@@ -2,17 +2,70 @@
 
 ## Introduction
 
-This guide walks the user through the TRON Quickstart (v2.0.0) image setup.   
-The image exposes a Full Node, Solidity Node, and Event Server. Through TRON Quickstart, the user can deploy DApps, smart contracts, and interact with the TronWeb library.  
-More information about usage of [Quickstart:](https://github.com/TRON-US/docker-tron-quickstart)  
+This guide provides two ways for TRON quickstart:
+- Set up a FullNode using the official tools: providing a wealth of configurable parameter to startup a FullNode
+- Set up a complete private network for Tron development using a third-party tool: [docker-tron-quickstart](https://github.com/TRON-US/docker-tron-quickstart)
 
-## Dependencies  
+## Dependencies
 
 ### Docker
 
 Please refer to the Docker official website to download and install the latest Docker version:
 * Docker Installation for [Mac](https://docs.docker.com/docker-for-mac/install/)
 * Docker Installation for [Windows](https://docs.docker.com/docker-for-windows/install/)   
+
+## Quickstart for using the official tools
+
+### Build the image from source with docker
+
+#### Clone the java-tron repo
+
+Pull the java-tron repo from github and change into the directory `java-tron`:
+```
+git clone https://github.com/tronprotocol/java-tron.git
+cd java-tron
+```
+
+#### Build the image
+
+Use the below command to start the build:
+```
+docker build -t tronprotocol/java-tron .
+```
+
+#### Using the official Docker images without building from source
+
+If you'd like to use the already pre-built official images, it's as simple as downloading it from the Dockerhub registry with only one command:
+```
+docker pull tronprotocol/java-tron
+```
+
+### Run the container
+
+You can just run the command below to start the java-tron:
+```
+docker run -it -d -p 8090:8090 -p 8091:8091 -p 18888:18888 -p 50051:50051 --restart always tronprotocol/java-tron 
+```
+
+The `-p` flag defines the ports that the container needs to be mapped on the host machine. By default the container will start and join in the mainnet
+using the built-in configuration file, you can specify another configuration file by mounting a directory and using the flag `-c`.
+This image also supports custom some other startup parameters，here is an example for running a FullNode as an SR in production env:
+```
+docker run -it -d -p 8080:8080 -p 8090:8090 -p 18888:18888 -p 50051:50051 \
+           -v /Users/quan/tron/docker/conf:/java-tron/conf \
+           -v /Users/quan/tron/docker/datadir:/java-tron/data \
+           tronprotocol/java-tron \
+           -jvm "{-Xmx10g -Xms10g}" \
+           -c /java-tron/conf/config-localtest.conf \
+           -d /java-tron/data \
+           -w 
+```
+Note: The directory `/Users/tron/docker/conf` shoud contain the file `config-localtest.conf`. The jvm parameters should be enclosed in double quotes and braces.
+
+## Quickstart for using docker-tron-quickstart
+
+The image exposes a Full Node, Solidity Node, and Event Server. Through TRON Quickstart, the user can deploy DApps, smart contracts, and interact with the TronWeb library.
+More information about usage of [Quickstart:](https://github.com/TRON-US/docker-tron-quickstart)
 
 ### Node.JS Console
   This will be used to interact with the Full and Solidity Nodes via Tron-Web.  
@@ -139,6 +192,7 @@ If everything goes well, your terminal console output will look like following :
 1. open your web browser
 2. enter : http://127.0.0.1:9090/
 3. there will be a response JSON data: 
+
 ```
  {"Welcome to":"TronGrid v2.2.8"}
 ```
