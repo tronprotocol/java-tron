@@ -19,7 +19,7 @@ import org.tron.core.exception.ItemNotFoundException;
 
 public class Chainbase implements IRevokingDB {
 
-  public static Map<String, byte[]> assetsAddress = new HashMap<>(); // key = name , value = address
+  // public static Map<String, byte[]> assetsAddress = new HashMap<>(); // key = name , value = address
   public enum Cursor {
     HEAD,
     SOLIDITY,
