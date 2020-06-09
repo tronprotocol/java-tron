@@ -1800,7 +1800,7 @@ public class PublicMethed {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      logger.info("Wait to produce next block");
+      //logger.info("Wait to produce next block");
       nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
       if (wait == 45) {
