@@ -69,7 +69,7 @@ public class ShieldTrc20Token002 extends ZenTrc20Base {
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
         null,null,shieldOutList,"",0L,blockingStubFull
-        );
+    );
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
 
     //Do mint transaction type

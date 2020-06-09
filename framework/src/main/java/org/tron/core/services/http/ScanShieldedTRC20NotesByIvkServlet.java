@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
+public class ScanShieldedTRC20NotesByIvkServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -29,7 +29,7 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
       JSONArray array = jsonNotes.getJSONArray("noteTxs");
       for (int index = 0; index < array.size(); index++) {
         JSONObject item = array.getJSONObject(index);
-        item.put("index", notes.getNoteTxs(index).getIndex());//避免把0自动忽略
+        item.put("index", notes.getNoteTxs(index).getIndex()); //避免把0自动忽略
       }
       return jsonNotes.toJSONString();
     }
@@ -40,13 +40,14 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+
       boolean visible = Util.getVisiblePost(input);
       IvkDecryptTRC20Parameters.Builder ivkDecryptTRC20Parameters = IvkDecryptTRC20Parameters
           .newBuilder();
       JsonFormat.merge(input, ivkDecryptTRC20Parameters, visible);
 
       GrpcAPI.DecryptNotesTRC20 notes = wallet
-          .scanShieldedTRC20NotesbyIvk(ivkDecryptTRC20Parameters.getStartBlockIndex(),
+          .scanShieldedTRC20NotesByIvk(ivkDecryptTRC20Parameters.getStartBlockIndex(),
               ivkDecryptTRC20Parameters.getEndBlockIndex(),
               ivkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray(),
               ivkDecryptTRC20Parameters.getIvk().toByteArray(),
@@ -64,14 +65,17 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
       long startNum = Long.parseLong(request.getParameter("start_block_index"));
       long endNum = Long.parseLong(request.getParameter("end_block_index"));
       String ivk = request.getParameter("ivk");
+
       String contractAddress = request.getParameter("shielded_TRC20_contract_address");
       if (visible) {
         contractAddress = Util.getHexAddress(contractAddress);
       }
+
       String ak = request.getParameter("ak");
       String nk = request.getParameter("nk");
+
       GrpcAPI.DecryptNotesTRC20 notes = wallet
-          .scanShieldedTRC20NotesbyIvk(startNum, endNum,
+          .scanShieldedTRC20NotesByIvk(startNum, endNum,
               ByteArray.fromHexString(contractAddress), ByteArray.fromHexString(ivk),
               ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
       response.getWriter().println(convertOutput(notes, visible));

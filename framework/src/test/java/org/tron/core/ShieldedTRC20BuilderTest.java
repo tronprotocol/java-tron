@@ -1955,7 +1955,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     FullViewingKey fvk = sk.fullViewingKey();
     byte[] ivk = fvk.inViewingKey().value;
 
-    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesbyIvk(
+    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByIvk(
         statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk());
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
@@ -1963,13 +1963,13 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   }
 
   @Test
-  public void testscanShieldedTRC20NotesbyOvk() throws Exception {
+  public void testscanShieldedTRC20NotesByOvk() throws Exception {
     int statNum = 9200;
     int endNum = 9240;
     SpendingKey sk = SpendingKey.decode(privateKey);
     FullViewingKey fvk = sk.fullViewingKey();
 
-    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesbyOvk(
+    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByOvk(
         statNum, endNum, fvk.getOvk(), SHIELDED_CONTRACT_ADDRESS);
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
@@ -1985,7 +1985,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     FullViewingKey fvk = sk.fullViewingKey();
     byte[] ivk = fvk.inViewingKey().value;
 
-    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesbyIvk(
+    GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByIvk(
         statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk());
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
@@ -2001,8 +2001,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       NfBuilfer.setNote(scannedNotes.getNoteTxs(0).getNote());
     }
 
-    GrpcAPI.NullifierResult result = wallet.isShieldedTRC20ContractNoteSpent(
-        NfBuilfer.build());
+    GrpcAPI.NullifierResult result = wallet
+        .isShieldedTRC20ContractNoteSpent(NfBuilfer.build());
     Assert.assertTrue(result.getIsSpent());
   }
 
