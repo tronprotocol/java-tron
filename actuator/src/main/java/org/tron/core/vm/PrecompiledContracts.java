@@ -1249,12 +1249,15 @@ public class PrecompiledContracts {
         } else {
           return Pair.of(true, DataWord.ZERO().getData());
         }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.info("VerifyTransferProof exception: " + e.getMessage());
       } catch (Throwable any) {
         String errorMsg = any.getMessage();
         if (errorMsg == null && any.getCause() != null) {
           errorMsg = any.getCause().getMessage();
         }
-        logger.info("VerifyTransferProof exception " + errorMsg);
+        logger.info("VerifyTransferProof exception: " + errorMsg);
       }
       return Pair.of(true, DataWord.ZERO().getData());
     }
@@ -1272,8 +1275,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckSpendTask(CountDownLatch countDownLatch,
-                            byte[] cv, byte[] anchor, byte[] nullifier, byte[] rk,
-                            byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
+          byte[] cv, byte[] anchor, byte[] nullifier, byte[] rk,
+          byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
         this.cv = cv;
         this.anchor = anchor;
         this.nullifier = nullifier;
@@ -1310,7 +1313,7 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckOutputTask(CountDownLatch countDownLatch, byte[] cv, byte[] cm,
-                         byte[] ephemeralKey, byte[] zkproof) {
+          byte[] ephemeralKey, byte[] zkproof) {
         this.cv = cv;
         this.cm = cm;
         this.ephemeralKey = ephemeralKey;
@@ -1347,8 +1350,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance, byte[] bindingSig,
-                              byte[] signHash, byte[] spendCvs, int spendCvLen,
-                              byte[] receiveCvs, int receiveCvLen) {
+          byte[] signHash, byte[] spendCvs, int spendCvLen,
+          byte[] receiveCvs, int receiveCvLen) {
         this.valueBalance = valueBalance;
         this.bindingSig = bindingSig;
         this.signHash = signHash;
