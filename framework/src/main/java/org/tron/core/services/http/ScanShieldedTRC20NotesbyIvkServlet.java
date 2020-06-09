@@ -52,7 +52,7 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
               ivkDecryptTRC20Parameters.getIvk().toByteArray(),
               ivkDecryptTRC20Parameters.getAk().toByteArray(),
               ivkDecryptTRC20Parameters.getNk().toByteArray(),
-              ivkDecryptTRC20Parameters.getLogTopicsList());
+              ivkDecryptTRC20Parameters.getEventsList());
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       Util.processError(e, response);

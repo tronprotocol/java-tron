@@ -33,7 +33,7 @@ public class ScanShieldedTRC20NotesbyOvkServlet extends RateLimiterServlet {
               ovkDecryptTRC20Parameters.getEndBlockIndex(),
               ovkDecryptTRC20Parameters.getOvk().toByteArray(),
               ovkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray(),
-              ovkDecryptTRC20Parameters.getLogTopicsList()
+              ovkDecryptTRC20Parameters.getEventsList()
           );
       response.getWriter()
           .println(ScanShieldedTRC20NotesbyIvkServlet.convertOutput(notes, visible));

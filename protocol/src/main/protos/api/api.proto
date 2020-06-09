@@ -1391,7 +1391,7 @@ message IvkDecryptTRC20Parameters {
   bytes ivk = 4;
   bytes ak = 5;
   bytes nk = 6;
-  repeated string log_topics = 7;
+  repeated string events = 7;
 }
 
 message OvkDecryptTRC20Parameters {
@@ -1399,7 +1399,7 @@ message OvkDecryptTRC20Parameters {
   int64 end_block_index = 2;
   bytes ovk = 3;
   bytes shielded_TRC20_contract_address = 4;
-  repeated string log_topics = 5;
+  repeated string events = 5;
 }
 
 message DecryptNotesTRC20 {
