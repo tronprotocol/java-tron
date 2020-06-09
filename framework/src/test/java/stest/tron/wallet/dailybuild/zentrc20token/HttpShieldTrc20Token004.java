@@ -308,8 +308,10 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     account2OvkNoteTxsOnSolidity = scanShieldTrc20NoteByOvkOnSolidity(httpSolidityNode,shieldAccountInfo2);
     Assert.assertEquals(account2OvkNoteTxs,account2OvkNoteTxsOnSolidity);
 
-
   }
+
+
+
 
   /**
    * constructor.

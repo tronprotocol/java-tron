@@ -31,6 +31,7 @@ import javax.xml.ws.Response;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
 import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -181,7 +182,6 @@ public class ZenTrc20Base {
   public GrpcAPI.ShieldedTRC20Parameters createShieldedTrc20Parameters(BigInteger publicFromAmount,
       GrpcAPI.DecryptNotesTRC20 inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,Long pubicToAmount,
       WalletGrpc.WalletBlockingStub blockingStubFull) throws ZksnarkException {
-
 
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder builder
         = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
@@ -895,10 +895,89 @@ public class ZenTrc20Base {
 
     }
     return null;
-
-
-
   }
+
+  /**
+   * constructor.
+   */
+  public static Boolean getTrc20SpendResult(
+      ShieldedAddressInfo shieldAddressInfo,GrpcAPI.DecryptNotesTRC20.NoteTx noteTx,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+
+    GrpcAPI.NfTRC20Parameters.Builder builder = GrpcAPI.NfTRC20Parameters.newBuilder();
+
+    String spendingKey = ByteArray.toHexString(shieldAddressInfo.getSk());
+    BytesMessage sk = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
+    Optional<GrpcAPI.ExpandedSpendingKeyMessage> esk = Optional
+        .of(blockingStubFull.getExpandedSpendingKey(sk));
+
+    String ask = ByteArray.toHexString(esk.get().getAsk().toByteArray());
+    BytesMessage ask1 = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(ask))).build();
+    Optional<BytesMessage> ak = Optional.of(blockingStubFull.getAkFromAsk(ask1));
+    String nsk = ByteArray.toHexString(esk.get().getNsk().toByteArray());
+    BytesMessage nsk1 = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(nsk))).build();
+    Optional<BytesMessage> nk = Optional.of(blockingStubFull.getNkFromNsk(nsk1));
+    builder.setAk(ak.get().getValue());
+    builder.setNk(nk.get().getValue());
+    builder.setPosition(noteTx.getPosition());
+    builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(shieldAddressByte));
+
+    Note.Builder noteBuild = Note.newBuilder();
+    noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+    noteBuild.setValue(noteTx.getNote().getValue());
+    noteBuild.setRcm(noteTx.getNote().getRcm());
+    noteBuild.setMemo(noteTx.getNote().getMemo());
+    builder.setNote(noteBuild.build());
+
+    Optional<GrpcAPI.NullifierResult> result = Optional.of(blockingStubFull.isShieldedTRC20ContractNoteSpent(builder.build()));
+    return result.get().getIsSpent();
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static Boolean getTrc20SpendResult(
+      ShieldedAddressInfo shieldAddressInfo,GrpcAPI.DecryptNotesTRC20.NoteTx noteTx,
+      WalletGrpc.WalletBlockingStub blockingStubFull,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+
+    GrpcAPI.NfTRC20Parameters.Builder builder = GrpcAPI.NfTRC20Parameters.newBuilder();
+
+    String spendingKey = ByteArray.toHexString(shieldAddressInfo.getSk());
+    BytesMessage sk = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
+    Optional<GrpcAPI.ExpandedSpendingKeyMessage> esk = Optional
+        .of(blockingStubFull.getExpandedSpendingKey(sk));
+
+    String ask = ByteArray.toHexString(esk.get().getAsk().toByteArray());
+    BytesMessage ask1 = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(ask))).build();
+    Optional<BytesMessage> ak = Optional.of(blockingStubFull.getAkFromAsk(ask1));
+    String nsk = ByteArray.toHexString(esk.get().getNsk().toByteArray());
+    BytesMessage nsk1 = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(nsk))).build();
+    Optional<BytesMessage> nk = Optional.of(blockingStubFull.getNkFromNsk(nsk1));
+    builder.setAk(ak.get().getValue());
+    builder.setNk(nk.get().getValue());
+    builder.setPosition(noteTx.getPosition());
+    builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(shieldAddressByte));
+
+    Note.Builder noteBuild = Note.newBuilder();
+    noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+    noteBuild.setValue(noteTx.getNote().getValue());
+    noteBuild.setRcm(noteTx.getNote().getRcm());
+    noteBuild.setMemo(noteTx.getNote().getMemo());
+    builder.setNote(noteBuild.build());
+
+    Optional<GrpcAPI.NullifierResult> result = Optional.of(blockingStubSolidity
+        .isShieldedTRC20ContractNoteSpent(builder.build()));
+    return result.get().getIsSpent();
+  }
+
 
   /**
    * constructor.
@@ -1450,6 +1529,32 @@ public class ZenTrc20Base {
     HttpMethed.printJsonContent(responseContent);
     return responseContent.containsKey("is_spent") ? responseContent.getBoolean("is_spent") : false;
   }
+
+  /**
+   * constructor.
+   */
+  public static Boolean isShieldedTrc20ContractNoteSpentOnSolidity(String httpNode,JSONObject accountInfo,JSONObject noteTxs) {
+    try {
+      String requestUrl = "http://" + httpNode + "/walletsolidity/isshieldedtrc20contractnotespent";
+      JSONObject userBaseObj2 = new JSONObject();
+      userBaseObj2.put("note",noteTxs.getJSONObject("note"));
+      userBaseObj2.put("ak",accountInfo.getString("ak"));
+      userBaseObj2.put("nk",accountInfo.getString("nk"));
+      userBaseObj2.put("position",noteTxs.containsKey("position") ? noteTxs.getInteger("position") : 0);
+      userBaseObj2.put("visible", true);
+      userBaseObj2.put("shielded_TRC20_contract_address", shieldAddress);
+      logger.info(userBaseObj2.toString());
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl,userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    return responseContent.containsKey("is_spent") ? responseContent.getBoolean("is_spent") : false;
+  }
+
 
 
   /**

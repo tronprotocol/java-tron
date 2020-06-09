@@ -224,6 +224,11 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
   }
 
 
+  @Test(enabled = true, description = "Query is shielded trc20 contract note spent on solidity by http")
+  public void test05QueryIsShieldedTRC20ContractNoteSpentByHttp() {
+    Assert.assertTrue(isShieldedTrc20ContractNoteSpentOnSolidity(httpSolidityNode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(2)));
+    Assert.assertTrue(isShieldedTrc20ContractNoteSpentOnSolidity(httpSolidityNode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(3)));
+  }
 
 
 

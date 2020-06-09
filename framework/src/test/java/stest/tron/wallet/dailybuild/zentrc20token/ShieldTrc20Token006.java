@@ -382,6 +382,42 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
   }
 
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Query is shield trc20 note spend on solidity")
+  public void test05IsShieldTrc20NoteSpendOnSolidity() throws Exception {
+    shield1Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo1.get(),
+        blockingStubFull);
+    shield2Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo2.get(),
+        blockingStubFull);
+
+    Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo1.get(),
+        shield1Note.getNoteTxs(0),blockingStubFull),true);
+
+    Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo1.get(),
+        shield1Note.getNoteTxs(0),blockingStubFull),
+        getTrc20SpendResult(shieldAddressInfo1.get(),
+            shield1Note.getNoteTxs(0),blockingStubFull,blockingStubSolidity));
+
+    Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo1.get(),
+        shield1Note.getNoteTxs(1),blockingStubFull),
+        getTrc20SpendResult(shieldAddressInfo1.get(),shield1Note.getNoteTxs(1),
+            blockingStubFull,blockingStubSolidity));
+
+    Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo2.get(),
+        shield2Note.getNoteTxs(0),blockingStubFull),
+        getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(0),
+            blockingStubFull,blockingStubSolidity));
+
+    Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo2.get(),
+        shield2Note.getNoteTxs(1),blockingStubFull),
+        getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(1),
+            blockingStubFull,blockingStubSolidity));
+
+  }
+
+
 
 
 
