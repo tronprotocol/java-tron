@@ -32,7 +32,8 @@ public class ScanShieldedTRC20NotesbyOvkServlet extends RateLimiterServlet {
           .scanShieldedTRC20NotesbyOvk(ovkDecryptTRC20Parameters.getStartBlockIndex(),
               ovkDecryptTRC20Parameters.getEndBlockIndex(),
               ovkDecryptTRC20Parameters.getOvk().toByteArray(),
-              ovkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray()
+              ovkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray(),
+              ovkDecryptTRC20Parameters.getLogTopicsList()
           );
       response.getWriter()
           .println(ScanShieldedTRC20NotesbyIvkServlet.convertOutput(notes, visible));
@@ -53,7 +54,7 @@ public class ScanShieldedTRC20NotesbyOvkServlet extends RateLimiterServlet {
       }
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesbyOvk(startBlockIndex, endBlockIndex,
-              ByteArray.fromHexString(ovk), ByteArray.fromHexString(contractAddress));
+              ByteArray.fromHexString(ovk), ByteArray.fromHexString(contractAddress), null);
       response.getWriter()
           .println(ScanShieldedTRC20NotesbyIvkServlet.convertOutput(notes, visible));
     } catch (Exception e) {
