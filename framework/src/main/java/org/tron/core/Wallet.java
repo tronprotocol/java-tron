@@ -2988,9 +2988,12 @@ public class Wallet {
   }
 
   private int getShieldedTRC20LogType(TransactionInfo.Log log, byte[] contractAddress,
-      ProtocolStringList topicsList) {
+      ProtocolStringList topicsList) throws ZksnarkException {
     byte[] logAddress = log.getAddress().toByteArray();
     byte[] addressWithoutPrefix = new byte[20];
+    if (ArrayUtils.isEmpty(contractAddress) || contractAddress.length != 21) {
+      throw new ZksnarkException("invalid contract address");
+    }
     System.arraycopy(contractAddress, 1, addressWithoutPrefix, 0, 20);
     if (Arrays.equals(logAddress, addressWithoutPrefix)) {
       List<ByteString> logTopicsList = log.getTopicsList();
@@ -3410,7 +3413,11 @@ public class Wallet {
     byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
     byte[] transparentToAddressTvm = new byte[20];
     if (!ArrayUtils.isEmpty(transparentToAddress)) {
-      System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
+      if (transparentToAddress.length == 21) {
+        System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
+      } else {
+        throw new ZksnarkException("invalid transparent to address");
+      }
     }
     String parameterType = shieldedTRC20Parameters.getParameterType();
     if (shieldedTRC20Parameters.getSpendDescriptionList().size() != spendAuthoritySignature
