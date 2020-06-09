@@ -200,7 +200,7 @@ public class ZenTrc20Base {
       List<String> rootAndPath = new ArrayList<>();
       for (int i = 0; i < inputNoteList.getNoteTxsCount(); i++) {
         long position = inputNoteList.getNoteTxs(i).getPosition();
-        rootAndPath.add(getRootAndPath(position,blockingStubFull));
+        rootAndPath.add(getRootAndPath(position,blockingStubSolidity));
       }
       if (rootAndPath.isEmpty() || rootAndPath.size() != inputNoteList.getNoteTxsCount()) {
         System.out.println("Can't get all merkle tree, please check the notes.");
@@ -323,7 +323,7 @@ public class ZenTrc20Base {
       List<String> rootAndPath = new ArrayList<>();
       for (int i = 0; i < inputNoteList.getNoteTxsCount(); i++) {
         long position = inputNoteList.getNoteTxs(i).getPosition();
-        rootAndPath.add(getRootAndPath(position,blockingStubFull));
+        rootAndPath.add(getRootAndPath(position,blockingStubSolidity));
       }
       if (rootAndPath.isEmpty() || rootAndPath.size() != inputNoteList.getNoteTxsCount()) {
         System.out.println("Can't get all merkle tree, please check the notes.");
@@ -445,14 +445,14 @@ public class ZenTrc20Base {
 
 
 
-  public String getRootAndPath(long position,WalletGrpc.WalletBlockingStub
-      blockingStubFull) {
+  public String getRootAndPath(long position,WalletSolidityGrpc.WalletSolidityBlockingStub
+      blockingStubSolidity) {
     String methodStr = "getPath(uint256)";
     byte[] indexBytes = ByteArray.fromLong(position);
     String argsStr = ByteArray.toHexString(indexBytes);
     argsStr = "000000000000000000000000000000000000000000000000" + argsStr;
-    TransactionExtention transactionExtention = PublicMethed.triggerConstantContractForExtention(shieldAddressByte, methodStr,argsStr,true,0,1000000000L,"0",0,zenTrc20TokenOwnerAddress,
-        zenTrc20TokenOwnerKey,blockingStubFull);
+    TransactionExtention transactionExtention = PublicMethed.triggerConstantContractForExtentionOnSolidity(shieldAddressByte, methodStr,argsStr,true,0,1000000000L,"0",0,zenTrc20TokenOwnerAddress,
+        zenTrc20TokenOwnerKey,blockingStubSolidity);
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     return ByteArray.toHexString(result);
   }
