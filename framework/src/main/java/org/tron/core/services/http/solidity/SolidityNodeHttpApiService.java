@@ -38,8 +38,8 @@ import org.tron.core.services.http.ListWitnessesServlet;
 import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByOvkServlet;
-import org.tron.core.services.http.ScanShieldedTRC20NotesbyIvkServlet;
-import org.tron.core.services.http.ScanShieldedTRC20NotesbyOvkServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesByIvkServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesByOvkServlet;
 import org.tron.core.services.http.TriggerConstantContractServlet;
 
 
@@ -106,9 +106,9 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private IsSpendServlet isSpendServlet;
   @Autowired
-  private ScanShieldedTRC20NotesbyIvkServlet scanShieldedTRC20NotesbyIvkServlet;
+  private ScanShieldedTRC20NotesByIvkServlet scanShieldedTRC20NotesByIvkServlet;
   @Autowired
-  private ScanShieldedTRC20NotesbyOvkServlet scanShieldedTRC20NotesbyOvkServlet;
+  private ScanShieldedTRC20NotesByOvkServlet scanShieldedTRC20NotesByOvkServlet;
   @Autowired
   private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
 
@@ -185,9 +185,9 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(isSpendServlet),
           "/walletsolidity/isspend");
 
-      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkServlet),
           "/walletsolidity/scanshieldedtrc20notesbyivk");
-      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkServlet),
           "/walletsolidity/scanshieldedtrc20notesbyovk");
       context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
           "/walletsolidity/isshieldedtrc20contractnotespent");

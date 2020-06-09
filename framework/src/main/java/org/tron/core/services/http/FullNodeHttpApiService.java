@@ -232,9 +232,9 @@ public class FullNodeHttpApiService implements Service {
   private CreateShieldedContractParametersWithoutAskServlet
       createShieldedContractParametersWithoutAskServlet;
   @Autowired
-  private ScanShieldedTRC20NotesbyIvkServlet scanShieldedTRC20NotesbyIvkServlet;
+  private ScanShieldedTRC20NotesByIvkServlet scanShieldedTRC20NotesByIvkServlet;
   @Autowired
-  private ScanShieldedTRC20NotesbyOvkServlet scanShieldedTRC20NotesbyOvkServlet;
+  private ScanShieldedTRC20NotesByOvkServlet scanShieldedTRC20NotesByOvkServlet;
   @Autowired
   private GetTriggerInputForShieldedTRC20ContractServlet
       getTriggerInputForShieldedTRC20ContractServlet;
@@ -261,10 +261,10 @@ public class FullNodeHttpApiService implements Service {
     }
 
     String spendPath = getParamsFile("sapling-spend.params");
-    String spendHash = "d1f8833960c43a2af250fbb97eceaf2b1afac27097680e8a74a5956b26f9072b30f48c82f28210e648ce9557847060d4262e8137eb16bdfb29a829ed664e715f";
+    String spendHash = "25fd9a0d1c1be0526c14662947ae95b758fe9f3d7fb7f55e9b4437830dcc6215a7ce3ea465914b157715b7a4d681389ea4aa84438190e185d5e4c93574d3a19a";
 
     String outputPath = getParamsFile("sapling-output.params");
-    String outputHash = "35cf2cc08f4005321215ee419e70bafec1d28ba8388fe788b9c30044bb635b0f56b490c5e1f744c2efdb780a542a58f4ee39a33766f75aff219eb4d4e0d208a3";
+    String outputHash = "a1cb23b93256adce5bce2cb09cefbc96a1d16572675ceb691e9a3626ec15b5b546926ff1c536cfe3a9df07d796b32fdfc3e5d99d65567257bf286cd2858d71a6";
 
     try {
       JLibrustzcash.librustzcashInitZksnarkParams(
@@ -414,9 +414,9 @@ public class FullNodeHttpApiService implements Service {
           "/createshieldedcontractparameters");
       context.addServlet(new ServletHolder(createShieldedContractParametersWithoutAskServlet),
           "/createshieldedcontractparameterswithoutask");
-      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkServlet),
           "/scanshieldedtrc20notesbyivk");
-      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkServlet),
           "/scanshieldedtrc20notesbyovk");
       context.addServlet(new ServletHolder(getTriggerInputForShieldedTRC20ContractServlet),
           "/gettriggerinputforshieldedtrc20contract");

@@ -713,10 +713,10 @@ service Wallet {
   rpc CreateShieldedContractParametersWithoutAsk (PrivateShieldedTRC20ParametersWithoutAsk) returns (ShieldedTRC20Parameters) {
   };
 
-  rpc ScanShieldedTRC20NotesbyIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
   rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
@@ -878,10 +878,10 @@ service WalletSolidity {
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
 
-  rpc ScanShieldedTRC20NotesbyIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
   rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
@@ -1391,6 +1391,7 @@ message IvkDecryptTRC20Parameters {
   bytes ivk = 4;
   bytes ak = 5;
   bytes nk = 6;
+  repeated string events = 7;
 }
 
 message OvkDecryptTRC20Parameters {
@@ -1398,6 +1399,7 @@ message OvkDecryptTRC20Parameters {
   int64 end_block_index = 2;
   bytes ovk = 3;
   bytes shielded_TRC20_contract_address = 4;
+  repeated string events = 5;
 }
 
 message DecryptNotesTRC20 {
@@ -1407,6 +1409,8 @@ message DecryptNotesTRC20 {
     bool is_spent = 3;
     bytes txid = 4;
     int32 index = 5; //the index of note in txid
+    string to_amount = 6;
+    bytes transparent_to_address = 7;
   }
   repeated NoteTx noteTxs = 1;
 }
