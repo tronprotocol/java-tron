@@ -69,7 +69,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   /**
    * constructor.
    */
-  @Test(enabled = true, threadPoolSize = 30, ç = 6000)
+  @Test(enabled = true, threadPoolSize = 60, invocationCount = 600000)
   public void test01ShieldTrc20TransactionByTypeMint() throws Exception {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
