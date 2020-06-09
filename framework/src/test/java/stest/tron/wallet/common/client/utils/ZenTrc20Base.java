@@ -99,7 +99,7 @@ public class ZenTrc20Base {
   static HttpPost httppost;
   static JSONObject responseContent;
   public static Integer scalingFactorLogarithm = 0;
-  public static Long totalSupply = 9223372036854775807L;
+  public static Long totalSupply = 1000000000000L;
 
 
   /**
