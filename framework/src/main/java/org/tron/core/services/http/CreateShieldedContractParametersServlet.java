@@ -25,9 +25,11 @@ public class CreateShieldedContractParametersServlet extends RateLimiterServlet 
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+
       boolean visible = Util.getVisiblePost(contract);
       PrivateShieldedTRC20Parameters.Builder build = PrivateShieldedTRC20Parameters.newBuilder();
       JsonFormat.merge(contract, build, visible);
+
       ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
           .createShieldedContractParameters(build.build());
       response.getWriter().println(JsonFormat.printToString(shieldedTRC20Parameters, visible));
