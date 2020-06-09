@@ -38,6 +38,7 @@ public class ShieldedTRC20ParametersBuilder {
 
   private static final int MERKLE_TREE_PATH_LENGTH = 1024; // 32*32
   private static final String MERKLE_TREE_PATH_LENGTH_ERROR = "Merkle tree path format is wrong";
+
   @Setter
   private List<SpendDescriptionInfo> spends = new ArrayList<>();
   @Setter
@@ -84,12 +85,14 @@ public class ShieldedTRC20ParametersBuilder {
     if (path.length != MERKLE_TREE_PATH_LENGTH) {
       throw new ZksnarkException(MERKLE_TREE_PATH_LENGTH_ERROR);
     }
+
     byte[] result = new byte[1065];
     result[0] = 0x20;
     for (int i = 0; i < 32; i++) {
       result[1 + i * 33] = 0x20;
       System.arraycopy(path, i * 32, result, 2 + i * 33, 32);
     }
+
     byte[] positionBytes = ByteArray.fromLong(position);
     ZksnarkUtils.sort(positionBytes);
     System.arraycopy(positionBytes, 0, result, 1057, 8);
@@ -100,11 +103,12 @@ public class ShieldedTRC20ParametersBuilder {
   private SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
       long ctx) throws ZksnarkException {
     byte[] cm = spend.note.cm();
-    //check if ak exists
+    // check if ak exists
     byte[] ak;
     byte[] nf;
     byte[] nsk;
     byte[] path = formatPath(spend.path, spend.position);
+
     if (!ArrayUtils.isEmpty(spend.ak)) {
       ak = spend.ak;
       nf = spend.note.nullifier(ak, JLibrustzcash.librustzcashNskToNk(spend.nsk), spend.position);
@@ -114,9 +118,11 @@ public class ShieldedTRC20ParametersBuilder {
       nf = spend.note.nullifier(spend.expsk.fullViewingKey(), spend.position);
       nsk = spend.expsk.getNsk();
     }
+
     if (ByteArray.isEmpty(cm) || ByteArray.isEmpty(nf)) {
       throw new ZksnarkException("Spend is invalid");
     }
+
     byte[] cv = new byte[32];
     byte[] rk = new byte[32];
     byte[] zkproof = new byte[192];
@@ -135,6 +141,7 @@ public class ShieldedTRC20ParametersBuilder {
             zkproof))) {
       throw new ZksnarkException("Spend proof failed");
     }
+
     SpendDescriptionCapsule spendDescriptionCapsule = new SpendDescriptionCapsule();
     spendDescriptionCapsule.setValueCommitment(cv);
     spendDescriptionCapsule.setRk(rk);
@@ -148,12 +155,12 @@ public class ShieldedTRC20ParametersBuilder {
   private ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, long ctx)
       throws ZksnarkException {
     byte[] cm = output.getNote().cm();
-    if (ByteArray.isEmpty(cm)) {
+    byte[] pkD = output.getNote().getPkD();
+    if (ByteArray.isEmpty(cm) || ByteArray.isEmpty(pkD)) {
       throw new ZksnarkException("Output is invalid");
     }
 
-    Optional<Note.NotePlaintextEncryptionResult> res = output.getNote()
-        .encrypt(output.getNote().getPkD());
+    Optional<Note.NotePlaintextEncryptionResult> res = output.getNote().encrypt(pkD);
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
     }
@@ -185,12 +192,13 @@ public class ShieldedTRC20ParametersBuilder {
     receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
     receiveDescriptionCapsule.setZkproof(zkProof);
 
-    OutgoingPlaintext outPlaintext =
-        new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
-    receiveDescriptionCapsule.setCOut(outPlaintext
-        .encrypt(output.ovk, receiveDescriptionCapsule.getValueCommitment().toByteArray(),
-            receiveDescriptionCapsule.getCm().toByteArray(),
-            encryptor).getData());
+    OutgoingPlaintext outPlaintext = new OutgoingPlaintext(output.getNote().getPkD(),
+        encryptor.getEsk());
+    byte[] cOut = outPlaintext.encrypt(output.ovk,
+        receiveDescriptionCapsule.getValueCommitment().toByteArray(),
+        receiveDescriptionCapsule.getCm().toByteArray(),
+        encryptor).getData();
+    receiveDescriptionCapsule.setCOut(cOut);
 
     return receiveDescriptionCapsule;
   }
@@ -240,14 +248,15 @@ public class ShieldedTRC20ParametersBuilder {
     ShieldContract.SpendDescription spendDescription;
     ShieldContract.ReceiveDescription receiveDescription;
     ShieldedTRC20Parameters shieldedTRC20Parameters;
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
     try {
       switch (shieldedTRC20ParametersType) {
         case MINT:
           ReceiveDescriptionInfo receive = receives.get(0);
           receiveDescription = generateOutputProof(receive, ctx).getInstance();
           builder.addReceiveDescription(receiveDescription);
+
           mergedBytes = ByteUtil.merge(shieldedTRC20Address,
               ByteArray.fromLong(receive.getNote().getValue()),
               encodeReceiveDescriptionWithoutC(receiveDescription),

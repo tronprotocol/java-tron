@@ -2747,6 +2747,7 @@ public class Wallet {
         }
       }
     }
+
     if (!Objects.isNull(receiveNotes)) {
       for (ReceiveNote receiveNote : receiveNotes) {
         if (receiveNote.getNote().getValue() < 0) {
@@ -2831,14 +2832,15 @@ public class Wallet {
     if (scaledFromAmount > 0 && spendSize == 0 && receiveSize == 1
         && scaledFromAmount == shieldedReceives.get(0).getNote().getValue()
         && scaledToAmount == 0) {
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+
       byte[] ovk = request.getOvk().toByteArray();
       if (ArrayUtils.isEmpty(ovk)) {
         ovk = SpendingKey.random().fullViewingKey().getOvk();
       }
-      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+
       builder.setTransparentFromAmount(fromAmount);
-      ReceiveNote receiveNote = shieldedReceives.get(0);
-      buildShieldedTRC20Output(builder, receiveNote, ovk);
+      buildShieldedTRC20Output(builder, shieldedReceives.get(0), ovk);
     } else if (scaledFromAmount == 0 && spendSize > 0 && spendSize < 3
         && receiveSize > 0 && receiveSize < 3 && scaledToAmount == 0) {
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
@@ -2847,7 +2849,7 @@ public class Wallet {
       byte[] nsk = request.getNsk().toByteArray();
       byte[] ovk = request.getOvk().toByteArray();
       if ((ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
-        throw new ContractValidateException("No shielded TRC-20 expended spending key");
+        throw new ContractValidateException("No shielded TRC-20 ask, nsk or ovk");
       }
 
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
@@ -2966,7 +2968,7 @@ public class Wallet {
       byte[] nsk = request.getNsk().toByteArray();
       byte[] ovk = request.getOvk().toByteArray();
       if ((ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
-        throw new ContractValidateException("No shielded TRC-20 expended spending key");
+        throw new ContractValidateException("No shielded TRC-20 ak, nsk or ovk");
       }
       for (GrpcAPI.SpendNoteTRC20 spendNote : shieldedSpends) {
         buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk, ovk);
@@ -3004,13 +3006,18 @@ public class Wallet {
 
   private boolean isShieldedTRC20Log(TransactionInfo.Log log) {
     List<ByteString> topicsList = log.getTopicsList();
+    if (topicsList.isEmpty()) {
+      return false;
+    }
+
     byte[] topicsBytes = new byte[0];
     for (ByteString bs : topicsList) {
       topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
     }
 
-    return Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS) || Hex
-        .toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS_FOR_BURN);
+    String topicsHexStr = Hex.toHexString(topicsBytes);
+    return topicsHexStr.equals(SHIELDED_TRC20_LOG_TOPICS) || topicsHexStr
+        .equals(SHIELDED_TRC20_LOG_TOPICS_FOR_BURN);
   }
 
   private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogListByIvk(
@@ -3052,6 +3059,7 @@ public class Wallet {
         return Optional.of(builder.setNote(note).setPosition(pos).build());
       }
     }
+
     return Optional.empty();
   }
 
@@ -3066,6 +3074,7 @@ public class Wallet {
 
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
+
     for (Block block : blockList.getBlockList()) {
       for (Transaction transaction : block.getTransactionsList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
@@ -3113,8 +3122,8 @@ public class Wallet {
     TriggerSmartContract.Builder triggerBuilder = TriggerSmartContract.newBuilder();
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
     triggerBuilder.setData(ByteString.copyFrom(input));
-
     TriggerSmartContract trigger = triggerBuilder.build();
+
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     TransactionExtention trxExt;
@@ -3123,9 +3132,10 @@ public class Wallet {
       TransactionCapsule trxCap = createTransactionCapsule(trigger,
           ContractType.TriggerSmartContract);
       Transaction trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
+
+      retBuilder.setResult(true).setCode(response_code.SUCCESS);
       trxExtBuilder.setTransaction(trx);
       trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
-      retBuilder.setResult(true).setCode(response_code.SUCCESS);
       trxExtBuilder.setResult(retBuilder);
     } catch (ContractValidateException | VMIllegalException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
@@ -3154,7 +3164,7 @@ public class Wallet {
         listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
       }
 
-      return ByteUtil.toHexString(nf).equals(ByteUtil.toHexString(listBytes));
+      return Arrays.equals(nf, listBytes);
     } else {
       // trigger contract failed
       throw new ContractExeException("trigger contract error.");
@@ -3285,6 +3295,7 @@ public class Wallet {
     if (Objects.isNull(paymentAddress)) {
       throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
     }
+
     ComputeNfParams computeNfParams = new ComputeNfParams(
         paymentAddress.getD().getData(),
         paymentAddress.getPkD(),
@@ -3321,6 +3332,9 @@ public class Wallet {
     return new BigInteger(trimmedIn, 10);
   }
 
+  /**
+   * trigger contract to get the scalingFactor, and check the public amount,
+   * */
   private long[] checkPublicAmount(byte[] address, BigInteger fromAmount, BigInteger toAmount)
       throws ContractExeException, ContractValidateException {
     checkBigIntegerRange(fromAmount);
@@ -3369,18 +3383,20 @@ public class Wallet {
     TriggerSmartContract.Builder triggerBuilder = TriggerSmartContract.newBuilder();
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
     triggerBuilder.setData(ByteString.copyFrom(selector));
-
     TriggerSmartContract trigger = triggerBuilder.build();
+
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     TransactionExtention trxExt;
+
     try {
       TransactionCapsule trxCap = createTransactionCapsule(trigger,
           ContractType.TriggerSmartContract);
       Transaction trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
+
+      retBuilder.setResult(true).setCode(response_code.SUCCESS);
       trxExtBuilder.setTransaction(trx);
       trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
-      retBuilder.setResult(true).setCode(response_code.SUCCESS);
       trxExtBuilder.setResult(retBuilder);
     } catch (ContractValidateException | VMIllegalException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
@@ -3402,13 +3418,12 @@ public class Wallet {
     }
 
     String code = trxExt.getResult().getCode().toString();
-    List<ByteString> list = trxExt.getConstantResultList();
-    byte[] listBytes = new byte[0];
-    for (ByteString bs : list) {
-      listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
-    }
-
     if (code.equals("SUCCESS")) {
+      List<ByteString> list = trxExt.getConstantResultList();
+      byte[] listBytes = new byte[0];
+      for (ByteString bs : list) {
+        listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
+      }
       return listBytes;
     } else {
       throw new ContractExeException("trigger contract error.");
