@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class ScanShieldedTRC20NotesbyOvkServlet extends RateLimiterServlet {
+public class ScanShieldedTRC20NotesByOvkServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -29,14 +29,14 @@ public class ScanShieldedTRC20NotesbyOvkServlet extends RateLimiterServlet {
       JsonFormat.merge(input, ovkDecryptTRC20Parameters, visible);
 
       GrpcAPI.DecryptNotesTRC20 notes = wallet
-          .scanShieldedTRC20NotesbyOvk(ovkDecryptTRC20Parameters.getStartBlockIndex(),
+          .scanShieldedTRC20NotesByOvk(ovkDecryptTRC20Parameters.getStartBlockIndex(),
               ovkDecryptTRC20Parameters.getEndBlockIndex(),
               ovkDecryptTRC20Parameters.getOvk().toByteArray(),
               ovkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray(),
               ovkDecryptTRC20Parameters.getEventsList()
           );
       response.getWriter()
-          .println(ScanShieldedTRC20NotesbyIvkServlet.convertOutput(notes, visible));
+          .println(ScanShieldedTRC20NotesByIvkServlet.convertOutput(notes, visible));
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -53,10 +53,11 @@ public class ScanShieldedTRC20NotesbyOvkServlet extends RateLimiterServlet {
         contractAddress = Util.getHexAddress(contractAddress);
       }
       GrpcAPI.DecryptNotesTRC20 notes = wallet
-          .scanShieldedTRC20NotesbyOvk(startBlockIndex, endBlockIndex,
+          .scanShieldedTRC20NotesByOvk(startBlockIndex, endBlockIndex,
               ByteArray.fromHexString(ovk), ByteArray.fromHexString(contractAddress), null);
+
       response.getWriter()
-          .println(ScanShieldedTRC20NotesbyIvkServlet.convertOutput(notes, visible));
+          .println(ScanShieldedTRC20NotesByIvkServlet.convertOutput(notes, visible));
     } catch (Exception e) {
       Util.processError(e, response);
     }
