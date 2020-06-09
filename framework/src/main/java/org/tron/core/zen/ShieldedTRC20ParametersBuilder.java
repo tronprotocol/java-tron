@@ -32,6 +32,7 @@ import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.contract.ShieldContract;
 
+
 @Slf4j
 public class ShieldedTRC20ParametersBuilder {
 
@@ -45,6 +46,7 @@ public class ShieldedTRC20ParametersBuilder {
   private ShieldedTRC20Parameters.Builder builder = ShieldedTRC20Parameters.newBuilder();
   @Getter
   private long valueBalance = 0;
+  @Getter
   @Setter
   private ShieldedTRC20ParametersType shieldedTRC20ParametersType;
   @Setter
@@ -55,6 +57,8 @@ public class ShieldedTRC20ParametersBuilder {
   private byte[] transparentToAddress;
   @Setter
   private BigInteger transparentToAmount;
+  @Setter
+  byte[] burnCiphertext = new byte[80];
 
   public ShieldedTRC20ParametersBuilder() {
 
@@ -224,7 +228,6 @@ public class ShieldedTRC20ParametersBuilder {
 
   public ShieldedTRC20Parameters build(boolean withAsk)
       throws ZksnarkException {
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
     // Empty output script
     byte[] mergedBytes;
     byte[] dataHashToBeSigned; //256
@@ -232,63 +235,64 @@ public class ShieldedTRC20ParametersBuilder {
     ShieldContract.SpendDescription spendDescription;
     ShieldContract.ReceiveDescription receiveDescription;
     ShieldedTRC20Parameters shieldedTRC20Parameters;
-
-    switch (shieldedTRC20ParametersType) {
-      case MINT:
-        ReceiveDescriptionInfo receive = receives.get(0);
-        receiveDescription = generateOutputProof(receive, ctx).getInstance();
-        builder.addReceiveDescription(receiveDescription);
-        mergedBytes = ByteUtil.merge(shieldedTRC20Address,
-            ByteArray.fromLong(receive.getNote().getValue()),
-            encodeReceiveDescriptionWithoutC(receiveDescription),
-            encodeCencCout(receiveDescription));
-        value = transparentFromAmount;
-        builder.setParameterType("mint");
-        break;
-      case TRANSFER:
-        // Create SpendDescriptions
-        mergedBytes = shieldedTRC20Address;
-        for (SpendDescriptionInfo spend : spends) {
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
+    try {
+      switch (shieldedTRC20ParametersType) {
+        case MINT:
+          ReceiveDescriptionInfo receive = receives.get(0);
+          receiveDescription = generateOutputProof(receive, ctx).getInstance();
+          builder.addReceiveDescription(receiveDescription);
+          mergedBytes = ByteUtil.merge(shieldedTRC20Address,
+              ByteArray.fromLong(receive.getNote().getValue()),
+              encodeReceiveDescriptionWithoutC(receiveDescription),
+              encodeCencCout(receiveDescription));
+          value = transparentFromAmount;
+          builder.setParameterType("mint");
+          break;
+        case TRANSFER:
+          // Create SpendDescriptions
+          mergedBytes = shieldedTRC20Address;
+          for (SpendDescriptionInfo spend : spends) {
+            spendDescription = generateSpendProof(spend, ctx).getInstance();
+            builder.addSpendDescription(spendDescription);
+            mergedBytes = ByteUtil.merge(mergedBytes,
+                encodeSpendDescriptionWithoutSpendAuthSig(spendDescription));
+          }
+          // Create OutputDescriptions
+          byte[] cencCout = new byte[0];
+          for (ReceiveDescriptionInfo receiveD : receives) {
+            receiveDescription = generateOutputProof(receiveD, ctx).getInstance();
+            builder.addReceiveDescription(receiveDescription);
+            mergedBytes = ByteUtil.merge(mergedBytes,
+                encodeReceiveDescriptionWithoutC(receiveDescription));
+            cencCout = ByteUtil.merge(cencCout, encodeCencCout(receiveDescription));
+          }
+          mergedBytes = ByteUtil.merge(mergedBytes, cencCout);
+          builder.setParameterType("transfer");
+          break;
+        case BURN:
+          SpendDescriptionInfo spend = spends.get(0);
           spendDescription = generateSpendProof(spend, ctx).getInstance();
           builder.addSpendDescription(spendDescription);
-          mergedBytes = ByteUtil.merge(mergedBytes,
-              encodeSpendDescriptionWithoutSpendAuthSig(spendDescription));
-        }
-        // Create OutputDescriptions
-        byte[] cencCout = new byte[0];
-        for (ReceiveDescriptionInfo receiveD : receives) {
-          receiveDescription = generateOutputProof(receiveD, ctx).getInstance();
-          builder.addReceiveDescription(receiveDescription);
-          mergedBytes = ByteUtil.merge(mergedBytes,
-              encodeReceiveDescriptionWithoutC(receiveDescription));
-          cencCout = ByteUtil.merge(cencCout, encodeCencCout(receiveDescription));
-        }
-        mergedBytes = ByteUtil.merge(mergedBytes, cencCout);
-        builder.setParameterType("transfer");
-        break;
-      case BURN:
-        SpendDescriptionInfo spend = spends.get(0);
-        spendDescription = generateSpendProof(spend, ctx).getInstance();
-        builder.addSpendDescription(spendDescription);
-        mergedBytes = ByteUtil.merge(shieldedTRC20Address,
-            encodeSpendDescriptionWithoutSpendAuthSig(spendDescription),
-            transparentToAddress,
-            ByteArray.fromLong(spend.note.getValue()));
-        value = transparentToAmount;
-        builder.setParameterType("burn");
-        break;
-      default:
-        mergedBytes = null;
-    }
-    dataHashToBeSigned = Sha256Hash.of(true, mergedBytes).getBytes();
-    if (dataHashToBeSigned == null) {
-      throw new ZksnarkException("cal transaction hash failed");
-    }
-    if (withAsk) {
-      createSpendAuth(dataHashToBeSigned);
-    }
-    builder.setMessageHash(ByteString.copyFrom(dataHashToBeSigned));
-    try {
+          mergedBytes = ByteUtil.merge(shieldedTRC20Address,
+              encodeSpendDescriptionWithoutSpendAuthSig(spendDescription),
+              transparentToAddress,
+              ByteArray.fromLong(spend.note.getValue()));
+          value = transparentToAmount;
+          builder.setParameterType("burn");
+          break;
+        default:
+          mergedBytes = null;
+      }
+      dataHashToBeSigned = Sha256Hash.of(true, mergedBytes).getBytes();
+      if (dataHashToBeSigned == null) {
+        throw new ZksnarkException("calculate transaction hash failed");
+      }
+      if (withAsk) {
+        createSpendAuth(dataHashToBeSigned);
+      }
+      builder.setMessageHash(ByteString.copyFrom(dataHashToBeSigned));
+
       byte[] bindingSig = new byte[64];
       JLibrustzcash.librustzcashSaplingBindingSig(
           new LibrustzcashParam.BindingSigParams(ctx,
@@ -297,6 +301,8 @@ public class ShieldedTRC20ParametersBuilder {
               bindingSig)
       );
       builder.setBindingSignature(ByteString.copyFrom(bindingSig));
+    } catch (Exception e) {
+      throw new ZksnarkException("build the shielded TRC-20 parameters error: " + e.getMessage());
     } finally {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     }
@@ -305,6 +311,9 @@ public class ShieldedTRC20ParametersBuilder {
       builder.setTriggerContractInput(
           getTriggerContractInput(shieldedTRC20Parameters, null, value, true,
               transparentToAddress));
+    }
+    if (!withAsk && shieldedTRC20ParametersType == ShieldedTRC20ParametersType.BURN) {
+      builder.setTriggerContractInput(Hex.toHexString(burnCiphertext));
     }
     return builder.build();
   }
@@ -370,6 +379,9 @@ public class ShieldedTRC20ParametersBuilder {
       }
     }
     long spendCount = spendDescs.size();
+    if (spendCount < 1 || spendCount > 2) {
+      throw new IllegalArgumentException("invalid transfer input number");
+    }
     if (!withAsk) {
       if (spendCount == 1) {
         spendAuthSig = spendAuthoritySignature.get(0).getValue().toByteArray();
@@ -450,7 +462,9 @@ public class ShieldedTRC20ParametersBuilder {
         spendAuthSign,
         ByteUtil.bigIntegerToBytes(value, 32),
         burnParams.getBindingSignature().toByteArray(),
-        payTo
+        payTo,
+        burnCiphertext,
+        new byte[16]
     ));
   }
 
