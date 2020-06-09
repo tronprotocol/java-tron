@@ -264,11 +264,13 @@ public class NoteEncryption {
       System.arraycopy(amountArray, 0, plaintext, 0, 32);
       System.arraycopy(transparentToAddress, 0, plaintext, 32,
           21);
+
       if (JLibsodium.cryptoAeadChacha20Poly1305IetfEncrypt(new Chacha20Poly1305IetfEncryptParams(
           cipher, null, plaintext,
           64, null, 0, null, cipherNonce, ovk)) != 0) {
         return Optional.empty();
       }
+
       return Optional.of(cipher);
     }
 
