@@ -96,7 +96,7 @@ public class WalletTestZenToken001 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -110,7 +110,7 @@ public class WalletTestZenToken001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction")
+  @Test(enabled = false, description = "Public to shield transaction")
   public void test1Public2ShieldTransaction() {
     Args.getInstance().setFullNodeAllowShieldedTransaction(true);
     shieldAddressInfo = PublicMethed.generateShieldAddress();
