@@ -387,22 +387,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
 
     Integer success = 0;
     Integer failed = 0;
-<<<<<<<HEAD
-        startNum = 31012L;
-    endNum = 31095L;
-    while (startNum < endNum) {
-      HttpResponse response = HttpMethed.getTransactionInfoByBlocknum(httpnode, startNum++);
-      List<JSONObject> responseContentByBlocknum = HttpMethed
-          .parseResponseContentArray(response);
-      for (int i = 0; i < responseContentByBlocknum.size(); i++) {
-        logger.info(responseContentByBlocknum.get(i).toString());
-        logger.info(responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result"));
-        if (responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result")
-            .equals("SUCCESS")) {
-          success++;
-        } else {
-          failed++;
-=======
+
           startmintNum.getAndAdd(-5);
           endmintNum.getAndAdd(5);
           startmintNum.set(32052);
@@ -428,7 +413,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
                 }
               } catch (Exception e) {
 
->>>>>>>9828 c1ca61c7a1024982d6b0db42a7c8e3e63694
               }
 
             }
