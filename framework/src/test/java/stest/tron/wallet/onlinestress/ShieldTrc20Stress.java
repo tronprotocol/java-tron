@@ -388,58 +388,58 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     Integer success = 0;
     Integer failed = 0;
 
-          startmintNum.getAndAdd(-5);
-          endmintNum.getAndAdd(5);
-          startmintNum.set(32052);
-          endTriggerNum.set(32082);
-          //startQureyNum = 7417L;
-          //endQueryNum = 7422L;
-          while (startmintNum.get() < endTriggerNum.get()) {
-            HttpResponse response = HttpMethed
-                .getTransactionInfoByBlocknum(httpnode, startmintNum.getAndAdd(1));
-            List<JSONObject> responseContentByBlocknum = HttpMethed
-                .parseResponseContentArray(response);
-            for (int i = 0; i < responseContentByBlocknum.size(); i++) {
-              //logger.info(responseContentByBlocknum.get(i).toString());
-              logger.info(
-                  responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result"));
-              //logger.info("responseContentByBlocknum:" + responseContentByBlocknum);
-              try {
-                if (responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result")
-                    .equals("SUCCESS")) {
-                  success++;
-                } else {
-                  failed++;
-                }
-              } catch (Exception e) {
-
-              }
-
-            }
-
+    startmintNum.getAndAdd(-5);
+    endmintNum.getAndAdd(5);
+    startmintNum.set(32052);
+    endTriggerNum.set(32082);
+    //startQureyNum = 7417L;
+    //endQueryNum = 7422L;
+    while (startmintNum.get() < endTriggerNum.get()) {
+      HttpResponse response = HttpMethed
+          .getTransactionInfoByBlocknum(httpnode, startmintNum.getAndAdd(1));
+      List<JSONObject> responseContentByBlocknum = HttpMethed
+          .parseResponseContentArray(response);
+      for (int i = 0; i < responseContentByBlocknum.size(); i++) {
+        //logger.info(responseContentByBlocknum.get(i).toString());
+        logger.info(
+            responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result"));
+        //logger.info("responseContentByBlocknum:" + responseContentByBlocknum);
+        try {
+          if (responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result")
+              .equals("SUCCESS")) {
+            success++;
+          } else {
+            failed++;
           }
-
-          logger.info("Success mint times:" + success);
-          logger.info("Failed  mint times:" + failed);
-
-          logger.info("note size:" + noteNumber.get());
-          logger.info("data size:" + dataNumber.get());
-
+        } catch (Exception e) {
 
         }
 
-        /**
-         * constructor.
-         */
-        @AfterClass
-        public void shutdown () throws InterruptedException {
-          //endNum = HttpMethed.getNowBlockNum(httpnode);
-          //logger.info("startNum:" + startNum);
-          //logger.info("endNum:" + endNum);
-          if (channelFull != null) {
-            channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-          }
-        }
       }
+
+    }
+
+    logger.info("Success mint times:" + success);
+    logger.info("Failed  mint times:" + failed);
+
+    logger.info("note size:" + noteNumber.get());
+    logger.info("data size:" + dataNumber.get());
+
+
+  }
+
+  /**
+   * constructor.
+   */
+  @AfterClass
+  public void shutdown() throws InterruptedException {
+    //endNum = HttpMethed.getNowBlockNum(httpnode);
+    //logger.info("startNum:" + startNum);
+    //logger.info("endNum:" + endNum);
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+  }
+}
 
 

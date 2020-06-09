@@ -670,7 +670,7 @@ public class ZenTrc20Base {
         .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
         .build();
     try {
-      return blockingStubFull.scanShieldedTRC20NotesbyIvk(parameters);
+      return blockingStubFull.scanShieldedTRC20NotesByIvk(parameters);
     } catch (Exception e) {
       System.out.println(e);
       Status status = Status.fromThrowable(e);
@@ -727,7 +727,7 @@ public class ZenTrc20Base {
           .setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)))
           .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
           .build();
-      tempNoteTxs = blockingStubFull.scanShieldedTRC20NotesbyIvk(parameters);
+      tempNoteTxs = blockingStubFull.scanShieldedTRC20NotesByIvk(parameters);
       logger.info("tempNoteTxs size:" + tempNoteTxs.getNoteTxsCount());
 
       result = result.toBuilder().addAllNoteTxs(tempNoteTxs.getNoteTxsList()).build();
@@ -816,7 +816,7 @@ public class ZenTrc20Base {
         .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
         .build();
     try {
-      return blockingStubSolidity.scanShieldedTRC20NotesbyIvk(parameters);
+      return blockingStubSolidity.scanShieldedTRC20NotesByIvk(parameters);
     } catch (Exception e) {
       System.out.println(e);
       Status status = Status.fromThrowable(e);
@@ -852,7 +852,7 @@ public class ZenTrc20Base {
         .build();
 
     try {
-      return blockingStubFull.scanShieldedTRC20NotesbyOvk(parameters);
+      return blockingStubFull.scanShieldedTRC20NotesByOvk(parameters);
     } catch (Exception e) {
       System.out.println(e);
       Status status = Status.fromThrowable(e);
@@ -887,7 +887,7 @@ public class ZenTrc20Base {
         .build();
 
     try {
-      return blockingStubSolidity.scanShieldedTRC20NotesbyOvk(parameters);
+      return blockingStubSolidity.scanShieldedTRC20NotesByOvk(parameters);
     } catch (Exception e) {
       System.out.println(e);
       Status status = Status.fromThrowable(e);
