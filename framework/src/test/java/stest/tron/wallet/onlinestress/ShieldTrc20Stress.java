@@ -148,17 +148,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
 
       //logger.info("send note size:" + sendNote.getNoteTxsCount());
 
-
-<<<<<<<HEAD
-      GrpcAPI.DecryptNotesTRC20 inputNoteFor2to2 = GrpcAPI.DecryptNotesTRC20.newBuilder()
-          .addNoteTxs(sendNote.getNoteTxs(sendNote.getNoteTxsCount() - 1)).build();
-      //Create transfer parameters
-      shieldedTrc20Parameters
-          = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-          inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull1
-      );
-=======
-
       //Create transfer parameters
       try {
         GrpcAPI.DecryptNotesTRC20 inputNoteFor2to2 = GrpcAPI.DecryptNotesTRC20.newBuilder()
@@ -169,8 +158,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
       } catch (Exception e) {
 
       }
-
->>>>>>>9828 c1ca61c7a1024982d6b0db42a7c8e3e63694
 
       Integer exit = 7;
       if (exit == 1) {
@@ -183,13 +170,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           zenTrc20TokenOwnerKey, blockingStubFull);
 
       //sendShieldAddressInfo = receiverShieldAddressInfo;
-
-<<<<<<<HEAD
-          =======
-
-
-
->>>>>>>9828 c1ca61c7a1024982d6b0db42a7c8e3e63694
     }
 
   }
