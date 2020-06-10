@@ -47,7 +47,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   private AtomicLong endTriggerNum = new AtomicLong(0);
   private AtomicLong startmintNum = new AtomicLong(0);
   private AtomicLong endmintNum = new AtomicLong(0);
-  private Integer thread = 80;
+  private Integer thread = 40                                              ;
 
   /**
    * constructor.
@@ -65,10 +65,10 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         .getBlockHeader().getRawData().getNumber());
   }
 
-  /**
+  /**wqs
    * constructor.
    */
-  @Test(enabled = true, threadPoolSize = 30, invocationCount = 30)
+  @Test(enabled = true, threadPoolSize = 40, invocationCount = 40)
   public void test01ScanAndCreateThenTrigger() throws Exception {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -187,7 +187,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   /**
    * constructor.
    */
-  @Test(enabled = false, threadPoolSize = 80, invocationCount = 80)
+  @Test(enabled = false, threadPoolSize = 40, invocationCount = 40)
   public void test02FirstScanCreateParameterThenCreateTrigger() throws Exception {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -209,7 +209,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
 
 
-    Integer mintNumber = 25;
+    Integer mintNumber = 40;
 
     while (--mintNumber >= 0) {
       BigInteger publicFromAmount = getRandomAmount();
@@ -227,7 +227,19 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           = createShieldedTrc20Parameters(publicFromAmount,
           null,null,shieldOutList,"",0L,blockingStubFull
       );
-      String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
+      String data="";
+      try {
+        data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
+      } catch (Exception e) {
+        try {
+          data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
+        }
+        catch (Exception e1) {
+          continue;
+        }
+
+      }
+
       String txid = PublicMethed.triggerContract(shieldAddressByte,
           mint, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
           zenTrc20TokenOwnerKey, blockingStubFull);
@@ -241,11 +253,17 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     finishMintNumber.addAndGet(1);
+    endmintNum.getAndAdd(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+        .getBlockHeader().getRawData().getNumber());
 
-    while (finishMintNumber.get() <= thread - 2) {
+    while (finishMintNumber.get() != thread) {
       try {
-        Thread.sleep(1000);
-        logger.info("Wait all thread finished mint,current finished thread is :" + finishMintNumber.get());
+        Thread.sleep(3000);
+        if(finishMintNumber.get() % 10 == 0) {
+          logger.info(
+              "Wait all thread finished mint,current finished thread is :" + finishMintNumber
+                  .get());
+        }
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -330,10 +348,13 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
 
     finishCreateParameterNumber.addAndGet(1);
     dataNumber.addAndGet(dataList.size());
-    while (finishCreateParameterNumber.get() <= thread - 2) {
+    while (finishCreateParameterNumber.get() != thread) {
       try {
-        Thread.sleep(1000);
-        logger.info("Wait all thread finished create parameter ,current finished thread is :" + finishCreateParameterNumber.get());
+        Thread.sleep(3000);
+        if(finishCreateParameterNumber.get() % 10 == 0) {
+          logger.info("Wait all thread finished create parameter ,current finished thread is :"
+              + finishCreateParameterNumber.get());
+        }
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -355,7 +376,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
             zenTrc20TokenOwnerKey, blockingStubFull1);
       }
       try {
-        Thread.sleep(400);
+        Thread.sleep(800);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -363,10 +384,14 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     finishTriggerNumber.addAndGet(1);
 
 
-    while (finishTriggerNumber.get() <= thread - 2) {
+    while (finishTriggerNumber.get() != thread) {
       try {
-        Thread.sleep(1000);
-        logger.info("Wait all thread finished trigger ,current finished thread is :" + finishTriggerNumber.get());
+        Thread.sleep(3000);
+        if(finishTriggerNumber.get() % 10 == 0) {
+          logger.info(
+              "Wait all thread finished trigger ,current finished thread is :" + finishTriggerNumber
+                  .get());
+        }
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -382,56 +407,98 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   public void test04QueryResult() throws Exception {
 
 
-    endTriggerNum.addAndGet(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+    endTriggerNum.set(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber());
-
-    logger.info("Start mint block number: " + startmintNum.get());
-    //logger.info("end   mint block number: " + endTriggerNum.get());
-
-    logger.info("Start trigger block number: " + startTriggerNum.get());
-    //logger.info("end   mint block number: " + endTriggerNum.get());
-
-
-    //logger.info("Start trigger block number: " + startTriggerNum.get());
+    Long endmintnum = endmintNum.longValue()/thread;
+    Long starttriggernum = startTriggerNum.longValue()/thread;
+    logger.info("Start trigger block number: " + starttriggernum);
     logger.info("end   trigger block number: " + endTriggerNum.get());
-
-    //12:56:28.987 INFO [s.t.w.o.ShieldTrc20Stress] Start mint block number: 29301
-    //12:56:28.987 INFO [s.t.w.o.ShieldTrc20Stress] Start trigger block number: 1512950
-    //12:56:28.987 INFO [s.t.w.o.ShieldTrc20Stress] end   trigger block number: 30266
+    logger.info("Start mint block number: " + startmintNum.get());
+    logger.info("End   mint block number: " + endmintnum);
 
 
     Integer success = 0;
     Integer failed = 0;
+    Integer outOfTime = 0;
+    Integer notMintContract = 0;
     startmintNum.getAndAdd(-5);
-    endmintNum.getAndAdd(5);
-    startmintNum.set(32052);
-    endTriggerNum.set(32082);
-    //startQureyNum = 7417L;
-    //endQueryNum = 7422L;
-    while (startmintNum.get() < endTriggerNum.get()) {
+    endmintnum = endmintnum + 5;
+
+    startmintNum.set(2016);
+    endmintnum = 2180L;
+    starttriggernum = 3040L;
+    endTriggerNum.set(3060);
+
+    while (startmintNum.get() < endmintnum) {
       HttpResponse response = HttpMethed.getTransactionInfoByBlocknum(httpnode,startmintNum.getAndAdd(1));
       List<JSONObject> responseContentByBlocknum = HttpMethed
           .parseResponseContentArray(response);
       for (int i = 0; i < responseContentByBlocknum.size();i++) {
-        //logger.info(responseContentByBlocknum.get(i).toString());
-        logger.info(responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result"));
-        //logger.info("responseContentByBlocknum:" + responseContentByBlocknum);
-        try {
-          if (responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result").equals("SUCCESS")) {
-            success++;
-          } else {
-            failed++;
-          }
-        } catch (Exception e) {
-
+        String result = responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result");
+        logger.info(result);
+        if (result == null) {
+          notMintContract++;
+          continue;
         }
-
+        if (result.equals("SUCCESS")) {
+          success++;
+          continue;
+        }
+        if (result.equals("OUT_OF_TIME")) {
+          outOfTime++;
+          continue;
+        }
+        failed++;
       }
-
     }
 
-    logger.info("Success mint times:" + success);
-    logger.info("Failed  mint times:" + failed);
+
+    Integer triggerSuccess = 0;
+    Integer triggerFailed = 0;
+    Integer triggerOutOfTime = 0;
+    Integer notTriggerContract = 0;
+    startTriggerNum.getAndAdd(-5);
+    endTriggerNum.getAndAdd(5);
+
+    while (starttriggernum < endTriggerNum.get()) {
+      HttpResponse response = HttpMethed.getTransactionInfoByBlocknum(httpnode,starttriggernum++);
+      List<JSONObject> responseContentByBlocknum = HttpMethed
+          .parseResponseContentArray(response);
+      for (int i = 0; i < responseContentByBlocknum.size();i++) {
+        String result = responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result");
+        logger.info(result);
+        if (result == null) {
+          notTriggerContract++;
+          continue;
+        }
+        if (result.equals("SUCCESS")) {
+          triggerSuccess++;
+          continue;
+        }
+        if (result.equals("OUT_OF_TIME")) {
+          triggerOutOfTime++;
+          continue;
+        }
+        triggerFailed++;
+      }
+    }
+
+    logger.info("Mint Success mint times:" + success);
+    logger.info("Mint Failed  mint times:" + failed);
+    logger.info("Mint Out of times  mint times:" + outOfTime);
+    logger.info("Not mint times:" + notMintContract);
+
+
+    logger.info("Success trigger times:" + triggerSuccess);
+    logger.info("Failed  trigger times:" + triggerFailed);
+    logger.info("Out of times  trigger times:" + triggerOutOfTime);
+    logger.info("Not trigger times:" + notTriggerContract);
+
+
+
+
+
+
 
 
     logger.info("note size:" + noteNumber.get());
