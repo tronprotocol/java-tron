@@ -1,5 +1,6 @@
 package org.tron.core.zen.address;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.Random;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,9 @@ import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.JLibsodium;
+import org.tron.common.zksnark.JLibsodiumParam.Blake2bFinalParams;
+import org.tron.common.zksnark.JLibsodiumParam.Blake2bInitSaltPersonalParams;
+import org.tron.common.zksnark.JLibsodiumParam.Blake2bUpdateParams;
 import org.tron.core.Constant;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ZksnarkException;
@@ -18,6 +22,7 @@ public class SpendingKey {
   @Setter
   @Getter
   public byte[] value;
+  private static SecureRandom random = new SecureRandom();
 
   public static SpendingKey random() throws ZksnarkException {
     while (true) {
@@ -29,21 +34,13 @@ public class SpendingKey {
   }
 
   public static SpendingKey decode(String hex) {
-    SpendingKey sk = new SpendingKey(ByteArray.fromHexString(hex));
-    return sk;
+    return new SpendingKey(ByteArray.fromHexString(hex));
   }
 
   private static byte[] randomUint256() {
-    return generatePrivateKey(0L);
-  }
-
-  public static byte[] generatePrivateKey(long seed) {
     byte[] result = new byte[32];
-    if (seed != 0L) {
-      new Random(seed).nextBytes(result);
-    } else {
-      new Random().nextBytes(result);
-    }
+    random.nextBytes(result);
+
     Integer i = result[0] & 0x0F;
     result[0] = i.byteValue();
     return result;
@@ -83,14 +80,15 @@ public class SpendingKey {
       long state = JLibsodium.initState();
       try {
         JLibsodium.cryptoGenerichashBlake2bInitSaltPersonal(
-            state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
-        JLibsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
-        JLibsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
+            new Blake2bInitSaltPersonalParams(state, null, 0, 64, null,
+                Constant.ZTRON_EXPANDSEED_PERSONALIZATION));
+        JLibsodium.cryptoGenerichashBlake2bUpdate(new Blake2bUpdateParams(state, blob, 34));
+        JLibsodium.cryptoGenerichashBlake2bFinal(new Blake2bFinalParams(state, res, 11));
         if (JLibrustzcash.librustzcashCheckDiversifier(res)) {
           break;
         } else if (blob[33] == (byte) 255) {
           throw new BadItemException(
-              "librustzcash_check_diversifier did not return valid diversifier");
+              "librustzcash_check_diversifier does not return valid diversifier");
         }
         blob[33] += 1;
       } finally {
@@ -120,7 +118,7 @@ public class SpendingKey {
       return nsk;
     }
 
-    public static byte[] prfOvk(byte[] sk) {
+    public static byte[] prfOvk(byte[] sk) throws ZksnarkException {
       byte[] ovk = new byte[32];
       byte t = 0x02;
       byte[] tmp = prfExpand(sk, t);
@@ -128,17 +126,18 @@ public class SpendingKey {
       return ovk;
     }
 
-    private static byte[] prfExpand(byte[] sk, byte t) {
+    private static byte[] prfExpand(byte[] sk, byte t) throws ZksnarkException {
       byte[] res = new byte[64];
       byte[] blob = new byte[33];
       System.arraycopy(sk, 0, blob, 0, 32);
       blob[32] = t;
       long state = JLibsodium.initState();
       try {
-        JLibsodium.cryptoGenerichashBlake2bInitSaltPersonal(
-            state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
-        JLibsodium.cryptoGenerichashBlake2bUpdate(state, blob, 33);
-        JLibsodium.cryptoGenerichashBlake2bFinal(state, res, 64);
+        JLibsodium.cryptoGenerichashBlake2bInitSaltPersonal(new Blake2bInitSaltPersonalParams(
+            state, null, 0, 64, null,
+            Constant.ZTRON_EXPANDSEED_PERSONALIZATION));
+        JLibsodium.cryptoGenerichashBlake2bUpdate(new Blake2bUpdateParams(state, blob, 33));
+        JLibsodium.cryptoGenerichashBlake2bFinal(new Blake2bFinalParams(state, res, 64));
       } finally {
         JLibsodium.freeState(state);
       }

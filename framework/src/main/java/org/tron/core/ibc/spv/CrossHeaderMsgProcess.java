@@ -20,8 +20,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
@@ -180,8 +180,8 @@ public class CrossHeaderMsgProcess {
 
   protected void setSrList(Builder builder, String chainIdString, long blockTime) {
     //
-    long round = blockTime / DBConfig.getMaintenanceTimeInterval();
-    long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
+    long round = blockTime / CommonParameter.getInstance().getMaintenanceTimeInterval();
+    long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
     Long latestMaintenanceTime = latestMaintenanceTimeMap.get(chainIdString);
     latestMaintenanceTime = latestMaintenanceTime == null ? 0 : latestMaintenanceTime;
     logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,

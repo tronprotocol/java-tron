@@ -15,14 +15,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -70,15 +72,16 @@ public class HeaderManager {
     BlockId blockId = header.getBlockId();
     List<ByteString> srsignlist = signedBlockHeader.getSrsSignatureList();
     //todo
-    List<ByteString> preSrList = getCurrentSrList(header.getInstance(), chainId);
-    if (CollectionUtils.isEmpty(preSrList) || CollectionUtils.isEmpty(srsignlist)) {
-      logger.warn("valid block pbft sign; preSrList:{}, srsignlist:{}", preSrList, srsignlist);
-    } else if (!validBlockPbftSign(header.getInstance(), srsignlist, preSrList)) {
+    List<ByteString> currentSrList = getCurrentSrList(header.getInstance(), chainId);
+    if (CollectionUtils.isEmpty(currentSrList) || CollectionUtils.isEmpty(srsignlist)) {
+      logger.warn("valid block pbft sign; currentSrList:{}, srsignlist:{}", currentSrList,
+          srsignlist);
+    } else if (!validBlockPbftSign(header.getInstance(), srsignlist, currentSrList)) {
       throw new ValidateSignatureException("valid block pbft signature fail!");
     }
     if (signedBlockHeader.getSrList() != PBFTCommitResult.getDefaultInstance()) {
       PBFTMessage.Raw raw = Raw.parseFrom(signedBlockHeader.getSrList().getData().toByteArray());
-      long epoch = raw.getEpoch() - DBConfig.getMaintenanceTimeInterval();
+      long epoch = raw.getEpoch() - CommonParameter.getInstance().getMaintenanceTimeInterval();
       epoch = epoch < 0 ? 0 : epoch;
       SRL srl = chainBaseManager.getCommonDataBase().getSRL(chainId, epoch);
       if (srl != null && !validSrList(signedBlockHeader.getSrList(),
@@ -138,14 +141,16 @@ public class HeaderManager {
   }
 
   private String buildKey(ByteString chainId, BlockHeader header) {
-    return chainId.toStringUtf8() + "_" + ByteArray.toHexString(header.getRawData().toByteArray());
+    return ByteArray.toHexString(chainId.toByteArray()) + "_" + ByteArray
+        .toHexString(header.getRawData().toByteArray());
   }
 
   private List<ByteString> getCurrentSrList(BlockHeader header, String chainId) {
-    long round = header.getRawData().getTimestamp() / DBConfig.getMaintenanceTimeInterval();
-    long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
-    if (header.getRawData().getTimestamp() % DBConfig.getMaintenanceTimeInterval() == 0) {
-      maintenanceTime = maintenanceTime - DBConfig.getMaintenanceTimeInterval();
+    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+    long round = header.getRawData().getTimestamp() / maintenanceTimeInterval;
+    long maintenanceTime = (round + 1) * maintenanceTimeInterval;
+    if (header.getRawData().getTimestamp() % maintenanceTimeInterval == 0) {
+      maintenanceTime = maintenanceTime - maintenanceTimeInterval;
       maintenanceTime = maintenanceTime < 0 ? 0 : maintenanceTime;
     }
     SRL srl = chainBaseManager.getCommonDataBase().getSRL(chainId, maintenanceTime);
@@ -153,7 +158,7 @@ public class HeaderManager {
   }
 
   public boolean validBlockPbftSign(BlockHeader header, List<ByteString> srSignList,
-      List<ByteString> preSrList)
+      List<ByteString> currentSrList)
       throws BadBlockException {
     //valid sr list
     long startTime = System.currentTimeMillis();
@@ -164,7 +169,7 @@ public class HeaderManager {
         throw new BadBlockException("sr sign count < sr count * 2/3 + 1");
       }
       byte[] dataHash = getBlockPbftData(header);
-      Set<ByteString> srSet = Sets.newHashSet(preSrList);
+      Set<ByteString> srSet = Sets.newHashSet(currentSrList);
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : srSignList) {
         futureList.add(executorService.submit(
@@ -189,10 +194,11 @@ public class HeaderManager {
   }
 
   private byte[] getBlockPbftData(BlockHeader header) {
-    long round = header.getRawData().getTimestamp() / DBConfig.getMaintenanceTimeInterval();
-    long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
-    if (header.getRawData().getTimestamp() % DBConfig.getMaintenanceTimeInterval() == 0) {
-      maintenanceTime = maintenanceTime - DBConfig.getMaintenanceTimeInterval();
+    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+    long round = header.getRawData().getTimestamp() / maintenanceTimeInterval;
+    long maintenanceTime = (round + 1) * maintenanceTimeInterval;
+    if (header.getRawData().getTimestamp() % maintenanceTimeInterval == 0) {
+      maintenanceTime = maintenanceTime - maintenanceTimeInterval;
       maintenanceTime = maintenanceTime < 0 ? 0 : maintenanceTime;
     }
     Raw.Builder rawBuilder = Raw.newBuilder();
@@ -200,7 +206,7 @@ public class HeaderManager {
         .setDataType(DataType.BLOCK).setMsgType(MsgType.COMMIT)
         .setData(new BlockHeaderCapsule(header).getBlockId().getByteString());
     Raw raw = rawBuilder.build();
-    return Sha256Hash.hash(raw.toByteArray());
+    return Sha256Hash.hash(true, raw.toByteArray());
   }
 
   private class ValidPbftSignTask implements Callable<Boolean> {
@@ -225,7 +231,11 @@ public class HeaderManager {
       try {
         byte[] srAddress = ECKey.signatureToAddress(dataHash,
             TransactionCapsule.getBase64FromByteString(sign));
+        logger.info("block signature sr address:{}", ByteArray.toHexString(srAddress));
         if (!srSet.contains(ByteString.copyFrom(srAddress))) {
+          srSet.forEach(address -> {
+            logger.error("block preCycleSrSet:{}", ByteArray.toHexString(address.toByteArray()));
+          });
           return false;
         }
         srSignSet.remove(sign);
@@ -265,8 +275,9 @@ public class HeaderManager {
     if (preCycleSrSignSet.size() != 0) {
       return false;
     }
-    //todo: save the sr list
-//      consensusDelegate.saveSrListCurrentCycle(cycle);
+    SRL srList = SRL.parseFrom(raw.getData().toByteArray());
+    logger.info("sr list  {} valid success", srList.getSrAddressList().stream().map(
+        bytes -> StringUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList()));
     return true;
   }
 
@@ -274,7 +285,7 @@ public class HeaderManager {
     Raw.Builder rawBuilder = Raw.newBuilder();
     rawBuilder.setViewN(raw.getEpoch()).setEpoch(raw.getEpoch()).setDataType(DataType.SRL)
         .setMsgType(MsgType.COMMIT).setData(raw.getData());
-    return Sha256Hash.hash(rawBuilder.build().toByteArray());
+    return Sha256Hash.hash(true, rawBuilder.build().toByteArray());
   }
 
   private class ValidSrListTask implements Callable<Boolean> {
@@ -299,7 +310,11 @@ public class HeaderManager {
       try {
         byte[] srAddress = ECKey.signatureToAddress(dataHash,
             TransactionCapsule.getBase64FromByteString(sign));
+        logger.info("sr signature sr address:{}", ByteArray.toHexString(srAddress));
         if (!preCycleSrSet.contains(ByteString.copyFrom(srAddress))) {
+          preCycleSrSet.forEach(address -> {
+            logger.error("sr preCycleSrSet:{}", ByteArray.toHexString(address.toByteArray()));
+          });
           return false;
         }
         preCycleSrSignSet.remove(sign);

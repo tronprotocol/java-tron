@@ -10,8 +10,8 @@ import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionCountByBlockNumOnPBFTServlet
-    extends GetTransactionCountByBlockNumServlet {
+public class GetTransactionCountByBlockNumOnPBFTServlet extends
+    GetTransactionCountByBlockNumServlet {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;

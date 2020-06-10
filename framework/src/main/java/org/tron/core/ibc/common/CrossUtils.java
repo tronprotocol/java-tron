@@ -15,26 +15,26 @@ import org.tron.protos.Protocol.Transaction;
 public class CrossUtils {
 
   public static Transaction addSourceTxId(Transaction transaction) {
-    Sha256Hash txId = Sha256Hash.of(transaction.getRawData().toByteArray());
+    Sha256Hash txId = Sha256Hash.of(true, transaction.getRawData().toByteArray());
     return transaction.toBuilder().setRawData(
         transaction.getRawData().toBuilder().setSourceTxId(txId.getByteString()).build()).build();
   }
 
   public static Sha256Hash getAddSourceTxId(Transaction transaction) {
-    Sha256Hash txId = Sha256Hash.of(transaction.getRawData().toByteArray());
+    Sha256Hash txId = Sha256Hash.of(true, transaction.getRawData().toByteArray());
     Transaction ts = transaction.toBuilder().setRawData(
         transaction.getRawData().toBuilder().setSourceTxId(txId.getByteString()).build()).build();
-    return Sha256Hash.of(ts.getRawData().toByteArray());
+    return Sha256Hash.of(true, ts.getRawData().toByteArray());
   }
 
   public static Sha256Hash getSourceTxId(Transaction transaction) {
-    return Sha256Hash.of(transaction.toBuilder()
+    return Sha256Hash.of(true, transaction.toBuilder()
         .setRawData(transaction.getRawData().toBuilder().clearSourceTxId().build()).build()
         .getRawData().toByteArray());
   }
 
   public static Sha256Hash getSourceMerkleTxHash(Transaction transaction) {
-    return Sha256Hash.of(transaction.toBuilder()
+    return Sha256Hash.of(true, transaction.toBuilder()
         .setRawData(transaction.getRawData().toBuilder().clearSourceTxId().build()).build()
         .toByteArray());
   }

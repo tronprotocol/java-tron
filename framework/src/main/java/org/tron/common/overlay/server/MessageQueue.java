@@ -17,6 +17,8 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.PongMessage;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -66,11 +68,11 @@ public class MessageQueue {
           Message msg = msgQueue.take();
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
             if (!future.isSuccess() && !channel.isDisconnect()) {
-              logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
+              logger.error("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
             }
           });
         } catch (Exception e) {
-          logger.error("Fail send to {}, error info: {}", ctx.channel().remoteAddress(),
+          logger.error("Failed to send to {}, error info: {}", ctx.channel().remoteAddress(),
               e.getMessage());
         }
       }
@@ -104,6 +106,7 @@ public class MessageQueue {
       logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
+    MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC, msg.getSendData().readableBytes());
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
       requestQueue.add(new MessageRoundTrip(msg));

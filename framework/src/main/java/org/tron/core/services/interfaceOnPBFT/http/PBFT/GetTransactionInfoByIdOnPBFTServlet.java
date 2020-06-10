@@ -11,8 +11,7 @@ import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionInfoByIdOnPBFTServlet
-    extends GetTransactionInfoByIdServlet {
+public class GetTransactionInfoByIdOnPBFTServlet extends GetTransactionInfoByIdServlet {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;

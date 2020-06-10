@@ -4,11 +4,13 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -28,6 +30,7 @@ public class DelegationService {
   private WitnessStore witnessStore;
 
   @Setter
+  @Getter
   private DelegationStore delegationStore;
 
   @Setter
@@ -64,6 +67,8 @@ public class DelegationService {
         double eachVotePay = (double) totalPay / voteSum;
         long pay = (long) (getWitnesseByAddress(b).getVoteCount() * eachVotePay);
         logger.debug("pay {} stand reward {}", Hex.toHexString(b.toByteArray()), pay);
+        delegationStore.addVodeReward(dynamicPropertiesStore
+            .getCurrentCycleNumber(), b.toByteArray(), pay);
         payReward(b.toByteArray(), pay);
       }
     }
@@ -72,6 +77,8 @@ public class DelegationService {
 
   public void payBlockReward(byte[] witnessAddress, long value) {
     logger.debug("pay {} block reward {}", Hex.toHexString(witnessAddress), value);
+    long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
+    delegationStore.addBlockReward(cycle, witnessAddress, value);
     payReward(witnessAddress, value);
   }
 
@@ -117,6 +124,7 @@ public class DelegationService {
     //
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
+      delegationStore.setRemark(endCycle, address);
       delegationStore.setBeginCycle(address, endCycle + 1);
       return;
     }
@@ -225,5 +233,4 @@ public class DelegationService {
     list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
         .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
-
 }

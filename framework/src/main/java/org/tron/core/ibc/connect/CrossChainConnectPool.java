@@ -44,8 +44,7 @@ public class CrossChainConnectPool {
 
   public void init() {
     Set<String> compare = new HashSet<>();
-    Set<Node> dbCrossNode = manager.readCrossNode();
-    dbCrossNode.addAll(Args.getInstance().getCrossChainConnect());
+    Set<Node> dbCrossNode = new HashSet<>(Args.getInstance().getCrossChainConnect());
     dbCrossNode.forEach(n -> {
       if (!compare.contains(n.getHostPort())) {
         peerClient.connectAsync(nodeManager.getNodeHandler(n), false, true);
@@ -55,7 +54,7 @@ public class CrossChainConnectPool {
 
     logExecutor.scheduleAtFixedRate(() -> {
       try {
-        writeCrossNode();
+//        writeCrossNode();
         logActivePeers();
       } catch (Throwable t) {
         logger.error("CrossChainConnectPool Exception in sync worker", t);
@@ -104,7 +103,6 @@ public class CrossChainConnectPool {
           nodeSet.add(peerConnection.getNode());
         });
       });
-      manager.clearAndWriteCrossNode(nodeSet);
     }
   }
 

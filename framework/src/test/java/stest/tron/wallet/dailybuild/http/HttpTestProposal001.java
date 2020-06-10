@@ -25,8 +25,8 @@ public class HttpTestProposal001 {
   private final String witnessKey002 = Configuration.getByPath("testng.conf")
       .getString("witness.key2");
   private final byte[] witness2Address = PublicMethed.getFinalAddress(witnessKey002);
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(0);
   private JSONObject responseContent;
   private HttpResponse response;
 
@@ -72,12 +72,12 @@ public class HttpTestProposal001 {
    */
   @Test(enabled = true, description = "Approval proposal by http")
   public void test4ApprovalProposal() {
-    response = HttpMethed.approvalProposal(httpnode, witness1Address, proposalId,
-        true, witnessKey001);
+    response = HttpMethed
+        .approvalProposal(httpnode, witness1Address, proposalId, true, witnessKey001);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.approvalProposal(httpnode, witness2Address, proposalId,
-        true, witnessKey002);
+    response = HttpMethed
+        .approvalProposal(httpnode, witness2Address, proposalId, true, witnessKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getProposalById(httpnode, proposalId);
@@ -128,15 +128,13 @@ public class HttpTestProposal001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertEquals("getMaintenanceTimeInterval",
-        responseContent.getJSONArray("chainParameter").getJSONObject(0)
-            .get("key"));
-    Assert.assertEquals(300000, responseContent.getJSONArray("chainParameter").getJSONObject(0)
-        .get("value"));
+        responseContent.getJSONArray("chainParameter").getJSONObject(0).get("key"));
+    Assert.assertEquals(300000,
+        responseContent.getJSONArray("chainParameter").getJSONObject(0).get("value"));
     Assert.assertEquals("getCreateAccountFee",
-        responseContent.getJSONArray("chainParameter").getJSONObject(2)
-            .get("key"));
-    Assert.assertEquals(100000, responseContent.getJSONArray("chainParameter").getJSONObject(2)
-        .get("value"));
+        responseContent.getJSONArray("chainParameter").getJSONObject(2).get("key"));
+    Assert.assertEquals(100000,
+        responseContent.getJSONArray("chainParameter").getJSONObject(2).get("value"));
   }
 
   /**

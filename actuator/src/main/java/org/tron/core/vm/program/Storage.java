@@ -7,7 +7,7 @@ import java.util.Map;
 import lombok.Getter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.store.StorageRowStore;
 

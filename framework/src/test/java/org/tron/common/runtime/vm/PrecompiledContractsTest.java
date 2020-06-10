@@ -1,6 +1,6 @@
 package org.tron.common.runtime.vm;
 
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -101,8 +101,6 @@ public class PrecompiledContractsTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

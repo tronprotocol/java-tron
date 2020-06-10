@@ -9,7 +9,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.P2pException;
 import org.tron.protos.Protocol.PBFTMessage;
@@ -95,7 +95,7 @@ public abstract class PbftBaseMessage extends Message {
   public abstract String getNo();
 
   public void analyzeSignature() throws SignatureException {
-    byte[] hash = Sha256Hash.hash(getPbftMessage().getRawData().toByteArray());
+    byte[] hash = Sha256Hash.hash(true, getPbftMessage().getRawData().toByteArray());
     publicKey = ECKey.signatureToAddress(hash, TransactionCapsule
         .getBase64FromByteString(getPbftMessage().getSignature()));
   }
@@ -120,7 +120,7 @@ public abstract class PbftBaseMessage extends Message {
     try {
       SRL srList = SRL.parseFrom(pbftMessage.getRawData().getData().toByteArray());
       return "sr list = " + srList.getSrAddressList().stream().map(
-          bytes -> WalletUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList());
+          bytes -> StringUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList());
     } catch (InvalidProtocolBufferException e) {
     }
     return "decode error";

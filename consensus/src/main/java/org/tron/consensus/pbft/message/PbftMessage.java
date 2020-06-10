@@ -63,7 +63,7 @@ public class PbftMessage extends PbftBaseMessage {
     rawBuilder.setViewN(viewN).setEpoch(epoch).setDataType(dataType)
         .setMsgType(MsgType.PREPREPARE).setData(data);
     Raw raw = rawBuilder.build();
-    byte[] hash = Sha256Hash.hash(raw.toByteArray());
+    byte[] hash = Sha256Hash.hash(true, raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);
     builder.setRawData(raw).setSignature(ByteString.copyFrom(signature.toByteArray()));
     PBFTMessage message = builder.build();
@@ -106,7 +106,7 @@ public class PbftMessage extends PbftBaseMessage {
         .setMsgType(type).setEpoch(getPbftMessage().getRawData().getEpoch())
         .setData(getPbftMessage().getRawData().getData());
     Raw raw = rawBuilder.build();
-    byte[] hash = Sha256Hash.hash(raw.toByteArray());
+    byte[] hash = Sha256Hash.hash(true, raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);
     builder.setRawData(raw).setSignature(ByteString.copyFrom(signature.toByteArray()));
     PBFTMessage message = builder.build();

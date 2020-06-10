@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.db.ByteArrayWrapper;
@@ -81,7 +82,7 @@ public class DataWord implements Comparable<DataWord> {
     } else if (data.length < WORD_SIZE) {
       System.arraycopy(data, 0, this.data, WORD_SIZE - data.length, data.length);
     } else {
-      throw new RuntimeException("Data word can't exceed 32 bytes: " + ByteUtil.toHexString(data));
+      throw new RuntimeException("Data word can't exceed 32 bytes: " + ByteArray.toHexString(data));
     }
   }
 

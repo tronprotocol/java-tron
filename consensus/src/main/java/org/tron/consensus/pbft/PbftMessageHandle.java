@@ -61,7 +61,7 @@ public class PbftMessageHandle {
 
   private PbftMessage srPbftMessage;
 
-  private Timer timer;
+  private Timer timer = new Timer("pbft-timer");
 
   @Autowired
   private PbftMessageAction pbftMessageAction;
@@ -225,8 +225,8 @@ public class PbftMessageHandle {
   private void remove(String no) {
     String pre = String.valueOf(no) + "_";
     preVotes.remove(no);
-    pareVoteMap.keySet().removeIf((vp) -> StringUtils.startsWith(vp, pre));
-    commitVoteMap.keySet().removeIf((vp) -> StringUtils.startsWith(vp, pre));
+    pareVoteMap.keySet().removeIf(vp -> StringUtils.startsWith(vp, pre));
+    commitVoteMap.keySet().removeIf(vp -> StringUtils.startsWith(vp, pre));
 
     agreePare.asMap().keySet().forEach(s -> {
       if (StringUtils.startsWith(s, pre)) {
@@ -267,7 +267,6 @@ public class PbftMessageHandle {
   }
 
   public void start() {
-    timer = new Timer("pbft-timer");
     timer.schedule(new TimerTask() {
       @Override
       public void run() {

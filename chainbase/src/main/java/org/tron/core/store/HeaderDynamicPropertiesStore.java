@@ -10,9 +10,9 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
@@ -94,7 +94,7 @@ public class HeaderDynamicPropertiesStore extends TronStoreWithRevoking<BytesCap
   }
 
   public void updateCrossNextMaintenanceTime(String chainId, long blockTime) {
-    long maintenanceTimeInterval = DBConfig.getMaintenanceTimeInterval();//todo
+    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();//todo
 
     long currentMaintenanceTime = getCrossNextMaintenanceTime(chainId);
     long round = (blockTime - currentMaintenanceTime) / maintenanceTimeInterval;

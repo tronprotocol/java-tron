@@ -19,13 +19,13 @@ import org.tron.core.exception.ItemNotFoundException;
 
 public class Chainbase implements IRevokingDB {
 
+  public static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
   public enum Cursor {
     HEAD,
     SOLIDITY,
     PBFT
   }
 
-  protected static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
   //true:fullnode, false:soliditynode
   private ThreadLocal<Cursor> cursor = new ThreadLocal<>();
   private ThreadLocal<Long> offset = new ThreadLocal<>();

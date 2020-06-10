@@ -31,7 +31,7 @@ static def isWindows() {
 }
 
 task version(type: Exec) {
-    commandLine 'bash', '-c', './ver.sh'
+    commandLine 'bash', '-c', '../ver.sh'
 }
 
 dependencies {
@@ -48,7 +48,8 @@ dependencies {
     compile "com.madgag.spongycastle:prov:1.58.0.0"
 
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-
+    
+    compile "com.cedarsoftware:java-util:1.8.0"
 
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 

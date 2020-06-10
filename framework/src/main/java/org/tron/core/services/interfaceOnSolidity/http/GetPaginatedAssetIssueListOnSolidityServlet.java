@@ -11,8 +11,7 @@ import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
 @Slf4j(topic = "API")
-public class GetPaginatedAssetIssueListOnSolidityServlet
-    extends GetPaginatedAssetIssueListServlet {
+public class GetPaginatedAssetIssueListOnSolidityServlet extends GetPaginatedAssetIssueListServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;

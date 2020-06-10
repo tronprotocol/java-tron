@@ -7,6 +7,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.interfaceOnSolidity.http.CheckCrossTxCommitOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
@@ -29,6 +30,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServ
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetTransactionInfoByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.IsSpendOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
@@ -108,6 +110,9 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
   @Autowired
+  private GetTransactionInfoByBlockNumOnSolidityServlet
+      getTransactionInfoByBlockNumOnSolidityServlet;
+  @Autowired
   private CheckCrossTxCommitOnSolidityServlet checkCrossTxCommitOnSolidityServlet;
 
   @Override
@@ -116,7 +121,7 @@ public class HttpApiOnSolidityService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
 
   }
 
@@ -162,29 +167,29 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumOnSolidityServlet),
           "/walletsolidity/getblockbylatestnum");
-      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnSolidityServlet),
-          "/walletsolidity/getmerkletreevoucherinfo");
-      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnSolidityServlet),
-          "/walletsolidity/scanandmarknotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet),
-          "/walletsolidity/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet),
-          "/walletsolidity/scannotebyovk");
-      context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
-          "/walletsolidity/isspend");
+      // context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnSolidityServlet),
+      //     "/walletsolidity/getmerkletreevoucherinfo");
+      // context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnSolidityServlet),
+      //     "/walletsolidity/scanandmarknotebyivk");
+      // context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet),
+      //     "/walletsolidity/scannotebyivk");
+      // context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet),
+      //     "/walletsolidity/scannotebyovk");
+      // context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
+      //     "/walletsolidity/isspend");
       context.addServlet(new ServletHolder(triggerConstantContractOnSolidityServlet),
           "/walletsolidity/triggerconstantcontract");
+      context.addServlet(new ServletHolder(getTransactionInfoByBlockNumOnSolidityServlet),
+          "/walletsolidity/gettransactioninfobyblocknum");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
           "/walletsolidity/gettransactionbyid");
-      context
-          .addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
-              "/walletsolidity/gettransactioninfobyid");
+      context.addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
+          "/walletsolidity/gettransactioninfobyid");
 
-      context
-          .addServlet(new ServletHolder(getTransactionCountByBlockNumOnSolidityServlet),
-              "/walletsolidity/gettransactioncountbyblocknum");
+      context.addServlet(new ServletHolder(getTransactionCountByBlockNumOnSolidityServlet),
+          "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");

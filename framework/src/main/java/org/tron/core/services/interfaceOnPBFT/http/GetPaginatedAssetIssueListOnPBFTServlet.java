@@ -11,8 +11,7 @@ import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
 
 @Component
 @Slf4j(topic = "API")
-public class GetPaginatedAssetIssueListOnPBFTServlet
-    extends GetPaginatedAssetIssueListServlet {
+public class GetPaginatedAssetIssueListOnPBFTServlet extends GetPaginatedAssetIssueListServlet {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;

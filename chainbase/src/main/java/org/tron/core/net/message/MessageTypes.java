@@ -15,6 +15,8 @@ public enum MessageTypes {
 
   BLOCKS(0x04),
 
+  BLOCKHEADERS(0x05),
+
   INVENTORY(0x06),
 
   FETCH_INV_DATA(0x07),

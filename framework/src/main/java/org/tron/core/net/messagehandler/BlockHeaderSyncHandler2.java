@@ -38,7 +38,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockHeaderIndexStore;
 import org.tron.core.db.BlockHeaderStore;
 import org.tron.core.db.BlockStore;
@@ -211,7 +210,7 @@ public class BlockHeaderSyncHandler2 {
     long blockHeight = requestMessage.getBlockHeight();
     long length = requestMessage.getLength();
     long currentBlockheight;
-    if (Args.getInstance().isInterChainNode() && !this.chainId.equals(chainIdString)) {
+    if (!this.chainId.equals(chainIdString)) {
       currentBlockheight = commonDataBase.getLatestPbftBlockNum();
     } else {
       currentBlockheight = getLatestSyncBlockHeight(chainIdString);
@@ -225,7 +224,7 @@ public class BlockHeaderSyncHandler2 {
       for (int i = 0; i < min; i++) {
         long height = blockHeight + i;
         BlockHeaderCapsule blockHeaderCapsule;
-        if (Args.getInstance().isInterChainNode() && !this.chainId.equals(chainIdString)) {
+        if (!this.chainId.equals(chainIdString)) {
           blockHeaderCapsule = new BlockHeaderCapsule(
               manager.getBlockByNum(height).getInstance().getBlockHeader());
         } else {
@@ -408,9 +407,9 @@ public class BlockHeaderSyncHandler2 {
           lower = unRecieves.lowerKey(nextBlockHeight);
         }
 
-        if (Args.getInstance().isInterChainNode()) {
-          broadcastNotice(headerCapsule);
-        }
+//        if (Args.getInstance().isInterChainNode()) {
+//          broadcastNotice(headerCapsule);
+//        }
       } catch (Exception e) {
         logger.info("updateBlockHeader " + e.getMessage(), e);
       }

@@ -7,9 +7,9 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol;
 
@@ -163,7 +163,7 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   }
 
   public void updateNextEpoch(String chainId, long blockTime) {
-    long maintenanceTimeInterval = DBConfig.getMaintenanceTimeInterval();
+    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
 
     long currentEpoch = getNextEpoch(chainId);
     long round = (blockTime - currentEpoch) / maintenanceTimeInterval;

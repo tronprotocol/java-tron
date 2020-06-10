@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -117,7 +118,8 @@ public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(blockHeader.getRawData().toByteArray());
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        blockHeader.getRawData().toByteArray());
   }
 
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
@@ -144,7 +146,9 @@ public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
   @Nonnull
   public BlockCapsule.BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockCapsule.BlockId(Sha256Hash.of(blockHeader.getRawData().toByteArray()),
+      blockId = new BlockCapsule.BlockId(Sha256Hash
+          .of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+              blockHeader.getRawData().toByteArray()),
           getNum());
     }
     return blockId;

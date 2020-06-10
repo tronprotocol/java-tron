@@ -7,6 +7,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.interfaceOnPBFT.http.CheckCrossTxCommitOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountByIdOnPBFTServlet;
@@ -116,7 +117,7 @@ public class HttpApiOnPBFTService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter parameter) {
 
   }
 
@@ -130,61 +131,46 @@ public class HttpApiOnPBFTService implements Service {
 
       // same as FullNode
       context.addServlet(new ServletHolder(accountOnPBFTServlet), "/getaccount");
-      context.addServlet(new ServletHolder(listWitnessesOnPBFTServlet),
-          "/listwitnesses");
-      context.addServlet(new ServletHolder(getAssetIssueListOnPBFTServlet),
-          "/getassetissuelist");
+      context.addServlet(new ServletHolder(listWitnessesOnPBFTServlet), "/listwitnesses");
+      context.addServlet(new ServletHolder(getAssetIssueListOnPBFTServlet), "/getassetissuelist");
       context.addServlet(new ServletHolder(getPaginatedAssetIssueListOnPBFTServlet),
           "/getpaginatedassetissuelist");
-      context.addServlet(new ServletHolder(getAssetIssueByNameOnPBFTServlet),
-          "/getassetissuebyname");
-      context.addServlet(new ServletHolder(getAssetIssueByIdOnPBFTServlet),
-          "/getassetissuebyid");
+      context
+          .addServlet(new ServletHolder(getAssetIssueByNameOnPBFTServlet), "/getassetissuebyname");
+      context.addServlet(new ServletHolder(getAssetIssueByIdOnPBFTServlet), "/getassetissuebyid");
       context.addServlet(new ServletHolder(getAssetIssueListByNameOnPBFTServlet),
           "/getassetissuelistbyname");
-      context.addServlet(new ServletHolder(getNowBlockOnPBFTServlet),
-          "/getnowblock");
-      context.addServlet(new ServletHolder(getBlockByNumOnPBFTServlet),
-          "/getblockbynum");
+      context.addServlet(new ServletHolder(getNowBlockOnPBFTServlet), "/getnowblock");
+      context.addServlet(new ServletHolder(getBlockByNumOnPBFTServlet), "/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceOnPBFTServlet),
           "/getdelegatedresource");
       context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnPBFTServlet),
           "/getdelegatedresourceaccountindex");
-      context.addServlet(new ServletHolder(getExchangeByIdOnPBFTServlet),
-          "/getexchangebyid");
-      context.addServlet(new ServletHolder(listExchangesOnPBFTServlet),
-          "/listexchanges");
-      context.addServlet(new ServletHolder(getAccountByIdOnPBFTServlet),
-          "/getaccountbyid");
-      context.addServlet(new ServletHolder(getBlockByIdOnPBFTServlet),
-          "/getblockbyid");
-      context.addServlet(new ServletHolder(getBlockByLimitNextOnPBFTServlet),
-          "/getblockbylimitnext");
-      context.addServlet(new ServletHolder(getBlockByLatestNumOnPBFTServlet),
-          "/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getExchangeByIdOnPBFTServlet), "/getexchangebyid");
+      context.addServlet(new ServletHolder(listExchangesOnPBFTServlet), "/listexchanges");
+      context.addServlet(new ServletHolder(getAccountByIdOnPBFTServlet), "/getaccountbyid");
+      context.addServlet(new ServletHolder(getBlockByIdOnPBFTServlet), "/getblockbyid");
+      context
+          .addServlet(new ServletHolder(getBlockByLimitNextOnPBFTServlet), "/getblockbylimitnext");
+      context
+          .addServlet(new ServletHolder(getBlockByLatestNumOnPBFTServlet), "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnPBFTServlet),
           "/getmerkletreevoucherinfo");
       context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnPBFTServlet),
           "/scanandmarknotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByIvkOnPBFTServlet),
-          "/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkOnPBFTServlet),
-          "/scannotebyovk");
-      context.addServlet(new ServletHolder(isSpendOnPBFTServlet),
-          "/isspend");
+      context.addServlet(new ServletHolder(scanNoteByIvkOnPBFTServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkOnPBFTServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendOnPBFTServlet), "/isspend");
       context.addServlet(new ServletHolder(triggerConstantContractOnPBFTServlet),
           "/triggerconstantcontract");
 
       // only for PBFTNode
-      context.addServlet(new ServletHolder(getTransactionByIdOnPBFTServlet),
-          "/gettransactionbyid");
-      context
-          .addServlet(new ServletHolder(getTransactionInfoByIdOnPBFTServlet),
-              "/gettransactioninfobyid");
+      context.addServlet(new ServletHolder(getTransactionByIdOnPBFTServlet), "/gettransactionbyid");
+      context.addServlet(new ServletHolder(getTransactionInfoByIdOnPBFTServlet),
+          "/gettransactioninfobyid");
 
-      context
-          .addServlet(new ServletHolder(getTransactionCountByBlockNumOnPBFTServlet),
-              "/gettransactioncountbyblocknum");
+      context.addServlet(new ServletHolder(getTransactionCountByBlockNumOnPBFTServlet),
+          "/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");

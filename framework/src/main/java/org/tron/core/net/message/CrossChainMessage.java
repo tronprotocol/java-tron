@@ -30,7 +30,7 @@ public class CrossChainMessage extends TronMessage {
 
   @Override
   public Sha256Hash getMessageId() {
-    return Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+    return Sha256Hash.of(true, crossMessage.getTransaction().getRawData().toByteArray());
   }
 
   @Override

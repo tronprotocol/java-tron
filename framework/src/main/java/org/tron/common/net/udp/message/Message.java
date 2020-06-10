@@ -7,6 +7,7 @@ import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.P2pException;
@@ -60,7 +61,7 @@ public abstract class Message {
   }
 
   public Sha256Hash getMessageId() {
-    return Sha256Hash.of(getData());
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(), getData());
   }
 
   public abstract Node getFrom();

@@ -240,7 +240,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
   }
 
   public boolean validTimeOut(long timeOutHeight, ByteString toChainId, Transaction sourceTx) {
-    Sha256Hash sourceHash = Sha256Hash.of(sourceTx.getRawData().toByteArray());
+    Sha256Hash sourceHash = Sha256Hash.of(true, sourceTx.getRawData().toByteArray());
     TransactionStore transactionStore = chainBaseManager.getTransactionStore();
     logger.info("valid chain {} time out, time out height:{},chain height:{}",
         ByteArray.toHexString(toChainId.toByteArray()),

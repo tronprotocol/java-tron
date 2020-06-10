@@ -60,26 +60,33 @@ import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.ViewingKeyMessage;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.api.MonitorGrpc;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -94,8 +101,10 @@ import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.ibc.common.CrossChainService;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Protocol;
@@ -155,10 +164,18 @@ public class RpcApiService implements Service {
   private Server apiServer;
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   @Autowired
   private NodeManager nodeManager;
   @Autowired
   private Wallet wallet;
+
+  @Autowired
+  private TransactionUtil transactionUtil;
+
   @Autowired
   private NodeInfoService nodeInfoService;
   @Autowired
@@ -166,11 +183,16 @@ public class RpcApiService implements Service {
   @Autowired
   private CrossChainService crossChainService;
 
+  @Autowired
+  private MetricsApiService metricsApiService;
+
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
   @Getter
   private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
+  @Getter
+  private MonitorApi monitorApi = new MonitorApi();
 
   @Override
   public void init() {
@@ -178,37 +200,41 @@ public class RpcApiService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
   }
 
   @Override
   public void start() {
     try {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
-      Args args = Args.getInstance();
+      CommonParameter parameter = Args.getInstance();
 
-      if (args.getRpcThreadNum() > 0) {
+      if (parameter.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+            .executor(Executors.newFixedThreadPool(parameter.getRpcThreadNum()));
       }
 
-      if (args.isSolidityNode()) {
+      if (parameter.isSolidityNode()) {
         serverBuilder = serverBuilder.addService(walletSolidityApi);
-        if (args.isWalletExtensionApi()) {
+        if (parameter.isWalletExtensionApi()) {
           serverBuilder = serverBuilder.addService(new WalletExtensionApi());
         }
       } else {
         serverBuilder = serverBuilder.addService(walletApi);
       }
 
+      if (parameter.isNodeMetricsEnable()) {
+        serverBuilder = serverBuilder.addService(monitorApi);
+      }
+
       // Set configs from config.conf or default value
       serverBuilder
-          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(args.getFlowControlWindow())
-          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(args.getMaxMessageSize())
-          .maxHeaderListSize(args.getMaxHeaderListSize());
+          .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(parameter.getFlowControlWindow())
+          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxMessageSize(parameter.getMaxMessageSize())
+          .maxHeaderListSize(parameter.getMaxHeaderListSize());
 
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
@@ -282,7 +308,8 @@ public class RpcApiService implements Service {
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     trxExtBuilder.setTransaction(transaction);
-    trxExtBuilder.setTxid(Sha256Hash.of(transaction.getRawData().toByteArray()).getByteString());
+    trxExtBuilder.setTxid(Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getByteString());
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExtBuilder.setResult(retBuilder);
     return trxExtBuilder.build();
@@ -308,6 +335,13 @@ public class RpcApiService implements Service {
       return Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException();
     } else {
       return Status.INTERNAL.withDescription("unknown").asRuntimeException();
+    }
+  }
+
+  private void checkSupportShieldedTransaction() throws ZksnarkException {
+    String msg = "Not support Shielded Transaction, need to be opened by the committee";
+    if (!dbManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
+      throw new ZksnarkException(msg);
     }
   }
 
@@ -356,7 +390,7 @@ public class RpcApiService implements Service {
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = dbManager.getHead().getInstance();
+        block = chainBaseManager.getHead().getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -368,7 +402,7 @@ public class RpcApiService implements Service {
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -560,7 +594,7 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
@@ -601,29 +635,16 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
-      String addressStr = Wallet.encode58Check(address);
+      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+          Args.getInstance().isECKeyCryptoEngine());
+      byte[] priKey = cryptoEngine.getPrivateKey();
+      byte[] address = cryptoEngine.getAddress();
+      String addressStr = StringUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);
       builder.setPrivateKey(priKeyStr);
       responseObserver.onNext(builder.build());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
-        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
-
-      try {
-        IncrementalMerkleVoucherInfo witnessInfo = wallet
-            .getMerkleTreeVoucherInfo(request);
-        responseObserver.onNext(witnessInfo);
-      } catch (Exception ex) {
-        responseObserver.onError(getRunTimeException(ex));
-      }
       responseObserver.onCompleted();
     }
 
@@ -637,39 +658,6 @@ public class RpcApiService implements Service {
         responseObserver.onNext(builder.build());
       } catch (Exception e) {
         responseObserver.onError(e);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
-        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
-      long startNum = request.getStartBlockIndex();
-      long endNum = request.getEndBlockIndex();
-      try {
-        DecryptNotes decryptNotes = wallet
-            .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
-        responseObserver.onNext(decryptNotes);
-      } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(getRunTimeException(e));
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
-        StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
-      long startNum = request.getStartBlockIndex();
-      long endNum = request.getEndBlockIndex();
-      try {
-        DecryptNotesMarked decryptNotes = wallet.scanAndMarkNoteByIvk(startNum, endNum,
-            request.getIvk().toByteArray(),
-            request.getAk().toByteArray(),
-            request.getNk().toByteArray());
-        responseObserver.onNext(decryptNotes);
-      } catch (BadItemException | ZksnarkException | InvalidProtocolBufferException
-          | ItemNotFoundException e) {
-        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -691,11 +679,68 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
+        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
+
+      try {
+        checkSupportShieldedTransaction();
+
+        IncrementalMerkleVoucherInfo witnessInfo = wallet
+            .getMerkleTreeVoucherInfo(request);
+        responseObserver.onNext(witnessInfo);
+      } catch (Exception ex) {
+        responseObserver.onError(getRunTimeException(ex));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      try {
+        checkSupportShieldedTransaction();
+
+        DecryptNotes decryptNotes = wallet
+            .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
+        StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      try {
+        checkSupportShieldedTransaction();
+
+        DecryptNotesMarked decryptNotes = wallet.scanAndMarkNoteByIvk(startNum, endNum,
+            request.getIvk().toByteArray(),
+            request.getAk().toByteArray(),
+            request.getNk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException | InvalidProtocolBufferException
+          | ItemNotFoundException e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
       try {
+        checkSupportShieldedTransaction();
+
         DecryptNotes decryptNotes = wallet
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
         responseObserver.onNext(decryptNotes);
@@ -708,6 +753,8 @@ public class RpcApiService implements Service {
     @Override
     public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         responseObserver.onNext(wallet.isSpend(request));
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
@@ -720,6 +767,18 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
 
       callContract(request, responseObserver, true);
+    }
+
+    @Override
+    public void getTransactionInfoByBlockNum(NumberMessage request,
+        StreamObserver<TransactionInfoList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getTransactionInfoByBlockNum(request.getNum()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
     }
 
     @Override
@@ -834,7 +893,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionSign(TransactionSign req,
         StreamObserver<Transaction> responseObserver) {
-      TransactionCapsule result = wallet.getTransactionSign(req);
+      TransactionCapsule result = TransactionUtil.getTransactionSign(req);
       responseObserver.onNext(result.getInstance());
       responseObserver.onCompleted();
     }
@@ -845,7 +904,7 @@ public class RpcApiService implements Service {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
-        TransactionCapsule trx = wallet.getTransactionSign(req);
+        TransactionCapsule trx = TransactionUtil.getTransactionSign(req);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
@@ -865,7 +924,7 @@ public class RpcApiService implements Service {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
-        TransactionCapsule trx = wallet.addSign(req);
+        TransactionCapsule trx = transactionUtil.addSign(req);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
@@ -882,7 +941,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionSignWeight(Transaction req,
         StreamObserver<TransactionSignWeight> responseObserver) {
-      TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
+      TransactionSignWeight tsw = transactionUtil.getTransactionSignWeight(req);
       responseObserver.onNext(tsw);
       responseObserver.onCompleted();
     }
@@ -911,8 +970,9 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
-        ECKey ecKey = ECKey.fromPrivate(privateKey);
-        byte[] owner = ecKey.getAddress();
+        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
+            .isECKeyCryptoEngine());
+        byte[] owner = cryptoEngine.getAddress();
         TransferContract.Builder builder = TransferContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));
         builder.setToAddress(toAddress);
@@ -962,8 +1022,9 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
-        ECKey ecKey = ECKey.fromPrivate(privateKey);
-        byte[] owner = ecKey.getAddress();
+        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey,
+            Args.getInstance().isECKeyCryptoEngine());
+        byte[] owner = cryptoEngine.getAddress();
         TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));
         builder.setToAddress(toAddress);
@@ -1378,7 +1439,7 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
@@ -1408,7 +1469,6 @@ public class RpcApiService implements Service {
                     .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
                     .setPort(node.getPort())));
           });
-
       responseObserver.onNext(nodeListBuilder.build());
       responseObserver.onCompleted();
     }
@@ -1800,10 +1860,11 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
-      String addressStr = Wallet.encode58Check(address);
+      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+          Args.getInstance().isECKeyCryptoEngine());
+      byte[] priKey = cryptoEngine.getPrivateKey();
+      byte[] address = cryptoEngine.getAddress();
+      String addressStr = StringUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);
@@ -1848,6 +1909,8 @@ public class RpcApiService implements Service {
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
       try {
+        checkSupportShieldedTransaction();
+
         IncrementalMerkleVoucherInfo witnessInfo = wallet
             .getMerkleTreeVoucherInfo(request);
         responseObserver.onNext(witnessInfo);
@@ -1866,6 +1929,8 @@ public class RpcApiService implements Service {
       Return.Builder retBuilder = Return.newBuilder();
 
       try {
+        checkSupportShieldedTransaction();
+
         TransactionCapsule trx = wallet.createShieldedTransaction(request);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
@@ -1894,6 +1959,8 @@ public class RpcApiService implements Service {
       Return.Builder retBuilder = Return.newBuilder();
 
       try {
+        checkSupportShieldedTransaction();
+
         TransactionCapsule trx = wallet.createShieldedTransactionWithoutSpendAuthSig(request);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
@@ -1915,9 +1982,25 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getNewShieldedAddress(EmptyMessage request,
+        StreamObserver<ShieldedAddressInfo> responseObserver) {
+
+      try {
+        checkSupportShieldedTransaction();
+
+        responseObserver.onNext(wallet.getNewShieldedAddress());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getSpendingKey(EmptyMessage request,
         StreamObserver<BytesMessage> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         responseObserver.onNext(wallet.getSpendingKey());
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
@@ -1929,6 +2012,8 @@ public class RpcApiService implements Service {
     public void getRcm(EmptyMessage request,
         StreamObserver<BytesMessage> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         responseObserver.onNext(wallet.getRcm());
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
@@ -1942,6 +2027,8 @@ public class RpcApiService implements Service {
       ByteString spendingKey = request.getValue();
 
       try {
+        checkSupportShieldedTransaction();
+
         ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
         responseObserver.onNext(response);
       } catch (BadItemException | ZksnarkException e) {
@@ -1956,6 +2043,8 @@ public class RpcApiService implements Service {
       ByteString ak = request.getValue();
 
       try {
+        checkSupportShieldedTransaction();
+
         responseObserver.onNext(wallet.getAkFromAsk(ak));
       } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(getRunTimeException(e));
@@ -1969,6 +2058,8 @@ public class RpcApiService implements Service {
       ByteString nk = request.getValue();
 
       try {
+        checkSupportShieldedTransaction();
+
         responseObserver.onNext(wallet.getNkFromNsk(nk));
       } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(getRunTimeException(e));
@@ -1984,6 +2075,8 @@ public class RpcApiService implements Service {
       ByteString nk = request.getNk();
 
       try {
+        checkSupportShieldedTransaction();
+
         responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(), nk.toByteArray()));
       } catch (ZksnarkException e) {
         responseObserver.onError(getRunTimeException(e));
@@ -1996,6 +2089,8 @@ public class RpcApiService implements Service {
     public void getDiversifier(EmptyMessage request,
         StreamObserver<DiversifierMessage> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         DiversifierMessage d = wallet.getDiversifier();
         responseObserver.onNext(d);
       } catch (ZksnarkException e) {
@@ -2012,6 +2107,8 @@ public class RpcApiService implements Service {
       DiversifierMessage d = request.getD();
 
       try {
+        checkSupportShieldedTransaction();
+
         PaymentAddressMessage saplingPaymentAddressMessage =
             wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
                 new DiversifierT(d.getD().toByteArray()));
@@ -2029,7 +2126,10 @@ public class RpcApiService implements Service {
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
+
       try {
+        checkSupportShieldedTransaction();
+
         DecryptNotes decryptNotes = wallet
             .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
         responseObserver.onNext(decryptNotes);
@@ -2045,7 +2145,10 @@ public class RpcApiService implements Service {
         StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
+
       try {
+        checkSupportShieldedTransaction();
+
         DecryptNotesMarked decryptNotes = wallet.scanAndMarkNoteByIvk(startNum, endNum,
             request.getIvk().toByteArray(),
             request.getAk().toByteArray(),
@@ -2063,7 +2166,10 @@ public class RpcApiService implements Service {
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
+
       try {
+        checkSupportShieldedTransaction();
+
         DecryptNotes decryptNotes = wallet
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
         responseObserver.onNext(decryptNotes);
@@ -2076,6 +2182,8 @@ public class RpcApiService implements Service {
     @Override
     public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         responseObserver.onNext(wallet.isSpend(request));
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
@@ -2087,6 +2195,8 @@ public class RpcApiService implements Service {
     public void createShieldNullifier(GrpcAPI.NfParameters request,
         StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         BytesMessage nf = wallet
             .createShieldNullifier(request);
         responseObserver.onNext(nf);
@@ -2100,6 +2210,8 @@ public class RpcApiService implements Service {
     public void createSpendAuthSig(SpendAuthSigParameters request,
         StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
         responseObserver.onNext(spendAuthSig);
       } catch (Exception e) {
@@ -2112,6 +2224,8 @@ public class RpcApiService implements Service {
     public void getShieldTransactionHash(Transaction request,
         StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
+        checkSupportShieldedTransaction();
+
         BytesMessage transactionHash = wallet.getShieldTransactionHash(request);
         responseObserver.onNext(transactionHash);
       } catch (Exception e) {
@@ -2166,9 +2280,31 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getTransactionInfoByBlockNum(NumberMessage request,
+        StreamObserver<TransactionInfoList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getTransactionInfoByBlockNum(request.getNum()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void checkCrossTransactionCommit(BytesMessage request,
         StreamObserver<Return> responseObserver) {
       checkCrossTransactionCommitCommon(request, responseObserver);
+    }
+  }
+
+  public class MonitorApi extends MonitorGrpc.MonitorImplBase {
+
+    @Override
+    public void getStatsInfo(EmptyMessage request,
+        StreamObserver<Protocol.MetricsInfo> responseObserver) {
+      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
+      responseObserver.onCompleted();
     }
   }
 

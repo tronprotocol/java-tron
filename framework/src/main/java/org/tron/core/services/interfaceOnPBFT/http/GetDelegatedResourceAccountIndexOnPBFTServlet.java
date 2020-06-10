@@ -10,8 +10,8 @@ import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
 
 @Component
 @Slf4j(topic = "API")
-public class GetDelegatedResourceAccountIndexOnPBFTServlet
-    extends GetDelegatedResourceAccountIndexServlet {
+public class GetDelegatedResourceAccountIndexOnPBFTServlet extends
+    GetDelegatedResourceAccountIndexServlet {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;

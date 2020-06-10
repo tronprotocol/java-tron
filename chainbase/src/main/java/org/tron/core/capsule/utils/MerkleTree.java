@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
+import org.tron.common.parameter.CommonParameter;
 import lombok.Setter;
 import org.tron.common.utils.Sha256Hash;
 
@@ -162,8 +163,9 @@ public class MerkleTree {
     return leaf;
   }
 
-  public Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
-    return Sha256Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
+  private Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 
   @Getter

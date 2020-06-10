@@ -17,29 +17,17 @@
  */
 package org.tron.core.vm.config;
 
-import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.parameter.CommonParameter;
 
 /**
  * For developer only
  */
 public class VMConfig {
 
-  @Getter
-  @Setter
-  private static double maxTimeRatio;
-
-  @Getter
-  @Setter
-  private static double minTimeRatio;
-
-  @Getter
-  @Setter
-  private static int checkFrozenTime; // for test only
-
-  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
+  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 TRX
 
   private static boolean vmTraceCompressed = false;
 
@@ -75,7 +63,7 @@ public class VMConfig {
   }
 
   public static void initVmHardFork(boolean pass) {
-    ENERGY_LIMIT_HARD_FORK = pass;
+    CommonParameter.ENERGY_LIMIT_HARD_FORK = pass;
   }
 
   public static void initAllowMultiSign(long allow) {

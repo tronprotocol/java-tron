@@ -7,6 +7,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -117,6 +118,15 @@ public class BlockCapsuleTest {
         blockCapsule0.getInstance().getBlockHeader().getRawData().getNumber());
     Assert.assertEquals(blockCapsule0.getParentHash(),
         Sha256Hash.wrap(blockCapsule0.getParentHashStr()));
+  }
+
+  @Test
+  public void testHasWitnessSignature() {
+
+    Assert.assertFalse(blockCapsule0.hasWitnessSignature());
+    blockCapsule0
+        .sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+    Assert.assertTrue(blockCapsule0.hasWitnessSignature());
   }
 
   @Test

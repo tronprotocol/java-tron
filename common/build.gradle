@@ -47,3 +47,16 @@ dependencies {
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile project(":protocol")
 }
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    executionData = files('../framework/build/jacoco/jacocoTest.exec')
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,)
+        })
+    }
+}

@@ -1,10 +1,14 @@
 package org.tron.common.utils;
 
+import static org.tron.common.utils.StringUtil.encode58Check;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
-import org.tron.common.utils.DecodeUtil;
+import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -20,7 +24,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 public class WalletUtil {
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+  public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
@@ -42,7 +46,7 @@ public class WalletUtil {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return Hash.sha3omit12(combined);
 
   }
 
@@ -50,37 +54,15 @@ public class WalletUtil {
   // for `CREATE2`
   public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return DecodeUtil.sha3omit12(mergedData);
-  }
-
-  // for `CREATE`
-  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
-    byte[] nonceBytes = Longs.toByteArray(nonce);
-    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
-    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
-    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
-
-    return DecodeUtil.sha3omit12(combined);
-  }
-
-
-  public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
-    byte[] inputCheck = new byte[input.length + 4];
-    System.arraycopy(input, 0, inputCheck, 0, input.length);
-    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
-    return Base58.encode(inputCheck);
+    return Hash.sha3omit12(mergedData);
   }
 
   public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)
       throws ContractValidateException {
     try {
       boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
-      if (constant) {
-        if (!DBConfig.isSupportConstant()) {
-          throw new ContractValidateException("this node don't support constant");
-        }
+      if (constant && !CommonParameter.getInstance().isSupportConstant()) {
+        throw new ContractValidateException("this node don't support constant");
       }
       return constant;
     } catch (ContractValidateException e) {
@@ -90,7 +72,7 @@ public class WalletUtil {
     }
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
+  public static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
     if (selector == null || selector.length != 4
         || abi.getEntrysList().size() == 0) {
@@ -131,8 +113,13 @@ public class WalletUtil {
     return false;
   }
 
+  public static List<String> getAddressStringList(Collection<ByteString> collection) {
+    return collection.stream()
+      .map(bytes -> encode58Check(bytes.toByteArray()))
+      .collect(Collectors.toList());
+  }
 
-  private static byte[] getSelector(byte[] data) {
+  public static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {
       return null;

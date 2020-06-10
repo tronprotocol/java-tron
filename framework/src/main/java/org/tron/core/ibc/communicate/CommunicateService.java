@@ -105,11 +105,11 @@ public class CommunicateService implements Communicate {
         List<Sha256Hash> hashList;
         if (blockCapsule.getInstance().getCrossMessageList().isEmpty()) {
           hashList = blockCapsule.getInstance().getTransactionsList().stream()
-              .map(transaction -> Sha256Hash.of(transaction.toByteArray()))
+              .map(transaction -> Sha256Hash.of(true, transaction.toByteArray()))
               .collect(Collectors.toList());
         } else {
           hashList = blockCapsule.getInstance().getCrossMessageList().stream()
-              .map(crossMsg -> Sha256Hash.of(crossMsg.getTransaction().toByteArray()))
+              .map(crossMsg -> Sha256Hash.of(true, crossMsg.getTransaction().toByteArray()))
               .collect(Collectors.toList());
         }
         List<ProofLeaf> proofLeafList = MerkleTree.getInstance()
@@ -154,7 +154,7 @@ public class CommunicateService implements Communicate {
     }
     MerkleTree merkleTree = MerkleTree.getInstance();
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
-        Sha256Hash.of(proof.getHash().toByteArray()),
+        Sha256Hash.of(true, proof.getHash().toByteArray()),
         proof.getLeftOrRight())).collect(Collectors.toList());
     logger.info("root:{}, tx:{}", root, txHash);
     return merkleTree.validProof(root, proofLeafList, txHash);
@@ -199,7 +199,7 @@ public class CommunicateService implements Communicate {
     if (crossMessage.getType() == Type.ACK) {
       txId = Sha256Hash.wrap(crossMessage.getTransaction().getRawData().getSourceTxId());
     } else {
-      txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+      txId = Sha256Hash.of(true, crossMessage.getTransaction().getRawData().toByteArray());
     }
     return txId;
   }
@@ -209,7 +209,7 @@ public class CommunicateService implements Communicate {
     if (crossMessage.getType() == Type.ACK) {
       txId = CrossUtils.getSourceMerkleTxHash(crossMessage.getTransaction());
     } else {
-      txId = Sha256Hash.of(crossMessage.getTransaction().toByteArray());
+      txId = Sha256Hash.of(true, crossMessage.getTransaction().toByteArray());
     }
     return txId;
   }
@@ -253,7 +253,7 @@ public class CommunicateService implements Communicate {
    * done: use genesisBlockId to chainId
    */
   public ByteString getLocalChainId() {
-    return manager.getGenesisBlockId().getByteString();
+    return chainBaseManager.getGenesisBlockId().getByteString();
   }
 
   public ByteString getRouteChainId() {

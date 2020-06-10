@@ -173,25 +173,34 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(entry.getValue());
           break;
         }
-        case ALLOW_SHIELDED_TRANSACTION: {
-          if (manager.getDynamicPropertiesStore().getAllowShieldedTransaction() == 0) {
-            manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(entry.getValue());
-            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(51);
-          }
+        //case ALLOW_SHIELDED_TRANSACTION: {
+        //  if (manager.getDynamicPropertiesStore().getAllowShieldedTransaction() == 0) {
+        //    manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(entry.getValue());
+        //    manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(51);
+        //  }
+        //  break;
+        //}
+        //case SHIELDED_TRANSACTION_FEE: {
+        //  manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
+        //  break;
+        //}
+        //        case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+        //          manager.getDynamicPropertiesStore()
+        //              .saveShieldedTransactionCreateAccountFee(entry.getValue());
+        //          break;
+        //        }
+        case FORBID_TRANSFER_TO_CONTRACT: {
+          manager.getDynamicPropertiesStore().saveForbidTransferToContract(entry.getValue());
           break;
         }
-        case SHIELDED_TRANSACTION_FEE: {
-          manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
+        case ALLOW_PBFT: {
+          manager.getDynamicPropertiesStore().saveAllowPBFT(entry.getValue());
           break;
         }
         case CROSS_CHAIN: {
           manager.getDynamicPropertiesStore().saveCrossChain(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(52);
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(53);
-          break;
-        }
-        case ALLOW_PBFT: {
-          manager.getDynamicPropertiesStore().saveAllowPBFT(entry.getValue());
           break;
         }
         default:

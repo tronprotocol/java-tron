@@ -6,7 +6,6 @@ import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -15,6 +14,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -32,7 +32,6 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
-@Ignore
 public class TransactionStoreTest {
 
   private static final byte[] key1 = TransactionStoreTest.randomBytes(21);
@@ -52,41 +51,34 @@ public class TransactionStoreTest {
   private static TransactionStore transactionStore;
   private static TronApplicationContext context;
   private static Application AppT;
-  private static Manager dbManager;
-
-  static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w"
-        },
-        Constant.TEST_CONF
-    );
-  }
+  private static ChainBaseManager chainBaseManager;
 
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
+    Args.setParam(new String[]{"--output-directory", dbPath, "--storage-db-directory",
+        dbDirectory, "--storage-index-directory", indexDirectory, "-w"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
-    dbManager = context.getBean(Manager.class);
-    transactionStore = dbManager.getTransactionStore();
-
+    chainBaseManager = context.getBean(ChainBaseManager.class);
+    transactionStore = chainBaseManager.getTransactionStore();
   }
 
+  /**
+   * release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
 
+  /**
+   * genarate random bytes.
+   */
   public static byte[] randomBytes(int length) {
     // generate the random number
     byte[] result = new byte[length];
@@ -140,15 +132,15 @@ public class TransactionStoreTest {
   }
 
   @Test
-  public void GetTransactionTest() throws BadItemException, ItemNotFoundException {
-    final BlockStore blockStore = dbManager.getBlockStore();
-    final TransactionStore trxStore = dbManager.getTransactionStore();
+  public void getTransactionTest() throws BadItemException, ItemNotFoundException {
+    final BlockStore blockStore = chainBaseManager.getBlockStore();
+    final TransactionStore trxStore = chainBaseManager.getTransactionStore();
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(chainBaseManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -196,11 +188,11 @@ public class TransactionStoreTest {
    * put and get CreateAccountTransaction.
    */
   @Test
-  public void CreateAccountTransactionStoreTest() throws BadItemException {
+  public void createAccountTransactionStoreTest() throws BadItemException {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
-        dbManager.getAccountStore());
+        chainBaseManager.getAccountStore());
     transactionStore.put(key1, ret);
     Assert.assertEquals("Store CreateAccountTransaction is error",
         transactionStore.get(key1).getInstance(),
@@ -209,15 +201,15 @@ public class TransactionStoreTest {
   }
 
   @Test
-  public void GetUncheckedTransactionTest() {
-    final BlockStore blockStore = dbManager.getBlockStore();
-    final TransactionStore trxStore = dbManager.getTransactionStore();
+  public void getUncheckedTransactionTest() {
+    final BlockStore blockStore = chainBaseManager.getBlockStore();
+    final TransactionStore trxStore = chainBaseManager.getTransactionStore();
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(chainBaseManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -265,7 +257,7 @@ public class TransactionStoreTest {
    * put and get CreateWitnessTransaction.
    */
   @Test
-  public void CreateWitnessTransactionStoreTest() throws BadItemException {
+  public void createWitnessTransactionStoreTest() throws BadItemException {
     WitnessCreateContract witnessContract = getWitnessContract(OWNER_ADDRESS, URL);
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessContract);
     transactionStore.put(key1, transactionCapsule);
@@ -278,7 +270,7 @@ public class TransactionStoreTest {
    * put and get TransferTransaction.
    */
   @Test
-  public void TransferTransactionStorenTest() throws BadItemException {
+  public void transferTransactionStorenTest() throws BadItemException {
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME),
@@ -286,10 +278,10 @@ public class TransactionStoreTest {
             AccountType.AssetIssue,
             1000000L
         );
-    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     TransferContract transferContract = getContract(AMOUNT, OWNER_ADDRESS, TO_ADDRESS);
     TransactionCapsule transactionCapsule = new TransactionCapsule(transferContract,
-        dbManager.getAccountStore());
+        chainBaseManager.getAccountStore());
     transactionStore.put(key1, transactionCapsule);
     Assert.assertEquals("Store TransferTransaction is error",
         transactionStore.get(key1).getInstance(),
@@ -312,7 +304,7 @@ public class TransactionStoreTest {
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
     ownerAccountFirstCapsule.setFrozen(frozenBalance, duration);
-    dbManager.getAccountStore()
+    chainBaseManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     VoteWitnessContract actuator = getVoteWitnessContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L);
     TransactionCapsule transactionCapsule = new TransactionCapsule(actuator);
@@ -326,7 +318,7 @@ public class TransactionStoreTest {
    * put value is null and get it.
    */
   @Test
-  public void TransactionValueNullTest() throws BadItemException {
+  public void transactionValueNullTest() throws BadItemException {
     TransactionCapsule transactionCapsule = null;
     transactionStore.put(key2, transactionCapsule);
     Assert.assertNull("put value is null", transactionStore.get(key2));
@@ -337,11 +329,11 @@ public class TransactionStoreTest {
    * put key is null and get it.
    */
   @Test
-  public void TransactionKeyNullTest() throws BadItemException {
+  public void transactionKeyNullTest() throws BadItemException {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
-        dbManager.getAccountStore());
+        chainBaseManager.getAccountStore());
     byte[] key = null;
     transactionStore.put(key, ret);
     try {

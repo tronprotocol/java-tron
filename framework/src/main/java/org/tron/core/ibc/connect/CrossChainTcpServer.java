@@ -13,13 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.TronChannelInitializer;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "net-cross")
 @Component
 public class CrossChainTcpServer {
 
-  private Args args = Args.getInstance();
+  private CommonParameter args = CommonParameter.getInstance();
 
   private ApplicationContext ctx;
 

@@ -1,13 +1,14 @@
 package org.tron.core.capsule.utils;
 
 import java.util.ArrayList;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 
 /**
  */
 public class RLPList extends ArrayList<RLPElement> implements RLPElement {
 
-  byte[] rlpData;
+  private byte[] rlpData;
 
   public static void recursivePrint(RLPElement element) {
 
@@ -23,7 +24,7 @@ public class RLPList extends ArrayList<RLPElement> implements RLPElement {
       }
       System.out.print("]");
     } else {
-      String hex = ByteUtil.toHexString(element.getRLPData());
+      String hex = ByteArray.toHexString(element.getRLPData());
       System.out.print(hex + ", ");
     }
   }

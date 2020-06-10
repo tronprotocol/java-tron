@@ -11,8 +11,7 @@ import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
 
 @Component
 @Slf4j(topic = "API")
-public class ListExchangesOnPBFTServlet
-    extends ListExchangesServlet {
+public class ListExchangesOnPBFTServlet extends ListExchangesServlet {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;

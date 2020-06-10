@@ -1,5 +1,7 @@
 package org.tron.core;
 
+import static stest.tron.wallet.common.client.WalletClient.decodeFromBase58Check;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
@@ -7,6 +9,7 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction;
@@ -25,7 +28,7 @@ public class CreateCommonTransactionTest {
   private static String fullnode = "127.0.0.1:50051";
 
   private static ByteString owner = ByteString
-      .copyFrom(Wallet.decodeFromBase58Check("TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW"));
+      .copyFrom(Commons.decodeFromBase58Check("TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW"));
   private static String pk = "D95611A9AF2A2A45359106222ED1AFED48853D9A44DEFF8DC7913F5CBA727366";
   private static final String URL = "https://tron.network";
 
@@ -34,12 +37,10 @@ public class CreateCommonTransactionTest {
    */
   public static void testCreateUpdateBrokerageContract() {
     WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
-            .build());
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build());
     UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
     updateBrokerageContract.setOwnerAddress(
-        ByteString.copyFrom(Wallet.decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
+        ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
         .setBrokerage(10);
     Transaction.Builder transaction = Transaction.newBuilder();
     raw.Builder raw = Transaction.raw.newBuilder();

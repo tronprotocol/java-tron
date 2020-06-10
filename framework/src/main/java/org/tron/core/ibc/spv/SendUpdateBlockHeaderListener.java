@@ -3,8 +3,8 @@ package org.tron.core.ibc.spv;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
@@ -77,8 +77,8 @@ public class SendUpdateBlockHeaderListener implements EventListener<PbftBlockCom
 
   protected synchronized void setSrList(Builder builder, long blockTime) {
     //
-    long round = blockTime / DBConfig.getMaintenanceTimeInterval();
-    long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
+    long round = blockTime / CommonParameter.getInstance().getMaintenanceTimeInterval();
+    long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
     if (maintenanceTime > latestMaintenanceTime) {
       try {
         Thread.sleep(1000);

@@ -42,7 +42,7 @@ public class CrossChainMsgHandler implements TronMsgHandler {
       return;
     }
     Sha256Hash txId = Sha256Hash
-        .of(crossChainMessage.getCrossMessage().getTransaction().getRawData().toByteArray());
+        .of(true, crossChainMessage.getCrossMessage().getTransaction().getRawData().toByteArray());
     try {
       if (crossStore.getReceiveCrossMsg(txId) != null) {
         return;

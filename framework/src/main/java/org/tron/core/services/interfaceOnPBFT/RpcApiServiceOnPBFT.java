@@ -30,8 +30,9 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
@@ -66,7 +67,8 @@ public class RpcApiServiceOnPBFT implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter parameter) {
+
   }
 
   @Override
@@ -75,7 +77,7 @@ public class RpcApiServiceOnPBFT implements Service {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
           .addService(new DatabaseApi());
 
-      Args args = Args.getInstance();
+      CommonParameter args = CommonParameter.getInstance();
 
       if (args.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
@@ -334,7 +336,7 @@ public class RpcApiServiceOnPBFT implements Service {
       ECKey ecKey = new ECKey(Utils.getRandom());
       byte[] priKey = ecKey.getPrivKeyBytes();
       byte[] address = ecKey.getAddress();
-      String addressStr = Wallet.encode58Check(address);
+      String addressStr = StringUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);

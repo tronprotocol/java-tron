@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BlockHeaderCapsule;
@@ -72,8 +72,8 @@ public class LocalHeaderMsgProcess {
 
   protected void setSrList(Builder builder, String chainIdString, long blockTime) {
     //
-    long round = blockTime / DBConfig.getMaintenanceTimeInterval();
-    long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
+    long round = blockTime / CommonParameter.getInstance().getMaintenanceTimeInterval();
+    long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
     Long latestMaintenanceTime = latestMaintenanceTimeMap.get(chainIdString);
     latestMaintenanceTime = latestMaintenanceTime == null ? 0 : latestMaintenanceTime;
     logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,

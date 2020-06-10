@@ -35,7 +35,7 @@ import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
-import org.tron.core.db.Manager;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.net.peer.PeerConnection;
 
 @Slf4j(topic = "net-cross")
@@ -52,7 +52,7 @@ public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
   private ChannelManager channelManager;
 
   @Autowired
-  private Manager manager;
+  private ChainBaseManager chainBaseManager;
 
   private byte[] remoteId;
 
@@ -109,7 +109,8 @@ public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), true);
+        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
+        chainBaseManager.getHeadBlockId(), true);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     logger.info("cross chain handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);

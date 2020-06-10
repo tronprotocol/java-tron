@@ -10,8 +10,8 @@ import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
 @Slf4j(topic = "API")
-public class GetDelegatedResourceAccountIndexOnSolidityServlet
-    extends GetDelegatedResourceAccountIndexServlet {
+public class GetDelegatedResourceAccountIndexOnSolidityServlet extends
+    GetDelegatedResourceAccountIndexServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;

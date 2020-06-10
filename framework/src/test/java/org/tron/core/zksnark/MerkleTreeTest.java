@@ -14,12 +14,12 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.collections.Lists;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.MerklePath;
-import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
@@ -130,7 +130,7 @@ public class MerkleTreeTest {
 
       PedersenHashCapsule test_commitment = new PedersenHashCapsule();
       byte[] bytes = ByteArray.fromHexString(commitment_tests.getString(i));
-      ZksnarkUtils.sort(bytes);
+      ByteUtil.reverse(bytes);
       test_commitment.setContent(ByteString.copyFrom(bytes));
       // Now append a commitment to the tree
       tree.append(test_commitment.getInstance());
