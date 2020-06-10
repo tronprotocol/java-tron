@@ -17,6 +17,16 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
   public void saveTokenMapping(String chainId, String sourceToken, String descToken) {
     this.put(buildTokenKey(chainId, sourceToken),
         new BytesCapsule(ByteArray.fromString(descToken)));
+    this.put(descToken.getBytes(), new BytesCapsule(new byte[1]));
+  }
+
+  public boolean containMapping(String token) {
+    BytesCapsule data = getUnchecked(token.getBytes());
+    if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public String getDestTokenFromMapping(String chainId, String sourceToken) {

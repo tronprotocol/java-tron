@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.InitParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -34,7 +33,7 @@ public class TokenProcess {
     long amount = crossToken.getAmount();
     byte[] ownerAddress = crossContract.getOwnerAddress().toByteArray();
     String tokenId = ByteArray.toStr(crossToken.getTokenId().toByteArray());
-    String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+    String tokenChainId = ByteArray.toHexString(crossToken.getChainId().toByteArray());
     Long inTokenCount = crossRevokingStore.getInTokenCount(tokenChainId, tokenId);
     if (inTokenCount != null) {//
       crossRevokingStore.saveInTokenCount(tokenChainId, tokenId, inTokenCount - amount);
@@ -66,7 +65,7 @@ public class TokenProcess {
     byte[] ownerAddress = crossContract.getOwnerAddress().toByteArray();
     byte[] toAddress = crossContract.getToAddress().toByteArray();
     String tokenId = ByteArray.toStr(crossToken.getTokenId().toByteArray());
-    String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+    String tokenChainId = ByteArray.toHexString(crossToken.getChainId().toByteArray());
     Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenChainId, tokenId);
     if (outTokenCount != null) {//source token
       crossRevokingStore.saveOutTokenCount(tokenChainId, tokenId, outTokenCount - amount);
@@ -111,16 +110,16 @@ public class TokenProcess {
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
 
-    String ownerChainId = ByteArray.toStr(crossContract.getOwnerChainId().toByteArray());
-    String toChainId = ByteArray.toStr(crossContract.getToChainId().toByteArray());
+    String ownerChainId = ByteArray.toHexString(crossContract.getOwnerChainId().toByteArray());
+    String toChainId = ByteArray.toHexString(crossContract.getToChainId().toByteArray());
     CrossToken crossToken = CrossToken.parseFrom(crossContract.getData());
     long fee = calcFee(chainBaseManager);
     byte[] ownerAddress = crossContract.getOwnerAddress().toByteArray();
     byte[] assetId = crossToken.getTokenId().toByteArray();
     long amount = crossToken.getAmount();
-    String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+    String tokenChainId = ByteArray.toHexString(crossToken.getChainId().toByteArray());
     String localChainId = ByteArray
-        .toStr(InitParameter.genesisBlock.getBlockId().getByteString().toByteArray());
+        .toHexString(chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
 
     if (!StringUtils.equals(ownerChainId, localChainId)) {
       logger.error("ownerChainId not equals localChainId! ownerChainId:{}, localChainId:{}",
@@ -167,6 +166,10 @@ public class TokenProcess {
       }
       assetId = ByteArray.fromString(crossRevokingStore
           .getDestTokenFromMapping(tokenChainId, ByteArray.toStr(assetId)));
+    } else if (crossRevokingStore.containMapping(ByteArray.toStr(assetId))) {
+      logger.error("assetId {} is mapping token,tokenChainId:{}, ownerChainId:{}, toChainId:{}",
+          ByteArray.toStr(assetId), tokenChainId, ownerChainId, toChainId);
+      throw new ContractValidateException("Invalid token chainId");
     }
     boolean contain = assetIssueV2Store.has(assetId);
     Long assetBalance = ownerAccount.getAssetMapV2().get(ByteArray.toStr(assetId));
@@ -189,15 +192,15 @@ public class TokenProcess {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    String ownerChainId = ByteArray.toStr(crossContract.getOwnerChainId().toByteArray());
-    String toChainId = ByteArray.toStr(crossContract.getToChainId().toByteArray());
+    String ownerChainId = ByteArray.toHexString(crossContract.getOwnerChainId().toByteArray());
+    String toChainId = ByteArray.toHexString(crossContract.getToChainId().toByteArray());
     CrossToken crossToken = CrossToken.parseFrom(crossContract.getData());
     byte[] toAddress = crossContract.getToAddress().toByteArray();
     long amount = crossToken.getAmount();
     byte[] assetId = crossToken.getTokenId().toByteArray();
-    String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+    String tokenChainId = ByteArray.toHexString(crossToken.getChainId().toByteArray());
     String localChainId = ByteArray
-        .toStr(InitParameter.genesisBlock.getBlockId().getByteString().toByteArray());
+        .toHexString(chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
 
     if (StringUtils.equals(ownerChainId, localChainId)) {
       logger.error("ownerChainId equals localChainId! ownerChainId:{}, localChainId:{}",

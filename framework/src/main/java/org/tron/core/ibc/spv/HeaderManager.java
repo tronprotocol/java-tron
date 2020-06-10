@@ -88,8 +88,8 @@ public class HeaderManager {
           Sets.newHashSet(srl.getSrAddressList()))) {
         throw new ValidateSignatureException("valid sr list fail!");
       }
-      SRL srList = SRL.parseFrom(raw.getData().toByteArray());
-      chainBaseManager.getCommonDataBase().saveSRL(chainId, raw.getEpoch(), srList);
+      chainBaseManager.getCommonDataBase()
+          .saveSRL(chainId, raw.getEpoch(), signedBlockHeader.getSrList());
     }
     // DB don't need lower block
     if (headerPropertiesStore.getLatestBlockHeaderHash(chainId) == null) {
@@ -122,12 +122,6 @@ public class HeaderManager {
     chainBaseManager.getCommonDataBase().saveLatestSyncBlockNum(chainId, blockId.getNum());
 
     logger.info("save chain {} block header: {}", chainId, header);
-  }
-
-  public BlockHeaderCapsule getGenBlockHeader(String chainId) {
-    BlockId blockId = blockHeaderIndexStore.getUnchecked(chainId, 0L);
-    BlockHeaderCapsule blockHeaderCapsule = blockHeaderStore.getUnchecked(chainId, blockId);
-    return blockHeaderCapsule;
   }
 
   public synchronized boolean isExist(ByteString chainId, BlockHeader header) {

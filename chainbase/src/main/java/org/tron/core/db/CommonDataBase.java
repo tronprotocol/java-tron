@@ -12,6 +12,10 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.PBFTCommitResult;
+import org.tron.protos.Protocol.PBFTMessage;
+import org.tron.protos.Protocol.PBFTMessage.Raw;
+import org.tron.protos.Protocol.SRL;
 
 @Slf4j
 @Component
@@ -134,7 +138,9 @@ public class CommonDataBase extends TronDatabase<byte[]> {
       return null;
     } else {
       try {
-        return Protocol.SRL.parseFrom(value);
+        PBFTMessage.Raw raw = Raw
+            .parseFrom(PBFTCommitResult.parseFrom(value).getData().toByteArray());
+        return SRL.parseFrom(raw.getData().toByteArray());
       } catch (InvalidProtocolBufferException e) {
         logger.error("", e);
         return null;
@@ -142,7 +148,21 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     }
   }
 
-  public void saveSRL(String chainId, long epoch, Protocol.SRL srl) {
+  public PBFTCommitResult getSRLCommit(String chainId, long epoch) {
+    byte[] value = get(buildKey(ByteArray.fromLong(epoch), chainId));
+    if (ByteUtil.isNullOrZeroArray(value)) {
+      return null;
+    } else {
+      try {
+        return PBFTCommitResult.parseFrom(value);
+      } catch (InvalidProtocolBufferException e) {
+        logger.error("", e);
+        return null;
+      }
+    }
+  }
+
+  public void saveSRL(String chainId, long epoch, PBFTCommitResult srl) {
     Protocol.SRL value = getSRL(chainId, epoch);
     if (value == null) {
       put(buildKey(ByteArray.fromLong(epoch), chainId), srl.toByteArray());

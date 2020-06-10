@@ -22,13 +22,15 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.ibc.common.CrossUtils;
-import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.ibc.connect.CrossChainTcpServer;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -49,6 +51,9 @@ public class ChannelManager {
   private CrossChainConnectPool crossChainConnectPool;
   @Autowired
   private CrossChainTcpServer crossChainTcpServer;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   private CommonParameter parameter = CommonParameter.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
@@ -196,7 +201,11 @@ public class ChannelManager {
       peer.disconnect(ReasonCode.USER_REASON);
       return false;
     }
-    peer.getInetAddress();
+    if (chainBaseManager.getGenesisBlockId().getByteString().equals(chainId)) {
+      logger.error("can not connect to myself:{}", ByteArray.toHexString(chainId.toByteArray()));
+      peer.disconnect(ReasonCode.USER_REASON);
+      return false;
+    }
     List<PeerConnection> peerConnectionList = crossChainConnectPool.getPeerConnect(chainId);
     Channel channel = CrossUtils.listToMap(peerConnectionList).get(peer.getNodeIdWrapper());
     if (channel != null) {

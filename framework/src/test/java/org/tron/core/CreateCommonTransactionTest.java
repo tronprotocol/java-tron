@@ -71,7 +71,7 @@ public class CreateCommonTransactionTest {
             .fromHexString("000000000000000019b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
             .getByteString())
         .setToAddress(owner).setToChainId(Sha256Hash.wrap(
-        ByteArray.fromHexString("0000000000000000bff8ab4242b00fac071a0035cb8e98d6351c87f0f1a753dd"))
+        ByteArray.fromHexString("0000000000000000d4b7cf850c78c1c779d19446edeafdfeb30875060e5dcee8"))
         .getByteString()).setType(CrossDataType.TOKEN).setData(crossToken.build().toByteString());
     Transaction.Builder transaction = Transaction.newBuilder();
     raw.Builder raw = Transaction.raw.newBuilder();
@@ -97,7 +97,7 @@ public class CreateCommonTransactionTest {
     crossToken.setAmount(100).setTokenId(ByteString.copyFrom(ByteArray.fromString("1000001")))
         .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross2"))).setPrecision(0)
         .setChainId(Sha256Hash.wrap(ByteArray
-            .fromHexString("0000000000000000bff8ab4242b00fac071a0035cb8e98d6351c87f0f1a753dd"))
+            .fromHexString("0000000000000000d4b7cf850c78c1c779d19446edeafdfeb30875060e5dcee8"))
             .getByteString());
     CrossContract.Builder builder = CrossContract.newBuilder();
     builder.setOwnerAddress(owner)
@@ -105,7 +105,7 @@ public class CreateCommonTransactionTest {
             .fromHexString("000000000000000019b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
             .getByteString())
         .setToAddress(owner).setOwnerChainId(Sha256Hash.wrap(
-        ByteArray.fromHexString("0000000000000000bff8ab4242b00fac071a0035cb8e98d6351c87f0f1a753dd"))
+        ByteArray.fromHexString("0000000000000000d4b7cf850c78c1c779d19446edeafdfeb30875060e5dcee8"))
         .getByteString()).setType(CrossDataType.TOKEN).setData(crossToken.build().toByteString());
     Transaction.Builder transaction = Transaction.newBuilder();
     raw.Builder raw = Transaction.raw.newBuilder();

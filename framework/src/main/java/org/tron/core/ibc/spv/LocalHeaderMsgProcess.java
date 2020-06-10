@@ -19,6 +19,7 @@ import org.tron.core.ibc.spv.message.BlockHeaderInventoryMesasge;
 import org.tron.core.ibc.spv.message.BlockHeaderRequestMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.PBFTCommitResult;
 import org.tron.protos.Protocol.SignedBlockHeader;
 import org.tron.protos.Protocol.SignedBlockHeader.Builder;
 
@@ -79,11 +80,11 @@ public class LocalHeaderMsgProcess {
     logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
         latestMaintenanceTime);
     if (maintenanceTime > latestMaintenanceTime) {
-      PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
-          .getCrossSrSignData(chainIdString, maintenanceTime);
-      if (srSignCapsule != null) {
+      PBFTCommitResult pbftCommitResult = chainBaseManager.getCommonDataBase()
+          .getSRLCommit(chainIdString, maintenanceTime);
+      if (pbftCommitResult != null) {
         latestMaintenanceTimeMap.put(chainIdString, maintenanceTime);
-        builder.setSrList(srSignCapsule.getInstance());
+        builder.setSrList(pbftCommitResult);
       }
     }
   }

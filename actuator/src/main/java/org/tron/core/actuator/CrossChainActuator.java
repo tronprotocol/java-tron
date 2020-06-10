@@ -150,7 +150,7 @@ public class CrossChainActuator extends AbstractActuator {
           CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
           long amount = crossToken.getAmount();
           String tokenId = ByteArray.toStr(crossToken.getTokenId().toByteArray());
-          String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+          String tokenChainId = ByteArray.toHexString(crossToken.getChainId().toByteArray());
           Long inTokenCount = crossRevokingStore.getInTokenCount(tokenChainId, tokenId);
           if (inTokenCount != null) {//
             crossRevokingStore.saveInTokenCount(tokenChainId, tokenId, inTokenCount + amount);

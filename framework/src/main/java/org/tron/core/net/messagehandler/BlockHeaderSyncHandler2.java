@@ -270,7 +270,7 @@ public class BlockHeaderSyncHandler2 {
       throw new Exception("verify SRL error");
     }
 
-    commonDataBase.saveSRL(chainId, epoch, srlMessage.getSrl());
+    commonDataBase.saveSRL(chainId, epoch, srlMessage.getDataSign());
   }
 
   private boolean verifySrList(Protocol.PBFTCommitResult srl,
