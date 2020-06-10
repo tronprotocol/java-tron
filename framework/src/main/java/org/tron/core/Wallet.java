@@ -3257,8 +3257,10 @@ public class Wallet {
           BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
           if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
               .equals(Hex.toHexString(decryptedAddress))) {
+            byte[] addressWithPrefix = new byte[21];
+            System.arraycopy(plaintext, 32, addressWithPrefix, 0, 21);
             builder.setToAmount(logAmount.toString(10))
-                .setTransparentToAddress(ByteString.copyFrom(logToAddress));
+                .setTransparentToAddress(ByteString.copyFrom(addressWithPrefix));
             return Optional.of(builder.build());
           }
         }
