@@ -205,6 +205,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
         zenTrc20TokenOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getTransactionInfoById(httpnode,txid,true);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -226,6 +227,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
 
   @Test(enabled = true, description = "Query is shielded trc20 contract note spent on solidity by http")
   public void test05QueryIsShieldedTRC20ContractNoteSpentByHttp() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSolidityNode);
     Assert.assertTrue(isShieldedTrc20ContractNoteSpentOnSolidity(httpSolidityNode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(2)));
     Assert.assertTrue(isShieldedTrc20ContractNoteSpentOnSolidity(httpSolidityNode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(3)));
   }
