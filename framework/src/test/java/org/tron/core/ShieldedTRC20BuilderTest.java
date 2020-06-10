@@ -1947,7 +1947,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   }
 
   @Test
-  public void testScanShieldedTRC20NotesbyIvk() throws Exception {
+  public void testScanShieldedTRC20NotesByIvk() throws Exception {
     int statNum = 1;
     int endNum = 100;
     librustzcashInitZksnarkParams();
@@ -1956,7 +1956,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     byte[] ivk = fvk.inViewingKey().value;
 
     GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByIvk(
-        statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk());
+        statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk(), null);
+
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
     }
@@ -1970,7 +1971,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     FullViewingKey fvk = sk.fullViewingKey();
 
     GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByOvk(
-        statNum, endNum, fvk.getOvk(), SHIELDED_CONTRACT_ADDRESS);
+        statNum, endNum, fvk.getOvk(), SHIELDED_CONTRACT_ADDRESS, null);
+
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
     }
@@ -1986,7 +1988,8 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     byte[] ivk = fvk.inViewingKey().value;
 
     GrpcAPI.DecryptNotesTRC20 scannedNotes = wallet.scanShieldedTRC20NotesByIvk(
-        statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk());
+        statNum, endNum, SHIELDED_CONTRACT_ADDRESS, ivk, fvk.getAk(), fvk.getNk(), null);
+
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
     }

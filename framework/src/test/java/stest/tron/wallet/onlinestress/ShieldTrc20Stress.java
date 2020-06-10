@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -26,10 +27,13 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 
 @Slf4j
 public class ShieldTrc20Stress extends ZenTrc20Base {
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
   Optional<ShieldedAddressInfo> sendShieldAddressInfo;
   private BigInteger publicFromAmount;
   List<Note> shieldOutList = new ArrayList<>();
@@ -58,6 +62,10 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
     publicFromAmount = getRandomAmount();
     //startQureyNum = HttpMethed.getNowBlockNum(httpnode);
@@ -84,25 +92,23 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-
-
     BigInteger publicFromAmount = getRandomAmount();
     Optional<ShieldedAddressInfo> sendShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
-    Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
+    Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(
+        blockingStubFull);
     String memo = "Shield trc20 from T account to shield account in" + System.currentTimeMillis();
     String sendShieldAddress = sendShieldAddressInfo.get().getAddress();
 
     List<Note> shieldOutList = new ArrayList<>();
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
-        "" + publicFromAmount, memo,blockingStubFull);
+        "" + publicFromAmount, memo, blockingStubFull);
 
     //Create shiled trc20 parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,blockingStubFull
+        null, null, shieldOutList, "", 0L, blockingStubFull
     );
-
 
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
 
@@ -118,14 +124,13 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     List<GrpcAPI.DecryptNotesTRC20> inputList = new ArrayList<>();
     inputShieldAddressList.add(sendShieldAddressInfo.get());
 
-
     sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
         blockingStubFull1);
 
-          while (sendNote.getNoteTxsCount() == 0) {
-        sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
-            blockingStubFull1);
-      }
+    while (sendNote.getNoteTxsCount() == 0) {
+      sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
+          blockingStubFull1);
+    }
 
     Integer times = 20;
     while (times-- > 0) {
@@ -146,11 +151,9 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
 
       shieldOutList.clear();
       shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
-          "" + publicFromAmount, transferMemo,blockingStubFull);
+          "" + publicFromAmount, transferMemo, blockingStubFull);
 
       //logger.info("send note size:" + sendNote.getNoteTxsCount());
-
-
 
       //Create transfer parameters
       try {
@@ -158,11 +161,10 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
             .addNoteTxs(sendNote.getNoteTxs(sendNote.getNoteTxsCount() - 1)).build();
         shieldedTrc20Parameters
             = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-            inputNoteFor2to2,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull1);
+            inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull1);
       } catch (Exception e) {
 
       }
-
 
       Integer exit = 7;
       if (exit == 1) {
@@ -175,10 +177,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           zenTrc20TokenOwnerKey, blockingStubFull);
 
       //sendShieldAddressInfo = receiverShieldAddressInfo;
-
-
-
-
     }
 
   }
@@ -203,11 +201,9 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-
-
     Optional<ShieldedAddressInfo> sendShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
-    Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
-
+    Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(
+        blockingStubFull);
 
     Integer mintNumber = 40;
 
@@ -220,12 +216,12 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
       List<Note> shieldOutList = new ArrayList<>();
       shieldOutList.clear();
       shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
-          "" + publicFromAmount, memo,blockingStubFull);
+          "" + publicFromAmount, memo, blockingStubFull);
 
       //Create shiled trc20 parameters
       GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
           = createShieldedTrc20Parameters(publicFromAmount,
-          null,null,shieldOutList,"",0L,blockingStubFull
+          null, null, shieldOutList, "", 0L, blockingStubFull
       );
       String data="";
       try {
@@ -272,12 +268,11 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     Long endMintNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber();
 
-
-    GrpcAPI.DecryptNotesTRC20 sendNote = scanShieldedTrc20NoteByIvkWithRange(sendShieldAddressInfo.get(),
-        startmintNum.get(),endMintNum,blockingStubFull1);
+    GrpcAPI.DecryptNotesTRC20 sendNote = scanShieldedTrc20NoteByIvkWithRange(
+        sendShieldAddressInfo.get(),
+        startmintNum.get(), endMintNum, blockingStubFull1);
 
     noteNumber.addAndGet(sendNote.getNoteTxsCount());
-
 
     logger.info("sendNote size :" + sendNote.getNoteTxsCount());
 
@@ -287,22 +282,22 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
 
     inputShieldAddressList.add(sendShieldAddressInfo.get());
 
-
     List<String> dataList = new ArrayList<>();
-    for (int i = 0; i < sendNote.getNoteTxsCount() - 1;i = i + 2) {
+    for (int i = 0; i < sendNote.getNoteTxsCount() - 1; i = i + 2) {
       GrpcAPI.DecryptNotesTRC20 inputNoteFor2to2 = GrpcAPI.DecryptNotesTRC20.newBuilder()
           .addNoteTxs(sendNote.getNoteTxs(i))
-          .addNoteTxs(sendNote.getNoteTxs(i+1))
+          .addNoteTxs(sendNote.getNoteTxs(i + 1))
           .build();
-
 
       String transferMemo1 = "Transfer1 type test " + getRandomLongAmount() + getRandomLongAmount();
       String transferMemo2 = "Transfer2 type test " + getRandomLongAmount() + getRandomLongAmount();
       shieldOutList.clear();
-      shieldOutList = addShieldTrc20OutputList(shieldOutList, receiverShieldAddressInfo.get().getAddress(),
-          "" + sendNote.getNoteTxs(i).getNote().getValue(), transferMemo1,blockingStubFull);
-      shieldOutList = addShieldTrc20OutputList(shieldOutList, receiverShieldAddressInfo.get().getAddress(),
-          "" + sendNote.getNoteTxs(i+1).getNote().getValue(), transferMemo2,blockingStubFull);
+      shieldOutList = addShieldTrc20OutputList(shieldOutList,
+          receiverShieldAddressInfo.get().getAddress(),
+          "" + sendNote.getNoteTxs(i).getNote().getValue(), transferMemo1, blockingStubFull);
+      shieldOutList = addShieldTrc20OutputList(shieldOutList,
+          receiverShieldAddressInfo.get().getAddress(),
+          "" + sendNote.getNoteTxs(i + 1).getNote().getValue(), transferMemo2, blockingStubFull);
 
       GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters = null;
       if (i % 2 == 0) {
@@ -339,10 +334,8 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         }
       }
 
-
       dataList.add(encodeTransferParamsToHexString(shieldedTrc20Parameters));
       //logger.info("dataList size:" + dataList.size());
-
 
     }
 
@@ -360,12 +353,11 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
       }
     }
 
-    startTriggerNum.addAndGet(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
-        .getBlockHeader().getRawData().getNumber());
+    startTriggerNum
+        .addAndGet(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+            .getBlockHeader().getRawData().getNumber());
 
-
-
-    for (int i = 0; i < dataList.size();i++) {
+    for (int i = 0; i < dataList.size(); i++) {
       if (i % 2 == 0) {
         PublicMethed.triggerContract(shieldAddressByte,
             transfer, dataList.get(i), true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
@@ -406,7 +398,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   @Test(enabled = false, threadPoolSize = 1, invocationCount = 1)
   public void test04QueryResult() throws Exception {
 
-
     endTriggerNum.set(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber());
     Long endmintnum = endmintNum.longValue()/thread;
@@ -415,7 +406,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     logger.info("end   trigger block number: " + endTriggerNum.get());
     logger.info("Start mint block number: " + startmintNum.get());
     logger.info("End   mint block number: " + endmintnum);
-
 
     Integer success = 0;
     Integer failed = 0;
@@ -493,7 +483,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     logger.info("Failed  trigger times:" + triggerFailed);
     logger.info("Out of times  trigger times:" + triggerOutOfTime);
     logger.info("Not trigger times:" + notTriggerContract);
-
 
 
 

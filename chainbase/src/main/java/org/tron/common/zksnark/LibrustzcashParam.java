@@ -803,6 +803,97 @@ public class LibrustzcashParam {
   }
 
   /**
+   * cv: value commitments, 32 bytes anchor: 32 bytes nullifier: 32 bytes rk:
+   * spendAuthSig.randomizePublicKey, 32 bytes zkproof: spend proof, 192 bytes spendAuthSig: 64
+   * bytes sighashValue: sha256 of transaction, 32 bytes
+   */
+  public static class CheckSpendNewParams implements ValidParam {
+
+    @Setter
+    @Getter
+    private byte[] cv;
+    @Setter
+    @Getter
+    private byte[] anchor;
+    @Setter
+    @Getter
+    private byte[] nullifier;
+    @Setter
+    @Getter
+    private byte[] rk;
+    @Setter
+    @Getter
+    private byte[] zkproof;
+    @Setter
+    @Getter
+    private byte[] spendAuthSig;
+    @Setter
+    @Getter
+    private byte[] sighashValue;
+
+    public CheckSpendNewParams(byte[] cv, byte[] anchor, byte[] nullifier,
+        byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue)
+        throws ZksnarkException {
+      this.cv = cv;
+      this.anchor = anchor;
+      this.nullifier = nullifier;
+      this.rk = rk;
+      this.zkproof = zkproof;
+      this.spendAuthSig = spendAuthSig;
+      this.sighashValue = sighashValue;
+      valid();
+    }
+
+    @Override
+    public void valid() throws ZksnarkException {
+      valid32Params(cv);
+      valid32Params(anchor);
+      valid32Params(nullifier);
+      valid32Params(rk);
+      validParamLength(zkproof, 192);
+      validParamLength(spendAuthSig, 64);
+      valid32Params(sighashValue);
+    }
+  }
+
+  /**
+   * cv: value commitments, 32 bytes cm: note commitment, 32 bytes ephemeralKey: 32 bytes zkproof:
+   * 192 bytes
+   */
+  public static class CheckOutputNewParams implements ValidParam {
+
+    @Setter
+    @Getter
+    private byte[] cv;
+    @Setter
+    @Getter
+    private byte[] cm;
+    @Setter
+    @Getter
+    private byte[] ephemeralKey;
+    @Setter
+    @Getter
+    private byte[] zkproof;
+
+    public CheckOutputNewParams(byte[] cv, byte[] cm, byte[] ephemeralKey, byte[] zkproof)
+        throws ZksnarkException {
+      this.cv = cv;
+      this.cm = cm;
+      this.ephemeralKey = ephemeralKey;
+      this.zkproof = zkproof;
+      valid();
+    }
+
+    @Override
+    public void valid() throws ZksnarkException {
+      valid32Params(cv);
+      valid32Params(cm);
+      valid32Params(ephemeralKey);
+      validParamLength(zkproof, 192);
+    }
+  }
+
+  /**
    * bindingSig: 64 bytes sighashValue: sha256 of transaction,32 bytes,
    */
   public static class FinalCheckNewParams implements ValidParam {
