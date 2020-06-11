@@ -606,7 +606,7 @@ message NodeInfo {
     double cpuRate = 6;
     string javaVersion = 7;
     string osName = 8;
-    int64 jvmTotalMemoery = 9;
+    int64 jvmTotalMemory = 9;
     int64 jvmFreeMemory = 10;
     double processCpuRate = 11;
     repeated MemoryDescInfo memoryDescInfoList = 12;

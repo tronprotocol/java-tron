@@ -64,13 +64,19 @@ public class MaintenanceManager {
         beforeMaintenanceTime = nextMaintenanceTime;
         doMaintenance();
         updateWitnessValue(currentWitness);
-        //pbft sr msg
-        pbftManager.srPrePrepare(blockCapsule, currentWitness, nextMaintenanceTime);
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
+      if (blockNum != 1) {
+        //pbft sr msg
+        pbftManager.srPrePrepare(blockCapsule, currentWitness,
+            consensusDelegate.getNextMaintenanceTime());
+      }
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
     //pbft block msg
+    if (blockNum == 1) {
+      nextMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
+    }
     pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime);
   }
 

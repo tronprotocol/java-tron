@@ -76,7 +76,7 @@ public class NodeInfoService {
     machineInfo.setJavaVersion(runtimeMXBean.getSystemProperties().get("java.version"));
     machineInfo
         .setOsName(operatingSystemMXBean.getName() + " " + operatingSystemMXBean.getVersion());
-    machineInfo.setJvmTotalMemoery(memoryMXBean.getHeapMemoryUsage().getMax());
+    machineInfo.setJvmTotalMemory(memoryMXBean.getHeapMemoryUsage().getMax());
     machineInfo.setJvmFreeMemory(
         memoryMXBean.getHeapMemoryUsage().getMax() - memoryMXBean.getHeapMemoryUsage().getUsed());
     machineInfo.setProcessCpuRate(operatingSystemMXBean.getProcessCpuLoad());
