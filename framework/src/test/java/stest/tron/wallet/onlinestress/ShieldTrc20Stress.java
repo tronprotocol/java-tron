@@ -33,7 +33,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private String soliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(1);
+      .getStringList("solidityNode.ip.list").get(0);
   Optional<ShieldedAddressInfo> sendShieldAddressInfo;
   private BigInteger publicFromAmount;
   List<Note> shieldOutList = new ArrayList<>();
@@ -107,7 +107,8 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     //Create shiled trc20 parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null, null, shieldOutList, "", 0L, blockingStubFull
+        null, null, shieldOutList, "", 0L,
+        blockingStubFull,blockingStubSolidity
     );
 
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
@@ -161,7 +162,8 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
             .addNoteTxs(sendNote.getNoteTxs(sendNote.getNoteTxsCount() - 1)).build();
         shieldedTrc20Parameters
             = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-            inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull1);
+            inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L,
+            blockingStubFull1,blockingStubSolidity);
       } catch (Exception e) {
 
       }
@@ -221,7 +223,8 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
       //Create shiled trc20 parameters
       GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
           = createShieldedTrc20Parameters(publicFromAmount,
-          null, null, shieldOutList, "", 0L, blockingStubFull
+          null, null, shieldOutList, "",
+          0L, blockingStubFull,blockingStubSolidity
       );
       String data="";
       try {
@@ -304,12 +307,14 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         try {
           shieldedTrc20Parameters
               = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-              inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull1);
+              inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
+              0L, blockingStubFull1,blockingStubSolidity);
         } catch (Exception e) {
           try {
             shieldedTrc20Parameters
                 = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-                inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull);
+                inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
+                0L, blockingStubFull,blockingStubSolidity);
           } catch (Exception e1) {
 
           }
@@ -320,12 +325,14 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         try {
           shieldedTrc20Parameters
               = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-              inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull);
+              inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
+              0L, blockingStubFull,blockingStubSolidity);
         } catch (Exception e) {
           try {
             shieldedTrc20Parameters
                 = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-                inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull1);
+                inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
+                0L, blockingStubFull1,blockingStubSolidity);
           } catch (Exception e2) {
 
           }

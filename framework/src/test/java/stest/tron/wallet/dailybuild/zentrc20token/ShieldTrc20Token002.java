@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -27,6 +28,8 @@ public class ShieldTrc20Token002 extends ZenTrc20Base {
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
   Optional<ShieldedAddressInfo> receiverShieldAddressInfo;
   private BigInteger publicFromAmount;
   List<Note> shieldOutList = new ArrayList<>();
@@ -42,6 +45,10 @@ public class ShieldTrc20Token002 extends ZenTrc20Base {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     publicFromAmount = getRandomAmount();
   }
 
@@ -68,7 +75,8 @@ public class ShieldTrc20Token002 extends ZenTrc20Base {
     //Create shiled trc20 parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,blockingStubFull
+        null,null,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity
     );
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
 

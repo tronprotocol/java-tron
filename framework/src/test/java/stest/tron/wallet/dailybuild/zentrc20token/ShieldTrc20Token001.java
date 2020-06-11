@@ -31,6 +31,8 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 public class ShieldTrc20Token001 extends ZenTrc20Base{
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
 
   /**
    * constructor.

@@ -146,6 +146,12 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
     Assert.assertEquals(responseContent.getString("contract_address"),shieldAddress);
     Assert.assertEquals(responseContent.getJSONObject("receipt").getString("result"),"SUCCESS");
 
+
+    noteTxs = scanShieldTrc20NoteByOvk(httpnode,shieldAccountInfo);
+    logger.info("noteTxs ovk:" + noteTxs);
+    Assert.assertEquals(noteTxs.getJSONObject(0).getLong("to_amount"),publicFromAmount);
+    Assert.assertEquals(noteTxs.getJSONObject(0).getString("transparent_to_address"),zenTrc20TokenOwnerAddressString);
+    Assert.assertEquals(noteTxs.getJSONObject(0).getString("txid"),txid);
   }
 
 

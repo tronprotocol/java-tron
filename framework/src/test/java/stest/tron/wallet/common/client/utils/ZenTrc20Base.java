@@ -94,7 +94,7 @@ public class ZenTrc20Base {
   public static String deployShieldTxid;
   public static String mint = "mint(uint256,bytes32[9],bytes32[2],bytes32[21])";
   public static String transfer = "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])";
-  public static String burn = "burn(bytes32[10],bytes32[2],uint256,bytes32[2],address)";
+  public static String burn = "burn(bytes32[10],bytes32[2],uint256,bytes32[2],address,bytes32[3])";
   public Wallet wallet = new Wallet();
   static HttpResponse response;
   static HttpPost httppost;
@@ -181,7 +181,7 @@ public class ZenTrc20Base {
    */
   public GrpcAPI.ShieldedTRC20Parameters createShieldedTrc20Parameters(BigInteger publicFromAmount,
       GrpcAPI.DecryptNotesTRC20 inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,Long pubicToAmount,
-      WalletGrpc.WalletBlockingStub blockingStubFull) throws ZksnarkException {
+      WalletGrpc.WalletBlockingStub blockingStubFull,WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) throws ZksnarkException {
 
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder builder
         = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
@@ -303,8 +303,8 @@ public class ZenTrc20Base {
    * constructor.
    */
   public GrpcAPI.ShieldedTRC20Parameters createShieldedTrc20ParametersWithoutAsk(BigInteger publicFromAmount,
-      GrpcAPI.DecryptNotesTRC20 inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,Long pubicToAmount,
-      WalletGrpc.WalletBlockingStub blockingStubFull) throws ZksnarkException {
+      GrpcAPI.DecryptNotesTRC20 inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,byte[] receiverAddressbyte,Long pubicToAmount,
+      WalletGrpc.WalletBlockingStub blockingStubFull,WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) throws ZksnarkException {
 
 
     GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder builder
@@ -422,6 +422,15 @@ public class ZenTrc20Base {
       return null;
     }
 
+    GrpcAPI.ShieldedTRC20TriggerContractParameters.Builder stBuilder =
+        GrpcAPI.ShieldedTRC20TriggerContractParameters.newBuilder();
+    stBuilder.setShieldedTRC20Parameters(parameters);
+
+    if (parameters.getParameterType().equals("burn")) {
+      stBuilder.setAmount(pubicToAmount.toString());
+      stBuilder.setTransparentToAddress(ByteString.copyFrom(receiverAddressbyte));
+    }
+
 
     ByteString messageHash = parameters.getMessageHash();
     List<SpendDescription> spendDescList = parameters.getSpendDescriptionList();
@@ -436,8 +445,22 @@ public class ZenTrc20Base {
       BytesMessage authSig = blockingStubFull.createSpendAuthSig(builder1.build());
       newBuilder.getSpendDescriptionBuilder(i)
           .setSpendAuthoritySignature(
-              ByteString.copyFrom(
-                  authSig.getValue().toByteArray()));
+              ByteString.copyFrom(authSig.getValue().toByteArray()));
+
+      stBuilder.addSpendAuthoritySignature(authSig);
+      BytesMessage triggerInputData;
+      try {
+        triggerInputData = blockingStubFull.getTriggerInputForShieldedTRC20Contract(stBuilder.build());
+      } catch (Exception e) {
+        triggerInputData = null;
+        System.out.println("getTriggerInputForShieldedTRC20Contract error, please retry!");
+      }
+      if (triggerInputData == null) {
+        return null;
+      }
+      newBuilder.setTriggerContractInput(ByteArray.toHexString(triggerInputData.getValue().toByteArray()));
+
+
     }
     return newBuilder.build();
   }
@@ -668,6 +691,7 @@ public class ZenTrc20Base {
         .setIvk(ByteString.copyFrom(ByteArray.fromHexString(ivkString)))
         .setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)))
         .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
+        //.setEvents()
         .build();
     try {
       return blockingStubFull.scanShieldedTRC20NotesByIvk(parameters);

@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -28,6 +29,8 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 public class ShieldTrc20Token004 extends ZenTrc20Base {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
   Optional<ShieldedAddressInfo> senderShieldAddressInfo;
   Optional<ShieldedAddressInfo> receiverShieldAddressInfo;
   private BigInteger publicFromAmount;
@@ -53,6 +56,11 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     publicFromAmount = getRandomAmount();
 
     //Generate new shiled account for sender and receiver
@@ -66,8 +74,8 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     //Create mint parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,blockingStubFull
-    );
+        null,null,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity);
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
     String txid = PublicMethed.triggerContract(shieldAddressByte,
@@ -94,7 +102,8 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
    * constructor.
    */
   @Test(enabled = true, description = "Shield TRC20 transaction with type burn")
-  public void test01ShieldTrc20TransactionWithTypeTurn() throws Exception {
+  public void test01ShieldTrc20TransactionWithTypeBurn() throws Exception {
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     //Query account before mint balance
     final Long beforeBurnAccountBalance = getBalanceOfShieldTrc20(receiverAddressString,
         zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
@@ -108,10 +117,10 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        senderNote,inputShieldAddressList,null,receiverAddressString,receiveAmount.longValue(),blockingStubFull
-    );
+        senderNote,inputShieldAddressList,null,receiverAddressString,
+        receiveAmount.longValue(),blockingStubFull,blockingStubSolidity);
 
-    String data = encodeBurnParamsToHexString(shieldedTrc20Parameters,receiveAmount,receiverAddressString);
+    String data = shieldedTrc20Parameters.getTriggerContractInput();
     String txid = PublicMethed.triggerContract(shieldAddressByte,
         burn, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
@@ -144,6 +153,17 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
         receiveAmount);
     Assert.assertEquals(BigInteger.valueOf(beforeBurnShieldAccountBalance - afterBurnShieldAccountBalance),
         receiveAmount);
+
+
+    senderNote = scanShieldedTrc20NoteByOvk(senderShieldAddressInfo.get(),
+        blockingStubFull);
+    Assert.assertEquals(ByteArray.toHexString(senderNote.getNoteTxs(0).getTxid().toByteArray()),txid);
+    Assert.assertEquals(senderNote.getNoteTxs(0).getToAmount(),publicFromAmount.toString());
+
+    String to_address = "41" + ByteArray.toHexString(senderNote.getNoteTxs(0).getTransparentToAddress().toByteArray());
+    String receiverHexString = ByteArray.toHexString(PublicMethed.getFinalAddress(receiverKey));
+    Assert.assertEquals(to_address,receiverHexString);
+
 
   }
 

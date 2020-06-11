@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -25,6 +26,8 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 public class ShieldTrc20Token003 extends ZenTrc20Base {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
   Optional<ShieldedAddressInfo> senderShieldAddressInfo;
   Optional<ShieldedAddressInfo> receiverShieldAddressInfo;
   private BigInteger publicFromAmount;
@@ -43,6 +46,11 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     publicFromAmount = getRandomAmount();
 
     //Generate new shiled account for sender and receiver
@@ -56,14 +64,14 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
     //Create mint parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,blockingStubFull
-    );
+        null,null,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity);
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
     String txid = PublicMethed.triggerContract(shieldAddressByte,
         mint, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
@@ -98,10 +106,12 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        senderNote,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
-    );
+        senderNote,inputShieldAddressList,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity);
+
 
     String data = encodeTransferParamsToHexString(shieldedTrc20Parameters);
+    //String data = shieldedTrc20Parameters.getTriggerContractInput();
     String txid = PublicMethed.triggerContract(shieldAddressByte,
         transfer, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
@@ -141,6 +151,7 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
    */
   @Test(enabled = true, description = "Shield TRC20 transaction with type transfer without ask")
   public void test02ShieldTrc20TransactionWithTypeTransferWithoutAsk() throws Exception {
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     //Scan receiver note prepare for without type of transfer
     receiverNote = scanShieldedTrc20NoteByIvk(receiverShieldAddressInfo.get(),
         blockingStubFull);
@@ -154,8 +165,8 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20ParametersWithoutAsk(BigInteger.valueOf(0),
-        receiverNote,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
-    );
+        receiverNote,inputShieldAddressList,shieldOutList,"",null,0L,
+        blockingStubFull,blockingStubSolidity);
 
     String data = encodeTransferParamsToHexString(shieldedTrc20Parameters);
     String txid = PublicMethed.triggerContract(shieldAddressByte,

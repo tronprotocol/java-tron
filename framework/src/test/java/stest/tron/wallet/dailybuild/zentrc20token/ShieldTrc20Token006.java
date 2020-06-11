@@ -73,7 +73,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Create mint parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,blockingStubFull
+        null,null,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity
     );
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
@@ -102,6 +103,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
    */
   @Test(enabled = true, description = "Shield TRC20 transfer with type 1 to 2")
   public void test01ShieldTrc20TransferWith1To2() throws Exception {
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     //Prepare parameters
     String transferMemo1 = "1 to 2 for shieldAddressInfo1 " + System.currentTimeMillis();
     String transferMemo2 = "1 to 2 for shieldAddressInfo2 " + System.currentTimeMillis();
@@ -120,7 +122,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        shield1Note,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
+        shield1Note,inputShieldAddressList,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity
     );
 
     //Create transfer transaction
@@ -189,7 +192,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Create mint parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,blockingStubFull
+        null,null,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity
     );
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
@@ -197,6 +201,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         mint, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
@@ -227,7 +232,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Create transfer parameters
     shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        inputNoteFor2to2,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
+        inputNoteFor2to2,inputShieldAddressList,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity
     );
 
     //Create transfer transaction
@@ -287,6 +293,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
    */
   @Test(enabled = true, description = "Shield TRC20 transfer with type 2 to 1")
   public void test03ShieldTrc20TransferWith2To1() throws Exception {
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     shield2Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo2.get(),
         blockingStubFull);
 
@@ -305,7 +312,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        shield2Note,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
+        shield2Note,inputShieldAddressList,shieldOutList,"",0L,
+        blockingStubFull,blockingStubSolidity
     );
 
     //Create transfer transaction
