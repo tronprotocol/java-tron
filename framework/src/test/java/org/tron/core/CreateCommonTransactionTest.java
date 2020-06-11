@@ -88,7 +88,7 @@ public class CreateCommonTransactionTest {
     System.out.println(walletStub.broadcastTransaction(tx));
   }
 
-  public static void testCrossTxBack() {
+  public static void testFalseCrossTxBack() {
     WalletBlockingStub walletStub = WalletGrpc
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
             .usePlaintext(true)
@@ -98,6 +98,40 @@ public class CreateCommonTransactionTest {
         .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross2"))).setPrecision(0)
         .setChainId(Sha256Hash.wrap(ByteArray
             .fromHexString("0000000000000000d4b7cf850c78c1c779d19446edeafdfeb30875060e5dcee8"))
+            .getByteString());
+    CrossContract.Builder builder = CrossContract.newBuilder();
+    builder.setOwnerAddress(owner)
+        .setToChainId(Sha256Hash.wrap(ByteArray
+            .fromHexString("000000000000000019b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
+            .getByteString())
+        .setToAddress(owner).setOwnerChainId(Sha256Hash.wrap(
+        ByteArray.fromHexString("0000000000000000d4b7cf850c78c1c779d19446edeafdfeb30875060e5dcee8"))
+        .getByteString()).setType(CrossDataType.TOKEN).setData(crossToken.build().toByteString());
+    Transaction.Builder transaction = Transaction.newBuilder();
+    raw.Builder raw = Transaction.raw.newBuilder();
+    Contract.Builder contract = Contract.newBuilder();
+    contract.setType(ContractType.CrossContract)
+        .setParameter(Any.pack(builder.build()));
+    raw.addContract(contract.build());
+    transaction.setRawData(raw.build());
+    TransactionExtention transactionExtention = walletStub
+        .createCommonTransaction(transaction.build());
+    System.out.println("Common CrossContract: " + transactionExtention);
+    Transaction tx = PublicMethed
+        .addTransactionSign(transactionExtention.getTransaction(), pk, walletStub);
+    System.out.println(walletStub.broadcastTransaction(tx));
+  }
+
+  public static void testRightCrossTxBack() {
+    WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build());
+    CrossToken.Builder crossToken = CrossToken.newBuilder();
+    crossToken.setAmount(100).setTokenId(ByteString.copyFrom(ByteArray.fromString("1000001")))
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross2"))).setPrecision(0)
+        .setChainId(Sha256Hash.wrap(ByteArray
+            .fromHexString("000000000000000019b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
             .getByteString());
     CrossContract.Builder builder = CrossContract.newBuilder();
     builder.setOwnerAddress(owner)
@@ -172,7 +206,8 @@ public class CreateCommonTransactionTest {
   public static void main(String[] args) {
 //    testCreateUpdateBrokerageContract();
 //    testCrossTx();
-//    testCrossTxBack();
+//    testFalseCrossTxBack();
+//    testRightCrossTxBack();
     query();
 //    createAsset("testCross111");
   }

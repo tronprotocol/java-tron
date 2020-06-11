@@ -27,6 +27,8 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   private static final byte[] LATEST_PBFT_BLOCK_HASH = "LATEST_PBFT_BLOCK_HASH".getBytes();
   private static final byte[] NEXT_EPOCH = "NEXT_EPOCH".getBytes();
   private static final byte[] CURRENT_EPOCH = "CURRENT_EPOCH".getBytes();
+  private static final byte[] CHAIN_MAINTENANCE_KEY = "MAINTENANCE".getBytes();
+  private static final byte[] HEADER_HASH_KEY = "HEADER_HASH".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -85,16 +87,16 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     this.put(buildKey(LATEST_PBFT_BLOCK_NUM, chainId), Longs.toByteArray(number));
   }
 
-  public long getLatestSyncBlockNum(String chainId) {
+  public long getLatestHeaderBlockNum(String chainId) {
     return Optional.ofNullable(get(buildKey(LATEST_SYNC_BLOCK_NUM, chainId)))
         .map(ByteArray::toLong)
         .orElse(0L);
   }
 
-  public void saveLatestSyncBlockNum(String chainId, long number) {
-    if (number <= getLatestSyncBlockNum(chainId)) {
+  public void saveLatestHeaderBlockNum(String chainId, long number) {
+    if (number <= getLatestHeaderBlockNum(chainId)) {
       logger.warn("chainId: {}, sync number {} <= latest number {}",
-          chainId, number, getLatestSyncBlockNum(chainId));
+          chainId, number, getLatestHeaderBlockNum(chainId));
       return;
     }
     this.put(buildKey(LATEST_SYNC_BLOCK_NUM, chainId), Longs.toByteArray(number));
@@ -210,6 +212,41 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public void saveCurrentEpoch(String chainId, long currentEpoch) {
     this.put(buildKey(NEXT_EPOCH, chainId), ByteArray.fromLong(currentEpoch));
+  }
+
+  public void saveLatestBlockHeaderHash(String chainId, String blockHash) {
+    this.put(buildKey(HEADER_HASH_KEY, chainId), blockHash.getBytes());
+  }
+
+  public String getLatestBlockHeaderHash(String chainId) {
+    return Optional.ofNullable(get(buildKey(HEADER_HASH_KEY, chainId)))
+        .map(String::new)
+        .orElse(null);
+  }
+
+  public long getCrossNextMaintenanceTime(String chainId) {
+    return Optional.ofNullable(get(buildKey(CHAIN_MAINTENANCE_KEY, chainId)))
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveCrossNextMaintenanceTime(String chainId, long nextMaintenanceTime) {
+    this.put(buildKey(CHAIN_MAINTENANCE_KEY, chainId), ByteArray.fromLong(nextMaintenanceTime));
+  }
+
+  public void updateCrossNextMaintenanceTime(String chainId, long blockTime) {
+    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();//todo
+
+    long currentMaintenanceTime = getCrossNextMaintenanceTime(chainId);
+    long round = (blockTime - currentMaintenanceTime) / maintenanceTimeInterval;
+    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
+    saveCrossNextMaintenanceTime(chainId, nextMaintenanceTime);
+
+    logger.info(
+        "do update cross chain:{} nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
+        chainId, new DateTime(currentMaintenanceTime), new DateTime(blockTime),
+        new DateTime(nextMaintenanceTime)
+    );
   }
 
 }

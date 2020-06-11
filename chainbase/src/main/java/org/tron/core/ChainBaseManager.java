@@ -20,19 +20,19 @@ import org.tron.core.db.BlockHeaderIndexStore;
 import org.tron.core.db.BlockHeaderStore;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.CommonStore;
 import org.tron.core.db.CommonDataBase;
+import org.tron.core.db.CommonStore;
 import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.db.CrossStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -46,7 +46,6 @@ import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.store.HeaderDynamicPropertiesStore;
 import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
@@ -186,9 +185,6 @@ public class ChainBaseManager {
 
   @Autowired
   @Getter
-  private HeaderDynamicPropertiesStore headerPropertiesStore;
-  @Autowired
-  @Getter
   private BlockHeaderIndexStore blockHeaderIndexStore;
   @Autowired
   @Getter
@@ -237,7 +233,6 @@ public class ChainBaseManager {
     closeOneStore(pbftSignDataStore);
     closeOneStore(crossStore);
     closeOneStore(crossRevokingStore);
-    closeOneStore(headerPropertiesStore);
     closeOneStore(blockHeaderIndexStore);
     closeOneStore(blockHeaderStore);
   }
@@ -279,7 +274,7 @@ public class ChainBaseManager {
     return dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
   }
 
-  public void initGenesis(){
+  public void initGenesis() {
     genesisBlock = BlockUtil.newGenesisBlockCapsule();
   }
 
@@ -287,7 +282,6 @@ public class ChainBaseManager {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
   }
-
 
 
   /**
@@ -312,7 +306,6 @@ public class ChainBaseManager {
       return false;
     }
   }
-
 
 
   /**

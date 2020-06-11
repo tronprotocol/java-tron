@@ -35,7 +35,6 @@ import org.tron.core.db.BlockHeaderIndexStore;
 import org.tron.core.db.BlockHeaderStore;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.store.HeaderDynamicPropertiesStore;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.PBFTCommitResult;
 import org.tron.protos.Protocol.PBFTMessage;
@@ -52,8 +51,6 @@ public class HeaderManager {
   private Cache<String, Boolean> blockHeaderCache = CacheBuilder.newBuilder().initialCapacity(100)
       .maximumSize(10000).expireAfterWrite(10, TimeUnit.MINUTES).build();
 
-  @Autowired
-  private HeaderDynamicPropertiesStore headerPropertiesStore;
   @Autowired
   private BlockHeaderIndexStore blockHeaderIndexStore;
   @Autowired
@@ -92,15 +89,13 @@ public class HeaderManager {
           .saveSRL(chainId, raw.getEpoch(), signedBlockHeader.getSrList());
     }
     // DB don't need lower block
-    if (headerPropertiesStore.getLatestBlockHeaderHash(chainId) == null) {
+    if (chainBaseManager.getCommonDataBase().getLatestBlockHeaderHash(chainId) == null) {
       if (header.getNum() != 1) {
         throw new BadBlockException("header number not 1 is " + header.getNum());
       }
     } else {
-      if (header.getNum() <= headerPropertiesStore.getLatestBlockHeaderNumber(chainId)) {
-        throw new BadBlockException(
-            "header number " + header.getNum() + " <= " + headerPropertiesStore
-                .getLatestBlockHeaderNumber(chainId));
+      if (header.getNum() <= chainBaseManager.getCommonDataBase().getLatestHeaderBlockNum(chainId)) {
+        return;
       }
       if (blockHeaderStore.getUnchecked(chainId, header.getParentBlockId()) == null) {
         throw new BadBlockException("not exist parent");
@@ -108,18 +103,18 @@ public class HeaderManager {
     }
     //update maintenance time
     long blockTime = header.getTimeStamp();
-    long nextMaintenanceTime = headerPropertiesStore.getCrossNextMaintenanceTime(chainId);
+    long nextMaintenanceTime = chainBaseManager.getCommonDataBase()
+        .getCrossNextMaintenanceTime(chainId);
     if (nextMaintenanceTime <= blockTime) {
-      headerPropertiesStore.updateCrossNextMaintenanceTime(chainId, blockTime);
+      chainBaseManager.getCommonDataBase().updateCrossNextMaintenanceTime(chainId, blockTime);
     }
 
     chainBaseManager.getPbftSignDataStore()
         .putCrossBlockSignData(chainId, blockId.getNum(), new PbftSignCapsule(srsignlist));
     blockHeaderIndexStore.put(chainId, blockId);
     blockHeaderStore.put(chainId, header);
-    headerPropertiesStore.saveLatestBlockHeaderHash(chainId, blockId.toString());
-    headerPropertiesStore.saveLatestBlockHeaderNumber(chainId, blockId.getNum());
-    chainBaseManager.getCommonDataBase().saveLatestSyncBlockNum(chainId, blockId.getNum());
+    chainBaseManager.getCommonDataBase().saveLatestBlockHeaderHash(chainId, blockId.toString());
+    chainBaseManager.getCommonDataBase().saveLatestHeaderBlockNum(chainId, blockId.getNum());
 
     logger.info("save chain {} block header: {}", chainId, header);
   }

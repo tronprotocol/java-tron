@@ -177,7 +177,7 @@ public class BlockHeaderSyncHandler2 {
           try {
             needHandleHeight = unHandles.lastKey();
           } catch (NoSuchElementException e2) {
-            needHandleHeight = commonDataBase.getLatestSyncBlockNum(chainId);
+            needHandleHeight = commonDataBase.getLatestHeaderBlockNum(chainId);
           }
         }
       }
@@ -431,14 +431,14 @@ public class BlockHeaderSyncHandler2 {
     BlockId blockId = headerCapsule.getBlockId();
     blockHeaderIndexStore.put(chainId, blockId);
     blockHeaderStore.put(chainId, headerCapsule);
-    commonDataBase.saveLatestSyncBlockNum(chainId, blockId.getNum());
+    commonDataBase.saveLatestHeaderBlockNum(chainId, blockId.getNum());
   }
 
   public void saveLatestSyncBlockNum(BlockHeaderCapsule headerCapsule) {
     if (isSyncDisabled()) {
       String chainId = headerCapsule.getChainId();
       BlockId blockId = headerCapsule.getBlockId();
-      commonDataBase.saveLatestSyncBlockNum(chainId, blockId.getNum());
+      commonDataBase.saveLatestHeaderBlockNum(chainId, blockId.getNum());
     }
   }
 
@@ -484,7 +484,7 @@ public class BlockHeaderSyncHandler2 {
         long unSendHeight = unSends.first();
         if (unRecieves.containsKey(unSendHeight)
             || unHandles.containsKey(unSendHeight)
-            || unSendHeight <= commonDataBase.getLatestSyncBlockNum(chainId)) {
+            || unSendHeight <= commonDataBase.getLatestHeaderBlockNum(chainId)) {
           unSends.remove(unSendHeight);
           continue;
         }
@@ -678,13 +678,13 @@ public class BlockHeaderSyncHandler2 {
   }
 
   public byte[] getLatestSyncBlockHash(String chainId) throws ItemNotFoundException {
-    long latestSyncBlockHeight = commonDataBase.getLatestSyncBlockNum(chainId);
+    long latestSyncBlockHeight = commonDataBase.getLatestHeaderBlockNum(chainId);
     BlockId blockId = blockHeaderIndexStore.get(chainId, latestSyncBlockHeight);
     return blockId.getBytes();
   }
 
   public long getLatestSyncBlockHeight(String chainId) {
-    return commonDataBase.getLatestSyncBlockNum(chainId);
+    return commonDataBase.getLatestHeaderBlockNum(chainId);
   }
 
   public byte[] getFirstPBFTBlockHash(String chainId) throws ItemNotFoundException {

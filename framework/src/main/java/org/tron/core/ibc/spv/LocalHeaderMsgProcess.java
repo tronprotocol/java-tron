@@ -39,7 +39,7 @@ public class LocalHeaderMsgProcess {
     String chainIdString = ByteArray.toHexString(chainId);
     long blockHeight = requestMessage.getBlockHeight();
     long currentBlockheight = chainBaseManager.getCommonDataBase()
-        .getLatestSyncBlockNum(chainIdString);
+        .getLatestHeaderBlockNum(chainIdString);
 
     logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, "
         , peer, chainIdString, blockHeight, currentBlockheight);

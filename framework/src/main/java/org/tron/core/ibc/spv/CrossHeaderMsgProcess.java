@@ -92,7 +92,7 @@ public class CrossHeaderMsgProcess {
 
     logger.info("HandleUpdatedNotice, peer:{}, notice num:{}, chainId:{}",
         peer, noticeMessage.getCurrentBlockHeight(), chainIdStr);
-    long localLatestHeight = chainBaseManager.getCommonDataBase().getLatestSyncBlockNum(chainIdStr);
+    long localLatestHeight = chainBaseManager.getCommonDataBase().getLatestHeaderBlockNum(chainIdStr);
     if (noticeMessage.getCurrentBlockHeight() - localLatestHeight <= 1
         && noticeMessage.getCurrentBlockHeight() - localLatestHeight >= 0) {//
       syncDisabledMap.put(chainIdStr, true);
@@ -159,9 +159,9 @@ public class CrossHeaderMsgProcess {
     }
     if (sendHeight != null && sendHeight + 1 == blockHeaders.get(0).getBlockHeader().getRawData()
         .getNumber()) {
-      sendHeaderNumCache.invalidate(chainIdStr);
       syncBlockHeaderMap.put(chainIdStr,
           blockHeaders.get(blockHeaders.size() - 1).getBlockHeader().getRawData().getNumber());
+      sendHeaderNumCache.invalidate(chainIdStr);
     }
     logger.info("next sync header num:{}", syncBlockHeaderMap.get(chainIdStr));
     if (!chainHeaderCache.containsKey(chainIdStr)) {
@@ -206,9 +206,10 @@ public class CrossHeaderMsgProcess {
           syncDisabledMap.entrySet().forEach(entry -> {
             if (!entry.getValue() && sendHeaderNumCache.getIfPresent(entry.getKey()) == null) {
               Long syncHeaderNum = syncBlockHeaderMap.get(entry.getKey());
-              syncHeaderNum = syncHeaderNum == null ? 0 : syncHeaderNum;
+              syncHeaderNum = syncHeaderNum == null ? chainBaseManager.getCommonDataBase()
+                  .getLatestHeaderBlockNum(entry.getKey()) : syncHeaderNum;
               sendHeaderNumCache.put(entry.getKey(), syncHeaderNum);
-              sendService.submit(new SyncHeader(entry.getKey()));
+              sendService.submit(new SyncHeader(entry.getKey(), syncHeaderNum));
               sleep.set(false);
             }
           });
@@ -225,9 +226,11 @@ public class CrossHeaderMsgProcess {
   private class SyncHeader implements Runnable {
 
     private String chainId;
+    private Long syncHeaderNum;
 
-    public SyncHeader(String chainId) {
+    public SyncHeader(String chainId, Long syncHeaderNum) {
       this.chainId = chainId;
+      this.syncHeaderNum = syncHeaderNum;
     }
 
     @Override
@@ -238,11 +241,9 @@ public class CrossHeaderMsgProcess {
         peerConnectionList = syncPool.getActivePeers();
       }
       int index = new Random().nextInt(peerConnectionList.size());
-      Long headerNum = syncBlockHeaderMap.get(chainId);
-      headerNum = headerNum == null ? 0 : headerNum;
       peerConnectionList.get(index)
-          .sendMessage(new BlockHeaderRequestMessage(chainId, headerNum, SYNC_NUMBER));
-      logger.info("begin send request to:{}, header num:{}", chainId, headerNum);
+          .sendMessage(new BlockHeaderRequestMessage(chainId, syncHeaderNum, SYNC_NUMBER));
+      logger.info("begin send request to:{}, header num:{}", chainId, syncHeaderNum);
     }
   }
 
@@ -277,7 +278,7 @@ public class CrossHeaderMsgProcess {
       Boolean sync = syncDisabledMap.get(chainId);
       while (sync != null) {
         long localLatestHeight = chainBaseManager.getCommonDataBase()
-            .getLatestSyncBlockNum(chainId);
+            .getLatestHeaderBlockNum(chainId);
         try {
           SignedBlockHeader signedBlockHeader = chainHeaderCache.get(chainId)
               .getIfPresent(localLatestHeight + 1);
