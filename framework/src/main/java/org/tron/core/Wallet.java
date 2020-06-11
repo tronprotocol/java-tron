@@ -3019,7 +3019,7 @@ public class Wallet {
       for (ByteString bs : logTopicsList) {
         topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
       }
-      if (topicsList.isEmpty()) {
+      if (Objects.isNull(topicsList) || topicsList.isEmpty()) {
         if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS)) {
           return 1;
         } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_FOR_BURN)) {
@@ -3257,8 +3257,10 @@ public class Wallet {
           BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
           if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
               .equals(Hex.toHexString(decryptedAddress))) {
+            byte[] addressWithPrefix = new byte[21];
+            System.arraycopy(plaintext, 32, addressWithPrefix, 0, 21);
             builder.setToAmount(logAmount.toString(10))
-                .setTransparentToAddress(ByteString.copyFrom(logToAddress));
+                .setTransparentToAddress(ByteString.copyFrom(addressWithPrefix));
             return Optional.of(builder.build());
           }
         }
