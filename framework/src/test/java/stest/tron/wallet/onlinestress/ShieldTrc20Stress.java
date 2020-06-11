@@ -76,7 +76,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   /**wqs
    * constructor.
    */
-  @Test(enabled = true, threadPoolSize = 40, invocationCount = 40)
+  @Test(enabled = false, threadPoolSize = 50, invocationCount = 50)
   public void test01ScanAndCreateThenTrigger() throws Exception {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -187,7 +187,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   /**
    * constructor.
    */
-  @Test(enabled = false, threadPoolSize = 40, invocationCount = 40)
+  @Test(enabled = true, threadPoolSize = 40, invocationCount = 40)
   public void test02FirstScanCreateParameterThenCreateTrigger() throws Exception {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -207,7 +207,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(
         blockingStubFull);
 
-    Integer mintNumber = 40;
+    Integer mintNumber = 50;
 
     while (--mintNumber >= 0) {
       BigInteger publicFromAmount = getRandomAmount();
@@ -243,7 +243,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           mint, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
           zenTrc20TokenOwnerKey, blockingStubFull);
       try {
-        Thread.sleep(3000);
+        Thread.sleep(2000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -375,7 +375,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
             zenTrc20TokenOwnerKey, blockingStubFull1);
       }
       try {
-        Thread.sleep(800);
+        Thread.sleep(3000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -402,7 +402,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   /**
    * constructor.
    */
-  @Test(enabled = false, threadPoolSize = 1, invocationCount = 1)
+  @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)
   public void test04QueryResult() throws Exception {
 
     endTriggerNum.set(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())

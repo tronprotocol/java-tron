@@ -160,7 +160,7 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     Assert.assertEquals(ByteArray.toHexString(senderNote.getNoteTxs(0).getTxid().toByteArray()),txid);
     Assert.assertEquals(senderNote.getNoteTxs(0).getToAmount(),publicFromAmount.toString());
 
-    String to_address = "41" + ByteArray.toHexString(senderNote.getNoteTxs(0).getTransparentToAddress().toByteArray());
+    String to_address = ByteArray.toHexString(senderNote.getNoteTxs(0).getTransparentToAddress().toByteArray());
     String receiverHexString = ByteArray.toHexString(PublicMethed.getFinalAddress(receiverKey));
     Assert.assertEquals(to_address,receiverHexString);
 
