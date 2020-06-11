@@ -3019,7 +3019,7 @@ public class Wallet {
       for (ByteString bs : logTopicsList) {
         topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
       }
-      if (topicsList.isEmpty()) {
+      if (Objects.isNull(topicsList)) {
         if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS)) {
           return 1;
         } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_FOR_BURN)) {
