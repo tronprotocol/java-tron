@@ -20,14 +20,7 @@ public class GetAccountLastUnwithdrawRewardServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       byte[] address = Util.getAddress(request);
-      if (address != null) {
-        HashMap<String, Long> value = wallet
-            .computeUnwithdrawReward(address);
-        response.getWriter().println(Util.printRewardMapToJSON(value));
-      } else {
-        response.getWriter().println("{}");
-      }
-
+      fillResponse(address, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -38,15 +31,19 @@ public class GetAccountLastUnwithdrawRewardServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      if (build.getAddress().toByteArray() != null) {
-        HashMap<String, Long> value = wallet
-            .computeUnwithdrawReward(build.getAddress().toByteArray());
-        response.getWriter().println(Util.printRewardMapToJSON(value));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(build.getAddress().toByteArray(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(byte[] address, HttpServletResponse response) throws IOException {
+    if (address != null) {
+      HashMap<String, Long> value = wallet
+          .computeUnwithdrawReward(address);
+      response.getWriter().println(Util.printRewardMapToJSON(value));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }
