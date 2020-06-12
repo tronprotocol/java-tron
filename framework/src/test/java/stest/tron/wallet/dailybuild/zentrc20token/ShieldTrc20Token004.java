@@ -38,7 +38,7 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
   List<ShieldedAddressInfo> inputShieldAddressList = new ArrayList<>();
   List<GrpcAPI.DecryptNotesTRC20> inputNoteList = new ArrayList<>();
   GrpcAPI.DecryptNotesTRC20 senderNote;
-  long sender_position;
+  long senderPosition;
 
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -91,7 +91,7 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
         blockingStubFull);
     Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(),false);
     logger.info("" + senderNote);
-    sender_position =  senderNote.getNoteTxs(0).getPosition();
+    senderPosition =  senderNote.getNoteTxs(0).getPosition();
     Assert.assertEquals(senderNote.getNoteTxs(0).getNote().getValue(),
         publicFromAmount.longValue());
 
@@ -151,18 +151,20 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     logger.info("afterBurnShieldAccountBalance :" + afterBurnShieldAccountBalance);
     Assert.assertEquals(BigInteger.valueOf(afterBurnAccountBalance - beforeBurnAccountBalance),
         receiveAmount);
-    Assert.assertEquals(BigInteger.valueOf(beforeBurnShieldAccountBalance - afterBurnShieldAccountBalance),
-        receiveAmount);
+    Assert.assertEquals(BigInteger.valueOf(beforeBurnShieldAccountBalance
+            - afterBurnShieldAccountBalance), receiveAmount);
 
 
     senderNote = scanShieldedTrc20NoteByOvk(senderShieldAddressInfo.get(),
         blockingStubFull);
-    Assert.assertEquals(ByteArray.toHexString(senderNote.getNoteTxs(0).getTxid().toByteArray()),txid);
+    Assert.assertEquals(ByteArray.toHexString(senderNote.getNoteTxs(0)
+        .getTxid().toByteArray()),txid);
     Assert.assertEquals(senderNote.getNoteTxs(0).getToAmount(),publicFromAmount.toString());
 
-    String to_address = ByteArray.toHexString(senderNote.getNoteTxs(0).getTransparentToAddress().toByteArray());
+    String toAddress = ByteArray.toHexString(senderNote.getNoteTxs(0)
+        .getTransparentToAddress().toByteArray());
     String receiverHexString = ByteArray.toHexString(PublicMethed.getFinalAddress(receiverKey));
-    Assert.assertEquals(to_address,receiverHexString);
+    Assert.assertEquals(toAddress,receiverHexString);
 
 
   }

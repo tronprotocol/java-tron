@@ -35,7 +35,7 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
   List<ShieldedAddressInfo> inputShieldAddressList = new ArrayList<>();
   GrpcAPI.DecryptNotesTRC20 senderNote;
   GrpcAPI.DecryptNotesTRC20 receiverNote;
-  long sender_position;
+  long senderPosition;
 
   /**
    * constructor.
@@ -81,7 +81,7 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
         blockingStubFull);
     Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(),false);
     logger.info("" + senderNote);
-    sender_position =  senderNote.getNoteTxs(0).getPosition();
+    senderPosition =  senderNote.getNoteTxs(0).getPosition();
     Assert.assertEquals(senderNote.getNoteTxs(0).getNote().getValue(),
         publicFromAmount.longValue());
 
@@ -127,8 +127,10 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
 
     logger.info("" + receiverNote);
     Assert.assertEquals(receiverNote.getNoteTxs(0).getTxid(),infoById.get().getId());
-    Assert.assertEquals(receiverNote.getNoteTxs(0).getNote().getMemo(), ByteString.copyFromUtf8(transferMemo));
-    Assert.assertEquals(receiverNote.getNoteTxs(0).getNote().getValue(),publicFromAmount.longValue());
+    Assert.assertEquals(receiverNote.getNoteTxs(0).getNote().getMemo(),
+        ByteString.copyFromUtf8(transferMemo));
+    Assert.assertEquals(receiverNote.getNoteTxs(0).getNote().getValue(),
+        publicFromAmount.longValue());
     Assert.assertEquals(receiverNote.getNoteTxs(0).getNote().getPaymentAddress(),
         receiverShieldAddressInfo.get().getAddress());
 
@@ -157,7 +159,8 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
         blockingStubFull);
     String transferMemo = "Transfer type without ask test " + System.currentTimeMillis();
     shieldOutList.clear();
-    shieldOutList = addShieldTrc20OutputList(shieldOutList, senderShieldAddressInfo.get().getAddress(),
+    shieldOutList = addShieldTrc20OutputList(shieldOutList, senderShieldAddressInfo.get()
+            .getAddress(),
         "" + publicFromAmount, transferMemo,blockingStubFull);
     inputShieldAddressList.clear();
     inputShieldAddressList.add(receiverShieldAddressInfo.get());
@@ -184,8 +187,10 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
 
     logger.info("" + senderNote);
     Assert.assertEquals(senderNote.getNoteTxs(1).getTxid(),infoById.get().getId());
-    Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getMemo(), ByteString.copyFromUtf8(transferMemo));
-    Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getValue(),publicFromAmount.longValue());
+    Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getMemo(),
+        ByteString.copyFromUtf8(transferMemo));
+    Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getValue(),
+        publicFromAmount.longValue());
     Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getPaymentAddress(),
         senderShieldAddressInfo.get().getAddress());
 

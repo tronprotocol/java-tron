@@ -36,7 +36,7 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
   List<ShieldedAddressInfo> inputShieldAddressList = new ArrayList<>();
   List<GrpcAPI.DecryptNotesTRC20> inputNoteList = new ArrayList<>();
   GrpcAPI.DecryptNotesTRC20 senderNote;
-  long sender_position;
+  long senderPosition;
 
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -88,7 +88,7 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
         blockingStubFull);
     Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(),false);
     logger.info("" + senderNote);
-    sender_position =  senderNote.getNoteTxs(0).getPosition();
+    senderPosition =  senderNote.getNoteTxs(0).getPosition();
     Assert.assertEquals(senderNote.getNoteTxs(0).getNote().getValue(),
         publicFromAmount.longValue());
 
@@ -116,8 +116,7 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
         senderNote,inputShieldAddressList,null,receiverAddressString,receiverAddressbyte,
         receiveAmount.longValue(),blockingStubFull,blockingStubSolidity);
 
-    String data = encodeBurnParamsToHexString(shieldedTrc20Parameters,receiveAmount,receiverAddressString);
-    data = shieldedTrc20Parameters.getTriggerContractInput();
+    String data = shieldedTrc20Parameters.getTriggerContractInput();
     String txid = PublicMethed.triggerContract(shieldAddressByte,
         burn, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
@@ -148,7 +147,8 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
     logger.info("afterBurnShieldAccountBalance :" + afterBurnShieldAccountBalance);
     Assert.assertEquals(BigInteger.valueOf(afterBurnAccountBalance - beforeBurnAccountBalance),
         receiveAmount);
-    Assert.assertEquals(BigInteger.valueOf(beforeBurnShieldAccountBalance - afterBurnShieldAccountBalance),
+    Assert.assertEquals(BigInteger.valueOf(beforeBurnShieldAccountBalance
+            - afterBurnShieldAccountBalance),
         receiveAmount);
   }
 
