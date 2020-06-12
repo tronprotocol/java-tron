@@ -33,6 +33,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.ProtocolStringList;
 import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -214,10 +215,10 @@ public class Wallet {
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
-  private static final String SHIELDED_TRC20_LOG_TOPICS =
-      "58aa407d312e8d4017790223440ca1f60c54959864d7bd1d1ed37c82f72dfc1d";
-  private static final String SHIELDED_TRC20_LOG_TOPICS_FOR_BURN =
-      "1daf70c304f467a9efbc9ac1ca7bfe859a478aa6c4b88131b4dbb1547029b972";
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS = Hash.sha3(ByteArray.fromString(
+      "NewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_FOR_BURN = Hash.sha3(ByteArray
+      .fromString("TokenBurn(address,uint256,bytes32[3])"));
   @Getter
   private final SignInterface cryptoEngine;
   @Autowired
@@ -2872,8 +2873,8 @@ public class Wallet {
       }
 
       byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
-      if (ArrayUtils.isEmpty(transparentToAddress)) {
-        throw new ContractValidateException("No transparent TRC-20 output address");
+      if (ArrayUtils.isEmpty(transparentToAddress) || transparentToAddress.length != 21) {
+        throw new ContractValidateException("No valid transparent TRC-20 output address");
       }
 
       byte[] transparentToAddressTvm = new byte[20];
@@ -2986,7 +2987,7 @@ public class Wallet {
         throw new ContractValidateException("No shielded TRC-20 ak, nsk or ovk");
       }
       byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
-      if (ArrayUtils.isEmpty(transparentToAddress)) {
+      if (ArrayUtils.isEmpty(transparentToAddress) || transparentToAddress.length != 21) {
         throw new ContractValidateException("No transparent TRC-20 output address");
       }
       byte[] transparentToAddressTvm = new byte[20];
@@ -3004,29 +3005,48 @@ public class Wallet {
     return builder.build(false);
   }
 
-  private boolean isShieldedTRC20Log(TransactionInfo.Log log) {
-    List<ByteString> topicsList = log.getTopicsList();
-    if (topicsList.isEmpty()) {
-      return false;
+  private int getShieldedTRC20LogType(TransactionInfo.Log log, byte[] contractAddress,
+      ProtocolStringList topicsList) throws ZksnarkException {
+    byte[] logAddress = log.getAddress().toByteArray();
+    byte[] addressWithoutPrefix = new byte[20];
+    if (ArrayUtils.isEmpty(contractAddress) || contractAddress.length != 21) {
+      throw new ZksnarkException("invalid contract address");
     }
-
-    byte[] topicsBytes = new byte[0];
-    for (ByteString bs : topicsList) {
-      topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
+    System.arraycopy(contractAddress, 1, addressWithoutPrefix, 0, 20);
+    if (Arrays.equals(logAddress, addressWithoutPrefix)) {
+      List<ByteString> logTopicsList = log.getTopicsList();
+      byte[] topicsBytes = new byte[0];
+      for (ByteString bs : logTopicsList) {
+        topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
+      }
+      if (Objects.isNull(topicsList) || topicsList.isEmpty()) {
+        if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS)) {
+          return 1;
+        } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_FOR_BURN)) {
+          return 2;
+        }
+      } else {
+        for (String topic : topicsList) {
+          byte[] topicHash = Hash.sha3(ByteArray.fromString(topic));
+          if (topic.toLowerCase().contains("leaf") && Arrays.equals(topicsBytes, topicHash)) {
+            return 1;
+          } else if (topic.toLowerCase().contains("burn") && Arrays
+              .equals(topicsBytes, topicHash)) {
+            return 2;
+          }
+        }
+      }
     }
-
-    String topicsHexStr = Hex.toHexString(topicsBytes);
-    return topicsHexStr.equals(SHIELDED_TRC20_LOG_TOPICS) || topicsHexStr
-        .equals(SHIELDED_TRC20_LOG_TOPICS_FOR_BURN);
+    return 0;
   }
 
   private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogListByIvk(
       DecryptNotesTRC20.NoteTx.Builder builder,
-      TransactionInfo.Log log, byte[] ivk, byte[] ak, byte[] nk, byte[] contractAddress)
+      TransactionInfo.Log log, byte[] ivk, byte[] ak, byte[] nk, byte[] contractAddress,
+      int logType)
       throws ZksnarkException, ContractExeException {
     byte[] logData = log.getData().toByteArray();
-
-    if (!ArrayUtils.isEmpty(logData) && logData.length == 800) {
+    if (!ArrayUtils.isEmpty(logData) && logType == 1) {
       // Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
       long pos = ByteArray.toLong(ByteArray.subArray(logData, 0, 32));
       byte[] cm = ByteArray.subArray(logData, 32, 64);
@@ -3064,7 +3084,8 @@ public class Wallet {
   }
 
   private DecryptNotesTRC20 queryTRC20NoteByIvk(long startNum, long endNum,
-      byte[] shieldedTRC20ContractAddress, byte[] ivk, byte[] ak, byte[] nk)
+      byte[] shieldedTRC20ContractAddress, byte[] ivk, byte[] ak, byte[] nk,
+      ProtocolStringList topicsList)
       throws BadItemException, ZksnarkException, ContractExeException {
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
       throw new BadItemException(
@@ -3074,35 +3095,33 @@ public class Wallet {
 
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
-
     for (Block block : blockList.getBlockList()) {
       for (Transaction transaction : block.getTransactionsList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txId = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txId));
-
-        if (info != null && Arrays
-            .equals(info.getContractAddress().toByteArray(), shieldedTRC20ContractAddress)) {
-          DecryptNotesTRC20.NoteTx.Builder noteBuilder;
+        DecryptNotesTRC20.NoteTx.Builder noteBuilder;
+        if (!Objects.isNull(info)) {
           List<TransactionInfo.Log> logList = info.getLogList();
-          Optional<DecryptNotesTRC20.NoteTx> noteTx;
-
-          int index = 0;
-          for (TransactionInfo.Log log : logList) {
-            if (isShieldedTRC20Log(log)) {
-              noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
-              noteBuilder.setTxid(ByteString.copyFrom(txId));
-              noteBuilder.setIndex(index);
-              index += 1;
-              noteTx = getNoteTxFromLogListByIvk(noteBuilder, log, ivk, ak, nk,
-                  shieldedTRC20ContractAddress);
-              noteTx.ifPresent(builder::addNoteTxs);
+          if (!Objects.isNull(logList)) {
+            Optional<DecryptNotesTRC20.NoteTx> noteTx;
+            int index = 0;
+            for (TransactionInfo.Log log : logList) {
+              int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress, topicsList);
+              if (logType > 0) {
+                noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+                noteBuilder.setTxid(ByteString.copyFrom(txId));
+                noteBuilder.setIndex(index);
+                index += 1;
+                noteTx = getNoteTxFromLogListByIvk(noteBuilder, log, ivk, ak, nk,
+                    shieldedTRC20ContractAddress, logType);
+                noteTx.ifPresent(builder::addNoteTxs);
+              }
             }
           }
         }
       } //end of transaction
     } //end of blocklist
-
     return builder.build();
   }
 
@@ -3163,7 +3182,6 @@ public class Wallet {
       for (ByteString bs : list) {
         listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
       }
-
       return Arrays.equals(nf, listBytes);
     } else {
       // trigger contract failed
@@ -3173,20 +3191,20 @@ public class Wallet {
 
   public DecryptNotesTRC20 scanShieldedTRC20NotesByIvk(
       long startNum, long endNum, byte[] shieldedTRC20ContractAddress,
-      byte[] ivk, byte[] ak, byte[] nk)
+      byte[] ivk, byte[] ak, byte[] nk, ProtocolStringList topicsList)
       throws BadItemException, ZksnarkException, ContractExeException {
     checkFullNodeAllowShieldedTransaction();
 
     return queryTRC20NoteByIvk(startNum, endNum,
-        shieldedTRC20ContractAddress, ivk, ak, nk);
+        shieldedTRC20ContractAddress, ivk, ak, nk, topicsList);
   }
 
   private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogListByOvk(
       DecryptNotesTRC20.NoteTx.Builder builder,
-      TransactionInfo.Log log, byte[] ovk) throws ZksnarkException {
+      TransactionInfo.Log log, byte[] ovk, int logType) throws ZksnarkException {
     byte[] logData = log.getData().toByteArray();
     if (!ArrayUtils.isEmpty(logData)) {
-      if (logData.length == 800) {
+      if (logType == 1) {
         //Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
         byte[] cm = ByteArray.subArray(logData, 32, 64);
         byte[] cv = ByteArray.subArray(logData, 64, 96);
@@ -3221,7 +3239,7 @@ public class Wallet {
             return Optional.of(builder.build());
           }
         }
-      } else if (logData.length == 160) {
+      } else if (logType == 2) {
         //Data = toAddress(32) + value(32) + ciphertext(80) + padding(16)
         byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
         byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
@@ -3239,8 +3257,10 @@ public class Wallet {
           BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
           if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
               .equals(Hex.toHexString(decryptedAddress))) {
+            byte[] addressWithPrefix = new byte[21];
+            System.arraycopy(plaintext, 32, addressWithPrefix, 0, 21);
             builder.setToAmount(logAmount.toString(10))
-                .setTransparentToAddress(ByteString.copyFrom(logToAddress));
+                .setTransparentToAddress(ByteString.copyFrom(addressWithPrefix));
             return Optional.of(builder.build());
           }
         }
@@ -3250,7 +3270,8 @@ public class Wallet {
   }
 
   public DecryptNotesTRC20 scanShieldedTRC20NotesByOvk(long startNum, long endNum,
-      byte[] ovk, byte[] shieldedTRC20ContractAddress) throws ZksnarkException, BadItemException {
+      byte[] ovk, byte[] shieldedTRC20ContractAddress, ProtocolStringList topicsList)
+      throws ZksnarkException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
 
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
@@ -3265,20 +3286,22 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txid));
-        if (info != null && Arrays.equals(info.getContractAddress().toByteArray(),
-            shieldedTRC20ContractAddress)) {
-          DecryptNotesTRC20.NoteTx.Builder noteBuilder;
+        DecryptNotesTRC20.NoteTx.Builder noteBuilder;
+        if (!Objects.isNull(info)) {
           List<TransactionInfo.Log> logList = info.getLogList();
-          Optional<DecryptNotesTRC20.NoteTx> noteTx;
-          int index = 0;
-          for (TransactionInfo.Log log : logList) {
-            if (isShieldedTRC20Log(log)) {
-              noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
-              noteBuilder.setTxid(ByteString.copyFrom(txid));
-              noteBuilder.setIndex(index);
-              index += 1;
-              noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk);
-              noteTx.ifPresent(builder::addNoteTxs);
+          if (!Objects.isNull(logList)) {
+            Optional<DecryptNotesTRC20.NoteTx> noteTx;
+            int index = 0;
+            for (TransactionInfo.Log log : logList) {
+              int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress, topicsList);
+              if (logType > 0) {
+                noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+                noteBuilder.setTxid(ByteString.copyFrom(txid));
+                noteBuilder.setIndex(index);
+                index += 1;
+                noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk, logType);
+                noteTx.ifPresent(builder::addNoteTxs);
+              }
             }
           }
         }
@@ -3334,7 +3357,7 @@ public class Wallet {
 
   /**
    * trigger contract to get the scalingFactor, and check the public amount,
-   * */
+   */
   private long[] checkPublicAmount(byte[] address, BigInteger fromAmount, BigInteger toAmount)
       throws ContractExeException, ContractValidateException {
     checkBigIntegerRange(fromAmount);
@@ -3442,7 +3465,11 @@ public class Wallet {
     byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
     byte[] transparentToAddressTvm = new byte[20];
     if (!ArrayUtils.isEmpty(transparentToAddress)) {
-      System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
+      if (transparentToAddress.length == 21) {
+        System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
+      } else {
+        throw new ZksnarkException("invalid transparent to address");
+      }
     }
     String parameterType = shieldedTRC20Parameters.getParameterType();
     if (shieldedTRC20Parameters.getSpendDescriptionList().size() != spendAuthoritySignature
