@@ -53,6 +53,8 @@ public class HttpSelfFormatFieldName {
     //ShieldedTRC20TriggerContractParameters
     AddressFieldNameMap.put(
         "protocol.ShieldedTRC20TriggerContractParameters.transparent_to_address", 1);
+    AddressFieldNameMap.put(
+        "protocol.DecryptNotesTRC20.NoteTx.transparent_to_address", 1);
 
     //***** Contract.proto *****
     //AccountCreateContract
