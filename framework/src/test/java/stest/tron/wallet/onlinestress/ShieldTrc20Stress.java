@@ -483,6 +483,8 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
       }
     }
 
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+
     Long endMintNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber();
 
