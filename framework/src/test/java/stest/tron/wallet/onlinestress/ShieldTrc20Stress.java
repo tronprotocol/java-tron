@@ -187,7 +187,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   /**
    * constructor.
    */
-  @Test(enabled = true, threadPoolSize = 40, invocationCount = 40)
+  @Test(enabled = false, threadPoolSize = 40, invocationCount = 40)
   public void test02FirstScanCreateParameterThenCreateTrigger() throws Exception {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -372,6 +372,212 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
       } else {
         PublicMethed.triggerContract(shieldAddressByte,
             transfer, dataList.get(i), true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
+            zenTrc20TokenOwnerKey, blockingStubFull1);
+      }
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    finishTriggerNumber.addAndGet(1);
+
+
+    while (finishTriggerNumber.get() != thread) {
+      try {
+        Thread.sleep(3000);
+        if(finishTriggerNumber.get() % 10 == 0) {
+          logger.info(
+              "Wait all thread finished trigger ,current finished thread is :" + finishTriggerNumber
+                  .get());
+        }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+
+
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, threadPoolSize = 40, invocationCount = 40)
+  public void test03BurnStress() throws Exception {
+    ManagedChannel channelFull = null;
+    WalletGrpc.WalletBlockingStub blockingStubFull = null;
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    ManagedChannel channelFull1 = null;
+    WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
+
+    Optional<ShieldedAddressInfo> sendShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
+    Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(
+        blockingStubFull);
+
+    Integer mintNumber = 25;
+
+    while (--mintNumber >= 0) {
+      BigInteger publicFromAmount = getRandomAmount();
+
+      String memo = "Shield trc20 from T account to shield account in" + System.currentTimeMillis();
+      String sendShieldAddress = sendShieldAddressInfo.get().getAddress();
+
+      List<Note> shieldOutList = new ArrayList<>();
+      shieldOutList.clear();
+      shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
+          "" + publicFromAmount, memo, blockingStubFull);
+
+      //Create shiled trc20 parameters
+      GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
+          = createShieldedTrc20Parameters(publicFromAmount,
+          null, null, shieldOutList, "",
+          0L, blockingStubFull,blockingStubSolidity
+      );
+      String data="";
+      try {
+        data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
+      } catch (Exception e) {
+        try {
+          data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
+        }
+        catch (Exception e1) {
+          continue;
+        }
+
+      }
+
+      String txid = PublicMethed.triggerContract(shieldAddressByte,
+          mint, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
+          zenTrc20TokenOwnerKey, blockingStubFull);
+      try {
+        Thread.sleep(2000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+
+    }
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    finishMintNumber.addAndGet(1);
+    endmintNum.getAndAdd(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+        .getBlockHeader().getRawData().getNumber());
+
+    while (finishMintNumber.get() != thread) {
+      try {
+        Thread.sleep(3000);
+        if(finishMintNumber.get() % 10 == 0) {
+          logger.info(
+              "Wait all thread finished mint,current finished thread is :" + finishMintNumber
+                  .get());
+        }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+
+    Long endMintNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+        .getBlockHeader().getRawData().getNumber();
+
+    GrpcAPI.DecryptNotesTRC20 sendNote = scanShieldedTrc20NoteByIvkWithRange(
+        sendShieldAddressInfo.get(),
+        startmintNum.get(), endMintNum, blockingStubFull1);
+
+    noteNumber.addAndGet(sendNote.getNoteTxsCount());
+
+    logger.info("sendNote size :" + sendNote.getNoteTxsCount());
+
+    List<Note> shieldOutList = new ArrayList<>();
+
+    List<ShieldedAddressInfo> inputShieldAddressList = new ArrayList<>();
+
+    inputShieldAddressList.add(sendShieldAddressInfo.get());
+
+    List<String> dataList = new ArrayList<>();
+    for (int i = 0; i < sendNote.getNoteTxsCount(); i++) {
+      String burnnMemo1 = "burnnMemo1 type test " + getRandomLongAmount() + getRandomLongAmount();
+      GrpcAPI.DecryptNotesTRC20 burnInput = GrpcAPI.DecryptNotesTRC20.newBuilder()
+          .addNoteTxs(sendNote.getNoteTxs(i))
+          .build();
+
+      GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters = null;
+          createShieldedTrc20Parameters(BigInteger.valueOf(0),
+          burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
+          burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull,blockingStubSolidity);
+
+
+      if (i % 2 == 0) {
+        try {
+          shieldedTrc20Parameters = createShieldedTrc20Parameters(BigInteger.valueOf(0),
+              burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
+              burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull,blockingStubSolidity);
+        } catch (Exception e) {
+          try {
+            shieldedTrc20Parameters = createShieldedTrc20Parameters(BigInteger.valueOf(0),
+                burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
+                burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull1,blockingStubSolidity);
+          } catch (Exception e1) {
+
+          }
+
+        }
+
+      } else {
+        try {
+          shieldedTrc20Parameters = createShieldedTrc20Parameters(BigInteger.valueOf(0),
+              burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
+              burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull,blockingStubSolidity);
+        } catch (Exception e) {
+          try {
+            shieldedTrc20Parameters = createShieldedTrc20Parameters(BigInteger.valueOf(0),
+                burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
+                burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull1,blockingStubSolidity);
+          } catch (Exception e1) {
+
+          }
+
+
+        }
+      }
+
+
+      dataList.add(shieldedTrc20Parameters.getTriggerContractInput());
+
+    }
+
+    finishCreateParameterNumber.addAndGet(1);
+    dataNumber.addAndGet(dataList.size());
+    while (finishCreateParameterNumber.get() != thread) {
+      try {
+        Thread.sleep(3000);
+        if(finishCreateParameterNumber.get() % 10 == 0) {
+          logger.info("Wait all thread finished create parameter ,current finished thread is :"
+              + finishCreateParameterNumber.get());
+        }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+
+    startTriggerNum
+        .addAndGet(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+            .getBlockHeader().getRawData().getNumber());
+
+    for (int i = 0; i < dataList.size(); i++) {
+      if (i % 2 == 0) {
+        PublicMethed.triggerContract(shieldAddressByte,
+            burn, dataList.get(i), true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
+            zenTrc20TokenOwnerKey, blockingStubFull);
+      } else {
+        PublicMethed.triggerContract(shieldAddressByte,
+            burn, dataList.get(i), true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
             zenTrc20TokenOwnerKey, blockingStubFull1);
       }
       try {
