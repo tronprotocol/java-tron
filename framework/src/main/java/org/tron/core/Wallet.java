@@ -3072,8 +3072,13 @@ public class Wallet {
             .setMemo(ByteString.copyFrom(stripRightZero(noteText.getMemo())))
             .build();
 
+        byte[] nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
+        if (Objects.isNull(nf)) {
+          throw new ZksnarkException("compute nullifier error");
+        }
+        builder.setNf(ByteString.copyFrom(nf));
         if (!(ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nk))) {
-          builder.setIsSpent(isShieldedTRC20NoteSpent(note, pos, ak, nk, contractAddress));
+          builder.setIsSpent(isShieldedTRC20NoteSpent(nf, contractAddress));
         }
 
         return Optional.of(builder.setNote(note).setPosition(pos).build());
@@ -3125,14 +3130,8 @@ public class Wallet {
     return builder.build();
   }
 
-  private boolean isShieldedTRC20NoteSpent(GrpcAPI.Note note, long pos, byte[] ak,
-      byte[] nk, byte[] contractAddress)
-      throws ZksnarkException, ContractExeException {
-    byte[] nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
-    if (Objects.isNull(nf)) {
-      throw new ZksnarkException("compute nullifier error");
-    }
-
+  private boolean isShieldedTRC20NoteSpent(byte[] nf, byte[] contractAddress)
+      throws ContractExeException {
     String methodSign = "nullifiers(bytes32)";
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
@@ -3337,12 +3336,22 @@ public class Wallet {
   public GrpcAPI.NullifierResult isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request) throws
       ZksnarkException, ContractExeException {
     checkFullNodeAllowShieldedTransaction();
-
+    byte[] nf = request.getNf().toByteArray();
+    if (ArrayUtils.isEmpty(nf)) {
+      GrpcAPI.Note note = request.getNote();
+      long pos = request.getPosition();
+      byte[] ak = request.getAk().toByteArray();
+      byte[] nk = request.getNk().toByteArray();
+      if (Objects.isNull(note) || pos < 0 || ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nk)) {
+        throw new ZksnarkException("invalid shielded TRC-20 nullifier parameters");
+      }
+      nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
+    }
+    if (Objects.isNull(nf) || nf.length != 32) {
+      throw new ZksnarkException("get nullifier error");
+    }
     return GrpcAPI.NullifierResult.newBuilder()
-        .setIsSpent(isShieldedTRC20NoteSpent(request.getNote(),
-            request.getPosition(),
-            request.getAk().toByteArray(),
-            request.getNk().toByteArray(),
+        .setIsSpent(isShieldedTRC20NoteSpent(nf,
             request.getShieldedTRC20ContractAddress().toByteArray()))
         .build();
   }

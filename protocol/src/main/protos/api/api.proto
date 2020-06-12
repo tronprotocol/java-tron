@@ -1411,6 +1411,7 @@ message DecryptNotesTRC20 {
     int32 index = 5; //the index of note in txid
     string to_amount = 6;
     bytes transparent_to_address = 7;
+    bytes nf = 8;
   }
   repeated NoteTx noteTxs = 1;
 }
@@ -1421,6 +1422,7 @@ message NfTRC20Parameters {
   bytes nk = 3;
   int64 position = 4;
   bytes shielded_TRC20_contract_address = 5;
+  bytes nf = 6;
 }
 
 message NullifierResult {
