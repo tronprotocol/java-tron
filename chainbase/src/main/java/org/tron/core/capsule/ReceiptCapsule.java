@@ -43,7 +43,7 @@ public class ReceiptCapsule {
   public static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
     long blockNum = ds.getLatestBlockHeaderNumber();
     return blockNum >= CommonParameter.getInstance()
-        .getBlockNumForEneryLimit();
+        .getBlockNumForEnergyLimit();
   }
 
   public ResourceReceipt getReceipt() {
