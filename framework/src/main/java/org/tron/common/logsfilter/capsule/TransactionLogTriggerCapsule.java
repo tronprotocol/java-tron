@@ -149,7 +149,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       }
 
       // internal transaction
-      transactionLogTrigger.setInternalTrananctionList(
+      transactionLogTrigger.setInternalTransactionList(
           getInternalTransactionList(programResult.getInternalTransactions()));
     }
   }
