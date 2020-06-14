@@ -292,7 +292,7 @@ public class KhaosDatabase extends TronDatabase {
 
     private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
     // private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
-    private int maxCapcity = 1024;
+    private int maxCapacity = 1024;
 
     @Getter
     private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
@@ -300,7 +300,7 @@ public class KhaosDatabase extends TronDatabase {
 
           @Override
           protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
-            long minNum = Long.max(0L, head.num - maxCapcity);
+            long minNum = Long.max(0L, head.num - maxCapacity);
             Map<Long, ArrayList<KhaosBlock>> minNumMap = numKblkMap.entrySet().stream()
                 .filter(e -> e.getKey() < minNum)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -314,8 +314,8 @@ public class KhaosDatabase extends TronDatabase {
           }
         };
 
-    public void setMaxCapcity(int maxCapcity) {
-      this.maxCapcity = maxCapcity;
+    public void setMaxCapcity(int maxCapacity) {
+      this.maxCapacity = maxCapacity;
     }
 
     public void insert(KhaosBlock block) {
