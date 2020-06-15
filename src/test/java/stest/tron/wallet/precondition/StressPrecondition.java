@@ -162,11 +162,11 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(21L, 1L);
       }
-/*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowProtoFilterNum") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowShieldedTRC20Transaction") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(24L, 1L);
-      }*/
+        proposalMap.put(39L, 1L);
+      }
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAdaptiveResourceLimitTargetRatio") && getChainParameters.get().getChainParameter(i).getValue() == 10) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
