@@ -301,7 +301,7 @@ public class ShieldedTRC20ParametersBuilder {
                     encodeCencCout(receiveDescription));
           }
           mergedBytes = ByteUtil
-              .merge(mergedBytes, transparentToAddress, ByteArray.fromLong(spend.note.getValue()));
+              .merge(mergedBytes, transparentToAddress, ByteArray.fromLong(valueBalance));
           value = transparentToAmount;
           builder.setParameterType("burn");
           break;
@@ -468,7 +468,7 @@ public class ShieldedTRC20ParametersBuilder {
     byte[] payTo = new byte[32];
     byte[] spendAuthSign = new byte[0];
     if (value.compareTo(BigInteger.ZERO) <= 0) {
-      throw new IllegalArgumentException("the value must be non-negative");
+      throw new IllegalArgumentException("the value must be positive");
     }
     if (ArrayUtils.isEmpty(transparentToAddress)) {
       throw new IllegalArgumentException("the transparent payTo address is null");

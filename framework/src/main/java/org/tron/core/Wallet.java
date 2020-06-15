@@ -218,7 +218,7 @@ public class Wallet {
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_MINT = Hash.sha3(ByteArray.fromString(
       "MintNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_TRANSFER = Hash.sha3(ByteArray.fromString(
-      "TransferNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21]) "));
+      "TransferNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_LEAF = Hash.sha3(ByteArray.fromString(
       "BurnNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
@@ -2835,8 +2835,12 @@ public class Wallet {
     int receiveSize = shieldedReceives.size();
     long totalToAmount = 0;
     if (scaledToAmount > 0) {
-      totalToAmount = receiveSize == 0 ? scaledToAmount
-          : (scaledToAmount + shieldedReceives.get(0).getNote().getValue());
+      try {
+        totalToAmount = receiveSize == 0 ? scaledToAmount
+            : (Math.addExact(scaledToAmount, shieldedReceives.get(0).getNote().getValue()));
+      } catch (ArithmeticException e) {
+        throw new ZksnarkException("Unbalanced burn!");
+      }
     }
 
     if (scaledFromAmount > 0 && spendSize == 0 && receiveSize == 1
@@ -2895,7 +2899,7 @@ public class Wallet {
           .encryptBurnMessageByOvk(ovk, toAmount, transparentToAddress);
       cipher.ifPresent(builder::setBurnCiphertext);
 
-      ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, null);
+      ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
       buildShieldedTRC20Input(builder, spendNote, expsk);
       if (receiveSize == 1) {
