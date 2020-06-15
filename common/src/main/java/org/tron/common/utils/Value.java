@@ -115,11 +115,6 @@ public class Value {
     return ByteUtil.EMPTY_BYTE_ARRAY;
   }
 
-
-  public int[] asSlice() {
-    return (int[]) value;
-  }
-
   public Value get(int index) {
     if (isList()) {
       // Guard for OutOfBounds
