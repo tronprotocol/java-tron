@@ -215,9 +215,13 @@ public class Wallet {
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
-  private static final byte[] SHIELDED_TRC20_LOG_TOPICS = Hash.sha3(ByteArray.fromString(
-      "NewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
-  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_FOR_BURN = Hash.sha3(ByteArray
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_MINT = Hash.sha3(ByteArray.fromString(
+      "MintNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_TRANSFER = Hash.sha3(ByteArray.fromString(
+      "TransferNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21]) "));
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_LEAF = Hash.sha3(ByteArray.fromString(
+      "BurnNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
   @Getter
   private final SignInterface cryptoEngine;
@@ -3036,19 +3040,30 @@ public class Wallet {
         topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
       }
       if (Objects.isNull(topicsList) || topicsList.isEmpty()) {
-        if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS)) {
+        if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_MINT)) {
           return 1;
-        } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_FOR_BURN)) {
+        } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_TRANSFER)) {
           return 2;
+        } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_BURN_LEAF)) {
+          return 3;
+        } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN)) {
+          return 4;
         }
       } else {
         for (String topic : topicsList) {
           byte[] topicHash = Hash.sha3(ByteArray.fromString(topic));
-          if (topic.toLowerCase().contains("leaf") && Arrays.equals(topicsBytes, topicHash)) {
-            return 1;
-          } else if (topic.toLowerCase().contains("burn") && Arrays
-              .equals(topicsBytes, topicHash)) {
-            return 2;
+          if (Arrays.equals(topicsBytes, topicHash)) {
+            if (topic.toLowerCase().contains("mint")) {
+              return 1;
+            } else if (topic.toLowerCase().contains("transfer")) {
+              return 2;
+            } else if (topic.toLowerCase().contains("burn")) {
+              if (topic.toLowerCase().contains("leaf")) {
+                return 3;
+              } else if (topic.toLowerCase().contains("token")) {
+                return 4;
+              }
+            }
           }
         }
       }
@@ -3062,7 +3077,7 @@ public class Wallet {
       int logType)
       throws ZksnarkException, ContractExeException {
     byte[] logData = log.getData().toByteArray();
-    if (!ArrayUtils.isEmpty(logData) && logType == 1) {
+    if (!ArrayUtils.isEmpty(logData) && logType > 0 && logType < 4) {
       // Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
       long pos = ByteArray.toLong(ByteArray.subArray(logData, 0, 32));
       byte[] cm = ByteArray.subArray(logData, 32, 64);
@@ -3220,7 +3235,7 @@ public class Wallet {
       TransactionInfo.Log log, byte[] ovk, int logType) throws ZksnarkException {
     byte[] logData = log.getData().toByteArray();
     if (!ArrayUtils.isEmpty(logData)) {
-      if (logType == 1) {
+      if (logType > 0 && logType < 4) {
         //Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
         byte[] cm = ByteArray.subArray(logData, 32, 64);
         byte[] cv = ByteArray.subArray(logData, 64, 96);
@@ -3255,7 +3270,7 @@ public class Wallet {
             return Optional.of(builder.build());
           }
         }
-      } else if (logType == 2) {
+      } else if (logType == 4) {
         //Data = toAddress(32) + value(32) + ciphertext(80) + padding(16)
         byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
         byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
