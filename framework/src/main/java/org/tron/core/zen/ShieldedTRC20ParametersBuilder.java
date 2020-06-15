@@ -31,6 +31,7 @@ import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.contract.ShieldContract;
+import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 
 
 @Slf4j
@@ -291,9 +292,16 @@ public class ShieldedTRC20ParametersBuilder {
           spendDescription = generateSpendProof(spend, ctx).getInstance();
           builder.addSpendDescription(spendDescription);
           mergedBytes = ByteUtil.merge(shieldedTRC20Address,
-              encodeSpendDescriptionWithoutSpendAuthSig(spendDescription),
-              transparentToAddress,
-              ByteArray.fromLong(spend.note.getValue()));
+              encodeSpendDescriptionWithoutSpendAuthSig(spendDescription));
+          if (receives.size() == 1) {
+            receiveDescription = generateOutputProof(receives.get(0), ctx).getInstance();
+            builder.addReceiveDescription(receiveDescription);
+            mergedBytes = ByteUtil
+                .merge(mergedBytes, encodeReceiveDescriptionWithoutC(receiveDescription),
+                    encodeCencCout(receiveDescription));
+          }
+          mergedBytes = ByteUtil
+              .merge(mergedBytes, transparentToAddress, ByteArray.fromLong(spend.note.getValue()));
           value = transparentToAmount;
           builder.setParameterType("burn");
           break;
@@ -473,7 +481,8 @@ public class ShieldedTRC20ParametersBuilder {
     } else {
       spendAuthSign = spendAuthoritySignature.get(0).getValue().toByteArray();
     }
-    return Hex.toHexString(ByteUtil.merge(
+    byte[] mergedBytes = new byte[0];
+    mergedBytes = ByteUtil.merge(
         spendDesc.getNullifier().toByteArray(),
         spendDesc.getAnchor().toByteArray(),
         spendDesc.getValueCommitment().toByteArray(),
@@ -485,7 +494,40 @@ public class ShieldedTRC20ParametersBuilder {
         payTo,
         burnCiphertext,
         new byte[16]
-    ));
+    );
+
+    byte[] outputOffsetBytes = new byte[32];
+    byte[] coffsetBytes = new byte[32];
+    byte[] outputCountBytes = new byte[32];
+    byte[] countBytes = new byte[32];
+    if (burnParams.getReceiveDescriptionList().size() == 0) {
+      outputOffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 2);
+      outputCountBytes = ByteUtil.longTo32Bytes(0L);
+      coffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 3);
+      countBytes = ByteUtil.longTo32Bytes(0L);
+      mergedBytes = ByteUtil
+          .merge(mergedBytes, outputOffsetBytes, coffsetBytes, outputCountBytes, countBytes);
+    } else {
+      outputOffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 2);
+      outputCountBytes = ByteUtil.longTo32Bytes(1L);
+      coffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 3 + 32 * 9);
+      countBytes = ByteUtil.longTo32Bytes(1L);
+      ReceiveDescription recvDesc = burnParams.getReceiveDescription(0);
+      mergedBytes = ByteUtil
+          .merge(mergedBytes,
+              outputOffsetBytes,
+              coffsetBytes,
+              outputCountBytes,
+              recvDesc.getNoteCommitment().toByteArray(),
+              recvDesc.getValueCommitment().toByteArray(),
+              recvDesc.getEpk().toByteArray(),
+              recvDesc.getZkproof().toByteArray(),
+              countBytes,
+              recvDesc.getCEnc().toByteArray(),
+              recvDesc.getCOut().toByteArray(),
+              new byte[12]);
+    }
+    return Hex.toHexString(mergedBytes);
   }
 
   public void addSpend(

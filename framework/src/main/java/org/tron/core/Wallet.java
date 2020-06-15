@@ -2829,6 +2829,11 @@ public class Wallet {
 
     int spendSize = shieldedSpends.size();
     int receiveSize = shieldedReceives.size();
+    long totalToAmount = 0;
+    if (scaledToAmount > 0) {
+      totalToAmount = receiveSize == 0 ? scaledToAmount
+          : (scaledToAmount + shieldedReceives.get(0).getNote().getValue());
+    }
 
     if (scaledFromAmount > 0 && spendSize == 0 && receiveSize == 1
         && scaledFromAmount == shieldedReceives.get(0).getNote().getValue()
@@ -2861,8 +2866,8 @@ public class Wallet {
       for (ReceiveNote receiveNote : shieldedReceives) {
         buildShieldedTRC20Output(builder, receiveNote, ovk);
       }
-    } else if (scaledFromAmount == 0 && spendSize == 1 && receiveSize == 0
-        && scaledToAmount > 0 && scaledToAmount == shieldedSpends.get(0).getNote().getValue()) {
+    } else if (scaledFromAmount == 0 && spendSize == 1 && receiveSize >= 0 && receiveSize <= 1
+        && scaledToAmount > 0 && totalToAmount == shieldedSpends.get(0).getNote().getValue()) {
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
 
       byte[] ask = request.getAsk().toByteArray();
@@ -2889,6 +2894,9 @@ public class Wallet {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, null);
       GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
       buildShieldedTRC20Input(builder, spendNote, expsk);
+      if (receiveSize == 1) {
+        buildShieldedTRC20Output(builder, shieldedReceives.get(0), ovk);
+      }
     } else {
       throw new ContractValidateException("invalid shielded TRC-20 parameters");
     }
@@ -2950,6 +2958,11 @@ public class Wallet {
     List<ReceiveNote> shieldedReceives = request.getShieldedReceivesList();
     int receiveSize = shieldedReceives.size();
     checkShieldedTRC20NoteValue(shieldedSpends, shieldedReceives);
+    long totalToAmount = 0;
+    if (scaledToAmount > 0) {
+      totalToAmount = receiveSize == 0 ? scaledToAmount
+          : (scaledToAmount + shieldedReceives.get(0).getNote().getValue());
+    }
 
     if (scaledFromAmount > 0 && spendSize == 0 && receiveSize == 1
         && scaledFromAmount == shieldedReceives.get(0).getNote().getValue()
@@ -2977,8 +2990,8 @@ public class Wallet {
       for (ReceiveNote receiveNote : shieldedReceives) {
         buildShieldedTRC20Output(builder, receiveNote, ovk);
       }
-    } else if (scaledFromAmount == 0 && spendSize == 1 && receiveSize == 0
-        && scaledToAmount > 0 && scaledToAmount == shieldedSpends.get(0).getNote().getValue()) {
+    } else if (scaledFromAmount == 0 && spendSize == 1 && receiveSize >= 0 && receiveSize <= 1
+        && scaledToAmount > 0 && totalToAmount == shieldedSpends.get(0).getNote().getValue()) {
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
       byte[] ak = request.getAk().toByteArray();
       byte[] nsk = request.getNsk().toByteArray();
@@ -2999,6 +3012,9 @@ public class Wallet {
       cipher.ifPresent(builder::setBurnCiphertext);
       GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
       buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk, null);
+      if (receiveSize == 1) {
+        buildShieldedTRC20Output(builder, shieldedReceives.get(0), ovk);
+      }
     } else {
       throw new ContractValidateException("invalid shielded TRC-20 parameters");
     }
@@ -3185,7 +3201,7 @@ public class Wallet {
       return Arrays.equals(nf, listBytes);
     } else {
       // trigger contract failed
-      throw new ContractExeException("trigger contract error.");
+      throw new ContractExeException("trigger contract to get nullifier error.");
     }
   }
 
@@ -3449,7 +3465,7 @@ public class Wallet {
       }
       return listBytes;
     } else {
-      throw new ContractExeException("trigger contract error.");
+      throw new ContractExeException("trigger contract to get scaling factor error.");
     }
   }
 
