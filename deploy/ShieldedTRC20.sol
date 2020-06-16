@@ -29,9 +29,10 @@ contract ShieldedTRC20 {
     event BurnNewLeaf(uint256 position, bytes32 cm, bytes32 cv, bytes32 epk, bytes32[21] c);
     event TokenMint(address from, uint256 value);
     event TokenBurn(address to, uint256 value, bytes32[3] ciphertext);
+    event NoteSpent(bytes32 nf);
     
     constructor (address trc20ContractAddress, uint256 scalingFactorExponent) public {
-        require(scalingFactorExponent < 77, "The scalingFactorLogarithm is out of range!");
+        require(scalingFactorExponent < 77, "The scalingFactorExponent is out of range!");
         scalingFactor = 10 ** scalingFactorExponent;
         owner = msg.sender;
         trc20Token = TokenTRC20(trc20ContractAddress);
@@ -115,6 +116,7 @@ contract ShieldedTRC20 {
         for (uint256 i = 0; i < input.length; i++) {
             bytes32 nf = input[i][0];
             nullifiers[nf] = nf;
+            emit NoteSpent(nf);
         }
         for (uint256 i = 0; i < output.length; i++) {
             noteCommitment[output[i][0]] = output[i][0];
@@ -139,12 +141,12 @@ contract ShieldedTRC20 {
         if (output.length == 0) {
             (bool result) = verifyBurnProof(input, spendAuthoritySignature, value, bindingSignature, signHash);
             require(result, "The proof and signature have not been verified by the contract!");
-            
         } else {
             transferInBurn(input, spendAuthoritySignature, value, bindingSignature, signHash, output, c);
         }
 
         nullifiers[nf] = nf;
+        emit NoteSpent(nf);
         //Finally, transfer trc20Token from this contract to the nominated address
         bool transferResult = trc20Token.transfer(payTo, rawValue);
         require(transferResult, "Transfer failed!");
