@@ -2968,8 +2968,12 @@ public class Wallet {
     checkShieldedTRC20NoteValue(shieldedSpends, shieldedReceives);
     long totalToAmount = 0;
     if (scaledToAmount > 0) {
-      totalToAmount = receiveSize == 0 ? scaledToAmount
-          : (scaledToAmount + shieldedReceives.get(0).getNote().getValue());
+      try {
+        totalToAmount = receiveSize == 0 ? scaledToAmount
+            : Math.addExact(scaledToAmount, shieldedReceives.get(0).getNote().getValue());
+      } catch (ArithmeticException e) {
+        throw new ZksnarkException("Unbalanced burn!");
+      }
     }
 
     if (scaledFromAmount > 0 && spendSize == 0 && receiveSize == 1
@@ -3019,7 +3023,7 @@ public class Wallet {
           .encryptBurnMessageByOvk(ovk, toAmount, transparentToAddress);
       cipher.ifPresent(builder::setBurnCiphertext);
       GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
-      buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk, null);
+      buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk, ovk);
       if (receiveSize == 1) {
         buildShieldedTRC20Output(builder, shieldedReceives.get(0), ovk);
       }
