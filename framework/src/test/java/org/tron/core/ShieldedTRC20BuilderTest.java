@@ -898,6 +898,126 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
   @Ignore
   @Test
+  public void createShieldedContractParametersForBurn1v2()
+      throws ZksnarkException, ContractValidateException, ContractExeException {
+    int totalCountNum = 2;
+    long leafCount = 0;
+    long value = 100L;
+    byte[] frontier = new byte[32 * 33];
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    for (int countNum = 0; countNum < totalCountNum; countNum++) {
+      SpendingKey senderSk = SpendingKey.random();
+      ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+      FullViewingKey senderFvk = senderSk.fullViewingKey();
+      byte[] senderOvk = senderFvk.getOvk();
+      IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+      byte[] rcm = new byte[32];
+      JLibrustzcash.librustzcashSaplingGenerateR(rcm);
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
+      String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
+
+      {//for mint1
+        GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
+        GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
+            .PrivateShieldedTRC20Parameters.newBuilder();
+        revNoteBuilder.setNote(note);
+        paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
+        paramBuilder.setFromAmount(BigInteger.valueOf(value).toString());
+        paramBuilder.addShieldedReceives(revNoteBuilder.build());
+        paramBuilder
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
+
+        ShieldedTRC20Parameters minParam = wallet.createShieldedContractParameters(privMintParams);
+        byte[] mintInputData1 = abiEncodeForMint(minParam, value, frontier, leafCount);
+        Pair<Boolean, byte[]> mintContractResult1 = mintContract.execute(mintInputData1);
+        byte[] mintResult1 = mintContractResult1.getRight();
+        Assert.assertEquals(1, mintResult1[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        int slot = mintResult1[63];
+        if (slot == 0) {
+          System.arraycopy(mintInputData1, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
+          System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+
+      {//for burn
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
+            .PrivateShieldedTRC20Parameters.newBuilder();
+        GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
+        GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
+        byte[][] cm1 = new byte[1][32];
+        //spendNote1
+        Note senderNote1 = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
+            value, rcm, new byte[512]);
+        System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
+        IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
+        byte[] path1 = decodePath(voucher1.path().encode());
+        byte[] anchor1 = voucher1.root().getContent().toByteArray();
+        long position1 = voucher1.position();
+        spendNoteBuilder.setRoot(ByteString.copyFrom(anchor1));
+        spendNoteBuilder.setPath(ByteString.copyFrom(path1));
+        spendNoteBuilder.setPos(position1);
+        spendNoteBuilder.setAlpha(ByteString.copyFrom(Note.generateR()));
+        spendNoteBuilder.setNote(note);
+        privateTRC20Builder.addShieldedSpends(spendNoteBuilder.build());
+
+        ExpandedSpendingKey expsk = senderSk.expandedSpendingKey();
+        privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
+        privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
+        privateTRC20Builder.setToAmount(BigInteger.valueOf(60).toString());
+        privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
+        privateTRC20Builder
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+
+        //receiveNote
+        GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
+        SpendingKey receiveSk2 = SpendingKey.random();
+        FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
+        IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        String recPaymentAddressStr2 = KeyIo.encodePaymentAddress(receivePaymentAddress2);
+        byte[] rcm4 = Note.generateR();
+        byte[] memo = new byte[512];
+        GrpcAPI.Note revNote2 = getNote(40, recPaymentAddressStr2, rcm4, memo);
+        revNoteBuilder2.setNote(revNote2);
+        privateTRC20Builder.addShieldedReceives(revNoteBuilder2.build());
+
+        GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
+            .createShieldedContractParameters(privateTRC20Builder.build());
+
+        byte[] inputData = abiEncodeForBurn(burnParam, value);
+        Pair<Boolean, byte[]> contractResult = burnContract.execute(inputData);
+        byte[] result = contractResult.getRight();
+        Assert.assertEquals(1, result[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        int slot = result[63];
+        if (slot == 0) {
+          System.arraycopy(result, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
+          System.arraycopy(result, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+    }
+  }
+
+
+  @Ignore
+  @Test
   public void createShieldedContractParametersWithouAskForTransfer1v1()
       throws Exception {
     int totalCountNum = 2;
@@ -1873,6 +1993,164 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Pair<Boolean, byte[]> contractResult = burnContract.execute(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
+      }
+    }
+  }
+
+  @Ignore
+  @Test
+  public void createShieldedContractParametersWithoutAskForBurn1v2()
+      throws Exception {
+    int totalCountNum = 2;
+    long leafCount = 0;
+    long value = 100L;
+    byte[] frontier = new byte[32 * 33];
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    for (int countNum = 0; countNum < totalCountNum; countNum++) {
+      SpendingKey senderSk = SpendingKey.random();
+      ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+      FullViewingKey senderFvk = senderSk.fullViewingKey();
+      byte[] senderOvk = senderFvk.getOvk();
+      IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+      byte[] rcm = new byte[32];
+      JLibrustzcash.librustzcashSaplingGenerateR(rcm);
+      PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
+      String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
+
+      {//for mint1
+        GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
+        GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
+        GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
+            .PrivateShieldedTRC20Parameters.newBuilder();
+        revNoteBuilder.setNote(note);
+        paramBuilder.setOvk(ByteString.copyFrom(senderFvk.getOvk()));
+        paramBuilder.setFromAmount(BigInteger.valueOf(value).toString());
+        paramBuilder.addShieldedReceives(revNoteBuilder.build());
+        paramBuilder
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+        PrivateShieldedTRC20Parameters privMintParams = paramBuilder.build();
+
+        ShieldedTRC20Parameters minParam = wallet.createShieldedContractParameters(privMintParams);
+        byte[] mintInputData1 = abiEncodeForMint(minParam, value, frontier, leafCount);
+        Pair<Boolean, byte[]> mintContractResult1 = mintContract.execute(mintInputData1);
+        byte[] mintResult1 = mintContractResult1.getRight();
+        Assert.assertEquals(1, mintResult1[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        int slot = mintResult1[63];
+        if (slot == 0) {
+          System.arraycopy(mintInputData1, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
+          System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+
+      {//for burn
+        GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
+            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+        GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
+        GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
+        byte[][] cm1 = new byte[1][32];
+        //spendNote1
+        Note senderNote1 = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
+            value, rcm, new byte[512]);
+        System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
+        IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
+        byte[] path1 = decodePath(voucher1.path().encode());
+        byte[] anchor1 = voucher1.root().getContent().toByteArray();
+        long position1 = voucher1.position();
+        spendNoteBuilder.setRoot(ByteString.copyFrom(anchor1));
+        spendNoteBuilder.setPath(ByteString.copyFrom(path1));
+        spendNoteBuilder.setPos(position1);
+        spendNoteBuilder.setAlpha(ByteString.copyFrom(Note.generateR()));
+        spendNoteBuilder.setNote(note);
+        privateTRC20Builder.addShieldedSpends(spendNoteBuilder.build());
+
+        ExpandedSpendingKey expsk = senderSk.expandedSpendingKey();
+        privateTRC20Builder.setAk(ByteString.copyFrom(senderFvk.getAk()));
+        privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
+        privateTRC20Builder.setToAmount(BigInteger.valueOf(60).toString());
+        privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
+        privateTRC20Builder
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS));
+
+        //receiveNote
+        GrpcAPI.ReceiveNote.Builder revNoteBuilder2 = GrpcAPI.ReceiveNote.newBuilder();
+        SpendingKey receiveSk2 = SpendingKey.random();
+        FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
+        IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        String recPaymentAddressStr2 = KeyIo.encodePaymentAddress(receivePaymentAddress2);
+        byte[] rcm4 = Note.generateR();
+        byte[] memo = new byte[512];
+        GrpcAPI.Note revNote2 = getNote(40, recPaymentAddressStr2, rcm4, memo);
+        revNoteBuilder2.setNote(revNote2);
+        privateTRC20Builder.addShieldedReceives(revNoteBuilder2.build());
+
+        GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
+            .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+
+        //get the binding signature
+        PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk =
+            privateTRC20Builder
+                .build();
+        SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
+        signParamerters1
+            .setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+        signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
+        signParamerters1.setTxHash(burnParam.getMessageHash());
+        BytesMessage signMsg1 = wallet.createSpendAuthSig(signParamerters1.build());
+
+        ShieldedTRC20TriggerContractParameters.Builder triggerParam =
+            ShieldedTRC20TriggerContractParameters
+                .newBuilder();
+        triggerParam.setShieldedTRC20Parameters(burnParam);
+        triggerParam.addSpendAuthoritySignature(signMsg1);
+        triggerParam.setAmount(BigInteger.valueOf(value).toString());
+        triggerParam.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
+        BytesMessage triggerInput = wallet
+            .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+        logger.info(
+            "trigger contract input: " + Hex.toHexString(triggerInput.getValue().toByteArray()));
+
+        SpendDescription.Builder spendDesBuilder1 = SpendDescription.newBuilder();
+        spendDesBuilder1.setSpendAuthoritySignature(signMsg1.getValue());
+        spendDesBuilder1.setAnchor(burnParam.getSpendDescription(0).getAnchor());
+        spendDesBuilder1.setRk(burnParam.getSpendDescription(0).getRk());
+        spendDesBuilder1
+            .setValueCommitment(burnParam.getSpendDescription(0).getValueCommitment());
+        spendDesBuilder1.setZkproof(burnParam.getSpendDescription(0).getZkproof());
+        spendDesBuilder1.setNullifier(burnParam.getSpendDescription(0).getNullifier());
+
+        ShieldedTRC20Parameters.Builder bindingSigBuilder = ShieldedTRC20Parameters.newBuilder();
+        bindingSigBuilder.addSpendDescription(spendDesBuilder1.build());
+        bindingSigBuilder.setMessageHash(burnParam.getMessageHash());
+        bindingSigBuilder.setBindingSignature(burnParam.getBindingSignature());
+        bindingSigBuilder.setParameterType(burnParam.getParameterType());
+        burnParam = bindingSigBuilder.build();
+
+        byte[] inputData = abiEncodeForBurn(burnParam, value);
+        Pair<Boolean, byte[]> contractResult = burnContract.execute(inputData);
+        byte[] result = contractResult.getRight();
+        Assert.assertEquals(1, result[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        int slot = result[63];
+        if (slot == 0) {
+          System.arraycopy(result, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
+          System.arraycopy(result, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
       }
     }
   }

@@ -1101,7 +1101,7 @@ public class PrecompiledContracts {
 
   public static class VerifyTransferProof extends VerifyProof {
 
-    private static final Integer[] SIZE = {2048, 2336, 2432, 2720};
+    private static final Integer[] SIZE = {2080, 2368, 2464, 2752};
     private static final ExecutorService workersInConstantCall;
     private static final ExecutorService workersInNonConstantCall;
 
@@ -1133,10 +1133,12 @@ public class PrecompiledContracts {
         int receiveOffset = parseInt(data, 64);
         System.arraycopy(data, 96, bindingSig, 0, 64);
         System.arraycopy(data, 160, signHash, 0, 32);
+        //parse value
+        long value = parseLong(data, 192);
         for (int i = 0; i < 33; i++) {
-          System.arraycopy(data, i * 32 + 192, frontier[i], 0, 32);
+          System.arraycopy(data, i * 32 + 224, frontier[i], 0, 32);
         }
-        long leafCount = parseLong(data, 1248);
+        long leafCount = parseLong(data, 1280);
         if (leafCount >= TREE_WIDTH - 1) {
           return Pair.of(true, DataWord.ZERO().getData());
         }
@@ -1234,7 +1236,7 @@ public class PrecompiledContracts {
         }
         // submit check binding signature
         Future<Boolean> futureCheckBindingSig = workers
-            .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
+            .submit(new SaplingCheckBingdingSig(countDownLatch, value, bindingSig,
                 signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
         futures.add(futureCheckBindingSig);
 
