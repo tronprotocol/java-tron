@@ -3019,7 +3019,7 @@ public class Wallet {
       for (ByteString bs : logTopicsList) {
         topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
       }
-      if (topicsList.isEmpty()) {
+      if (Objects.isNull(topicsList) || topicsList.isEmpty()) {
         if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS)) {
           return 1;
         } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_FOR_BURN)) {
@@ -3095,34 +3095,33 @@ public class Wallet {
 
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
-
     for (Block block : blockList.getBlockList()) {
       for (Transaction transaction : block.getTransactionsList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txId = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txId));
         DecryptNotesTRC20.NoteTx.Builder noteBuilder;
-        List<TransactionInfo.Log> logList = info.getLogList();
-        if (!Objects.isNull(logList)) {
-          Optional<DecryptNotesTRC20.NoteTx> noteTx;
-
-          int index = 0;
-          for (TransactionInfo.Log log : logList) {
-            int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress, topicsList);
-            if (logType > 0) {
-              noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
-              noteBuilder.setTxid(ByteString.copyFrom(txId));
-              noteBuilder.setIndex(index);
-              index += 1;
-              noteTx = getNoteTxFromLogListByIvk(noteBuilder, log, ivk, ak, nk,
-                  shieldedTRC20ContractAddress, logType);
-              noteTx.ifPresent(builder::addNoteTxs);
+        if (!Objects.isNull(info)) {
+          List<TransactionInfo.Log> logList = info.getLogList();
+          if (!Objects.isNull(logList)) {
+            Optional<DecryptNotesTRC20.NoteTx> noteTx;
+            int index = 0;
+            for (TransactionInfo.Log log : logList) {
+              int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress, topicsList);
+              if (logType > 0) {
+                noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+                noteBuilder.setTxid(ByteString.copyFrom(txId));
+                noteBuilder.setIndex(index);
+                index += 1;
+                noteTx = getNoteTxFromLogListByIvk(noteBuilder, log, ivk, ak, nk,
+                    shieldedTRC20ContractAddress, logType);
+                noteTx.ifPresent(builder::addNoteTxs);
+              }
             }
           }
         }
       } //end of transaction
     } //end of blocklist
-
     return builder.build();
   }
 
@@ -3258,8 +3257,10 @@ public class Wallet {
           BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
           if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
               .equals(Hex.toHexString(decryptedAddress))) {
+            byte[] addressWithPrefix = new byte[21];
+            System.arraycopy(plaintext, 32, addressWithPrefix, 0, 21);
             builder.setToAmount(logAmount.toString(10))
-                .setTransparentToAddress(ByteString.copyFrom(logToAddress));
+                .setTransparentToAddress(ByteString.copyFrom(addressWithPrefix));
             return Optional.of(builder.build());
           }
         }
@@ -3286,19 +3287,21 @@ public class Wallet {
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txid));
         DecryptNotesTRC20.NoteTx.Builder noteBuilder;
-        List<TransactionInfo.Log> logList = info.getLogList();
-        if (!Objects.isNull(logList)) {
-          Optional<DecryptNotesTRC20.NoteTx> noteTx;
-          int index = 0;
-          for (TransactionInfo.Log log : logList) {
-            int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress, topicsList);
-            if (logType > 0) {
-              noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
-              noteBuilder.setTxid(ByteString.copyFrom(txid));
-              noteBuilder.setIndex(index);
-              index += 1;
-              noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk, logType);
-              noteTx.ifPresent(builder::addNoteTxs);
+        if (!Objects.isNull(info)) {
+          List<TransactionInfo.Log> logList = info.getLogList();
+          if (!Objects.isNull(logList)) {
+            Optional<DecryptNotesTRC20.NoteTx> noteTx;
+            int index = 0;
+            for (TransactionInfo.Log log : logList) {
+              int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress, topicsList);
+              if (logType > 0) {
+                noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+                noteBuilder.setTxid(ByteString.copyFrom(txid));
+                noteBuilder.setIndex(index);
+                index += 1;
+                noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk, logType);
+                noteTx.ifPresent(builder::addNoteTxs);
+              }
             }
           }
         }

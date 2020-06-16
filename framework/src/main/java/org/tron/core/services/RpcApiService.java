@@ -2402,7 +2402,7 @@ public class RpcApiService implements Service {
         GrpcAPI.NullifierResult nf = wallet
             .isShieldedTRC20ContractNoteSpent(request);
         responseObserver.onNext(nf);
-      } catch (ZksnarkException | ContractExeException e) {
+      } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
         return;
       }
@@ -2418,7 +2418,7 @@ public class RpcApiService implements Service {
 
         BytesMessage bytesMessage = wallet.getTriggerInputForShieldedTRC20Contract(request);
         responseObserver.onNext(bytesMessage);
-      } catch (ZksnarkException | ContractValidateException e) {
+      } catch (Exception e) {
         responseObserver.onError(e);
         return;
       }
