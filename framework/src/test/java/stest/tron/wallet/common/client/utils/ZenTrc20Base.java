@@ -70,7 +70,8 @@ public class ZenTrc20Base {
   public static String mint = "mint(uint256,bytes32[9],bytes32[2],bytes32[21])";
   public static String transfer =
       "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])";
-  public static String burn = "burn(bytes32[10],bytes32[2],uint256,bytes32[2],address,bytes32[3])";
+  public static String burn = "burn(bytes32[10],bytes32[2],uint256,bytes32[2],address,"
+      + "bytes32[3],bytes32[9][],bytes32[21][])";
   public Wallet wallet = new Wallet();
   static HttpResponse response;
   static HttpPost httppost;
@@ -1188,15 +1189,27 @@ public class ZenTrc20Base {
    */
   public static HttpResponse createShieldContractParametersForBurn(String httpNode,
       JSONObject shieldAccountInfo, JSONArray shieldedSpends,String toAddress,Long toAmount) {
+    return createShieldContractParametersForBurn(httpNode,shieldAccountInfo,shieldedSpends,
+        toAddress,toAmount,null);
+
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createShieldContractParametersForBurn(String httpNode,
+      JSONObject shieldAccountInfo, JSONArray shieldedSpends,String toAddress,Long toAmount,
+      JSONArray shieldedReceiver) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/createshieldedcontractparameters";
-
-
       JSONObject rawBody = new JSONObject();
       rawBody.put("ovk",shieldAccountInfo.getString("ovk"));
       rawBody.put("ask",shieldAccountInfo.getString("ask"));
       rawBody.put("nsk",shieldAccountInfo.getString("nsk"));
       rawBody.put("shielded_spends",shieldedSpends);
+      if (shieldedReceiver != null) {
+        rawBody.put("shielded_receives",shieldedReceiver);
+      }
       rawBody.put("shielded_TRC20_contract_address",shieldAddress);
       rawBody.put("transparent_to_address",toAddress);
       rawBody.put("to_amount",toAmount.toString());
@@ -1217,6 +1230,16 @@ public class ZenTrc20Base {
    */
   public static HttpResponse createShieldContractParametersWithoutAskForBurn(String httpNode,
       JSONObject shieldAccountInfo, JSONArray shieldedSpends,String toAddress,Long toAmount) {
+    return createShieldContractParametersWithoutAskForBurn(httpNode,shieldAccountInfo,
+        shieldedSpends,toAddress,toAmount,null);
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createShieldContractParametersWithoutAskForBurn(String httpNode,
+      JSONObject shieldAccountInfo, JSONArray shieldedSpends,String toAddress,Long toAmount,
+      JSONArray shieldedReceiver) {
     try {
       final String requestUrl
           = "http://" + httpNode + "/wallet/createshieldedcontractparameterswithoutask";
@@ -1231,6 +1254,9 @@ public class ZenTrc20Base {
       rawBody.put("transparent_to_address",toAddress);
       rawBody.put("to_amount",toAmount.toString());
       rawBody.put("visible",true);
+      if (shieldedReceiver != null) {
+        rawBody.put("shielded_receives",shieldedReceiver);
+      }
 
       response = HttpMethed.createConnectForShieldTrc20(requestUrl, rawBody);
 
