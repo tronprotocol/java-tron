@@ -3284,7 +3284,7 @@ public class Wallet {
         byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
         byte[] cipher = ByteArray.subArray(logData, 64, 144);
         BigInteger logAmount = ByteUtil.bytesToBigInteger(logAmountArray);
-        byte[] plaintext = new byte[64];
+        byte[] plaintext;
         byte[] amountArray = new byte[32];
         byte[] decryptedAddress = new byte[20];
         Optional<byte[]> decryptedText = NoteEncryption.Encryption

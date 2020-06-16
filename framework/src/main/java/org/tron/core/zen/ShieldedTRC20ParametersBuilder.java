@@ -186,19 +186,19 @@ public class ShieldedTRC20ParametersBuilder {
       throw new ZksnarkException("ovk is null or invalid and ovk should be 32 bytes (256 bit)");
     }
 
+    OutgoingPlaintext outPlaintext = new OutgoingPlaintext(output.getNote().getPkD(),
+        encryptor.getEsk());
+    byte[] cOut = outPlaintext.encrypt(output.ovk,
+        cv,
+        cm,
+        encryptor).getData();
+
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
     receiveDescriptionCapsule.setValueCommitment(cv);
     receiveDescriptionCapsule.setNoteCommitment(cm);
     receiveDescriptionCapsule.setEpk(encryptor.getEpk());
     receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
     receiveDescriptionCapsule.setZkproof(zkProof);
-
-    OutgoingPlaintext outPlaintext = new OutgoingPlaintext(output.getNote().getPkD(),
-        encryptor.getEsk());
-    byte[] cOut = outPlaintext.encrypt(output.ovk,
-        receiveDescriptionCapsule.getValueCommitment().toByteArray(),
-        receiveDescriptionCapsule.getCm().toByteArray(),
-        encryptor).getData();
     receiveDescriptionCapsule.setCOut(cOut);
 
     return receiveDescriptionCapsule;
@@ -365,12 +365,13 @@ public class ShieldedTRC20ParametersBuilder {
 
   private String mintParamsToHexString(GrpcAPI.ShieldedTRC20Parameters mintParams,
                                        BigInteger value) {
-    byte[] mergedBytes;
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("require the value be positive");
     }
+
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
-    mergedBytes = ByteUtil.merge(
+    byte[] zeros = new byte[12];
+    byte[] mergedBytes = ByteUtil.merge(
         ByteUtil.bigIntegerToBytes(value, 32),
         revDesc.getNoteCommitment().toByteArray(),
         revDesc.getValueCommitment().toByteArray(),
@@ -379,7 +380,7 @@ public class ShieldedTRC20ParametersBuilder {
         mintParams.getBindingSignature().toByteArray(),
         revDesc.getCEnc().toByteArray(),
         revDesc.getCOut().toByteArray(),
-        new byte[12]
+        zeros
     );
     return Hex.toHexString(mergedBytes);
   }
@@ -418,9 +419,11 @@ public class ShieldedTRC20ParametersBuilder {
             spendAuthoritySignature.get(1).getValue().toByteArray());
       }
     }
+
     byte[] inputOffsetbytes = ByteUtil.longTo32Bytes(192);
     byte[] spendCountBytes = ByteUtil.longTo32Bytes(spendCount);
     byte[] authOffsetBytes = ByteUtil.longTo32Bytes(192 + 32 + 320 * spendCount);
+
     List<ShieldContract.ReceiveDescription> recvDescs = transferParams.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -429,12 +432,14 @@ public class ShieldedTRC20ParametersBuilder {
           recvDesc.getEpk().toByteArray(),
           recvDesc.getZkproof().toByteArray()
       );
+      byte[] zeros = new byte[12];
       c = ByteUtil.merge(c,
           recvDesc.getCEnc().toByteArray(),
           recvDesc.getCOut().toByteArray(),
-          new byte[12]
+          zeros
       );
     }
+
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = ByteUtil.longTo32Bytes(recvCount);
     byte[] outputOffsetbytes = ByteUtil
@@ -466,22 +471,27 @@ public class ShieldedTRC20ParametersBuilder {
                                        BigInteger value, byte[] transparentToAddress,
                                        boolean withAsk) {
     byte[] payTo = new byte[32];
-    byte[] spendAuthSign = new byte[0];
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("the value must be positive");
     }
+
     if (ArrayUtils.isEmpty(transparentToAddress)) {
       throw new IllegalArgumentException("the transparent payTo address is null");
     }
+
     payTo[11] = Wallet.getAddressPreFixByte();
     System.arraycopy(transparentToAddress, 0, payTo, 12, 20);
     ShieldContract.SpendDescription spendDesc = burnParams.getSpendDescription(0);
+
+    byte[] spendAuthSign;
     if (withAsk) {
       spendAuthSign = spendDesc.getSpendAuthoritySignature().toByteArray();
     } else {
       spendAuthSign = spendAuthoritySignature.get(0).getValue().toByteArray();
     }
-    byte[] mergedBytes = new byte[0];
+
+    byte[] mergedBytes;
+    byte[] zeros = new byte[16];
     mergedBytes = ByteUtil.merge(
         spendDesc.getNullifier().toByteArray(),
         spendDesc.getAnchor().toByteArray(),
@@ -493,26 +503,27 @@ public class ShieldedTRC20ParametersBuilder {
         burnParams.getBindingSignature().toByteArray(),
         payTo,
         burnCiphertext,
-        new byte[16]
+        zeros
     );
 
-    byte[] outputOffsetBytes = new byte[32];
-    byte[] coffsetBytes = new byte[32];
-    byte[] outputCountBytes = new byte[32];
-    byte[] countBytes = new byte[32];
+    byte[] outputOffsetBytes; // 32
+    byte[] coffsetBytes; // 32
+    byte[] outputCountBytes; // 32
+    byte[] countBytes; // 32
     if (burnParams.getReceiveDescriptionList().size() == 0) {
-      outputOffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 2);
+      outputOffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32L * 2);
       outputCountBytes = ByteUtil.longTo32Bytes(0L);
-      coffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 3);
+      coffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32L * 3);
       countBytes = ByteUtil.longTo32Bytes(0L);
       mergedBytes = ByteUtil
           .merge(mergedBytes, outputOffsetBytes, coffsetBytes, outputCountBytes, countBytes);
     } else {
-      outputOffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 2);
+      outputOffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32L * 2);
       outputCountBytes = ByteUtil.longTo32Bytes(1L);
-      coffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 3 + 32 * 9);
+      coffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 3 + 32L * 9);
       countBytes = ByteUtil.longTo32Bytes(1L);
       ReceiveDescription recvDesc = burnParams.getReceiveDescription(0);
+      zeros = new byte[12];
       mergedBytes = ByteUtil
           .merge(mergedBytes,
               outputOffsetBytes,
@@ -525,7 +536,7 @@ public class ShieldedTRC20ParametersBuilder {
               countBytes,
               recvDesc.getCEnc().toByteArray(),
               recvDesc.getCOut().toByteArray(),
-              new byte[12]);
+              zeros);
     }
     return Hex.toHexString(mergedBytes);
   }
