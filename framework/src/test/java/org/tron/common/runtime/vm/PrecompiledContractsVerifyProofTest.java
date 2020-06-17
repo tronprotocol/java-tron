@@ -254,7 +254,7 @@ public class PrecompiledContractsVerifyProofTest {
 
         ShieldedTRC20Parameters params = builder.build(true);
 
-        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
@@ -363,7 +363,7 @@ public class PrecompiledContractsVerifyProofTest {
 
         ShieldedTRC20Parameters params = builder.build(true);
 
-        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
@@ -387,6 +387,112 @@ public class PrecompiledContractsVerifyProofTest {
         for (int i = 0; i < 1; i++) {
           byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
               .toByteArray();
+          System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
+        }
+        IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
+        byte[] root = voucher.root().getContent().toByteArray();
+
+        Assert.assertArrayEquals(root, Arrays.copyOfRange(result, idx, idx + 32));
+      }
+    }
+  }
+
+  @Test
+  public void verifyBurnWithCmCorrect() throws ZksnarkException {
+    int totalCountNum = 2;
+    long leafCount = 0;
+    byte[] frontier = new byte[32 * 33];
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    for (int countNum = 0; countNum < totalCountNum; countNum++) {
+      SpendingKey senderSk = SpendingKey.random();
+      ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+      FullViewingKey senderFvk = senderSk.fullViewingKey();
+      byte[] senderOvk = senderFvk.getOvk();
+      IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+      byte[] rcm1 = new byte[32];
+      JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
+
+      {//for mint1
+        ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
+        mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+        mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
+            senderPaymentAddress1.getPkD(), 100, rcm1, new byte[512]);
+        ShieldedTRC20Parameters mintParams1 = mintBuilder1.build(false);
+
+        byte[] mintInputData1 = abiEncodeForMint(mintParams1, 100, frontier, leafCount);
+        Pair<Boolean, byte[]> mintContractResult1 = mintContract.execute(mintInputData1);
+        byte[] mintResult1 = mintContractResult1.getRight();
+        Assert.assertEquals(1, mintResult1[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        int slot = mintResult1[63];
+        if (slot == 0) {
+          System.arraycopy(mintInputData1, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
+          System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+
+      {//for burn
+        ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+        builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
+        builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.valueOf(50L));
+        builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
+        //spendNote1
+        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
+            100, rcm1, new byte[512]);
+        byte[][] cm1 = new byte[1][32];
+        System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
+        IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
+        byte[] path1 = decodePath(voucher1.path().encode());
+        byte[] anchor1 = voucher1.root().getContent().toByteArray();
+        long position1 = voucher1.position();
+        builder.addSpend(senderExpsk, senderNote1, anchor1, path1, position1);
+
+        //receiveNote1
+        SpendingKey receiveSk1 = SpendingKey.random();
+        FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
+        IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        builder.addOutput(senderOvk, receivePaymentAddress1, 50, new byte[512]);
+
+        ShieldedTRC20Parameters params = builder.build(true);
+
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 50);
+        Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
+        byte[] result = contractResult.getRight();
+        Assert.assertEquals(1, result[31]);
+
+        //update frontier and leafCount
+        int idx = 63;
+        int slot = result[idx];
+        if (slot == 0) {
+          byte[] noteCommitment = params.getReceiveDescription(0).getNoteCommitment()
+                                        .toByteArray();
+          System.arraycopy(noteCommitment, 0, frontier, 0, 32);
+        } else {
+          int destPos = slot * 32;
+          int srcPos = (slot - 1) * 32 + idx + 1;
+          System.arraycopy(result, srcPos, frontier, destPos, 32);
+        }
+        idx += slot * 32 + 1;
+        leafCount++;
+
+        byte[][] cm = new byte[1][32];
+        for (int i = 0; i < 1; i++) {
+          byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
+                                        .toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -475,7 +581,7 @@ public class PrecompiledContractsVerifyProofTest {
 
         ShieldedTRC20Parameters params = builder.build(true);
 
-        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
@@ -626,7 +732,7 @@ public class PrecompiledContractsVerifyProofTest {
 
         ShieldedTRC20Parameters params = builder.build(true);
 
-        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
         Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
@@ -778,6 +884,85 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   @Test
+  public void verifyBurnWithCmWrong() throws ZksnarkException {
+    long leafCount = 0;
+    byte[] frontier = new byte[32 * 33];
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+
+    SpendingKey senderSk = SpendingKey.random();
+    ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+    FullViewingKey senderFvk = senderSk.fullViewingKey();
+    byte[] senderOvk = senderFvk.getOvk();
+    IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+    byte[] rcm1 = new byte[32];
+    JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
+    PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
+
+    {//for mint1
+      ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
+      mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
+      mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+      mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+      mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
+          senderPaymentAddress1.getPkD(), 100, rcm1, new byte[512]);
+      ShieldedTRC20Parameters mintParams1 = mintBuilder1.build(false);
+
+      byte[] mintInputData1 = abiEncodeForMint(mintParams1, 100, frontier, leafCount);
+      Pair<Boolean, byte[]> mintContractResult1 = mintContract.execute(mintInputData1);
+      byte[] mintResult1 = mintContractResult1.getRight();
+      Assert.assertEquals(1, mintResult1[31]);
+
+      //update frontier and leafCount
+      //if slot == 0, frontier[0:31]=noteCommitment
+      int slot = mintResult1[63];
+      if (slot == 0) {
+        System.arraycopy(mintInputData1, 0, frontier, 0, 32);
+      } else {
+        int srcPos = (slot + 1) * 32;
+        int destPos = slot * 32;
+        System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
+      }
+      leafCount++;
+    }
+
+    {//for burn
+      ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
+      builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+      builder.setTransparentFromAmount(BigInteger.ZERO);
+      builder.setTransparentToAmount(BigInteger.valueOf(40));
+      builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
+      //spendNote1
+      Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
+          100, rcm1, new byte[512]);
+      byte[][] cm1 = new byte[1][32];
+      System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
+      IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
+      byte[] path1 = decodePath(voucher1.path().encode());
+      byte[] anchor1 = voucher1.root().getContent().toByteArray();
+      long position1 = voucher1.position();
+      builder.addSpend(senderExpsk, senderNote1, anchor1, path1, position1);
+
+      //receiveNote1
+      SpendingKey receiveSk1 = SpendingKey.random();
+      FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
+      IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
+      PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+      builder.addOutput(senderOvk, receivePaymentAddress1, 50, new byte[512]);
+
+      ShieldedTRC20Parameters params = builder.build(true);
+
+      byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 40);
+      Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
+      byte[] result = contractResult.getRight();
+      Assert.assertEquals(0, result[31]);
+    }
+
+  }
+
+  @Test
   public void merkleHashWrongInput() {
     long[] levelList = {-1, 64, (1L << 32)};
 
@@ -908,7 +1093,7 @@ public class PrecompiledContractsVerifyProofTest {
     builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
     ShieldedTRC20Parameters params = builder.build(true);
 
-    byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+    byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
     byte[] mergedBytes = ByteUtil.merge(inputData, new byte[1]);
     Pair<Boolean, byte[]> contractResult = verifyTransfer(mergedBytes);
     byte[] result = contractResult.getRight();
@@ -1044,7 +1229,7 @@ public class PrecompiledContractsVerifyProofTest {
       builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
       ShieldedTRC20Parameters params = builder.build(true);
 
-      byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+      byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
       Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
       byte[] result = contractResult.getRight();
 
@@ -1101,7 +1286,7 @@ public class PrecompiledContractsVerifyProofTest {
     builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
     ShieldedTRC20Parameters params = builder.build(true);
 
-    byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+    byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
     Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
     byte[] result = contractResult.getRight();
 
@@ -1168,7 +1353,7 @@ public class PrecompiledContractsVerifyProofTest {
         50, r, new byte[512]);
     ShieldedTRC20Parameters params = builder.build(true);
 
-    byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+    byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount, 0);
     Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
     byte[] result = contractResult.getRight();
 
@@ -3535,7 +3720,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransfer(ShieldedTRC20Parameters params, byte[] frontier,
-                                      long leafCount) {
+                                      long leafCount, long valueBalance) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3552,10 +3737,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3567,12 +3752,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(valueBalance),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3604,10 +3790,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3619,12 +3805,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3656,10 +3843,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3671,12 +3858,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3709,10 +3897,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3724,12 +3912,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3761,10 +3950,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3776,12 +3965,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3814,10 +4004,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3829,12 +4019,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3865,10 +4056,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3881,12 +4072,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3918,10 +4110,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3934,12 +4126,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -3970,10 +4163,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -3986,12 +4179,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -4024,10 +4218,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -4040,12 +4234,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -4077,10 +4272,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -4092,13 +4287,14 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
 //        params.getBindingSignature().toByteArray(),
         Wallet.generateRandomBytes(64),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -4130,10 +4326,10 @@ public class PrecompiledContractsVerifyProofTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -4145,12 +4341,13 @@ public class PrecompiledContractsVerifyProofTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
 //        params.getMessageHash().toByteArray(),
+        longTo32Bytes(0),
         Wallet.generateRandomBytes(32),
         frontier,
         longTo32Bytes(leafCount),
