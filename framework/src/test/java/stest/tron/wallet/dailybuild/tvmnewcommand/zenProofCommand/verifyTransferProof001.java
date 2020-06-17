@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.precompiledcontracts;
+package stest.tron.wallet.dailybuild.tvmnewcommand.zenProofCommand;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
