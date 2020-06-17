@@ -86,83 +86,74 @@ public class pedersenHash001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    logger.info(
-        "infoById:" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
-    Assert.assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())
-        .equals("0000000000000000000000000000000000000000000000000000000000000001"
-            + "0000000000000000000000000000000000000000000000000000000000000040"
-            + "0000000000000000000000000000000000000000000000000000000000000020"
-            + "0000000000000000000000000000000000000000000000000000000000000000"));
+    Assert.assertEquals(1, infoById.get().getResultValue());
+    Assert.assertEquals("FAILED", infoById.get().getResult().toString());
+    Assert.assertEquals("OUT_OF_ENERGY", infoById.get().getReceipt().getResult().toString());
+    Assert.assertEquals(1000000000, infoById.get().getFee());
+    Assert.assertTrue(infoById.get().getResMessage().toStringUtf8()
+        .contains("Not enough energy for 'SWAP2' operation executing: curInvokeEnergyLimit"));
   }
 
   @Test(enabled = true, description = "data length limit")
   public void test02DataLengthLimit() {
     String method = "test2(bytes)";
-    txid = PublicMethed
-        .triggerContract(contractAddress, method,
-            "\"0000000000000000000000000000000000000000000000000000000000000001"
-                + "0000000000000000000000000000000000000000000000000000000000000002\"",
-            false, 0, maxFeeLimit, contractExcAddress,
-            contractExcKey, blockingStubFull);
+    // length:64
+    String argsStr1 = "\"0000000000000000000000000000000000000000000000000000000000000001"
+        + "0000000000000000000000000000000000000000000000000000000000000002\"";
+    Optional<TransactionInfo> infoById = null;
+    txid = PublicMethed.triggerContract(contractAddress, method, argsStr1, false, 0, maxFeeLimit,
+        contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> infoById = PublicMethed
+    infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(1, infoById.get().getResultValue());
+    Assert.assertEquals("FAILED", infoById.get().getResult().toString());
+    Assert.assertEquals("OUT_OF_ENERGY", infoById.get().getReceipt().getResult().toString());
+    Assert.assertEquals(1000000000, infoById.get().getFee());
+    Assert.assertTrue(infoById.get().getResMessage().toStringUtf8()
+        .contains("Not enough energy for 'SWAP2' operation executing: curInvokeEnergyLimit"));
+
+    // length:128
+    String argsStr2 = "\"0000000000000000000000000000000000000000000000000000000000000001"
+        + "0000000000000000000000000000000000000000000000000000000000000001"
+        + "0000000000000000000000000000000000000000000000000000000000000002"
+        + "0000000000000000000000000000000000000000000000000000000000000002\"";
+    txid = PublicMethed.triggerContract(contractAddress, method, argsStr2, false, 0, maxFeeLimit,
+        contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    logger.info(
-        "infoById:" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
-    Assert.assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())
-        .equals("0000000000000000000000000000000000000000000000000000000000000001"
+    Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001"
             + "0000000000000000000000000000000000000000000000000000000000000040"
             + "0000000000000000000000000000000000000000000000000000000000000020"
-            + "0000000000000000000000000000000000000000000000000000000000000000"));
+            + "7d6b910840eb7b47f76492aca4a3344888b8fa5aab77a49e9445cda718d75040",
+        ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
   }
 
-/*
-  @Test(enabled = true, description = "Trigger precompile multivalidatesign function with incor"
-      + "rect data")
-  public void test02TriggerPrecompileMultivalisignWithIncorrectData() {
-    List<Object> signatures = new ArrayList<>();
-    List<Object> addresses = new ArrayList<>();
-    byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 16; i++) {
-      ECKey key = new ECKey();
-      byte[] sign = key.sign(hash).toByteArray();
-      signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
-    }
-    byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
-    signatures.set(0, Hex.toHexString(sign));
-    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-    String argsStr = PublicMethed.parametersString(parameters);
-
-    String input = AbiUtil.parseParameters("batchvalidatesign(bytes32,bytes[],address[])", argsStr);
-    String method = "testArray2(bytes)";
-    txid = PublicMethed.triggerContractBoth(contractAddress, method,
-        AbiUtil.parseParameters(method, Arrays.asList(input)), true, 0, maxFeeLimit,
-        contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
-    PublicMethed.getTransactionById(txid, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+  @Test(enabled = true, description = "normal")
+  public void test02Normal() {
+    String method = "test3(uint32,bytes32,bytes32)";
+    String argsStr1 = "0000000000000000000000000000000000000000000000000000000000000001"
+        + "0000000000000000000000000000000000000000000000000000000000000001"
+        + "0000000000000000000000000000000000000000000000000000000000000002";
     Optional<TransactionInfo> infoById = null;
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    txid = PublicMethed.triggerContract(contractAddress, method, argsStr1, true, 0, maxFeeLimit,
+        contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    logger.info(
-        "infoById:" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
-    Assert.assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())
-        .equals("0000000000000000000000000000000000000000000000000000000000000001"
-            + "0000000000000000000000000000000000000000000000000000000000000040"
-            + "0000000000000000000000000000000000000000000000000000000000000020"
-            + "0001010101010101010101010101010100000000000000000000000000000000"));
-  }*/
+    Assert.assertEquals("7d6b910840eb7b47f76492aca4a3344888b8fa5aab77a49e9445cda718d75040",
+        ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
+  }
 
-  /**
-   * constructor.
-   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
-        blockingStubFull);
+    PublicMethed
+        .sendcoin(testNetAccountAddress, balance - 1000000, contractExcAddress, contractExcKey,
+            blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
