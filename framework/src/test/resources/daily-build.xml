@@ -6,7 +6,9 @@
   </listeners>
   <test name="stest">
     <packages>
-      <package name="stest.tron.wallet.dailybuild.*">
+      <package name="stest.tron.wallet.dailybuild.zentrc20token">
+      </package>
+      <package name="stest.tron.wallet.dailybuild.tvmnewcommand">
       </package>
     </packages>
   </test>
