@@ -9,7 +9,7 @@ contract verifyTransferProofTest {
         return address(0x1000002).delegatecall(data);
     }
 
-    function test3(bytes32[10][] memory input, bytes32[2][] memory spendAuthoritySignature, bytes32[9][] memory output, bytes32[2] memory bindingSignature, bytes32 signHash, bytes32[33] memory frontier, uint256 leafCount) public returns (bytes32[] memory){
-        return verifyTransferProof(input, spendAuthoritySignature, output, bindingSignature, signHash, frontier, leafCount);
+    function test3(bytes32[10][] memory input, bytes32[2][] memory spendAuthoritySignature, bytes32[9][] memory output, bytes32[2] memory bindingSignature, bytes32 signHash, uint64 valueBalance, bytes32[33] memory frontier, uint256 leafCount) public returns (bytes32[] memory){
+        return verifyTransferProof(input, spendAuthoritySignature, output, bindingSignature, signHash, valueBalance, frontier, leafCount);
     }
 }
