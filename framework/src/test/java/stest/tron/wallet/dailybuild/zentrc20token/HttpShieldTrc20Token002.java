@@ -80,7 +80,7 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.getJSONObject("receipt")
-        .getLong("energy_usage_total") > 300000L);
+        .getLong("energy_usage_total") > 250000L);
     Assert.assertEquals(responseContent.getString("contract_address"),shieldAddress);
     Assert.assertEquals(responseContent.getJSONObject("receipt").getString("result"),
         "SUCCESS");
@@ -104,7 +104,7 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.getJSONObject("receipt")
-        .getLong("energy_usage_total") > 300000L);
+        .getLong("energy_usage_total") > 250000L);
     Assert.assertEquals(responseContent.getString("contract_address"),shieldAddress);
     Assert.assertEquals(responseContent.getJSONObject("receipt").getString("result"),
         "SUCCESS");
