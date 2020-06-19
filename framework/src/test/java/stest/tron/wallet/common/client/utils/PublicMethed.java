@@ -4668,7 +4668,7 @@ public class PublicMethed {
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     int i = 10;
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+    while (!response.getResult() && response.getCode() == response_code.SERVER_BUSY
         && i > 0) {
       try {
         Thread.sleep(300);
