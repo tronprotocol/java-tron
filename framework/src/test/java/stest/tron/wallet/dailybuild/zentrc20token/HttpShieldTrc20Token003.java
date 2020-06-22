@@ -80,6 +80,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
             .getString("trigger_contract_input"),maxFeeLimit,0L,0,0L,
         zenTrc20TokenOwnerKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
   }
 
