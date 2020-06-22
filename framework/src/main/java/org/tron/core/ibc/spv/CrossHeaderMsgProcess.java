@@ -41,7 +41,7 @@ import org.tron.protos.Protocol.SignedBlockHeader;
 import org.tron.protos.Protocol.SignedBlockHeader.Builder;
 
 //todo:同步从指定高度开始，需要记录这个高度的当前sr list
-@Slf4j(topic = "blockheader-process")
+@Slf4j(topic = "cross-blockheader-process")
 @Service
 public class CrossHeaderMsgProcess {
 
@@ -94,7 +94,7 @@ public class CrossHeaderMsgProcess {
       return;
     }
 
-    logger.info("HandleUpdatedNotice, peer:{}, notice num:{}, chainId:{}",
+    logger.debug("HandleUpdatedNotice, peer:{}, notice num:{}, chainId:{}",
         peer, noticeMessage.getCurrentBlockHeight(), chainIdStr);
     long localLatestHeight = chainBaseManager.getCommonDataBase()
         .getLatestHeaderBlockNum(chainIdStr);
@@ -107,16 +107,15 @@ public class CrossHeaderMsgProcess {
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
       missBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber() + 1);
-      logger.info("sync finish");
     } else {//sync
       syncDisabledMap.put(chainIdStr, false);
-      logger.info("sync begin");
     }
     //notice local node
     syncPool.getActivePeers().forEach(peerConnection -> {
       peerConnection.sendMessage(msg);
     });
-    logger.info("HandleUpdatedNotice end");
+    logger.info("chain {} handleUpdatedNotice {} end", chainIdStr,
+        noticeMessage.getCurrentBlockHeight());
   }
 
   public void handleRequest(PeerConnection peer, TronMessage msg)
@@ -191,7 +190,7 @@ public class CrossHeaderMsgProcess {
     long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
     Long latestMaintenanceTime = latestMaintenanceTimeMap.get(chainIdString);
     latestMaintenanceTime = latestMaintenanceTime == null ? 0 : latestMaintenanceTime;
-    logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
+    logger.debug("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
         latestMaintenanceTime);
     if (maintenanceTime > latestMaintenanceTime) {
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
@@ -231,7 +230,7 @@ public class CrossHeaderMsgProcess {
           }
         }
       } catch (Exception e) {
-        logger.info("sendRequest " + e.getMessage(), e);
+        logger.error("sendRequest error!", e);
       }
     }
   }

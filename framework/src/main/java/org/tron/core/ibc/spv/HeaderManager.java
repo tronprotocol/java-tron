@@ -44,7 +44,7 @@ import org.tron.protos.Protocol.PBFTMessage.Raw;
 import org.tron.protos.Protocol.SRL;
 import org.tron.protos.Protocol.SignedBlockHeader;
 
-@Slf4j
+@Slf4j(topic = "cross-block-head")
 @Component
 public class HeaderManager {
 
@@ -73,7 +73,7 @@ public class HeaderManager {
     List<ByteString> currentSrList = getCurrentSrList(header.getInstance(), chainId);
     if (CollectionUtils.isEmpty(currentSrList) || CollectionUtils.isEmpty(srsignlist)) {
       logger.warn("valid block pbft sign; currentSrList:{}, srsignlist:{}", currentSrList,
-          srsignlist);
+          srsignlist.size());
     } else if (!validBlockPbftSign(header.getInstance(), srsignlist, currentSrList)) {
       throw new ValidateSignatureException("valid block pbft signature fail!");
     } else {
@@ -122,14 +122,13 @@ public class HeaderManager {
     if (validBlock) {
       chainBaseManager.getCommonDataBase().saveLatestPBFTBlockNum(chainId, blockId.getNum());
     }
-    logger.info("save chain {} block header: {}", chainId, header);
+    logger.info("save chain {} block header num: {}", chainId, header.getNum());
   }
 
   public synchronized boolean isExist(ByteString chainId, BlockHeader header) {
     String key = buildKey(chainId, header);
     if (blockHeaderCache.getIfPresent(key) == null) {
       blockHeaderCache.put(key, true);
-      logger.info("{} is not exist!", key);
       return false;
     }
     return true;
@@ -226,7 +225,7 @@ public class HeaderManager {
       try {
         byte[] srAddress = ECKey.signatureToAddress(dataHash,
             TransactionCapsule.getBase64FromByteString(sign));
-        logger.info("block signature sr address:{}", ByteArray.toHexString(srAddress));
+        logger.debug("block signature sr address:{}", ByteArray.toHexString(srAddress));
         if (!srSet.contains(ByteString.copyFrom(srAddress))) {
           srSet.forEach(address -> {
             logger.error("block preCycleSrSet:{}", ByteArray.toHexString(address.toByteArray()));

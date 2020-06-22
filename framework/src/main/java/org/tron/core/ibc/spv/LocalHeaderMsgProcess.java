@@ -23,7 +23,7 @@ import org.tron.protos.Protocol.PBFTCommitResult;
 import org.tron.protos.Protocol.SignedBlockHeader;
 import org.tron.protos.Protocol.SignedBlockHeader.Builder;
 
-@Slf4j(topic = "localHeaderMsgProcess")
+@Slf4j(topic = "cross-localHeaderMsgProcess")
 @Service
 public class LocalHeaderMsgProcess {
 
@@ -77,7 +77,7 @@ public class LocalHeaderMsgProcess {
     long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
     Long latestMaintenanceTime = latestMaintenanceTimeMap.get(chainIdString);
     latestMaintenanceTime = latestMaintenanceTime == null ? 0 : latestMaintenanceTime;
-    logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
+    logger.debug("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
         latestMaintenanceTime);
     if (maintenanceTime > latestMaintenanceTime) {
       PBFTCommitResult pbftCommitResult = chainBaseManager.getCommonDataBase()

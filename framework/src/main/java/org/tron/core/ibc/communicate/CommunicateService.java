@@ -119,7 +119,7 @@ public class CommunicateService implements Communicate {
           return builder.setHash(proofLeaf.getHash().getByteString())
               .setLeftOrRight(proofLeaf.isLeftOrRight()).build();
         }).collect(Collectors.toList());
-        //set the proof and time out height
+        //set the proof and root height
         crossMessage = crossMessage.toBuilder().addAllProof(proofList)
             .setRootHeight(blockNum).build();
         //send data
@@ -156,7 +156,7 @@ public class CommunicateService implements Communicate {
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
         Sha256Hash.of(true, proof.getHash().toByteArray()),
         proof.getLeftOrRight())).collect(Collectors.toList());
-    logger.info("root:{}, tx:{}", root, txHash);
+    logger.debug("root:{}, tx:{}", root, txHash);
     return merkleTree.validProof(root, proofLeafList, txHash);
   }
 
@@ -186,7 +186,7 @@ public class CommunicateService implements Communicate {
           logger.info("to {} broadcast cross msg, txid is {}, type {}", peer, getTxId(crossMessage),
               crossMessage.getType());
         });
-    return false;
+    return true;
   }
 
   @Override

@@ -154,8 +154,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             try {
               CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
               builder.setToChainId(crossContract.getToChainId())
-                  .setTimeOutBlockHeight(timeOut / BLOCK_PRODUCED_INTERVAL + communicateService
-                      .getHeight(crossContract.getToChainId()) + 1);
+                  .setTimeOutBlockHeight(getTimeOutHeight(crossContract, timeOut));
             } catch (Exception e) {
               logger.error("", e);
             }
@@ -229,7 +228,6 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
           }
           manager.addCrossTx(builder.build());
           logger.info("a cross chain tx:{} time out!", sendTxEntry.getTxHash().toString());
-
         } else {
           break;
         }

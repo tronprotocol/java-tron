@@ -1372,7 +1372,8 @@ public class Manager {
         crossMessage = crossTxQueue.poll();
         //todo:a->o->b
         if (crossMessage.getType() == Type.TIME_OUT || crossMessage.getType() == Type.ACK
-            || crossMessage.getTimeOutBlockHeight() > chainBaseManager.getHeadBlockNum()) {
+            || (crossMessage.getType() == Type.DATA
+            && crossMessage.getTimeOutBlockHeight() > chainBaseManager.getHeadBlockNum())) {
           trx = new TransactionCapsule(crossMessage.getTransaction());
           trx.setSource(false);
           trx.setType(crossMessage.getType());

@@ -20,7 +20,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.SignedBlockHeader.Builder;
 
-@Slf4j(topic = "pbft-blockheader-listener")
+@Slf4j(topic = "cross-blockheader-listener")
 @Service
 public class SendUpdateBlockHeaderListener implements EventListener<PbftBlockCommitEvent> {
 
@@ -81,13 +81,13 @@ public class SendUpdateBlockHeaderListener implements EventListener<PbftBlockCom
     long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
     if (maintenanceTime > latestMaintenanceTime) {
       try {
-        Thread.sleep(1000);
+        Thread.sleep(500);
       } catch (InterruptedException e) {
         logger.error("", e);
       }
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
           .getSrSignData(maintenanceTime);
-      logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}, srSignCapsule:{}",
+      logger.debug("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}, srSignCapsule:{}",
           maintenanceTime, latestMaintenanceTime, srSignCapsule);
       if (srSignCapsule != null) {
         latestMaintenanceTime = maintenanceTime;
