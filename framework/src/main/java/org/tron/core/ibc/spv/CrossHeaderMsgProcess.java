@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +51,14 @@ public class CrossHeaderMsgProcess {
   private volatile Map<String, Long> latestMaintenanceTimeMap = new ConcurrentHashMap<>();
   private volatile Map<String, Boolean> syncDisabledMap = new ConcurrentHashMap<>();
   private volatile Map<String, Long> syncBlockHeaderMap = new ConcurrentHashMap<>();
+  private volatile Map<String, Long> missBlockHeaderMap = new ConcurrentHashMap<>();
   private volatile Map<String, Boolean> startProcessHeaderMap = new ConcurrentHashMap<>();
   private Map<String, Cache<Long, SignedBlockHeader>> chainHeaderCache = new ConcurrentHashMap<>();
   private Cache<String, Long> sendHeaderNumCache = CacheBuilder.newBuilder()
       .initialCapacity(100)
       .maximumSize(1000).expireAfterWrite(1, TimeUnit.MINUTES).build();
+  private Cache<String, AtomicInteger> sendTimesCache = CacheBuilder.newBuilder()
+      .initialCapacity(100).maximumSize(100).expireAfterWrite(1, TimeUnit.MINUTES).build();
   private ExecutorService processHeaderService = Executors.newFixedThreadPool(20,
       r -> new Thread(r, "process-cross-header"));
   private ExecutorService sendService = Executors.newFixedThreadPool(20,
@@ -92,7 +96,8 @@ public class CrossHeaderMsgProcess {
 
     logger.info("HandleUpdatedNotice, peer:{}, notice num:{}, chainId:{}",
         peer, noticeMessage.getCurrentBlockHeight(), chainIdStr);
-    long localLatestHeight = chainBaseManager.getCommonDataBase().getLatestHeaderBlockNum(chainIdStr);
+    long localLatestHeight = chainBaseManager.getCommonDataBase()
+        .getLatestHeaderBlockNum(chainIdStr);
     if (noticeMessage.getCurrentBlockHeight() - localLatestHeight <= 1
         && noticeMessage.getCurrentBlockHeight() - localLatestHeight >= 0) {//
       syncDisabledMap.put(chainIdStr, true);
@@ -100,6 +105,8 @@ public class CrossHeaderMsgProcess {
       headerManager.pushBlockHeader(noticeMessage.getSignedBlockHeader());
       syncBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
+      missBlockHeaderMap.put(chainIdStr,
+          noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber() + 1);
       logger.info("sync finish");
     } else {//sync
       syncDisabledMap.put(chainIdStr, false);
@@ -157,13 +164,6 @@ public class CrossHeaderMsgProcess {
     if (CollectionUtils.isEmpty(blockHeaders)) {//todo
       return;
     }
-    if (sendHeight != null && sendHeight + 1 == blockHeaders.get(0).getBlockHeader().getRawData()
-        .getNumber()) {
-      syncBlockHeaderMap.put(chainIdStr,
-          blockHeaders.get(blockHeaders.size() - 1).getBlockHeader().getRawData().getNumber());
-      sendHeaderNumCache.invalidate(chainIdStr);
-    }
-    logger.info("next sync header num:{}", syncBlockHeaderMap.get(chainIdStr));
     if (!chainHeaderCache.containsKey(chainIdStr)) {
       Cache<Long, SignedBlockHeader> blockHeaderCache = CacheBuilder.newBuilder()
           .initialCapacity(1000)
@@ -176,6 +176,13 @@ public class CrossHeaderMsgProcess {
       logger.info("save {} chain {} block header to cache", chainIdStr,
           blockHeader.getBlockHeader().getRawData().getNumber());
     }
+    if (sendHeight != null && sendHeight + 1 == blockHeaders.get(0).getBlockHeader().getRawData()
+        .getNumber()) {
+      syncBlockHeaderMap.put(chainIdStr,
+          blockHeaders.get(blockHeaders.size() - 1).getBlockHeader().getRawData().getNumber());
+      sendHeaderNumCache.invalidate(chainIdStr);
+    }
+    logger.info("next sync header num:{}", syncBlockHeaderMap.get(chainIdStr));
   }
 
   protected void setSrList(Builder builder, String chainIdString, long blockTime) {
@@ -204,10 +211,16 @@ public class CrossHeaderMsgProcess {
         } else {
           AtomicReference<Boolean> sleep = new AtomicReference<>(true);
           syncDisabledMap.entrySet().forEach(entry -> {
-            if (!entry.getValue() && sendHeaderNumCache.getIfPresent(entry.getKey()) == null) {
-              Long syncHeaderNum = syncBlockHeaderMap.get(entry.getKey());
-              syncHeaderNum = syncHeaderNum == null ? chainBaseManager.getCommonDataBase()
-                  .getLatestHeaderBlockNum(entry.getKey()) : syncHeaderNum;
+            Long syncHeaderNum = syncBlockHeaderMap.get(entry.getKey());
+            Long missBlock = missBlockHeaderMap.get(entry.getKey());
+            long latestHeaderNum = chainBaseManager.getCommonDataBase()
+                .getLatestHeaderBlockNum(entry.getKey());
+            syncHeaderNum = syncHeaderNum == null ? latestHeaderNum : syncHeaderNum;
+            if (missBlock != null && syncHeaderNum > missBlock) {
+              syncHeaderNum = missBlock;
+            }
+            if (!entry.getValue() && sendHeaderNumCache.getIfPresent(entry.getKey()) == null
+                && syncHeaderNum - latestHeaderNum <= MAX_HEADER_NUMBER / 2) {
               sendHeaderNumCache.put(entry.getKey(), syncHeaderNum);
               sendService.submit(new SyncHeader(entry.getKey(), syncHeaderNum));
               sleep.set(false);
@@ -266,7 +279,6 @@ public class CrossHeaderMsgProcess {
 
   private class SaveBlockHeader implements Runnable {
 
-
     private String chainId;
 
     public SaveBlockHeader(String chainId) {
@@ -279,21 +291,21 @@ public class CrossHeaderMsgProcess {
       while (sync != null) {
         long localLatestHeight = chainBaseManager.getCommonDataBase()
             .getLatestHeaderBlockNum(chainId);
+        long nextHeight = localLatestHeight + 1;
         try {
           SignedBlockHeader signedBlockHeader = chainHeaderCache.get(chainId)
-              .getIfPresent(localLatestHeight + 1);
+              .getIfPresent(nextHeight);
           if (signedBlockHeader != null) {
             //
+            chainHeaderCache.get(chainId).invalidate(nextHeight);
+            missBlockHeaderMap.remove(chainId);
             headerManager.pushBlockHeader(signedBlockHeader);
-            chainHeaderCache.get(chainId).invalidate(localLatestHeight + 1);
           } else {
+            if (!syncDisabledMap.get(chainId) && !missBlockHeaderMap.containsKey(chainId)) {
+              missBlockHeaderMap.put(chainId, nextHeight);
+            }
             Thread.sleep(50);
           }
-        } catch (InterruptedException e) {
-          logger.error("", e);
-        } catch (BadBlockException | ValidateSignatureException | InvalidProtocolBufferException e) {
-          chainHeaderCache.get(chainId).invalidate(localLatestHeight + 1);
-          logger.error("", e);
         } catch (Exception e) {
           logger.error("", e);
         }

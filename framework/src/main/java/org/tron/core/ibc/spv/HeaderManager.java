@@ -64,6 +64,7 @@ public class HeaderManager {
   public synchronized void pushBlockHeader(SignedBlockHeader signedBlockHeader)
       throws BadBlockException, ValidateSignatureException, InvalidProtocolBufferException {
 //    isExist(header);
+    boolean validBlock = false;
     BlockHeaderCapsule header = new BlockHeaderCapsule(signedBlockHeader.getBlockHeader());
     String chainId = header.getChainId();
     BlockId blockId = header.getBlockId();
@@ -75,6 +76,8 @@ public class HeaderManager {
           srsignlist);
     } else if (!validBlockPbftSign(header.getInstance(), srsignlist, currentSrList)) {
       throw new ValidateSignatureException("valid block pbft signature fail!");
+    } else {
+      validBlock = true;
     }
     if (signedBlockHeader.getSrList() != PBFTCommitResult.getDefaultInstance()) {
       PBFTMessage.Raw raw = Raw.parseFrom(signedBlockHeader.getSrList().getData().toByteArray());
@@ -94,7 +97,8 @@ public class HeaderManager {
         throw new BadBlockException("header number not 1 is " + header.getNum());
       }
     } else {
-      if (header.getNum() <= chainBaseManager.getCommonDataBase().getLatestHeaderBlockNum(chainId)) {
+      if (header.getNum() <= chainBaseManager.getCommonDataBase()
+          .getLatestHeaderBlockNum(chainId)) {
         return;
       }
       if (blockHeaderStore.getUnchecked(chainId, header.getParentBlockId()) == null) {
@@ -115,7 +119,9 @@ public class HeaderManager {
     blockHeaderStore.put(chainId, header);
     chainBaseManager.getCommonDataBase().saveLatestBlockHeaderHash(chainId, blockId.toString());
     chainBaseManager.getCommonDataBase().saveLatestHeaderBlockNum(chainId, blockId.getNum());
-
+    if (validBlock) {
+      chainBaseManager.getCommonDataBase().saveLatestPBFTBlockNum(chainId, blockId.getNum());
+    }
     logger.info("save chain {} block header: {}", chainId, header);
   }
 
@@ -176,7 +182,7 @@ public class HeaderManager {
       if (srSignSet.size() != 0) {
         return false;
       }
-      logger.info("block {} validSrList spend time : {}",
+      logger.info("block {} valid pbft sign spend time : {}",
           header.getRawData().getNumber(), (System.currentTimeMillis() - startTime));
     }
     return true;

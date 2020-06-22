@@ -412,7 +412,12 @@ public class Manager {
       }
       tmp = khaosDb.getBlock(tmp.getParentHash());
     }
-    return false;
+    BlockId headBlockId = chainBaseManager.getHeadBlockId();
+    if (tmp == null && !newblock.getParentBlockId().equals(headBlockId)) {
+      logger.warn("ParentHash:{}, headBlockId:{}", newblock.getParentBlockId(), headBlockId);
+      return false;
+    }
+    return true;
   }
 
   private BlockCapsule findHighestBlockNum(Sha256Hash blockHash) {

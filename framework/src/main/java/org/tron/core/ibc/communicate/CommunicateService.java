@@ -232,6 +232,11 @@ public class CommunicateService implements Communicate {
     if (blockId == null) {
       return null;
     }
+    if (blockId.getNum() > chainBaseManager.getCommonDataBase().getLatestPBFTBlockNum(chainId)) {
+      logger.warn("chain {} latest pbft height is {}, but block height is {} ", chainId,
+          blockId.getNum(), chainBaseManager.getCommonDataBase().getLatestPBFTBlockNum(chainId));
+      return null;
+    }
     BlockHeaderCapsule blockHeaderCapsule = blockHeaderStore.getUnchecked(chainId, blockId);
     if (blockHeaderCapsule != null) {
       return blockHeaderCapsule.getCrossMerkleRoot().equals(Sha256Hash.ZERO_HASH)
