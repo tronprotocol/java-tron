@@ -539,7 +539,7 @@ public class ContractInternalTransaction003 {
           .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()),
               "");
       Assert.assertEquals(contractResult.OUT_OF_TIME, infoById.get().getReceipt().getResult());
-      Assert.assertEquals("CPU timeout for \\'PUSH1\\' operation executing",
+      Assert.assertEquals("CPU timeout for 'PUSH1' operation executing",
           ByteArray.toHexString(infoById.get().getResMessage().toByteArray()));
     }
   }
