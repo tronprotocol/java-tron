@@ -47,7 +47,7 @@ public class HttpShieldTrc20Token005 extends ZenTrc20Base {
         zenTrc20TokenOwnerAddressString,shieldAddress,mint,responseContent
             .getString("trigger_contract_input"),maxFeeLimit,0L,0,0L,
         zenTrc20TokenOwnerKey);
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getTransactionInfoById(httpnode,txid,true);
     responseContent = HttpMethed.parseResponseContent(response);
