@@ -42,7 +42,7 @@ contract isTestCtr {
         }
     }
     function isTestEquals(address addr) view public returns (bool) {
-        if (addr.isContract == true) {
+        if (addr.isContract) {
             return true;
         } else {
             return false;
