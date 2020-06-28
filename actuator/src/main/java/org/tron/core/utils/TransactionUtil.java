@@ -24,6 +24,7 @@ import com.google.protobuf.ByteString;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -221,7 +222,7 @@ public class TransactionUtil {
       Contract contract = trx.getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
       AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
-      if (account == null) {
+      if (Objects.isNull(account)) {
         throw new PermissionException("Account does not exist!");
       }
       int permissionId = contract.getPermissionId();
