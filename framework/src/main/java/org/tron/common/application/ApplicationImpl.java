@@ -89,11 +89,6 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public BlockStore getBlockStoreS() {
-    return blockStoreDb;
-  }
-
-  @Override
   public Manager getDbManager() {
     return dbManager;
   }
@@ -101,14 +96,6 @@ public class ApplicationImpl implements Application {
   @Override
   public ChainBaseManager getChainBaseManager() {
     return chainBaseManager;
-  }
-
-  public boolean isProducer() {
-    return isProducer;
-  }
-
-  public void setIsProducer(boolean producer) {
-    isProducer = producer;
   }
 
   private void closeRevokingStore() {

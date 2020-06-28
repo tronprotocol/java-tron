@@ -37,8 +37,6 @@ public interface Application {
 
   void shutdownServices();
 
-  BlockStore getBlockStoreS();
-
   void addService(Service service);
 
   Manager getDbManager();
