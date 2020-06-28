@@ -536,11 +536,11 @@ public class ContractInternalTransaction003 {
     } else if (infoById.get().getResultValue() == 1) {
       Assert.assertEquals(FAILED, infoById.get().getResult());
       Assert
-          .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()),
+          .assertEquals(infoById.get().getContractResult(0).toStringUtf8(),
               "");
       Assert.assertEquals(contractResult.OUT_OF_TIME, infoById.get().getReceipt().getResult());
       Assert.assertEquals("CPU timeout for 'PUSH1' operation executing",
-          ByteArray.toHexString(infoById.get().getResMessage().toByteArray()));
+          infoById.get().getResMessage().toStringUtf8());
     }
   }
 
