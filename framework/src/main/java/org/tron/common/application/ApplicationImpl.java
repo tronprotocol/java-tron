@@ -16,7 +16,6 @@ import org.tron.core.net.TronNetService;
 @Component
 public class ApplicationImpl implements Application {
 
-  private BlockStore blockStoreDb;
   private ServiceContainer services;
 
   @Autowired
@@ -30,9 +29,7 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private ConsensusService consensusService;
-
-  private boolean isProducer;
-
+  
   @Override
   public void setOptions(Args args) {
     // not used
@@ -41,7 +38,6 @@ public class ApplicationImpl implements Application {
   @Override
   @Autowired
   public void init(CommonParameter parameter) {
-    blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
   }
 
