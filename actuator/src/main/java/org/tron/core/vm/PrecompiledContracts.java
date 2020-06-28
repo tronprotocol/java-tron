@@ -932,7 +932,7 @@ public class PrecompiledContracts {
 
     private int getFrontierSlot(long leafIndex) {
       int slot = 0;
-      if (leafIndex % 2 == 1) {
+      if (leafIndex % 2 != 0) {
         int exp1 = 1;
         long pow1 = 2;
         long pow2 = pow1 << 1;
@@ -1240,7 +1240,8 @@ public class PrecompiledContracts {
                 signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
         futures.add(futureCheckBindingSig);
 
-        countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
+        boolean withNoTimeout =  countDownLatch.await(getCPUTimeLeftInNanoSecond(),
+            TimeUnit.NANOSECONDS);
         boolean checkResult = true;
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
@@ -1341,9 +1342,9 @@ public class PrecompiledContracts {
 
     private static class SaplingCheckBingdingSig implements Callable<Boolean> {
 
-      long valueBalance;
-      int spendCvLen;
-      int receiveCvLen;
+      private long valueBalance;
+      private int spendCvLen;
+      private int receiveCvLen;
       private byte[] bindingSig;
       private byte[] signHash;
       private byte[] spendCvs;
