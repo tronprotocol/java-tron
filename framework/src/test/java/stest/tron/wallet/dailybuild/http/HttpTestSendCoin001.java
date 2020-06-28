@@ -68,6 +68,7 @@ public class HttpTestSendCoin001 {
   public void test3GetTransactionInfoByIdFromSolidity() {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
 
     response = HttpMethed.getTransactionInfoByIdFromSolidity(httpSoliditynode, txid);
