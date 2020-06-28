@@ -375,7 +375,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int maxTransactionPendingSize;
-
+  @Getter
+  @Setter
+  public long pendingTransactionTimeout;
   @Getter
   @Setter
   public boolean nodeMetricsEnable = true;
