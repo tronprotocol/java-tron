@@ -2915,7 +2915,7 @@ public class Wallet {
 
   private void buildShieldedTRC20InputWithAK(
       ShieldedTRC20ParametersBuilder builder, GrpcAPI.SpendNoteTRC20 spendNote,
-      byte[] ak, byte[] nsk, byte[] ovk) throws ZksnarkException {
+      byte[] ak, byte[] nsk) throws ZksnarkException {
     GrpcAPI.Note note = spendNote.getNote();
     PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(note.getPaymentAddress());
     if (Objects.isNull(paymentAddress)) {
@@ -2926,7 +2926,6 @@ public class Wallet {
         paymentAddress.getPkD(), note.getValue(), note.getRcm().toByteArray());
     builder.addSpend(ak,
         nsk,
-        ovk,
         baseNote,
         spendNote.getAlpha().toByteArray(),
         spendNote.getRoot().toByteArray(),
@@ -2998,7 +2997,7 @@ public class Wallet {
         throw new ContractValidateException("No shielded TRC-20 ak, nsk or ovk");
       }
       for (GrpcAPI.SpendNoteTRC20 spendNote : shieldedSpends) {
-        buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk, ovk);
+        buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk);
       }
       for (ReceiveNote receiveNote : shieldedReceives) {
         buildShieldedTRC20Output(builder, receiveNote, ovk);
@@ -3024,7 +3023,7 @@ public class Wallet {
           .encryptBurnMessageByOvk(ovk, toAmount, transparentToAddress);
       cipher.ifPresent(builder::setBurnCiphertext);
       GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
-      buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk, ovk);
+      buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk);
       if (receiveSize == 1) {
         buildShieldedTRC20Output(builder, shieldedReceives.get(0), ovk);
       }

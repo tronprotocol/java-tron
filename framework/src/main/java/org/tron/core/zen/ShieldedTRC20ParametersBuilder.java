@@ -565,13 +565,12 @@ public class ShieldedTRC20ParametersBuilder {
   public void addSpend(
       byte[] ak,
       byte[] nsk,
-      byte[] ovk,
       Note note,
       byte[] alpha,
       byte[] anchor,
       byte[] path,
       long position) {
-    spends.add(new SpendDescriptionInfo(ak, nsk, ovk, note, alpha, anchor, path, position));
+    spends.add(new SpendDescriptionInfo(ak, nsk, note, alpha, anchor, path, position));
     valueBalance += note.getValue();
   }
 
@@ -634,7 +633,6 @@ public class ShieldedTRC20ParametersBuilder {
     private SpendDescriptionInfo(
         byte[] ak,
         byte[] nsk,
-        byte[] ovk,
         Note note,
         byte[] alpha,
         byte[] anchor,
