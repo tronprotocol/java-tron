@@ -66,10 +66,10 @@ public class ProposalApproveActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.any == null) {
+    if (Objects.isNull(this.any)) {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
-    if (chainBaseManager == null) {
+    if (Objects.isNull(chainBaseManager)) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
