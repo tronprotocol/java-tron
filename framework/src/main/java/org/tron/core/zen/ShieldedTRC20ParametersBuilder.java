@@ -60,7 +60,7 @@ public class ShieldedTRC20ParametersBuilder {
   @Setter
   private BigInteger transparentToAmount;
   @Setter
-  private byte[] burnCiphertext;
+  private byte[] burnCiphertext = new byte[80];
 
   public ShieldedTRC20ParametersBuilder() {
 
