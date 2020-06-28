@@ -102,7 +102,6 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonUniqueObjectException;
@@ -2003,7 +2002,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("createShieldedTransaction exception caught: " + e.getMessage());
       }
 
       trxExtBuilder.setResult(retBuilder);
@@ -2033,7 +2032,8 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info(
+            "createShieldedTransactionWithoutSpendAuthSig exception caught: " + e.getMessage());
       }
 
       trxExtBuilder.setResult(retBuilder);
@@ -2323,7 +2323,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(shieldedTRC20Parameters);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("createShieldedContractParameters exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2341,7 +2341,8 @@ public class RpcApiService implements Service {
         responseObserver.onNext(shieldedTRC20Parameters);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger
+            .info("createShieldedContractParametersWithoutAsk exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2365,7 +2366,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("scanShieldedTRC20NotesByIvk exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2387,7 +2388,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("scanShieldedTRC20NotesByOvk exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2416,8 +2417,7 @@ public class RpcApiService implements Service {
       try {
         checkSupportShieldedTRC20Transaction();
 
-        BytesMessage bytesMessage = wallet.getTriggerInputForShieldedTRC20Contract(request);
-        responseObserver.onNext(bytesMessage);
+        responseObserver.onNext(wallet.getTriggerInputForShieldedTRC20Contract(request));
       } catch (Exception e) {
         responseObserver.onError(e);
         return;
