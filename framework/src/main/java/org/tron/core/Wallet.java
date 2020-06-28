@@ -214,6 +214,9 @@ public class Wallet {
 
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+  private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
+      "request requires start_block_index >= 0 && end_block_index > "
+          + "start_block_index && end_block_index - start_block_index <= 1000";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_MINT = Hash.sha3(ByteArray.fromString(
       "MintNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
@@ -2555,8 +2558,7 @@ public class Wallet {
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request requires start_block_index >= 0 && end_block_index > start_block_index "
-              + "&& end_block_index - start_block_index <= 1000");
+          SHIELDED_TRANSACTION_SCAN_RANGE);
     }
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
     for (Block block : blockList.getBlockList()) {
@@ -2669,8 +2671,7 @@ public class Wallet {
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request require start_block_index >= 0 && end_block_index > start_block_index "
-              + "&& end_block_index - start_block_index <= 1000");
+          SHIELDED_TRANSACTION_SCAN_RANGE);
     }
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
     for (Block block : blockList.getBlockList()) {
@@ -3128,8 +3129,7 @@ public class Wallet {
       throws BadItemException, ZksnarkException, ContractExeException {
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request requires start_block_index >= 0 && end_block_index > start_block_index "
-              + "&& end_block_index - start_block_index <= 1000");
+          SHIELDED_TRANSACTION_SCAN_RANGE);
     }
 
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
@@ -3215,7 +3215,7 @@ public class Wallet {
     }
 
     String code = trxExt.getResult().getCode().toString();
-    if (code.equals("SUCCESS")) {
+    if ("SUCCESS".equals(code)) {
       List<ByteString> list = trxExt.getConstantResultList();
       byte[] listBytes = new byte[0];
       for (ByteString bs : list) {
@@ -3316,8 +3316,7 @@ public class Wallet {
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request requires start_block_index >= 0 && end_block_index > start_block_index "
-              + "&& end_block_index - start_block_index <= 1000");
+          SHIELDED_TRANSACTION_SCAN_RANGE);
     }
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
     for (Block block : blockList.getBlockList()) {
@@ -3480,7 +3479,7 @@ public class Wallet {
     }
 
     String code = trxExt.getResult().getCode().toString();
-    if (code.equals("SUCCESS")) {
+    if ("SUCCESS".equals(code)) {
       List<ByteString> list = trxExt.getConstantResultList();
       byte[] listBytes = new byte[0];
       for (ByteString bs : list) {

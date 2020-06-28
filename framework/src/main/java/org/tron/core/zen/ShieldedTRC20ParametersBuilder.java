@@ -60,7 +60,7 @@ public class ShieldedTRC20ParametersBuilder {
   @Setter
   private BigInteger transparentToAmount;
   @Setter
-  byte[] burnCiphertext = new byte[80];
+  private byte[] burnCiphertext;
 
   public ShieldedTRC20ParametersBuilder() {
 
@@ -600,7 +600,6 @@ public class ShieldedTRC20ParametersBuilder {
     private long position;
     private byte[] ak;
     private byte[] nsk;
-    private byte[] ovk;
 
     private SpendDescriptionInfo(
         ExpandedSpendingKey expsk,
@@ -648,7 +647,6 @@ public class ShieldedTRC20ParametersBuilder {
       this.path = path;
       this.position = position;
       this.alpha = alpha;
-      this.ovk = ovk;
     }
   }
 
