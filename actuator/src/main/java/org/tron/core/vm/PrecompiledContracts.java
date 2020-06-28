@@ -1242,6 +1242,11 @@ public class PrecompiledContracts {
 
         boolean withNoTimeout =  countDownLatch.await(getCPUTimeLeftInNanoSecond(),
             TimeUnit.NANOSECONDS);
+        if (!withNoTimeout) {
+          logger.info("VerifyTransferProof timeout");
+          throw Program.Exception.notEnoughTime("call VerifyTransferProof precompile method");
+        }
+
         boolean checkResult = true;
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
