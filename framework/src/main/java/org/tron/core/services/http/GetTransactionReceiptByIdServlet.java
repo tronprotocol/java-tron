@@ -40,17 +40,15 @@ public class GetTransactionReceiptByIdServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
       TransactionInfo result = wallet.getTransactionInfoById(build.getValue());
 
       if (result != null) {
         response.getWriter().println(
-            Util.printTransactionFee(JsonFormat.printToString(result, visible)));
+            Util.printTransactionFee(JsonFormat
+                .printToString(result, params.isVisible())));
       } else {
         response.getWriter().println("{}");
       }

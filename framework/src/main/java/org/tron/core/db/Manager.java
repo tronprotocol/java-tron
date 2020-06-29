@@ -233,10 +233,8 @@ public class Manager {
             } else {
               TimeUnit.MILLISECONDS.sleep(50L);
             }
-          } catch (Exception ex) {
+          } catch (Throwable ex) {
             logger.error("unknown exception happened in rePush loop", ex);
-          } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in rePush loop", throwable);
           } finally {
             if (tx != null) {
               getRePushTransactions().remove(tx);
@@ -255,8 +253,6 @@ public class Manager {
           } catch (InterruptedException ex) {
             logger.info(ex.getMessage());
             Thread.currentThread().interrupt();
-          } catch (Exception ex) {
-            logger.error("unknown exception happened in process capsule loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in process capsule loop", throwable);
           }
