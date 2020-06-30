@@ -107,7 +107,7 @@ public class DepositTest {
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     this.manager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderNumber(CommonParameter.getInstance()
-            .getBlockNumForEneryLimit() + 1);
+            .getBlockNumForEnergyLimit() + 1);
 
     String contractA = "A";
     String contractB = "B";
