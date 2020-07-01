@@ -19,8 +19,6 @@ public class CrossChainMsgProcess {
   @Autowired
   private CommunicateService communicateService;
 
-  //  @Autowired
-//  private BlockHeaderSyncHandler2 blockHeaderSyncHandler;
   @Autowired
   private CrossHeaderMsgProcess crossHeaderMsgProcess;
 
@@ -37,15 +35,12 @@ public class CrossChainMsgProcess {
         }
         case HEADER_UPDATED_NOTICE:
           crossHeaderMsgProcess.handleCrossUpdatedNotice(peer, msg);
-//          blockHeaderSyncHandler.HandleUpdatedNotice(peer, msg);
           break;
         case HEADER_REQUEST_MESSAGE:
           crossHeaderMsgProcess.handleRequest(peer, msg);
-//          blockHeaderSyncHandler.handleRequest(peer, msg);
           break;
         case HEADER_INVENTORY:
           crossHeaderMsgProcess.handleInventory(peer, msg);
-//          blockHeaderSyncHandler.handleInventory(peer, msg);
           break;
         case SR_LIST:
 //          blockHeaderSyncHandler.handleSrList(peer, msg);

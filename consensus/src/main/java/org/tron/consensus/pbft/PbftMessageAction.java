@@ -27,7 +27,7 @@ public class PbftMessageAction {
   @Autowired
   private RevokingDatabase revokingStore;
 
-  public void action(PbftMessage message, List<ByteString> dataSignList) {
+  public synchronized void action(PbftMessage message, List<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();
