@@ -132,7 +132,7 @@ public class AttackSendcoin {
     transaction = TransactionUtils.sign(transaction, ecKey);
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     }

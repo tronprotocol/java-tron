@@ -58,10 +58,6 @@ public abstract class AbstractActuator implements Actuator {
     return this;
   }
 
-  public ForkController getForkUtils() {
-    return forkController;
-  }
-
   public AbstractActuator setForkUtils(ForkController forkController) {
     this.forkController = forkController;
     return this;

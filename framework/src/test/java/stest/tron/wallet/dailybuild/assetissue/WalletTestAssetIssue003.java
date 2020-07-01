@@ -328,7 +328,7 @@ public class WalletTestAssetIssue003 {
     }
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       return false;
     } else {
       Account search = queryAccount(ecKey, blockingStubFull);
@@ -370,7 +370,7 @@ public class WalletTestAssetIssue003 {
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {

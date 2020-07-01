@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace.TimeResultType;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
@@ -15,7 +16,7 @@ public class PendingManager implements AutoCloseable {
   @Getter
   private List<TransactionCapsule> tmpTransactions = new ArrayList<>();
   private Manager dbManager;
-  private long timeout = 60_000;
+  private long timeout = Args.getInstance().getPendingTransactionTimeout();
 
   public PendingManager(Manager db) {
     this.dbManager = db;
