@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
@@ -41,6 +42,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
@@ -71,6 +73,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     isSwitch = aSwitch;
     return this;
   }
+
+  @Getter
+  @Setter
+  private PbftSignDataStore pbftSignDataStore;
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
