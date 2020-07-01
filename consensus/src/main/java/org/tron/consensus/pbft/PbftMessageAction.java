@@ -2,6 +2,7 @@ package org.tron.consensus.pbft;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,12 +39,10 @@ public class PbftMessageAction {
         long blockNum = message.getNumber();
         SnapshotManager.allowCrossChain = chainBaseManager
             .getDynamicPropertiesStore().allowCrossChain();
-        BlockCapsule blockCapsule = blockStore.getLatestBlockFromDisk(1).get(0);
-        if (blockCapsule == null) {
-          logger.error("get no block from disk");
-          return;
-        }
-        revokingStore.fastFlush(blockNum, blockCapsule.getNum());
+        long latestBlockNumOnDisk = Optional.ofNullable(blockStore.getLatestBlockFromDisk(1).get(0))
+                .map(BlockCapsule::getNum)
+                .orElse(0L);
+        revokingStore.fastFlush(blockNum, latestBlockNumOnDisk);
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
         chainBaseManager.getPbftSignDataStore()

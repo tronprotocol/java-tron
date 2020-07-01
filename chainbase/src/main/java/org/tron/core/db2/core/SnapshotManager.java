@@ -297,16 +297,16 @@ public class SnapshotManager implements RevokingDatabase {
     if (flushCount <= 0) {
       return;
     }
+    if (size - flushCount < 0) {
+      logger.error("size is lower than flushCount, size: {}, flushCount: {}", size, flushCount);
+      throw new RuntimeException("size is lower than flushCount");
+    }
     needFlush.set(true);
     try {
       updateSolidity(flushCount);
     } catch (Exception e) {
       logger.error("updateSolidity failed, err: ", e);
       throw new RuntimeException("updateSolidity failed");
-    }
-    if (size - flushCount < 0) {
-      logger.error("size is lower than flushCount, size: {}, flushCount: {}", size, flushCount);
-      throw new RuntimeException("size is lower than flushCount");
     }
     size -= flushCount;
     flush();
