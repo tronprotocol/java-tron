@@ -93,7 +93,7 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    if (allowCrossChain == false) {
+    if (!allowCrossChain || size > DEFAULT_MAX_FLUSH_COUNT) {
       if (size > maxSize.get()) {
         flushCount = flushCount + (size - maxSize.get());
         updateSolidity(size - maxSize.get());
@@ -285,15 +285,30 @@ public class SnapshotManager implements RevokingDatabase {
     }
   }
 
+  /**
+   *  This method does not update the {@maxSize}, as the {@maxSize} is only used in no-pbft concensus or syncing mode.
+   *
+   * @param blockNum
+   * @param latestBlockNumOnDisk
+   */
   @Override
-  public void fastFlush(long blockNum, long latestSolidifiedBlockNum) {
-    flushCount = (int)(blockNum - latestSolidifiedBlockNum) + flushCount;
+  public synchronized void fastFlush(long blockNum, long latestBlockNumOnDisk) {
+    flushCount = (int)(blockNum - latestBlockNumOnDisk);
     if (flushCount <= 0) {
       return;
     }
     needFlush.set(true);
-    updateSolidity((int)(blockNum - latestSolidifiedBlockNum));
-    size = maxSize.get();
+    try {
+      updateSolidity(flushCount);
+    } catch (Exception e) {
+      logger.error("updateSolidity failed, err: ", e);
+      throw new RuntimeException("updateSolidity failed");
+    }
+    if (size - flushCount < 0) {
+      logger.error("size is lower than flushCount, size: {}, flushCount: {}", size, flushCount);
+      throw new RuntimeException("size is lower than flushCount");
+    }
+    size -= flushCount;
     flush();
     needFlush.set(false);
     flushCount = 0;
