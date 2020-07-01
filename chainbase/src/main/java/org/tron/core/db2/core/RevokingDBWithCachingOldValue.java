@@ -141,4 +141,9 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return dbSource.getValuesNext(key, limit);
   }
+
+  @Override
+  public Set<byte[]> getlatestValuesFromDisk(long limit) {
+    throw new UnsupportedOperationException("chainbase v1 does not support this method");
+  }
 }

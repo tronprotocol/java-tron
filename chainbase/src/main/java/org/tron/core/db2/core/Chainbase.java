@@ -215,4 +215,24 @@ public class Chainbase implements IRevokingDB {
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return getValuesNext(head(), key, limit);
   }
+
+  @Override
+  public Set<byte[]> getlatestValuesFromDisk(long limit) {
+    if (limit <= 0) {
+      return Collections.emptySet();
+    }
+
+    Set<byte[]> result = new HashSet<>();
+    Snapshot snapshot = head.getRoot();
+
+    if (snapshot.getPrevious() == null) {
+      if (((SnapshotRoot) snapshot).db.getClass() == LevelDB.class) {
+        result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(limit));
+      } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(limit));
+      }
+    }
+
+    return result;
+  }
 }

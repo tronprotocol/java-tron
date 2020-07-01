@@ -24,6 +24,7 @@ import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
+import org.tron.consensus.base.PbftInterface;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.CommonDataBase;
@@ -53,6 +54,8 @@ public class DposService implements ConsensusInterface {
   @Autowired
   private CommonDataBase commonDataBase;
 
+  private PbftInterface pbftInterface;
+
   @Getter
   @Setter
   private volatile boolean needSyncCheck;
@@ -81,6 +84,7 @@ public class DposService implements ConsensusInterface {
     this.genesisBlock = param.getGenesisBlock();
     this.genesisBlockTime = Long.parseLong(param.getGenesisBlock().getTimestamp());
     param.getMiners().forEach(miner -> miners.put(miner.getWitnessAddress(), miner));
+    pbftInterface = param.getPbftInterface();
 
     dposTask.setDposService(this);
     dposSlot.setDposService(this);
@@ -149,7 +153,7 @@ public class DposService implements ConsensusInterface {
 
   private void updateSolidBlock() {
     long newSolidNum;
-    if (!consensusDelegate.getDynamicPropertiesStore().allowCrossChain()) {
+    if (!consensusDelegate.getDynamicPropertiesStore().allowCrossChain() || pbftInterface.isSyncing()) {
       List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
           .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
           .sorted()

@@ -2,12 +2,15 @@ package org.tron.consensus.pbft;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
+import org.tron.core.db.BlockStore;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.event.EventBusService;
@@ -27,14 +30,19 @@ public class PbftMessageAction {
   @Autowired
   private RevokingDatabase revokingStore;
 
+  @Autowired
+  private BlockStore blockStore;
+
   public void action(PbftMessage message, List<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();
         SnapshotManager.allowCrossChain = chainBaseManager
             .getDynamicPropertiesStore().allowCrossChain();
-        revokingStore.fastFlush(blockNum,
-            chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        long latestBlockNumOnDisk = Optional.ofNullable(blockStore.getLatestBlockFromDisk(1).get(0))
+                .map(BlockCapsule::getNum)
+                .orElse(0L);
+        revokingStore.fastFlush(blockNum, latestBlockNumOnDisk);
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
         chainBaseManager.getPbftSignDataStore()
