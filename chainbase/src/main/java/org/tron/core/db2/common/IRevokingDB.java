@@ -32,4 +32,7 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
   // for blockstore
   Set<byte[]> getValuesNext(byte[] key, long limit);
 
+  // for blockstore
+  Set<byte[]> getlatestValuesFromDisk(long limit);
+
 }

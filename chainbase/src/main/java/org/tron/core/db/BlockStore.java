@@ -66,4 +66,18 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
         .sorted(Comparator.comparing(BlockCapsule::getNum))
         .collect(Collectors.toList());
   }
+
+  public List<BlockCapsule> getLatestBlockFromDisk(long num) {
+    return revokingDB.getlatestValuesFromDisk(num).stream()
+            .map(bytes -> {
+              try {
+                return new BlockCapsule(bytes);
+              } catch (BadItemException ignored) {
+              }
+              return null;
+            })
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(BlockCapsule::getNum))
+            .collect(Collectors.toList());
+  }
 }
