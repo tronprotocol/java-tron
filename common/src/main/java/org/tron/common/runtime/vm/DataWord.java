@@ -91,7 +91,7 @@ public class DataWord implements Comparable<DataWord> {
   }
 
   public static DataWord ZERO() {
-    return new DataWord(new byte[32]);
+    return new DataWord(new byte[WORD_SIZE]);
   }
 
   public static DataWord of(byte num) {
