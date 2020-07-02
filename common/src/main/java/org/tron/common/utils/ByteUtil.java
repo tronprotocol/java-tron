@@ -31,6 +31,7 @@ public class ByteUtil {
 
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final byte[] ZERO_BYTE_ARRAY = new byte[]{0};
+  public static final int WORD_SIZE = 32;
 
 
   /**
@@ -274,7 +275,7 @@ public class ByteUtil {
    * @return Byte array of given size with a copy of the <code>src</code>
    */
   public static byte[] copyToArray(BigInteger value) {
-    byte[] dest = ByteBuffer.allocate(32).array();
+    byte[] dest = ByteBuffer.allocate(WORD_SIZE).array();
     byte[] src = ByteUtil.bigIntegerToBytes(value);
     if (src != null) {
       System.arraycopy(src, 0, dest, dest.length - src.length, src.length);
@@ -322,7 +323,7 @@ public class ByteUtil {
    * @param idx an index of the word starting from {@code 0}
    */
   public static byte[] parseWord(byte[] input, int idx) {
-    return parseBytes(input, 32 * idx, 32);
+    return parseBytes(input, WORD_SIZE * idx, WORD_SIZE);
   }
 
   /**
@@ -333,7 +334,7 @@ public class ByteUtil {
    * @param offset an offset in {@code input} array to start parsing from
    */
   public static byte[] parseWord(byte[] input, int offset, int idx) {
-    return parseBytes(input, offset + 32 * idx, 32);
+    return parseBytes(input, offset + WORD_SIZE * idx, WORD_SIZE);
   }
 
   public static boolean greater(byte[] bytes1, byte[] bytes2) {
