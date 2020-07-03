@@ -76,8 +76,8 @@ public class WalletGrpcClient {
     return walletBlockingStub.createWitness(contract);
   }
 
-  public boolean broadcastTransaction(Transaction signaturedTransaction) {
-    Return response = walletBlockingStub.broadcastTransaction(signaturedTransaction);
+  public boolean broadcastTransaction(Transaction signedTransaction) {
+    Return response = walletBlockingStub.broadcastTransaction(signedTransaction);
     return response.getResult();
   }
 
