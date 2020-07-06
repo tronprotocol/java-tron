@@ -2,15 +2,18 @@ pragma solidity ^0.5.8;
 pragma experimental ABIEncoderV2;
 
 import "./SafeMath.sol";
+import "./TransferHelper.sol";
 
 contract TokenTRC20 {
     function transfer(address _to, uint256 _value) public returns (bool success);
+
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 }
 
 contract ShieldedTRC20 {
     using SafeMath for uint256;
-    
+    using TransferHelper for address;
+
     uint256 public scalingFactor; // used when decimals of TRC20 token is too large.
     uint256 public leafCount;
     uint256 constant INT64_MAX = 2 ** 63 - 1;
@@ -30,7 +33,7 @@ contract ShieldedTRC20 {
     event TokenMint(address from, uint256 value);
     event TokenBurn(address to, uint256 value, bytes32[3] ciphertext);
     event NoteSpent(bytes32 nf);
-    
+
     constructor (address trc20ContractAddress, uint256 scalingFactorExponent) public {
         require(scalingFactorExponent < 77, "The scalingFactorExponent is out of range!");
         scalingFactor = 10 ** scalingFactorExponent;
@@ -41,16 +44,16 @@ contract ShieldedTRC20 {
     function mint(uint256 rawValue, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32[21] calldata c) external {
         address sender = msg.sender;
         // transfer the trc20Token from the sender to this contract
-        bool transferResult = trc20Token.transferFrom(sender, address(this), rawValue);
+        bool transferResult = address(trc20Token).safeTransferFrom(sender, address(this), rawValue);
         require(transferResult, "TransferFrom failed!");
-        
+
         require(noteCommitment[output[0]] == 0, "Duplicate noteCommitments!");
         uint64 value = rawValueToValue(rawValue);
         bytes32 signHash = sha256(abi.encodePacked(address(this), value, output, c));
         (bytes32[] memory ret) = verifyMintProof(output, bindingSignature, value, signHash, frontier, leafCount);
         uint256 result = uint256(ret[0]);
         require(result == 1, "The proof and signature have not been verified by the contract!");
-        
+
         uint256 slot = uint256(ret[1]);
         uint256 nodeIndex = leafCount + 2 ** 32 - 1;
         tree[nodeIndex] = output[0];
@@ -68,7 +71,7 @@ contract ShieldedTRC20 {
         roots[latestRoot] = latestRoot;
         noteCommitment[output[0]] = output[0];
         leafCount ++;
-        
+
         emit MintNewLeaf(leafCount - 1, output[0], output[1], output[2], c);
         emit TokenMint(sender, rawValue);
     }
@@ -79,7 +82,7 @@ contract ShieldedTRC20 {
         require(input.length == spendAuthoritySignature.length, "Input number must be equal to spendAuthoritySignature number!");
         require(output.length >= 1 && output.length <= 2, "Output number must be 1 or 2!");
         require(output.length == c.length, "Output number must be equal to c number!");
-        
+
         for (uint256 i = 0; i < input.length; i++) {
             require(nullifiers[input[i][0]] == 0, "The note has already been spent!");
             require(roots[input[i][1]] != 0, "The anchor must exist!");
@@ -87,7 +90,7 @@ contract ShieldedTRC20 {
         for (uint256 i = 0; i < output.length; i++) {
             require(noteCommitment[output[i][0]] == 0, "Duplicate noteCommitment!");
         }
-        
+
         bytes32 signHash = sha256(abi.encodePacked(address(this), input, output, c));
         (bytes32[] memory ret) = verifyTransferProof(input, spendAuthoritySignature, output, bindingSignature, signHash, 0, frontier, leafCount);
         uint256 result = uint256(ret[0]);
@@ -133,10 +136,10 @@ contract ShieldedTRC20 {
         bytes32 anchor = input[1];
         require(nullifiers[nf] == 0, "The note has already been spent!");
         require(roots[anchor] != 0, "The anchor must exist!");
-        
+
         require(output.length <= 1, "Output number cannot exceed 1!");
         require(output.length == c.length, "Output number must be equal to length of c!");
-        
+
         // bytes32 signHash = sha256(abi.encodePacked(address(this), input, payTo, value, output, c));
         if (output.length == 0) {
             (bool result) = verifyBurnProof(input, spendAuthoritySignature, value, bindingSignature, signHash);
@@ -148,7 +151,7 @@ contract ShieldedTRC20 {
         nullifiers[nf] = nf;
         emit NoteSpent(nf);
         //Finally, transfer trc20Token from this contract to the nominated address
-        bool transferResult = trc20Token.transfer(payTo, rawValue);
+        bool transferResult = address(trc20Token).safeTransfer(payTo, rawValue);
         require(transferResult, "Transfer failed!");
 
         emit TokenBurn(payTo, rawValue, burnCipher);
@@ -182,7 +185,7 @@ contract ShieldedTRC20 {
         roots[latestRoot] = latestRoot;
         noteCommitment[cm] = cm;
         leafCount ++;
-        
+
         emit BurnNewLeaf(leafCount - 1, cm, output[0][1], output[0][2], c[0]);
     }
 
