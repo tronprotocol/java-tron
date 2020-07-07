@@ -39,13 +39,19 @@ contract ShieldedTRC20 {
         scalingFactor = 10 ** scalingFactorExponent;
         owner = msg.sender;
         trc20Token = TokenTRC20(trc20ContractAddress);
+        require(approveSelf(), "approveSelf failed!");
     }
+
+    function approveSelf() public returns (bool) {
+        return address(trc20Token).safeApprove(address(this), uint256(- 1));
+    }
+
     // output: cm, cv, epk, proof
     function mint(uint256 rawValue, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32[21] calldata c) external {
         address sender = msg.sender;
         // transfer the trc20Token from the sender to this contract
         bool transferResult = address(trc20Token).safeTransferFrom(sender, address(this), rawValue);
-        require(transferResult, "TransferFrom failed!");
+        require(transferResult, "safeTransferFrom failed!");
 
         require(noteCommitment[output[0]] == 0, "Duplicate noteCommitments!");
         uint64 value = rawValueToValue(rawValue);
@@ -151,8 +157,8 @@ contract ShieldedTRC20 {
         nullifiers[nf] = nf;
         emit NoteSpent(nf);
         //Finally, transfer trc20Token from this contract to the nominated address
-        bool transferResult = address(trc20Token).safeTransfer(payTo, rawValue);
-        require(transferResult, "Transfer failed!");
+        bool transferResult = address(trc20Token).safeTransferFrom(address(this), payTo, rawValue);
+        require(transferResult, "safeTransferFrom failed!");
 
         emit TokenBurn(payTo, rawValue, burnCipher);
     }
