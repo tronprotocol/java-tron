@@ -210,7 +210,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private IsSpendServlet isSpendServlet;
   @Autowired
-  private CreateShieldedTransactionWithoutSpendAuthSigServlet createShieldedTransactionWithoutSpendAuthSigServlet;
+  private CreateShieldedTransactionWithoutSpendAuthSigServlet
+      createShieldedTransactionWithoutSpendAuthSigServlet;
   @Autowired
   private BroadcastHexServlet broadcastHexServlet;
   @Autowired
@@ -223,6 +224,20 @@ public class FullNodeHttpApiService implements Service {
   private CreateCommonTransactionServlet createCommonTransactionServlet;
   @Autowired
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
+  @Autowired
+  private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
+  @Autowired
+  private CreateShieldedContractParametersServlet createShieldedContractParametersServlet;
+  @Autowired
+  private CreateShieldedContractParametersWithoutAskServlet
+      createShieldedContractParametersWithoutAskServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByIvkServlet scanShieldedTRC20NotesByIvkServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByOvkServlet scanShieldedTRC20NotesByOvkServlet;
+  @Autowired
+  private GetTriggerInputForShieldedTRC20ContractServlet
+      getTriggerInputForShieldedTRC20ContractServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -246,10 +261,10 @@ public class FullNodeHttpApiService implements Service {
     }
 
     String spendPath = getParamsFile("sapling-spend.params");
-    String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
+    String spendHash = "25fd9a0d1c1be0526c14662947ae95b758fe9f3d7fb7f55e9b4437830dcc6215a7ce3ea465914b157715b7a4d681389ea4aa84438190e185d5e4c93574d3a19a";
 
     String outputPath = getParamsFile("sapling-output.params");
-    String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
+    String outputHash = "a1cb23b93256adce5bce2cb09cefbc96a1d16572675ceb691e9a3626ec15b5b546926ff1c536cfe3a9df07d796b32fdfc3e5d99d65567257bf286cd2858d71a6";
 
     try {
       JLibrustzcash.librustzcashInitZksnarkParams(
@@ -366,16 +381,16 @@ public class FullNodeHttpApiService implements Service {
           "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
-      // context
-      //     .addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
-      // context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
-      // context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
-      // context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
-      // context
-      //     .addServlet(new ServletHolder(getNewShieldedAddressServlet), "/getnewshieldedaddress");
-      // context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
-      // context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
-      // context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");
+      context
+          .addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
+      context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
+      context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
+      context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
+      context
+          .addServlet(new ServletHolder(getNewShieldedAddressServlet), "/getnewshieldedaddress");
+      context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
+      context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
+      context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");
       // context.addServlet(new ServletHolder(createShieldedTransactionServlet),
       //     "/createshieldedtransaction");
       // context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
@@ -383,14 +398,29 @@ public class FullNodeHttpApiService implements Service {
       // context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
       // context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet), "/scanandmarknotebyivk");
       // context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
-      // context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
+      context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
       // context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
       //     "/getmerkletreevoucherinfo");
       // context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
-      // context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
+      context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
       // context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
       // context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
       //     "/getshieldtransactionhash");
+      // for shielded contract
+      context
+          .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
+              "/isshieldedtrc20contractnotespent");
+      context.addServlet(new ServletHolder(createShieldedContractParametersServlet),
+          "/createshieldedcontractparameters");
+      context.addServlet(new ServletHolder(createShieldedContractParametersWithoutAskServlet),
+          "/createshieldedcontractparameterswithoutask");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkServlet),
+          "/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkServlet),
+          "/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(getTriggerInputForShieldedTRC20ContractServlet),
+          "/gettriggerinputforshieldedtrc20contract");
+
       context.addServlet(new ServletHolder(broadcastHexServlet), "/broadcasthex");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");

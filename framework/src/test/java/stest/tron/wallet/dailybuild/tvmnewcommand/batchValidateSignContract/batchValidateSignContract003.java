@@ -103,8 +103,8 @@ public class batchValidateSignContract003 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals("class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+      Assert.assertEquals(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -134,8 +134,8 @@ public class batchValidateSignContract003 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals("class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+      Assert.assertEquals(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -164,8 +164,8 @@ public class batchValidateSignContract003 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals("class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+      Assert.assertEquals(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -194,8 +194,8 @@ public class batchValidateSignContract003 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals("class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+      Assert.assertEquals(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -225,8 +225,8 @@ public class batchValidateSignContract003 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals("class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+      Assert.assertEquals(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -257,8 +257,8 @@ public class batchValidateSignContract003 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals("class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+      Assert.assertEquals(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",

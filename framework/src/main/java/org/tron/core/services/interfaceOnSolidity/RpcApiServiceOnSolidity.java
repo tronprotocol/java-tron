@@ -32,14 +32,12 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -447,5 +445,31 @@ public class RpcApiServiceOnSolidity implements Service {
       );
     }
 
+    @Override
+    public void scanShieldedTRC20NotesByIvk(GrpcAPI.IvkDecryptTRC20Parameters request,
+        StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesByIvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesByOvk(GrpcAPI.OvkDecryptTRC20Parameters request,
+        StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesByOvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void isShieldedTRC20ContractNoteSpent(GrpcAPI.NfTRC20Parameters request,
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .isShieldedTRC20ContractNoteSpent(request, responseObserver)
+      );
+    }
   }
 }
