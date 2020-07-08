@@ -1,7 +1,5 @@
 package org.tron.common.logsfilter.capsule;
 
-import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
-
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
