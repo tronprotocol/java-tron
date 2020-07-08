@@ -660,6 +660,16 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_METRICS_ENABLE)) {
       PARAMETER.nodeMetricsEnable = config.getBoolean(Constant.NODE_METRICS_ENABLE);
     }
+
+    PARAMETER.influxDbIp = config.hasPath(Constant.METRICS_INFLUXDB_IP) ? config
+            .getString(Constant.METRICS_INFLUXDB_IP) : "127.0.0.1";
+    PARAMETER.influxDbPort = config.hasPath(Constant.METRICS_INFLUXDB_PORT) ? config
+            .getInt(Constant.METRICS_INFLUXDB_PORT) : 8086;
+    PARAMETER.influxDbDatabase = config.hasPath(Constant.METRICS_INFLUXDB_DATABASE) ? config
+            .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
+    PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
+            .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
+
     logConfig();
   }
 
