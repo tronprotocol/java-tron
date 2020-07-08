@@ -42,13 +42,13 @@ public class NetMetricManager {
         Protocol.MetricsInfo.NetInfo.ApiInfo.newBuilder();
     // api
     RateInfo qps = net.getApi().getQps();
-    Protocol.MetricsInfo.RateInfo qpsInfo = qps.toProtoEntity(qps);
+    Protocol.MetricsInfo.RateInfo qpsInfo = qps.toProtoEntity();
     apiInfo.setQps(qpsInfo);
     RateInfo failQps = net.getApi().getFailQps();
-    Protocol.MetricsInfo.RateInfo failQpsInfo = failQps.toProtoEntity(failQps);
+    Protocol.MetricsInfo.RateInfo failQpsInfo = failQps.toProtoEntity();
     apiInfo.setFailQps(failQpsInfo);
     RateInfo outTraffic = net.getApi().getOutTraffic();
-    Protocol.MetricsInfo.RateInfo outTrafficInfo = outTraffic.toProtoEntity(outTraffic);
+    Protocol.MetricsInfo.RateInfo outTrafficInfo = outTraffic.toProtoEntity();
     apiInfo.setOutTraffic(outTrafficInfo);
 
     for (ApiDetailInfo apiDetail : net.getApi().getDetail()) {
@@ -56,15 +56,19 @@ public class NetMetricManager {
           Protocol.MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo.newBuilder();
       detailInfo.setName(apiDetail.getName());
       RateInfo detailQps = apiDetail.getQps();
-      Protocol.MetricsInfo.RateInfo detailqpsInfo = detailQps.toProtoEntity(detailQps);
-      apiInfo.setQps(detailqpsInfo);
+      Protocol.MetricsInfo.RateInfo detailQpsInfo = detailQps.toProtoEntity();
+      detailInfo.setQps(detailQpsInfo);
       RateInfo detailFailQps = apiDetail.getFailQps();
-      Protocol.MetricsInfo.RateInfo detailFailQpsInfo = detailFailQps.toProtoEntity(detailFailQps);
-      apiInfo.setFailQps(detailFailQpsInfo);
+      if (detailFailQps != null) {
+        Protocol.MetricsInfo.RateInfo detailFailQpsInfo = detailFailQps.toProtoEntity();
+        detailInfo.setFailQps(detailFailQpsInfo);
+      }
       RateInfo DetailOutTraffic = apiDetail.getOutTraffic();
-      Protocol.MetricsInfo.RateInfo DetailOutTrafficInfo =
-          DetailOutTraffic.toProtoEntity(DetailOutTraffic);
-      apiInfo.setOutTraffic(DetailOutTrafficInfo);
+      if (DetailOutTraffic != null) {
+        Protocol.MetricsInfo.RateInfo DetailOutTrafficInfo =
+            DetailOutTraffic.toProtoEntity();
+        detailInfo.setOutTraffic(DetailOutTrafficInfo);
+      }
       apiInfo.addDetail(detailInfo);
     }
     netInfo.setApi(apiInfo.build());
@@ -82,17 +86,17 @@ public class NetMetricManager {
     }
     // tcp
     RateInfo tcpInTraffic = net.getTcpInTraffic();
-    Protocol.MetricsInfo.RateInfo tcpInTrafficInfo = tcpInTraffic.toProtoEntity(tcpInTraffic);
+    Protocol.MetricsInfo.RateInfo tcpInTrafficInfo = tcpInTraffic.toProtoEntity();
     netInfo.setTcpInTraffic(tcpInTrafficInfo);
     RateInfo tcpOutTraffic = net.getTcpOutTraffic();
-    Protocol.MetricsInfo.RateInfo tcpOUTrafficInfo = tcpOutTraffic.toProtoEntity(tcpOutTraffic);
+    Protocol.MetricsInfo.RateInfo tcpOUTrafficInfo = tcpOutTraffic.toProtoEntity();
     netInfo.setTcpOutTraffic(tcpOUTrafficInfo);
     // udp
     RateInfo udpInTraffic = net.getUdpInTraffic();
-    Protocol.MetricsInfo.RateInfo udpInTrafficInfo = udpInTraffic.toProtoEntity(udpInTraffic);
+    Protocol.MetricsInfo.RateInfo udpInTrafficInfo = udpInTraffic.toProtoEntity();
     netInfo.setTcpOutTraffic(udpInTrafficInfo);
     RateInfo udpOutTraffic = net.getUdpOutTraffic();
-    Protocol.MetricsInfo.RateInfo udpOutTrafficInfo = udpOutTraffic.toProtoEntity(udpOutTraffic);
+    Protocol.MetricsInfo.RateInfo udpOutTrafficInfo = udpOutTraffic.toProtoEntity();
     netInfo.setUdpOutTraffic(udpOutTrafficInfo);
 
     // latency
@@ -112,9 +116,9 @@ public class NetMetricManager {
       detailInfo.setTop95(detail.getTop95());
       detailInfo.setTop75(detail.getTop75());
       detailInfo.setCount(detail.getCount());
-      detail.setDelay1S(detail.getDelay1S());
-      detail.setDelay2S(detail.getDelay2S());
-      detail.setDelay3S(detail.getDelay3S());
+      detailInfo.setDelay1S(detail.getDelay1S());
+      detailInfo.setDelay2S(detail.getDelay2S());
+      detailInfo.setDelay3S(detail.getDelay3S());
       latencyInfo.addDetail(detailInfo.build());
     }
 

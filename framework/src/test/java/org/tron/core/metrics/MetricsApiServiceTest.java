@@ -10,28 +10,30 @@ public class MetricsApiServiceTest {
 
   @Test
   public void metricMeterTest() throws InterruptedException {
-
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, 10);
-    Assert.assertEquals(10,
-        MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME).getCount());
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, 20);
+    String key = "testMeter";
+    MetricsUtil.meterMark(key, 10);
+    Assert.assertEquals(10, MetricsUtil.getMeter(key).getCount());
+    MetricsUtil.meterMark(key, 20);
     Assert.assertEquals(30,
-        MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME).getCount());
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, 20);
+        MetricsUtil.getMeter(key).getCount());
+    MetricsUtil.meterMark(key, 20);
     Thread.sleep(59000);
     // TimeUnit.SECONDS.sleep(59);
     // meanRate
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, 10);
+    MetricsUtil.meterMark(key, 10);
     Assert.assertEquals(1.0,
-        MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME).getMeanRate(), 0.1);
+        MetricsUtil.getMeter(key).getMeanRate(), 0.1);
     // One minute exponentially moving average rate
     double expWRate =
-        (10 - MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME).getMeanRate())
+        (10 - MetricsUtil.getMeter(key).getMeanRate())
             * ((double) 2 / (4 + 1))
-            + MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME).getMeanRate();
+            + MetricsUtil.getMeter(key).getMeanRate();
     // compare with estimate exp rate
-    Assert.assertEquals(expWRate,
-        MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME).getOneMinuteRate(), 1);
+    Assert.assertNotEquals(1.0, MetricsUtil.getMeter(key).getOneMinuteRate(), 1);
+    Assert.assertTrue(MetricsUtil.getMeter(key).getOneMinuteRate() < 5.0);
+    Assert.assertTrue(MetricsUtil.getMeter(key).getOneMinuteRate() > 3.0);
+    // Assert.assertEquals(expWRate,
+    //    MetricsUtil.getMeter(key).getOneMinuteRate(), 1);
   }
 
   @Test

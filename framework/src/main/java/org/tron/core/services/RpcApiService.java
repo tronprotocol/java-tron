@@ -2200,7 +2200,7 @@ public class RpcApiService implements Service {
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
     @Override
-    public void metrics(EmptyMessage request,
+    public void getStatsInfo(EmptyMessage request,
                         StreamObserver<Protocol.MetricsInfo> responseObserver) {
       responseObserver.onNext(metricsApiService.getMetricProtoInfo());
       responseObserver.onCompleted();
