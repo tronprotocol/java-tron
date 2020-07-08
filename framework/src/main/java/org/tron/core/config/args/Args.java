@@ -50,6 +50,7 @@ import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -69,7 +70,7 @@ import org.tron.program.Version;
 @Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
-public class Args {
+public class Args extends CommonParameter {
 
   private static final Args INSTANCE = new Args();
 

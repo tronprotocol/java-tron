@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.BlockHandle;
@@ -156,6 +157,7 @@ public class DposService implements ConsensusInterface {
       logger.warn("Update solid block number failed, new: {} < old: {}", newSolidNum, oldSolidNum);
       return;
     }
+    CommonParameter.getInstance().setOldSolidityBlockNum(oldSolidNum);
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);
     logger.info("Update solid block number to {}", newSolidNum);
   }
