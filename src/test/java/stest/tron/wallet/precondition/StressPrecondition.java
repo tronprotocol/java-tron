@@ -303,6 +303,7 @@ public class StressPrecondition {
         .freezeBalanceGetEnergy(PublicMethed.getFinalAddress(triggerOwnerKey), 50000000000000L, 3,
             0, triggerOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true)
@@ -323,6 +324,7 @@ public class StressPrecondition {
     logger.info("oldAddress " + oldAddress);
     logger.info("newAddress " + newAddress);
     replacAddressInConfig("stress.conf", oldAddress, newAddress);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
   }
@@ -346,6 +348,7 @@ public class StressPrecondition {
     logger.info("newAddress " + newAddress);
     replacAddressInConfig("stress.conf", oldAddress, newAddress);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true)
@@ -366,6 +369,7 @@ public class StressPrecondition {
     logger.info("oldAddress " + oldAddress);
     logger.info("newAddress " + newAddress);
     replacAddressInConfig("stress.conf", oldAddress, newAddress);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
@@ -414,6 +418,7 @@ public class StressPrecondition {
     String newTokenIdInConfig = "commontokenid = " + newTokenId;
     logger.info("newTokenIdInConfig " + newTokenIdInConfig);
     replacAddressInConfig("stress.conf", oldTokenIdString, newTokenIdInConfig);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true)
@@ -458,6 +463,7 @@ public class StressPrecondition {
     String newTokenIdInConfig = "commonexchangeid = " + newExchangeId;
     logger.info("newTokenIdInConfig " + newTokenIdInConfig);
     replacAddressInConfig("stress.conf", oldExchangeIdString, newTokenIdInConfig);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
 
@@ -492,6 +498,7 @@ public class StressPrecondition {
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
         PublicMethed.getFinalAddress(mutiSignOwnerKey), mutiSignOwnerKey,
         blockingStubFull, ownerKeyString);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
   }
 
@@ -514,6 +521,7 @@ public class StressPrecondition {
     logger.info("newAddress " + newAddress);
     replacAddressInConfig("stress.conf", oldAddress, newAddress);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true)
@@ -534,6 +542,7 @@ public class StressPrecondition {
     logger.info("oldAddress " + oldAddress);
     logger.info("newAddress " + newAddress);
     replacAddressInConfig("stress.conf", oldAddress, newAddress);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
   }
