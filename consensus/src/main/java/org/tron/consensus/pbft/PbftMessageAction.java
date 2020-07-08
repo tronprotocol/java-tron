@@ -41,7 +41,8 @@ public class PbftMessageAction {
             .getDynamicPropertiesStore().allowCrossChain();
         long latestBlockNumOnDisk = Optional.ofNullable(blockStore.getLatestBlockFromDisk(1).get(0))
             .map(BlockCapsule::getNum).orElse(0L);
-        revokingStore.fastFlush(blockNum, latestBlockNumOnDisk);
+        revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
+            chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
         chainBaseManager.getPbftSignDataStore()

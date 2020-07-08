@@ -41,5 +41,5 @@ public interface RevokingDatabase {
 
   void shutdown();
 
-  void fastFlush(long blockNum, long latestSolidifiedBlockNum);
+  void fastFlush(long blockNum, long latestSolidifiedBlockNum, long latestSolidityBlockNum);
 }

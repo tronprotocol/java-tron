@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -93,7 +93,7 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    if (!allowCrossChain || size > DEFAULT_MAX_FLUSH_COUNT) {
+    if (!allowCrossChain) {
       if (size > maxSize.get()) {
         flushCount = flushCount + (size - maxSize.get());
         updateSolidity(size - maxSize.get());
@@ -286,29 +286,24 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   /**
-   *  This method does not update the {@maxSize}, as the {@maxSize} is only used in no-pbft concensus or syncing mode.
-   *
-   * @param blockNum
-   * @param latestBlockNumOnDisk
+   * This method does not update the {@maxSize}, as the {@maxSize} is only used in no-pbft concensus
+   * or syncing mode.
    */
   @Override
-  public synchronized void fastFlush(long blockNum, long latestBlockNumOnDisk) {
-    flushCount = (int)(blockNum - latestBlockNumOnDisk);
+  public synchronized void fastFlush(long blockNum, long latestBlockNumOnDisk,
+      long latestSolidityBlockNum) {
+    flushCount = (int) (blockNum - latestBlockNumOnDisk);
     if (flushCount <= 0) {
       return;
     }
-    if (size - flushCount < 0) {
-      logger.error("size is lower than flushCount, size: {}, flushCount: {}", size, flushCount);
-      throw new RuntimeException("size is lower than flushCount");
-    }
     needFlush.set(true);
     try {
-      updateSolidity(flushCount);
+      updateSolidity((int) (blockNum - latestSolidityBlockNum));
     } catch (Exception e) {
       logger.error("updateSolidity failed, err: ", e);
       throw new RuntimeException("updateSolidity failed");
     }
-    size -= flushCount;
+    size = maxSize.get();
     flush();
     needFlush.set(false);
     flushCount = 0;
