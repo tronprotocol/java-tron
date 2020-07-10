@@ -165,6 +165,7 @@ public class CrossHeaderMsgProcess {
     Long sendHeight = sendHeaderNumCache.getIfPresent(chainIdStr);
     if (CollectionUtils.isEmpty(blockHeaders)) {//todo
       syncFailPeerSet.add(peer);
+      sendHeaderNumCache.invalidate(chainIdStr);
       return;
     }
     if (!chainHeaderCache.containsKey(chainIdStr)) {
