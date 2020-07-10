@@ -6,9 +6,10 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,6 +48,8 @@ public class CrossHeaderMsgProcess {
 
   public static final int SYNC_NUMBER = 200;
   private static final int MAX_HEADER_NUMBER = 10000;
+
+  private static Set<PeerConnection> syncFailPeerSet = new HashSet<>();
 
   private volatile Map<String, Long> latestMaintenanceTimeMap = new ConcurrentHashMap<>();
   private volatile Map<String, Boolean> syncDisabledMap = new ConcurrentHashMap<>();
@@ -161,6 +164,7 @@ public class CrossHeaderMsgProcess {
     String chainIdStr = ByteArray.toHexString(blockHeaderInventoryMesasge.getChainId());
     Long sendHeight = sendHeaderNumCache.getIfPresent(chainIdStr);
     if (CollectionUtils.isEmpty(blockHeaders)) {//todo
+      syncFailPeerSet.add(peer);
       return;
     }
     if (!chainHeaderCache.containsKey(chainIdStr)) {
@@ -252,10 +256,26 @@ public class CrossHeaderMsgProcess {
       if (CollectionUtils.isEmpty(peerConnectionList)) {
         peerConnectionList = syncPool.getActivePeers();
       }
-      int index = new Random().nextInt(peerConnectionList.size());
-      peerConnectionList.get(index)
-          .sendMessage(new BlockHeaderRequestMessage(chainId, syncHeaderNum, SYNC_NUMBER));
+      if (peerConnectionList.size() == 0) {
+        return;
+      }
+
+      PeerConnection peer = selectPeer(peerConnectionList);
+      if (peer == null) {
+        syncFailPeerSet.clear();
+        peer = selectPeer(peerConnectionList);
+      }
+      peer.sendMessage(new BlockHeaderRequestMessage(chainId, syncHeaderNum, SYNC_NUMBER));
       logger.info("begin send request to:{}, header num:{}", chainId, syncHeaderNum);
+    }
+
+    private PeerConnection selectPeer(List<PeerConnection> peerConnectionList) {
+      for (PeerConnection peer : peerConnectionList) {
+        if (!syncFailPeerSet.contains(peer)) {
+          return peer;
+        }
+      }
+      return null;
     }
   }
 
