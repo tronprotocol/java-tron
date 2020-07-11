@@ -217,7 +217,6 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
-  private static final int DEFAULT_MAX_CHECK_COUNT = 30;
 
   /**
    * Cycle thread to rePush Transactions
