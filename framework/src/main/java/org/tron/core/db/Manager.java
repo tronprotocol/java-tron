@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -1362,8 +1363,8 @@ public class Manager {
     }
   }
 
-  private void postSolitityLogContractTrigger(Long blockNum) {
-    if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) {
+  private void postSolitityLogContractTrigger(Long blockNum, Long lastSolidityNum) {
+    if (blockNum > lastSolidityNum) {
       return;
     }
     for (ContractLogTrigger logTriggerCapsule : Args
@@ -1377,8 +1378,8 @@ public class Manager {
     Args.getSolidityContractLogTriggerList().remove(blockNum);
   }
 
-  private void postSolitityEventContractTrigger(Long blockNum) {
-    if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) {
+  private void postSolitityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
+    if (blockNum > lastSolidityNum) {
       return;
     }
     for (ContractEventTrigger eventTriggerCapsule : Args
@@ -1563,15 +1564,13 @@ public class Manager {
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-      for (long i = Args.getInstance()
-          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
-        postSolitityLogContractTrigger(i);
+      for (Long i : Args.getSolidityContractLogTriggerList().keySet()) {
+        postSolitityLogContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-      for (long i = Args.getInstance()
-          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
-        postSolitityEventContractTrigger(i);
+      for (Long i : Args.getSolidityContractEventTriggerList().keySet()) {
+        postSolitityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
   }
