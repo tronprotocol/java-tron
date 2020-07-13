@@ -29,24 +29,7 @@ public class GetTransactionInfoByBlockNumServlet extends RateLimiterServlet {
   private JSONObject convertLogAddressToTronAddress(TransactionInfo transactionInfo,
       boolean visible) {
     if (visible) {
-      List<Log> newLogList = new ArrayList<>();
-      for (Log log : transactionInfo.getLogList()) {
-        Log.Builder logBuilder = Log.newBuilder();
-        logBuilder.setData(log.getData());
-        logBuilder.addAllTopics(log.getTopicsList());
-
-        byte[] oldAddress = log.getAddress().toByteArray();
-
-        if (oldAddress.length == 0 || oldAddress.length > 20) {
-          logBuilder.setAddress(log.getAddress());
-        } else {
-          byte[] newAddress = new byte[20];
-          int start = 20 - oldAddress.length;
-          System.arraycopy(oldAddress, 0, newAddress, start, oldAddress.length);
-          logBuilder.setAddress(ByteString.copyFrom(MUtil.convertToTronAddress(newAddress)));
-        }
-        newLogList.add(logBuilder.build());
-      }
+      List<Log> newLogList = Util.convertLogAddressToTronAddress(transactionInfo);
       transactionInfo = transactionInfo.toBuilder().clearLog().addAllLog(newLogList).build();
     }
 

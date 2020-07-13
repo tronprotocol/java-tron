@@ -44,7 +44,11 @@ public class EventPluginLoader {
 
   private boolean contractLogTriggerEnable = false;
 
-  private boolean solidityLogTriggerEnable = true;
+  private boolean solidityEventTriggerEnable = false;
+
+  private boolean solidityLogTriggerEnable = false;
+
+  private boolean solidityTriggerEnable = false;
 
   private FilterQuery filterQuery;
 
@@ -186,12 +190,33 @@ public class EventPluginLoader {
     } else if (EventPluginConfig.SOLIDITY_TRIGGER_NAME
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
+        solidityTriggerEnable = true;
+      } else {
+        solidityTriggerEnable = false;
+      }
+      if (!useNativeQueue) {
+        setPluginTopic(Trigger.SOLIDITY_TRIGGER, triggerConfig.getTopic());
+      }
+    } else if (EventPluginConfig.SOLIDITY_EVENT_NAME
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        solidityEventTriggerEnable = true;
+      } else {
+        solidityEventTriggerEnable = false;
+      }
+
+      if (!useNativeQueue) {
+        setPluginTopic(Trigger.SOLIDITY_EVENT_TRIGGER, triggerConfig.getTopic());
+      }
+    } else if (EventPluginConfig.SOLIDITY_LOG_NAME
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
         solidityLogTriggerEnable = true;
       } else {
         solidityLogTriggerEnable = false;
       }
       if (!useNativeQueue) {
-        setPluginTopic(Trigger.SOLIDITY_TRIGGER, triggerConfig.getTopic());
+        setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
       }
     }
   }
@@ -208,6 +233,14 @@ public class EventPluginLoader {
 
   public synchronized boolean isBlockLogTriggerEnable() {
     return blockLogTriggerEnable;
+  }
+
+  public synchronized boolean isSolidityTriggerEnable() {
+    return solidityTriggerEnable;
+  }
+
+  public synchronized boolean isSolidityEventTriggerEnable() {
+    return solidityEventTriggerEnable;
   }
 
   public synchronized boolean isSolidityLogTriggerEnable() {
@@ -290,6 +323,26 @@ public class EventPluginLoader {
     } else {
       eventListeners.forEach(listener ->
           listener.handleBlockEvent(toJsonString(trigger)));
+    }
+  }
+
+  public void postSolidityLogTrigger(ContractLogTrigger trigger) {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
+      eventListeners.forEach(listener ->
+          listener.handleSolidityLogTrigger(toJsonString(trigger)));
+    }
+  }
+
+  public void postSolidityEventTrigger(ContractEventTrigger trigger) {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
+      eventListeners.forEach(listener ->
+          listener.handleSolidityEventTrigger(toJsonString(trigger)));
     }
   }
 

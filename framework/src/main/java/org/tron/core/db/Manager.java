@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -47,12 +48,17 @@ import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
@@ -279,6 +285,9 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+
+  private static final int DEFAULT_MAX_CHECK_COUNT = 30;
+
   /**
    * Cycle thread to repush Transactions
    */
@@ -1581,6 +1590,37 @@ public class Manager {
     }
   }
 
+  private void postSolitityLogContractTrigger(Long blockNum) {
+    if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) {
+      return;
+    }
+    for (ContractLogTrigger logTriggerCapsule : Args
+        .getSolidityContractLogTriggerList().get(blockNum)) {
+      if (transactionStore.getUnchecked(ByteArray.fromHexString(
+          logTriggerCapsule.getTransactionId())) != null) {
+        logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
+      }
+    }
+    Args.getSolidityContractLogTriggerList().remove(blockNum);
+  }
+
+  private void postSolitityEventContractTrigger(Long blockNum) {
+    if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) {
+      return;
+    }
+    for (ContractEventTrigger eventTriggerCapsule : Args
+        .getSolidityContractEventTriggerList().get(blockNum)) {
+      if (transactionStore
+          .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
+          .getTransactionId())) != null) {
+        eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
+      }
+    }
+    Args.getSolidityContractEventTriggerList().remove(blockNum);
+  }
+
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       this.transactionIdCache.put(transactionCapsule.getTransactionId(), true);
@@ -1787,13 +1827,27 @@ public class Manager {
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
       SolidityTriggerCapsule solidityTriggerCapsule
           = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
       if (!result) {
         logger.info("too many trigger, lost solidified trigger, "
             + "block number: {}", latestSolidifiedBlockNumber);
+      }
+    }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+      for (long i = Args.getInstance()
+              .getOldSolidityBlockNum() - DEFAULT_MAX_CHECK_COUNT;
+           i <= latestSolidifiedBlockNumber; i++) {
+        postSolitityLogContractTrigger(i);
+      }
+    }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
+      for (long i = Args.getInstance()
+              .getOldSolidityBlockNum() - DEFAULT_MAX_CHECK_COUNT;
+           i <= latestSolidifiedBlockNumber; i++) {
+        postSolitityEventContractTrigger(i);
       }
     }
   }
@@ -1844,15 +1898,21 @@ public class Manager {
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
-    if (eventPluginLoaded &&
-        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-            || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+    boolean isContractTriggerEnable = EventPluginLoader.getInstance()
+        .isContractEventTriggerEnable() || EventPluginLoader
+        .getInstance().isContractLogTriggerEnable();
+    boolean isSolidityContractTriggerEnable = EventPluginLoader.getInstance()
+        .isSolidityEventTriggerEnable() || EventPluginLoader
+        .getInstance().isSolidityLogTriggerEnable();
+    if (eventPluginLoaded
+        && (isContractTriggerEnable || isSolidityContractTriggerEnable)) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
-        ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
-        contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
-        contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
-        if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
+        ContractTriggerCapsule contractTriggerCapsule = new ContractTriggerCapsule(trigger);
+        contractTriggerCapsule.getContractTrigger().setRemoved(remove);
+        contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+            .getLatestSolidifiedBlockNum());
+        if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
           logger
               .info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
