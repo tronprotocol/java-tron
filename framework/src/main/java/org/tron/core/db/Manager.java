@@ -443,6 +443,10 @@ public class Manager {
         getDynamicPropertiesStore().getLatestBlockHeaderNumber());
   }
 
+  public BlockId getHeadBlockIdV2() {
+    return new BlockId(getDynamicPropertiesStore().getLatestBlockHeaderHash());
+  }
+
   public long getHeadBlockNum() {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
   }

@@ -424,7 +424,7 @@ public class Wallet {
       long timeout) {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     try {
-      BlockId blockId = dbManager.getHeadBlockId();
+      BlockId blockId = dbManager.getHeadBlockIdV2();
       if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
         blockId = dbManager.getSolidBlockId();
       }
@@ -482,7 +482,7 @@ public class Wallet {
     }
 
     try {
-      BlockId blockId = dbManager.getHeadBlockId();
+      BlockId blockId = dbManager.getHeadBlockIdV2();
       if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
         blockId = dbManager.getSolidBlockId();
       }
