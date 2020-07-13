@@ -274,6 +274,8 @@ message Transaction {
       ShieldedTransferContract = 51;
       CrossContract = 53;
       RegisterCrossContract = 54;
+      UpdateCrossContract = 55;
+      VoteCrossContract = 56;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

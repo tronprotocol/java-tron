@@ -17,8 +17,6 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.db2.core.Snapshot;
-import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -143,6 +141,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] SR_LIST_CURRENT_CYCLE = "SR_LIST_CURRENT_CYCLE".getBytes();
   //cross
   private static final byte[] CROSS_CHAIN = "CROSS_CHAIN".getBytes();
+  private static final byte[] BURNED_FOR_REGISTER_CROSS = "BURNED_FOR_REGISTER_CROSS".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -653,6 +653,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowPBFT();
     } catch (IllegalArgumentException e) {
       this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
+    }
+
+    try {
+      this.getBurnedForRegisterCross();
+    } catch (IllegalArgumentException e) {
+      this.saveBurnedForRegisterCross();
     }
 
   }
@@ -1935,6 +1941,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveSrListCurrentCycle(long cycle) {
     this.put(SR_LIST_CURRENT_CYCLE, new BytesCapsule(ByteArray.fromLong(cycle)));
+  }
+
+  public long getBurnedForRegisterCross() {
+    return Optional.ofNullable(getUnchecked(BURNED_FOR_REGISTER_CROSS))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found BURNED_FOR_REGISTER_CROSS"));
+  }
+
+  public void saveBurnedForRegisterCross() {
+    this.put(BURNED_FOR_REGISTER_CROSS, new BytesCapsule(ByteArray.fromLong(1000000L)));
   }
 
   private static class DynamicResourceProperties {
