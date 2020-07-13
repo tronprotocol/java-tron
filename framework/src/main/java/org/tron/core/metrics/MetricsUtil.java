@@ -17,7 +17,8 @@ public class MetricsUtil {
   private static MetricRegistry metricRegistry = new MetricRegistry();
 
   public static void init() {
-    if (CommonParameter.getInstance().isNodeMetricsEnable()) {
+    if (CommonParameter.getInstance().isNodeMetricsEnable()
+            && CommonParameter.getInstance().isMetricsStorageEnable()) {
       String ip = CommonParameter.getInstance().getInfluxDbIp();
       int port = CommonParameter.getInstance().getInfluxDbPort();
       String dataBase = CommonParameter.getInstance().getInfluxDbDatabase();

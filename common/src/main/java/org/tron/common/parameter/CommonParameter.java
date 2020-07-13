@@ -379,6 +379,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public boolean metricsStorageEnable = false;
+
+  @Getter
+  @Setter
   public String influxDbIp;
 
   @Getter
