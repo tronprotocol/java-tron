@@ -47,6 +47,7 @@ subprojects {
         compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         compile "org.apache.commons:commons-collections4:4.0"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
+        compile "org.apache.kafka:kafka-clients:0.10.2.2"
 
     }
 
