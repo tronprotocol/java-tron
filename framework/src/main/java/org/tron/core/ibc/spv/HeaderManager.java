@@ -97,8 +97,10 @@ public class HeaderManager {
         throw new BadBlockException("header number not 1 is " + header.getNum());
       }
     } else {
-      if (header.getNum() <= chainBaseManager.getCommonDataBase()
-          .getLatestHeaderBlockNum(chainId)) {
+      long latestHeaderNum = chainBaseManager.getCommonDataBase().getLatestHeaderBlockNum(chainId);
+      if (header.getNum() <= latestHeaderNum) {
+        logger.warn("pushBlockHeader num {} <= latestHeaderBlockNum {}", header.getNum(),
+            latestHeaderNum);
         return;
       }
       if (blockHeaderStore.getUnchecked(chainId, header.getParentBlockId()) == null) {

@@ -109,7 +109,7 @@ public class CrossHeaderMsgProcess {
       syncBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
       missBlockHeaderMap.put(chainIdStr,
-          noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber() + 1);
+          noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
     } else {//sync
       syncDisabledMap.put(chainIdStr, false);
     }
