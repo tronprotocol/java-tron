@@ -59,11 +59,6 @@ public class CliApplication implements Application {
   }
 
   @Override
-  public BlockStore getBlockStoreS() {
-    return null;
-  }
-
-  @Override
   public void addService(Service service) {
 
   }

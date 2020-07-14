@@ -194,12 +194,10 @@ public class WalletTestAssetIssue004 {
       }
       transaction = signTransaction(ecKey, transaction);
       Return response = blockingStubFull.broadcastTransaction(transaction);
-      if (response.getResult() == false) {
-        return false;
-      } else {
+      if (response.getResult()) {
         logger.info(name);
-        return true;
       }
+      return response.getResult();
     } catch (Exception ex) {
       ex.printStackTrace();
       return false;

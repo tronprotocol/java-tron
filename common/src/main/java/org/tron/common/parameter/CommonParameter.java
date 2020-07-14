@@ -306,7 +306,7 @@ public class CommonParameter {
   public boolean fullNodeAllowShieldedTransactionArgs;
   @Getter
   @Setter
-  public long blockNumForEneryLimit;
+  public long blockNumForEnergyLimit;
   @Getter
   @Setter
   @Parameter(names = {"--es"})
@@ -379,7 +379,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int maxTransactionPendingSize;
-
+  @Getter
+  @Setter
+  public long pendingTransactionTimeout;
   @Getter
   @Setter
   public boolean nodeMetricsEnable = true;

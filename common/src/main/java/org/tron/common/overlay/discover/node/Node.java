@@ -62,8 +62,8 @@ public class Node implements Serializable {
     return id;
   }
 
-  public boolean isConnectible(int argsP2pversion) {
-    return port == bindPort && p2pVersion == argsP2pversion;
+  public boolean isConnectible(int argsP2PVersion) {
+    return port == bindPort && p2pVersion == argsP2PVersion;
   }
 
   public String getHexId() {

@@ -369,7 +369,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
-      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
+      List<Actuator> actList = ActuatorFactory.createActuator(trx, chainBaseManager);
       for (Actuator act : actList) {
         act.validate();
       }

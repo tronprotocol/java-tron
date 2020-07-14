@@ -2,8 +2,8 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Deque;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol.PBFTCommitResult;
@@ -22,7 +22,7 @@ public class PbftSignCapsule implements ProtoCapsule<PBFTCommitResult> {
     }
   }
 
-  public PbftSignCapsule(ByteString data, List<ByteString> signList) {
+  public PbftSignCapsule(ByteString data, Deque<ByteString> signList) {
     PBFTCommitResult.Builder builder = PBFTCommitResult.newBuilder();
     builder.setData(data).addAllSignature(signList);
     pbftCommitResult = builder.build();

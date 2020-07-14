@@ -602,6 +602,10 @@ public class Args extends CommonParameter {
         && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
     PARAMETER.maxTransactionPendingSize = config.hasPath(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE)
         ? config.getInt(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
+
+    PARAMETER.pendingTransactionTimeout = config.hasPath(Constant.NODE_PENDING_TRANSACTION_TIMEOUT)
+        ? config.getLong(Constant.NODE_PENDING_TRANSACTION_TIMEOUT) : 60_000;
+
     PARAMETER.needToUpdateAsset =
         config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) ? config
             .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET)
@@ -618,7 +622,7 @@ public class Args extends CommonParameter {
     PARAMETER.minEffectiveConnection = config.hasPath(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION)
         ? config.getInt(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION) : 1;
 
-    PARAMETER.blockNumForEneryLimit = config.hasPath(Constant.ENERGY_LIMIT_BLOCK_NUM)
+    PARAMETER.blockNumForEnergyLimit = config.hasPath(Constant.ENERGY_LIMIT_BLOCK_NUM)
         ? config.getInt(Constant.ENERGY_LIMIT_BLOCK_NUM) : 4727890L;
 
     PARAMETER.vmTrace =

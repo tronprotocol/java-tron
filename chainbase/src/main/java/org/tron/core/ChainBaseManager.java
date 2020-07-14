@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
@@ -174,6 +175,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private PbftSignDataStore pbftSignDataStore;
+
+  @Getter
+  private ForkController forkController = ForkController.instance();
 
   @Autowired
   @Getter

@@ -1466,7 +1466,7 @@ public class Program {
         }
         throw e;
       }
-      // tokenId can only be 0 when isTokenTransferMsg == false
+      // tokenId can only be 0 when isTokenTransferMsg is false
       // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0)
           || (tokenId == 0 && msg.isTokenTransferMsg())) {

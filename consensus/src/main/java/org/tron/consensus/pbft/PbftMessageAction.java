@@ -1,6 +1,7 @@
 package org.tron.consensus.pbft;
 
 import com.google.protobuf.ByteString;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class PbftMessageAction {
   @Autowired
   private BlockStore blockStore;
 
-  public synchronized void action(PbftMessage message, List<ByteString> dataSignList) {
+  public synchronized void action(PbftMessage message, Deque<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();

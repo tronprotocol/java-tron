@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -206,8 +207,6 @@ public class Manager {
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
-  @Getter
-  private ForkController forkController = ForkController.instance();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
@@ -255,10 +254,8 @@ public class Manager {
             } else {
               TimeUnit.MILLISECONDS.sleep(50L);
             }
-          } catch (Exception ex) {
+          } catch (Throwable ex) {
             logger.error("unknown exception happened in rePush loop", ex);
-          } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in rePush loop", throwable);
           } finally {
             if (tx != null) {
               getRePushTransactions().remove(tx);
@@ -277,8 +274,6 @@ public class Manager {
           } catch (InterruptedException ex) {
             logger.info(ex.getMessage());
             Thread.currentThread().interrupt();
-          } catch (Exception ex) {
-            logger.error("unknown exception happened in process capsule loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in process capsule loop", throwable);
           }
@@ -534,7 +529,7 @@ public class Manager {
           Args.getInstance().getOutputDirectory());
       System.exit(1);
     }
-    forkController.init(this.chainBaseManager);
+    getChainBaseManager().getForkController().init(this.chainBaseManager);
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
@@ -1576,7 +1571,7 @@ public class Manager {
     if (chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp()) {
       proposalController.processProposals();
-      forkController.reset();
+      chainBaseManager.getForkController().reset();
     }
 
     if (!consensus.applyBlock(block)) {
@@ -1621,8 +1616,8 @@ public class Manager {
     }
   }
 
-  private void postSolitityLogContractTrigger(Long blockNum) {
-    if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) {
+  private void postSolitityLogContractTrigger(Long blockNum, Long lastSolidityNum) {
+    if (blockNum > lastSolidityNum) {
       return;
     }
     for (ContractLogTrigger logTriggerCapsule : Args
@@ -1636,8 +1631,8 @@ public class Manager {
     Args.getSolidityContractLogTriggerList().remove(blockNum);
   }
 
-  private void postSolitityEventContractTrigger(Long blockNum) {
-    if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) {
+  private void postSolitityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
+    if (blockNum > lastSolidityNum) {
       return;
     }
     for (ContractEventTrigger eventTriggerCapsule : Args
@@ -1665,7 +1660,8 @@ public class Manager {
   }
 
   public void updateFork(BlockCapsule block) {
-    forkController.update(block);
+    chainBaseManager
+        .getForkController().update(block);
   }
 
   public long getSyncBeginNumber() {
@@ -1818,15 +1814,13 @@ public class Manager {
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-      for (long i = Args.getInstance()
-          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
-        postSolitityLogContractTrigger(i);
+      for (Long i : Args.getSolidityContractLogTriggerList().keySet()) {
+        postSolitityLogContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-      for (long i = Args.getInstance()
-          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
-        postSolitityEventContractTrigger(i);
+      for (Long i : Args.getSolidityContractEventTriggerList().keySet()) {
+        postSolitityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
   }
