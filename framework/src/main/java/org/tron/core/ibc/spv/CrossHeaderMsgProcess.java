@@ -321,7 +321,7 @@ public class CrossHeaderMsgProcess {
             missBlockHeaderMap.remove(chainId);
             headerManager.pushBlockHeader(signedBlockHeader);
           } else {
-            logger.warn("chainHeaderCache not exist chain:{}, block num:{}", chainId, nextHeight);
+            logger.debug("chainHeaderCache not exist chain:{}, block num:{}", chainId, nextHeight);
             if (!syncDisabledMap.get(chainId) && !missBlockHeaderMap.containsKey(chainId)) {
               missBlockHeaderMap.put(chainId, localLatestHeight);
             }
