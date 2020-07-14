@@ -8,13 +8,14 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import lombok.Setter;
@@ -50,12 +51,12 @@ public class PbftMessageHandle {
   //Successfully processed request
   private Map<String, PbftMessage> doneMsg = Maps.newConcurrentMap();
 
-  private LoadingCache<String, List<ByteString>> dataSignCache = CacheBuilder.newBuilder()
+  private LoadingCache<String, Deque<ByteString>> dataSignCache = CacheBuilder.newBuilder()
       .initialCapacity(100).maximumSize(1000).expireAfterWrite(2, TimeUnit.MINUTES).build(
-          new CacheLoader<String, List<ByteString>>() {
+          new CacheLoader<String, Deque<ByteString>>() {
             @Override
-            public List<ByteString> load(String s) throws Exception {
-              return new ArrayList<>();
+            public Deque<ByteString> load(String s) throws Exception {
+              return new ConcurrentLinkedDeque<>();
             }
           });
 

@@ -1,6 +1,7 @@
 package org.tron.consensus.pbft;
 
 import com.google.protobuf.ByteString;
+import java.util.Deque;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ public class PbftMessageAction {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  public void action(PbftMessage message, List<ByteString> dataSignList) {
+  public void action(PbftMessage message, Deque<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();
