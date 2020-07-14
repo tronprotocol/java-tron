@@ -162,7 +162,9 @@ public class HeaderManager {
       Set<ByteString> srSignSet = new ConcurrentSet();
       srSignSet.addAll(srSignList);
       if (srSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
-        throw new BadBlockException("sr sign count < sr count * 2/3 + 1");
+        logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", srSignSet.size(),
+            Param.getInstance().getAgreeNodeCount());
+        return false;
       }
       byte[] dataHash = getBlockPbftData(header);
       Set<ByteString> srSet = Sets.newHashSet(currentSrList);
@@ -251,6 +253,8 @@ public class HeaderManager {
     Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
     preCycleSrSignSet.addAll(preCycleSrSignList);
     if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
+      logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", preCycleSrSignSet.size(),
+          Param.getInstance().getAgreeNodeCount());
       return false;
     }
     byte[] dataHash = getSrPbftData(raw);
