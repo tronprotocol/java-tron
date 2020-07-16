@@ -41,7 +41,7 @@ public class AssetUpdateHelper {
     finish();
     logger.info(
         "Complete the asset update, Total time:{} milliseconds",
-            System.currentTimeMillis() - start);
+        System.currentTimeMillis() - start);
   }
 
   public void init() {
