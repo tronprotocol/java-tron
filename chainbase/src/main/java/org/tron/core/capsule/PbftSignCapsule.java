@@ -22,7 +22,7 @@ public class PbftSignCapsule implements ProtoCapsule<PBFTCommitResult> {
     }
   }
 
-  public PbftSignCapsule(ByteString data, Deque<ByteString> signList) {
+  public PbftSignCapsule(ByteString data, List<ByteString> signList) {
     PBFTCommitResult.Builder builder = PBFTCommitResult.newBuilder();
     builder.setData(data).addAllSignature(signList);
     pbftCommitResult = builder.build();
