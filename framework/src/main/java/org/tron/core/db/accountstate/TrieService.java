@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.db.Manager;
 import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 
 @Slf4j(topic = "AccountState")

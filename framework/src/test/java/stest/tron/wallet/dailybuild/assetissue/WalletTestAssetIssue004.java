@@ -288,13 +288,10 @@ public class WalletTestAssetIssue004 {
     }
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
+    if (response.getResult()) {
       Account search = queryAccount(ecKey, blockingStubFull);
-      return true;
     }
-
+    return response.getResult();
   }
 }
 
