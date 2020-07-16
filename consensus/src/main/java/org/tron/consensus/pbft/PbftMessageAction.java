@@ -18,7 +18,7 @@ public class PbftMessageAction {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  public void action(PbftMessage message, Deque<ByteString> dataSignList) {
+  public void action(PbftMessage message, List<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();

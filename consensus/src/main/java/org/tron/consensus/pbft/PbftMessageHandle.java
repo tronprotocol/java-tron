@@ -8,14 +8,13 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.protobuf.ByteString;
-import java.util.Deque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import lombok.Setter;
@@ -51,12 +50,12 @@ public class PbftMessageHandle {
   //Successfully processed request
   private Map<String, PbftMessage> doneMsg = Maps.newConcurrentMap();
 
-  private LoadingCache<String, Deque<ByteString>> dataSignCache = CacheBuilder.newBuilder()
+  private LoadingCache<String, List<ByteString>> dataSignCache = CacheBuilder.newBuilder()
       .initialCapacity(100).maximumSize(1000).expireAfterWrite(2, TimeUnit.MINUTES).build(
-          new CacheLoader<String, Deque<ByteString>>() {
+          new CacheLoader<String, List<ByteString>>() {
             @Override
-            public Deque<ByteString> load(String s) throws Exception {
-              return new ConcurrentLinkedDeque<>();
+            public List<ByteString> load(String s) throws Exception {
+              return new ArrayList<>();
             }
           });
 
@@ -102,7 +101,7 @@ public class PbftMessageHandle {
     }
   }
 
-  public void onPrepare(PbftMessage message) {
+  public synchronized void onPrepare(PbftMessage message) {
     String key = message.getKey();
 
     if (!preVotes.contains(message.getNo())) {
@@ -139,7 +138,7 @@ public class PbftMessageHandle {
     //Subsequent votes will definitely not be satisfied, timeout will be automatically cleared.
   }
 
-  public void onCommit(PbftMessage message) {
+  public synchronized void onCommit(PbftMessage message) {
     String key = message.getKey();
     if (!pareVoteMap.containsKey(key)) {
       //Must be prepared
