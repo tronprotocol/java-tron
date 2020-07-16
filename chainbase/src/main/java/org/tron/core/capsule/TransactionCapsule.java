@@ -249,6 +249,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return currentWeight;
   }
 
+  //make sure that contractType is validated before
+  //No exception will be thrown here
+  public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx) {
+    try {
+      return hashShieldTransaction(tx.getInstance(), DBConfig.getZenTokenId());
+    } catch (ContractValidateException | InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+    }
+    return null;
+  }
+
   public static byte[] hashShieldTransaction(Transaction tx, String tokenId)
       throws ContractValidateException, InvalidProtocolBufferException {
     Any contractParameter = tx.getRawData().getContract(0).getParameter();

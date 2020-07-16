@@ -233,4 +233,10 @@ public class Constant {
   public static final String STORAGE_BACKUP_PROP_PATH = "storage.backup.propPath";
 
   public static final String ACTUATOR_WHITELIST = "actuator.whitelist";
+
+  public static final String MONITOR_SHIELDED_CHECK_LOG = "monitor.monitorShieldCheckLog";
+
+  public static final String TRC20_CONTRACT_ADDRESS = "monitor.trc20ContractAddress";
+  public static final String SHIELDED_TRC20_CONTRACT_ADDRESS = "monitor"
+      + ".shieldedTrc20ContractAddress";
 }

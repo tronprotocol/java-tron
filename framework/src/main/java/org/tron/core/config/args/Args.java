@@ -449,6 +449,11 @@ public class Args {
   private long allowShieldedTransaction; //committee parameter
 
   // full node used this parameter to close shielded transaction
+
+  @Getter
+  @Setter
+  private boolean monitorShieldCheckLog;
+
   @Getter
   @Setter
   private boolean fullNodeAllowShieldedTransactionArgs;
@@ -534,6 +539,14 @@ public class Args {
   @Setter
   public boolean isEckey=true;
 
+  @Getter
+  @Setter
+  private String trc20ContractAddress;
+
+  @Getter
+  @Setter
+  private String shieldedTrc20ContractAddress;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -612,6 +625,7 @@ public class Args {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
+    INSTANCE.monitorShieldCheckLog = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -621,6 +635,8 @@ public class Args {
     INSTANCE.fullNodeHttpEnable = true;
     INSTANCE.solidityNodeHttpEnable = true;
     INSTANCE.isEckey = true;
+    INSTANCE.trc20ContractAddress = "";
+    INSTANCE.shieldedTrc20ContractAddress = "";
   }
 
   /**
@@ -1038,6 +1054,10 @@ public class Args {
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
+    INSTANCE.monitorShieldCheckLog =
+        config.hasPath(Constant.MONITOR_SHIELDED_CHECK_LOG) ?
+            config.getBoolean(Constant.MONITOR_SHIELDED_CHECK_LOG) : true;
+
     INSTANCE.allowShieldedTRC20Transaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) : 0;
@@ -1101,6 +1121,12 @@ public class Args {
                     new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
                     : Collections.emptySet();
 
+    INSTANCE.trc20ContractAddress = config.hasPath(Constant.TRC20_CONTRACT_ADDRESS) ? config
+        .getString(Constant.TRC20_CONTRACT_ADDRESS) : "";
+
+    INSTANCE.shieldedTrc20ContractAddress =
+        config.hasPath(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) ? config
+            .getString(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) : "";
 
     logConfig();
     initDBConfig(INSTANCE);
@@ -1495,6 +1521,7 @@ public class Args {
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
 //    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
+    DBConfig.setMonitorShieldCheckLog(cfgArgs.isMonitorShieldCheckLog());
     DBConfig.setAllowShieldedTRC20Transaction(
         cfgArgs.getAllowShieldedTRC20Transaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());

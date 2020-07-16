@@ -79,6 +79,9 @@ public class DBConfig {
   private static long allowShieldedTransaction; //committee parameter
   @Getter
   @Setter
+  private static boolean monitorShieldCheckLog;
+  @Getter
+  @Setter
   private static long allowShieldedTRC20Transaction;
   @Getter
   @Setter

@@ -2003,7 +2003,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("createShieldedTransaction exception caught: " + e.getMessage());
       }
 
       trxExtBuilder.setResult(retBuilder);
@@ -2033,7 +2033,8 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info(
+            "createShieldedTransactionWithoutSpendAuthSig exception caught: " + e.getMessage());
       }
 
       trxExtBuilder.setResult(retBuilder);
@@ -2323,7 +2324,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(shieldedTRC20Parameters);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("createShieldedContractParameters exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2341,7 +2342,8 @@ public class RpcApiService implements Service {
         responseObserver.onNext(shieldedTRC20Parameters);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger
+            .info("createShieldedContractParametersWithoutAsk exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2365,7 +2367,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("scanShieldedTRC20NotesByIvk exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
@@ -2387,7 +2389,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("exception caught: " + e.getMessage());
+        logger.info("scanShieldedTRC20NotesByOvk exception caught: " + e.getMessage());
         return;
       }
       responseObserver.onCompleted();
