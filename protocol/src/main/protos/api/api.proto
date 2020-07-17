@@ -1110,7 +1110,7 @@ message AddressPrKeyPairMessage {
 message TransactionExtention {
   Transaction transaction = 1;
   bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
-  repeated bytes constant_result = 3;
+  repeated bytes contract_result = 3;
   Return result = 4;
 }
 
