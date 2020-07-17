@@ -410,6 +410,9 @@ service Wallet {
   rpc GetContract (BytesMessage) returns (SmartContract) {
   }
 
+  rpc GetContract2 (BytesMessage) returns (SmartContract) {
+  }
+
   rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 

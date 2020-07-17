@@ -124,6 +124,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetContractServlet getContractServlet;
   @Autowired
+  private GetContractServlet2 getContractServlet2;
+  @Autowired
   private ClearABIServlet clearABIServlet;
   @Autowired
   private ProposalCreateServlet proposalCreateServlet;
@@ -353,6 +355,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(triggerConstantContractServlet),
           "/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/getcontract");
+      context.addServlet(new ServletHolder(getContractServlet2), "/getcontract2");
       context.addServlet(new ServletHolder(clearABIServlet), "/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/proposalapprove");

@@ -78,6 +78,11 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
         .build();
   }
 
+  public void setBytecode(byte[] bytecode) {
+    this.smartContract = this.smartContract.toBuilder().setBytecode(ByteString.copyFrom(bytecode))
+        .build();
+  }
+
   @Override
   public byte[] getData() {
     return this.smartContract.toByteArray();

@@ -1855,6 +1855,14 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getContract2(BytesMessage request,
+        StreamObserver<SmartContract> responseObserver) {
+      SmartContract contract = wallet.getContract2(request);
+      responseObserver.onNext(contract);
+      responseObserver.onCompleted();
+    }
+
     public void listWitnesses(EmptyMessage request,
         StreamObserver<WitnessList> responseObserver) {
       responseObserver.onNext(wallet.getWitnessList());
