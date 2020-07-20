@@ -61,10 +61,5 @@ sourceSets {
     }
 }
 
-tasks {
-    openApiGenerate
-
-    compileJava  {
-        dependsOn(openApiGenerate)
-    }
-}
+compileJava.dependsOn tasks.openApiGenerate
+//build.dependsOn openApiGenerate
