@@ -48,7 +48,7 @@ public class CrossRegisterActuator extends AbstractActuator {
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     try {
       RegisterCrossContract registerCrossContract = any.unpack(RegisterCrossContract.class);
-      byte[] ownerAddress = registerCrossContract.getCrossChainInfo().getOwnerAddress().toByteArray();
+      byte[] ownerAddress = registerCrossContract.getOwnerAddress().toByteArray();
       String chainId = registerCrossContract.getCrossChainInfo().getChainId().toString();
       long burn = dynamicStore.getBurnedForRegisterCross();
       Commons.adjustBalance(accountStore, ownerAddress, -burn);
@@ -96,7 +96,7 @@ public class CrossRegisterActuator extends AbstractActuator {
     }
 
     byte[] chainId = registerCrossContract.getCrossChainInfo().getChainId().toByteArray();
-    byte[] ownerAddress = registerCrossContract.getCrossChainInfo().getOwnerAddress().toByteArray();
+    byte[] ownerAddress = registerCrossContract.getOwnerAddress().toByteArray();
 
     // 判断chain_id是否存在
     if (crossRevokingStore.getCrossInfoById(ByteArray.toStr(chainId)) != null) {
@@ -126,7 +126,7 @@ public class CrossRegisterActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(RegisterCrossContract.class).getCrossChainInfo().getOwnerAddress();
+    return any.unpack(RegisterCrossContract.class).getOwnerAddress();
   }
 
   @Override

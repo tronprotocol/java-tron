@@ -45,7 +45,7 @@ public class CrossUpdateActuator extends AbstractActuator {
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     try {
       UpdateCrossContract updateCrossContract = any.unpack(UpdateCrossContract.class);
-      byte[] ownerAddress = updateCrossContract.getCrossChainInfo().getOwnerAddress().toByteArray();
+      byte[] ownerAddress = updateCrossContract.getOwnerAddress().toByteArray();
       String chainId = updateCrossContract.getCrossChainInfo().getChainId().toString();
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
@@ -91,7 +91,7 @@ public class CrossUpdateActuator extends AbstractActuator {
     }
 
     byte[] chainId = updateCrossContract.getCrossChainInfo().getChainId().toByteArray();
-    byte[] ownerAddress = updateCrossContract.getCrossChainInfo().getOwnerAddress().toByteArray();
+    byte[] ownerAddress = updateCrossContract.getOwnerAddress().toByteArray();
 
     byte[] crossChainInfoBytes = crossRevokingStore.getCrossInfoById(ByteArray.toStr(chainId));
     BalanceContract.CrossChainInfo crossChainInfo = null;
@@ -110,7 +110,7 @@ public class CrossUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid ownerAddress!");
     }
 
-    if (!Arrays.equals(crossChainInfo.getOwnerAddress().toByteArray(), ownerAddress)) {
+    if (!Arrays.equals(crossChainInfo.toByteArray(), ownerAddress)) {
       throw new ContractValidateException("ownerAddress must be the same with the register address!");
     }
 
@@ -133,7 +133,7 @@ public class CrossUpdateActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(UpdateCrossContract.class).getCrossChainInfo().getOwnerAddress();
+    return any.unpack(UpdateCrossContract.class).getOwnerAddress();
   }
 
   @Override
