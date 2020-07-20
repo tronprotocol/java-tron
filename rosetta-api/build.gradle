@@ -1,0 +1,70 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://repo1.maven.org/maven2" }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "https://oss.sonatype.org/content/repositories/releases/"
+        }
+        maven {
+            url "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        // Updated version can be passed via command line arg as -PopenApiGeneratorVersion=VERSION
+        classpath "org.openapitools:openapi-generator-gradle-plugin:4.3.1"
+    }
+}
+plugins {
+    id 'java'
+    id("java-library")
+    id("org.openapi.generator").version("4.3.1")
+}
+
+version '1.0.0'
+
+sourceCompatibility = 1.8
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'org.springframework', name: 'spring-web', version: '4.2.4.RELEASE'
+    compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.8.0'
+    compile group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
+}
+
+ext {
+    spec = "$rootDir/rosetta-api/specs/api.json".toString()
+    generatedSourcesDir = "$buildDir/generated/rosetta".toString()
+}
+
+openApiGenerate {
+    generatorName = "spring"
+
+    inputSpec = spec
+    outputDir = generatedSourcesDir
+
+    apiPackage = "org.tron.api"
+    invokerPackage = "org.tron.invoker"
+    modelPackage = "org.tron.model"
+    configOptions = [
+            dateLibrary: "java8"
+    ]
+}
+
+sourceSets {
+    getByName("main") {
+        java {
+            srcDir("$generatedSourcesDir/src/main/java")
+        }
+    }
+}
+
+tasks {
+    openApiGenerate
+
+    compileJava  {
+        dependsOn(openApiGenerate)
+    }
+}
