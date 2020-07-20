@@ -31,7 +31,7 @@ import org.tron.core.net.peer.PeerConnection;
 public class SyncPool {
 
   private final List<PeerConnection> activePeers = Collections
-      .synchronizedList(new ArrayList<PeerConnection>());
+      .synchronizedList(new ArrayList<>());
   private final AtomicInteger passivePeersCount = new AtomicInteger(0);
   private final AtomicInteger activePeersCount = new AtomicInteger(0);
   private double factor = Args.getInstance().getConnectFactor();

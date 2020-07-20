@@ -425,13 +425,6 @@ public class SM2 implements Serializable, SignInterface {
         return pubKeyHash;
     }
 
-    @Override
-    public byte[] signToAddress(byte[] messageHash, String
-            signatureBase64) throws SignatureException {
-        return computeAddress(signatureToKeyBytes(messageHash,
-                signatureBase64));
-    }
-
     /**
      * Compute the address of the key that signed the given signature.
      *

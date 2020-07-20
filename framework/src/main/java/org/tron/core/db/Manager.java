@@ -1362,14 +1362,14 @@ public class Manager {
       return;
     }
     for (ContractLogTrigger logTriggerCapsule : Args
-        .getSolidityContractLogTriggerList().get(blockNum)) {
+        .getSolidityContractLogTriggerMap().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
           logTriggerCapsule.getTransactionId())) != null) {
         logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
       }
     }
-    Args.getSolidityContractLogTriggerList().remove(blockNum);
+    Args.getSolidityContractLogTriggerMap().remove(blockNum);
   }
 
   private void postSolitityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
@@ -1377,7 +1377,7 @@ public class Manager {
       return;
     }
     for (ContractEventTrigger eventTriggerCapsule : Args
-        .getSolidityContractEventTriggerList().get(blockNum)) {
+        .getSolidityContractEventTriggerMap().get(blockNum)) {
       if (chainBaseManager.getTransactionStore()
           .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
               .getTransactionId())) != null) {
@@ -1385,7 +1385,7 @@ public class Manager {
         EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
       }
     }
-    Args.getSolidityContractEventTriggerList().remove(blockNum);
+    Args.getSolidityContractEventTriggerMap().remove(blockNum);
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1558,12 +1558,12 @@ public class Manager {
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-      for (Long i : Args.getSolidityContractLogTriggerList().keySet()) {
+      for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolitityLogContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-      for (Long i : Args.getSolidityContractEventTriggerList().keySet()) {
+      for (Long i : Args.getSolidityContractEventTriggerMap().keySet()) {
         postSolitityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }

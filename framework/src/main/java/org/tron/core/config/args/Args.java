@@ -74,12 +74,12 @@ public class Args extends CommonParameter {
   @Autowired(required = false)
   @Getter
   private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
-      solidityContractLogTriggerList =  new ConcurrentHashMap<>();
+      solidityContractLogTriggerMap =  new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
   private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
-      solidityContractEventTriggerList =  new ConcurrentHashMap<>();
+      solidityContractEventTriggerMap =  new ConcurrentHashMap<>();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -683,8 +683,8 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
             .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
 
-    PARAMETER.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
-        .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.agreeNodeCount = config.hasPath(Constant.NODE_AGREE_NODE_COUNT) ? config
+        .getInt(Constant.NODE_AGREE_NODE_COUNT) : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
         ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
     if (PARAMETER.isWitness()) {
