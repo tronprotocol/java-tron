@@ -724,12 +724,6 @@ public class ECKey implements Serializable, SignInterface {
     return ByteUtil.appendByte(temp,first);
   }
 
-  @Override
-  public byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException {
-    return Hash.computeAddress(signatureToKeyBytes(messageHash,
-            signatureBase64));
-  }
-
   /**
    * Generates the NodeID based on this key, that is the public key without first format byte
    */
