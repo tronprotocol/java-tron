@@ -510,7 +510,7 @@ public class Wallet {
     } catch (ContractValidateException e) {
       logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
       logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
