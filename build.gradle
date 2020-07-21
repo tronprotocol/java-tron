@@ -40,6 +40,8 @@ subprojects {
         compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
         compileOnly 'org.projectlombok:lombok:1.18.12'
         annotationProcessor 'org.projectlombok:lombok:1.18.12'
+        testCompileOnly 'org.projectlombok:lombok:1.18.12'
+        testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
         compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
         compile "com.google.code.findbugs:jsr305:3.0.0"
         compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
