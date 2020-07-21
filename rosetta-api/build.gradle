@@ -56,6 +56,10 @@ openApiGenerate {
     configOptions = [
             dateLibrary: "java8"
     ]
+
+    groupId = "tronprotocol"
+    id = "tron-rosetta-api"
+    version = "1.0.0"
 }
 
 sourceSets {
