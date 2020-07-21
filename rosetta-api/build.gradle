@@ -54,7 +54,16 @@ openApiGenerate {
     invokerPackage = "org.tron.invoker"
     modelPackage = "org.tron.model"
     configOptions = [
-            dateLibrary: "java8"
+            dateLibrary: "java8",
+            configPackage: "org.tron.config",
+            hideGenerationTimestamp: "true",
+            java8: "true",
+            interfaceOnly: "true",
+            library: "spring-mvc",
+            returnSuccessCode: "true",
+            serializableModel: "true",
+            //skipDefaultInterface: "true",
+
     ]
 
     groupId = "tronprotocol"
