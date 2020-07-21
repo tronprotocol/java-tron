@@ -37,12 +37,54 @@ public class ForkUtils {
   }
 
   public synchronized boolean pass(int version) {
+    if (version > ForkBlockVersionEnum.VERSION_4_0.getValue()) {
+      return passNew(version);
+    } else {
+      return passOld(version);
+    }
+  }
+
+  private boolean passOld(int version) {
     if (version == ForkBlockVersionConsts.ENERGY_LIMIT) {
       return checkForEnergyLimit();
     }
 
     byte[] stats = dynamicPropertiesStore.statsByVersion(version);
     return check(stats);
+  }
+
+  private boolean passNew(int version) {
+    ForkBlockVersionEnum versionEnum = ForkBlockVersionEnum.getForkBlockVersionEnum(version);
+    if (versionEnum == null) {
+      logger.error("not exist block version: {}", version);
+      return false;
+    }
+    long latestBlockTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+    long maintenanceTimeInterval = dynamicPropertiesStore.getMaintenanceTimeInterval();
+    long hardForkTime = ((versionEnum.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+        * maintenanceTimeInterval;
+    if (latestBlockTime < hardForkTime) {
+      return false;
+    }
+    Boolean hardForkResult = dynamicPropertiesStore.getForked(version);
+    if (hardForkResult != null) {
+      return hardForkResult;
+    }
+    byte[] stats = dynamicPropertiesStore.statsByVersion(version);
+    if (stats == null || stats.length == 0) {
+      return false;
+    }
+    int count = 0;
+    for (int i = 0; i < stats.length; i++) {
+      if (check[i] == stats[i]) {
+        ++count;
+      }
+    }
+    hardForkResult = count >= versionEnum.getHardForkCount();
+    dynamicPropertiesStore.forked(version, hardForkResult);
+    logger.info("******** update block version {} hard fork result:{} ********", version,
+        hardForkResult);
+    return hardForkResult;
   }
 
   // when block.version = 5,

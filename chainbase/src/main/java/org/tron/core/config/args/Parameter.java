@@ -5,19 +5,34 @@ import lombok.Getter;
 public class Parameter {
 
   public enum ForkBlockVersionEnum {
-    ENERGY_LIMIT(5),
-    VERSION_3_2_2(6),
-    VERSION_3_5(7),
-    VERSION_3_6(8),
-    VERSION_3_6_5(9),
-    VERSION_3_6_6(10),
-    VERSION_4_0(16);
+    ENERGY_LIMIT(5, 0L, 0),
+    VERSION_3_2_2(6, 0L, 0),
+    VERSION_3_5(7, 0L, 0),
+    VERSION_3_6(8, 0L, 0),
+    VERSION_3_6_5(9, 0L, 0),
+    VERSION_3_6_6(10, 0L, 0),
+    VERSION_4_0(16, 0L, 0);
 
     @Getter
     private int value;
+    @Getter
+    private long hardForkTime;
+    @Getter
+    private int hardForkCount;
 
-    ForkBlockVersionEnum(int value) {
+    ForkBlockVersionEnum(int value, long hardForkTime, int hardForkCount) {
       this.value = value;
+      this.hardForkTime = hardForkTime;
+      this.hardForkCount = hardForkCount;
+    }
+
+    public static ForkBlockVersionEnum getForkBlockVersionEnum(int value) {
+      for (ForkBlockVersionEnum versionEnum : values()) {
+        if (versionEnum.getValue() == value) {
+          return versionEnum;
+        }
+      }
+      return null;
     }
   }
 
