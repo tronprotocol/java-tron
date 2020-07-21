@@ -45,7 +45,7 @@ public class DataWord implements Comparable<DataWord> {
   // TODO not safe
   public static final DataWord ZERO = new DataWord(
       new byte[WORD_SIZE]);      // don't push it in to the stack
-  private byte[] data = new byte[32];
+  private byte[] data = new byte[WORD_SIZE];
 
   public DataWord() {
   }
@@ -91,7 +91,7 @@ public class DataWord implements Comparable<DataWord> {
   }
 
   public static DataWord ZERO() {
-    return new DataWord(new byte[32]);
+    return new DataWord(new byte[WORD_SIZE]);
   }
 
   public static DataWord of(byte num) {
@@ -309,7 +309,7 @@ public class DataWord implements Comparable<DataWord> {
   // By   : Holger
   // From : http://stackoverflow.com/a/24023466/459349
   public void add(DataWord word) {
-    byte[] result = new byte[32];
+    byte[] result = new byte[WORD_SIZE];
     for (int i = 31, overflow = 0; i >= 0; i--) {
       int v = (this.data[i] & 0xff) + (word.data[i] & 0xff) + overflow;
       result[i] = (byte) v;
@@ -395,7 +395,7 @@ public class DataWord implements Comparable<DataWord> {
 
   public void addmod(DataWord word1, DataWord word2) {
     if (word2.isZero()) {
-      this.data = new byte[32];
+      this.data = new byte[WORD_SIZE];
       return;
     }
 
@@ -406,7 +406,7 @@ public class DataWord implements Comparable<DataWord> {
   public void mulmod(DataWord word1, DataWord word2) {
 
     if (this.isZero() || word1.isZero() || word2.isZero()) {
-      this.data = new byte[32];
+      this.data = new byte[WORD_SIZE];
       return;
     }
 
