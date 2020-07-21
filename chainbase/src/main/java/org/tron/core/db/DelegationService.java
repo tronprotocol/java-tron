@@ -60,12 +60,12 @@ public class DelegationService {
     long voteSum = 0;
     long totalPay = dynamicPropertiesStore.getWitness127PayPerBlock();
     for (ByteString b : witnessAddressList) {
-      voteSum += getWitnesseByAddress(b).getVoteCount();
+      voteSum += getWitnessByAddress(b).getVoteCount();
     }
     if (voteSum > 0) {
       for (ByteString b : witnessAddressList) {
         double eachVotePay = (double) totalPay / voteSum;
-        long pay = (long) (getWitnesseByAddress(b).getVoteCount() * eachVotePay);
+        long pay = (long) (getWitnessByAddress(b).getVoteCount() * eachVotePay);
         logger.debug("pay {} stand reward {}", Hex.toHexString(b.toByteArray()), pay);
         delegationStore.addVoteReward(dynamicPropertiesStore
             .getCurrentCycleNumber(), b.toByteArray(), pay);
@@ -198,7 +198,7 @@ public class DelegationService {
     return reward;
   }
 
-  public WitnessCapsule getWitnesseByAddress(ByteString address) {
+  public WitnessCapsule getWitnessByAddress(ByteString address) {
     return witnessStore.get(address.toByteArray());
   }
 
@@ -230,7 +230,7 @@ public class DelegationService {
   }
 
   private void sortWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
+    list.sort(Comparator.comparingLong((ByteString b) -> getWitnessByAddress(b).getVoteCount())
         .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 }
