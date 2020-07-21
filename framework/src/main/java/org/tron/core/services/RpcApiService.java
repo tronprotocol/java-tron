@@ -802,7 +802,7 @@ public class RpcApiService implements Service {
    */
   public class WalletApi extends WalletImplBase {
 
-    private BlockListExtention blocklist2Extention(BlockList blockList) {
+    private BlockListExtention blockList2Extention(BlockList blockList) {
       if (blockList == null) {
         return null;
       }
@@ -1650,7 +1650,7 @@ public class RpcApiService implements Service {
 
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
         responseObserver
-            .onNext(blocklist2Extention(wallet.getBlocksByLimitNext(startNum, endNum - startNum)));
+            .onNext(blockList2Extention(wallet.getBlocksByLimitNext(startNum, endNum - startNum)));
       } else {
         responseObserver.onNext(null);
       }
@@ -1676,7 +1676,7 @@ public class RpcApiService implements Service {
       long getNum = request.getNum();
 
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-        responseObserver.onNext(blocklist2Extention(wallet.getBlockByLatestNum(getNum)));
+        responseObserver.onNext(blockList2Extention(wallet.getBlockByLatestNum(getNum)));
       } else {
         responseObserver.onNext(null);
       }
