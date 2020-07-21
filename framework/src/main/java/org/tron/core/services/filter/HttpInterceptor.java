@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 
-@Slf4j(topic = "httpIntercetpor")
+@Slf4j(topic = "httpInterceptor")
 public class HttpInterceptor implements Filter {
 
   private String endpoint;
