@@ -150,6 +150,8 @@ test {
         exclude '**/BackupDbUtilTest.class'
         exclude '**/ManagerTest.class'
         exclude 'org/tron/core/zksnark/**'
+        exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
+        exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
     }
 }
 

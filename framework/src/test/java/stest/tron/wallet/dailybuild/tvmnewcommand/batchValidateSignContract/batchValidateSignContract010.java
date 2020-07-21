@@ -100,8 +100,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -134,8 +133,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("01000000000000000000000000000000",
@@ -167,8 +165,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("01100000000000000000000000000000",
@@ -201,8 +198,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("11111101100000000000000000000000",
@@ -236,8 +232,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("10001000000000000000000000000000",
@@ -273,8 +268,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -309,8 +303,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
@@ -345,8 +338,7 @@ public class batchValidateSignContract010 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
-              + " : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",

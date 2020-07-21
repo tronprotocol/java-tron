@@ -171,6 +171,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeMetricsEnable = true;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
+    PARAMETER.allowShieldedTRC20Transaction = 0;
   }
 
   /**
@@ -630,6 +631,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowShieldedTransaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+
+    PARAMETER.allowShieldedTRC20Transaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) : 0;
 
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)

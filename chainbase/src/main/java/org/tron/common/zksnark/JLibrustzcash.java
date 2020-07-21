@@ -11,6 +11,9 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputNewParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendNewParams;
+import org.tron.common.zksnark.LibrustzcashParam.FinalCheckNewParams;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
@@ -247,6 +250,31 @@ public class JLibrustzcash {
     }
     return INSTANCE.librustzcashSaplingFinalCheck(params.getCtx(),
         params.getValueBalance(), params.getBindingSig(), params.getSighashValue());
+  }
+
+  public static boolean librustzcashSaplingCheckSpendNew(CheckSpendNewParams params) {
+    if (!isOpenZen()) {
+      return true;
+    }
+    return INSTANCE.librustzcashSaplingCheckSpendNew(params.getCv(),
+        params.getAnchor(), params.getNullifier(), params.getRk(), params.getZkproof(),
+        params.getSpendAuthSig(), params.getSighashValue());
+  }
+
+  public static boolean librustzcashSaplingCheckOutputNew(CheckOutputNewParams params) {
+    if (!isOpenZen()) {
+      return true;
+    }
+    return INSTANCE.librustzcashSaplingCheckOutputNew(params.getCv(), params.getCm(),
+        params.getEphemeralKey(), params.getZkproof());
+  }
+
+  public static boolean librustzcashSaplingFinalCheckNew(FinalCheckNewParams params) {
+    if (!isOpenZen()) {
+      return true;
+    }
+    return INSTANCE.librustzcashSaplingFinalCheckNew(params.getValueBalance(), params.getBindingSig(),
+            params.getSighashValue(), params.getSpendCv(),params.getSpendCvLen(), params.getOutputCv(),params.getOutputCvLen());
   }
 
   public static void librustzcashSaplingVerificationCtxFree(long ctx) {
