@@ -162,8 +162,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     long tokenQuant = contract.getQuant();
     long tokenExpected = contract.getExpected();
 
-    if (dynamicStore.getAllowSameTokenName() == 1 && 
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) && 
+    if (dynamicStore.getAllowSameTokenName() == 1 &&
+        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
         !TransactionUtil.isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }

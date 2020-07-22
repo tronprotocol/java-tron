@@ -118,8 +118,6 @@ public class BrokerageTest001 {
   }
 
 
-
-
   /**
    * constructor.
    */
@@ -138,7 +136,6 @@ public class BrokerageTest001 {
       channelSoliInFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
-
 
 
   boolean updateBrokerage(byte[] owner, int brokerage,

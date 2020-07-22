@@ -8,7 +8,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 
@@ -29,7 +28,7 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private ConsensusService consensusService;
-  
+
   @Override
   public void setOptions(Args args) {
     // not used

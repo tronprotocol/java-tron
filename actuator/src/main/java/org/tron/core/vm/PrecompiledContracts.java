@@ -24,14 +24,17 @@ import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.BIUtil.isZero;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.bytesToBigInteger;
+import static org.tron.common.utils.ByteUtil.merge;
 import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
 import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -46,7 +49,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
@@ -62,13 +64,15 @@ import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.JLibrustzcash;
+import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
-import org.tron.common.crypto.SignatureInterface;
 
 /**
  * @author Roman Mandeleil
@@ -90,6 +94,11 @@ public class PrecompiledContracts {
   private static final BatchValidateSign batchValidateSign = new BatchValidateSign();
   private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
 
+  private static final VerifyMintProof verifyMintProof = new VerifyMintProof();
+  private static final VerifyTransferProof verifyTransferProof = new VerifyTransferProof();
+  private static final VerifyBurnProof verifyBurnProof = new VerifyBurnProof();
+
+  private static final MerkleHash merkleHash = new MerkleHash();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -111,6 +120,14 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000009");
   private static final DataWord validateMultiSignAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000000000a");
+  private static final DataWord verifyMintProofAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000001");
+  private static final DataWord verifyTransferProofAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000002");
+  private static final DataWord verifyBurnProofAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000003");
+  private static final DataWord merkleHashAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000001000004");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -147,6 +164,18 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowTvmSolidity059() && address.equals(validateMultiSignAddr)) {
       return validateMultiSign;
+    }
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(verifyMintProofAddr)) {
+      return verifyMintProof;
+    }
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(verifyTransferProofAddr)) {
+      return verifyTransferProof;
+    }
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(verifyBurnProofAddr)) {
+      return verifyBurnProof;
+    }
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(merkleHashAddr)) {
+      return merkleHash;
     }
 
     return null;
@@ -277,6 +306,12 @@ public class PrecompiledContracts {
       return ret;
     }
 
+    protected byte[] dataBoolean(boolean result) {
+      if (result) {
+        return DataWord.ONE().getData();
+      }
+      return DataWord.ZERO().getData();
+    }
   }
 
   public static class Identity extends PrecompiledContract {
@@ -872,6 +907,583 @@ public class PrecompiledContracts {
     }
 
 
+  }
+
+  public abstract static class VerifyProof extends PrecompiledContract {
+
+    protected static final long TREE_WIDTH = 1L << 32;
+    protected static final byte[][] UNCOMMITTED = new byte[32][32];
+
+    static {
+      UNCOMMITTED[0] = ByteArray.fromHexString(
+          "0100000000000000000000000000000000000000000000000000000000000000");
+      try {
+        for (int i = 0; i < 31; i++) {
+          JLibrustzcash.librustzcashMerkleHash(
+              new LibrustzcashParam.MerkleHashParams(
+                  i, UNCOMMITTED[i], UNCOMMITTED[i], UNCOMMITTED[i + 1]));
+        }
+      } catch (Throwable any) {
+        logger.info("Initialize UNCOMMITTED array failed:{}", any.getMessage());
+      }
+    }
+
+    protected long parseLong(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).longValueSafe();
+    }
+
+    protected int parseInt(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).intValueSafe();
+    }
+
+    private int getFrontierSlot(long leafIndex) {
+      int slot = 0;
+      if (leafIndex % 2 != 0) {
+        int exp1 = 1;
+        long pow1 = 2;
+        long pow2 = pow1 << 1;
+        while (slot == 0) {
+          if ((leafIndex + 1 - pow1) % pow2 == 0) {
+            slot = exp1;
+          } else {
+            pow1 = pow2;
+            pow2 = pow2 << 1;
+            exp1++;
+          }
+        }
+      }
+      return slot;
+    }
+
+    protected Pair<Boolean, byte[]> insertLeaves(
+        byte[][] frontier, long leafCount, byte[][] leafValue) {
+      long nodeIndex = 0;
+      boolean success = true;
+      byte[] leftInput;
+      byte[] rightInput;
+      byte[] hash = new byte[32];
+      byte[] nodeValue = new byte[32];
+      int cmCount = leafValue.length;
+      int[] slot = new int[cmCount];
+      for (int i = 0; i < cmCount; i++) {
+        slot[i] = getFrontierSlot(leafCount + i);
+      }
+      int resultArrayLength = 32;
+      for (int i = 0; i < cmCount; i++) {
+        resultArrayLength += (slot[i] + 1) * 32;
+      }
+
+      byte[] result = new byte[resultArrayLength];
+      try {
+        int offset = 0;
+        for (int i = 0; i < cmCount; i++) {
+          byte[] slotArray = DataWord.of((byte) (slot[i] & 0xFF)).getData();
+          System.arraycopy(slotArray, 0, result, offset, 32);
+          offset += 32;
+          nodeIndex = i + leafCount + TREE_WIDTH - 1;
+          System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
+          if (slot[i] == 0) {
+            System.arraycopy(nodeValue, 0, frontier[0], 0, 32);
+            continue;
+          }
+          for (int level = 1; level <= slot[i]; level++) {
+            if (nodeIndex % 2 == 0) {
+              leftInput = frontier[level - 1];
+              rightInput = nodeValue;
+              nodeIndex = (nodeIndex - 1) / 2;
+            } else {
+              leftInput = nodeValue;
+              rightInput = UNCOMMITTED[level - 1];
+              nodeIndex = nodeIndex / 2;
+            }
+            JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(
+                level - 1, leftInput, rightInput, hash));
+            System.arraycopy(hash, 0, nodeValue, 0, 32);
+            System.arraycopy(hash, 0, result, offset, 32);
+            offset += 32;
+          }
+          System.arraycopy(nodeValue, 0, frontier[slot[i]], 0, 32);
+        }
+
+        for (int level = slot[cmCount - 1] + 1; level <= 32; level++) {
+          if (nodeIndex % 2 == 0) {
+            leftInput = frontier[level - 1];
+            rightInput = nodeValue;
+            nodeIndex = (nodeIndex - 1) / 2;
+          } else {
+            leftInput = nodeValue;
+            rightInput = UNCOMMITTED[level - 1];
+            nodeIndex = nodeIndex / 2;
+          }
+          JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(
+              level - 1, leftInput, rightInput, hash));
+          System.arraycopy(hash, 0, nodeValue, 0, 32);
+        }
+        System.arraycopy(nodeValue, 0, result, offset, 32);
+      } catch (Throwable any) {
+        success = false;
+        String errorMsg = any.getMessage();
+        if (errorMsg == null && any.getCause() != null) {
+          errorMsg = any.getCause().getMessage();
+        }
+        logger.info("Insert leaves failed: " + errorMsg);
+      }
+      if (success) {
+        return Pair.of(true, merge(DataWord.ONE().getData(), result));
+      } else {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+    }
+  }
+
+  public static class VerifyMintProof extends VerifyProof {
+
+    private static final int SIZE = 1504;
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 150000;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      if (data.length != SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      boolean result;
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        byte[] cm = new byte[32];
+        byte[] cv = new byte[32];
+        byte[] epk = new byte[32];
+        byte[] proof = new byte[192];
+        byte[] bindingSig = new byte[64];
+        byte[] signHash = new byte[32];
+        byte[][] frontier = new byte[33][32];
+
+        System.arraycopy(data, 0, cm, 0, 32);
+        System.arraycopy(data, 32, cv, 0, 32);
+        System.arraycopy(data, 64, epk, 0, 32);
+        System.arraycopy(data, 96, proof, 0, 192);
+        System.arraycopy(data, 288, bindingSig, 0, 64);
+        long value = parseLong(data, 352);
+        System.arraycopy(data, 384, signHash, 0, 32);
+        for (int i = 0; i < 33; i++) {
+          System.arraycopy(data, i * 32 + 416, frontier[i], 0, 32);
+        }
+        long leafCount = parseLong(data, 1472);
+        if (leafCount >= TREE_WIDTH) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+
+        result = JLibrustzcash.librustzcashSaplingCheckOutput(
+            new LibrustzcashParam.CheckOutputParams(ctx, cv, cm, epk, proof));
+        long valueBalance = -value;
+        result = result && JLibrustzcash.librustzcashSaplingFinalCheck(
+            new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, bindingSig, signHash));
+
+        if (result) {
+          byte[][] leafValue = new byte[1][32];
+          System.arraycopy(cm, 0, leafValue[0], 0, 32);
+          return insertLeaves(frontier, leafCount, leafValue);
+        } else {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+      } catch (Throwable any) {
+        String errorMsg = any.getMessage();
+        if (errorMsg == null && any.getCause() != null) {
+          errorMsg = any.getCause().getMessage();
+        }
+        logger.info("VerifyMintProof exception " + errorMsg);
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+      return Pair.of(true, DataWord.ZERO().getData());
+    }
+  }
+
+  public static class VerifyTransferProof extends VerifyProof {
+
+    private static final Integer[] SIZE = {2080, 2368, 2464, 2752};
+    private static final ExecutorService workersInConstantCall;
+    private static final ExecutorService workersInNonConstantCall;
+
+    static {
+      workersInConstantCall = Executors.newFixedThreadPool(5);
+      workersInNonConstantCall = Executors.newFixedThreadPool(5);
+    }
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 200000;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      if (!Arrays.asList(SIZE).contains(data.length)) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      try {
+        byte[] bindingSig = new byte[64];
+        byte[] signHash = new byte[32];
+        byte[][] frontier = new byte[33][32];
+        //parse unfixed field offset
+        int spendOffset = parseInt(data, 0);
+        int spendAuthSigOffset = parseInt(data, 32);
+        int receiveOffset = parseInt(data, 64);
+        System.arraycopy(data, 96, bindingSig, 0, 64);
+        System.arraycopy(data, 160, signHash, 0, 32);
+        //parse value
+        long value = parseLong(data, 192);
+        for (int i = 0; i < 33; i++) {
+          System.arraycopy(data, i * 32 + 224, frontier[i], 0, 32);
+        }
+        long leafCount = parseLong(data, 1280);
+        if (leafCount >= TREE_WIDTH - 1) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+
+        int spendCount = parseInt(data, spendOffset);
+        int spendAuthSigCount = parseInt(data, spendAuthSigOffset);
+        int receiveCount = parseInt(data, receiveOffset);
+
+        if (spendCount != spendAuthSigCount || spendCount < 1
+            || spendCount > 2 || receiveCount < 1 || receiveCount > 2) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+        byte[][] anchor = new byte[spendCount][32];
+        byte[][] nullifier = new byte[spendCount][32];
+        byte[][] spendCv = new byte[spendCount][32];
+        byte[][] rk = new byte[spendCount][32];
+        byte[][] spendProof = new byte[spendCount][192];
+        byte[][] spendAuthSig = new byte[spendCount][64];
+        byte[][] receiveCm = new byte[receiveCount][32];
+        byte[][] receiveCv = new byte[receiveCount][32];
+        byte[][] receiveEpk = new byte[receiveCount][32];
+        byte[][] receiveProof = new byte[receiveCount][192];
+
+        //spend
+        spendOffset += 32;
+        for (int i = 0; i < spendCount; i++) {
+          System.arraycopy(data, spendOffset + 320 * i, nullifier[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 32, anchor[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 64, spendCv[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 96, rk[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 128, spendProof[i], 0, 192);
+        }
+        spendAuthSigOffset += 32;
+        for (int i = 0; i < spendCount; i++) {
+          System.arraycopy(data, spendAuthSigOffset + 64 * i, spendAuthSig[i], 0, 64);
+        }
+        //output
+        receiveOffset += 32;
+        for (int i = 0; i < receiveCount; i++) {
+          System.arraycopy(data, receiveOffset + 288 * i, receiveCm[i], 0, 32);
+          System.arraycopy(data, receiveOffset + 288 * i + 32, receiveCv[i], 0, 32);
+          System.arraycopy(data, receiveOffset + 288 * i + 64, receiveEpk[i], 0, 32);
+          System.arraycopy(data, receiveOffset + 288 * i + 96, receiveProof[i], 0, 192);
+        }
+
+        //copy each spendCv(receiveCv) into spendCvs(receiveCvs)
+        byte[] spendCvs = new byte[spendCount * 32];
+        byte[] receiveCvs = new byte[receiveCount * 32];
+        for (int i = 0; i < spendCount; i++) {
+          System.arraycopy(spendCv[i], 0, spendCvs, 32 * i, 32);
+        }
+        for (int i = 0; i < receiveCount; i++) {
+          System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
+        }
+        //check duplicate nullifiers
+        HashSet<String> nfSet = new HashSet<>();
+        for (byte[] nf : nullifier) {
+          if (nfSet.contains(ByteArray.toHexString(nf))) {
+            return Pair.of(true, DataWord.ZERO().getData());
+          }
+          nfSet.add(ByteArray.toHexString(nf));
+        }
+        //check duplicate output note
+        HashSet<String> cmSet = new HashSet<>();
+        for (byte[] cm : receiveCm) {
+          if (cmSet.contains(ByteArray.toHexString(cm))) {
+            return Pair.of(true, DataWord.ZERO().getData());
+          }
+          cmSet.add(ByteArray.toHexString(cm));
+        }
+
+        int threadCount = spendCount + receiveCount + 1;
+        CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+        List<Future<Boolean>> futures = new ArrayList<>(threadCount);
+        ExecutorService workers;
+        if (isConstantCall()) {
+          workers = workersInConstantCall;
+        } else {
+          workers = workersInNonConstantCall;
+        }
+
+        // submit check spend task
+        for (int i = 0; i < spendCount; i++) {
+          Future<Boolean> futureCheckSpend = workers
+              .submit(new SaplingCheckSpendTask(countDownLatch, spendCv[i], anchor[i],
+                  nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+          futures.add(futureCheckSpend);
+        }
+        //submit check output task
+        for (int i = 0; i < receiveCount; i++) {
+          Future<Boolean> futureCheckOutput = workers
+              .submit(new SaplingCheckOutputTask(countDownLatch, receiveCv[i], receiveCm[i],
+                  receiveEpk[i], receiveProof[i]));
+          futures.add(futureCheckOutput);
+        }
+        // submit check binding signature
+        Future<Boolean> futureCheckBindingSig = workers
+            .submit(new SaplingCheckBingdingSig(countDownLatch, value, bindingSig,
+                signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+        futures.add(futureCheckBindingSig);
+
+        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInNanoSecond(),
+            TimeUnit.NANOSECONDS);
+        boolean checkResult = true;
+        for (Future<Boolean> future : futures) {
+          boolean eachTaskResult = future.get();
+          checkResult = checkResult && eachTaskResult;
+        }
+        if (checkResult) {
+          return insertLeaves(frontier, leafCount, receiveCm);
+        } else {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.info("VerifyTransferProof exception: " + e.getMessage());
+      } catch (Throwable any) {
+        String errorMsg = any.getMessage();
+        if (errorMsg == null && any.getCause() != null) {
+          errorMsg = any.getCause().getMessage();
+        }
+        logger.info("VerifyTransferProof exception: " + errorMsg);
+      }
+      return Pair.of(true, DataWord.ZERO().getData());
+    }
+
+    private static class SaplingCheckSpendTask implements Callable<Boolean> {
+
+      private byte[] cv;
+      private byte[] anchor;
+      private byte[] nullifier;
+      private byte[] rk;
+      private byte[] zkproof;
+      private byte[] spendAuthSig;
+      private byte[] signHash;
+
+      private CountDownLatch countDownLatch;
+
+      SaplingCheckSpendTask(CountDownLatch countDownLatch,
+          byte[] cv, byte[] anchor, byte[] nullifier, byte[] rk,
+          byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
+        this.cv = cv;
+        this.anchor = anchor;
+        this.nullifier = nullifier;
+        this.rk = rk;
+        this.zkproof = zkproof;
+        this.spendAuthSig = spendAuthSig;
+        this.signHash = signHash;
+        this.countDownLatch = countDownLatch;
+      }
+
+      @Override
+      public Boolean call() throws ZksnarkException {
+        boolean result;
+        try {
+          result = JLibrustzcash.librustzcashSaplingCheckSpendNew(
+              new LibrustzcashParam.CheckSpendNewParams(this.cv, this.anchor, this.nullifier,
+                  this.rk, this.zkproof, this.spendAuthSig, this.signHash));
+        } catch (ZksnarkException e) {
+          throw e;
+        } finally {
+          countDownLatch.countDown();
+        }
+        return result;
+      }
+    }
+
+    private static class SaplingCheckOutputTask implements Callable<Boolean> {
+
+      private byte[] cv;
+      private byte[] cm;
+      private byte[] ephemeralKey;
+      private byte[] zkproof;
+
+      private CountDownLatch countDownLatch;
+
+      SaplingCheckOutputTask(CountDownLatch countDownLatch, byte[] cv, byte[] cm,
+          byte[] ephemeralKey, byte[] zkproof) {
+        this.cv = cv;
+        this.cm = cm;
+        this.ephemeralKey = ephemeralKey;
+        this.zkproof = zkproof;
+        this.countDownLatch = countDownLatch;
+      }
+
+      @Override
+      public Boolean call() throws ZksnarkException {
+        boolean result;
+        try {
+          result = JLibrustzcash.librustzcashSaplingCheckOutputNew(
+              new LibrustzcashParam.CheckOutputNewParams(this.cv, this.cm,
+                  this.ephemeralKey, this.zkproof));
+        } catch (ZksnarkException e) {
+          throw e;
+        } finally {
+          countDownLatch.countDown();
+        }
+        return result;
+      }
+    }
+
+    private static class SaplingCheckBingdingSig implements Callable<Boolean> {
+
+      private long valueBalance;
+      private int spendCvLen;
+      private int receiveCvLen;
+      private byte[] bindingSig;
+      private byte[] signHash;
+      private byte[] spendCvs;
+      private byte[] receiveCvs;
+
+      private CountDownLatch countDownLatch;
+
+      SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance, byte[] bindingSig,
+          byte[] signHash, byte[] spendCvs, int spendCvLen,
+          byte[] receiveCvs, int receiveCvLen) {
+        this.valueBalance = valueBalance;
+        this.bindingSig = bindingSig;
+        this.signHash = signHash;
+        this.spendCvs = spendCvs;
+        this.spendCvLen = spendCvLen;
+        this.receiveCvs = receiveCvs;
+        this.receiveCvLen = receiveCvLen;
+        this.countDownLatch = countDownLatch;
+      }
+
+      @Override
+      public Boolean call() throws ZksnarkException {
+        boolean result;
+        try {
+          result = JLibrustzcash.librustzcashSaplingFinalCheckNew(
+              new LibrustzcashParam.FinalCheckNewParams(this.valueBalance, this.bindingSig,
+                  this.signHash, this.spendCvs, this.spendCvLen,
+                  this.receiveCvs, this.receiveCvLen));
+        } catch (ZksnarkException e) {
+          throw e;
+        } finally {
+          countDownLatch.countDown();
+        }
+        return result;
+      }
+    }
+  }
+
+  public static class VerifyBurnProof extends VerifyProof {
+
+    private static final int SIZE = 512;
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 150000;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      if (data.length != SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      boolean result;
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        byte[] nullifier = new byte[32];
+        byte[] anchor = new byte[32];
+        byte[] cv = new byte[32];
+        byte[] rk = new byte[32];
+        byte[] proof = new byte[192];
+        byte[] spendAuthSig = new byte[64];
+        byte[] bindingSig = new byte[64];
+        byte[] signHash = new byte[32];
+        //spend
+        System.arraycopy(data, 0, nullifier, 0, 32);
+        System.arraycopy(data, 32, anchor, 0, 32);
+        System.arraycopy(data, 64, cv, 0, 32);
+        System.arraycopy(data, 96, rk, 0, 32);
+        System.arraycopy(data, 128, proof, 0, 192);
+        System.arraycopy(data, 320, spendAuthSig, 0, 64);
+        long value = parseLong(data, 384);
+        System.arraycopy(data, 416, bindingSig, 0, 64);
+        System.arraycopy(data, 480, signHash, 0, 32);
+
+        result = JLibrustzcash.librustzcashSaplingCheckSpend(
+            new LibrustzcashParam.CheckSpendParams(
+                ctx, cv, anchor, nullifier, rk, proof, spendAuthSig, signHash));
+        result = result && JLibrustzcash.librustzcashSaplingFinalCheck(
+            new LibrustzcashParam.FinalCheckParams(ctx, value, bindingSig, signHash));
+      } catch (Throwable any) {
+        result = false;
+        String errorMsg = any.getMessage();
+        if (errorMsg == null && any.getCause() != null) {
+          errorMsg = any.getCause().getMessage();
+        }
+        logger.info("VerifyBurnProof exception " + errorMsg);
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+      return Pair.of(true, dataBoolean(result));
+    }
+  }
+
+  // compute Merkle Hash
+  public static class MerkleHash extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 500;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      byte[] left = new byte[32];
+      byte[] right = new byte[32];
+      byte[] hash = new byte[32];
+      boolean res = true;
+      try {
+        int level = parseInt(data);
+        System.arraycopy(data, 32, left, 0, 32);
+        System.arraycopy(data, 64, right, 0, 32);
+        JLibrustzcash.librustzcashMerkleHash(
+            new LibrustzcashParam.MerkleHashParams(level, left, right, hash));
+      } catch (Throwable any) {
+        res = false;
+        logger.info("Compute MerkleHash failed:{}", any.getMessage());
+      }
+      if (res) {
+        return Pair.of(true, hash);
+      } else {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+    }
+
+    private int parseInt(byte[] data) {
+      byte[] bytes = parseBytes(data, 0, 32);
+      return new DataWord(bytes).intValueSafe();
+    }
   }
 
 }

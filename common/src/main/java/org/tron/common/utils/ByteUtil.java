@@ -25,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.spongycastle.util.encoders.Hex;
 
 public class ByteUtil {
 
@@ -409,6 +408,12 @@ public class ByteUtil {
       bytes[i] = bytes[bytes.length - i - 1];
       bytes[bytes.length - i - 1] = b;
     }
+  }
+
+  public static byte[] longTo32Bytes(long value) {
+    byte[] longBytes = ByteArray.fromLong(value);
+    byte[] zeroBytes = new byte[24];
+    return ByteUtil.merge(zeroBytes, longBytes);
   }
 
 }

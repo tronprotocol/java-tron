@@ -92,7 +92,6 @@ public class RateLimiterInterceptor implements ServerInterceptor {
   public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
       ServerCallHandler<ReqT, RespT> next) {
 
-
     String methodMeterName = MetricsKey.NET_API_DETAIL_QPS
         + call.getMethodDescriptor().getFullMethodName();
     MetricsUtil.meterMark(MetricsKey.NET_API_QPS);

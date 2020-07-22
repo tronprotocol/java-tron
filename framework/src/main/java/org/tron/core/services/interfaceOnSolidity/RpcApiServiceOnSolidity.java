@@ -400,5 +400,32 @@ public class RpcApiServiceOnSolidity implements Service {
       walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
           .getTransactionInfoByBlockNum(request, responseObserver));
     }
+
+    @Override
+    public void scanShieldedTRC20NotesByIvk(GrpcAPI.IvkDecryptTRC20Parameters request,
+        StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesByIvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesByOvk(GrpcAPI.OvkDecryptTRC20Parameters request,
+        StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesByOvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void isShieldedTRC20ContractNoteSpent(GrpcAPI.NfTRC20Parameters request,
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .isShieldedTRC20ContractNoteSpent(request, responseObserver)
+      );
+    }
   }
 }

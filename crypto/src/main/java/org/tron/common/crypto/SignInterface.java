@@ -12,5 +12,5 @@ public interface SignInterface {
 
   byte[] getNodeId();
 
-  byte[] Base64toBytes (String signature);
+  byte[] Base64toBytes(String signature);
 }
