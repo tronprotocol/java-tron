@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.db.TronDatabase;
 
 @Component
 public class CommonStore extends TronDatabase<BytesCapsule> {

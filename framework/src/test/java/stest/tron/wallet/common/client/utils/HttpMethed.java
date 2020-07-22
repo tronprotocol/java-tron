@@ -166,7 +166,7 @@ public class HttpMethed {
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("owner_address", ownerAddress);
       userBaseObj2.add("votes", voteArray);
-      userBaseObj2.addProperty("visible",true);
+      userBaseObj2.addProperty("visible", true);
       logger.info(userBaseObj2.toString());
       response = createConnect(requestUrl, userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
@@ -181,7 +181,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**
@@ -241,8 +240,8 @@ public class HttpMethed {
       response = createConnect(requestUrl, userBaseObj2);
       logger.info(userBaseObj2.toString());
       transactionString = EntityUtils.toString(response.getEntity());
-      transactionSignString = gettransactionsign(httpNode,transactionString,ownerKey);
-      response = broadcastTransaction(httpNode,transactionSignString);
+      transactionSignString = gettransactionsign(httpNode, transactionString, ownerKey);
+      response = broadcastTransaction(httpNode, transactionSignString);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -250,7 +249,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**
@@ -855,7 +853,6 @@ public class HttpMethed {
     responseContent = HttpMethed.parseStringContent(transactionSignString);
     return responseContent.getString("txID");
   }
-
 
 
   /**
@@ -1739,13 +1736,13 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getTransactionInfoById(String httpNode, String txid) {
-    return getTransactionInfoById(httpNode,txid,false);
+    return getTransactionInfoById(httpNode, txid, false);
   }
 
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionInfoById(String httpNode, String txid,Boolean visible) {
+  public static HttpResponse getTransactionInfoById(String httpNode, String txid, Boolean visible) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/gettransactioninfobyid";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1759,7 +1756,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**
@@ -2055,7 +2051,8 @@ public class HttpMethed {
       httppost.releaseConnection();
       return null;
     }
-    return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
+    return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data")
+        .getLong("number");
   }
 
   /**
@@ -2070,7 +2067,8 @@ public class HttpMethed {
       httppost.releaseConnection();
       return null;
     }
-    return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
+    return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data")
+        .getLong("number");
   }
 
 
@@ -4648,13 +4646,14 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getNowSrAnnualizedRate(String httpNode,String address) {
+  public static HttpResponse getNowSrAnnualizedRate(String httpNode, String address) {
     try {
-      final String requestUrl = "http://" + httpNode + "/wallet/getNowSRAnnualizedRateOfReturnServlet";
+      final String requestUrl =
+          "http://" + httpNode + "/wallet/getNowSRAnnualizedRateOfReturnServlet";
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address",address);
+      userBaseObj2.addProperty("address", address);
       logger.info(address);
-      userBaseObj2.addProperty("visible",true);
+      userBaseObj2.addProperty("visible", true);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4668,16 +4667,16 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getAccountRewardByCycle(String httpNode,String address,
+  public static HttpResponse getAccountRewardByCycle(String httpNode, String address,
       Integer startCycle, Integer endCycle) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getAccountRewardByCycleServlet";
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address",address);
+      userBaseObj2.addProperty("address", address);
       logger.info(address);
-      userBaseObj2.addProperty("startCycle",String.valueOf(startCycle));
-      userBaseObj2.addProperty("endCycle",String.valueOf(endCycle));
-      userBaseObj2.addProperty("visible",true);
+      userBaseObj2.addProperty("startCycle", String.valueOf(startCycle));
+      userBaseObj2.addProperty("endCycle", String.valueOf(endCycle));
+      userBaseObj2.addProperty("visible", true);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4688,18 +4687,17 @@ public class HttpMethed {
   }
 
 
-
-
   /**
    * constructor.
    */
-  public static HttpResponse getAccountLastUnwithdrawReward(String httpNode,String address) {
+  public static HttpResponse getAccountLastUnwithdrawReward(String httpNode, String address) {
     try {
-      final String requestUrl = "http://" + httpNode + "/wallet/getAccountLastUnwithdrawRewardServlet";
+      final String requestUrl =
+          "http://" + httpNode + "/wallet/getAccountLastUnwithdrawRewardServlet";
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address",address);
+      userBaseObj2.addProperty("address", address);
       logger.info(address);
-      userBaseObj2.addProperty("visible",true);
+      userBaseObj2.addProperty("visible", true);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4713,16 +4711,16 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getSrProfitByCycle(String httpNode,String address,Integer startCycle,
+  public static HttpResponse getSrProfitByCycle(String httpNode, String address, Integer startCycle,
       Integer endCycle) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getSRProfitByCycleServlet";
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address",address);
+      userBaseObj2.addProperty("address", address);
       logger.info(address);
-      userBaseObj2.addProperty("visible",true);
-      userBaseObj2.addProperty("startCycle",String.valueOf(startCycle));
-      userBaseObj2.addProperty("endCycle",String.valueOf(endCycle));
+      userBaseObj2.addProperty("visible", true);
+      userBaseObj2.addProperty("startCycle", String.valueOf(startCycle));
+      userBaseObj2.addProperty("endCycle", String.valueOf(endCycle));
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4735,16 +4733,16 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getSrDividendsByCycle(String httpNode,String address,
+  public static HttpResponse getSrDividendsByCycle(String httpNode, String address,
       Integer startCycle, Integer endCycle) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getSRDividendsByCycleServlet";
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address",address);
+      userBaseObj2.addProperty("address", address);
       logger.info(address);
-      userBaseObj2.addProperty("visible",true);
-      userBaseObj2.addProperty("startCycle",String.valueOf(startCycle));
-      userBaseObj2.addProperty("endCycle",String.valueOf(endCycle));
+      userBaseObj2.addProperty("visible", true);
+      userBaseObj2.addProperty("startCycle", String.valueOf(startCycle));
+      userBaseObj2.addProperty("endCycle", String.valueOf(endCycle));
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4753,11 +4751,6 @@ public class HttpMethed {
     }
     return response;
   }
-
-
-
-
-
 
 
 }

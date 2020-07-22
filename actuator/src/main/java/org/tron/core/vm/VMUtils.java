@@ -32,8 +32,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -77,7 +75,7 @@ public final class VMUtils {
       } else {
         try {
           file.getParentFile().mkdirs();
-          if (!file.createNewFile()){
+          if (!file.createNewFile()) {
             logger.error("failed to create file {}", file.getPath());
           }
           result = file;

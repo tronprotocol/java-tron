@@ -57,7 +57,7 @@ public class PrecompiledContractsVerifyProofTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, "config-test.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
@@ -479,7 +479,7 @@ public class PrecompiledContractsVerifyProofTest {
         int slot = result[idx];
         if (slot == 0) {
           byte[] noteCommitment = params.getReceiveDescription(0).getNoteCommitment()
-                                        .toByteArray();
+              .toByteArray();
           System.arraycopy(noteCommitment, 0, frontier, 0, 32);
         } else {
           int destPos = slot * 32;
@@ -492,7 +492,7 @@ public class PrecompiledContractsVerifyProofTest {
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
           byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
-                                        .toByteArray();
+              .toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -864,7 +864,6 @@ public class PrecompiledContractsVerifyProofTest {
       Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(),
           randomLong(), rcm, new byte[512]);
       byte[] node = note.cm();
-
 
       for (int i = 0; i < 32; i++) {
         byte[] input = ByteUtil.merge(longTo32Bytes(i), node, uncommitted[i]);
@@ -3588,7 +3587,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForMint(ShieldedTRC20Parameters params, long value,
-                                  byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3606,7 +3605,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongCM(ShieldedTRC20Parameters params, long value,
-                                         byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3625,7 +3624,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongCV(ShieldedTRC20Parameters params, long value,
-                                         byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3644,7 +3643,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongEpk(ShieldedTRC20Parameters params, long value,
-                                          byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3663,7 +3662,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongProof(ShieldedTRC20Parameters params, long value,
-                                            byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3682,7 +3681,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongBindingSignature(ShieldedTRC20Parameters params, long value,
-                                                       byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3701,7 +3700,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongHash(ShieldedTRC20Parameters params, long value,
-                                           byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3720,7 +3719,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransfer(ShieldedTRC20Parameters params, byte[] frontier,
-                                      long leafCount, long valueBalance) {
+      long leafCount, long valueBalance) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3772,7 +3771,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongNf(ShieldedTRC20Parameters params, byte[] frontier,
-                                             long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3825,7 +3824,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongRoot(ShieldedTRC20Parameters params, byte[] frontier,
-                                               long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3879,7 +3878,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongSpendCV(ShieldedTRC20Parameters params, byte[] frontier,
-                                                  long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3932,7 +3931,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongRk(ShieldedTRC20Parameters params, byte[] frontier,
-                                             long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3985,8 +3984,8 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongSpendProof(ShieldedTRC20Parameters params,
-                                                     byte[] frontier,
-                                                     long leafCount) {
+      byte[] frontier,
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4039,7 +4038,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongCM(ShieldedTRC20Parameters params, byte[] frontier,
-                                             long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4093,7 +4092,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongReceiveCV(ShieldedTRC20Parameters params, byte[] frontier,
-                                                    long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4146,7 +4145,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongEpk(ShieldedTRC20Parameters params, byte[] frontier,
-                                              long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4200,8 +4199,8 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongReceivProof(ShieldedTRC20Parameters params,
-                                                      byte[] frontier,
-                                                      long leafCount) {
+      byte[] frontier,
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4254,8 +4253,8 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongBindingSignature(ShieldedTRC20Parameters params,
-                                                           byte[] frontier,
-                                                           long leafCount) {
+      byte[] frontier,
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4309,7 +4308,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongHash(ShieldedTRC20Parameters params, byte[] frontier,
-                                               long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4469,7 +4468,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForBurnWrongAuthoritySignature(ShieldedTRC20Parameters params,
-                                                         long value) {
+      long value) {
     byte[] mergedBytes;
     ShieldContract.SpendDescription spendDesc = params.getSpendDescription(0);
     mergedBytes = ByteUtil.merge(

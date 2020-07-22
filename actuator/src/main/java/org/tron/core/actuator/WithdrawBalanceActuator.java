@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -115,7 +114,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     boolean isGP = CommonParameter.getInstance()
         .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
-        Arrays.equals(ownerAddress, witness.getAddress()));
+            Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress

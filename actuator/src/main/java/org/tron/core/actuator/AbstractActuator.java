@@ -62,5 +62,5 @@ public abstract class AbstractActuator implements Actuator {
     this.forkController = forkController;
     return this;
   }
-  
+
 }

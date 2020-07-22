@@ -22,6 +22,7 @@ import static java.util.Arrays.copyOfRange;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.isNullOrZeroArray;
 import static org.tron.common.utils.ByteUtil.isSingleZero;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -120,7 +121,7 @@ public class Hash {
       throw new RuntimeException(e);
     }
   }
-  
+
   public static byte[] encodeElement(byte[] srcData) {
 
     // [0x80]

@@ -30,6 +30,7 @@ import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,7 +73,6 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
-import org.tron.common.crypto.SignatureInterface;
 
 /**
  * @author Roman Mandeleil
@@ -1248,7 +1248,7 @@ public class PrecompiledContracts {
                 signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
         futures.add(futureCheckBindingSig);
 
-        boolean withNoTimeout =  countDownLatch.await(getCPUTimeLeftInNanoSecond(),
+        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInNanoSecond(),
             TimeUnit.NANOSECONDS);
         boolean checkResult = true;
         for (Future<Boolean> future : futures) {

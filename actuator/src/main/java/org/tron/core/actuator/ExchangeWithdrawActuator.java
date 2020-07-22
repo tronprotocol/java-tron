@@ -185,8 +185,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     long anotherTokenQuant;
 
-    if (dynamicStore.getAllowSameTokenName() == 1 && 
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) && 
+    if (dynamicStore.getAllowSameTokenName() == 1 &&
+        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
         !TransactionUtil.isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }

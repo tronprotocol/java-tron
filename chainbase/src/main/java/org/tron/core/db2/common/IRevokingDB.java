@@ -2,7 +2,6 @@ package org.tron.core.db2.common;
 
 import java.util.Map;
 import java.util.Set;
-
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.ItemNotFoundException;
 

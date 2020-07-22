@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -3234,8 +3233,6 @@ public class PublicMethed {
         .toBuilder();
     rawBuilder.setFeeLimit(feeLimit);
 
-
-
     transBuilder.setRawData(rawBuilder);
     for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
       ByteString s = transactionExtention.getTransaction().getSignature(i);
@@ -3950,7 +3947,7 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<DelegatedResourceAccountIndex>
-      getDelegatedResourceAccountIndexFromSolidity(
+  getDelegatedResourceAccountIndexFromSolidity(
       byte[] address, WalletSolidityGrpc
       .WalletSolidityBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);

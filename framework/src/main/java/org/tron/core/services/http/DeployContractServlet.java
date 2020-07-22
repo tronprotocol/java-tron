@@ -1,13 +1,11 @@
 package org.tron.core.services.http;
 
 import static org.tron.core.services.http.Util.getHexAddress;
-import static org.tron.core.services.http.Util.getVisiblePost;
 import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;

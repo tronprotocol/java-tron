@@ -73,8 +73,6 @@ public class EventQuery003 {
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
-
-
     ecKey1 = new ECKey(Utils.getRandom());
     event001Address = ecKey1.getAddress();
     event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -84,7 +82,6 @@ public class EventQuery003 {
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
     String contractName = "addressDemo";
     String code = Configuration.getByPath("testng.conf")
         .getString("code.code_ContractEventAndLog1");
@@ -93,9 +90,6 @@ public class EventQuery003 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 50, null, event001Key, event001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-
-
 
 
   }
@@ -144,16 +138,15 @@ public class EventQuery003 {
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
-    Assert.assertEquals(blockObject.getString("triggerName"),"contractEventTrigger");
+    Assert.assertEquals(blockObject.getString("triggerName"), "contractEventTrigger");
 
-    Assert.assertEquals(blockObject.getString("transactionId"),txid);
+    Assert.assertEquals(blockObject.getString("transactionId"), txid);
   }
-
 
 
   @Test(enabled = true, description = "Event query for solidity contract event")
   public void test02EventQueryForContractSolidityEvent() {
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     ZMQ.Context context = ZMQ.context(1);
     ZMQ.Socket req = context.socket(ZMQ.SUB);
 
@@ -198,11 +191,10 @@ public class EventQuery003 {
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
-    Assert.assertEquals(blockObject.getString("triggerName"),"solidityEventTrigger");
+    Assert.assertEquals(blockObject.getString("triggerName"), "solidityEventTrigger");
 
-    Assert.assertEquals(blockObject.getString("transactionId"),txid);
+    Assert.assertEquals(blockObject.getString("transactionId"), txid);
   }
-
 
 
   /**

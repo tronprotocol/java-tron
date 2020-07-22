@@ -19,17 +19,17 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
-import org.tron.core.db.CommonStore;
 import org.tron.core.db.CommonDataBase;
+import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -255,7 +255,7 @@ public class ChainBaseManager {
     return dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
   }
 
-  public void initGenesis(){
+  public void initGenesis() {
     genesisBlock = BlockUtil.newGenesisBlockCapsule();
   }
 
@@ -263,7 +263,6 @@ public class ChainBaseManager {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
   }
-
 
 
   /**
@@ -288,7 +287,6 @@ public class ChainBaseManager {
       return false;
     }
   }
-
 
 
   /**

@@ -254,7 +254,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isStaticCall() {return isStaticCall;}
+  public boolean isStaticCall() {
+    return isStaticCall;
+  }
 
   @Override
   public boolean isConstantCall() {

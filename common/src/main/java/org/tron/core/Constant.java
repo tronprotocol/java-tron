@@ -1,8 +1,7 @@
 package org.tron.core;
 
-import org.tron.common.utils.ByteArray;
-
 public class Constant {
+
   //config for testnet, mainnet, beta
   public static final String TESTNET_CONF = "config.conf";
 

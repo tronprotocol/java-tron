@@ -238,10 +238,10 @@ public class AdvService {
           && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
-            invSender.add(item, peer);
-            peer.getAdvInvRequest().put(item, now);
-            invToFetch.remove(item);
-          });
+        invSender.add(item, peer);
+        peer.getAdvInvRequest().put(item, now);
+        invToFetch.remove(item);
+      });
     });
 
     invSender.sendFetch();

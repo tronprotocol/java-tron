@@ -1,7 +1,5 @@
 package stest.tron.wallet.common.client;
 
-import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.typesafe.config.Config;
@@ -635,9 +633,9 @@ public class WalletClient {
     byte[] decodeData = new byte[decodeCheck.length - 4];
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
     byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
-        .isECKeyCryptoEngine(),decodeData);
+        .isECKeyCryptoEngine(), decodeData);
     byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance()
-        .isECKeyCryptoEngine(),hash0);
+        .isECKeyCryptoEngine(), hash0);
     if (hash1[0] == decodeCheck[decodeData.length]
         && hash1[1] == decodeCheck[decodeData.length + 1]
         && hash1[2] == decodeCheck[decodeData.length + 2]

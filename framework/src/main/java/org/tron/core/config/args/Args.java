@@ -74,12 +74,12 @@ public class Args extends CommonParameter {
   @Autowired(required = false)
   @Getter
   private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
-      solidityContractLogTriggerMap =  new ConcurrentHashMap<>();
+      solidityContractLogTriggerMap = new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
   private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
-      solidityContractEventTriggerMap =  new ConcurrentHashMap<>();
+      solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -693,7 +693,7 @@ public class Args extends CommonParameter {
     PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
         ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
     if (PARAMETER.isWitness()) {
-    //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+      //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
     initBackupProperty(config);

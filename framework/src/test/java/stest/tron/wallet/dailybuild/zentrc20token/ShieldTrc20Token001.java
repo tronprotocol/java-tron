@@ -1,34 +1,23 @@
 package stest.tron.wallet.dailybuild.zentrc20token;
 
-import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Utils;
-import org.tron.core.Wallet;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
-import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 
 @Slf4j
 public class ShieldTrc20Token001 extends ZenTrc20Base {
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -54,7 +43,6 @@ public class ShieldTrc20Token001 extends ZenTrc20Base {
     infoById = PublicMethed
         .getTransactionInfoById(deployShieldTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
-
 
     //scalingFactor()
   }

@@ -105,7 +105,8 @@ public class TransactionUtil {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (CommonParameter.getInstance().isSaveInternalTx() && null != programResult.getInternalTransactions()) {
+    if (CommonParameter.getInstance().isSaveInternalTx() && null != programResult
+        .getInternalTransactions()) {
       for (InternalTransaction internalTransaction : programResult
           .getInternalTransactions()) {
         Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction
@@ -125,7 +126,9 @@ public class TransactionUtil {
         // Just one transferBuilder for now.
         internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
         internalTransaction.getTokenInfo().forEach((tokenId, amount) -> {
-          internalTrxBuilder.addCallValueInfo(Protocol.InternalTransaction.CallValueInfo.newBuilder().setTokenId(tokenId).setCallValue(amount));
+          internalTrxBuilder.addCallValueInfo(
+              Protocol.InternalTransaction.CallValueInfo.newBuilder().setTokenId(tokenId)
+                  .setCallValue(amount));
         });
         // Token for loop end here
         internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));

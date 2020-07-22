@@ -2,7 +2,6 @@ package org.tron.core.zen.address;
 
 import java.security.SecureRandom;
 import java.util.Optional;
-import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
