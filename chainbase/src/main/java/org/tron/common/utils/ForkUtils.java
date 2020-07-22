@@ -66,10 +66,6 @@ public class ForkUtils {
     if (latestBlockTime < hardForkTime) {
       return false;
     }
-    Boolean hardForkResult = dynamicPropertiesStore.getForked(version);
-    if (hardForkResult != null) {
-      return hardForkResult;
-    }
     byte[] stats = dynamicPropertiesStore.statsByVersion(version);
     if (stats == null || stats.length == 0) {
       return false;
@@ -80,11 +76,7 @@ public class ForkUtils {
         ++count;
       }
     }
-    hardForkResult = count >= versionEnum.getHardForkCount();
-    dynamicPropertiesStore.forked(version, hardForkResult);
-    logger.info("******** update block version {} hard fork result:{} ********", version,
-        hardForkResult);
-    return hardForkResult;
+    return count >= versionEnum.getHardForkCount();
   }
 
   // when block.version = 5,

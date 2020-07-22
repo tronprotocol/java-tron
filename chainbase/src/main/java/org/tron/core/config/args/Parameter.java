@@ -11,7 +11,8 @@ public class Parameter {
     VERSION_3_6(8, 0L, 0),
     VERSION_3_6_5(9, 0L, 0),
     VERSION_3_6_6(10, 0L, 0),
-    VERSION_4_0(16, 0L, 0);
+    VERSION_4_0(16, 0L, 0),
+    VERSION_4_0_1(17, 1L, 22);
 
     @Getter
     private int value;
