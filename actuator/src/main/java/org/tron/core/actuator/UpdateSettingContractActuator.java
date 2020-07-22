@@ -87,7 +87,7 @@ public class UpdateSettingContractActuator extends AbstractActuator {
     }
 
     long newPercent = contract.getConsumeUserResourcePercent();
-    if (newPercent > 100 || newPercent < 0) {
+    if (newPercent > ActuatorConstant.ONE_HUNDRED || newPercent < 0) {
       throw new ContractValidateException(
           "percent not in [0, 100]");
     }
