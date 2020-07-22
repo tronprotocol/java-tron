@@ -137,7 +137,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (times-- > 0) {
       //receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
       //Scan sender note
-  /*    sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
+      /*sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
           blockingStubFull1);
 
       while (sendNote.getNoteTxsCount() == 0) {
@@ -165,7 +165,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
             inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L,
             blockingStubFull1, blockingStubSolidity);
       } catch (Exception e) {
-
+        throw e;
       }
 
       Integer exit = 7;
@@ -315,7 +315,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
                 inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
                 0L, blockingStubFull, blockingStubSolidity);
           } catch (Exception e1) {
-
+            throw e1;
           }
 
         }
@@ -333,7 +333,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
                 inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
                 0L, blockingStubFull1, blockingStubSolidity);
           } catch (Exception e2) {
-
+            throw e2;
           }
 
 
@@ -523,7 +523,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
                 burnInput.getNoteTxs(0).getNote().getValue(), blockingStubFull1,
                 blockingStubSolidity);
           } catch (Exception e1) {
-
+            throw e1;
           }
 
         }
@@ -540,7 +540,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
                 burnInput.getNoteTxs(0).getNote().getValue(), blockingStubFull1,
                 blockingStubSolidity);
           } catch (Exception e1) {
-
+            throw e1;
           }
 
 
