@@ -10,11 +10,12 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.core.Wallet;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 
 
 @Component
 @Slf4j(topic = "API")
-public class GetContractServlet2 extends RateLimiterServlet {
+public class GetContractInfoServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -31,7 +32,7 @@ public class GetContractServlet2 extends RateLimiterServlet {
       jsonObject.put("value", input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
-      SmartContract smartContract = wallet.getContract2(build.build());
+      SmartContractDataWrapper smartContract = wallet.getContractInfo(build.build());
       JSONObject jsonSmartContract = JSONObject
           .parseObject(JsonFormat.printToString(smartContract, visible));
       response.getWriter().println(jsonSmartContract.toJSONString());
@@ -55,7 +56,7 @@ public class GetContractServlet2 extends RateLimiterServlet {
 
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      SmartContract smartContract = wallet.getContract2(build.build());
+      SmartContractDataWrapper smartContract = wallet.getContractInfo(build.build());
       JSONObject jsonSmartContract = JSONObject
           .parseObject(JsonFormat.printToString(smartContract, visible));
       response.getWriter().println(jsonSmartContract.toJSONString());

@@ -87,3 +87,8 @@ message UpdateEnergyLimitContract {
     bytes contract_address = 2;
     int64 origin_energy_limit = 3;
 }
+
+message SmartContractDataWrapper {
+    SmartContract smart_contract = 1;
+    bytes runtimecode = 2;
+}

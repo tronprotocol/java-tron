@@ -614,7 +614,8 @@ public class Program {
         builder.setContractAddress(ByteString.copyFrom(newAddress))
             .setConsumeUserResourcePercent(100)
             .setOriginAddress(ByteString.copyFrom(senderAddress));
-        if (isNotEmpty(programCode)) {
+        //TODO: java-tron 4.1, add a hard fork here
+        if (true && isNotEmpty(programCode)) {
           builder.setBytecode(ByteString.copyFrom(programCode));
         }
         if (isCreate2) {
