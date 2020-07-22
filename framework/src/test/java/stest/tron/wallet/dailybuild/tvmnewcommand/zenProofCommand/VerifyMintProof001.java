@@ -103,7 +103,7 @@ public class VerifyMintProof001 {
 
     Assert.assertEquals(0, infoById.get().getResultValue());
 
-   contractAddress = infoById.get().getContractAddress().toByteArray();
+    contractAddress = infoById.get().getContractAddress().toByteArray();
     SmartContract smartContract = PublicMethed.getContract(contractAddress,
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
@@ -177,12 +177,14 @@ public class VerifyMintProof001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("TriggerTxid: " + TriggerTxid);
 
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(TriggerTxid,blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(TriggerTxid,blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
     Assert.assertEquals(0,infoById.get().getResultValue());
-    String contractResult = ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
+    String contractResult = ByteArray.toHexString(infoById.get()
+        .getContractResult(0).toByteArray());
 
     Assert.assertEquals(""
         + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
@@ -202,12 +204,14 @@ public class VerifyMintProof001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("TriggerTxid: " + TriggerTxid);
 
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(TriggerTxid,blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(TriggerTxid,blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
     Assert.assertEquals(0,infoById.get().getResultValue());
-    String contractResult = ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
+    String contractResult = ByteArray.toHexString(infoById.get()
+        .getContractResult(0).toByteArray());
 
     Assert.assertEquals(""
         + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true

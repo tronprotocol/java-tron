@@ -164,7 +164,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -196,7 +196,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -293,7 +293,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -325,7 +325,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -443,7 +443,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -475,7 +475,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -507,7 +507,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -628,7 +628,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -660,7 +660,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -692,7 +692,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -825,7 +825,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -857,7 +857,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -918,7 +918,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -950,7 +950,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20Parameters.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -1037,7 +1037,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -1069,7 +1069,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -1206,7 +1206,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(100, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -1238,7 +1238,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -1395,7 +1395,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -1427,7 +1427,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -1459,7 +1459,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -1634,7 +1634,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       String senderPaymentAddressStr1 = KeyIo.encodePaymentAddress(senderPaymentAddress1);
       String senderPaymentAddressStr2 = KeyIo.encodePaymentAddress(senderPaymentAddress2);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(30, senderPaymentAddressStr1, rcm1, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -1666,7 +1666,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         GrpcAPI.Note note = getNote(70, senderPaymentAddressStr2, rcm2, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -1698,7 +1698,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder1 = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -1887,7 +1887,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -1919,7 +1919,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();
@@ -2019,7 +2019,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
       String senderPaymentAddressStr = KeyIo.encodePaymentAddress(senderPaymentAddress);
 
-      {//for mint1
+      { //for mint1
         GrpcAPI.Note note = getNote(value, senderPaymentAddressStr, rcm, new byte[512]);
         GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
         GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
@@ -2051,7 +2051,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
             .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
         GrpcAPI.SpendNoteTRC20.Builder spendNoteBuilder = GrpcAPI.SpendNoteTRC20.newBuilder();

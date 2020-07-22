@@ -77,7 +77,8 @@ public class pedersenHash002 {
   private BigInteger publicFromAmount;
   Optional<ShieldedAddressInfo> receiverShieldAddressInfo;
   List<Note> shieldOutList = new ArrayList<>();
-  public static String transfer = "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])";
+  public static String transfer =
+      "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])";
   public Wallet wallet = new Wallet();
   static HttpResponse response;
   static HttpPost httppost;
@@ -309,6 +310,21 @@ public class pedersenHash002 {
   /**
    * constructor.
    */
+  public static HttpResponse getNewShieldedAddress(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getnewshieldedaddress";
+      response = HttpMethed.createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
   public Optional<ShieldedAddressInfo> getNewShieldedAddress(WalletGrpc.WalletBlockingStub
       blockingStubFull) {
     ShieldedAddressInfo addressInfo = new ShieldedAddressInfo();
@@ -441,20 +457,6 @@ public class pedersenHash002 {
     return ByteUtil.merge(zeroBytes, longBytes);
   }
 
-  /**
-   * constructor.
-   */
-  public static HttpResponse getNewShieldedAddress(String httpNode) {
-    try {
-      String requestUrl = "http://" + httpNode + "/wallet/getnewshieldedaddress";
-      response = HttpMethed.createConnect(requestUrl);
-    } catch (Exception e) {
-      e.printStackTrace();
-      httppost.releaseConnection();
-      return null;
-    }
-    return response;
-  }
 
   /**
    * constructor.

@@ -2055,7 +2055,8 @@ public class HttpMethed {
       httppost.releaseConnection();
       return null;
     }
-    return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
+    return parseResponseContent(response).getJSONObject("block_header")
+        .getJSONObject("raw_data").getLong("number");
   }
 
   /**
@@ -2070,7 +2071,8 @@ public class HttpMethed {
       httppost.releaseConnection();
       return null;
     }
-    return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
+    return parseResponseContent(response).getJSONObject("block_header")
+        .getJSONObject("raw_data").getLong("number");
   }
 
 

@@ -75,11 +75,11 @@ public class ShieldedAddressInfo {
     return getShieldedAddress(d, pkD);
   }
 
-  public static String getShieldedAddress(DiversifierT d, byte[] pkD ) {
+  public static String getShieldedAddress(DiversifierT d, byte[] pkD) {
     try {
       PaymentAddress paymentAddress = new PaymentAddress(d, pkD);
       return KeyIo.encodePaymentAddress(paymentAddress);
-    } catch (Exception e ) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return "";
@@ -95,7 +95,8 @@ public class ShieldedAddressInfo {
     System.arraycopy(ivk, 0, text, sk.length, ivk.length);
     System.arraycopy(ovk, 0, text, sk.length + ivk.length, ovk.length);
     System.arraycopy(d.getData(), 0, text, sk.length + ivk.length + ovk.length, d.getData().length);
-    System.arraycopy(pkD, 0, text, sk.length + ivk.length + ovk.length + d.getData().length, pkD.length);
+    System.arraycopy(pkD, 0, text,
+        sk.length + ivk.length + ovk.length + d.getData().length, pkD.length);
     
     byte[] cipherText = ZenUtils.aesCtrEncrypt(text, encryptKey);
     return Base58.encode(cipherText);
@@ -103,7 +104,7 @@ public class ShieldedAddressInfo {
 
   /**
    * parse string to get a shielded address info
-   * @param data
+   *
    * @return
    */
   public boolean decode(final String data, byte[] encryptKey) throws CipherException {

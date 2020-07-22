@@ -51,7 +51,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   private AtomicLong endTriggerNum = new AtomicLong(0);
   private AtomicLong startmintNum = new AtomicLong(0);
   private AtomicLong endmintNum = new AtomicLong(0);
-  private Integer thread = 40                                              ;
+  private Integer thread = 40;
 
   /**
    * constructor.
@@ -137,7 +137,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (times-- > 0) {
       //receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
       //Scan sender note
-  /*    sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
+      /*sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
           blockingStubFull1);
 
       while (sendNote.getNoteTxsCount() == 0) {
@@ -165,7 +165,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
             inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L,
             blockingStubFull1,blockingStubSolidity);
       } catch (Exception e) {
-
+        throw e;
       }
 
       Integer exit = 7;
@@ -226,14 +226,13 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           null, null, shieldOutList, "",
           0L, blockingStubFull,blockingStubSolidity
       );
-      String data="";
+      String data = "";
       try {
         data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
       } catch (Exception e) {
         try {
           data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
-        }
-        catch (Exception e1) {
+        } catch (Exception e1) {
           continue;
         }
 
@@ -258,7 +257,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (finishMintNumber.get() != thread) {
       try {
         Thread.sleep(3000);
-        if(finishMintNumber.get() % 10 == 0) {
+        if (finishMintNumber.get() % 10 == 0) {
           logger.info(
               "Wait all thread finished mint,current finished thread is :" + finishMintNumber
                   .get());
@@ -316,7 +315,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
                 inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
                 0L, blockingStubFull,blockingStubSolidity);
           } catch (Exception e1) {
-
+            throw e1;
           }
 
         }
@@ -334,7 +333,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
                 inputNoteFor2to2, inputShieldAddressList, shieldOutList, "",
                 0L, blockingStubFull1,blockingStubSolidity);
           } catch (Exception e2) {
-
+            throw e2;
           }
 
 
@@ -351,7 +350,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (finishCreateParameterNumber.get() != thread) {
       try {
         Thread.sleep(3000);
-        if(finishCreateParameterNumber.get() % 10 == 0) {
+        if (finishCreateParameterNumber.get() % 10 == 0) {
           logger.info("Wait all thread finished create parameter ,current finished thread is :"
               + finishCreateParameterNumber.get());
         }
@@ -386,7 +385,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (finishTriggerNumber.get() != thread) {
       try {
         Thread.sleep(3000);
-        if(finishTriggerNumber.get() % 10 == 0) {
+        if (finishTriggerNumber.get() % 10 == 0) {
           logger.info(
               "Wait all thread finished trigger ,current finished thread is :" + finishTriggerNumber
                   .get());
@@ -441,14 +440,13 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           null, null, shieldOutList, "",
           0L, blockingStubFull,blockingStubSolidity
       );
-      String data="";
+      String data = "";
       try {
         data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
       } catch (Exception e) {
         try {
           data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
-        }
-        catch (Exception e1) {
+        } catch (Exception e1) {
           continue;
         }
 
@@ -473,7 +471,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (finishMintNumber.get() != thread) {
       try {
         Thread.sleep(3000);
-        if(finishMintNumber.get() % 10 == 0) {
+        if (finishMintNumber.get() % 10 == 0) {
           logger.info(
               "Wait all thread finished mint,current finished thread is :" + finishMintNumber
                   .get());
@@ -510,7 +508,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           .build();
 
       GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters = null;
-          createShieldedTrc20Parameters(BigInteger.valueOf(0),
+      createShieldedTrc20Parameters(BigInteger.valueOf(0),
           burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
           burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull,blockingStubSolidity);
 
@@ -524,9 +522,10 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           try {
             shieldedTrc20Parameters = createShieldedTrc20Parameters(BigInteger.valueOf(0),
                 burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
-                burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull1,blockingStubSolidity);
+                burnInput.getNoteTxs(0).getNote().getValue(),
+                blockingStubFull1,blockingStubSolidity);
           } catch (Exception e1) {
-
+            throw e1;
           }
 
         }
@@ -540,9 +539,10 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           try {
             shieldedTrc20Parameters = createShieldedTrc20Parameters(BigInteger.valueOf(0),
                 burnInput,inputShieldAddressList,null,zenTrc20TokenOwnerAddressString,
-                burnInput.getNoteTxs(0).getNote().getValue(),blockingStubFull1,blockingStubSolidity);
+                burnInput.getNoteTxs(0).getNote().getValue(),
+                blockingStubFull1,blockingStubSolidity);
           } catch (Exception e1) {
-
+            throw e1;
           }
 
 
@@ -559,7 +559,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (finishCreateParameterNumber.get() != thread) {
       try {
         Thread.sleep(3000);
-        if(finishCreateParameterNumber.get() % 10 == 0) {
+        if (finishCreateParameterNumber.get() % 10 == 0) {
           logger.info("Wait all thread finished create parameter ,current finished thread is :"
               + finishCreateParameterNumber.get());
         }
@@ -594,7 +594,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     while (finishTriggerNumber.get() != thread) {
       try {
         Thread.sleep(3000);
-        if(finishTriggerNumber.get() % 10 == 0) {
+        if (finishTriggerNumber.get() % 10 == 0) {
           logger.info(
               "Wait all thread finished trigger ,current finished thread is :" + finishTriggerNumber
                   .get());
@@ -615,8 +615,8 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
 
     endTriggerNum.set(blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber());
-    Long endmintnum = endmintNum.longValue()/thread;
-    Long starttriggernum = startTriggerNum.longValue()/thread;
+    Long endmintnum = endmintNum.longValue() / thread;
+    Long starttriggernum = startTriggerNum.longValue() / thread;
     logger.info("Start trigger block number: " + starttriggernum);
     logger.info("end   trigger block number: " + endTriggerNum.get());
     logger.info("Start mint block number: " + startmintNum.get());
@@ -635,11 +635,13 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     endTriggerNum.set(3060);
 
     while (startmintNum.get() < endmintnum) {
-      HttpResponse response = HttpMethed.getTransactionInfoByBlocknum(httpnode,startmintNum.getAndAdd(1));
+      HttpResponse response = HttpMethed.getTransactionInfoByBlocknum(
+          httpnode,startmintNum.getAndAdd(1));
       List<JSONObject> responseContentByBlocknum = HttpMethed
           .parseResponseContentArray(response);
       for (int i = 0; i < responseContentByBlocknum.size();i++) {
-        String result = responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result");
+        String result = responseContentByBlocknum.get(i)
+            .getJSONObject("receipt").getString("result");
         logger.info(result);
         if (result == null) {
           notMintContract++;
@@ -670,7 +672,8 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
       List<JSONObject> responseContentByBlocknum = HttpMethed
           .parseResponseContentArray(response);
       for (int i = 0; i < responseContentByBlocknum.size();i++) {
-        String result = responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result");
+        String result = responseContentByBlocknum.get(i)
+            .getJSONObject("receipt").getString("result");
         logger.info(result);
         if (result == null) {
           notTriggerContract++;

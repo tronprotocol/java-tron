@@ -70,7 +70,7 @@ public class ShieldedTRC20NoteInfo {
   /**
    * parse string to get shieldedTRC20 note
    *
-   * @param data
+   *
    * @return
    */
   public boolean decode(String data, byte[] encryptKey) throws CipherException {

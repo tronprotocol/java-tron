@@ -132,7 +132,7 @@ public class ShieldTrc10Stress {
             null, 0,
             zenTokenOwnerKey, blockingStubFull);
       } catch (Exception e) {
-
+        throw e;
       }
     }
 

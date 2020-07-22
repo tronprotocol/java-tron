@@ -50,14 +50,14 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
   private final byte[] bytes;
   private static boolean isEckey = true;
 
-/*  static {
-    Config config = Configuration.getByPath("config.conf"); // it is needs set to be a constant
-    Config config = "crypto.engine";
-    if (config.hasPath("crypto.engine")) {
-      isEckey = config.getString("crypto.engine").equalsIgnoreCase("eckey");
-      System.out.println("Sha256Sm3Hash getConfig isEckey: " + isEckey);
-    }
-  }*/
+  /*  static {
+      Config config = Configuration.getByPath("config.conf"); // it is needs set to be a constant
+      Config config = "crypto.engine";
+      if (config.hasPath("crypto.engine")) {
+        isEckey = config.getString("crypto.engine").equalsIgnoreCase("eckey");
+        System.out.println("Sha256Sm3Hash getConfig isEckey: " + isEckey);
+      }
+    }*/
   
   public Sha256Sm3Hash(long num, byte[] hash) {
     byte[] rawHashBytes = this.generateBlockId(num, hash);
@@ -100,7 +100,7 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * Use {@link #of(byte[])} instead: this old name is ambiguous.
    */
   @Deprecated
-  public static Sha256Sm3Hash create( byte[] contents) {
+  public static Sha256Sm3Hash create(byte[] contents) {
     return of(contents);
   }
 
@@ -110,7 +110,7 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * @param contents the bytes on which the hash value is calculated
    * @return a new instance containing the calculated (one-time) hash
    */
-  public static Sha256Sm3Hash of( byte[] contents) {
+  public static Sha256Sm3Hash of(byte[] contents) {
     return wrap(hash(contents));
   }
 
@@ -123,7 +123,7 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * @return a new instance containing the calculated (one-time) hash
    * @throws IOException if an error occurs while reading the file
    */
-  public static Sha256Sm3Hash of( File file) throws IOException {
+  public static Sha256Sm3Hash of(File file) throws IOException {
 
     try (FileInputStream in = new FileInputStream(file)) {
       return of(ByteStreams.toByteArray(in));
@@ -134,8 +134,8 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * Use {@link #twiceOf(byte[])} instead: this old name is ambiguous.
    */
   @Deprecated
-  public static Sha256Sm3Hash createDouble( byte[] contents) {
-    return twiceOf( contents);
+  public static Sha256Sm3Hash createDouble(byte[] contents) {
+    return twiceOf(contents);
   }
 
   /**
@@ -144,8 +144,8 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * @param contents the bytes on which the hash value is calculated
    * @return a new instance containing the calculated (two-time) hash
    */
-  public static Sha256Sm3Hash twiceOf( byte[] contents) {
-    return wrap(hashTwice( contents));
+  public static Sha256Sm3Hash twiceOf(byte[] contents) {
+    return wrap(hashTwice(contents));
   }
 
   /**
@@ -178,8 +178,8 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * @param input the bytes to hash
    * @return the hash (in big-endian order)
    */
-  public static byte[] hash( byte[] input) {
-    return hash( input, 0, input.length);
+  public static byte[] hash(byte[] input) {
+    return hash(input, 0, input.length);
   }
 
   /**
@@ -190,7 +190,7 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * @param length the number of bytes to hash
    * @return the hash (in big-endian order)
    */
-  public static byte[] hash( byte[] input, int offset, int length) {
+  public static byte[] hash(byte[] input, int offset, int length) {
     if (isEckey) {
       MessageDigest digest = newDigest();
       digest.update(input, offset, length);
@@ -211,8 +211,8 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * @param input the bytes to hash
    * @return the double-hash (in big-endian order)
    */
-  public static byte[] hashTwice( byte[] input) {
-    return hashTwice( input, 0, input.length);
+  public static byte[] hashTwice(byte[] input) {
+    return hashTwice(input, 0, input.length);
   }
 
   /**
@@ -223,7 +223,7 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * @param length the number of bytes to hash
    * @return the double-hash (in big-endian order)
    */
-  public static byte[] hashTwice( byte[] input, int offset, int length) {
+  public static byte[] hashTwice(byte[] input, int offset, int length) {
     if (isEckey) {
       MessageDigest digest = newDigest();
       digest.update(input, offset, length);
@@ -245,7 +245,7 @@ public class Sha256Sm3Hash implements Serializable, Comparable<Sha256Sm3Hash> {
    * Calculates the hash of hash on the given byte ranges. This is equivalent to concatenating the
    * two ranges and then passing the result to {@link #hashTwice(byte[])}.
    */
-  public static byte[] hashTwice( byte[] input1, int offset1, int length1,
+  public static byte[] hashTwice(byte[] input1, int offset1, int length1,
                                  byte[] input2, int offset2, int length2) {
     if (isEckey) {
       MessageDigest digest = newDigest();
