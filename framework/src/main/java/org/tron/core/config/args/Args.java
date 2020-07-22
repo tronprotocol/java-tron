@@ -155,7 +155,7 @@ public class Args extends CommonParameter {
     PARAMETER.minTimeRatio = 0.0;
     PARAMETER.maxTimeRatio = 5.0;
     PARAMETER.longRunningTime = 10;
-    PARAMETER.allowShieldedTransaction = 0;
+    // PARAMETER.allowShieldedTransaction = 0;
     PARAMETER.maxHttpConnectNumber = 50;
     PARAMETER.allowMultiSign = 0;
     PARAMETER.trxExpirationTimeInMilliseconds = 0;
@@ -628,9 +628,9 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX)
             && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
-    PARAMETER.allowShieldedTransaction =
-        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+    // PARAMETER.allowShieldedTransaction =
+    //     config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
+    //         .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
     PARAMETER.allowShieldedTRC20Transaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config

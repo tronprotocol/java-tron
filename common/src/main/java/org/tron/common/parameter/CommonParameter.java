@@ -293,9 +293,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minEffectiveConnection;
-  @Getter
-  @Setter
-  public long allowShieldedTransaction; //committee parameter
+  // @Getter
+  // @Setter
+  // public long allowShieldedTransaction; //committee parameter
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
