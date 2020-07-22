@@ -231,8 +231,7 @@ public class VerifyBurnProof001 {
     // parseLong will return Long.MAX_VALUE and checkResult false
 
     Assert.assertEquals(""
-            + "0000000000000000000000000000000000000000000000000000000000000000"  // 1 : true
-        , contractResult);
+            + "0000000000000000000000000000000000000000000000000000000000000000", contractResult);
   }
 
   @Test(enabled = true, description = "verify success with address call")
@@ -324,8 +323,7 @@ public class VerifyBurnProof001 {
         infoById.get().getContractResult(0).toByteArray());
 
     Assert.assertEquals(""
-            + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
-        , contractResult);
+            + "0000000000000000000000000000000000000000000000000000000000000001", contractResult);
   }
 
 

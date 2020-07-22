@@ -3947,7 +3947,7 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<DelegatedResourceAccountIndex>
-  getDelegatedResourceAccountIndexFromSolidity(
+      getDelegatedResourceAccountIndexFromSolidity(
       byte[] address, WalletSolidityGrpc
       .WalletSolidityBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);

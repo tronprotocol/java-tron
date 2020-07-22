@@ -284,10 +284,12 @@ public class FullNodeHttpApiService implements Service {
     }
 
     String spendPath = getParamsFile("sapling-spend.params");
-    String spendHash = "25fd9a0d1c1be0526c14662947ae95b758fe9f3d7fb7f55e9b4437830dcc6215a7ce3ea465914b157715b7a4d681389ea4aa84438190e185d5e4c93574d3a19a";
+    String spendHash = "25fd9a0d1c1be0526c14662947ae95b758fe9f3d7fb7f55e9b4437830dcc6215a7ce3ea465"
+        + "914b157715b7a4d681389ea4aa84438190e185d5e4c93574d3a19a";
 
     String outputPath = getParamsFile("sapling-output.params");
-    String outputHash = "a1cb23b93256adce5bce2cb09cefbc96a1d16572675ceb691e9a3626ec15b5b546926ff1c536cfe3a9df07d796b32fdfc3e5d99d65567257bf286cd2858d71a6";
+    String outputHash = "a1cb23b93256adce5bce2cb09cefbc96a1d16572675ceb691e9a3626ec15b5b546926ff1c"
+        + "536cfe3a9df07d796b32fdfc3e5d99d65567257bf286cd2858d71a6";
 
     try {
       JLibrustzcash.librustzcashInitZksnarkParams(
@@ -435,24 +437,24 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getincomingviewingkey");
       context.addServlet(new ServletHolder(getZenPaymentAddressServlet),
           "/wallet/getzenpaymentaddress");
-//      context.addServlet(new ServletHolder(createShieldedTransactionServlet),
-//          "/wallet/createshieldedtransaction");
-//      context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
-//          "/wallet/createshieldedtransactionwithoutspendauthsig");
-//      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/wallet/scannotebyivk");
-//      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
-//          "/wallet/scanandmarknotebyivk");
-//      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/wallet/scannotebyovk");
+      //      context.addServlet(new ServletHolder(createShieldedTransactionServlet),
+      //          "/wallet/createshieldedtransaction");
+      //  context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
+      //          "/wallet/createshieldedtransactionwithoutspendauthsig");
+      //      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/wallet/scannotebyivk");
+      //      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
+      //          "/wallet/scanandmarknotebyivk");
+      //      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/wallet/scannotebyovk");
       context.addServlet(new ServletHolder(getRcmServlet), "/wallet/getrcm");
-//      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
-//          "/wallet/getmerkletreevoucherinfo");
-//      context.addServlet(new ServletHolder(isSpendServlet), "/wallet/isspend");
+      //      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+      //          "/wallet/getmerkletreevoucherinfo");
+      //      context.addServlet(new ServletHolder(isSpendServlet), "/wallet/isspend");
       context.addServlet(new ServletHolder(createSpendAuthSigServlet),
           "/wallet/createspendauthsig");
-//      context.addServlet(new ServletHolder(createShieldNullifierServlet),
-//          "/wallet/createshieldnullifier");
-//      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
-//      "/wallet/getshieldtransactionhash");
+      //      context.addServlet(new ServletHolder(createShieldNullifierServlet),
+      //          "/wallet/createshieldnullifier");
+      //      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
+      //      "/wallet/getshieldtransactionhash");
 
       context
           .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
