@@ -2560,17 +2560,6 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
-  }
-
-  public class MonitorApi extends MonitorGrpc.MonitorImplBase {
-
-    @Override
-    public void getStatsInfo(EmptyMessage request,
-        StreamObserver<Protocol.MetricsInfo> responseObserver) {
-      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
-      responseObserver.onCompleted();
-    }
-
 
     @Override
     public void marketSellAsset(MarketSellAssetContract request,
@@ -2654,5 +2643,17 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+  }
+
+  public class MonitorApi extends MonitorGrpc.MonitorImplBase {
+
+    @Override
+    public void getStatsInfo(EmptyMessage request,
+        StreamObserver<Protocol.MetricsInfo> responseObserver) {
+      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
+      responseObserver.onCompleted();
+    }
+
+
   }
 }
