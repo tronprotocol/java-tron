@@ -68,7 +68,7 @@ public class SyncPool {
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         fillUp();
-      } catch (Throwable t) {
+      } catch (Exception e) {
         logger.error("Exception in sync worker", t);
       }
     }, 30000, 3600, TimeUnit.MILLISECONDS);
@@ -76,7 +76,7 @@ public class SyncPool {
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logActivePeers();
-      } catch (Throwable t) {
+      } catch (Exception e) {
         logger.error("Exception in sync worker", t);
       }
     }, 30, 10, TimeUnit.SECONDS);
