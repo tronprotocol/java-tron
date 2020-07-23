@@ -66,9 +66,9 @@ openApiGenerate {
 
     ]
 
-    groupId = "tronprotocol"
-    id = "tron-rosetta-api"
-    version = "1.0.0"
+    //groupId = "tronprotocol"
+    //id = "tron-rosetta-api"
+    //version = "1.0.0"
 }
 
 sourceSets {
