@@ -57,13 +57,9 @@ public class SyncPool {
 
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
 
-  private PeerClient peerClient;
-
   public void init() {
 
     channelManager = ctx.getBean(ChannelManager.class);
-
-    peerClient = ctx.getBean(PeerClient.class);
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -83,6 +79,7 @@ public class SyncPool {
   }
 
   private void fillUp() {
+    PeerClient peerClient = ctx.getBean(PeerClient.class);
     List<NodeHandler> connectNodes = new ArrayList<>();
     Set<InetAddress> addressInUse = new HashSet<>();
     Set<String> nodesInUse = new HashSet<>();
