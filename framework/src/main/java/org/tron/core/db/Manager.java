@@ -1050,6 +1050,10 @@ public class Manager {
       return null;
     }
 
+    if (getDynamicPropertiesStore().needSetTransactionRet() && Objects.isNull(blockCap)) {
+      trxCap.resetResult();
+    }
+
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1095,11 +1099,7 @@ public class Manager {
 
     trace.finalization();
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
-      if (getDynamicPropertiesStore().needSetTransactionRet()) {
-        trxCap.setResultWithRet(trace.getTransactionContext());
-      } else {
         trxCap.setResult(trace.getTransactionContext());
-      }
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
 
