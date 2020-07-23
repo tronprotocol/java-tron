@@ -69,7 +69,7 @@ public class SyncPool {
       try {
         fillUp();
       } catch (Exception e) {
-        logger.error("Exception in sync worker", t);
+        logger.error("Exception in sync worker", e);
       }
     }, 30000, 3600, TimeUnit.MILLISECONDS);
 
@@ -77,7 +77,7 @@ public class SyncPool {
       try {
         logActivePeers();
       } catch (Exception e) {
-        logger.error("Exception in sync worker", t);
+        logger.error("Exception in sync worker", e);
       }
     }, 30, 10, TimeUnit.SECONDS);
   }
