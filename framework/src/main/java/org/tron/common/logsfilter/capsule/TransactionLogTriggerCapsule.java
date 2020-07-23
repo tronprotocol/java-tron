@@ -17,7 +17,7 @@ import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.core.Wallet;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
@@ -32,27 +32,29 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   @Setter
   private TransactionLogTrigger transactionLogTrigger;
 
-  public TransactionLogTriggerCapsule(TransactionCapsule trxCasule, BlockCapsule blockCapsule) {
+  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule) {
     transactionLogTrigger = new TransactionLogTrigger();
     if (Objects.nonNull(blockCapsule)) {
       transactionLogTrigger.setBlockHash(blockCapsule.getBlockId().toString());
     }
-    transactionLogTrigger.setTransactionId(trxCasule.getTransactionId().toString());
+    transactionLogTrigger.setTransactionId(trxCapsule.getTransactionId().toString());
     transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
-    transactionLogTrigger.setBlockNumber(trxCasule.getBlockNum());
+    transactionLogTrigger.setBlockNumber(trxCapsule.getBlockNum());
+    transactionLogTrigger.setData(Hex.toHexString(trxCapsule
+        .getInstance().getRawData().getData().toByteArray()));
 
-    TransactionTrace trxTrace = trxCasule.getTrxTrace();
+    TransactionTrace trxTrace = trxCapsule.getTrxTrace();
 
     //result
-    if (Objects.nonNull(trxCasule.getContractRet())) {
-      transactionLogTrigger.setResult(trxCasule.getContractRet().toString());
+    if (Objects.nonNull(trxCapsule.getContractRet())) {
+      transactionLogTrigger.setResult(trxCapsule.getContractRet().toString());
     }
 
-    if (Objects.nonNull(trxCasule.getInstance().getRawData())) {
+    if (Objects.nonNull(trxCapsule.getInstance().getRawData())) {
       // fee limit
-      transactionLogTrigger.setFeeLimit(trxCasule.getInstance().getRawData().getFeeLimit());
+      transactionLogTrigger.setFeeLimit(trxCapsule.getInstance().getRawData().getFeeLimit());
 
-      Protocol.Transaction.Contract contract = trxCasule.getInstance().getRawData().getContract(0);
+      Protocol.Transaction.Contract contract = trxCapsule.getInstance().getRawData().getContract(0);
       Any contractParameter = null;
       // contract type
       if (Objects.nonNull(contract)) {
@@ -75,13 +77,13 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               transactionLogTrigger.setAssetName("trx");
 
               if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
-                transactionLogTrigger.setFromAddress(
-                    Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                transactionLogTrigger.setFromAddress(StringUtil
+                    .encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
               }
 
               if (Objects.nonNull(contractTransfer.getToAddress())) {
                 transactionLogTrigger.setToAddress(
-                    Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+                    StringUtil.encode58Check(contractTransfer.getToAddress().toByteArray()));
               }
 
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
@@ -98,12 +100,12 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
               if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
                 transactionLogTrigger.setFromAddress(
-                    Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                    StringUtil.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
               }
 
               if (Objects.nonNull(contractTransfer.getToAddress())) {
-                transactionLogTrigger.setToAddress(
-                    Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+                transactionLogTrigger.setToAddress(StringUtil
+                    .encode58Check(contractTransfer.getToAddress().toByteArray()));
               }
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }
@@ -137,11 +139,11 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
         transactionLogTrigger
-            .setContractAddress(Wallet.encode58Check((contractAddress.toByteArray())));
+            .setContractAddress(StringUtil.encode58Check((contractAddress.toByteArray())));
       }
 
       // internal transaction
-      transactionLogTrigger.setInternalTrananctionList(
+      transactionLogTrigger.setInternalTransactionList(
           getInternalTransactionList(programResult.getInternalTransactions()));
     }
   }

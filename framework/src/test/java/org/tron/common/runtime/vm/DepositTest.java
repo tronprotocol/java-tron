@@ -9,7 +9,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
@@ -29,7 +28,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -107,7 +105,7 @@ public class DepositTest {
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     this.manager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderNumber(CommonParameter.getInstance()
-            .getBlockNumForEneryLimit() + 1);
+            .getBlockNumForEnergyLimit() + 1);
 
     String contractA = "A";
     String contractB = "B";

@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +35,9 @@ public class GetPaginatedAssetIssueListServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+      String input = params.getParams();
+      boolean visible = params.isVisible();
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       AssetIssueList reply = wallet.getAssetIssueList(build.getOffset(), build.getLimit());

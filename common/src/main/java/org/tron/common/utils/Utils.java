@@ -46,33 +46,10 @@ public interface Utils {
     return Id == null ? "<null>" : Id.substring(0, 8);
   }
 
-  static char[] getChars(byte[] bytes) {
-    Charset cs = Charset.forName("UTF-8");
-    ByteBuffer bb = ByteBuffer.allocate(bytes.length);
-    bb.put(bytes);
-    bb.flip();
-    CharBuffer cb = cs.decode(bb);
-
-    return cb.array();
-  }
-
   static byte[] clone(byte[] value) {
     byte[] clone = new byte[value.length];
     System.arraycopy(value, 0, clone, 0, value.length);
     return clone;
-  }
-
-  static String sizeToStr(long size) {
-    if (size < 2 * (1L << 10)) {
-      return size + "b";
-    }
-    if (size < 2 * (1L << 20)) {
-      return String.format("%dKb", size / (1L << 10));
-    }
-    if (size < 2 * (1L << 30)) {
-      return String.format("%dMb", size / (1L << 20));
-    }
-    return String.format("%dGb", size / (1L << 30));
   }
 
   static String align(String s, char fillChar, int targetLen, boolean alignRight) {

@@ -280,7 +280,7 @@ public class PublicMethedForMutiSign {
       transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
       boolean result = broadcastTransaction(transaction, blockingStubFull);
-      if (result == false) {
+      if (!result) {
         return null;
       } else {
         return ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
@@ -556,12 +556,11 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
     boolean result = broadcastTransaction(transaction, blockingStubFull);
-    if (result == false) {
+    if (!result) {
       return null;
-    } else {
-      return ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
-          .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
     }
+    return ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
   }
 
   /**
@@ -934,7 +933,7 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
     boolean result = broadcastTransaction(transaction, blockingStubFull);
-    if (result == false) {
+    if (!result) {
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
@@ -5079,7 +5078,7 @@ public class PublicMethedForMutiSign {
 
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       logger.info("response.getRestult() == false");
       return false;

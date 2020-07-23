@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
@@ -18,9 +19,11 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
@@ -177,6 +180,17 @@ public class ChainBaseManager {
   @Setter
   private BlockCapsule genesisBlock;
 
+  @Autowired
+  @Getter
+  private CommonDataBase commonDataBase;
+
+  @Autowired
+  @Getter
+  private PbftSignDataStore pbftSignDataStore;
+
+  @Getter
+  private ForkController forkController = ForkController.instance();
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -216,6 +230,8 @@ public class ChainBaseManager {
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
     closeOneStore(commonStore);
+    closeOneStore(commonDataBase);
+    closeOneStore(pbftSignDataStore);
   }
 
   // for test only
@@ -255,7 +271,7 @@ public class ChainBaseManager {
     return dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
   }
 
-  public void initGenesis(){
+  public void initGenesis() {
     genesisBlock = BlockUtil.newGenesisBlockCapsule();
   }
 
@@ -263,7 +279,6 @@ public class ChainBaseManager {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
   }
-
 
 
   /**
@@ -288,7 +303,6 @@ public class ChainBaseManager {
       return false;
     }
   }
-
 
 
   /**

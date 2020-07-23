@@ -523,7 +523,7 @@ public class MultiSign07 {
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,
             blockingStubFull,
             activePermissionKeys.toArray(new String[activePermissionKeys.size()])));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin + 1000000);

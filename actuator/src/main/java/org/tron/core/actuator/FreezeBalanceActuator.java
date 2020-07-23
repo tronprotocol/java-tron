@@ -23,7 +23,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -114,10 +113,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();

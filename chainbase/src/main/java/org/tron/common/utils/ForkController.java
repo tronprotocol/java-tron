@@ -1,6 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.WalletUtil.encode58Check;
+import static org.tron.common.utils.StringUtil.encode58Check;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,7 +57,7 @@ public class ForkController {
   // version !=5, skip this.
   private boolean checkForEnergyLimit() {
     long blockNum = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    return blockNum >= CommonParameter.getInstance().getBlockNumForEneryLimit();
+    return blockNum >= CommonParameter.getInstance().getBlockNumForEnergyLimit();
   }
 
   private boolean check(byte[] stats) {

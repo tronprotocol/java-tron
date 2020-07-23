@@ -74,7 +74,7 @@ public class ProposalCreateActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No dbManager!");
@@ -120,8 +120,9 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
-    ProposalUtil.validator(chainBaseManager.getDynamicPropertiesStore(), forkController, entry.getKey(),
-        entry.getValue());
+    ProposalUtil
+        .validator(chainBaseManager.getDynamicPropertiesStore(), forkController, entry.getKey(),
+            entry.getValue());
   }
 
   @Override

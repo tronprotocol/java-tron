@@ -4,7 +4,31 @@ import lombok.Getter;
 
 public class Parameter {
 
+  public enum ForkBlockVersionEnum {
+    ENERGY_LIMIT(5),
+    VERSION_3_2_2(6),
+    VERSION_3_5(7),
+    VERSION_3_6(8),
+    VERSION_3_6_5(9),
+    VERSION_3_6_6(10),
+    VERSION_3_8(16),
+    VERSION_4_0(15);
+
+    @Getter
+    private int value;
+
+    ForkBlockVersionEnum(int value) {
+      this.value = value;
+    }
+  }
+
+  public static class ChainSymbol {
+
+    public static final byte[] TRX_SYMBOL_BYTES = "_".getBytes(); // TRX symbol
+  }
+
   public class ChainConstant {
+
     public static final int MAX_ACTIVE_WITNESS_NUM = 27;
     public static final int WITNESS_STANDBY_LENGTH = 127;
     public static final long TRANSFER_FEE = 0; // free
@@ -21,21 +45,19 @@ public class Parameter {
     public static final int SINGLE_REPEAT = 1;
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 15;
+    public static final int BLOCK_VERSION = 16;
     public static final long FROZEN_PERIOD = 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
   }
 
-  public static class ChainSymbol {
-    public static final byte[] TRX_SYMBOL_BYTES = "_".getBytes(); // TRX symbol
-  }
-  
   public class NodeConstant {
+
     public static final int MAX_TRANSACTION_PENDING = 2000;
     public static final int MAX_HTTP_CONNECT_NUMBER = 50;
   }
 
   public class NetConstants {
+
     public static final long SYNC_FETCH_BATCH_NUM = 2000;
     public static final long ADV_TIME_OUT = 20000L;
     public static final long SYNC_TIME_OUT = 5000L;
@@ -63,24 +85,10 @@ public class Parameter {
     public static final int LIMIT_MULTIPLIER = 1000; //s
   }
 
-  public enum ForkBlockVersionEnum {
-    ENERGY_LIMIT(5),
-    VERSION_3_2_2(6),
-    VERSION_3_5(7),
-    VERSION_3_6(8),
-    VERSION_3_6_5(9),
-    VERSION_4_0(15);
-
-    @Getter
-    private int value;
-
-    ForkBlockVersionEnum(int value) {
-      this.value = value;
-    }
-  }
 
   @Deprecated
   public class ForkBlockVersionConsts {
+
     public static final int START_NEW_TRANSACTION = 4;
     public static final int ENERGY_LIMIT = 5;
   }

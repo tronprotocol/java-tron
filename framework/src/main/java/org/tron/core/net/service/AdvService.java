@@ -261,7 +261,9 @@ public class AdvService {
 
     invToSpread.forEach((item, time) -> peers.forEach(peer -> {
       if (peer.getAdvInvReceive().getIfPresent(item) == null
-          && peer.getAdvInvSpread().getIfPresent(item) == null) {
+          && peer.getAdvInvSpread().getIfPresent(item) == null
+          && !(item.getType().equals(InventoryType.BLOCK)
+          && System.currentTimeMillis() - time > BLOCK_PRODUCED_INTERVAL)) {
         peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
         invSender.add(item, peer);
       }

@@ -51,23 +51,8 @@ public class Value {
     }
   }
 
-  public static Value fromSerEncoded(byte[] data) {
-
-    if (data != null && data.length != 0) {
-      Value v = new Value();
-      v.init(data);
-      return v;
-    }
-    return null;
-  }
-
   public void init(byte[] serializable) {
     this.serializable = serializable;
-  }
-
-  public Value withHash(byte[] hash) {
-    sha3 = hash;
-    return this;
   }
 
   /* *****************
@@ -128,11 +113,6 @@ public class Value {
       return asString().getBytes();
     }
     return ByteUtil.EMPTY_BYTE_ARRAY;
-  }
-
-
-  public int[] asSlice() {
-    return (int[]) value;
   }
 
   public Value get(int index) {

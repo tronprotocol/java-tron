@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -37,12 +36,10 @@ public class EasyTransferByPrivateServlet extends RateLimiterServlet {
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
     boolean visible = false;
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+      visible = params.isVisible();
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
+      JsonFormat.merge(params.getParams(), build, visible);
       byte[] privateKey = build.getPrivateKey().toByteArray();
       SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance()
           .isECKeyCryptoEngine());

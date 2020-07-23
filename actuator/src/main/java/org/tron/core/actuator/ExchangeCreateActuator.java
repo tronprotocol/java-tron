@@ -122,7 +122,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       ret.setExchangeId(id);
       ret.setStatus(fee, code.SUCESS);
-    } catch (BalanceInsufficientException| InvalidProtocolBufferException e) {
+    } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -133,10 +133,10 @@ public class ExchangeCreateActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamicStore store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -175,7 +175,8 @@ public class ExchangeCreateActuator extends AbstractActuator {
     long secondTokenBalance = contract.getSecondTokenBalance();
 
     if (dynamicStore.getAllowSameTokenName() == 1) {
-      if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES) && !TransactionUtil.isNumber(firstTokenID)) {
+      if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES) && !TransactionUtil
+          .isNumber(firstTokenID)) {
         throw new ContractValidateException("first token id is not a valid number");
       }
       if (!Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES) && !TransactionUtil

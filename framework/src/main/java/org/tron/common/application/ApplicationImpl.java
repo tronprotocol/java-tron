@@ -8,7 +8,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 
@@ -16,7 +15,6 @@ import org.tron.core.net.TronNetService;
 @Component
 public class ApplicationImpl implements Application {
 
-  private BlockStore blockStoreDb;
   private ServiceContainer services;
 
   @Autowired
@@ -31,8 +29,6 @@ public class ApplicationImpl implements Application {
   @Autowired
   private ConsensusService consensusService;
 
-  private boolean isProducer;
-
   @Override
   public void setOptions(Args args) {
     // not used
@@ -41,7 +37,6 @@ public class ApplicationImpl implements Application {
   @Override
   @Autowired
   public void init(CommonParameter parameter) {
-    blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
   }
 
@@ -89,11 +84,6 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public BlockStore getBlockStoreS() {
-    return blockStoreDb;
-  }
-
-  @Override
   public Manager getDbManager() {
     return dbManager;
   }
@@ -101,14 +91,6 @@ public class ApplicationImpl implements Application {
   @Override
   public ChainBaseManager getChainBaseManager() {
     return chainBaseManager;
-  }
-
-  public boolean isProducer() {
-    return isProducer;
-  }
-
-  public void setIsProducer(boolean producer) {
-    isProducer = producer;
   }
 
   private void closeRevokingStore() {

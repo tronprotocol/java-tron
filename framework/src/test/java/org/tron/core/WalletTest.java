@@ -21,11 +21,14 @@ package org.tron.core;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -42,18 +45,21 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
@@ -81,6 +87,8 @@ public class WalletTest {
   public static final long BLOCK_NUM_THREE = 3;
   public static final long BLOCK_NUM_FOUR = 4;
   public static final long BLOCK_NUM_FIVE = 5;
+  public static final long CYCLE_NUM_ONE = 1;
+  public static final long CYCLE_NUM_TWO = 2;
   public static final long BLOCK_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
   public static final long BLOCK_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
   public static final long BLOCK_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
@@ -330,19 +338,19 @@ public class WalletTest {
   public void getBlockById() {
     Block blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block1).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById1", block1, blockById);
+    assertEquals("getBlockById1", block1, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block2).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById2", block2, blockById);
+    assertEquals("getBlockById2", block2, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block3).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById3", block3, blockById);
+    assertEquals("getBlockById3", block3, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block4).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById4", block4, blockById);
+    assertEquals("getBlockById4", block4, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block5).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById5", block5, blockById);
+    assertEquals("getBlockById5", block5, blockById);
   }
 
   @Test
@@ -365,35 +373,35 @@ public class WalletTest {
     TransactionInfo transactionById1 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction1.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById1.getId().toByteArray()),
         ByteString.copyFrom(transaction1.getRawData().toByteArray()));
 
     TransactionInfo transactionById2 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction2.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById2.getId().toByteArray()),
         ByteString.copyFrom(transaction2.getRawData().toByteArray()));
 
     TransactionInfo transactionById3 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction3.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById3.getId().toByteArray()),
         ByteString.copyFrom(transaction3.getRawData().toByteArray()));
 
     TransactionInfo transactionById4 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction4.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById4.getId().toByteArray()),
         ByteString.copyFrom(transaction4.getRawData().toByteArray()));
 
     TransactionInfo transactionById5 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction5.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById5.getId().toByteArray()),
         ByteString.copyFrom(transaction5.getRawData().toByteArray()));
   }
@@ -404,23 +412,23 @@ public class WalletTest {
     Transaction transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction1).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById1", transaction1, transactionById);
+    assertEquals("getTransactionById1", transaction1, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction2).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById2", transaction2, transactionById);
+    assertEquals("getTransactionById2", transaction2, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction3).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById3", transaction3, transactionById);
+    assertEquals("getTransactionById3", transaction3, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction4).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById4", transaction4, transactionById);
+    assertEquals("getTransactionById4", transaction4, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction5).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById5", transaction5, transactionById);
+    assertEquals("getTransactionById5", transaction5, transactionById);
   }
 
   @Test
@@ -458,17 +466,17 @@ public class WalletTest {
     //
     ProposalList proposalList = wallet.getPaginatedProposalList(0, 100);
 
-    Assert.assertEquals(2, proposalList.getProposalsCount());
-    Assert.assertEquals("Address1",
+    assertEquals(2, proposalList.getProposalsCount());
+    assertEquals("Address1",
         proposalList.getProposalsList().get(0).getProposerAddress().toStringUtf8());
-    Assert.assertEquals("Address2",
+    assertEquals("Address2",
         proposalList.getProposalsList().get(1).getProposerAddress().toStringUtf8());
 
     //
     proposalList = wallet.getPaginatedProposalList(1, 100);
 
-    Assert.assertEquals(1, proposalList.getProposalsCount());
-    Assert.assertEquals("Address2",
+    assertEquals(1, proposalList.getProposalsCount());
+    assertEquals("Address2",
         proposalList.getProposalsList().get(0).getProposerAddress().toStringUtf8());
 
     //
@@ -481,7 +489,7 @@ public class WalletTest {
 
     //
     proposalList = wallet.getPaginatedProposalList(0, 1000000000L);
-    Assert.assertEquals(2, proposalList.getProposalsCount());
+    assertEquals(2, proposalList.getProposalsCount());
 
   }
 
@@ -489,9 +497,9 @@ public class WalletTest {
   public void getPaginatedExchangeList() {
     buildExchange();
     ExchangeList exchangeList = wallet.getPaginatedExchangeList(0, 100);
-    Assert.assertEquals("Address1",
+    assertEquals("Address1",
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
-    Assert.assertEquals("Address2",
+    assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
   }
 
@@ -517,4 +525,127 @@ public class WalletTest {
     System.out.printf(builder.build().toString());
   }
 
+  @Test
+  public void getRewardOfVoteEachBlock() {
+    long l = wallet.getRewardOfVoteEachBlock();
+    System.out.println(l);
+    assertEquals(16000000L, l);
+  }
+
+  @Test
+  public void getRewardOfBlockEachBlock() {
+    long l = wallet.getRewardOfBlockEachBlock();
+    assertEquals(32000000L, l);
+  }
+
+  @Test
+  public void queryVoteNumberZero() {
+    double v = wallet.queryVoteNumber(ACCOUNT_ADDRESS_ONE.getBytes(),
+        CYCLE_NUM_ONE, CYCLE_NUM_TWO);
+    assertEquals(0.0, v, 0);
+  }
+
+  @Test
+  public void queryTotalVoteNumber() {
+    double v = wallet.queryTotalVoteNumber(CYCLE_NUM_ONE, CYCLE_NUM_ONE);
+    int srNumber = wallet.getSrNumber();
+    assertEquals(-srNumber, v, 0);
+  }
+
+  @Test
+  public void getBlockNumberEachDay() {
+    double v = wallet.getBlockNumberEachDay();
+    assertEquals(28792, v, 0);
+  }
+
+  @Test
+  public void getAnnualizedRateOfReturn() throws Exception {
+    double v = wallet.getAnnualizedRateOfReturn(1, 1,
+        1, 1, 1, 1, 1);
+    assertEquals(730, v, 0);
+    double v1 = wallet.getAnnualizedRateOfReturn(1, 1,
+        1, 0, 1, 1, 1);
+    assertEquals(0, v1, 0);
+  }
+
+  @Test
+  public void getVoteList() {
+    long currentcycle = 10;
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+        110_000_000L);
+    chainBaseManager.getDelegationStore()
+        .setAccountVote(currentcycle, ACCOUNT_ADDRESS_ONE.getBytes(), ownerCapsule);
+    chainBaseManager.getDynamicPropertiesStore()
+        .saveCurrentCycleNumber(currentcycle + 10);
+
+    Assert.assertNotNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle));
+    Assert.assertNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle + 1));
+    Assert.assertNotNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle - 1));
+  }
+
+  @Test
+  public void testQueryPayByCycle() {
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    long start = 10;
+    long end = start + 60;
+    {
+      chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(0);
+      assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+    {
+      chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(1);
+      assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+    {
+      AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+          110_000_000L);
+      chainBaseManager.getAccountStore().put(OWNER_ADDRESS
+          .getBytes(), ownerCapsule);
+      Assert.assertNotEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+  }
+
+  @Test
+  public void testPercentageOfBlockReward() {
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    long beginCycle = 60;
+    long endCycle = 10;
+    double result = 0;
+    assertEquals(wallet.percentageOfBlockReward(beginCycle, endCycle, OWNER_ADDRESS
+        .getBytes()), result, 10);
+  }
+
+  @Test
+  public void checkAddress() {
+    List<ByteString> witnessAddresses = new ArrayList<>();
+    byte[] address = decode58Check("TT1smsmhxype64boboU8xTuNZVCKP1w6qT");
+    witnessAddresses.add(ByteString.copyFrom(address));
+    chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(witnessAddresses);
+    Assert.assertTrue(wallet.checkAddress(address));
+  }
+
+  @Test
+  public void existAddress() {
+    byte[] address = decode58Check("TT1smsmhxype64boboU8xTuNZVCKP1w6qT");
+    byte[] address1 = decode58Check("TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainBaseManager.getWitnessStore().put(address, witnessCapsule);
+    Assert.assertTrue(wallet.existAddress(address));
+    Assert.assertFalse(wallet.existAddress(address1));
+  }
+
 }
+

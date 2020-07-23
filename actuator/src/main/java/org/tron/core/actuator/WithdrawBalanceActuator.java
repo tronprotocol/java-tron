@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -54,6 +53,10 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     delegationService.withdrawReward(withdrawBalanceContract.getOwnerAddress()
         .toByteArray());
 
+    delegationService.getDelegationStore().setLastWithdrawCycle(
+        dynamicStore.getCurrentCycleNumber(), withdrawBalanceContract.getOwnerAddress()
+            .toByteArray());
+
     AccountCapsule accountCapsule = accountStore.
         get(withdrawBalanceContract.getOwnerAddress().toByteArray());
     long oldBalance = accountCapsule.getBalance();
@@ -75,10 +78,10 @@ public class WithdrawBalanceActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -111,7 +114,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     boolean isGP = CommonParameter.getInstance()
         .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
-        Arrays.equals(ownerAddress, witness.getAddress()));
+            Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress

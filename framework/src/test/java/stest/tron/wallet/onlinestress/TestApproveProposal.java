@@ -1,5 +1,7 @@
 package stest.tron.wallet.onlinestress;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -11,18 +13,15 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.ChainParameters;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.contract.BalanceContract.TransferContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 
@@ -63,6 +62,11 @@ public class TestApproveProposal {
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(0);
+  JsonArray voteKeys = new JsonArray();
+  JsonObject voteElement = new JsonObject();
+
 
   @BeforeSuite
   public void beforeSuite() {
@@ -109,7 +113,7 @@ public class TestApproveProposal {
     //Get proposal list after approve
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
     listProposals = Optional.ofNullable(proposalList);
-    logger.info(Integer.toString(listProposals.get().getProposals(0).getApprovalsCount()));
+    //logger.info(Integer.toString(listProposals.get().getProposals(0).getApprovalsCount()));
 
     String[] witnessKey = {
 
@@ -131,63 +135,33 @@ public class TestApproveProposal {
   }
 
   @Test(enabled = true)
-  public void testGetAllNodeBlockNum() throws InterruptedException {
-    String[] nodeIp = {
-        "47.93.14.253:50051",
-        "39.105.28.73:50051",
-        "101.200.51.70:50051",
-        "47.94.209.241:50051",
-        "47.94.148.150:50051",
-        "47.94.9.222:50051",
-        "39.107.87.203:50051"
-    };
+  public void testCreateWitness() {
+    int index = 2;
 
-    for (String ip : nodeIp) {
-      fullnode = ip;
-      channelFull = ManagedChannelBuilder.forTarget(fullnode)
-          .usePlaintext(true)
-          .build();
-      blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-      Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-      Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-      logger.info("ip " + ip + ", block num is : " + currentBlockNum);
+    while (index <= 27) {
+      String witnessKey = Configuration.getByPath("testng.conf")
+          .getString("mainWitness.key" + index);
+      byte[] witnessAddressByte = PublicMethed.getFinalAddress(witnessKey);
+      String witnessAddress = PublicMethed.getAddressString(witnessKey);
+      HttpMethed.sendCoin(httpnode, fromAddress, witnessAddressByte, 10100000000L, testKey002);
+      HttpMethed.waitToProduceOneBlock(httpnode);
+      HttpMethed
+          .createWitness(httpnode, witnessAddressByte, "Sr reward witness " + index, witnessKey);
+      HttpMethed.waitToProduceOneBlock(httpnode);
+      HttpMethed.freezeBalance(httpnode, witnessAddressByte, 50000000L, 0, 0, witnessKey);
+      HttpMethed.waitToProduceOneBlock(httpnode);
 
-      Integer times = 0;
-      while (times++ <= -100) {
-        currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-        Transaction.Contract contract;
-        TransferContract transferContract;
-        Integer triggerNum = 0;
-        Integer transactionNum = 0;
-        for (Transaction transaction : currentBlock.getTransactionsList()) {
-          if (transaction.getRawData().getContract(0).getContractName().isEmpty()) {
-            transactionNum++;
-          } else {
-            triggerNum++;
-
-          }
-
-        }
-
-        logger.info("ip " + ip + ", block num is : " + currentBlockNum);
-        logger.info("Transfer contract num is " + transactionNum);
-        logger.info("Trigger contract num is " + triggerNum);
-        try {
-          Thread.sleep(3000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-
-
-      }
-
-
-    }
-    if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      JsonArray voteKeys = new JsonArray();
+      JsonObject voteElement = new JsonObject();
+      voteElement.addProperty("vote_address", witnessAddress);
+      voteElement.addProperty("vote_count", index);
+      voteKeys.add(voteElement);
+      HttpMethed.voteWitnessAccount(httpnode, witnessAddress, voteKeys, witnessKey);
+      index++;
     }
 
   }
+
 
   @Test(enabled = true)
   public void testGetChainParameters() {

@@ -119,8 +119,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
   //If the parameter is larger than 0, allow ZKsnark Transaction
   private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
+  private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
+      "ALLOW_SHIELDED_TRC20_TRANSACTION"
+          .getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
+  private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
+      .getBytes();
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
       .getBytes();
@@ -130,6 +135,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
+  private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
+  private static final byte[] CURRENT_CYCLE_TIMESTAMP = "CURRENT_CYCLE_TIMESTAMP".getBytes();
 
   private static final byte[] ALLOW_MARKET_TRANSACTION = "ALLOW_MARKET_TRANSACTION".getBytes();
   private static final byte[] MARKET_SELL_FEE = "MARKET_SELL_FEE".getBytes();
@@ -526,6 +533,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getForbidTransferToContract();
+    } catch (IllegalArgumentException e) {
+      this.saveForbidTransferToContract(CommonParameter.getInstance()
+          .getForbidTransferToContract());
+    }
+
+    try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
       String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
@@ -564,8 +578,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowShieldedTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowShieldedTransaction(CommonParameter.getInstance()
-          .getAllowShieldedTransaction());
+      this.saveAllowShieldedTransaction(0L);
+    }
+
+    try {
+      this.getAllowShieldedTRC20Transaction();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowShieldedTRC20Transaction(
+          CommonParameter.getInstance().getAllowShieldedTRC20Transaction());
     }
 
     try {
@@ -639,6 +659,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveChangeDelegation(CommonParameter.getInstance()
           .getChangedDelegation());
+    }
+
+    try {
+      this.getAllowPBFT();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
     }
 
   }
@@ -1114,7 +1140,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE"));
+            () -> new IllegalArgumentException(
+                "not found SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE"));
   }
 
   public void saveShieldedTransactionCreateAccountFee(long fee) {
@@ -1486,6 +1513,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_059"));
   }
 
+  public void saveForbidTransferToContract(long value) {
+    this.put(FORBID_TRANSFER_TO_CONTRACT,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getForbidTransferToContract() {
+    return Optional.ofNullable(getUnchecked(FORBID_TRANSFER_TO_CONTRACT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found FORBID_TRANSFER_TO_CONTRACT"));
+  }
+
   public void saveAvailableContractType(byte[] value) {
     this.put(AVAILABLE_CONTRACT_TYPE,
         new BytesCapsule(value));
@@ -1612,11 +1651,29 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_ZKSNARK_TRANSACTION"));
+            () -> new IllegalArgumentException("not found ALLOW_SHIELDED_TRANSACTION"));
+  }
+
+  public void saveAllowShieldedTRC20Transaction(long allowShieldedTRC20Transaction) {
+    this.put(DynamicPropertiesStore.ALLOW_SHIELDED_TRC20_TRANSACTION,
+        new BytesCapsule(ByteArray.fromLong(allowShieldedTRC20Transaction)));
+  }
+
+  public long getAllowShieldedTRC20Transaction() {
+    String msg = "not found ALLOW_SHIELDED_TRC20_TRANSACTION";
+    return Optional.ofNullable(getUnchecked(ALLOW_SHIELDED_TRC20_TRANSACTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
   }
 
   public boolean supportShieldedTransaction() {
     return getAllowShieldedTransaction() == 1L;
+  }
+
+  public boolean supportShieldedTRC20Transaction() {
+    return getAllowShieldedTRC20Transaction() == 1L;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
@@ -1783,7 +1840,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
-        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
+        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},"
+            + "nextMaintenanceTime:{}",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );
@@ -1868,6 +1926,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_STATE_ROOT"));
   }
 
+  public void saveCurrentCycleTiimeStamp(long timeStamp) {
+    this.put(CURRENT_CYCLE_TIMESTAMP, new BytesCapsule(ByteArray.fromLong(timeStamp)));
+
+  }
+
+  public long getCurrentCycleTimeStamp() {
+    return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_TIMESTAMP))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
   public boolean allowAccountStateRoot() {
     return getAllowAccountStateRoot() == 1;
   }
@@ -1899,6 +1969,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getChangeDelegation() == 1;
   }
 
+  public void saveAllowPBFT(long number) {
+    this.put(ALLOW_PBFT,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getAllowPBFT() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PBFT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_PBFT"));
+  }
+
+  public boolean allowPBFT() {
+    return getAllowPBFT() == 1;
+  }
+
   private static class DynamicResourceProperties {
 
     private static final byte[] ONE_DAY_NET_LIMIT = "ONE_DAY_NET_LIMIT".getBytes();
@@ -1920,10 +2006,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
-    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER = "ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"
-        .getBytes();
-    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO = "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
-        .getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER =
+        "ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"
+            .getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO =
+        "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
+            .getBytes();
   }
 
 }

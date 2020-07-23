@@ -7,7 +7,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.option.KademliaOptions;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 
@@ -46,7 +45,7 @@ public class Node implements Serializable {
 
   public static Node instanceOf(String hostPort) {
     try {
-      String [] sz = hostPort.split(":");
+      String[] sz = hostPort.split(":");
       int port = Integer.parseInt(sz[1]);
       return new Node(Node.getNodeId(), sz[0], port);
     } catch (Exception e) {
@@ -56,14 +55,15 @@ public class Node implements Serializable {
   }
 
   public static byte[] getNodeId() {
+    int NODE_ID_LENGTH = 64;
     Random gen = new Random();
-    byte[] id = new byte[KademliaOptions.NODE_ID_LEN];
+    byte[] id = new byte[NODE_ID_LENGTH];
     gen.nextBytes(id);
     return id;
   }
 
-  public boolean isConnectible(int argsP2pversion) {
-    return port == bindPort && p2pVersion == argsP2pversion;
+  public boolean isConnectible(int argsP2PVersion) {
+    return port == bindPort && p2pVersion == argsP2PVersion;
   }
 
   public String getHexId() {

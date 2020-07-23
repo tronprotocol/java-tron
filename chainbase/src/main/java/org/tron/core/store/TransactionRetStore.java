@@ -31,7 +31,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
   @Override
   public void put(byte[] key, TransactionRetCapsule item) {
     if (BooleanUtils.toBoolean(CommonParameter.getInstance()
-        .getStorage().getTransactionHistoreSwitch())) {
+        .getStorage().getTransactionHistorySwitch())) {
       super.put(key, item);
     }
   }
@@ -47,7 +47,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
     }
 
     TransactionRetCapsule result = new TransactionRetCapsule(value);
-    if (Objects.isNull(result) || Objects.isNull(result.getInstance())) {
+    if (Objects.isNull(result.getInstance())) {
       return null;
     }
 
@@ -57,6 +57,16 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
       }
     }
     return null;
+  }
+
+  public TransactionRetCapsule getTransactionInfoByBlockNum(byte[] key) throws BadItemException {
+
+    byte[] value = revokingDB.getUnchecked(key);
+    if (Objects.isNull(value)) {
+      return null;
+    }
+
+    return new TransactionRetCapsule(value);
   }
 
 }

@@ -103,10 +103,10 @@ public class TransferAssetActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -176,8 +176,8 @@ public class TransferAssetActuator extends AbstractActuator {
 
     AccountCapsule toAccount = accountStore.get(toAddress);
     if (toAccount != null) {
-      //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
-      if (dynamicStore.getAllowTvmSolidity059() == 1
+      //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
+      if (dynamicStore.getForbidTransferToContract() == 1
           && toAccount.getType() == AccountType.Contract) {
         throw new ContractValidateException("Cannot transfer asset to smartContract.");
       }
