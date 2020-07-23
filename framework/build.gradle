@@ -257,12 +257,12 @@ createScript(project, 'org.tron.program.FullNode', 'FullNode')
 createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
 createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
 
-artifacts {
-    archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
-            binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))
-}
+//artifacts {
+//    archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
+//            binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
+//            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+//            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))
+//}
 
 task copyToParent(type: Copy) {
     into "../build/distributions"
