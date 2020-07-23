@@ -205,8 +205,8 @@ public class ProposalService extends ProposalUtil {
         case ALLOW_MARKET_TRANSACTION: {
           if (manager.getDynamicPropertiesStore().getAllowMarketTransaction() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMarketTransaction(entry.getValue());
-            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(60);
-            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(61);
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(52);
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(53);
           }
           break;
         }
