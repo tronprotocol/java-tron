@@ -432,6 +432,7 @@ public class RpcApiServiceOnSolidity implements Service {
               .isShieldedTRC20ContractNoteSpent(request, responseObserver)
       );
     }
+
     @Override
     public void getMarketOrderByAccount(BytesMessage request,
         StreamObserver<MarketOrderList> responseObserver) {
