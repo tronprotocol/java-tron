@@ -250,7 +250,7 @@ public class HttpSelfFormatFieldName {
     NameFieldNameMap.put("protocol.MarketSellAssetContract.sell_token_id", 1);
     NameFieldNameMap.put("protocol.MarketSellAssetContract.buy_token_id", 1);
 
-    // MarketCancelOrderServlet
+    // MarketCancelOrderContract
     AddressFieldNameMap.put("protocol.MarketCancelOrderContract.owner_address", 1);
 
     // MarketOrder
