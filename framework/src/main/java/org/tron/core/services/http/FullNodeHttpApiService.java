@@ -512,8 +512,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
 
-      context.addServlet(new ServletHolder(marketSellAssetServlet), "/marketsellasset");
-      context.addServlet(new ServletHolder(marketCancelOrderServlet), "/marketcancelorder");
+      context.addServlet(new ServletHolder(marketSellAssetServlet), "/wallet/marketsellasset");
+      context.addServlet(new ServletHolder(marketCancelOrderServlet), "/wallet/marketcancelorder");
       context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
           "/wallet/getmarketorderbyaccount");
       context.addServlet(new ServletHolder(getMarketOrderByIdServlet),
