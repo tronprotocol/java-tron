@@ -90,15 +90,12 @@ public class PbftDataSyncHandler implements TronMsgHandler {
           chainBaseManager.getWitnesses())) {
         return;
       }
-      if (raw.getDataType() == DataType.BLOCK) {
-        if (pbftSignDataStore.getBlockSignData(raw.getViewN()) == null) {
-          pbftSignDataStore
-              .putBlockSignData(raw.getViewN(), pbftCommitMessage.getPbftSignCapsule());
-        }
-      } else if (raw.getDataType() == DataType.SRL) {
-        if (pbftSignDataStore.getSrSignData(raw.getEpoch()) == null) {
-          pbftSignDataStore.putSrSignData(raw.getEpoch(), pbftCommitMessage.getPbftSignCapsule());
-        }
+      if (raw.getDataType() == DataType.BLOCK
+          && pbftSignDataStore.getBlockSignData(raw.getViewN()) == null) {
+        pbftSignDataStore.putBlockSignData(raw.getViewN(), pbftCommitMessage.getPbftSignCapsule());
+      } else if (raw.getDataType() == DataType.SRL
+          && pbftSignDataStore.getSrSignData(raw.getEpoch()) == null) {
+        pbftSignDataStore.putSrSignData(raw.getEpoch(), pbftCommitMessage.getPbftSignCapsule());
       }
     } catch (InvalidProtocolBufferException e) {
       logger.error("", e);
@@ -141,11 +138,11 @@ public class PbftDataSyncHandler implements TronMsgHandler {
 
   private class ValidPbftSignTask implements Callable<Boolean> {
 
-    long viewN;
-    Set<ByteString> srSignSet;
-    byte[] dataHash;
-    Set<ByteString> srSet;
-    ByteString sign;
+    private long viewN;
+    private Set<ByteString> srSignSet;
+    private byte[] dataHash;
+    private Set<ByteString> srSet;
+    private ByteString sign;
 
     ValidPbftSignTask(long viewN, Set<ByteString> srSignSet,
         byte[] dataHash, Set<ByteString> srSet, ByteString sign) {

@@ -2,8 +2,11 @@ package org.tron.core.net.messagehandler;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,7 +41,8 @@ import org.tron.protos.Protocol.Transaction;
 @Component
 public class FetchInvDataMsgHandler implements TronMsgHandler {
 
-  private static long latestEpoch = 0;
+  private volatile Cache<Long, Boolean> epochCache = CacheBuilder.newBuilder().initialCapacity(100)
+      .maximumSize(1000).expireAfterWrite(1, TimeUnit.HOURS).build();
 
   private static final int MAX_SIZE = 1_000_000;
   @Autowired
@@ -116,8 +120,8 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         epoch =
             (blockCapsule.getTimeStamp() / maintenanceTimeInterval + 1) * maintenanceTimeInterval;
       }
-      if (epoch > latestEpoch) {
-        latestEpoch = epoch;
+      if (epochCache.getIfPresent(epoch) == null) {
+        epochCache.put(epoch, true);
         PbftSignCapsule srl = tronNetDelegate.getSRLPbftCommitData(epoch);
         if (srl != null) {
           peer.sendMessage(new PbftCommitMessage(srl));
