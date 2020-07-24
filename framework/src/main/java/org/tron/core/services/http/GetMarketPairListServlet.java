@@ -38,13 +38,13 @@ public class GetMarketPairListServlet extends RateLimiterServlet {
       Util.checkBodySize(input);
 
       boolean visible = false;
-      if (!input.equals("")) {
+      if (!"".equals(input)) {
         visible = Util.getVisiblePost(input);
       }
 
       MarketOrderPairList reply = wallet.getMarketPairList();
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply,visible));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
