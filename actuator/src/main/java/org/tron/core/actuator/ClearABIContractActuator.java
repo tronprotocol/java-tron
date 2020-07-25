@@ -89,7 +89,8 @@ public class ClearABIContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR
+              + readableOwnerAddress + "] not exists");
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();

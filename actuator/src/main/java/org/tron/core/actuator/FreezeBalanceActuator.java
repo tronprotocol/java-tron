@@ -142,7 +142,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
     }
 
     long frozenBalance = freezeBalanceContract.getFrozenBalance();
