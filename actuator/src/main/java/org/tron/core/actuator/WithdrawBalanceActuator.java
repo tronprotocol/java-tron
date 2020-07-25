@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import com.google.common.math.LongMath;
@@ -107,7 +108,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);

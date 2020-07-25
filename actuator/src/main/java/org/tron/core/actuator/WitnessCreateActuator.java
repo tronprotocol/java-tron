@@ -86,7 +86,8 @@ public class WitnessCreateActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
     if (accountCapsule == null) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("account[" + readableOwnerAddress
+          + ActuatorConstant.NOT_EXIST_STR);
     }
     /* todo later
     if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {

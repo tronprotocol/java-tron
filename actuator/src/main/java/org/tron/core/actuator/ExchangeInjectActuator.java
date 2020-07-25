@@ -159,7 +159,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
           get(ByteArray.fromLong(contract.getExchangeId()));
 
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
+      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + ActuatorConstant
+          .NOT_EXIST_STR);
     }
 
     if (!accountCapsule.getAddress().equals(exchangeCapsule.getCreatorAddress())) {
