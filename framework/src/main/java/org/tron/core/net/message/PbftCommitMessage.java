@@ -31,9 +31,5 @@ public class PbftCommitMessage extends TronMessage {
   public Class<?> getAnswerMessage() {
     return null;
   }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
+  
 }
