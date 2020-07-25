@@ -144,7 +144,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     if (!accountStore.has(ownerAddress)) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("account[" + readableOwnerAddress + ActuatorConstant
+          .NOT_EXIST_STR);
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);

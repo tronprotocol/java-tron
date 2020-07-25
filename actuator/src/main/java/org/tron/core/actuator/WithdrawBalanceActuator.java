@@ -108,7 +108,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + ActuatorConstant.NOT_EXIST_STR);
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
