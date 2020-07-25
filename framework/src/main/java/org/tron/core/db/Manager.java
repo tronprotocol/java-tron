@@ -154,9 +154,7 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
   private int maxTransactionPendingSize = Args.getInstance().getMaxTransactionPendingSize();
-  @Autowired(required = false)
-  @Getter
-  private TransactionCache transactionCache;
+
   @Autowired
   private KhaosDatabase khaosDb;
   @Getter
@@ -520,7 +518,7 @@ public class Manager {
             chainBaseManager.getBlockByNum(blockNum).getTransactions().stream()
                 .map(tc -> tc.getTransactionId().getBytes())
                 .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
-                .forEach(e -> transactionCache
+                .forEach(e -> chainBaseManager.getTransactionCache()
                     .put(e.getKey(), new BytesCapsule(e.getValue())));
           } catch (ItemNotFoundException | BadItemException e) {
             logger.info("init txs cache error.");
@@ -539,7 +537,7 @@ public class Manager {
     }
 
     logger.info("end to init txs cache. trx ids:{}, block count:{}, empty block count:{}, cost:{}",
-        transactionCache.size(),
+        chainBaseManager.getTransactionCache().size(),
         blockCount.get(),
         emptyBlockCount.get(),
         System.currentTimeMillis() - start
@@ -607,8 +605,9 @@ public class Manager {
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {
-    if (transactionCache != null) {
-      return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
+    if (chainBaseManager.getTransactionCache() != null) {
+      return chainBaseManager.getTransactionCache()
+          .has(transactionCapsule.getTransactionId().getBytes());
     }
 
     return chainBaseManager.getTransactionStore()
@@ -1099,7 +1098,7 @@ public class Manager {
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
 
-    Optional.ofNullable(transactionCache)
+    Optional.ofNullable(chainBaseManager.getTransactionCache())
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
             new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 

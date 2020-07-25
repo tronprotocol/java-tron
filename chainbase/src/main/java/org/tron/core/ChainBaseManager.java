@@ -25,6 +25,7 @@ import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
+import org.tron.core.db.TransactionCache;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
@@ -174,6 +175,10 @@ public class ChainBaseManager {
 
   @Getter
   private ForkController forkController = ForkController.instance();
+
+  @Autowired(required = false)
+  @Getter
+  private TransactionCache transactionCache;
 
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");

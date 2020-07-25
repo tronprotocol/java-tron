@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -89,7 +91,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
     long newOriginEnergyLimit = contract.getOriginEnergyLimit();
@@ -111,7 +113,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
     if (!Arrays.equals(ownerAddress, deployedContractOwnerAddress)) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] is not the owner of the contract");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] is not the owner of the contract");
     }
 
     return true;
