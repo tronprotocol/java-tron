@@ -261,6 +261,20 @@ public class FullNodeHttpApiService implements Service {
   private GetCurrentCycleService getCurrentCycleServlet;
   @Autowired
   private GetNowSRAnnualizedRateOfReturnServlet getNowSRAnnualizedRateOfReturnServlet;
+  @Autowired
+  private MarketSellAssetServlet marketSellAssetServlet;
+  @Autowired
+  private MarketCancelOrderServlet marketCancelOrderServlet;
+  @Autowired
+  private GetMarketOrderByAccountServlet getMarketOrderByAccountServlet;
+  @Autowired
+  private GetMarketOrderByIdServlet getMarketOrderByIdServlet;
+  @Autowired
+  private GetMarketPriceByPairServlet getMarketPriceByPairServlet;
+  @Autowired
+  private GetMarketOrderListByPairServlet getMarketOrderListByPairServlet;
+  @Autowired
+  private GetMarketPairListServlet getMarketPairListServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -497,6 +511,19 @@ public class FullNodeHttpApiService implements Service {
 
       context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
+
+      context.addServlet(new ServletHolder(marketSellAssetServlet), "/wallet/marketsellasset");
+      context.addServlet(new ServletHolder(marketCancelOrderServlet), "/wallet/marketcancelorder");
+      context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
+          "/wallet/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdServlet),
+          "/wallet/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
+          "/wallet/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairServlet),
+          "/wallet/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListServlet),
+          "/wallet/getmarketpairlist");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

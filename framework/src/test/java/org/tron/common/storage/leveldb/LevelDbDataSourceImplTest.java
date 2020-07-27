@@ -26,8 +26,10 @@ import static org.junit.Assert.assertNull;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +54,6 @@ public class LevelDbDataSourceImplTest {
   private byte[] value4 = "40000".getBytes();
   private byte[] value5 = "50000".getBytes();
   private byte[] value6 = "60000".getBytes();
-  private byte[] value7 = "70000".getBytes();
 
   private byte[] key1 = "00000001aa".getBytes();
   private byte[] key2 = "00000002aa".getBytes();
@@ -60,7 +61,6 @@ public class LevelDbDataSourceImplTest {
   private byte[] key4 = "00000004aa".getBytes();
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
-  private byte[] key7 = "00000003ab".getBytes();
 
   /**
    * Release resources.
@@ -235,6 +235,7 @@ public class LevelDbDataSourceImplTest {
     dataSource.resetDb();
 
     putSomeKeyValue(dataSource);
+    Assert.assertTrue(true);
     dataSource.resetDb();
     dataSource.closeDB();
   }
@@ -288,6 +289,26 @@ public class LevelDbDataSourceImplTest {
     dataMapset.put(key3, value3);
     dataMapset.forEach(dataSource::putData);
     Assert.assertEquals(dataMapset.size(), dataSource.getTotal());
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void getKeysNext() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getKeysNext_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+    putSomeKeyValue(dataSource);
+
+    int limit = 2;
+    List<byte[]> seekKeyLimitNext = dataSource.getKeysNext("0000000300".getBytes(), limit);
+    List<byte[]> list = Arrays.asList(key3, key4);
+
+    for (int i = 0; i < limit; i++) {
+      Assert.assertArrayEquals(list.get(i), seekKeyLimitNext.get(i));
+    }
+
     dataSource.resetDb();
     dataSource.closeDB();
   }

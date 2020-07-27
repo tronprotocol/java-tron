@@ -11,6 +11,7 @@ import "core/contract/balance_contract.proto";
 import "core/contract/proposal_contract.proto";
 import "core/contract/storage_contract.proto";
 import "core/contract/exchange_contract.proto";
+import "core/contract/market_contract.proto";
 import "core/contract/smart_contract.proto";
 import "core/contract/shield_contract.proto";
 
@@ -285,6 +286,28 @@ service Wallet {
 
   rpc ExchangeTransaction (ExchangeTransactionContract) returns (TransactionExtention) {
   }
+
+  rpc MarketSellAsset (MarketSellAssetContract) returns (TransactionExtention) {
+  }
+
+  rpc MarketCancelOrder (MarketCancelOrderContract) returns (TransactionExtention) {
+  }
+
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
+
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
+  }
+
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
+  }
+
 
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
@@ -897,6 +920,21 @@ service WalletSolidity {
   }
 
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+  }
+
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
+
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
+  }
+
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
   }
 
 };

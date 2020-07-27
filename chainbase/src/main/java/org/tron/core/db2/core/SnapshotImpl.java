@@ -7,12 +7,14 @@ import com.google.common.collect.Streams;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
+import org.tron.core.db2.common.Value.Operator;
 import org.tron.core.db2.common.WrappedByteArray;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
@@ -34,20 +36,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     return get(this, key);
   }
 
-  @Override
-  public void put(byte[] key, byte[] value) {
-    Preconditions.checkNotNull(key, "key in db is not null.");
-    Preconditions.checkNotNull(value, "value in db is not null.");
-
-    db.put(Key.copyOf(key), Value.copyOf(Value.Operator.PUT, value));
-  }
-
-  @Override
-  public void remove(byte[] key) {
-    Preconditions.checkNotNull(key, "key in db is not null.");
-    db.put(Key.of(key), Value.of(Value.Operator.DELETE, null));
-  }
-
   private byte[] get(Snapshot head, byte[] key) {
     Snapshot snapshot = head;
     Value value;
@@ -60,6 +48,20 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     }
 
     return snapshot == null ? null : snapshot.get(key);
+  }
+
+  @Override
+  public void put(byte[] key, byte[] value) {
+    Preconditions.checkNotNull(key, "key in db is not null.");
+    Preconditions.checkNotNull(value, "value in db is not null.");
+
+    db.put(Key.copyOf(key), Value.copyOf(Value.Operator.PUT, value));
+  }
+
+  @Override
+  public void remove(byte[] key) {
+    Preconditions.checkNotNull(key, "key in db is not null.");
+    db.put(Key.of(key), Value.of(Value.Operator.DELETE, null));
   }
 
   // we have a 3x3 matrix of all possibilities when merging previous snapshot and current snapshot :
@@ -113,6 +115,31 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
       next = next.getNext();
     }
   }
+
+  /**
+   * In the snapshot, there may be same keys.
+   * If we use Map to get all the data, the later will overwrite the previous value.
+   * So, if we use list, we need to exclude duplicate keys.
+   * More than that, there will be some item which has been deleted, but just assigned in Operator,
+   * so we need Operator value to determine next step.
+   * */
+  synchronized void collectUnique(Map<WrappedByteArray, Operator> all) {
+    Snapshot next = getRoot().getNext();
+    while (next != null) {
+      Streams.stream(((SnapshotImpl) next).db)
+          .forEach(e -> {
+            WrappedByteArray key = WrappedByteArray.of(e.getKey().getBytes());
+            if (!all.containsKey(key)) {
+              all.put(WrappedByteArray.of(e.getKey().getBytes()),
+                   e.getValue().getOperator());
+            }
+
+          });
+      next = next.getNext();
+    }
+  }
+
+
 
   @Override
   public void close() {

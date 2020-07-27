@@ -25,6 +25,11 @@ import org.tron.core.services.http.GetBrokerageServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
+import org.tron.core.services.http.GetMarketOrderByAccountServlet;
+import org.tron.core.services.http.GetMarketOrderByIdServlet;
+import org.tron.core.services.http.GetMarketOrderListByPairServlet;
+import org.tron.core.services.http.GetMarketPairListServlet;
+import org.tron.core.services.http.GetMarketPriceByPairServlet;
 import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
@@ -112,6 +117,16 @@ public class SolidityNodeHttpApiService implements Service {
   private ScanShieldedTRC20NotesByOvkServlet scanShieldedTRC20NotesByOvkServlet;
   @Autowired
   private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
+  @Autowired
+  private GetMarketOrderByAccountServlet getMarketOrderByAccountServlet;
+  @Autowired
+  private GetMarketOrderByIdServlet getMarketOrderByIdServlet;
+  @Autowired
+  private GetMarketPriceByPairServlet getMarketPriceByPairServlet;
+  @Autowired
+  private GetMarketOrderListByPairServlet getMarketOrderListByPairServlet;
+  @Autowired
+  private GetMarketPairListServlet getMarketPairListServlet;
 
   @Autowired
   private GetBrokerageServlet getBrokerageServlet;
@@ -194,6 +209,17 @@ public class SolidityNodeHttpApiService implements Service {
 
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/walletsolidity/gettransactioninfobyblocknum");
+
+      context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
+          "/walletsolidity/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdServlet),
+          "/walletsolidity/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
+          "/walletsolidity/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairServlet),
+          "/walletsolidity/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListServlet),
+          "/walletsolidity/getmarketpairlist");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),

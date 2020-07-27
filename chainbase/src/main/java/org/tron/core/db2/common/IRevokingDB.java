@@ -1,5 +1,6 @@
 package org.tron.core.db2.common;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.tron.core.db2.core.Chainbase;
@@ -30,5 +31,7 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   // for blockstore
   Set<byte[]> getValuesNext(byte[] key, long limit);
+
+  List<byte[]> getKeysNext(byte[] key, long limit);
 
 }

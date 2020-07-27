@@ -25,6 +25,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.WITNESS_STANDBY_LENGTH;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
 import com.google.common.collect.ContiguousSet;
@@ -41,8 +42,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -132,6 +135,9 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -139,6 +145,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
@@ -168,6 +175,9 @@ import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegationStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
@@ -188,6 +198,11 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.MarketOrder;
+import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketOrderPairList;
+import org.tron.protos.Protocol.MarketPrice;
+import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -928,6 +943,22 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getWitness127PayPerBlock")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
+        .build());
+
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowMarketTransaction")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowMarketTransaction())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMarketSellFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMarketSellFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMarketCancelFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMarketCancelFee())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -2213,6 +2244,166 @@ public class Wallet {
                   .setPort(node.getPort())));
         });
     return nodeListBuilder.build();
+  }
+
+  public MarketOrder getMarketOrderById(ByteString orderId) {
+
+    if (orderId == null || orderId.isEmpty()) {
+      return null;
+    }
+
+    MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
+
+    try {
+      return marketOrderStore.get(orderId.toByteArray()).getInstance();
+    } catch (ItemNotFoundException e) {
+      logger.error("orderId = " + orderId.toString() + " not found");
+      throw new IllegalStateException("order not found in store");
+    }
+
+  }
+
+  public MarketOrderList getMarketOrderByAccount(ByteString accountAddress) {
+
+    if (accountAddress == null || accountAddress.isEmpty()) {
+      return null;
+    }
+
+    MarketAccountOrderCapsule marketAccountOrderCapsule;
+    try {
+      marketAccountOrderCapsule = dbManager.getChainBaseManager()
+          .getMarketAccountStore().get(accountAddress.toByteArray());
+    } catch (ItemNotFoundException e) {
+      return null;
+    }
+
+    MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
+
+    MarketOrderList.Builder marketOrderListBuilder = MarketOrderList.newBuilder();
+    List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
+
+    orderIdList.forEach(
+        orderId -> {
+          try {
+            MarketOrderCapsule orderCapsule = marketOrderStore.get(orderId.toByteArray());
+            // set prev and next, hide these messages in the print
+            orderCapsule.setPrev(new byte[0]);
+            orderCapsule.setNext(new byte[0]);
+
+            marketOrderListBuilder
+                .addOrders(orderCapsule.getInstance());
+          } catch (ItemNotFoundException e) {
+            logger.error("orderId = " + orderId.toString() + " not found");
+            throw new IllegalStateException("order not found in store");
+          }
+        }
+    );
+
+    return marketOrderListBuilder.build();
+  }
+
+  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId)
+      throws BadItemException {
+    MarketUtils.checkPairValid(sellTokenId, buyTokenId);
+
+    MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
+
+    MarketPriceList.Builder marketPriceListBuilder = MarketPriceList.newBuilder()
+        .setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId));
+
+    long count = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (count == 0) {
+      return marketPriceListBuilder.build();
+    }
+
+    long limit = count < MARKET_COUNT_LIMIT_MAX ? count : MARKET_COUNT_LIMIT_MAX;
+
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, limit);
+
+    priceKeysList.forEach(
+        priceKey -> {
+          MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKey);
+          marketPriceListBuilder.addPrices(marketPrice);
+        }
+    );
+
+    return marketPriceListBuilder.build();
+  }
+
+  public MarketOrderPairList getMarketPairList() {
+    MarketOrderPairList.Builder builder = MarketOrderPairList.newBuilder();
+    MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore();
+
+    Iterator<Entry<byte[], BytesCapsule>> iterator = marketPairToPriceStore
+        .iterator();
+    long count = 0;
+    while (iterator.hasNext()) {
+      Entry<byte[], BytesCapsule> next = iterator.next();
+
+      byte[] pairKey = next.getKey();
+      builder.addOrderPair(MarketUtils.decodeKeyToMarketPairHuman(pairKey));
+      count++;
+      if (count > MARKET_COUNT_LIMIT_MAX) {
+        break;
+      }
+    }
+
+    return builder.build();
+  }
+
+  public MarketOrderList getMarketOrderListByPair(byte[] sellTokenId, byte[] buyTokenId)
+      throws ItemNotFoundException, BadItemException {
+    MarketUtils.checkPairValid(sellTokenId, buyTokenId);
+
+    MarketOrderList.Builder builder = MarketOrderList.newBuilder();
+
+    MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
+    MarketPairPriceToOrderStore pairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
+    MarketOrderStore orderStore = dbManager.getChainBaseManager().getMarketOrderStore();
+
+    long countForPrice = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (countForPrice == 0) {
+      return builder.build();
+    }
+    long limitForPrice =
+        countForPrice < MARKET_COUNT_LIMIT_MAX ? countForPrice : MARKET_COUNT_LIMIT_MAX;
+
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, limitForPrice);
+
+    long countForOrder = 0;
+    for (byte[] pairPriceKey : priceKeysList) {
+      MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+          .getUnchecked(pairPriceKey);
+      if (MARKET_COUNT_LIMIT_MAX - countForOrder <= 0) {
+        break;
+      }
+      if (orderIdListCapsule != null) {
+        List<MarketOrderCapsule> orderList = orderIdListCapsule
+            .getAllOrder(orderStore, MARKET_COUNT_LIMIT_MAX - countForOrder);
+
+        orderList.forEach(orderCapsule -> {
+          // set prev and next, hide these messages in the print
+          orderCapsule.setPrev(new byte[0]);
+          orderCapsule.setNext(new byte[0]);
+
+          builder.addOrders(orderCapsule.getInstance());
+        });
+        countForOrder += orderList.size();
+      }
+    }
+
+    return builder.build();
   }
 
   public Transaction deployContract(TransactionCapsule trxCap) {

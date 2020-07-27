@@ -293,6 +293,11 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minEffectiveConnection;
+
+  @Getter
+  @Setter
+  public long allowMarketTransaction; //committee parameter
+
   // @Getter
   // @Setter
   // public long allowShieldedTransaction; //committee parameter

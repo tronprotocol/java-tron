@@ -138,6 +138,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
   private static final byte[] CURRENT_CYCLE_TIMESTAMP = "CURRENT_CYCLE_TIMESTAMP".getBytes();
 
+  private static final byte[] ALLOW_MARKET_TRANSACTION = "ALLOW_MARKET_TRANSACTION".getBytes();
+  private static final byte[] MARKET_SELL_FEE = "MARKET_SELL_FEE".getBytes();
+  private static final byte[] MARKET_CANCEL_FEE = "MARKET_CANCEL_FEE".getBytes();
+  private static final byte[] MARKET_QUANTITY_LIMIT = "MARKET_QUANTITY_LIMIT".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -425,6 +430,30 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getExchangeBalanceLimit();
     } catch (IllegalArgumentException e) {
       this.saveExchangeBalanceLimit(1_000_000_000_000_000L);
+    }
+
+    try {
+      this.getAllowMarketTransaction();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMarketTransaction(CommonParameter.getInstance().getAllowMarketTransaction());
+    }
+
+    try {
+      this.getMarketSellFee();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketSellFee(0L); // 0L
+    }
+
+    try {
+      this.getMarketCancelFee();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketCancelFee(0L);
+    }
+
+    try {
+      this.getMarketQuantityLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketQuantityLimit(1_000_000_000_000_000L);
     }
 
     try {
@@ -1258,6 +1287,62 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found EXCHANGE_BALANCE_LIMIT"));
+  }
+
+  public void saveAllowMarketTransaction(long allowMarketTransaction) {
+    this.put(DynamicPropertiesStore.ALLOW_MARKET_TRANSACTION,
+        new BytesCapsule(ByteArray.fromLong(allowMarketTransaction)));
+  }
+
+  public long getAllowMarketTransaction() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MARKET_TRANSACTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_MARKET_TRANSACTION"));
+  }
+
+  public boolean supportAllowMarketTransaction() {
+    return getAllowMarketTransaction() == 1L;
+  }
+
+  public void saveMarketSellFee(long fee) {
+    this.put(MARKET_SELL_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getMarketSellFee() {
+    return Optional.ofNullable(getUnchecked(MARKET_SELL_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_SELL_FEE"));
+  }
+
+  public void saveMarketCancelFee(long fee) {
+    this.put(MARKET_CANCEL_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getMarketCancelFee() {
+    return Optional.ofNullable(getUnchecked(MARKET_CANCEL_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_CANCEL_FEE"));
+  }
+
+  public void saveMarketQuantityLimit(long limit) {
+    this.put(MARKET_QUANTITY_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(limit)));
+  }
+
+  public long getMarketQuantityLimit() {
+    return Optional.ofNullable(getUnchecked(MARKET_QUANTITY_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_QUANTITY_LIMIT"));
   }
 
   public void saveTotalTransactionCost(long value) {

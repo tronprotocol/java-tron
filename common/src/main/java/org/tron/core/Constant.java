@@ -173,6 +173,9 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
       + ".allowShieldedTRC20Transaction";
 
+  public static final String COMMITTEE_ALLOW_MARKET_TRANSACTION =
+      "committee.allowMarketTransaction";
+
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
 
   public static final String EVENT_SUBSCRIBE_FILTER = "event.subscribe.filter";
