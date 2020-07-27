@@ -12,7 +12,7 @@ public class Parameter {
     VERSION_3_6_5(9, 0L, 0),
     VERSION_3_6_6(10, 0L, 0),
     VERSION_4_0(16, 0L, 0),
-    VERSION_4_0_1(17, 1596780000000L, 22);
+    VERSION_4_0_1(17, 1596780000000L, 22);//GMT 2020-08-07 06:00:00
 
     @Getter
     private int value;
