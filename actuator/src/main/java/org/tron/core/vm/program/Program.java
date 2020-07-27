@@ -1097,8 +1097,10 @@ public class Program {
     return invoke.getCallerAddress().clone();
   }
 
-  public DataWord getChainId() {return new DataWord(getContractState().getBlockByNum(0).getBlockId().getNum());}
-
+  public DataWord getChainId() {
+    return new DataWord(Hex.toHexString(getContractState()
+        .getBlockByNum(0).getBlockId().getBytes()));
+  }
   public DataWord getDropPrice() {
     return new DataWord(1);
   }

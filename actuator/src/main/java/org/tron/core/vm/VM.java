@@ -1040,11 +1040,13 @@ public class VM {
         case CHAINID: {
           DataWord chainId = program.getChainId();
           program.stackPush(chainId);
+          program.step();
           break;
         }
         case SELFBALANCE: {
           DataWord selfBalance = program.getBalance(program.getContractAddress());
           program.stackPush(selfBalance);
+          program.step();
           break;
         }
         case POP: {
