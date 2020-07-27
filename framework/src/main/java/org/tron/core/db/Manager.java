@@ -139,6 +139,8 @@ import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 
 
@@ -1050,8 +1052,14 @@ public class Manager {
       return null;
     }
 
-    if (getDynamicPropertiesStore().needSetTransactionRet() && Objects.isNull(blockCap)) {
-      trxCap.resetResult();
+    if (getDynamicPropertiesStore().needSetTransactionRet()) {
+      if (Objects.nonNull(trxCap.getContractResult())) {
+        Result.contractResult contractResult = trxCap.getContractResult();
+        trxCap.resetResult();
+        trxCap.setResultCode(contractResult);
+      } else {
+        trxCap.resetResult();
+      }
     }
 
     validateTapos(trxCap);

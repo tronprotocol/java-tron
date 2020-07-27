@@ -2,10 +2,12 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -17,6 +19,9 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
 public class TransactionCapsuleTest {
@@ -1069,4 +1074,13 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     }
   }*/
+
+//  @Test
+//  public void trxCapsuleClearTest() {
+//    Transaction tx = Transaction.newBuilder().setRet(0, Result.newBuilder().setContractRet(contractResult.OUT_OF_TIME).build()).build();
+//    TransactionCapsule trxCap = new TransactionCapsule(tx);
+//    Result.contractResult contractResult = trxCap.getContractResult();
+//    trxCap.resetResult();
+//    trxCap.setResultCode(contractResult);
+//  }
 }

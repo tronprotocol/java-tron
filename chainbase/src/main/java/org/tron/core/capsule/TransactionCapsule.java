@@ -737,6 +737,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = transaction.toBuilder().addRet(ret).build();
   }
 
+  public Transaction.Result.contractResult getContractResult() {
+    return this.transaction.getRet(0).getContractRet();
+  }
+
 //  public void setResultWithRet(TransactionContext context) {
 //    contractResult code = context.getProgramResult().getResultCode();
 //
