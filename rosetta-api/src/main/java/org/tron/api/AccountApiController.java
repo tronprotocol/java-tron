@@ -26,7 +26,7 @@ import org.tron.model.AccountIdentifier;
 import org.tron.model.Amount;
 import org.tron.model.BlockIdentifier;
 import org.tron.model.Error;
-import org.tron.util.Default;
+import org.tron.common.Default;
 
 @Controller
 @RequestMapping("${openapi.rosetta.base-path:}")
