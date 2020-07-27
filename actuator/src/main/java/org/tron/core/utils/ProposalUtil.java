@@ -302,7 +302,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_SHIELDED_TRC20_TRANSACTION: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_SHIELDED_TRC20_TRANSACTION]");
         }
