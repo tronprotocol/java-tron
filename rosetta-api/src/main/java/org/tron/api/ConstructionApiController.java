@@ -1,15 +1,20 @@
 package org.tron.api;
 
 import com.alibaba.fastjson.JSON;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.Valid;
+
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,11 +25,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.model.*;
 import org.tron.model.Error;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.BalanceContract;
 
 
 @Controller
@@ -71,15 +78,29 @@ public class ConstructionApiController implements ConstructionApi {
       for (MediaType mediaType : MediaType.parseMediaTypes(request.getHeader("Accept"))) {
         if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
           String returnString;
+//          BalanceContract.TransferContract transferContract = BalanceContract.TransferContract.newBuilder().setAmount(10)
+//                  .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("121212a9cf")))
+//                  .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("232323a9cf"))).build();
+//          Protocol.Transaction transactionTest = Protocol.Transaction.newBuilder().setRawData(
+//                  Protocol.Transaction.raw.newBuilder().setTimestamp(DateTime.now().minusDays(4).getMillis())
+//                          .setRefBlockNum(1)
+//                          .addContract(
+//                                  Protocol.Transaction.Contract.newBuilder().setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+//                                          .setParameter(Any.pack(transferContract)).build()).build())
+//                  .build();
+//          ConstructionCombineResponse constructionCombineResponse = new ConstructionCombineResponse();
+//          constructionCombineResponse.setSignedTransaction(Base64.getEncoder().encodeToString(transactionTest.getRawData().toByteArray()));
+//          returnString = JSON.toJSONString(constructionCombineResponse);
+//          constructionCombineRequest.setUnsignedTransaction(Base64.getEncoder().encodeToString(transactionTest.getRawData().toByteArray()));
           try {
-            Protocol.Transaction.raw transaction = Protocol.Transaction.raw.parseFrom(constructionCombineRequest.getUnsignedTransaction().getBytes());
+            Protocol.Transaction.raw transaction = Protocol.Transaction.raw.parseFrom(Base64.getDecoder().decode(constructionCombineRequest.getUnsignedTransaction()));
             Protocol.Transaction.Builder transactionBuilder = Protocol.Transaction.newBuilder();
             transactionBuilder.setRawData(transaction);
             for (Signature signature : constructionCombineRequest.getSignatures()) {
               transactionBuilder.addSignature(ByteString.copyFrom(signature.getHexBytes().getBytes()));
             }
             ConstructionCombineResponse constructionCombineResponse = new ConstructionCombineResponse();
-            constructionCombineResponse.setSignedTransaction(transactionBuilder.build().toString());
+            constructionCombineResponse.setSignedTransaction(Base64.getEncoder().encodeToString(transactionBuilder.build().toByteArray()));
             returnString = JSON.toJSONString(constructionCombineResponse);
           } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
@@ -125,11 +146,10 @@ public class ConstructionApiController implements ConstructionApi {
           String returnString = "{ \"transaction_hash\" : \"transaction_hash\" }";
           try {
             transaction = Protocol.Transaction.parseFrom(
-                    constructionHashRequest.getSignedTransaction().getBytes());
-            String transactionHash = Sha256Hash.hash(
+                    Base64.getDecoder().decode(constructionHashRequest.getSignedTransaction()));
+            String transactionHash = Base64.getEncoder().encodeToString(Sha256Hash.hash(
                     CommonParameter.getInstance().isECKeyCryptoEngine(),
-                    transaction.getRawData().toByteArray())
-                    .toString();
+                    transaction.getRawData().toByteArray()));
             ConstructionHashResponse constructionHashResponse = new ConstructionHashResponse();
             constructionHashResponse.setTransactionHash(transactionHash);
             returnString = JSON.toJSONString(constructionHashResponse);
@@ -185,7 +205,7 @@ public class ConstructionApiController implements ConstructionApi {
           Error error = new Error();
           try {
             Protocol.Transaction transactionSigned = Protocol.Transaction.parseFrom(
-                    constructionSubmitRequest.getSignedTransaction().getBytes());
+                    Base64.getDecoder().decode(constructionSubmitRequest.getSignedTransaction()));
             GrpcAPI.Return result = wallet.broadcastTransaction(transactionSigned);
             if (result.getResult()) {
               String transactionHash = Sha256Hash.hash(
