@@ -1,5 +1,7 @@
 package org.tron.core.actuator.utils;
 
+import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
+
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import lombok.extern.slf4j.Slf4j;
@@ -132,14 +134,14 @@ public class TransactionUtilTest {
   public void isNumberCheck() throws UnsupportedEncodingException {
     TransactionUtil actuatorUtil = new TransactionUtil();
     String number = "";
-    Assert.assertEquals(false, actuatorUtil.isNumber(number.getBytes("utf-8")));
+    Assert.assertEquals(false, isNumber(number.getBytes("utf-8")));
 
     number = "123df34";
-    Assert.assertEquals(false, actuatorUtil.isNumber(number.getBytes("utf-8")));
+    Assert.assertEquals(false, isNumber(number.getBytes("utf-8")));
     number = "013";
-    Assert.assertEquals(false, actuatorUtil.isNumber(number.getBytes("utf-8")));
+    Assert.assertEquals(false, isNumber(number.getBytes("utf-8")));
     number = "24";
-    Assert.assertEquals(true, actuatorUtil.isNumber(number.getBytes("utf-8")));
+    Assert.assertEquals(true, isNumber(number.getBytes("utf-8")));
   }
 
 }
