@@ -27,6 +27,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import java.util.Optional;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
+import org.tron.common.utils.ByteArray;
 import org.tron.config.Constant;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
@@ -156,25 +157,27 @@ public class NetworkApiController implements NetworkApi {
         networkStatusResponse.setCurrentBlockIdentifier(
                 new BlockIdentifier()
                         .index(currentBlock.getNum())
-                        .hash(currentBlock.getBlockId().getString()));
-        networkStatusResponse.setCurrentBlockTimestamp(new Timestamp(currentBlock.getTimeStamp()));
+                        .hash(ByteArray.toHexString(currentBlock.getBlockId().getBytes())));
 
         BlockCapsule genesisBlock = chainBaseManager.getGenesisBlock();
         networkStatusResponse.setGenesisBlockIdentifier(
                 new BlockIdentifier()
                         .index(genesisBlock.getNum())
-                        .hash(genesisBlock.getBlockId().getString()));
+                        .hash(ByteArray.toHexString(genesisBlock.getBlockId().getBytes())));
 
         networkStatusResponse.setOldestBlockIdentifier(
                 new BlockIdentifier()
                         .index(currentBlock.getNum())
-                        .hash(currentBlock.getBlockId().getString()));
+                        .hash(ByteArray.toHexString(currentBlock.getBlockId().getBytes())));
+
+        networkStatusResponse.setCurrentBlockTimestamp(new Timestamp(currentBlock.getTimeStamp()));
 
         List<Channel> activePeers = new ArrayList<>(channelManager.getActivePeers());
         List<Peer> peers = Lists.newArrayList();
         activePeers.forEach(peer -> {
             Map<String, Object> metaData = Maps.newHashMap();
-            metaData.put("address", peer.getInetAddress());
+            metaData.put("address", peer.getNode().getHost());
+            metaData.put("port", peer.getNode().getPort());
             peers.add(new Peer()
                     .peerId(peer.getPeerId())
                     .metadata(metaData));
@@ -182,6 +185,11 @@ public class NetworkApiController implements NetworkApi {
         networkStatusResponse.setPeers(peers);
 
         return new ResponseEntity<>(networkStatusResponse, HttpStatus.OK);
+    }
+
+    private boolean checkRequest(NetworkRequest networkRequest) {
+
+        return true;
     }
 
 }

@@ -12,6 +12,7 @@ public class Constant {
 
   // OperationStatus
   public static OperationStatus OPERATION_SUCCESS = new OperationStatus().status("SUCCESS").successful(true);
+  public static OperationStatus OPERATION_REVERT = new OperationStatus().status("REVERTED").successful(false);
 
   // errors
   public static Error INVALID_ACCOUNT_FORMAT =
@@ -22,7 +23,8 @@ public class Constant {
           "TRANSFER"
   };
   public static List<OperationStatus> supportOperationStatuses = Arrays.asList(
-          OPERATION_SUCCESS
+          OPERATION_SUCCESS,
+          OPERATION_REVERT
   );
   public static List<Error> supportErrors = Arrays.asList(
           INVALID_ACCOUNT_FORMAT
