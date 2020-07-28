@@ -21,6 +21,8 @@ import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.model.ConstructionDeriveRequest;
 import org.tron.model.ConstructionDeriveResponse;
+import org.tron.model.ConstructionPreprocessRequest;
+import org.tron.model.ConstructionPreprocessResponse;
 import org.tron.model.CurveType;
 import org.tron.model.Error;
 import org.tron.model.PublicKey;
@@ -80,6 +82,36 @@ public class ConstructionApiController implements ConstructionApi {
             }
         }
         return new ResponseEntity<>(HttpStatus.valueOf(200));
+    }
+
+    /**
+     * POST /construction/preprocess : Create a Request to Fetch Metadata
+     * Preprocess is called prior to &#x60;/construction/payloads&#x60; to construct a request for any metadata that is needed for transaction construction given (i.e. account nonce). The request returned from this method will be used by the caller (in a different execution environment) to call the &#x60;/construction/metadata&#x60; endpoint.
+     *
+     * @param constructionPreprocessRequest  (required)
+     * @return Expected response to a valid request (status code 200)
+     *         or unexpected error (status code 200)
+     */
+    @ApiOperation(value = "Create a Request to Fetch Metadata", nickname = "constructionPreprocess", notes = "Preprocess is called prior to `/construction/payloads` to construct a request for any metadata that is needed for transaction construction given (i.e. account nonce). The request returned from this method will be used by the caller (in a different execution environment) to call the `/construction/metadata` endpoint.", response = ConstructionPreprocessResponse.class, tags={ "Construction", })
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "Expected response to a valid request", response = ConstructionPreprocessResponse.class),
+        @ApiResponse(code = 200, message = "unexpected error", response = Error.class) })
+    @RequestMapping(value = "/construction/preprocess",
+        produces = { "application/json" },
+        consumes = { "application/json" },
+        method = RequestMethod.POST)
+    public ResponseEntity<ConstructionPreprocessResponse> constructionPreprocess(@ApiParam(value = "" ,required=true )  @Valid @RequestBody ConstructionPreprocessRequest constructionPreprocessRequest) {
+        getRequest().ifPresent(request -> {
+            for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+                    String exampleString = "{ \"options\" : \"{}\" }";
+                    ApiUtil.setExampleResponse(request, "application/json", exampleString);
+                    break;
+                }
+            }
+        });
+        return new ResponseEntity<>(HttpStatus.valueOf(200));
+
     }
 
 }

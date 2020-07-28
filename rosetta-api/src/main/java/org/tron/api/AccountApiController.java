@@ -77,8 +77,6 @@ public class AccountApiController implements AccountApi {
                     Amount amount = new Amount();
                     amount.value(balance)
                         .currency(Default.CURRENCY);
-//                    String exampleString = "{ \"balances\" : [ { \"metadata\" : \"{}\", \"currency\" : { \"symbol\" : \"BTC\", \"metadata\" : { \"Issuer\" : \"Satoshi\" }, \"decimals\" : 8 }, \"value\" : \"1238089899992\" }, { \"metadata\" : \"{}\", \"currency\" : { \"symbol\" : \"BTC\", \"metadata\" : { \"Issuer\" : \"Satoshi\" }, \"decimals\" : 8 }, \"value\" : \"1238089899992\" } ], \"metadata\" : { \"sequence_number\" : 23 }, \"block_identifier\" : { \"index\" : 1123941, \"hash\" : \"0x1f2cc6c5027d2f201a5453ad1119574d2aed23a392654742ac3c78783c071f85\" } }";
-//                    ApiUtil.setExampleResponse(request, "application/json", exampleString);
 
                     BlockIdentifier blockIdentifier = new BlockIdentifier();
                     blockIdentifier.index(dynamicPropertiesStore.getLatestBlockHeaderNumber())
