@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 
 @Slf4j
 @Component
@@ -63,6 +64,35 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
+  public byte[] getCrossInfoById(String chainId) {
+    return getUnchecked(buildRegisterKey(chainId)).getData();
+  }
+
+  public void putCrossInfo(String chainId, byte[] crossInfo) {
+    byte[] key = buildRegisterKey(chainId);
+    this.put(key, new BytesCapsule(crossInfo));
+  }
+
+  // todo: vote-infos are only stored in the db, but not stored on the chain,
+  // can track the details of the withdraw and deposit
+  public void putCrossVote(String chainId, String address, long amount) {
+    this.put(buildVoteKey(chainId, address), new BytesCapsule(ByteArray.fromLong(amount)));
+  }
+
+  public Long getCrossVote(String chainId, String address) {
+    BytesCapsule data = getUnchecked(buildVoteKey(chainId, address));
+    if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
+      return ByteArray.toLong(data.getData());
+    } else {
+      return 0L;
+    }
+  }
+
+  // todo
+  public Long getVoteCountByChainId(String chainId) {
+    return 0L;
+  }
+
   private byte[] buildTokenKey(String chainId, String tokenId) {
     return ("token_" + chainId + "_" + tokenId).getBytes();
   }
@@ -74,4 +104,13 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
   private byte[] buildInKey(String fromChainId, String tokenId) {
     return ("in_" + fromChainId + "_" + tokenId).getBytes();
   }
+
+  private byte[] buildRegisterKey(String chainId) {
+    return ("register_" + chainId).getBytes();
+  }
+
+  private byte[] buildVoteKey(String chainId, String address) {
+    return ("vote_" + chainId + address).getBytes();
+  }
+
 }

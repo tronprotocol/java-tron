@@ -55,10 +55,20 @@ message CrossToken {
   bytes chain_id = 5;
 }
 
-message RegisterCrossContract {
+message CrossChainInfo {
   bytes chain_id = 1;
   bytes sr_list = 2;
   int64 begin_sync_height = 3;
   int64 maintenance_time_interval = 4;
   bytes parent_block_hash = 5;
+}
+
+message RegisterCrossContract {
+  bytes owner_address = 1;
+  CrossChainInfo cross_chain_info = 2;
+}
+
+message UpdateCrossContract {
+  bytes owner_address = 1;
+  CrossChainInfo cross_chain_info = 2;
 }

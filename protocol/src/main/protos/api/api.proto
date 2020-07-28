@@ -13,6 +13,7 @@ import "core/contract/storage_contract.proto";
 import "core/contract/exchange_contract.proto";
 import "core/contract/smart_contract.proto";
 import "core/contract/shield_contract.proto";
+import "core/contract/cross_chain.proto";
 
 option java_package = "org.tron.api"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "GrpcAPI"; //Specify the class name of the generated Java file
@@ -714,7 +715,19 @@ service Wallet {
   }
   //check the cross chain transaction is commit or not
   rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
+  };
 
+  rpc RegisterCross (RegisterCrossContract) returns (TransactionExtention) {
+  };
+
+  rpc GetRegisterCrossList (EmptyMessage) returns (RegisterCrossList) {
+  };
+
+  rpc VoteCross (VoteCrossContract) returns (TransactionExtention) {
+  };
+
+  // TODO: the data structure of PARAM and RETURN need to be discussed
+  rpc GetVoteCrossList (BytesMessage) returns (VoteCrossList) {
   };
 };
 
@@ -1330,4 +1343,12 @@ message SpendResult {
 
 message TransactionInfoList {
   repeated TransactionInfo transactionInfo = 1;
+}
+
+message RegisterCrossList {
+  repeated RegisterCrossContract registerCrossContract = 1;
+}
+
+message VoteCrossList {
+  repeated VoteCrossContract voteCrossContract = 1;
 }
