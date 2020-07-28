@@ -978,6 +978,8 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.UpdateBrokerageContract
           || contractType == ContractType.CrossContract
           || contractType == ContractType.RegisterCrossContract
+          || contractType == ContractType.UpdateCrossContract
+          || contractType == ContractType.VoteCrossContract
           ) {
         continue;
       }
@@ -1009,6 +1011,8 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.UpdateBrokerageContract
           || contractType == ContractType.CrossContract
           || contractType == ContractType.RegisterCrossContract
+          || contractType == ContractType.UpdateCrossContract
+          || contractType == ContractType.VoteCrossContract
           ) {
         continue;
       }
@@ -1032,7 +1036,9 @@ public class AccountPermissionUpdateActuatorTest {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.UpdateBrokerageContract
           || contractType == ContractType.CrossContract
-          || contractType == ContractType.RegisterCrossContract) {
+          || contractType == ContractType.RegisterCrossContract
+          || contractType == ContractType.UpdateCrossContract
+          || contractType == ContractType.VoteCrossContract) {
         continue;
       }
       int id = contractType.getNumber();
@@ -1056,7 +1062,9 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.AccountPermissionUpdateContract
           || contractType == ContractType.UpdateBrokerageContract
           || contractType == ContractType.CrossContract
-          || contractType == ContractType.RegisterCrossContract) {
+          || contractType == ContractType.RegisterCrossContract
+          || contractType == ContractType.UpdateCrossContract
+          || contractType == ContractType.VoteCrossContract) {
         continue;
       }
       int id = contractType.getNumber();
