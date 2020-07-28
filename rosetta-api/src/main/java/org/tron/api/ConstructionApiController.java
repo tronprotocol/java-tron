@@ -1,10 +1,14 @@
 package org.tron.api;
 
+import com.alibaba.fastjson.JSONObject;
+import com.google.common.primitives.Ints;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,12 +17,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.NativeWebRequest;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.args.Args;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.model.ConstructionDeriveRequest;
 import org.tron.model.ConstructionDeriveResponse;
 import org.tron.model.ConstructionMetadataRequest;
@@ -34,6 +45,9 @@ import org.tron.model.PublicKey;
 public class ConstructionApiController implements ConstructionApi {
 
     private final NativeWebRequest request;
+
+    @Autowired
+    private DynamicPropertiesStore dynamicPropertiesStore;
 
     @org.springframework.beans.factory.annotation.Autowired
     public ConstructionApiController(NativeWebRequest request) {
@@ -133,15 +147,33 @@ public class ConstructionApiController implements ConstructionApi {
         consumes = { "application/json" },
         method = RequestMethod.POST)
     public ResponseEntity<ConstructionMetadataResponse> constructionMetadata(@ApiParam(value = "" ,required=true )  @Valid @RequestBody ConstructionMetadataRequest constructionMetadataRequest) {
-        getRequest().ifPresent(request -> {
+        if (getRequest().isPresent()) {
             for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
                 if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
                     String exampleString = "{ \"metadata\" : { \"account_sequence\" : 23, \"recent_block_hash\" : \"0x52bc44d5378309ee2abf1539bf71de1b7d7be3b5\" } }";
                     ApiUtil.setExampleResponse(request, "application/json", exampleString);
-                    break;
+                    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(dynamicPropertiesStore.getLatestBlockHeaderHash());
+                    byte[] referenceBlockNumBytes = ByteArray.subArray(ByteArray.fromLong(blockId.getNum()), 6, 8);
+                    int referenceBlockNum = Ints.fromBytes((byte) 0, (byte) 0, referenceBlockNumBytes[0], referenceBlockNumBytes[1]);
+                    String referenceBlockHash = ByteArray.toHexString(ByteArray.subArray(blockId.getBytes(), 8, 16));
+                    long expiration = dynamicPropertiesStore.getLatestBlockHeaderTimestamp() + Args.getInstance()
+                        .getTrxExpirationTimeInMilliseconds();
+                    long timestamp = System.currentTimeMillis();
+
+                    Map<String, Object> metadatas = new HashMap<>();
+                    metadatas.put("reference_block_num", referenceBlockNum);
+                    metadatas.put("reference_block_hash", referenceBlockHash);
+                    metadatas.put("expiration", expiration);
+                    metadatas.put("timestamp", timestamp);
+                    JSONObject jsonObject = new JSONObject(metadatas);
+                    ConstructionMetadataResponse response = new ConstructionMetadataResponse();
+                    response.setMetadata(jsonObject.toString());
+
+                    return new ResponseEntity<>(response, HttpStatus.OK);
                 }
             }
-        });
+        }
+
         return new ResponseEntity<>(HttpStatus.valueOf(200));
 
     }
