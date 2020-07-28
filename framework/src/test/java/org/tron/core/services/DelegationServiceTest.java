@@ -14,6 +14,7 @@ import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.Manager;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
@@ -28,6 +29,7 @@ public class DelegationServiceTest {
   public DelegationServiceTest(TronApplicationContext context) {
     delegationService = context.getBean(DelegationService.class);
     manager = context.getBean(Manager.class);
+    manager.getWitnessStore()
   }
 
   public static void testGrpc() {
@@ -116,6 +118,7 @@ public class DelegationServiceTest {
     testPay(0);
     testWithdraw();
     testBlockReward();
+    testGetWitnesseByAddress();
   }
 
   public void testBlockReward() {
@@ -125,6 +128,15 @@ public class DelegationServiceTest {
     manager.getDelegationStore().addBlockReward(cycle, address.getBytes(), 20);
     Assert.assertEquals(manager.getDelegationStore()
         .getBlockReward(cycle, address.getBytes()), 30);
+
+  }
+
+  public void testGetWitnesseByAddress() {
+    WitnessCapsule result = manager.getDelegationService()
+        .getWitnesseByAddress(ByteString
+            .copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));
+    Assert.assertNull(result);
+
 
   }
 }
