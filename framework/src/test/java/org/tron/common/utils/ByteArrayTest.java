@@ -17,8 +17,10 @@ package org.tron.common.utils;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.tron.common.utils.ByteArray.fromHexString;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
@@ -40,18 +42,23 @@ public class ByteArrayTest {
   }
 
   @Test
+  public void testFromHexString() {
+    assertEquals(0, fromHexString(null).length);
+    Assert.assertNotEquals(0, fromHexString("0x11").length);
+  }
+  @Test
   public void testHexStringToByte() {
     //logger.info("Byte: hex string 0x11 to byte = {}", ByteArray.fromHexString("0x11"));
     byte[] expectedfirst = new byte[]{17};
-    byte[] actualfirst = ByteArray.fromHexString("0x11");
+    byte[] actualfirst = fromHexString("0x11");
     assertArrayEquals(expectedfirst, actualfirst);
     //logger.info("Byte: hex string 10 to byte = {}", ByteArray.fromHexString("10"));
     byte[] expectedsecond = new byte[]{16};
-    byte[] actualsecond = ByteArray.fromHexString("10");
+    byte[] actualsecond = fromHexString("10");
     assertArrayEquals(expectedsecond, actualsecond);
     //logger.info("Byte: hex string 1 to byte = {}", ByteArray.fromHexString("1"));
     byte[] expectedthird = new byte[]{1};
-    byte[] actualthird = ByteArray.fromHexString("1");
+    byte[] actualthird = fromHexString("1");
     assertArrayEquals(expectedthird, actualthird);
   }
 

@@ -1569,8 +1569,7 @@ public class Manager {
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum());
-      boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
-      if (!result) {
+      if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
         logger.info("too many triggers, block trigger lost: {}", newBlock.getBlockId());
       }
     }
@@ -1586,8 +1585,7 @@ public class Manager {
       TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
       trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum());
-      boolean result = triggerCapsuleQueue.offer(trx);
-      if (!result) {
+      if (!triggerCapsuleQueue.offer(trx)) {
         logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
       }
     }
