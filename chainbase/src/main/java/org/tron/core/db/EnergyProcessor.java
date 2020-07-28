@@ -79,7 +79,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     result = Math.min(
         Math.max(result, totalEnergyLimit),
-        totalEnergyLimit * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER
+        totalEnergyLimit * dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier()
     );
 
     dynamicPropertiesStore.saveTotalEnergyCurrentLimit(result);

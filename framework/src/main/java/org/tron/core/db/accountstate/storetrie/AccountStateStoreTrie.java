@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateEntity;
 import org.tron.core.db.accountstate.TrieService;

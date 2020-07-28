@@ -31,6 +31,30 @@ public class HttpSelfFormatFieldName {
     //PrivateParametersWithoutAsk
     AddressFieldNameMap.put("protocol.PrivateParametersWithoutAsk.transparent_from_address", 1);
     AddressFieldNameMap.put("protocol.PrivateParametersWithoutAsk.transparent_to_address", 1);
+    //PrivateShieldedTRC20Parameters
+    AddressFieldNameMap.put(
+        "protocol.PrivateShieldedTRC20Parameters.transparent_to_address", 1);
+    AddressFieldNameMap.put(
+        "protocol.PrivateShieldedTRC20Parameters.shielded_TRC20_contract_address", 1);
+    //PrivateShieldedTRC20ParametersWithoutAsk
+    AddressFieldNameMap.put(
+        "protocol.PrivateShieldedTRC20ParametersWithoutAsk.transparent_to_address", 1);
+    AddressFieldNameMap.put(
+        "protocol.PrivateShieldedTRC20ParametersWithoutAsk.shielded_TRC20_contract_address", 1);
+    //IvkDecryptTRC20Parameters
+    AddressFieldNameMap.put(
+        "protocol.IvkDecryptTRC20Parameters.shielded_TRC20_contract_address", 1);
+    //OvkDecryptTRC20Parameters
+    AddressFieldNameMap.put(
+        "protocol.OvkDecryptTRC20Parameters.shielded_TRC20_contract_address", 1);
+    //NfTRC20Parameters
+    AddressFieldNameMap.put(
+        "protocol.NfTRC20Parameters.shielded_TRC20_contract_address", 1);
+    //ShieldedTRC20TriggerContractParameters
+    AddressFieldNameMap.put(
+        "protocol.ShieldedTRC20TriggerContractParameters.transparent_to_address", 1);
+    AddressFieldNameMap.put(
+        "protocol.DecryptNotesTRC20.NoteTx.transparent_to_address", 1);
 
     //***** Contract.proto *****
     //AccountCreateContract
@@ -219,6 +243,28 @@ public class HttpSelfFormatFieldName {
     NameFieldNameMap.put("protocol.Transaction.Contract.ContractName", 1);
     //TransactionInfo
     NameFieldNameMap.put("protocol.TransactionInfo.resMessage", 1);
+
+    //***** market.proto *****
+    // MarketSellAssetContract
+    AddressFieldNameMap.put("protocol.MarketSellAssetContract.owner_address", 1);
+    NameFieldNameMap.put("protocol.MarketSellAssetContract.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketSellAssetContract.buy_token_id", 1);
+
+    // MarketCancelOrderContract
+    AddressFieldNameMap.put("protocol.MarketCancelOrderContract.owner_address", 1);
+
+    // MarketOrder
+    AddressFieldNameMap.put("protocol.MarketOrder.owner_address", 1);
+    NameFieldNameMap.put("protocol.MarketOrder.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketOrder.buy_token_id", 1);
+
+    // MarketOrderPair
+    NameFieldNameMap.put("protocol.MarketOrderPair.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketOrderPair.buy_token_id", 1);
+
+    // MarketPriceList
+    NameFieldNameMap.put("protocol.MarketPriceList.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketPriceList.buy_token_id", 1);
   }
 
   public static boolean isAddressFormat(final String name) {

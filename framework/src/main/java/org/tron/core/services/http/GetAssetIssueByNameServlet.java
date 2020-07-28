@@ -3,7 +3,6 @@ package org.tron.core.services.http;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +42,7 @@ public class GetAssetIssueByNameServlet extends RateLimiterServlet {
         value = Util.getHexString(value);
       }
       fillResponse(params.isVisible(), ByteString.copyFrom(
-              ByteArray.fromHexString(value)), response);
+          ByteArray.fromHexString(value)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }

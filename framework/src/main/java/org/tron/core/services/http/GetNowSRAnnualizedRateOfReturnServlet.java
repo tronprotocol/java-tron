@@ -1,4 +1,3 @@
-
 package org.tron.core.services.http;
 
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
@@ -12,7 +11,6 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.AddressNotFound;
 import org.tron.core.exception.InvalidAddress;
-import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")

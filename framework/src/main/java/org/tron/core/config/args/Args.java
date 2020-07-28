@@ -76,12 +76,12 @@ public class Args extends CommonParameter {
   @Autowired(required = false)
   @Getter
   private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
-      solidityContractLogTriggerList = new ConcurrentHashMap<>();
+      solidityContractLogTriggerMap = new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
   private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
-      solidityContractEventTriggerList = new ConcurrentHashMap<>();
+      solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -157,7 +157,7 @@ public class Args extends CommonParameter {
     PARAMETER.minTimeRatio = 0.0;
     PARAMETER.maxTimeRatio = 5.0;
     PARAMETER.longRunningTime = 10;
-    PARAMETER.allowShieldedTransaction = 0;
+    // PARAMETER.allowShieldedTransaction = 0;
     PARAMETER.maxHttpConnectNumber = 50;
     PARAMETER.allowMultiSign = 0;
     PARAMETER.trxExpirationTimeInMilliseconds = 0;
@@ -173,6 +173,8 @@ public class Args extends CommonParameter {
     PARAMETER.nodeMetricsEnable = true;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
+    PARAMETER.allowShieldedTRC20Transaction = 0;
+    PARAMETER.allowMarketTransaction = 0;
     PARAMETER.crossChainPort = 0;
     PARAMETER.crossChainConnect = Collections.emptyList();
     PARAMETER.crossChain = 0;
@@ -632,9 +634,17 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX)
             && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
-    PARAMETER.allowShieldedTransaction =
-        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+    // PARAMETER.allowShieldedTransaction =
+    //     config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
+    //         .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+
+    PARAMETER.allowShieldedTRC20Transaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) : 0;
+
+    PARAMETER.allowMarketTransaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
 
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
@@ -690,8 +700,8 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
             .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
 
-    PARAMETER.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
-        .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.agreeNodeCount = config.hasPath(Constant.NODE_AGREE_NODE_COUNT) ? config
+        .getInt(Constant.NODE_AGREE_NODE_COUNT) : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
         ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
     if (PARAMETER.isWitness()) {

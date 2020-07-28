@@ -1,7 +1,5 @@
 package org.tron.common.crypto;
 
-import java.security.SignatureException;
-
 public interface SignInterface {
 
   byte[] getPrivateKey();
@@ -12,9 +10,7 @@ public interface SignInterface {
 
   String signHash(byte[] hash);
 
-  byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException;
-
   byte[] getNodeId();
 
-  byte[] Base64toBytes (String signature);
+  byte[] Base64toBytes(String signature);
 }

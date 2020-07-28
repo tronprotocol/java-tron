@@ -114,7 +114,8 @@ public class ReceiptCapsule {
    * payEnergyBill pay receipt energy bill by energy processor.
    */
   public void payEnergyBill(DynamicPropertiesStore dynamicPropertiesStore,
-      AccountStore accountStore, ForkController forkController, AccountCapsule origin, AccountCapsule caller,
+      AccountStore accountStore, ForkController forkController, AccountCapsule origin,
+      AccountCapsule caller,
       long percent, long originEnergyLimit, EnergyProcessor energyProcessor, long now)
       throws BalanceInsufficientException {
     if (receipt.getEnergyUsageTotal() <= 0) {
@@ -156,7 +157,8 @@ public class ReceiptCapsule {
   }
 
   private void payEnergyBill(
-      DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore, ForkController forkController,
+      DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore,
+      ForkController forkController,
       AccountCapsule account,
       long usage,
       EnergyProcessor energyProcessor,

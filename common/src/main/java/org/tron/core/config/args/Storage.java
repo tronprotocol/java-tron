@@ -136,7 +136,8 @@ public class Storage {
 
   public static Boolean getContractParseSwitchFromConfig(final Config config) {
     return config.hasPath(EVENT_SUBSCRIBE_CONTRACT_PARSE)
-        ? config.getBoolean(EVENT_SUBSCRIBE_CONTRACT_PARSE) : DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE;
+        ? config.getBoolean(EVENT_SUBSCRIBE_CONTRACT_PARSE)
+        : DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE;
   }
 
   public static String getDbDirectoryFromConfig(final Config config) {

@@ -160,11 +160,11 @@ public class PbftMessageHandle {
     dataSignCache.getUnchecked(message.getDataKey())
         .add(message.getPbftMessage().getSignature());
     if (agCou >= Param.getInstance().getAgreeNodeCount()) {
+      srPbftMessage = null;
       remove(message.getNo());
       //commit,
       if (!isSyncing()) {
         pbftMessageAction.action(message, dataSignCache.getUnchecked(message.getDataKey()));
-        srPbftMessage = null;
       }
     }
   }

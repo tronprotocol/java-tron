@@ -1,13 +1,14 @@
 package org.tron.core.db2.core;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import lombok.extern.slf4j.XSlf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -16,6 +17,7 @@ import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.exception.ItemNotFoundException;
+
 @Slf4j
 public class RevokingDBWithCachingOldValue implements IRevokingDB {
 
@@ -27,11 +29,26 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
     this(dbName, RevokingStore.getInstance());
   }
 
-  // only for unit test
+  // add for user defined option, ex: comparator
+  public RevokingDBWithCachingOldValue(String dbName, Options options) {
+    this(dbName, options, RevokingStore.getInstance());
+  }
+
+  // set public only for unit test
   public RevokingDBWithCachingOldValue(String dbName, AbstractRevokingStore revokingDatabase) {
     dbSource = new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
         dbName,
         StorageUtils.getOptionsByDbName(dbName),
+        new WriteOptions().sync(CommonParameter.getInstance().getStorage().isDbSync()));
+    dbSource.initDB();
+    this.revokingDatabase = revokingDatabase;
+  }
+
+  public RevokingDBWithCachingOldValue(String dbName, Options options,
+      AbstractRevokingStore revokingDatabase) {
+    dbSource = new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
+        dbName,
+        options,
         new WriteOptions().sync(CommonParameter.getInstance().getStorage().isDbSync()));
     dbSource.initDB();
     this.revokingDatabase = revokingDatabase;
@@ -42,7 +59,6 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
     if (Objects.isNull(key) || Objects.isNull(newValue)) {
       return;
     }
-    //logger.info("Address is {}, " + item.getClass().getSimpleName() + " is {}", key, item);
     byte[] value = dbSource.getData(key);
     if (ArrayUtils.isNotEmpty(value)) {
       onModify(key, value);
@@ -140,6 +156,11 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return dbSource.getValuesNext(key, limit);
+  }
+
+  @Override
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    return dbSource.getKeysNext(key, limit);
   }
 
   @Override

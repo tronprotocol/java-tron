@@ -146,7 +146,7 @@ public class NodeHandler {
 
   public void handlePing(PingMessage msg) {
     if (!nodeManager.getTable().getNode().equals(node)) {
-      sendPong(msg.getTimestamp());
+      sendPong();
     }
     node.setP2pVersion(msg.getVersion());
     if (!node.isConnectible(Args.getInstance().getNodeP2pVersion())) {
@@ -225,8 +225,8 @@ public class NodeHandler {
     }, pingTimeout, TimeUnit.MILLISECONDS);
   }
 
-  public void sendPong(long sequence) {
-    Message pong = new PongMessage(nodeManager.getPublicHomeNode(), sequence);
+  public void sendPong() {
+    Message pong = new PongMessage(nodeManager.getPublicHomeNode());
     sendMessage(pong);
   }
 

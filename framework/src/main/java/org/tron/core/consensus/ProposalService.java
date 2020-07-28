@@ -198,12 +198,33 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowPBFT(entry.getValue());
           break;
         }
+        case ALLOW_SHIELDED_TRC20_TRANSACTION: {
+          manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(entry.getValue());
+          break;
+        }
+        case ALLOW_MARKET_TRANSACTION: {
+          if (manager.getDynamicPropertiesStore().getAllowMarketTransaction() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowMarketTransaction(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(52);
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(53);
+          }
+          break;
+        }
+        case MARKET_SELL_FEE: {
+          manager.getDynamicPropertiesStore().saveMarketSellFee(entry.getValue());
+          break;
+        }
+        case MARKET_CANCEL_FEE: {
+          manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
+          break;
+        }
+
         case CROSS_CHAIN: {
           manager.getDynamicPropertiesStore().saveCrossChain(entry.getValue());
-          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(53);
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(54);
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(55);
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(56);
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(57);
           break;
         }
         default:

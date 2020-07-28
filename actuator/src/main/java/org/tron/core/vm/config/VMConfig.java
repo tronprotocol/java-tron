@@ -18,9 +18,9 @@
 package org.tron.core.vm.config;
 
 
-import lombok.Getter;
+import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
+
 import lombok.Setter;
-import org.tron.common.parameter.CommonParameter;
 
 /**
  * For developer only
@@ -34,18 +34,15 @@ public class VMConfig {
   @Setter
   private static boolean vmTrace = false;
 
-  @Setter
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
 
-  @Setter
   private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
-  @Setter
   private static boolean ALLOW_MULTI_SIGN = false;
 
-  @Setter
   private static boolean ALLOW_TVM_SOLIDITY_059 = false;
 
+  private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
 
   private VMConfig() {
   }
@@ -63,7 +60,7 @@ public class VMConfig {
   }
 
   public static void initVmHardFork(boolean pass) {
-    CommonParameter.ENERGY_LIMIT_HARD_FORK = pass;
+    ENERGY_LIMIT_HARD_FORK = pass;
   }
 
   public static void initAllowMultiSign(long allow) {
@@ -82,6 +79,14 @@ public class VMConfig {
     ALLOW_TVM_SOLIDITY_059 = allow == 1;
   }
 
+  public static void initAllowShieldedTRC20Transaction(long allow) {
+    ALLOW_SHIELDED_TRC20_TRANSACTION = allow == 1;
+  }
+
+  public static boolean getEnergyLimitHardFork() {
+    return ENERGY_LIMIT_HARD_FORK;
+  }
+
   public static boolean allowTvmTransferTrc10() {
     return ALLOW_TVM_TRANSFER_TRC10;
   }
@@ -98,7 +103,12 @@ public class VMConfig {
     return ALLOW_TVM_SOLIDITY_059;
   }
 
+  public static boolean allowShieldedTRC20Transaction() {
+    return ALLOW_SHIELDED_TRC20_TRANSACTION;
+  }
+
   private static class SystemPropertiesInstance {
+
     private static final VMConfig INSTANCE = new VMConfig();
   }
 }

@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +28,10 @@ public class GetNewShieldedAddressServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       ShieldedAddressInfo reply = wallet.getNewShieldedAddress();
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
+        response.getWriter().println(JsonFormat.printToString(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }

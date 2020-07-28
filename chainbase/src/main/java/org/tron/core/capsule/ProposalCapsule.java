@@ -1,7 +1,8 @@
 package org.tron.core.capsule;
 
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 import static org.tron.common.utils.WalletUtil.getAddressStringList;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -10,7 +11,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.StringUtil;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
 

@@ -297,9 +297,14 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minEffectiveConnection;
+
   @Getter
   @Setter
-  public long allowShieldedTransaction; //committee parameter
+  public long allowMarketTransaction; //committee parameter
+
+  // @Getter
+  // @Setter
+  // public long allowShieldedTransaction; //committee parameter
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
@@ -402,6 +407,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long oldSolidityBlockNum = -1;
+
+  @Getter/**/
+  @Setter
+  public long allowShieldedTRC20Transaction;
 
   @Getter
   @Setter

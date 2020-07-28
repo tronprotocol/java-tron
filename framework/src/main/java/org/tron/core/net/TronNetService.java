@@ -16,6 +16,7 @@ import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.CrossChainMsgHandler;
 import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
 import org.tron.core.net.messagehandler.InventoryMsgHandler;
+import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
@@ -58,6 +59,9 @@ public class TronNetService {
 
   @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
+
+  @Autowired
+  private PbftDataSyncHandler pbftDataSyncHandler;
 
   @Autowired
   private CrossChainMsgHandler crossChainMsgHandler;
@@ -114,6 +118,10 @@ public class TronNetService {
           break;
         case TRXS:
           transactionsMsgHandler.processMessage(peer, msg);
+          break;
+        case PBFT_BLOCK_MSG:
+        case PBFT_SRL_MSG:
+          pbftDataSyncHandler.processMessage(peer, msg);
           break;
         case CROSS_MSG:
           crossChainMsgHandler.processMessage(peer, msg);

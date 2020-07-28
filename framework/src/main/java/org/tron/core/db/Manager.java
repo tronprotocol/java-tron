@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -61,7 +60,6 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
@@ -161,10 +159,10 @@ public class Manager {
   private static final String SAVE_BLOCK = "save block: ";
   private final int shieldedTransInPendingMaxCounts =
       Args.getInstance().getShieldedTransInPendingMaxCounts();
-  private int maxTransactionPendingSize = Args.getInstance().getMaxTransactionPendingSize();
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
+  private int maxTransactionPendingSize = Args.getInstance().getMaxTransactionPendingSize();
   @Autowired(required = false)
   @Getter
   private TransactionCache transactionCache;
@@ -1621,14 +1619,14 @@ public class Manager {
       return;
     }
     for (ContractLogTrigger logTriggerCapsule : Args
-        .getSolidityContractLogTriggerList().get(blockNum)) {
+        .getSolidityContractLogTriggerMap().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
           logTriggerCapsule.getTransactionId())) != null) {
         logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
       }
     }
-    Args.getSolidityContractLogTriggerList().remove(blockNum);
+    Args.getSolidityContractLogTriggerMap().remove(blockNum);
   }
 
   private void postSolitityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
@@ -1636,7 +1634,7 @@ public class Manager {
       return;
     }
     for (ContractEventTrigger eventTriggerCapsule : Args
-        .getSolidityContractEventTriggerList().get(blockNum)) {
+        .getSolidityContractEventTriggerMap().get(blockNum)) {
       if (chainBaseManager.getTransactionStore()
           .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
               .getTransactionId())) != null) {
@@ -1644,7 +1642,7 @@ public class Manager {
         EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
       }
     }
-    Args.getSolidityContractEventTriggerList().remove(blockNum);
+    Args.getSolidityContractEventTriggerMap().remove(blockNum);
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1814,12 +1812,12 @@ public class Manager {
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-      for (Long i : Args.getSolidityContractLogTriggerList().keySet()) {
+      for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolitityLogContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-      for (Long i : Args.getSolidityContractEventTriggerList().keySet()) {
+      for (Long i : Args.getSolidityContractEventTriggerMap().keySet()) {
         postSolitityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }

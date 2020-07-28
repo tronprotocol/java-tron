@@ -39,7 +39,6 @@ public class ReceiveDescriptionCapsule implements ProtoCapsule<ReceiveDescriptio
             .setNoteCommitment(cm)
             .setEpk(ephemeralKey)
             .setCEnc(encCiphertext)
-            .setCEnc(encCiphertext)
             .setCOut(outCiphertext)
             .setZkproof(zkproof)
             .build();

@@ -7,6 +7,7 @@ import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2.SM2Signature;
 
 public class SignUtils {
+
   public static SignInterface getGeneratedRandomSign(boolean isECKeyCryptoEngine) {
     if (isECKeyCryptoEngine) {
       return new ECKey();

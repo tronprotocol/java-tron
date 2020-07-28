@@ -24,6 +24,7 @@ public class MetricsUtil {
 
   /**
    * Histogram update.
+   *
    * @param key String
    * @param value long
    */
@@ -43,6 +44,7 @@ public class MetricsUtil {
 
   /**
    * get all Meters with same prefix
+   *
    * @param key prefix String
    */
   public static SortedMap<String, Meter> getMeters(String key) {
@@ -51,6 +53,7 @@ public class MetricsUtil {
 
   /**
    * Meter mark.
+   *
    * @param key String
    */
   public static void meterMark(String key) {
@@ -65,6 +68,7 @@ public class MetricsUtil {
 
   /**
    * Meter mark.
+   *
    * @param key String
    * @param value long
    */
@@ -88,6 +92,7 @@ public class MetricsUtil {
 
   /**
    * Counter inc.
+   *
    * @param key String
    */
   public static void counterInc(String key) {
@@ -102,6 +107,7 @@ public class MetricsUtil {
 
   /**
    * get rate info.
+   *
    * @param key String
    * @return RateInfo
    */

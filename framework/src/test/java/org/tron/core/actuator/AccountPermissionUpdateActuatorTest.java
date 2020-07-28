@@ -969,7 +969,7 @@ public class AccountPermissionUpdateActuatorTest {
     // and you will get the value from the output,
     // then update the value to checkAvailableContractType
     // and checkActiveDefaultOperations
-    String validContractType = "7fff1fc0037e0800000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037e3800000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -990,7 +990,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     System.out.println(ByteArray.toHexString(availableContractType));
 
-    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+    Assert.assertEquals(validContractType, ByteArray.toHexString(availableContractType));
 
   }
 
@@ -1001,7 +1001,7 @@ public class AccountPermissionUpdateActuatorTest {
     // 7fff1fc0033e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract
     // type
-    String validContractType = "7fff1fc0033e0800000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033e3800000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1023,13 +1023,13 @@ public class AccountPermissionUpdateActuatorTest {
 
     System.out.println(ByteArray.toHexString(availableContractType));
 
-    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+    Assert.assertEquals(validContractType, ByteArray.toHexString(availableContractType));
 
   }
 
   @Test
   public void checkAvailableContractType() {
-    String validContractType = "7fff1fc0037e0900000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037e3900000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1048,13 +1048,13 @@ public class AccountPermissionUpdateActuatorTest {
 
     System.out.println(ByteArray.toHexString(availableContractType));
 
-    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+    Assert.assertEquals(validContractType, ByteArray.toHexString(availableContractType));
 
   }
 
   @Test
   public void checkActiveDefaultOperations() {
-    String validContractType = "7fff1fc0033e0900000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033e3900000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1074,7 +1074,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     System.out.println(ByteArray.toHexString(availableContractType));
 
-    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+    Assert.assertEquals(validContractType, ByteArray.toHexString(availableContractType));
 
   }
 

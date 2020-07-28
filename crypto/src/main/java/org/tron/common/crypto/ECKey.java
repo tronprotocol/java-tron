@@ -17,58 +17,41 @@ package org.tron.common.crypto;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import javax.annotation.Nullable;
-import javax.crypto.KeyAgreement;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.asn1.ASN1InputStream;
-import org.spongycastle.asn1.ASN1Integer;
-import org.spongycastle.asn1.DLSequence;
 import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
-import org.spongycastle.crypto.agreement.ECDHBasicAgreement;
 import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.engines.AESEngine;
-import org.spongycastle.crypto.modes.SICBlockCipher;
 import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
-import org.spongycastle.crypto.params.ECPublicKeyParameters;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.crypto.params.ParametersWithIV;
 import org.spongycastle.crypto.signers.ECDSASigner;
 import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.spongycastle.jce.spec.ECParameterSpec;
 import org.spongycastle.jce.spec.ECPrivateKeySpec;
-import org.spongycastle.jce.spec.ECPublicKeySpec;
 import org.spongycastle.math.ec.ECAlgorithms;
 import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.jce.ECKeyAgreement;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECKeyPairGenerator;
-import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
@@ -303,6 +286,7 @@ public class ECKey implements Serializable, SignInterface {
   public static ECKey fromPrivate(byte[] privKeyBytes) {
     return fromPrivate(new BigInteger(1, privKeyBytes));
   }
+
   /**
    * Creates an ECKey that simply trusts the caller to ensure that point is really the result of
    * multiplying the generator point by the private key. This is used to speed things up when you
@@ -507,7 +491,8 @@ public class ECKey implements Serializable, SignInterface {
    * <p>Given the components of a signature and a selector value, recover and return the public key
    * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p>
    *
-   * <p> <p>The recId is an index from 0 to 3 which indicates which of the 4 possible allKeys is the
+   * <p> <p>The recId is an index from 0 to 3 which indicates which of the 4 possible allKeys is
+   * the
    * correct one. Because the key recovery operation yields multiple potential allKeys, the correct
    * key must either be stored alongside the signature, or you must be willing to try each recId in
    * turn until you find one that outputs the key you are expecting.</p>
@@ -717,17 +702,11 @@ public class ECKey implements Serializable, SignInterface {
     return sign(hash).toBase64();
   }
 
-  public byte[] Base64toBytes (String signature) {
+  public byte[] Base64toBytes(String signature) {
     byte[] signData = Base64.decode(signature);
-    byte first = (byte)(signData[0] - 27);
-    byte[] temp = Arrays.copyOfRange(signData,1,65);
-    return ByteUtil.appendByte(temp,first);
-  }
-
-  @Override
-  public byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException {
-    return Hash.computeAddress(signatureToKeyBytes(messageHash,
-            signatureBase64));
+    byte first = (byte) (signData[0] - 27);
+    byte[] temp = Arrays.copyOfRange(signData, 1, 65);
+    return ByteUtil.appendByte(temp, first);
   }
 
   /**
@@ -839,7 +818,7 @@ public class ECKey implements Serializable, SignInterface {
       return new ECDSASignature(components[0], components[1])
           .toCanonicalised();
     } else {
-      throw new RuntimeException("ECKey signing error" );
+      throw new RuntimeException("ECKey signing error");
     }
   }
 
@@ -1024,7 +1003,6 @@ public class ECKey implements Serializable, SignInterface {
       System.arraycopy(ByteUtil.bigIntegerToBytes(this.s, 32), 0, sigData, 33, 32);
       return new String(Base64.encode(sigData), Charset.forName("UTF-8"));
     }
-
 
 
     public byte[] toByteArray() {

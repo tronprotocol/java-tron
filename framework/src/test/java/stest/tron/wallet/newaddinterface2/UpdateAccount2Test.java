@@ -290,11 +290,7 @@ public class UpdateAccount2Test {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
-      return true;
-    }
+    return response.getResult();
   }
 
   /**
@@ -339,7 +335,7 @@ public class UpdateAccount2Test {
 
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       return response;
     }
     return ret;
@@ -376,12 +372,10 @@ public class UpdateAccount2Test {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
     }
+    return response.getResult();
   }
 
   /**

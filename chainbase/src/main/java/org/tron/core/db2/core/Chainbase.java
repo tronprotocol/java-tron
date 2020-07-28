@@ -2,18 +2,22 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.Value;
+import org.tron.core.db2.common.Value.Operator;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -139,43 +143,12 @@ public class Chainbase implements IRevokingDB {
     return head().iterator();
   }
 
-  //for blockstore
   @Override
-  public Set<byte[]> getlatestValues(long limit) {
-    return getlatestValues(head(), limit);
+  public Set<byte[]> getValuesNext(byte[] key, long limit) {
+    return getValuesNext(head(), key, limit);
   }
 
-  //for blockstore
-  private synchronized Set<byte[]> getlatestValues(Snapshot head, long limit) {
-    if (limit <= 0) {
-      return Collections.emptySet();
-    }
-
-    Set<byte[]> result = new HashSet<>();
-    Snapshot snapshot = head;
-    long tmp = limit;
-    for (; tmp > 0 && snapshot.getPrevious() != null; snapshot = snapshot.getPrevious()) {
-      if (!((SnapshotImpl) snapshot).db.isEmpty()) {
-        --tmp;
-        Streams.stream(((SnapshotImpl) snapshot).db)
-            .map(Map.Entry::getValue)
-            .map(Value::getBytes)
-            .forEach(result::add);
-      }
-    }
-
-    if (snapshot.getPrevious() == null && tmp != 0) {
-      if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
-        result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
-      } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
-      }
-    }
-
-    return result;
-  }
-
-  //for blockstore
+  // for blockstore
   private Set<byte[]> getValuesNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptySet();
@@ -212,8 +185,102 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public Set<byte[]> getValuesNext(byte[] key, long limit) {
-    return getValuesNext(head(), key, limit);
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    return getKeysNext(head(), key, limit);
+  }
+
+  /**
+   * Notes: For now, this function is just used for Market, because it should use
+   * MarketUtils.comparePriceKey as its comparator. It need to use MarketUtils.createPairPriceKey to
+   * create the key.
+   */
+  // for market
+  private List<byte[]> getKeysNext(Snapshot head, byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyList();
+    }
+
+    Map<WrappedByteArray, Operator> collectionList = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collectUnique(collectionList);
+    }
+
+    // just get the same token pair
+    List<WrappedByteArray> snapshotList = new ArrayList<>();
+    if (!collectionList.isEmpty()) {
+      snapshotList = collectionList.keySet().stream()
+          .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
+          .collect(Collectors.toList());
+    }
+
+    // for delete operation
+    long limitLevelDB = limit + collectionList.size();
+
+    List<WrappedByteArray> levelDBList = new ArrayList<>();
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limitLevelDB)
+          .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limitLevelDB)
+          .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
+    }
+
+    List<WrappedByteArray> keyList = new ArrayList<>();
+    keyList.addAll(levelDBList);
+
+    // snapshot and levelDB will have duplicated key, so need to check it before,
+    // and remove the key which has been deleted
+    snapshotList.forEach(ssKey -> {
+      if (!keyList.contains(ssKey)) {
+        keyList.add(ssKey);
+      }
+      if (collectionList.get(ssKey) == Operator.DELETE) {
+        keyList.remove(ssKey);
+      }
+    });
+
+    return keyList.stream()
+        .filter(e -> MarketUtils.greaterOrEquals(e.getBytes(), key))
+        .sorted((e1, e2) -> MarketUtils.comparePriceKey(e1.getBytes(), e2.getBytes()))
+        .limit(limit)
+        .map(WrappedByteArray::getBytes)
+        .collect(Collectors.toList());
+  }
+
+  // for blockstore
+  @Override
+  public Set<byte[]> getlatestValues(long limit) {
+    return getlatestValues(head(), limit);
+  }
+
+  // for blockstore
+  private synchronized Set<byte[]> getlatestValues(Snapshot head, long limit) {
+    if (limit <= 0) {
+      return Collections.emptySet();
+    }
+
+    Set<byte[]> result = new HashSet<>();
+    Snapshot snapshot = head;
+    long tmp = limit;
+    for (; tmp > 0 && snapshot.getPrevious() != null; snapshot = snapshot.getPrevious()) {
+      if (!((SnapshotImpl) snapshot).db.isEmpty()) {
+        --tmp;
+        Streams.stream(((SnapshotImpl) snapshot).db)
+            .map(Map.Entry::getValue)
+            .map(Value::getBytes)
+            .forEach(result::add);
+      }
+    }
+
+    if (snapshot.getPrevious() == null && tmp != 0) {
+      if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+        result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      }
+    }
+
+    return result;
   }
 
   @Override

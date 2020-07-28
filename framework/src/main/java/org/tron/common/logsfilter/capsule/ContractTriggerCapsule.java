@@ -16,7 +16,6 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
-import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
@@ -132,7 +131,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
 
         if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-          Args.getSolidityContractEventTriggerList().computeIfAbsent(event
+          Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractEventTrigger) event);
         }
 
@@ -142,7 +141,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
 
         if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-          Args.getSolidityContractLogTriggerList().computeIfAbsent(event
+          Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractLogTrigger) event);
         }
       }

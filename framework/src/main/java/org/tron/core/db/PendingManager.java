@@ -49,11 +49,11 @@ public class PendingManager implements AutoCloseable {
     }
     dbManager.getPoppedTransactions().clear();
   }
-  
+
   private void txIteration(TransactionCapsule tx) {
     try {
       if (tx.getTrxTrace() != null
-              && tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
+          && tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
         dbManager.getRePushTransactions().put(tx);
       }
     } catch (InterruptedException e) {
