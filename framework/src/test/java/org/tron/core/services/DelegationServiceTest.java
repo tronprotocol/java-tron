@@ -29,7 +29,6 @@ public class DelegationServiceTest {
   public DelegationServiceTest(TronApplicationContext context) {
     delegationService = context.getBean(DelegationService.class);
     manager = context.getBean(Manager.class);
-    manager.getWitnessStore()
   }
 
   public static void testGrpc() {
