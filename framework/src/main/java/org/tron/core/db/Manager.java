@@ -176,10 +176,6 @@ public class Manager {
   @Getter
   @Setter
   private MerkleContainer merkleContainer;
-  @Autowired
-  @Getter
-  @Setter
-  private TreeBlockIndexStore merkleTreeIndexStore;
   private ExecutorService validateSignService;
   private boolean isRunRePushThread = true;
   private boolean isRunTriggerCapsuleProcessThread = true;
@@ -348,7 +344,7 @@ public class Manager {
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
-            this.merkleTreeIndexStore));
+            chainBaseManager.getMerkleTreeIndexStore()));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.rePushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
