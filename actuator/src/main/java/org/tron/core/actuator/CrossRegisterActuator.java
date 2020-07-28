@@ -29,12 +29,6 @@ public class CrossRegisterActuator extends AbstractActuator {
     super(ContractType.RegisterCrossContract, RegisterCrossContract.class);
   }
 
-  /**
-   * 向数据库插入注册记录
-   * @param object
-   * @return
-   * @throws ContractExeException
-   */
   @Override
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
@@ -63,14 +57,6 @@ public class CrossRegisterActuator extends AbstractActuator {
     return true;
   }
 
-  /**
-   * 1. 解析协议，判断数据库中是否存在chain_id，若存在则返回error，
-   * 2. 若不存在，判断owner地址
-   * 3. 判断owner财富
-   * 4. 都符合后返回true
-   * @return
-   * @throws ContractValidateException
-   */
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
@@ -98,7 +84,7 @@ public class CrossRegisterActuator extends AbstractActuator {
     byte[] chainId = registerCrossContract.getCrossChainInfo().getChainId().toByteArray();
     byte[] ownerAddress = registerCrossContract.getOwnerAddress().toByteArray();
 
-    // 判断chain_id是否存在
+    // check chain_id is exist
     if (crossRevokingStore.getCrossInfoById(ByteArray.toStr(chainId)) != null) {
       throw new ContractValidateException("ChainId has already been registered!");
     }
@@ -119,7 +105,7 @@ public class CrossRegisterActuator extends AbstractActuator {
       throw new ContractValidateException("OwnerAccount balance must be greater than BURNED_FOR_REGISTER_CROSS.");
     }
 
-    // todo:是否要检查剩余的4个参数
+    // todo: whether check all params?
 
     return true;
   }

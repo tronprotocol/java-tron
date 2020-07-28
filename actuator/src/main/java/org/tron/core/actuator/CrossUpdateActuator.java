@@ -27,12 +27,6 @@ public class CrossUpdateActuator extends AbstractActuator {
     super(ContractType.UpdateCrossContract, UpdateCrossContract.class);
   }
 
-  /**
-   * 向数据库插入注册记录
-   * @param object
-   * @return
-   * @throws ContractExeException
-   */
   @Override
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
@@ -59,14 +53,6 @@ public class CrossUpdateActuator extends AbstractActuator {
     return true;
   }
 
-  /**
-   * 1. 解析协议，判断数据库中是否存在chain_id，若不存在则返回error，
-   * 2. 若存在，判断owner地址
-   * 3. 判断手续费是否充足
-   * 4. 都符合后返回true
-   * @return
-   * @throws ContractValidateException
-   */
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
@@ -126,7 +112,7 @@ public class CrossUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("Validate UpdateCrossContract error, balance is not sufficient.");
     }
 
-    // todo:是否要检查剩余的4个参数
+    // todo: whether check all params?
 
     return true;
   }

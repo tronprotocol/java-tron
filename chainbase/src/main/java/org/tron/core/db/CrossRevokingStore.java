@@ -73,8 +73,8 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     this.put(key, new BytesCapsule(crossInfo));
   }
 
-  // 待讨论：只是存数据库，投票期结束后，钱自动返还用户，但是链上只有用户投票的记录，没有钱返还的记录。
-  // 会不会发生用户讹我们的情况？
+  // todo: vote-infos are only stored in the db, but not stored on the chain,
+  // can track the details of the withdraw and deposit
   public void putCrossVote(String chainId, String address, long amount) {
     this.put(buildVoteKey(chainId, address), new BytesCapsule(ByteArray.fromLong(amount)));
   }

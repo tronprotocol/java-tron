@@ -726,7 +726,7 @@ service Wallet {
   rpc VoteCross (VoteCrossContract) returns (TransactionExtention) {
   };
 
-  // TODO: vote支持请求的参数和返回格式有待商榷
+  // TODO: the data structure of PARAM and RETURN need to be discussed
   rpc GetVoteCrossList (BytesMessage) returns (VoteCrossList) {
   };
 };
