@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.NativeWebRequest;
+import org.tron.model.*;
+import org.tron.model.Error;
+import org.tron.protos.Protocol;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -83,6 +87,72 @@ public class ConstructionApiController implements ConstructionApi {
     return Optional.ofNullable(request);
   }
 
+
+    /**
+     * POST /construction/parse : Parse a Transaction
+     * Parse is called on both unsigned and signed transactions to understand the intent of the formulated transaction. This is run as a sanity check before signing (after &#x60;/construction/payloads&#x60;) and before broadcast (after &#x60;/construction/combine&#x60;).
+     *
+     * @param constructionParseRequest  (required)
+     * @return Expected response to a valid request (status code 200)
+     *         or unexpected error (status code 200)
+     */
+    @ApiOperation(value = "Parse a Transaction", nickname = "constructionParse", notes = "Parse is called on both unsigned and signed transactions to understand the intent of the formulated transaction. This is run as a sanity check before signing (after `/construction/payloads`) and before broadcast (after `/construction/combine`). ", response = ConstructionParseResponse.class, tags={ "Construction", })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Expected response to a valid request", response = ConstructionParseResponse.class),
+            @ApiResponse(code = 200, message = "unexpected error", response = Error.class) })
+    @RequestMapping(value = "/construction/parse",
+            produces = { "application/json" },
+            consumes = { "application/json" },
+            method = RequestMethod.POST)
+    public ResponseEntity<ConstructionParseResponse> constructionParse(@ApiParam(value = "" ,required=true )  @Valid @RequestBody ConstructionParseRequest constructionParseRequest) {
+        AtomicInteger statusCode = new AtomicInteger(200);
+
+        getRequest().ifPresent(request -> {
+            for (MediaType mediaType : MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+                    String returnString = "";
+                    Error error = new Error();
+
+                    try {
+                        ConstructionParseResponse constructionParseResponse = new org.tron.model.ConstructionParseResponse();
+
+                        NetworkIdentifier networkIdentifier = constructionParseRequest.getNetworkIdentifier();
+                        Boolean signed = constructionParseRequest.getSigned();
+                        String tronTx = constructionParseRequest.getTransaction();
+
+                        Protocol.Transaction transaction = Protocol.Transaction.parseFrom(tronTx.getBytes());
+                        if (signed) {
+                            java.util.List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData().getContractList();
+                            for(org.tron.protos.Protocol.Transaction.Contract contract:contracts){
+                                Any contractParameter = contract.getParameter();
+                                if(org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract == contract.getType()){
+                                    String from = contractParameter.unpack(BalanceContract.TransferContract.class).getOwnerAddress().toString();
+                                    constructionParseResponse.addSignersItem(from);
+                                }
+                            }
+                        }
+                        constructionParseResponse.addOperationsItem(new org.tron.model.Operation()
+                                .operationIdentifier(new OperationIdentifier().index((long) 1))
+                                .type(transaction.getRawData().getContract(0).getType().toString())
+                                .status(transaction.getRet(0).getContractRet().toString()));
+
+                        returnString = JSON.toJSONString(constructionParseResponse);
+                    } catch (java.lang.Error | InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                        statusCode.set(500);
+                        error.setCode(100);
+                        error.setMessage("error in server");
+                        error.setRetriable(false);
+                        returnString = JSON.toJSONString(error);
+                    }
+
+                    ApiUtil.setExampleResponse(request, "application/json", returnString);
+                    break;
+                }
+            }
+        });
+        return new ResponseEntity<>(HttpStatus.valueOf(statusCode.get()));
+    }
 
   /**
    * POST /construction/derive : Derive an Address from a PublicKey
