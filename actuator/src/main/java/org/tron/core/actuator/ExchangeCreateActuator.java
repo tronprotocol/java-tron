@@ -176,12 +176,10 @@ public class ExchangeCreateActuator extends AbstractActuator {
     long secondTokenBalance = contract.getSecondTokenBalance();
 
     if (dynamicStore.getAllowSameTokenName() == 1) {
-      if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)
-          && !isNumber(firstTokenID)) {
+      if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES) && !isNumber(firstTokenID)) {
         throw new ContractValidateException("first token id is not a valid number");
       }
-      if (!Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)
-          && !isNumber(secondTokenID)) {
+      if (!Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES) && !isNumber(secondTokenID)) {
         throw new ContractValidateException("second token id is not a valid number");
       }
     }
