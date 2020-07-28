@@ -29,7 +29,7 @@ public class OpenAPIDocumentationConfig {
             .license("Apache 2.0")
             .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html")
             .termsOfServiceUrl("")
-            .version("1.4.0")
+            .version(Constant.rosettaVersion)
             .contact(new Contact("","", ""))
             .build();
     }
