@@ -170,7 +170,8 @@ public class NetworkApiController implements NetworkApi {
                         .index(currentBlock.getNum())
                         .hash(ByteArray.toHexString(currentBlock.getBlockId().getBytes())));
 
-        networkStatusResponse.setCurrentBlockTimestamp(new Timestamp(currentBlock.getTimeStamp()));
+//        networkStatusResponse.setCurrentBlockTimestamp(new Timestamp(currentBlock.getTimeStamp()));
+        networkStatusResponse.setCurrentBlockTimestamp(currentBlock.getTimeStamp());
 
         List<Channel> activePeers = new ArrayList<>(channelManager.getActivePeers());
         List<Peer> peers = Lists.newArrayList();

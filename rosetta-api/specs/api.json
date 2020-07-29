@@ -854,7 +854,7 @@
            "$ref":"#/components/schemas/BlockIdentifier"
           },
          "timestamp": {
-           "$ref":"#/components/schemas/Timestamp"
+           "$ref":"#/components/schemas/TimestampLong"
           },
          "transactions": {
            "type":"array",
@@ -1105,7 +1105,7 @@
          "successful": true
         }
       },
-     "Timestamp": {
+     "TimestampLong": {
        "description":"The timestamp of the block in milliseconds since the Unix Epoch. The timestamp is stored in milliseconds because some blockchains produce blocks more often than once a second.",
        "type":"integer",
        "format":"int64",
@@ -1406,7 +1406,7 @@
            "$ref":"#/components/schemas/BlockIdentifier"
           },
          "current_block_timestamp": {
-           "$ref":"#/components/schemas/Timestamp"
+           "$ref":"#/components/schemas/TimestampLong"
           },
          "genesis_block_identifier": {
            "$ref":"#/components/schemas/BlockIdentifier"
