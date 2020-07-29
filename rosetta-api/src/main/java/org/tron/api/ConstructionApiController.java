@@ -387,7 +387,7 @@ public class ConstructionApiController implements ConstructionApi {
         produces = { "application/json" },
         consumes = { "application/json" },
         method = RequestMethod.POST)
-    default ResponseEntity<ConstructionPayloadsResponse> constructionPayloads(@ApiParam(value = "" ,required=true )  @Valid @RequestBody
+    public ResponseEntity<ConstructionPayloadsResponse> constructionPayloads(@ApiParam(value = "" ,required=true )  @Valid @RequestBody
                                                                                   ConstructionPayloadsRequest constructionPayloadsRequest) {
         getRequest().ifPresent(request -> {
             for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
