@@ -1,15 +1,16 @@
 package org.tron.api;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.primitives.Ints;
-import com.alibaba.fastjson.JSON;
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.Valid;
@@ -22,25 +23,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.NativeWebRequest;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.WalletUtil;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.args.Args;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.config.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.model.ConstructionCombineRequest;
 import org.tron.model.ConstructionCombineResponse;
 import org.tron.model.ConstructionDeriveRequest;
@@ -58,7 +50,6 @@ import org.tron.model.Error;
 import org.tron.model.PublicKey;
 import org.tron.model.Signature;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.BalanceContract;
 
 @Controller
 @RequestMapping("${openapi.rosetta.base-path:}")
