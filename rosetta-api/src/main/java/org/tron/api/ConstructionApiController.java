@@ -3,6 +3,8 @@ package org.tron.api;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.primitives.Ints;
+import com.alibaba.fastjson.JSON;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.swagger.annotations.ApiOperation;
@@ -23,10 +25,24 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.NativeWebRequest;
+import java.util.Base64;
+import org.tron.model.*;
+import org.tron.model.Error;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.WalletUtil;
 import org.tron.config.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -121,17 +137,24 @@ public class ConstructionApiController implements ConstructionApi {
                                 }
                             }
                         }
+
+                        String status = "0";
+                        if(0 != transaction.getRetCount())
+                        {
+                            status = transaction.getRet(0).getContractRet().toString();
+                        }
+
                         constructionParseResponse.addOperationsItem(new org.tron.model.Operation()
                                 .operationIdentifier(new OperationIdentifier().index((long) 1))
                                 .type(transaction.getRawData().getContract(0).getType().toString())
-                                .status(transaction.getRet(0).getContractRet().toString()));
+                                .status(status));
 
                         returnString = JSON.toJSONString(constructionParseResponse);
                     } catch (java.lang.Error | InvalidProtocolBufferException e) {
                         e.printStackTrace();
                         statusCode.set(500);
                         error.setCode(100);
-                        error.setMessage("error in server");
+                        error.setMessage("error:"+e.getMessage());
                         error.setRetriable(false);
                         returnString = JSON.toJSONString(error);
                     }
