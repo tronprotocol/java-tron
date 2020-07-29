@@ -153,9 +153,7 @@ public class ConstructionApiController implements ConstructionApi {
                     } catch (java.lang.Error | InvalidProtocolBufferException e) {
                         e.printStackTrace();
                         statusCode.set(500);
-                        error.setCode(100);
-                        error.setMessage("error:"+e.getMessage());
-                        error.setRetriable(false);
+                        error = Constant.INVALID_TRANSACTION_FORMAT;
                         returnString = JSON.toJSONString(error);
                     }
 
