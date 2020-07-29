@@ -17,6 +17,8 @@ public class Constant {
   // errors
   public static Error INVALID_ACCOUNT_FORMAT =
           new Error().code(12).message("Invalid account format").retriable(true).details(null);
+  public static Error INVALID_TRANSACTION_FORMAT =
+          new Error().code(100).message("Invalid transaction format").retriable(false).details(null);
 
 
   public static String[] supportOperationTypes = new String[]{
@@ -27,6 +29,7 @@ public class Constant {
           OPERATION_REVERT
   );
   public static List<Error> supportErrors = Arrays.asList(
-          INVALID_ACCOUNT_FORMAT
+          INVALID_ACCOUNT_FORMAT,
+          INVALID_TRANSACTION_FORMAT
   );
 }
