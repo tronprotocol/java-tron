@@ -41,6 +41,8 @@ import org.tron.model.ConstructionHashRequest;
 import org.tron.model.ConstructionHashResponse;
 import org.tron.model.ConstructionMetadataRequest;
 import org.tron.model.ConstructionMetadataResponse;
+import org.tron.model.ConstructionPayloadsRequest;
+import org.tron.model.ConstructionPayloadsResponse;
 import org.tron.model.ConstructionPreprocessRequest;
 import org.tron.model.ConstructionPreprocessResponse;
 import org.tron.model.ConstructionSubmitRequest;
@@ -368,5 +370,37 @@ public class ConstructionApiController implements ConstructionApi {
     return new ResponseEntity<>(HttpStatus.valueOf(statusCode.get()));
 
   }
+
+    /**
+     * POST /construction/payloads : Generate an Unsigned Transaction and Signing Payloads
+     * Payloads is called with an array of operations and the response from &#x60;/construction/metadata&#x60;. It returns an unsigned transaction blob and a collection of payloads that must be signed by particular addresses using a certain SignatureType. The array of operations provided in transaction construction often times can not specify all \&quot;effects\&quot; of a transaction (consider invoked transactions in Ethereum). However, they can deterministically specify the \&quot;intent\&quot; of the transaction, which is sufficient for construction. For this reason, parsing the corresponding transaction in the Data API (when it lands on chain) will contain a superset of whatever operations were provided during construction.
+     *
+     * @param constructionPayloadsRequest  (required)
+     * @return Expected response to a valid request (status code 200)
+     *         or unexpected error (status code 200)
+     */
+    @ApiOperation(value = "Generate an Unsigned Transaction and Signing Payloads", nickname = "constructionPayloads", notes = "Payloads is called with an array of operations and the response from `/construction/metadata`. It returns an unsigned transaction blob and a collection of payloads that must be signed by particular addresses using a certain SignatureType. The array of operations provided in transaction construction often times can not specify all \"effects\" of a transaction (consider invoked transactions in Ethereum). However, they can deterministically specify the \"intent\" of the transaction, which is sufficient for construction. For this reason, parsing the corresponding transaction in the Data API (when it lands on chain) will contain a superset of whatever operations were provided during construction.", response = ConstructionPayloadsResponse.class, tags={ "Construction", })
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "Expected response to a valid request", response = ConstructionPayloadsResponse.class),
+        @ApiResponse(code = 200, message = "unexpected error", response = Error.class) })
+    @RequestMapping(value = "/construction/payloads",
+        produces = { "application/json" },
+        consumes = { "application/json" },
+        method = RequestMethod.POST)
+    default ResponseEntity<ConstructionPayloadsResponse> constructionPayloads(@ApiParam(value = "" ,required=true )  @Valid @RequestBody
+                                                                                  ConstructionPayloadsRequest constructionPayloadsRequest) {
+        getRequest().ifPresent(request -> {
+            for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+                    String exampleString = "{ \"unsigned_transaction\" : \"unsigned_transaction\", \"payloads\" : [ { \"address\" : \"address\", \"hex_bytes\" : \"hex_bytes\" }, { \"address\" : \"address\", \"hex_bytes\" : \"hex_bytes\" } ] }";
+                    ApiUtil.setExampleResponse(request, "application/json", exampleString);
+                    break;
+                }
+            }
+        });
+        return new ResponseEntity<>(HttpStatus.valueOf(200));
+
+    }
+
 }
 
