@@ -8,7 +8,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import java.util.Base64;
+
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.Valid;
@@ -23,13 +23,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.tron.common.crypto.Hash;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.WalletUtil;
+import org.tron.config.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.BadItemException;
 import org.tron.model.ConstructionCombineRequest;
 import org.tron.model.ConstructionCombineResponse;
 import org.tron.model.ConstructionDeriveRequest;
@@ -179,7 +178,6 @@ public class ConstructionApiController implements ConstructionApi {
    * @return Expected response to a valid request (status code 200)
    * or unexpected error (status code 200)
    */
-  @SuppressWarnings("checkstyle:Indentation")
   @ApiOperation(value = "Create Network Transaction from Signatures", nickname = "constructionCombine", notes = "Combine creates a network-specific transaction from an unsigned transaction and an array of provided signatures. The signed transaction returned from this method will be sent to the `/construction/submit` endpoint by the caller.", response = ConstructionCombineResponse.class, tags = {"Construction",})
   @ApiResponses(value = {
           @ApiResponse(code = 200, message = "Expected response to a valid request", response = ConstructionCombineResponse.class),
@@ -189,7 +187,7 @@ public class ConstructionApiController implements ConstructionApi {
           consumes = {"application/json"},
           method = RequestMethod.POST)
   public ResponseEntity<ConstructionCombineResponse> constructionCombine(@ApiParam(value = "", required = true) @Valid @RequestBody ConstructionCombineRequest constructionCombineRequest) {
-    AtomicInteger statusCode = new AtomicInteger(200);
+    AtomicInteger statusCode = new AtomicInteger(HttpStatus.OK.value());
     getRequest().ifPresent(request -> {
       for (MediaType mediaType : MediaType.parseMediaTypes(request.getHeader("Accept"))) {
         if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
@@ -204,27 +202,27 @@ public class ConstructionApiController implements ConstructionApi {
 //                                  Protocol.Transaction.Contract.newBuilder().setType(Protocol.Transaction.Contract.ContractType.TransferContract)
 //                                          .setParameter(Any.pack(transferContract)).build()).build())
 //                  .build();
-//          ConstructionCombineResponse constructionCombineResponse = new ConstructionCombineResponse();
-//          constructionCombineResponse.setSignedTransaction(Base64.getEncoder().encodeToString(transactionTest.getRawData().toByteArray()));
-//          returnString = JSON.toJSONString(constructionCombineResponse);
-//          constructionCombineRequest.setUnsignedTransaction(Base64.getEncoder().encodeToString(transactionTest.getRawData().toByteArray()));
+//          System.out.println(ByteArray.toHexString(transactionTest.getRawData().toByteArray()));
+//          String priKey = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+//          TransactionCapsule transactionCapsule = new TransactionCapsule(transactionTest);
+//          transactionCapsule.sign(ByteArray.fromHexString(priKey));
+//          System.out.println(ByteArray.toHexString(transactionCapsule.getInstance().getSignature(0).toByteArray()));
+//          constructionCombineRequest.setUnsignedTransaction(ByteArray.toHexString(transactionTest.getRawData().toByteArray()));
           try {
-            Protocol.Transaction.raw transaction = Protocol.Transaction.raw.parseFrom(Base64.getDecoder().decode(constructionCombineRequest.getUnsignedTransaction()));
+            Protocol.Transaction.raw transaction = Protocol.Transaction.raw.parseFrom(
+                    ByteArray.fromHexString(constructionCombineRequest.getUnsignedTransaction()));
             Protocol.Transaction.Builder transactionBuilder = Protocol.Transaction.newBuilder();
             transactionBuilder.setRawData(transaction);
             for (Signature signature : constructionCombineRequest.getSignatures()) {
-              transactionBuilder.addSignature(ByteString.copyFrom(signature.getHexBytes().getBytes()));
+              transactionBuilder.addSignature(ByteString.copyFrom(ByteArray.fromHexString(signature.getHexBytes())));
             }
             ConstructionCombineResponse constructionCombineResponse = new ConstructionCombineResponse();
-            constructionCombineResponse.setSignedTransaction(Base64.getEncoder().encodeToString(transactionBuilder.build().toByteArray()));
+            constructionCombineResponse.setSignedTransaction(ByteArray.toHexString(transactionBuilder.build().toByteArray()));
             returnString = JSON.toJSONString(constructionCombineResponse);
           } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
-            statusCode.set(500);
-            Error error = new Error();
-            error.setCode(100);
-            error.setMessage("Invalid unsigned transaction format");
-            error.setRetriable(false);
+            statusCode.set(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            Error error = Constant.INVALID_TRANSACTION_FORMAT;
             returnString = JSON.toJSONString(error);
           }
 
@@ -233,7 +231,7 @@ public class ConstructionApiController implements ConstructionApi {
         }
       }
     });
-    return new ResponseEntity<>(HttpStatus.valueOf(200));
+    return new ResponseEntity<>(HttpStatus.valueOf(statusCode.get()));
 
   }
 
@@ -254,28 +252,22 @@ public class ConstructionApiController implements ConstructionApi {
           consumes = {"application/json"},
           method = RequestMethod.POST)
   public ResponseEntity<ConstructionHashResponse> constructionHash(@ApiParam(value = "", required = true) @Valid @RequestBody ConstructionHashRequest constructionHashRequest) {
-    AtomicInteger statusCode = new AtomicInteger(200);
+    AtomicInteger statusCode = new AtomicInteger(HttpStatus.OK.value());
     getRequest().ifPresent(request -> {
       for (MediaType mediaType : MediaType.parseMediaTypes(request.getHeader("Accept"))) {
         if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
-          Protocol.Transaction transaction = null;
           String returnString = "{ \"transaction_hash\" : \"transaction_hash\" }";
           try {
-            transaction = Protocol.Transaction.parseFrom(
-                    Base64.getDecoder().decode(constructionHashRequest.getSignedTransaction()));
-            String transactionHash = Base64.getEncoder().encodeToString(Sha256Hash.hash(
-                    CommonParameter.getInstance().isECKeyCryptoEngine(),
-                    transaction.getRawData().toByteArray()));
+            TransactionCapsule transaction = new TransactionCapsule(
+                    ByteArray.fromHexString(constructionHashRequest.getSignedTransaction()));
+            String transactionHash = transaction.getTransactionId().toString();
             ConstructionHashResponse constructionHashResponse = new ConstructionHashResponse();
             constructionHashResponse.setTransactionHash(transactionHash);
             returnString = JSON.toJSONString(constructionHashResponse);
-          } catch (InvalidProtocolBufferException e) {
+          } catch (BadItemException e) {
             e.printStackTrace();
-            statusCode.set(500);
-            Error error = new Error();
-            error.setCode(100);
-            error.setMessage("Invalid transaction format");
-            error.setRetriable(false);
+            statusCode.set(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            Error error = Constant.INVALID_TRANSACTION_FORMAT;
             returnString = JSON.toJSONString(error);
           }
 
@@ -312,7 +304,7 @@ public class ConstructionApiController implements ConstructionApi {
           method = RequestMethod.POST)
   public ResponseEntity<ConstructionSubmitResponse> constructionSubmit(
           @ApiParam(value = "", required = true) @Valid @RequestBody ConstructionSubmitRequest constructionSubmitRequest) {
-    AtomicInteger statusCode = new AtomicInteger(200);
+    AtomicInteger statusCode = new AtomicInteger(HttpStatus.OK.value());
 
     getRequest().ifPresent(request -> {
       for (MediaType mediaType : MediaType.parseMediaTypes(request.getHeader("Accept"))) {
@@ -320,29 +312,25 @@ public class ConstructionApiController implements ConstructionApi {
           String returnString = "";
           Error error = new Error();
           try {
-            Protocol.Transaction transactionSigned = Protocol.Transaction.parseFrom(
-                    Base64.getDecoder().decode(constructionSubmitRequest.getSignedTransaction()));
-            GrpcAPI.Return result = wallet.broadcastTransaction(transactionSigned);
+            TransactionCapsule transactionSigned = new TransactionCapsule(
+                    ByteArray.fromHexString(constructionSubmitRequest.getSignedTransaction()));
+            GrpcAPI.Return result = wallet.broadcastTransaction(transactionSigned.getInstance());
             if (result.getResult()) {
-              String transactionHash = Base64.getEncoder().encodeToString(Sha256Hash.hash(
-                      CommonParameter.getInstance().isECKeyCryptoEngine(),
-                      transactionSigned.getRawData().toByteArray()));
+              String transactionHash = transactionSigned.getTransactionId().toString();
               ConstructionSubmitResponse constructionSubmitResponse = new ConstructionSubmitResponse();
               constructionSubmitResponse.getTransactionIdentifier().setHash(transactionHash);
               returnString = JSON.toJSONString(constructionSubmitResponse);
             } else {
-              statusCode.set(500);
+              statusCode.set(HttpStatus.INTERNAL_SERVER_ERROR.value());
               error.setCode(result.getCodeValue());
-              error.setMessage(result.getMessage().toString());
+              error.setMessage(result.getMessage().toStringUtf8());
               error.setRetriable(true);
               returnString = JSON.toJSONString(error);
             }
-          } catch (InvalidProtocolBufferException e) {
+          } catch (BadItemException e) {
             e.printStackTrace();
-            statusCode.set(500);
-            error.setCode(100);
-            error.setMessage("Invalid transaction format");
-            error.setRetriable(false);
+            statusCode.set(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            error = Constant.INVALID_TRANSACTION_FORMAT;
             returnString = JSON.toJSONString(error);
           }
 
