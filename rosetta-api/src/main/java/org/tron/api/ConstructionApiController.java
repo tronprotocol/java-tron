@@ -12,10 +12,12 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.Valid;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -459,36 +461,85 @@ public class ConstructionApiController implements ConstructionApi {
 
   }
 
-    /**
-     * POST /construction/payloads : Generate an Unsigned Transaction and Signing Payloads
-     * Payloads is called with an array of operations and the response from &#x60;/construction/metadata&#x60;. It returns an unsigned transaction blob and a collection of payloads that must be signed by particular addresses using a certain SignatureType. The array of operations provided in transaction construction often times can not specify all \&quot;effects\&quot; of a transaction (consider invoked transactions in Ethereum). However, they can deterministically specify the \&quot;intent\&quot; of the transaction, which is sufficient for construction. For this reason, parsing the corresponding transaction in the Data API (when it lands on chain) will contain a superset of whatever operations were provided during construction.
-     *
-     * @param constructionPayloadsRequest  (required)
-     * @return Expected response to a valid request (status code 200)
-     *         or unexpected error (status code 200)
-     */
-    @ApiOperation(value = "Generate an Unsigned Transaction and Signing Payloads", nickname = "constructionPayloads", notes = "Payloads is called with an array of operations and the response from `/construction/metadata`. It returns an unsigned transaction blob and a collection of payloads that must be signed by particular addresses using a certain SignatureType. The array of operations provided in transaction construction often times can not specify all \"effects\" of a transaction (consider invoked transactions in Ethereum). However, they can deterministically specify the \"intent\" of the transaction, which is sufficient for construction. For this reason, parsing the corresponding transaction in the Data API (when it lands on chain) will contain a superset of whatever operations were provided during construction.", response = ConstructionPayloadsResponse.class, tags={ "Construction", })
-    @ApiResponses(value = {
-        @ApiResponse(code = 200, message = "Expected response to a valid request", response = ConstructionPayloadsResponse.class),
-        @ApiResponse(code = 200, message = "unexpected error", response = Error.class) })
-    @RequestMapping(value = "/construction/payloads",
-        produces = { "application/json" },
-        consumes = { "application/json" },
-        method = RequestMethod.POST)
-    public ResponseEntity<ConstructionPayloadsResponse> constructionPayloads(@ApiParam(value = "" ,required=true )  @Valid @RequestBody
-                                                                                  ConstructionPayloadsRequest constructionPayloadsRequest) {
-        getRequest().ifPresent(request -> {
-            for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
-                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
-                    String exampleString = "{ \"unsigned_transaction\" : \"unsigned_transaction\", \"payloads\" : [ { \"address\" : \"address\", \"hex_bytes\" : \"hex_bytes\" }, { \"address\" : \"address\", \"hex_bytes\" : \"hex_bytes\" } ] }";
-                    ApiUtil.setExampleResponse(request, "application/json", exampleString);
-                    break;
-                }
-            }
-        });
-        return new ResponseEntity<>(HttpStatus.valueOf(200));
+  /**
+   * POST /construction/payloads : Generate an Unsigned Transaction and Signing Payloads
+   * Payloads is called with an array of operations and the response from &#x60;/construction/metadata&#x60;. It returns an unsigned transaction blob and a collection of payloads that must be signed by particular addresses using a certain SignatureType. The array of operations provided in transaction construction often times can not specify all \&quot;effects\&quot; of a transaction (consider invoked transactions in Ethereum). However, they can deterministically specify the \&quot;intent\&quot; of the transaction, which is sufficient for construction. For this reason, parsing the corresponding transaction in the Data API (when it lands on chain) will contain a superset of whatever operations were provided during construction.
+   *
+   * @param constructionPayloadsRequest  (required)
+   * @return Expected response to a valid request (status code 200)
+   *         or unexpected error (status code 200)
+   */
+  @ApiOperation(value = "Generate an Unsigned Transaction and Signing Payloads", nickname = "constructionPayloads", notes = "Payloads is called with an array of operations and the response from `/construction/metadata`. It returns an unsigned transaction blob and a collection of payloads that must be signed by particular addresses using a certain SignatureType. The array of operations provided in transaction construction often times can not specify all \"effects\" of a transaction (consider invoked transactions in Ethereum). However, they can deterministically specify the \"intent\" of the transaction, which is sufficient for construction. For this reason, parsing the corresponding transaction in the Data API (when it lands on chain) will contain a superset of whatever operations were provided during construction.", response = ConstructionPayloadsResponse.class, tags={ "Construction", })
+  @ApiResponses(value = {
+      @ApiResponse(code = 200, message = "Expected response to a valid request", response = ConstructionPayloadsResponse.class),
+      @ApiResponse(code = 200, message = "unexpected error", response = Error.class) })
+  @RequestMapping(value = "/construction/payloads",
+      produces = { "application/json" },
+      consumes = { "application/json" },
+      method = RequestMethod.POST)
+  public ResponseEntity<ConstructionPayloadsResponse> constructionPayloads(
+      @ApiParam(value = "" ,required=true )
+      @Valid @RequestBody
+          ConstructionPayloadsRequest constructionPayloadsRequest) {
+    if (getRequest().isPresent()) {
+      for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+        if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+          validatePayloadsRequest(constructionPayloadsRequest);
+          Protocol.Transaction transaction = buildTransaction(constructionPayloadsRequest);
+          ConstructionPayloadsResponse response = new ConstructionPayloadsResponse();
+          response.unsignedTransaction(ByteArray.toHexString(transaction.toByteArray()))
+              .addPayloadsItem(null);
+          return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+      }
+    }
+    return new ResponseEntity<>(HttpStatus.valueOf(200));
+
+  }
+
+  public void validatePayloadsRequest(ConstructionPayloadsRequest constructionPayloadsRequest) {
+
+  }
+
+  public Protocol.Transaction buildTransaction(ConstructionPayloadsRequest constructionPayloadsRequest) {
+    List<Operation> operations = constructionPayloadsRequest.getOperations();
+    Operation from, to;
+    if (!CollectionUtils.isEmpty(operations.get(0).getRelatedOperations())) {
+      from = operations.get(1);
+      to = operations.get(0);
+    } else {
+      from = operations.get(0);
+      to = operations.get(1);
 
     }
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract
+        .newBuilder();
+    String src = from.getAccount().getAddress();
+    ByteString bsOwner = ByteString.copyFrom(Commons.decodeFromBase58Check(src));
+    builder.setOwnerAddress(bsOwner);
+
+    String dest = to.getAccount().getAddress();
+    ByteString bsTo = ByteString.copyFrom(Commons.decodeFromBase58Check(dest));
+    builder.setToAddress(bsTo);
+
+    builder.setAmount(Long.parseLong(from.getAmount().getValue()));
+    BalanceContract.TransferContract contract = builder.build();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(contract,
+        Protocol.Transaction.Contract.ContractType.TransferContract);
+
+    JSONObject metadata = JSON.parseObject((String) constructionPayloadsRequest.getMetadata());
+
+    String referenceBlockHash = metadata.getString("reference_block_hash");
+    int referenceBlockNum = metadata.getIntValue("reference_block_num");
+    transactionCapsule.setReference(referenceBlockNum, ByteArray.fromHexString(referenceBlockHash));
+
+    long expiration = metadata.getLongValue("expiration");
+    transactionCapsule.setExpiration(expiration);
+
+    long timestamp = metadata.getLongValue("timestamp");
+    transactionCapsule.setTimestamp(timestamp);
+    return transactionCapsule.getInstance();
+  }
 
 }
 
