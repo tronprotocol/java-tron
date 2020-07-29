@@ -55,23 +55,22 @@ public class PbftDataSyncHandler implements TronMsgHandler {
     }
   }
 
-  public void processPBFTCommitMessage(long blockNum) {
+  public void processPBFTCommitData(BlockCapsule block) {
     try {
       if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
         return;
       }
       long epoch = 0;
-      PbftCommitMessage pbftCommitMessage = pbftCommitMessageCache.remove(blockNum);
+      PbftCommitMessage pbftCommitMessage = pbftCommitMessageCache.remove(block.getNum());
       long maintenanceTimeInterval = chainBaseManager.getDynamicPropertiesStore()
           .getMaintenanceTimeInterval();
       if (pbftCommitMessage == null) {
-        BlockCapsule blockCapsule = chainBaseManager.getBlockByNum(blockNum);
-        long round = blockCapsule.getTimeStamp() / maintenanceTimeInterval;
+        long round = block.getTimeStamp() / maintenanceTimeInterval;
         epoch = (round + 1) * maintenanceTimeInterval;
       } else {
         processPBFTCommitMessage(pbftCommitMessage);
         Raw raw = Raw.parseFrom(pbftCommitMessage.getPBFTCommitResult().getData());
-        epoch = raw.getEpoch() + maintenanceTimeInterval;
+        epoch = raw.getEpoch();
       }
       pbftCommitMessage = pbftCommitMessageCache.remove(epoch);
       if (pbftCommitMessage != null) {
@@ -93,16 +92,18 @@ public class PbftDataSyncHandler implements TronMsgHandler {
       if (raw.getDataType() == DataType.BLOCK
           && pbftSignDataStore.getBlockSignData(raw.getViewN()) == null) {
         pbftSignDataStore.putBlockSignData(raw.getViewN(), pbftCommitMessage.getPbftSignCapsule());
+        logger.info("save the block {} pbft commit data", raw.getViewN());
       } else if (raw.getDataType() == DataType.SRL
           && pbftSignDataStore.getSrSignData(raw.getEpoch()) == null) {
         pbftSignDataStore.putSrSignData(raw.getEpoch(), pbftCommitMessage.getPbftSignCapsule());
+        logger.info("save the srl {} pbft commit data", raw.getEpoch());
       }
     } catch (InvalidProtocolBufferException e) {
       logger.error("", e);
     }
   }
 
-  public boolean validPbftSign(Raw raw, List<ByteString> srSignList,
+  private boolean validPbftSign(Raw raw, List<ByteString> srSignList,
       List<ByteString> currentSrList) {
     //valid sr list
     if (srSignList.size() != 0) {

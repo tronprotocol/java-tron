@@ -9,13 +9,13 @@ public class PbftCommitMessage extends TronMessage {
 
   public PbftCommitMessage(byte[] data) {
     super(data);
-    this.type = MessageTypes.PBFT_BLOCK_MSG.asByte();
+    this.type = MessageTypes.PBFT_COMMIT_MSG.asByte();
     this.pbftSignCapsule = new PbftSignCapsule(data);
   }
 
   public PbftCommitMessage(PbftSignCapsule pbftSignCapsule) {
     data = pbftSignCapsule.getData();
-    this.type = MessageTypes.PBFT_BLOCK_MSG.asByte();
+    this.type = MessageTypes.PBFT_COMMIT_MSG.asByte();
     this.pbftSignCapsule = pbftSignCapsule;
   }
 
