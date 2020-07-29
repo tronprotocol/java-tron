@@ -107,8 +107,7 @@ public class TronNetService {
         case TRXS:
           transactionsMsgHandler.processMessage(peer, msg);
           break;
-        case PBFT_BLOCK_MSG:
-        case PBFT_SRL_MSG:
+        case PBFT_COMMIT_MSG:
           pbftDataSyncHandler.processMessage(peer, msg);
           break;
         default:

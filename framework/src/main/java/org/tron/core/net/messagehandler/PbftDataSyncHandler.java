@@ -55,7 +55,7 @@ public class PbftDataSyncHandler implements TronMsgHandler {
     }
   }
 
-  public void processPBFTCommitMessage(BlockCapsule block) {
+  public void processPBFTCommitData(BlockCapsule block) {
     try {
       if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
         return;
@@ -103,7 +103,7 @@ public class PbftDataSyncHandler implements TronMsgHandler {
     }
   }
 
-  public boolean validPbftSign(Raw raw, List<ByteString> srSignList,
+  private boolean validPbftSign(Raw raw, List<ByteString> srSignList,
       List<ByteString> currentSrList) {
     //valid sr list
     if (srSignList.size() != 0) {

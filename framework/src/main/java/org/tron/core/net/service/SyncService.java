@@ -264,7 +264,7 @@ public class SyncService {
     BlockId blockId = block.getBlockId();
     try {
       tronNetDelegate.processBlock(block, true);
-      pbftDataSyncHandler.processPBFTCommitMessage(block);
+      pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (Exception e) {
       logger.error("Process sync block {} failed.", blockId.getString(), e);
       flag = false;
