@@ -16,8 +16,10 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.RateLimiterInitialization.RpcRateLimiterItem;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.RateLimiterInitialization.RpcRateLimiterItem;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
@@ -90,6 +92,11 @@ public class RateLimiterInterceptor implements ServerInterceptor {
   public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
       ServerCallHandler<ReqT, RespT> next) {
 
+    String methodMeterName = MetricsKey.NET_API_DETAIL_QPS
+        + call.getMethodDescriptor().getFullMethodName();
+    MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
+    MetricsUtil.meterMark(methodMeterName);
+
     IRateLimiter rateLimiter = container
         .get(KEY_PREFIX_RPC, call.getMethodDescriptor().getFullMethodName());
 
@@ -128,6 +135,10 @@ public class RateLimiterInterceptor implements ServerInterceptor {
         call.close(Status.fromCode(Code.RESOURCE_EXHAUSTED), new Metadata());
       }
     } catch (Exception e) {
+      String grpcFailMeterName = MetricsKey.NET_API_DETAIL_FAIL_QPS
+          + call.getMethodDescriptor().getFullMethodName();
+      MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
+      MetricsUtil.meterMark(grpcFailMeterName);
       logger.error("Rpc Api Error: {}", e.getMessage());
     }
 

@@ -33,7 +33,7 @@ public class ShieldedAddressInfo {
   @Getter
   byte[] pkD; // 256
 
-  public ShieldedAddressInfo(){
+  public ShieldedAddressInfo() {
   }
 
   public FullViewingKey getFullViewingKey() throws ZksnarkException {
@@ -43,7 +43,6 @@ public class ShieldedAddressInfo {
 
   /**
    * check parameters
-   * @return
    */
   public boolean validateCheck() {
     try {
@@ -75,11 +74,11 @@ public class ShieldedAddressInfo {
     return getShieldedAddress(d, pkD);
   }
 
-  public static String getShieldedAddress(DiversifierT d, byte[] pkD ) {
+  public static String getShieldedAddress(DiversifierT d, byte[] pkD) {
     try {
       PaymentAddress paymentAddress = new PaymentAddress(d, pkD);
       return KeyIo.encodePaymentAddress(paymentAddress);
-    } catch (Exception e ) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return "";
@@ -87,7 +86,6 @@ public class ShieldedAddressInfo {
 
   /**
    * format shielded address info to a string
-   * @return
    */
   public String encode(byte[] encryptKey) throws CipherException {
     byte[] text = new byte[sk.length + ivk.length + ovk.length + d.getData().length + pkD.length];
@@ -95,16 +93,15 @@ public class ShieldedAddressInfo {
     System.arraycopy(ivk, 0, text, sk.length, ivk.length);
     System.arraycopy(ovk, 0, text, sk.length + ivk.length, ovk.length);
     System.arraycopy(d.getData(), 0, text, sk.length + ivk.length + ovk.length, d.getData().length);
-    System.arraycopy(pkD, 0, text, sk.length + ivk.length + ovk.length + d.getData().length, pkD.length);
-    
+    System.arraycopy(pkD, 0, text, sk.length + ivk.length + ovk.length + d.getData().length,
+        pkD.length);
+
     byte[] cipherText = ZenUtils.aesCtrEncrypt(text, encryptKey);
     return Base58.encode(cipherText);
   }
 
   /**
    * parse string to get a shielded address info
-   * @param data
-   * @return
    */
   public boolean decode(final String data, byte[] encryptKey) throws CipherException {
     byte[] cipherText = Base58.decode(data);

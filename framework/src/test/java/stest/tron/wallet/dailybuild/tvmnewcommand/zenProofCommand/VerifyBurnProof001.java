@@ -4,10 +4,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
 import java.util.Optional;
-import jdk.nashorn.internal.runtime.options.Option;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -15,7 +13,6 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteString;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -68,7 +65,6 @@ public class VerifyBurnProof001 {
 
   @Test(enabled = true, description = "Deploy VerfyMintProof contract ")
   public void verifyBurnProof001() {
-
 
     //before deploy, check account resource
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(testAddress001,
@@ -146,11 +142,11 @@ public class VerifyBurnProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(
         infoById.get().getContractResult(0).toByteArray());
 
@@ -158,7 +154,7 @@ public class VerifyBurnProof001 {
         + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
         + "0000000000000000000000000000000000000000000000000000000000000040"
         + "0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000000",contractResult);
+        + "0000000000000000000000000000000000000000000000000000000000000000", contractResult);
 
 
   }
@@ -174,11 +170,11 @@ public class VerifyBurnProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(
         infoById.get().getContractResult(0).toByteArray());
 
@@ -186,7 +182,7 @@ public class VerifyBurnProof001 {
         + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
         + "0000000000000000000000000000000000000000000000000000000000000040"
         + "0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000000",contractResult);
+        + "0000000000000000000000000000000000000000000000000000000000000000", contractResult);
 
 
   }
@@ -224,19 +220,18 @@ public class VerifyBurnProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(
         infoById.get().getContractResult(0).toByteArray());
 
     // parseLong will return Long.MAX_VALUE and checkResult false
 
     Assert.assertEquals(""
-        + "0000000000000000000000000000000000000000000000000000000000000000"  // 1 : true
-        ,contractResult);
+            + "0000000000000000000000000000000000000000000000000000000000000000", contractResult);
   }
 
   @Test(enabled = true, description = "verify success with address call")
@@ -272,11 +267,11 @@ public class VerifyBurnProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(
         infoById.get().getContractResult(0).toByteArray());
 
@@ -284,7 +279,7 @@ public class VerifyBurnProof001 {
         + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
         + "0000000000000000000000000000000000000000000000000000000000000040"
         + "0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000001",contractResult);
+        + "0000000000000000000000000000000000000000000000000000000000000001", contractResult);
   }
 
   @Test(enabled = true, description = "verify success with fuction call")
@@ -319,17 +314,16 @@ public class VerifyBurnProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(
         infoById.get().getContractResult(0).toByteArray());
 
     Assert.assertEquals(""
-        + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
-         ,contractResult);
+            + "0000000000000000000000000000000000000000000000000000000000000001", contractResult);
   }
 
 

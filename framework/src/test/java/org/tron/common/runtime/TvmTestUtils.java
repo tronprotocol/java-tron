@@ -9,9 +9,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -174,7 +174,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(deposit.getDbManager()));    // init
+        new RuntimeImpl());    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -191,7 +191,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbmanager));
+        new RuntimeImpl());
     // init
     trace.init(block);
     //exec
@@ -209,7 +209,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(deposit.getDbManager()));    // init
+        new RuntimeImpl());    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -270,7 +270,7 @@ public class TvmTestUtils {
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbManager));
+        new RuntimeImpl());
     // init
     trace.init(blockCap);
     //exec

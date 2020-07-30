@@ -23,17 +23,17 @@ import java.util.List;
 
 public class Bucket {
 
-  public static int MAX_KADEMLIA_K = 5;
+  public static final int MAX_KADEMLIA_K = 5;
 
   // if bit = 1 go left
-  Bucket left;
+  private Bucket left;
 
   // if bit = 0 go right
-  Bucket right;
+  private Bucket right;
 
-  String name;
+  private String name;
 
-  List<Peer> peers = new ArrayList<>();
+  private List<Peer> peers = new ArrayList<>();
 
 
   public Bucket(String name) {

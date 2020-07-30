@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static junit.framework.TestCase.fail;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -24,6 +26,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 
 @Slf4j
 public class UpdateAccountActuatorTest {
@@ -71,6 +74,9 @@ public class UpdateAccountActuatorTest {
    */
   @Before
   public void createCapsule() {
+
+    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(0);   // reset allowUpdate
+
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
@@ -78,8 +84,9 @@ public class UpdateAccountActuatorTest {
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_1));
-    dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME.getBytes());
-    dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME_1.getBytes());
+    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME.getBytes());
+    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME_1.getBytes());
+
   }
 
   private Any getContract(String name, String address) {
@@ -102,28 +109,38 @@ public class UpdateAccountActuatorTest {
             .build());
   }
 
+
   /**
-   * Update account when all right.
+   * update a account with a valid accountName and OwnerAddress
    */
-  @Test
-  public void rightUpdateAccount() {
+  private void UpdateAccount(String accountName, String OwnerAddress) {
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator = new UpdateAccountActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+        .setAny(getContract(accountName, OwnerAddress));
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
+          .get(ByteArray.fromHexString(OwnerAddress));
+      Assert.assertEquals(accountName, accountCapsule.getAccountName().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+
+  /**
+   * Update account when all right.
+   */
+  @Test
+  public void rightUpdateAccount() {
+    UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);
   }
 
   @Test
@@ -133,16 +150,9 @@ public class UpdateAccountActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALID));
 
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertFalse(true);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalid ownerAddress", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(actuator, ret, "Invalid ownerAddress",
+        "Invalid ownerAddress");
+
   }
 
   @Test
@@ -152,45 +162,22 @@ public class UpdateAccountActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS_1));
 
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertFalse(true);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account does not exist", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    processAndCheckInvalid(actuator, ret, "Account does not exist",
+        "Account does not exist");
+
   }
 
-  //@Test
+  @Test
   /*
    * Can update name only one time.
    */
-  public void twiceUpdateAccount() {
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    UpdateAccountActuator actuator = new UpdateAccountActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+  public void twiceUpdateAccountFail() {
 
+    UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);  // firstly update account
+    TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator1 = new UpdateAccountActuator();
     actuator1.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(ACCOUNT_NAME_1, OWNER_ADDRESS));
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
-      Assert.assertTrue(true);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
 
     try {
       actuator1.validate();
@@ -198,7 +185,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("This account name already exist", e.getMessage());
+      Assert.assertEquals("This account name is already existed", e.getMessage());
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
@@ -207,30 +194,53 @@ public class UpdateAccountActuatorTest {
     }
   }
 
-  //@Test
-  public void nameAlreadyUsed() {
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    UpdateAccountActuator actuator = new UpdateAccountActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+  @Test
+  /*
+   * Can update name more than one time
+   */
+  public void twiceUpdateAccountSuccess() {
 
+    UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);  // firstly update account
+
+    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(1);   // allowUpdate more
+    // than 1 time
+    UpdateAccount(ACCOUNT_NAME_1, OWNER_ADDRESS);  // second update
+
+    String accountTest = "third Update";
+
+    UpdateAccount(accountTest, OWNER_ADDRESS);  // Third update
+
+    dbManager.getAccountIndexStore().delete(accountTest.getBytes());  // delete it after test
+
+
+  }
+
+
+  @Test
+  public void updateSameNameSuccess() {
+
+    UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);   // first update account
+
+    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(1);   // allow update more
+    // than one time
+    UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);   // second update with same account Name
+
+    UpdateAccount("sameName", OWNER_ADDRESS);   // Third Update
+
+    UpdateAccount("sameName", OWNER_ADDRESS);   // fourth Update with same accountName
+
+    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME.getBytes());
+
+  }
+
+  @Test
+  public void updateSameNameFail() {
+    UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);   // first update account
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator1 = new UpdateAccountActuator();
     actuator1.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS_1));
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule accountCapsule = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
-      Assert.assertTrue(true);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
 
     AccountCapsule ownerCapsule =
         new AccountCapsule(
@@ -239,13 +249,15 @@ public class UpdateAccountActuatorTest {
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
+    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(0);   // reset allowUpdate
+
     try {
       actuator1.validate();
       actuator1.execute(ret);
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("This name has existed", e.getMessage());
+      Assert.assertEquals("This name is existed", e.getMessage());
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
@@ -253,6 +265,7 @@ public class UpdateAccountActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
 
   @Test
   /*
@@ -336,46 +349,61 @@ public class UpdateAccountActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
-//    //Too short name 7 bytes
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract("testnam", OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//
-//    //Can't contain space
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract("t e", OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//    //Can't contain chinese characters
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
-//              , OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
   }
+
+
+  @Test
+  public void noContract() {
+
+    UpdateAccountActuator actuator = new UpdateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    UpdateAccountActuator actuator = new UpdateAccountActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error, expected type [AccountUpdateContract], real type["
+            + invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void nullTransationResult() {
+    UpdateAccountActuator actuator = new UpdateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    TransactionResultCapsule ret = null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+  }
+
+  private void processAndCheckInvalid(UpdateAccountActuator actuator,
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
+
 }

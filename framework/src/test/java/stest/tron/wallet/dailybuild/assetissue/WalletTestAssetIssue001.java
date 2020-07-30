@@ -188,7 +188,7 @@ public class WalletTestAssetIssue001 {
       }
       transaction = signTransaction(ecKey, transaction);
       Return response = blockingStubFull.broadcastTransaction(transaction);
-      if (response.getResult() == false) {
+      if (!response.getResult()) {
         logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
         return false;
       } else {
@@ -286,7 +286,7 @@ public class WalletTestAssetIssue001 {
     }
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {
@@ -314,9 +314,9 @@ public class WalletTestAssetIssue001 {
 
     UnfreezeAssetContract.Builder builder = UnfreezeAssetContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess);
+    builder.setOwnerAddress(byteAddress);
 
     UnfreezeAssetContract contract = builder.build();
 
@@ -329,12 +329,10 @@ public class WalletTestAssetIssue001 {
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
     }
+    return response.getResult();
   }
 }
 

@@ -13,6 +13,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -22,6 +23,7 @@ public class WitnessControllerTest {
 
   private static Manager dbManager = new Manager();
   private static DposSlot dposSlot;
+  private static ChainBaseManager chainBaseManager;
 
   private static TronApplicationContext context;
   private static String dbPath = "output_witness_controller_test";
@@ -36,6 +38,8 @@ public class WitnessControllerTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
+
     dposSlot = context.getBean(DposSlot.class);
   }
 
@@ -49,12 +53,8 @@ public class WitnessControllerTest {
   @Test
   public void testSlot() {
 
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(19000);
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1);
-
-//    assertEquals(21, dbManager.getWitnessController().getAbSlotAtTime(21500));
-//    assertEquals(2, dbManager.getWitnessController().getSlotAtTime(21500));
-//    assertEquals(19, dbManager.getWitnessController().getHeadSlot());
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(19000);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1);
 
   }
 
@@ -62,7 +62,7 @@ public class WitnessControllerTest {
   public void testWitnessSchedule() {
 
     // no witness produce block
-    assertEquals(0, dbManager.getHeadBlockNum());
+    assertEquals(0, chainBaseManager.getHeadBlockNum());
 
     // test witnesses in genesis block
     assertEquals(
@@ -98,38 +98,16 @@ public class WitnessControllerTest {
     w.add(b);
 
     // update active witness
-    dbManager.getWitnessScheduleStore().saveActiveWitnesses(w);
+    chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(w);
     // now 2 active witnesses
-    assertEquals(2, dbManager.getWitnessScheduleStore().getActiveWitnesses().size());
+    assertEquals(2, chainBaseManager.getWitnessScheduleStore().getActiveWitnesses().size());
 
     // update shuffled witness
-    dbManager.getWitnessScheduleStore().saveCurrentShuffledWitnesses(w);
+    chainBaseManager.getWitnessScheduleStore().saveCurrentShuffledWitnesses(w);
 
     assertEquals(a, dposSlot.getScheduledWitness(1));
     assertEquals(b, dposSlot.getScheduledWitness(2));
     assertEquals(a, dposSlot.getScheduledWitness(3));
     assertEquals(b, dposSlot.getScheduledWitness(4));
   }
-//
-//  @Test
-//  public void testTryRemoveThePowerOfTheGr() {
-//
-//    Witness witness = Args.getInstance().getGenesisBlock().getWitnesses().get(0);
-//    assertEquals(105, witness.getVoteCount());
-//
-//    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
-//    consensusDelegate.tryRemoveThePowerOfTheGr();
-//    assertEquals(105, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
-//
-//    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(1);
-//    ConsensusDelegate.getWitnessController().tryRemoveThePowerOfTheGr();
-//    assertEquals(0, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
-//
-//    dbManager.getWitnessController().tryRemoveThePowerOfTheGr();
-//    assertEquals(0, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
-//
-//
-//  }
-
-
 }

@@ -14,11 +14,6 @@ public abstract class WrappedResultSet<T> extends ResultSet<T> {
     this.resultSet = resultSet;
   }
 
-//  @Override
-//  public Iterator<T> iterator() {
-//    return null;
-//  }
-
   @Override
   public boolean contains(T object) {
     return Iterables.contains(this, object);

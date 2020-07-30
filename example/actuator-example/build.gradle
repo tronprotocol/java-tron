@@ -3,3 +3,4 @@ description = "actuator-example – a example of actuator."
 dependencies {
     compile project(":actuator")
 }
+

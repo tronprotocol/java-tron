@@ -15,6 +15,8 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -49,9 +52,9 @@ public class AssetIssueActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -64,16 +67,6 @@ public class AssetIssueActuator extends AbstractActuator {
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
       AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(assetIssueContract);
-//      String name = new String(assetIssueCapsule.getName().toByteArray(),
-//          Charset.forName("UTF-8")); // getName().toStringUtf8()
-//      long order = 0;
-//      byte[] key = name.getBytes();
-//      while (this.dbManager.getAssetIssueStore().get(key) != null) {
-//        order++;
-//        String nameKey = AssetIssueCapsule.createDbKeyString(name, order);
-//        key = nameKey.getBytes();
-//      }
-//      assetIssueCapsule.setOrder(order);
       long tokenIdNum = dynamicStore.getTokenIdNum();
       tokenIdNum++;
       assetIssueCapsule.setId(Long.toString(tokenIdNum));
@@ -104,7 +97,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
       while (iterator.hasNext()) {
         FrozenSupply next = iterator.next();
-        long expireTime = startTime + next.getFrozenDays() * 86_400_000;
+        long expireTime = startTime + next.getFrozenDays() * FROZEN_PERIOD;
         Frozen newFrozen = Frozen.newBuilder()
             .setFrozenBalance(next.getFrozenAmount())
             .setExpireTime(expireTime)
@@ -126,15 +119,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
       ret.setAssetIssueID(Long.toString(tokenIdNum));
       ret.setStatus(fee, code.SUCESS);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (ArithmeticException e) {
+    } catch (InvalidProtocolBufferException | BalanceInsufficientException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -146,10 +131,10 @@ public class AssetIssueActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -169,7 +154,7 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 
@@ -179,16 +164,16 @@ public class AssetIssueActuator extends AbstractActuator {
 
     if (dynamicStore.getAllowSameTokenName() != 0) {
       String name = assetIssueContract.getName().toStringUtf8().toLowerCase();
-      if (name.equals("trx")) {
+      if (("trx").equals(name)) {
         throw new ContractValidateException("assetName can't be trx");
       }
     }
 
     int precision = assetIssueContract.getPrecision();
-    if (precision != 0 && dynamicStore.getAllowSameTokenName() != 0) {
-      if (precision < 0 || precision > 6) {
-        throw new ContractValidateException("precision cannot exceed 6");
-      }
+    if (precision != 0
+        && dynamicStore.getAllowSameTokenName() != 0
+        && (precision < 0 || precision > ActuatorConstant.PRECISION_DECIMAL)) {
+      throw new ContractValidateException("precision cannot exceed 6");
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
@@ -292,23 +277,6 @@ public class AssetIssueActuator extends AbstractActuator {
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for fee!");
     }
-//
-//    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
-//    String name = new String(assetIssueCapsule.getName().toByteArray(),
-//        Charset.forName("UTF-8")); // getName().toStringUtf8()
-//    long order = 0;
-//    byte[] key = name.getBytes();
-//    while (this.dbManager.getAssetIssueStore().get(key) != null) {
-//      order++;
-//      String nameKey = AssetIssueCapsule.createDbKeyString(name, order);
-//      key = nameKey.getBytes();
-//    }
-//    assetIssueCapsule.setOrder(order);
-//
-//    if (!TransactionUtil.validAssetName(assetIssueCapsule.createDbKey())) {
-//      throw new ContractValidateException("Invalid assetID");
-//    }
-
     return true;
   }
 
@@ -322,7 +290,4 @@ public class AssetIssueActuator extends AbstractActuator {
     return chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee();
   }
 
-  public long calcUsage() {
-    return 0;
-  }
 }

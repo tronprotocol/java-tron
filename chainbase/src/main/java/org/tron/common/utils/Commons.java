@@ -1,14 +1,8 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
-import static org.tron.common.utils.Hash.sha3omit12;
-import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
-
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.math.ec.ECPoint;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -22,14 +16,7 @@ import org.tron.core.store.ExchangeV2Store;
 @Slf4j(topic = "Commons")
 public class Commons {
 
-  public static final int ADDRESS_SIZE = 42;
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
-
-  public static byte[] clone(byte[] value) {
-    byte[] clone = new byte[value.length];
-    System.arraycopy(value, 0, clone, 0, value.length);
-    return clone;
-  }
 
   private static byte[] decode58Check(String input) {
     byte[] decodeCheck = Base58.decode(input);
@@ -38,8 +25,10 @@ public class Commons {
     }
     byte[] decodeData = new byte[decodeCheck.length - 4];
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), decodeData);
-    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), hash0);
+    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        decodeData);
+    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        hash0);
     if (hash1[0] == decodeCheck[decodeData.length] &&
         hash1[1] == decodeCheck[decodeData.length + 1] &&
         hash1[2] == decodeCheck[decodeData.length + 2] &&
@@ -47,27 +36,6 @@ public class Commons {
       return decodeData;
     }
     return null;
-  }
-
-  public static boolean addressValid(byte[] address) {
-    if (ArrayUtils.isEmpty(address)) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    if (address.length != ADDRESS_SIZE / 2) {
-      logger.warn(
-          "Warning: Address length need " + ADDRESS_SIZE + " but " + address.length
-              + " !!");
-      return false;
-    }
-
-    if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
-          + address[0] + " !!");
-      return false;
-    }
-    //Other rule;
-    return true;
   }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
@@ -80,7 +48,7 @@ public class Commons {
       return null;
     }
 
-    if (!addressValid(address)) {
+    if (!DecodeUtil.addressValid(address)) {
       return null;
     }
 
@@ -91,10 +59,6 @@ public class Commons {
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
     adjustBalance(accountStore, account, amount);
-  }
-
-  public static String createReadableString(byte[] bytes) {
-    return ByteArray.toHexString(bytes);
   }
 
   /**
@@ -110,7 +74,7 @@ public class Commons {
 
     if (amount < 0 && balance < -amount) {
       throw new BalanceInsufficientException(
-          createReadableString(account.createDbKey()) + " insufficient balance");
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
     }
     account.setBalance(Math.addExact(balance, amount));
     accountStore.put(account.getAddress().toByteArray(), account);

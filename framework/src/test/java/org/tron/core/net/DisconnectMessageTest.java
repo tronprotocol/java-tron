@@ -97,8 +97,7 @@ public class DisconnectMessageTest extends com.google.protobuf.GeneratedMessageV
     return this.unknownFields;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-  internalGetFieldAccessorTable() {
+  protected FieldAccessorTable internalGetFieldAccessorTable() {
     return null;
   }
 

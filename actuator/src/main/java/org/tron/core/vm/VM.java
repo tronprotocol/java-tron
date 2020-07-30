@@ -1,7 +1,8 @@
 package org.tron.core.vm;
 
+import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.Hash.sha3;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
 import static org.tron.core.vm.OpCode.CALLTOKENID;
@@ -15,7 +16,6 @@ import static org.tron.core.vm.OpCode.SAR;
 import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -37,6 +37,9 @@ import org.tron.core.vm.program.Stack;
 public class VM {
 
   public static final String ADDRESS_LOG = "address: ";
+  private static final String DATA_LOG = "data: ";
+  private static final String SIZE_LOG = "size: ";
+  private static final String VALUE_LOG = " value: ";
   private static final BigInteger _32_ = BigInteger.valueOf(32);
   private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
   // 3MB
@@ -56,7 +59,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size  number of bytes needed
+   * @param size number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -75,7 +78,7 @@ public class VM {
 
     checkMemorySize(op, newMemSize);
 
-    // memory drop consume calc
+    // memory SUN consume calc
     long memoryUsage = (newMemSize.longValueExact() + 31) / 32 * 32;
     if (memoryUsage > oldMemSize) {
       long memWords = (memoryUsage / 32);
@@ -105,16 +108,14 @@ public class VM {
       }
 
       // hard fork for 3.2
-      if (!VMConfig.allowTvmTransferTrc10()) {
-        if (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID) {
-          throw Program.Exception.invalidOpCode(program.getCurrentOp());
-        }
+      if (!VMConfig.allowTvmTransferTrc10()
+          && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      if (!VMConfig.allowTvmConstantinople()) {
-        if (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH) {
-          throw Program.Exception.invalidOpCode(program.getCurrentOp());
-        }
+      if (!VMConfig.allowTvmConstantinople()
+          && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
       if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
@@ -234,10 +235,10 @@ public class VM {
           DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
 
           //check to see if account does not exist and is not a precompiled contract
-          if (op == CALL || op == CALLTOKEN) {
-            if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
-              energyCost += energyCosts.getNEW_ACCT_CALL();
-            }
+          if ((op == CALL || op == CALLTOKEN)
+              && isDeadAccount(program, callAddressWord)
+              && !value.isZero()) {
+            energyCost += energyCosts.getNEW_ACCT_CALL();
           }
 
           // TODO #POC9 Make sure this is converted to BigInteger (256num support)
@@ -817,7 +818,7 @@ public class VM {
           DataWord value = program.getDataValue(dataOffs);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + value;
+            hint = DATA_LOG + value;
           }
 
           program.stackPush(value);
@@ -828,7 +829,7 @@ public class VM {
           DataWord dataSize = program.getDataSize();
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + dataSize.value();
+            hint = SIZE_LOG + dataSize.value();
           }
 
           program.stackPush(dataSize);
@@ -843,7 +844,7 @@ public class VM {
           byte[] msgData = program.getDataCopy(dataOffsetData, lengthData);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(msgData);
+            hint = DATA_LOG + Hex.toHexString(msgData);
           }
 
           program.memorySave(memOffsetData.intValueSafe(), msgData);
@@ -854,7 +855,7 @@ public class VM {
           DataWord dataSize = program.getReturnDataBufferSize();
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + dataSize.value();
+            hint = SIZE_LOG + dataSize.value();
           }
 
           program.stackPush(dataSize);
@@ -874,7 +875,7 @@ public class VM {
           }
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(msgData);
+            hint = DATA_LOG + Hex.toHexString(msgData);
           }
 
           program.memorySave(memOffsetData.intValueSafe(), msgData);
@@ -894,7 +895,7 @@ public class VM {
           DataWord codeLength = new DataWord(length);
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + length;
+            hint = SIZE_LOG + length;
           }
 
           program.stackPush(codeLength);
@@ -1120,7 +1121,7 @@ public class VM {
           DataWord data = program.memoryLoad(addr);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + data;
+            hint = DATA_LOG + data;
           }
 
           program.stackPush(data);
@@ -1132,7 +1133,7 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isDebugEnabled()) {
-            hint = "addr: " + addr + " value: " + value;
+            hint = "addr: " + addr + VALUE_LOG + value;
           }
 
           program.memorySave(addr, value);
@@ -1152,7 +1153,7 @@ public class VM {
           DataWord val = program.storageLoad(key);
 
           if (logger.isDebugEnabled()) {
-            hint = "key: " + key + " value: " + val;
+            hint = "key: " + key + VALUE_LOG + val;
           }
 
           if (val == null) {
@@ -1173,7 +1174,7 @@ public class VM {
 
           if (logger.isDebugEnabled()) {
             hint =
-                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
+                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + VALUE_LOG
                     + value;
           }
 
@@ -1407,7 +1408,7 @@ public class VM {
           program.setHReturn(hReturn);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(hReturn)
+            hint = DATA_LOG + Hex.toHexString(hReturn)
                 + " offset: " + offset.value()
                 + " size: " + size.value();
           }

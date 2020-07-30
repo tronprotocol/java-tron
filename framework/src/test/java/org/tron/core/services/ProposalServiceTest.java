@@ -63,6 +63,7 @@ public class ProposalServiceTest {
     }
   }
 
+
   @After
   public void removeDb() {
     Args.clearParam();

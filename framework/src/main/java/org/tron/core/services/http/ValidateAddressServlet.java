@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 
 
 @Component
@@ -22,7 +23,7 @@ public class ValidateAddressServlet extends RateLimiterServlet {
     boolean result = true;
     String msg;
     try {
-      if (input.length() == Commons.ADDRESS_SIZE) {
+      if (input.length() == DecodeUtil.ADDRESS_SIZE) {
         //hex
         address = ByteArray.fromHexString(input);
         msg = "Hex string format";
@@ -39,7 +40,7 @@ public class ValidateAddressServlet extends RateLimiterServlet {
         msg = "Length error";
       }
       if (result) {
-        result = Commons.addressValid(address);
+        result = DecodeUtil.addressValid(address);
         if (!result) {
           msg = "Invalid address";
         }

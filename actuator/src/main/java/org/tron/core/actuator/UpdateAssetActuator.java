@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -29,9 +29,9 @@ public class UpdateAssetActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)object;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) object;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -51,7 +51,8 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
-      AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+      AssetIssueCapsule assetIssueCapsule;
+      AssetIssueCapsule assetIssueCapsuleV2;
 
       AssetIssueStore assetIssueStoreV2 = assetIssueV2Store;
       assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
@@ -91,10 +92,10 @@ public class UpdateAssetActuator extends AbstractActuator {
   public boolean validate() throws ContractValidateException {
 
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -119,7 +120,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     ByteString newUrl = updateAssetContract.getUrl();
     ByteString newDescription = updateAssetContract.getDescription();
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 

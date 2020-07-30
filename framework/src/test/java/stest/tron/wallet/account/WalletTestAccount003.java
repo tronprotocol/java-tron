@@ -151,9 +151,10 @@ public class WalletTestAccount003 {
       Assert.assertTrue(sendCoin(toAddress, lowaccount.getBalance(), lowBalAddress, lowBalTest));
     }
     //Create AssetIssue failed when there is no enough balance.
-    Assert.assertFalse(PublicMethed.createAssetIssue(lowBalAddress, name, TotalSupply, 1, 1,
-        now + 100000000L, now + 10000000000L, 2, description, url, 10000L,
-        10000L, 1L, 1L, lowBalTest, blockingStubFull));
+    Assert.assertFalse(PublicMethed.createAssetIssue(lowBalAddress, name, TotalSupply, 1,
+        1, now + 100000000L, now + 10000000000L, 2,
+        description, url, 10000L, 10000L, 1L,
+        1L, lowBalTest, blockingStubFull));
     logger.info("nobalancecreateassetissue");
   }
 
@@ -279,8 +280,8 @@ public class WalletTestAccount003 {
     ECKey ecKey = temKey;
 
     try {
-      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract
-          .newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder
+          = AssetIssueContractOuterClass.AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(TotalSupply);
@@ -361,8 +362,8 @@ public class WalletTestAccount003 {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    BalanceContract.UnfreezeBalanceContract.Builder builder = BalanceContract.UnfreezeBalanceContract
-        .newBuilder();
+    BalanceContract.UnfreezeBalanceContract.Builder builder
+        = BalanceContract.UnfreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess);
@@ -405,8 +406,8 @@ public class WalletTestAccount003 {
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder
+          = WitnessContract.VoteWitnessContract.Vote.newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
         return false;

@@ -1,6 +1,6 @@
 package org.tron.program;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
@@ -14,6 +14,8 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -29,6 +31,8 @@ public class SolidityNode {
 
   private Manager dbManager;
 
+  private ChainBaseManager chainBaseManager;
+
   private DatabaseGrpcClient databaseGrpcClient;
 
   private AtomicLong ID = new AtomicLong();
@@ -43,8 +47,9 @@ public class SolidityNode {
 
   public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
+    this.chainBaseManager = dbManager.getChainBaseManager();
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
-    ID.set(dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
     remoteBlockNum.set(getLastSolidityBlockNum());
   }
@@ -53,37 +58,38 @@ public class SolidityNode {
    * Start the SolidityNode.
    */
   public static void main(String[] args) {
-    logger.info("Solidity node running.");
+    logger.info("Solidity node is running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    Args cfgArgs = Args.getInstance();
+    CommonParameter parameter = Args.getInstance();
 
     logger.info("index switch is {}",
-        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
+        BooleanUtils.toStringOnOff(BooleanUtils
+            .toBoolean(parameter.getStorage().getIndexSwitch())));
 
-    if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
-      logger.error("Trust node not set.");
+    if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
+      logger.error("Trust node is not set.");
       return;
     }
-    cfgArgs.setSolidityNode(true);
+    parameter.setSolidityNode(true);
 
     ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
 
-    if (cfgArgs.isHelp()) {
+    if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
     Application appT = ApplicationFactory.create(context);
     FullNode.shutdown(appT);
 
-    //appT.init(cfgArgs);
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
     //http
     SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
-    if (Args.getInstance().solidityNodeHttpEnable) {
+    if (CommonParameter.getInstance().solidityNodeHttpEnable) {
       appT.addService(httpApiService);
     }
-    appT.initServices(cfgArgs);
+
+    appT.initServices(parameter);
     appT.startServices();
     appT.startup();
 
@@ -150,7 +156,7 @@ public class SolidityNode {
       long blockNum = block.getBlockHeader().getRawData().getNumber();
       try {
         dbManager.pushVerifiedBlock(new BlockCapsule(block));
-        dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
+        chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
         logger
             .info("Success to process block: {}, blockQueueSize: {}.", blockNum, blockQueue.size());
         return;
@@ -203,18 +209,20 @@ public class SolidityNode {
     try {
       Thread.sleep(time);
     } catch (Exception e1) {
+      logger.error(e1.getMessage());
     }
   }
 
   private void resolveCompatibilityIssueIfUsingFullNodeDatabase() {
-    long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-    long headBlockNum = dbManager.getHeadBlockNum();
+    long lastSolidityBlockNum =
+        chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long headBlockNum = chainBaseManager.getHeadBlockNum();
     logger.info("headBlockNum:{}, solidityBlockNum:{}, diff:{}",
         headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
     if (lastSolidityBlockNum < headBlockNum) {
       logger.info("use fullNode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
           headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
-      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
+      chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
     }
   }
 }

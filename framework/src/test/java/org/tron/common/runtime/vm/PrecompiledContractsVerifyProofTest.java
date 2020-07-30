@@ -57,7 +57,7 @@ public class PrecompiledContractsVerifyProofTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, "config-test.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
@@ -155,7 +155,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -182,7 +182,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -210,7 +210,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -310,7 +310,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -337,7 +337,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -415,7 +415,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -442,7 +442,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -479,7 +479,7 @@ public class PrecompiledContractsVerifyProofTest {
         int slot = result[idx];
         if (slot == 0) {
           byte[] noteCommitment = params.getReceiveDescription(0).getNoteCommitment()
-                                        .toByteArray();
+              .toByteArray();
           System.arraycopy(noteCommitment, 0, frontier, 0, 32);
         } else {
           int destPos = slot * 32;
@@ -492,7 +492,7 @@ public class PrecompiledContractsVerifyProofTest {
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
           byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
-                                        .toByteArray();
+              .toByteArray();
           System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
         }
         IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
@@ -521,7 +521,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -548,7 +548,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -640,7 +640,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -667,7 +667,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -695,7 +695,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -786,7 +786,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -813,7 +813,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -853,6 +853,7 @@ public class PrecompiledContractsVerifyProofTest {
                 i, uncommitted[i], uncommitted[i], uncommitted[i + 1]));
       }
     } catch (Throwable any) {
+      any.printStackTrace();
     }
     for (int cnt = 0; cnt < totalCountNum; cnt++) {
       SpendingKey sk = SpendingKey.random();
@@ -864,7 +865,6 @@ public class PrecompiledContractsVerifyProofTest {
       Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(),
           randomLong(), rcm, new byte[512]);
       byte[] node = note.cm();
-
 
       for (int i = 0; i < 32; i++) {
         byte[] input = ByteUtil.merge(longTo32Bytes(i), node, uncommitted[i]);
@@ -900,7 +900,7 @@ public class PrecompiledContractsVerifyProofTest {
     JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
     PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
 
-    {//for mint1
+    { //for mint1
       ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
       mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
       mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -927,7 +927,7 @@ public class PrecompiledContractsVerifyProofTest {
       leafCount++;
     }
 
-    {//for burn
+    { //for burn
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1622,7 +1622,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1648,7 +1648,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1675,7 +1675,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1748,7 +1748,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1774,7 +1774,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1801,7 +1801,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1875,7 +1875,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1901,7 +1901,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -1928,7 +1928,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2001,7 +2001,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2027,7 +2027,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2054,7 +2054,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2127,7 +2127,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2153,7 +2153,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2180,7 +2180,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2253,7 +2253,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2279,7 +2279,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2306,7 +2306,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2379,7 +2379,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2405,7 +2405,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2432,7 +2432,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2505,7 +2505,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2531,7 +2531,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2558,7 +2558,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2631,7 +2631,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2657,7 +2657,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2684,7 +2684,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2757,7 +2757,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2783,7 +2783,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2810,7 +2810,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2883,7 +2883,7 @@ public class PrecompiledContractsVerifyProofTest {
       PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
       PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint1
+      { //for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
         mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2909,7 +2909,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for mint2
+      { //for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
         mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -2936,7 +2936,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for transfer
+      { //for transfer
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3007,7 +3007,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3033,7 +3033,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3078,7 +3078,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3104,7 +3104,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3150,7 +3150,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3176,7 +3176,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3221,7 +3221,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3247,7 +3247,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3292,7 +3292,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3318,7 +3318,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3363,7 +3363,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3389,7 +3389,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3434,7 +3434,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3460,7 +3460,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3505,7 +3505,7 @@ public class PrecompiledContractsVerifyProofTest {
       JLibrustzcash.librustzcashSaplingGenerateR(rcm);
       PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).get();
 
-      {//for mint
+      { //for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
         mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3531,7 +3531,7 @@ public class PrecompiledContractsVerifyProofTest {
         leafCount++;
       }
 
-      {//for burn
+      { //for burn
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
@@ -3588,7 +3588,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForMint(ShieldedTRC20Parameters params, long value,
-                                  byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3606,11 +3606,10 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongCM(ShieldedTRC20Parameters params, long value,
-                                         byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
-//        revDesc.getNoteCommitment().toByteArray(),
         Wallet.generateRandomBytes(32),
         revDesc.getValueCommitment().toByteArray(),
         revDesc.getEpk().toByteArray(),
@@ -3625,12 +3624,11 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongCV(ShieldedTRC20Parameters params, long value,
-                                         byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
         revDesc.getNoteCommitment().toByteArray(),
-//        revDesc.getValueCommitment().toByteArray(),
         Wallet.generateRandomBytes(32),
         revDesc.getEpk().toByteArray(),
         revDesc.getZkproof().toByteArray(),
@@ -3644,13 +3642,12 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongEpk(ShieldedTRC20Parameters params, long value,
-                                          byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
         revDesc.getNoteCommitment().toByteArray(),
         revDesc.getValueCommitment().toByteArray(),
-//        revDesc.getEpk().toByteArray(),
         Wallet.generateRandomBytes(32),
         revDesc.getZkproof().toByteArray(),
         params.getBindingSignature().toByteArray(),
@@ -3663,14 +3660,13 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongProof(ShieldedTRC20Parameters params, long value,
-                                            byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
         revDesc.getNoteCommitment().toByteArray(),
         revDesc.getValueCommitment().toByteArray(),
         revDesc.getEpk().toByteArray(),
-//        revDesc.getZkproof().toByteArray(),
         Wallet.generateRandomBytes(192),
         params.getBindingSignature().toByteArray(),
         longTo32Bytes(value),
@@ -3682,7 +3678,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongBindingSignature(ShieldedTRC20Parameters params, long value,
-                                                       byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3690,7 +3686,6 @@ public class PrecompiledContractsVerifyProofTest {
         revDesc.getValueCommitment().toByteArray(),
         revDesc.getEpk().toByteArray(),
         revDesc.getZkproof().toByteArray(),
-//        params.getBindingSignature().toByteArray(),
         Wallet.generateRandomBytes(64),
         longTo32Bytes(value),
         params.getMessageHash().toByteArray(),
@@ -3701,7 +3696,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongHash(ShieldedTRC20Parameters params, long value,
-                                           byte[] frontier, long leafCount) {
+      byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3711,7 +3706,6 @@ public class PrecompiledContractsVerifyProofTest {
         revDesc.getZkproof().toByteArray(),
         params.getBindingSignature().toByteArray(),
         longTo32Bytes(value),
-//        params.getMessageHash().toByteArray(),
         Wallet.generateRandomBytes(32),
         frontier,
         longTo32Bytes(leafCount)
@@ -3720,7 +3714,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransfer(ShieldedTRC20Parameters params, byte[] frontier,
-                                      long leafCount, long valueBalance) {
+      long leafCount, long valueBalance) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3772,7 +3766,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongNf(ShieldedTRC20Parameters params, byte[] frontier,
-                                             long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3780,7 +3774,6 @@ public class PrecompiledContractsVerifyProofTest {
     List<ShieldContract.SpendDescription> spendDescs = params.getSpendDescriptionList();
     for (ShieldContract.SpendDescription spendDesc : spendDescs) {
       input = ByteUtil.merge(input,
-//          spendDesc.getNullifier().toByteArray(),
           Wallet.generateRandomBytes(32),
           spendDesc.getAnchor().toByteArray(),
           spendDesc.getValueCommitment().toByteArray(),
@@ -3825,7 +3818,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongRoot(ShieldedTRC20Parameters params, byte[] frontier,
-                                               long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3834,7 +3827,6 @@ public class PrecompiledContractsVerifyProofTest {
     for (ShieldContract.SpendDescription spendDesc : spendDescs) {
       input = ByteUtil.merge(input,
           spendDesc.getNullifier().toByteArray(),
-//          spendDesc.getAnchor().toByteArray(),
           Wallet.generateRandomBytes(32),
           spendDesc.getValueCommitment().toByteArray(),
           spendDesc.getRk().toByteArray(),
@@ -3879,7 +3871,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongSpendCV(ShieldedTRC20Parameters params, byte[] frontier,
-                                                  long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3889,7 +3881,6 @@ public class PrecompiledContractsVerifyProofTest {
       input = ByteUtil.merge(input,
           spendDesc.getNullifier().toByteArray(),
           spendDesc.getAnchor().toByteArray(),
-//          spendDesc.getValueCommitment().toByteArray(),
           Wallet.generateRandomBytes(32),
           spendDesc.getRk().toByteArray(),
           spendDesc.getZkproof().toByteArray()
@@ -3932,7 +3923,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongRk(ShieldedTRC20Parameters params, byte[] frontier,
-                                             long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3943,7 +3934,6 @@ public class PrecompiledContractsVerifyProofTest {
           spendDesc.getNullifier().toByteArray(),
           spendDesc.getAnchor().toByteArray(),
           spendDesc.getValueCommitment().toByteArray(),
-//          spendDesc.getRk().toByteArray(),
           Wallet.generateRandomBytes(32),
           spendDesc.getZkproof().toByteArray()
       );
@@ -3985,8 +3975,8 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongSpendProof(ShieldedTRC20Parameters params,
-                                                     byte[] frontier,
-                                                     long leafCount) {
+      byte[] frontier,
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3998,7 +3988,6 @@ public class PrecompiledContractsVerifyProofTest {
           spendDesc.getAnchor().toByteArray(),
           spendDesc.getValueCommitment().toByteArray(),
           spendDesc.getRk().toByteArray(),
-//          spendDesc.getZkproof().toByteArray()
           Wallet.generateRandomBytes(192)
       );
       spendAuthSig = ByteUtil.merge(
@@ -4039,7 +4028,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongCM(ShieldedTRC20Parameters params, byte[] frontier,
-                                             long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4063,7 +4052,6 @@ public class PrecompiledContractsVerifyProofTest {
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
-//          recvDesc.getNoteCommitment().toByteArray(),
           Wallet.generateRandomBytes(32),
           recvDesc.getValueCommitment().toByteArray(),
           recvDesc.getEpk().toByteArray(),
@@ -4093,7 +4081,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongReceiveCV(ShieldedTRC20Parameters params, byte[] frontier,
-                                                    long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4118,7 +4106,6 @@ public class PrecompiledContractsVerifyProofTest {
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
           recvDesc.getNoteCommitment().toByteArray(),
-//          recvDesc.getValueCommitment().toByteArray(),
           Wallet.generateRandomBytes(32),
           recvDesc.getEpk().toByteArray(),
           recvDesc.getZkproof().toByteArray()
@@ -4146,7 +4133,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongEpk(ShieldedTRC20Parameters params, byte[] frontier,
-                                              long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4172,7 +4159,6 @@ public class PrecompiledContractsVerifyProofTest {
       output = ByteUtil.merge(output,
           recvDesc.getNoteCommitment().toByteArray(),
           recvDesc.getValueCommitment().toByteArray(),
-//          recvDesc.getEpk().toByteArray(),
           Wallet.generateRandomBytes(32),
           recvDesc.getZkproof().toByteArray()
       );
@@ -4200,8 +4186,8 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongReceivProof(ShieldedTRC20Parameters params,
-                                                      byte[] frontier,
-                                                      long leafCount) {
+      byte[] frontier,
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4228,7 +4214,6 @@ public class PrecompiledContractsVerifyProofTest {
           recvDesc.getNoteCommitment().toByteArray(),
           recvDesc.getValueCommitment().toByteArray(),
           recvDesc.getEpk().toByteArray(),
-//          recvDesc.getZkproof().toByteArray()
           Wallet.generateRandomBytes(192)
       );
     }
@@ -4254,8 +4239,8 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongBindingSignature(ShieldedTRC20Parameters params,
-                                                           byte[] frontier,
-                                                           long leafCount) {
+      byte[] frontier,
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4291,7 +4276,6 @@ public class PrecompiledContractsVerifyProofTest {
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
-//        params.getBindingSignature().toByteArray(),
         Wallet.generateRandomBytes(64),
         params.getMessageHash().toByteArray(),
         longTo32Bytes(0),
@@ -4309,7 +4293,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongHash(ShieldedTRC20Parameters params, byte[] frontier,
-                                               long leafCount) {
+      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -4346,7 +4330,6 @@ public class PrecompiledContractsVerifyProofTest {
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
-//        params.getMessageHash().toByteArray(),
         longTo32Bytes(0),
         Wallet.generateRandomBytes(32),
         frontier,
@@ -4382,7 +4365,6 @@ public class PrecompiledContractsVerifyProofTest {
     byte[] mergedBytes;
     ShieldContract.SpendDescription spendDesc = params.getSpendDescription(0);
     mergedBytes = ByteUtil.merge(
-//        spendDesc.getNullifier().toByteArray(),
         Wallet.generateRandomBytes(32),
         spendDesc.getAnchor().toByteArray(),
         spendDesc.getValueCommitment().toByteArray(),
@@ -4402,7 +4384,6 @@ public class PrecompiledContractsVerifyProofTest {
     mergedBytes = ByteUtil.merge(
         spendDesc.getNullifier().toByteArray(),
         Wallet.generateRandomBytes(32),
-//        spendDesc.getAnchor().toByteArray(),
         spendDesc.getValueCommitment().toByteArray(),
         spendDesc.getRk().toByteArray(),
         spendDesc.getZkproof().toByteArray(),
@@ -4420,7 +4401,6 @@ public class PrecompiledContractsVerifyProofTest {
     mergedBytes = ByteUtil.merge(
         spendDesc.getNullifier().toByteArray(),
         spendDesc.getAnchor().toByteArray(),
-//        spendDesc.getValueCommitment().toByteArray(),
         Wallet.generateRandomBytes(32),
         spendDesc.getRk().toByteArray(),
         spendDesc.getZkproof().toByteArray(),
@@ -4440,7 +4420,6 @@ public class PrecompiledContractsVerifyProofTest {
         spendDesc.getAnchor().toByteArray(),
         spendDesc.getValueCommitment().toByteArray(),
         Wallet.generateRandomBytes(32),
-//        spendDesc.getRk().toByteArray(),
         spendDesc.getZkproof().toByteArray(),
         spendDesc.getSpendAuthoritySignature().toByteArray(),
         longTo32Bytes(value),
@@ -4458,7 +4437,6 @@ public class PrecompiledContractsVerifyProofTest {
         spendDesc.getAnchor().toByteArray(),
         spendDesc.getValueCommitment().toByteArray(),
         spendDesc.getRk().toByteArray(),
-//        spendDesc.getZkproof().toByteArray(),
         Wallet.generateRandomBytes(192),
         spendDesc.getSpendAuthoritySignature().toByteArray(),
         longTo32Bytes(value),
@@ -4469,7 +4447,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForBurnWrongAuthoritySignature(ShieldedTRC20Parameters params,
-                                                         long value) {
+      long value) {
     byte[] mergedBytes;
     ShieldContract.SpendDescription spendDesc = params.getSpendDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -4479,7 +4457,6 @@ public class PrecompiledContractsVerifyProofTest {
         spendDesc.getRk().toByteArray(),
         spendDesc.getZkproof().toByteArray(),
         Wallet.generateRandomBytes(64),
-//        spendDesc.getSpendAuthoritySignature().toByteArray(),
         longTo32Bytes(value),
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray()
@@ -4498,7 +4475,6 @@ public class PrecompiledContractsVerifyProofTest {
         spendDesc.getZkproof().toByteArray(),
         spendDesc.getSpendAuthoritySignature().toByteArray(),
         longTo32Bytes(value),
-//        params.getBindingSignature().toByteArray(),
         Wallet.generateRandomBytes(64),
         params.getMessageHash().toByteArray()
     );
@@ -4518,7 +4494,6 @@ public class PrecompiledContractsVerifyProofTest {
         longTo32Bytes(value),
         params.getBindingSignature().toByteArray(),
         Wallet.generateRandomBytes(21)
-//        params.getMessageHash().toByteArray()
     );
     return mergedBytes;
   }

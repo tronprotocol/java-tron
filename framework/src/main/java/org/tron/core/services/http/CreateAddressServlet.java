@@ -1,6 +1,8 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.protobuf.ByteString;
+import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -9,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 
 
@@ -31,23 +33,10 @@ public class CreateAddressServlet extends RateLimiterServlet {
       jsonObject.put("value", input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
-      byte[] address = wallet.createAdresss(build.getValue().toByteArray());
-      String base58check = WalletUtil.encode58Check(address);
-      String hexString = ByteArray.toHexString(address);
-      JSONObject jsonAddress = new JSONObject();
-      jsonAddress.put("base58checkAddress", base58check);
-      jsonAddress.put("value", hexString);
-      response.getWriter().println(jsonAddress.toJSONString());
+      fillResponse(build.getValue(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
-  }
-
-  private String covertStringToHex(String input) {
-    JSONObject jsonObject = JSONObject.parseObject(input);
-    String value = jsonObject.getString("value");
-    jsonObject.put("value", Util.getHexString(value));
-    return jsonObject.toJSONString();
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
@@ -61,15 +50,26 @@ public class CreateAddressServlet extends RateLimiterServlet {
       }
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      byte[] address = wallet.createAdresss(build.getValue().toByteArray());
-      String base58check = WalletUtil.encode58Check(address);
-      String hexString = ByteArray.toHexString(address);
-      JSONObject jsonAddress = new JSONObject();
-      jsonAddress.put("base58checkAddress", base58check);
-      jsonAddress.put("value", hexString);
-      response.getWriter().println(jsonAddress.toJSONString());
+      fillResponse(build.getValue(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private String covertStringToHex(String input) {
+    JSONObject jsonObject = JSONObject.parseObject(input);
+    String value = jsonObject.getString("value");
+    jsonObject.put("value", Util.getHexString(value));
+    return jsonObject.toJSONString();
+  }
+
+  private void fillResponse(ByteString value, HttpServletResponse response) throws IOException {
+    byte[] address = wallet.createAddress(value.toByteArray());
+    String base58check = StringUtil.encode58Check(address);
+    String hexString = ByteArray.toHexString(address);
+    JSONObject jsonAddress = new JSONObject();
+    jsonAddress.put("base58checkAddress", base58check);
+    jsonAddress.put("value", hexString);
+    response.getWriter().println(jsonAddress.toJSONString());
   }
 }

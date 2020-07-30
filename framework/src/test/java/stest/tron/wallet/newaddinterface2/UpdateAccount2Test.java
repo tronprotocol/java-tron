@@ -290,11 +290,7 @@ public class UpdateAccount2Test {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
-      return true;
-    }
+    return response.getResult();
   }
 
   /**
@@ -339,7 +335,7 @@ public class UpdateAccount2Test {
 
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       return response;
     }
     return ret;
@@ -376,12 +372,10 @@ public class UpdateAccount2Test {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
     }
+    return response.getResult();
   }
 
   /**
@@ -567,11 +561,11 @@ public class UpdateAccount2Test {
     final ECKey ecKey = temKey;
 
     AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
-    ByteString basAddreess = ByteString.copyFrom(addressBytes);
+    ByteString basAddress = ByteString.copyFrom(addressBytes);
     ByteString bsAccountName = ByteString.copyFrom(accountNameBytes);
 
     builder.setAccountName(bsAccountName);
-    builder.setOwnerAddress(basAddreess);
+    builder.setOwnerAddress(basAddress);
 
     AccountUpdateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateAccount(contract);

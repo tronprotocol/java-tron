@@ -29,6 +29,7 @@ import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ZksnarkException;
@@ -76,7 +77,8 @@ public class pedersenHash002 {
   private BigInteger publicFromAmount;
   Optional<ShieldedAddressInfo> receiverShieldAddressInfo;
   List<Note> shieldOutList = new ArrayList<>();
-  public static String transfer = "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])";
+  public static String transfer =
+      "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])";
   public Wallet wallet = new Wallet();
   static HttpResponse response;
   static HttpPost httppost;
@@ -272,7 +274,7 @@ public class pedersenHash002 {
     }
 
     if (!StringUtil.isNullOrEmpty(publicToAddress)) {
-      byte[] to = wallet.decodeFromBase58Check(publicToAddress);
+      byte[] to = Commons.decodeFromBase58Check(publicToAddress);
       if (to == null) {
         return null;
       }
@@ -303,6 +305,21 @@ public class pedersenHash002 {
             zenTrc20TokenOwnerKey, blockingStubSolidity);
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     return ByteArray.toHexString(result);
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getNewShieldedAddress(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getnewshieldedaddress";
+      response = HttpMethed.createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
   }
 
   /**
@@ -440,20 +457,6 @@ public class pedersenHash002 {
     return ByteUtil.merge(zeroBytes, longBytes);
   }
 
-  /**
-   * constructor.
-   */
-  public static HttpResponse getNewShieldedAddress(String httpNode) {
-    try {
-      String requestUrl = "http://" + httpNode + "/wallet/getnewshieldedaddress";
-      response = HttpMethed.createConnect(requestUrl);
-    } catch (Exception e) {
-      e.printStackTrace();
-      httppost.releaseConnection();
-      return null;
-    }
-    return response;
-  }
 
   /**
    * constructor.

@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -35,15 +34,12 @@ public class GetAssetIssueByIdServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       String id = jsonObject.getString("value");
       AssetIssueContract reply = wallet.getAssetIssueById(id);
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
+        response.getWriter().println(JsonFormat.printToString(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }
@@ -51,4 +47,6 @@ public class GetAssetIssueByIdServlet extends RateLimiterServlet {
       Util.processError(e, response);
     }
   }
+
+
 }

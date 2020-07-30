@@ -1,50 +1,26 @@
 package org.tron.core.services.interfaceOnSolidity.http;
 
-import com.alibaba.fastjson.JSON;
-import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.entity.NodeInfo;
-import org.tron.core.services.http.RateLimiterServlet;
-import org.tron.core.services.http.Util;
-import org.tron.core.services.interfaceOnSolidity.NodeInfoOnSolidityService;
+import org.tron.core.services.http.GetNodeInfoServlet;
+import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 
 @Component
 @Slf4j(topic = "API")
-public class GetNodeInfoOnSolidityServlet extends RateLimiterServlet {
+public class GetNodeInfoOnSolidityServlet extends GetNodeInfoServlet {
 
   @Autowired
-  private NodeInfoOnSolidityService nodeInfoService;
+  private WalletOnSolidity walletOnSolidity;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-    try {
-      NodeInfo nodeInfo = nodeInfoService.getNodeInfo();
-      response.getWriter().println(JSON.toJSONString(nodeInfo));
-    } catch (Exception e) {
-      logger.error("", e);
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
-    }
+    walletOnSolidity.futureGet(() -> super.doGet(request, response));
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    try {
-      NodeInfo nodeInfo = nodeInfoService.getNodeInfo();
-      response.getWriter().println(JSON.toJSONString(nodeInfo));
-    } catch (Exception e) {
-      logger.error("", e);
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
-    }
+    walletOnSolidity.futureGet(() -> super.doPost(request, response));
   }
 }

@@ -9,8 +9,8 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
@@ -135,6 +135,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
+  private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
+  private static final byte[] CURRENT_CYCLE_TIMESTAMP = "CURRENT_CYCLE_TIMESTAMP".getBytes();
+
+  private static final byte[] ALLOW_MARKET_TRANSACTION = "ALLOW_MARKET_TRANSACTION".getBytes();
+  private static final byte[] MARKET_SELL_FEE = "MARKET_SELL_FEE".getBytes();
+  private static final byte[] MARKET_CANCEL_FEE = "MARKET_CANCEL_FEE".getBytes();
+  private static final byte[] MARKET_QUANTITY_LIMIT = "MARKET_QUANTITY_LIMIT".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -149,7 +156,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowMultiSign();
     } catch (IllegalArgumentException e) {
-      this.saveAllowMultiSign(DBConfig.getAllowMultiSign());
+      this.saveAllowMultiSign(CommonParameter.getInstance()
+          .getAllowMultiSign());
     }
 
     try {
@@ -263,7 +271,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMaintenanceTimeInterval();
     } catch (IllegalArgumentException e) {
-      this.saveMaintenanceTimeInterval(DBConfig.getMaintenanceTimeInterval()); // 6 hours
+      this.saveMaintenanceTimeInterval(CommonParameter.getInstance()
+          .getMaintenanceTimeInterval()); // 6 hours
     }
 
     try {
@@ -323,7 +332,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowAdaptiveEnergy();
     } catch (IllegalArgumentException e) {
-      this.saveAllowAdaptiveEnergy(DBConfig.getAllowAdaptiveEnergy());
+      this.saveAllowAdaptiveEnergy(CommonParameter.getInstance()
+          .getAllowAdaptiveEnergy());
     }
 
     try {
@@ -423,6 +433,30 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowMarketTransaction();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMarketTransaction(CommonParameter.getInstance().getAllowMarketTransaction());
+    }
+
+    try {
+      this.getMarketSellFee();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketSellFee(0L); // 0L
+    }
+
+    try {
+      this.getMarketCancelFee();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketCancelFee(0L);
+    }
+
+    try {
+      this.getMarketQuantityLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketQuantityLimit(1_000_000_000_000_000L);
+    }
+
+    try {
       this.getTotalTransactionCost();
     } catch (IllegalArgumentException e) {
       this.saveTotalTransactionCost(0L);
@@ -473,31 +507,36 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowDelegateResource();
     } catch (IllegalArgumentException e) {
-      this.saveAllowDelegateResource(DBConfig.getAllowDelegateResource());
+      this.saveAllowDelegateResource(CommonParameter.getInstance()
+          .getAllowDelegateResource());
     }
 
     try {
       this.getAllowTvmTransferTrc10();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmTransferTrc10(DBConfig.getAllowTvmTransferTrc10());
+      this.saveAllowTvmTransferTrc10(CommonParameter.getInstance()
+          .getAllowTvmTransferTrc10());
     }
 
     try {
       this.getAllowTvmConstantinople();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmConstantinople(DBConfig.getAllowTvmConstantinople());
+      this.saveAllowTvmConstantinople(CommonParameter.getInstance()
+          .getAllowTvmConstantinople());
     }
 
     try {
       this.getAllowTvmSolidity059();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmSolidity059(DBConfig.getAllowTvmSolidity059());
+      this.saveAllowTvmSolidity059(CommonParameter.getInstance()
+          .getAllowTvmSolidity059());
     }
 
     try {
       this.getForbidTransferToContract();
     } catch (IllegalArgumentException e) {
-      this.saveForbidTransferToContract(DBConfig.getForbidTransferToContract());
+      this.saveForbidTransferToContract(CommonParameter.getInstance()
+          .getForbidTransferToContract());
     }
 
     try {
@@ -519,7 +558,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowSameTokenName();
     } catch (IllegalArgumentException e) {
-      this.saveAllowSameTokenName(DBConfig.getAllowSameTokenName());
+      this.saveAllowSameTokenName(CommonParameter.getInstance()
+          .getAllowSameTokenName());
     }
 
     try {
@@ -531,20 +571,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowCreationOfContracts();
     } catch (IllegalArgumentException e) {
-      this.saveAllowCreationOfContracts(DBConfig.getAllowCreationOfContracts());
+      this.saveAllowCreationOfContracts(CommonParameter.getInstance()
+          .getAllowCreationOfContracts());
     }
 
     try {
       this.getAllowShieldedTransaction();
     } catch (IllegalArgumentException e) {
-//      this.saveAllowShieldedTransaction(DBConfig.getAllowShieldedTransaction());
       this.saveAllowShieldedTransaction(0L);
     }
 
     try {
       this.getAllowShieldedTRC20Transaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowShieldedTRC20Transaction(DBConfig.getAllowShieldedTRC20Transaction());
+      this.saveAllowShieldedTRC20Transaction(
+          CommonParameter.getInstance().getAllowShieldedTRC20Transaction());
     }
 
     try {
@@ -559,7 +600,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getNextMaintenanceTime();
     } catch (IllegalArgumentException e) {
       this.saveNextMaintenanceTime(
-          Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()));
+          Long.parseLong(CommonParameter.getInstance()
+              .getGenesisBlock().getTimestamp()));
     }
 
     try {
@@ -601,19 +643,28 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowAccountStateRoot();
     } catch (IllegalArgumentException e) {
-      this.saveAllowAccountStateRoot(DBConfig.getAllowAccountStateRoot());
+      this.saveAllowAccountStateRoot(CommonParameter.getInstance()
+          .getAllowAccountStateRoot());
     }
 
     try {
       this.getAllowProtoFilterNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterNum(DBConfig.getAllowProtoFilterNum());
+      this.saveAllowProtoFilterNum(CommonParameter.getInstance()
+          .getAllowProtoFilterNum());
     }
 
     try {
       this.getChangeDelegation();
     } catch (IllegalArgumentException e) {
-      this.saveChangeDelegation(DBConfig.getChangedDelegation());
+      this.saveChangeDelegation(CommonParameter.getInstance()
+          .getChangedDelegation());
+    }
+
+    try {
+      this.getAllowPBFT();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
     }
 
   }
@@ -1238,6 +1289,62 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found EXCHANGE_BALANCE_LIMIT"));
   }
 
+  public void saveAllowMarketTransaction(long allowMarketTransaction) {
+    this.put(DynamicPropertiesStore.ALLOW_MARKET_TRANSACTION,
+        new BytesCapsule(ByteArray.fromLong(allowMarketTransaction)));
+  }
+
+  public long getAllowMarketTransaction() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MARKET_TRANSACTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_MARKET_TRANSACTION"));
+  }
+
+  public boolean supportAllowMarketTransaction() {
+    return getAllowMarketTransaction() == 1L;
+  }
+
+  public void saveMarketSellFee(long fee) {
+    this.put(MARKET_SELL_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getMarketSellFee() {
+    return Optional.ofNullable(getUnchecked(MARKET_SELL_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_SELL_FEE"));
+  }
+
+  public void saveMarketCancelFee(long fee) {
+    this.put(MARKET_CANCEL_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getMarketCancelFee() {
+    return Optional.ofNullable(getUnchecked(MARKET_CANCEL_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_CANCEL_FEE"));
+  }
+
+  public void saveMarketQuantityLimit(long limit) {
+    this.put(MARKET_QUANTITY_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(limit)));
+  }
+
+  public long getMarketQuantityLimit() {
+    return Optional.ofNullable(getUnchecked(MARKET_QUANTITY_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_QUANTITY_LIMIT"));
+  }
+
   public void saveTotalTransactionCost(long value) {
     this.put(TOTAL_TRANSACTION_COST,
         new BytesCapsule(ByteArray.fromLong(value)));
@@ -1441,8 +1548,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void updateDynamicStoreByConfig() {
-    if (DBConfig.getAllowTvmConstantinople() != 0) {
-      saveAllowTvmConstantinople(DBConfig.getAllowTvmConstantinople());
+    if (CommonParameter.getInstance()
+        .getAllowTvmConstantinople() != 0) {
+      saveAllowTvmConstantinople(CommonParameter.getInstance()
+          .getAllowTvmConstantinople());
       addSystemContractAndSetPermission(48);
     }
   }
@@ -1819,6 +1928,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_STATE_ROOT"));
   }
 
+  public void saveCurrentCycleTiimeStamp(long timeStamp) {
+    this.put(CURRENT_CYCLE_TIMESTAMP, new BytesCapsule(ByteArray.fromLong(timeStamp)));
+
+  }
+
+  public long getCurrentCycleTimeStamp() {
+    return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_TIMESTAMP))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
   public boolean allowAccountStateRoot() {
     return getAllowAccountStateRoot() == 1;
   }
@@ -1848,6 +1969,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
+  }
+
+  public void saveAllowPBFT(long number) {
+    this.put(ALLOW_PBFT,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getAllowPBFT() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PBFT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_PBFT"));
+  }
+
+  public boolean allowPBFT() {
+    return getAllowPBFT() == 1;
   }
 
   private static class DynamicResourceProperties {

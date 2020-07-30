@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.Getter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.exception.ZksnarkException;
 
 public class MerklePath {
@@ -95,7 +96,7 @@ public class MerklePath {
     }
     indexLong = convertVectorToLong(index);
     byte[] indexBytes = ByteArray.fromLong(indexLong);
-    ZksnarkUtils.sort(indexBytes);
+    ByteUtil.reverse(indexBytes);
     byte[] pathByteArray = listList2Bytes(pathByteList);
     byte[] result = new byte[pathByteArray.length + 8];
     System.arraycopy(pathByteArray, 0, result, 0, pathByteArray.length);

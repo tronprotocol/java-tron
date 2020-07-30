@@ -17,7 +17,8 @@
  */
 package org.tron.core.vm.config;
 
-import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
+
+import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
 
 import lombok.Setter;
 
@@ -26,9 +27,7 @@ import lombok.Setter;
  */
 public class VMConfig {
 
-  public static final int MAX_CODE_LENGTH = 1024 * 1024;
-
-  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
+  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 TRX
 
   private static boolean vmTraceCompressed = false;
 
@@ -112,5 +111,4 @@ public class VMConfig {
 
     private static final VMConfig INSTANCE = new VMConfig();
   }
-
 }

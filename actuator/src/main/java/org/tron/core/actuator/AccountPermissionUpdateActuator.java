@@ -9,6 +9,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -33,9 +34,9 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule result = (TransactionResultCapsule)object;
-    if (Objects.isNull(result)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule result = (TransactionResultCapsule) object;
+    if (Objects.isNull(result)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -55,11 +56,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
       result.setStatus(fee, code.SUCESS);
-    } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
-      result.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
+    } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       result.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -103,7 +100,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
           "address should be distinct in permission " + permission.getType());
     }
     for (Key key : permission.getKeysList()) {
-      if (!Commons.addressValid(key.getAddress().toByteArray())) {
+      if (!DecodeUtil.addressValid(key.getAddress().toByteArray())) {
         throw new ContractValidateException("key is not a validate address");
       }
       if (key.getWeight() <= 0) {
@@ -149,11 +146,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   public boolean validate() throws ContractValidateException {
 
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
 
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -176,7 +173,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
