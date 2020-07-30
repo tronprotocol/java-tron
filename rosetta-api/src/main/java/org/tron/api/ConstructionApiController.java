@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.validation.Valid;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -482,10 +483,15 @@ public class ConstructionApiController implements ConstructionApi {
       for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
         if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
           validatePayloadsRequest(constructionPayloadsRequest);
-          Protocol.Transaction transaction = buildTransaction(constructionPayloadsRequest);
+          Pair<String, Protocol.Transaction> pair = buildTransaction(constructionPayloadsRequest);
+          Protocol.Transaction transaction = pair.getRight();
+          String owner = pair.getLeft();
+          SigningPayload payloadItem = new SigningPayload();
+          payloadItem.address(owner)
+              .hexBytes(ByteArray.toHexString(transaction.getRawData().toByteArray()));
           ConstructionPayloadsResponse response = new ConstructionPayloadsResponse();
           response.unsignedTransaction(ByteArray.toHexString(transaction.toByteArray()))
-              .addPayloadsItem(null);
+              .addPayloadsItem(payloadItem);
           return new ResponseEntity<>(response, HttpStatus.OK);
         }
       }
@@ -498,7 +504,7 @@ public class ConstructionApiController implements ConstructionApi {
 
   }
 
-  public Protocol.Transaction buildTransaction(ConstructionPayloadsRequest constructionPayloadsRequest) {
+  public Pair<String, Protocol.Transaction> buildTransaction(ConstructionPayloadsRequest constructionPayloadsRequest) {
     List<Operation> operations = constructionPayloadsRequest.getOperations();
     Operation from, to;
     if (!CollectionUtils.isEmpty(operations.get(0).getRelatedOperations())) {
@@ -535,7 +541,7 @@ public class ConstructionApiController implements ConstructionApi {
 
     long timestamp = metadata.getLongValue("timestamp");
     transactionCapsule.setTimestamp(timestamp);
-    return transactionCapsule.getInstance();
+    return Pair.of(src, transactionCapsule.getInstance());
   }
 
 }
