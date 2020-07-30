@@ -1050,6 +1050,10 @@ public class Manager {
       return null;
     }
 
+    if (Objects.nonNull(blockCap)) {
+      chainBaseManager.getBalanceTraceStore().setCurrentTransactionId(trxCap.getTransactionId());
+    }
+
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1111,6 +1115,14 @@ public class Manager {
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+    }
+
+    if (Objects.nonNull(blockCap)) {
+      chainBaseManager.getBalanceTraceStore()
+          .updateCurrentTransactionBalanceTrace(
+              trxCap.getInstance().getRawData().getContract(0).getType().name(),
+              trace.getReceipt().getResult().name());
+      chainBaseManager.getBalanceTraceStore().resetCurrentTransactionId();
     }
 
     return transactionInfo.getInstance();
@@ -1281,6 +1293,9 @@ public class Manager {
     if (!consensus.validBlock(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
+
+    chainBaseManager.getBalanceTraceStore().initCurrentBlockBalanceTrace(block);
+
     //reset BlockEnergyUsage
     chainBaseManager.getDynamicPropertiesStore().saveBlockEnergyUsage(0);
     //parallel check sign
@@ -1338,6 +1353,7 @@ public class Manager {
     updateTransHashCache(block);
     updateRecentBlock(block);
     updateDynamicProperties(block);
+    chainBaseManager.getBalanceTraceStore().resetCurrentBlockId();
   }
 
   private void payReward(BlockCapsule block) {

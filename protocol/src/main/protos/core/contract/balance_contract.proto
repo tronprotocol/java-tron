@@ -34,3 +34,24 @@ message TransferContract {
   bytes to_address = 2;
   int64 amount = 3;
 }
+
+message TransactionBalanceTrace {
+  message Operation {
+    int64 operation_identifier = 1;
+    repeated int64 related_operation = 2;
+    bytes address = 3;
+    string amount = 4;
+  }
+
+  bytes transaction_identifier = 1;
+  repeated Operation operation = 2;
+  string type = 3;
+  string status = 4;
+}
+
+message BlockBalanceTrace {
+  bytes block_identifier = 1;
+  int64 block_number = 2;
+  int64 timestamp = 3;
+  repeated TransactionBalanceTrace transaction_balance_trace = 4;
+}
