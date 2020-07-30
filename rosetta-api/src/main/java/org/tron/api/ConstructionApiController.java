@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.context.request.NativeWebRequest;
-import java.util.Base64;
 import org.tron.model.*;
 import org.tron.model.Error;
 import org.tron.protos.Protocol;
@@ -261,34 +260,33 @@ public class ConstructionApiController implements ConstructionApi {
       for (MediaType mediaType : MediaType.parseMediaTypes(request.getHeader("Accept"))) {
         if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
           String returnString;
-//          BalanceContract.TransferContract transferContract = BalanceContract.TransferContract.newBuilder().setAmount(10)
-//                  .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("121212a9cf")))
-//                  .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("232323a9cf"))).build();
-//          Protocol.Transaction transactionTest = Protocol.Transaction.newBuilder().setRawData(
-//                  Protocol.Transaction.raw.newBuilder().setTimestamp(DateTime.now().minusDays(4).getMillis())
-//                          .setRefBlockNum(1)
-//                          .addContract(
-//                                  Protocol.Transaction.Contract.newBuilder().setType(Protocol.Transaction.Contract.ContractType.TransferContract)
-//                                          .setParameter(Any.pack(transferContract)).build()).build())
-//                  .build();
-//          System.out.println(ByteArray.toHexString(transactionTest.getRawData().toByteArray()));
-//          String priKey = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-//          TransactionCapsule transactionCapsule = new TransactionCapsule(transactionTest);
-//          transactionCapsule.sign(ByteArray.fromHexString(priKey));
-//          System.out.println(ByteArray.toHexString(transactionCapsule.getInstance().getSignature(0).toByteArray()));
-//          constructionCombineRequest.setUnsignedTransaction(ByteArray.toHexString(transactionTest.getRawData().toByteArray()));
+          //BalanceContract.TransferContract transferContract = BalanceContract.TransferContract.newBuilder().setAmount(10)
+          //        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("121212a9cf")))
+          //        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("232323a9cf"))).build();
+          //Protocol.Transaction transactionTest = Protocol.Transaction.newBuilder().setRawData(
+          //        Protocol.Transaction.raw.newBuilder().setTimestamp(DateTime.now().minusDays(4).getMillis())
+          //                .setRefBlockNum(1)
+          //                .addContract(
+          //                        Protocol.Transaction.Contract.newBuilder().setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+          //                                .setParameter(Any.pack(transferContract)).build()).build())
+          //        .build();
+          //System.out.println(ByteArray.toHexString(transactionTest.getRawData().toByteArray()));
+          //String priKey = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+          //TransactionCapsule transactionCapsule = new TransactionCapsule(transactionTest);
+          //transactionCapsule.sign(ByteArray.fromHexString(priKey));
+          //System.out.println(ByteArray.toHexString(transactionCapsule.getInstance().getSignature(0).toByteArray()));
+          //constructionCombineRequest.setUnsignedTransaction(ByteArray.toHexString(transactionTest.toByteArray()));
           try {
-            Protocol.Transaction.raw transaction = Protocol.Transaction.raw.parseFrom(
+            TransactionCapsule transaction = new TransactionCapsule(
                     ByteArray.fromHexString(constructionCombineRequest.getUnsignedTransaction()));
-            Protocol.Transaction.Builder transactionBuilder = Protocol.Transaction.newBuilder();
-            transactionBuilder.setRawData(transaction);
+            Protocol.Transaction.Builder transactionBuilder = transaction.getInstance().toBuilder();
             for (Signature signature : constructionCombineRequest.getSignatures()) {
               transactionBuilder.addSignature(ByteString.copyFrom(ByteArray.fromHexString(signature.getHexBytes())));
             }
             ConstructionCombineResponse constructionCombineResponse = new ConstructionCombineResponse();
             constructionCombineResponse.setSignedTransaction(ByteArray.toHexString(transactionBuilder.build().toByteArray()));
             returnString = JSON.toJSONString(constructionCombineResponse);
-          } catch (InvalidProtocolBufferException e) {
+          } catch (BadItemException e) {
             e.printStackTrace();
             statusCode.set(HttpStatus.INTERNAL_SERVER_ERROR.value());
             Error error = Constant.INVALID_TRANSACTION_FORMAT;
