@@ -150,7 +150,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
           get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
+      throw new ContractValidateException("Exchange[" + contract.getExchangeId()
+          + ActuatorConstant.NOT_EXIST_STR);
     }
 
     byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
@@ -162,8 +163,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     long tokenQuant = contract.getQuant();
     long tokenExpected = contract.getExpected();
 
-    if (dynamicStore.getAllowSameTokenName() == 1 && 
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) && 
+    if (dynamicStore.getAllowSameTokenName() == 1 &&
+        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
         !TransactionUtil.isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }

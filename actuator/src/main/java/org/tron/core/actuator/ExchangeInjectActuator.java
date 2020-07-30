@@ -159,7 +159,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
           get(ByteArray.fromLong(contract.getExchangeId()));
 
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
+      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + ActuatorConstant
+          .NOT_EXIST_STR);
     }
 
     if (!accountCapsule.getAddress().equals(exchangeCapsule.getCreatorAddress())) {
@@ -177,8 +178,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
     byte[] anotherTokenID;
     long anotherTokenQuant;
 
-    if (dynamicStore.getAllowSameTokenName() == 1 && 
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) && 
+    if (dynamicStore.getAllowSameTokenName() == 1 &&
+        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
         !TransactionUtil.isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
@@ -201,7 +202,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
     long newTokenBalance;
     long newAnotherTokenBalance;
-    
+
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenID = secondTokenID;
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)

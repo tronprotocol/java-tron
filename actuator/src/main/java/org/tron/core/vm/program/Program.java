@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
@@ -48,7 +49,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -310,7 +310,7 @@ public class Program {
 
   /**
    * @param transferAddress the address send TRX to.
-   * @param value  the TRX value transferred in the internal transaction
+   * @param value the TRX value transferred in the internal transaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
@@ -477,9 +477,9 @@ public class Program {
   /**
    * . Allocates a piece of memory and stores value at given offset address
    *
-   * @param addr      is the offset address
+   * @param addr is the offset address
    * @param allocSize size of memory needed to write
-   * @param value     the data to write to memory
+   * @param value the data to write to memory
    */
   public void memorySave(int addr, int allocSize, byte[] value) {
     memory.extendAndWrite(addr, allocSize, value);
@@ -511,7 +511,7 @@ public class Program {
    * . Allocates extra memory in the program for a specified size, calculated from a given offset
    *
    * @param offset the memory address offset
-   * @param size   the number of bytes to allocate
+   * @param size the number of bytes to allocate
    */
   public void allocateMemory(int offset, int size) {
     memory.extend(offset, size);
@@ -583,7 +583,8 @@ public class Program {
 
   private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
       boolean isCreate2) {
-    byte[] senderAddress = TransactionTrace.convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     if (logger.isDebugEnabled()) {
       logger.debug("creating a new contract inside contract run: [{}]",
@@ -740,7 +741,8 @@ public class Program {
       refundEnergy(refundEnergy, "remain energy from the internal call");
       if (logger.isDebugEnabled()) {
         logger.debug("The remaining energy is refunded, account: [{}], energy: [{}] ",
-            Hex.toHexString(TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes())),
+            Hex.toHexString(
+                TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes())),
             refundEnergy);
       }
     }
@@ -766,8 +768,10 @@ public class Program {
     byte[] data = memoryChunk(msg.getInDataOffs().intValue(), msg.getInDataSize().intValue());
 
     // FETCH THE SAVED STORAGE
-    byte[] codeAddress = TransactionTrace.convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] senderAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] codeAddress = TransactionTrace
+        .convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     if (logger.isDebugEnabled()) {
@@ -983,7 +987,8 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          CommonParameter.getInstance().getMinTimeRatio(), CommonParameter.getInstance().getMaxTimeRatio(),
+          CommonParameter.getInstance().getMinTimeRatio(),
+          CommonParameter.getInstance().getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
@@ -1013,7 +1018,8 @@ public class Program {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
     getContractState()
-        .putStorageValue(TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
+        .putStorageValue(
+            TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
             valWord);
   }
 
@@ -1022,7 +1028,8 @@ public class Program {
   }
 
   public byte[] getCodeAt(DataWord address) {
-    byte[] code = invoke.getDeposit().getCode(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
+    byte[] code = invoke.getDeposit()
+        .getCode(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return nullToEmpty(code);
   }
 
@@ -1141,7 +1148,8 @@ public class Program {
 
   public DataWord storageLoad(DataWord key) {
     DataWord ret = getContractState()
-        .getStorageValue(TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes()),
+        .getStorageValue(
+            TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes()),
             key.clone());
     return ret == null ? null : ret.clone();
   }
@@ -1182,7 +1190,9 @@ public class Program {
     return invoke.getDifficulty().clone();
   }
 
-  public boolean isStaticCall() { return invoke.isStaticCall(); }
+  public boolean isStaticCall() {
+    return invoke.isStaticCall();
+  }
 
   public boolean isConstantCall() {
     return invoke.isConstantCall();
@@ -1315,7 +1325,8 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    byte[] senderAddress = TransactionTrace.convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(this.getCallerAddress().getLast20Bytes());
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
     byte[] contractAddress = WalletUtil
@@ -1350,8 +1361,10 @@ public class Program {
 
     Repository deposit = getContractState().newRepositoryChild();
 
-    byte[] senderAddress = TransactionTrace.convertToTronAddress(this.getContractAddress().getLast20Bytes());
-    byte[] codeAddress = TransactionTrace.convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] codeAddress = TransactionTrace
+        .convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     long endowment = msg.getEndowment().value().longValueExact();

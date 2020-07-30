@@ -90,7 +90,7 @@ public class UpdateBrokerageActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 
-    if (brokerage < 0 || brokerage > 100) {
+    if (brokerage < 0 || brokerage > ActuatorConstant.ONE_HUNDRED) {
       throw new ContractValidateException("Invalid brokerage");
     }
 

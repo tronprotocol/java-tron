@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,11 +40,14 @@ import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
 
@@ -320,9 +324,11 @@ public class Util {
 
   public static boolean getVisiblePost(final String input) {
     boolean visible = false;
-    JSONObject jsonObject = JSON.parseObject(input);
-    if (jsonObject.containsKey(VISIBLE)) {
-      visible = jsonObject.getBoolean(VISIBLE);
+    if (StringUtil.isNotBlank(input)) {
+      JSONObject jsonObject = JSON.parseObject(input);
+      if (jsonObject.containsKey(VISIBLE)) {
+        visible = jsonObject.getBoolean(VISIBLE);
+      }
     }
 
     return visible;
@@ -482,6 +488,31 @@ public class Util {
       }
     }
     return address;
+  }
+
+  public static List<Log> convertLogAddressToTronAddress(TransactionInfo transactionInfo) {
+    List<Log> newLogList = new ArrayList<>();
+
+    for (Log log : transactionInfo.getLogList()) {
+      Log.Builder logBuilder = Log.newBuilder();
+      logBuilder.setData(log.getData());
+      logBuilder.addAllTopics(log.getTopicsList());
+
+      byte[] oldAddress = log.getAddress().toByteArray();
+      if (oldAddress.length == 0 || oldAddress.length > 20) {
+        logBuilder.setAddress(log.getAddress());
+      } else {
+        byte[] newAddress = new byte[20];
+        int start = 20 - oldAddress.length;
+        System.arraycopy(oldAddress, 0, newAddress, start, oldAddress.length);
+        logBuilder
+            .setAddress(ByteString.copyFrom(TransactionTrace.convertToTronAddress(newAddress)));
+      }
+
+      newLogList.add(logBuilder.build());
+    }
+
+    return newLogList;
   }
 
 }

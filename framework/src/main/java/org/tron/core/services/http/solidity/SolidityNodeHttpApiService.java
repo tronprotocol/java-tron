@@ -25,6 +25,11 @@ import org.tron.core.services.http.GetBrokerageServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
+import org.tron.core.services.http.GetMarketOrderByAccountServlet;
+import org.tron.core.services.http.GetMarketOrderByIdServlet;
+import org.tron.core.services.http.GetMarketOrderListByPairServlet;
+import org.tron.core.services.http.GetMarketPairListServlet;
+import org.tron.core.services.http.GetMarketPriceByPairServlet;
 import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
@@ -32,12 +37,15 @@ import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
 import org.tron.core.services.http.GetTransactionInfoByBlockNumServlet;
+import org.tron.core.services.http.IsShieldedTRC20ContractNoteSpentServlet;
 import org.tron.core.services.http.IsSpendServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
 import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByOvkServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesByIvkServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesByOvkServlet;
 import org.tron.core.services.http.TriggerConstantContractServlet;
 
 
@@ -103,6 +111,22 @@ public class SolidityNodeHttpApiService implements Service {
   private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
   @Autowired
   private IsSpendServlet isSpendServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByIvkServlet scanShieldedTRC20NotesByIvkServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByOvkServlet scanShieldedTRC20NotesByOvkServlet;
+  @Autowired
+  private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
+  @Autowired
+  private GetMarketOrderByAccountServlet getMarketOrderByAccountServlet;
+  @Autowired
+  private GetMarketOrderByIdServlet getMarketOrderByIdServlet;
+  @Autowired
+  private GetMarketPriceByPairServlet getMarketPriceByPairServlet;
+  @Autowired
+  private GetMarketOrderListByPairServlet getMarketOrderListByPairServlet;
+  @Autowired
+  private GetMarketPairListServlet getMarketPairListServlet;
 
   @Autowired
   private GetBrokerageServlet getBrokerageServlet;
@@ -176,8 +200,26 @@ public class SolidityNodeHttpApiService implements Service {
       // context.addServlet(new ServletHolder(isSpendServlet),
       //     "/walletsolidity/isspend");
 
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
+          "/walletsolidity/isshieldedtrc20contractnotespent");
+
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/walletsolidity/gettransactioninfobyblocknum");
+
+      context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
+          "/walletsolidity/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdServlet),
+          "/walletsolidity/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
+          "/walletsolidity/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairServlet),
+          "/walletsolidity/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListServlet),
+          "/walletsolidity/getmarketpairlist");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),

@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -83,11 +85,11 @@ public class UpdateSettingContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] does not exist");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
     long newPercent = contract.getConsumeUserResourcePercent();
-    if (newPercent > 100 || newPercent < 0) {
+    if (newPercent > ActuatorConstant.ONE_HUNDRED || newPercent < 0) {
       throw new ContractValidateException(
           "percent not in [0, 100]");
     }

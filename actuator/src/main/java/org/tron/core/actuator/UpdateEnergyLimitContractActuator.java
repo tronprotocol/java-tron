@@ -89,7 +89,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] does not exist");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
     long newOriginEnergyLimit = contract.getOriginEnergyLimit();

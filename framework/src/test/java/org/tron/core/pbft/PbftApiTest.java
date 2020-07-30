@@ -42,7 +42,7 @@ public class PbftApiTest extends BlockGenerate {
 
   @Before
   public void init() {
-    Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dbManager = context.getBean(Manager.class);
     setManager(dbManager);

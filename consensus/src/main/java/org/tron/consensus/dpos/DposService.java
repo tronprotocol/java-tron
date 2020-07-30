@@ -2,6 +2,7 @@ package org.tron.consensus.dpos;
 
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
+
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -12,7 +13,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.util.Args;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -86,7 +86,7 @@ public class DposService implements ConsensusInterface {
     if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
       List<ByteString> witnesses = new ArrayList<>();
       consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->
-        witnesses.add(witnessCapsule.getAddress()));
+          witnesses.add(witnessCapsule.getAddress()));
       updateWitness(witnesses);
       List<ByteString> addresses = consensusDelegate.getActiveWitnesses();
       addresses.forEach(address -> {
@@ -156,7 +156,8 @@ public class DposService implements ConsensusInterface {
       logger.warn("Update solid block number failed, new: {} < old: {}", newSolidNum, oldSolidNum);
       return;
     }
-    CommonParameter.getInstance().setOldSolidityBlockNum(consensusDelegate.getLatestSolidifiedBlockNum());
+    CommonParameter.getInstance()
+        .setOldSolidityBlockNum(consensusDelegate.getLatestSolidifiedBlockNum());
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);
     logger.info("Update solid block number to {}", newSolidNum);
   }

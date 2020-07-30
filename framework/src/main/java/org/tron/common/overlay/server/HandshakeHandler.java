@@ -126,7 +126,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC,
-            message.getSendData().readableBytes());
+        message.getSendData().readableBytes());
     logger.info("Handshake send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 

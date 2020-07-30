@@ -3,7 +3,6 @@ package org.tron.core.services.filter;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -12,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 
-@Slf4j(topic = "httpIntercetpor")
+@Slf4j(topic = "httpInterceptor")
 public class HttpInterceptor implements Filter {
 
   private String endpoint;

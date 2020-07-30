@@ -30,7 +30,8 @@ import org.tron.core.config.args.Args;
  * Web3 Secret Storage Definition</a> or the <a href="https://github.com/ethereum/go-ethereum/blob/master/accounts/key_store_passphrase.go">
  * Go Ethereum client implementation</a>.</p>
  *
- * <p><strong>Note:</strong> the Bouncy Castle Scrypt implementation {@link SCrypt}, fails to comply
+ * <p><strong>Note:</strong> the Bouncy Castle Scrypt implementation {@link SCrypt}, fails to
+ * comply
  * with the following Ethereum reference <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition#scrypt">
  * Scrypt test vector</a>:</p>
  *

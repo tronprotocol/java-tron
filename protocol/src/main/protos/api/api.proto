@@ -11,6 +11,7 @@ import "core/contract/balance_contract.proto";
 import "core/contract/proposal_contract.proto";
 import "core/contract/storage_contract.proto";
 import "core/contract/exchange_contract.proto";
+import "core/contract/market_contract.proto";
 import "core/contract/smart_contract.proto";
 import "core/contract/shield_contract.proto";
 
@@ -285,6 +286,28 @@ service Wallet {
 
   rpc ExchangeTransaction (ExchangeTransactionContract) returns (TransactionExtention) {
   }
+
+  rpc MarketSellAsset (MarketSellAssetContract) returns (TransactionExtention) {
+  }
+
+  rpc MarketCancelOrder (MarketCancelOrderContract) returns (TransactionExtention) {
+  }
+
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
+
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
+  }
+
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
+  }
+
 
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
@@ -705,6 +728,25 @@ service Wallet {
 
   rpc CreateShieldNullifier (NfParameters) returns (BytesMessage) {
   };
+
+  //for shielded contract
+  rpc CreateShieldedContractParameters (PrivateShieldedTRC20Parameters) returns (ShieldedTRC20Parameters) {
+  };
+
+  rpc CreateShieldedContractParametersWithoutAsk (PrivateShieldedTRC20ParametersWithoutAsk) returns (ShieldedTRC20Parameters) {
+  };
+
+  rpc ScanShieldedTRC20NotesByIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  };
+
+  rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  };
+
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
+  };
+
+  rpc GetTriggerInputForShieldedTRC20Contract (ShieldedTRC20TriggerContractParameters) returns (BytesMessage) {
+  };
   // end for shiededTransaction
 
   rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
@@ -859,6 +901,15 @@ service WalletSolidity {
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
 
+  rpc ScanShieldedTRC20NotesByIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  };
+
+  rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  };
+
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
+  };
+
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
   };
 
@@ -869,6 +920,21 @@ service WalletSolidity {
   }
 
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+  }
+
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
+
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
+  }
+
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
   }
 
 };
@@ -1238,6 +1304,7 @@ message PrivateParameters {
   repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
+  int64 timeout = 10; // timeout in seconds, it works only when it bigger than 0
 }
 
 message PrivateParametersWithoutAsk {
@@ -1250,6 +1317,7 @@ message PrivateParametersWithoutAsk {
   repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
+  int64 timeout = 10; // timeout in seconds, it works only when it bigger than 0
 }
 
 message SpendAuthSigParameters {
@@ -1295,7 +1363,7 @@ message PaymentAddressMessage {
   string payment_address = 3;
 }
 
-message ShieldedAddressInfo{
+message ShieldedAddressInfo {
   bytes sk = 1;
   bytes ask = 2;
   bytes nsk = 3;
@@ -1323,4 +1391,95 @@ message SpendResult {
 
 message TransactionInfoList {
   repeated TransactionInfo transactionInfo = 1;
+}
+
+message SpendNoteTRC20 {
+  Note note = 1;
+  bytes alpha = 2;
+  bytes root = 3;
+  bytes path = 4;
+  int64 pos = 5;
+}
+
+message PrivateShieldedTRC20Parameters {
+  bytes ask = 1;
+  bytes nsk = 2;
+  bytes ovk = 3;
+  string from_amount = 4;
+  repeated SpendNoteTRC20 shielded_spends = 5;
+  repeated ReceiveNote shielded_receives = 6;
+  bytes transparent_to_address = 7;
+  string to_amount = 8;
+  bytes shielded_TRC20_contract_address = 9;
+}
+
+message PrivateShieldedTRC20ParametersWithoutAsk {
+  bytes ak = 1;
+  bytes nsk = 2;
+  bytes ovk = 3;
+  string from_amount = 4;
+  repeated SpendNoteTRC20 shielded_spends = 5;
+  repeated ReceiveNote shielded_receives = 6;
+  bytes transparent_to_address = 7;
+  string to_amount = 8;
+  bytes shielded_TRC20_contract_address = 9;
+}
+
+message ShieldedTRC20Parameters {
+  repeated SpendDescription spend_description = 1;
+  repeated ReceiveDescription receive_description = 2;
+  bytes binding_signature = 3;
+  bytes message_hash = 4;
+  string trigger_contract_input = 5;
+  string parameter_type = 6;
+}
+
+message IvkDecryptTRC20Parameters {
+  int64 start_block_index = 1;
+  int64 end_block_index = 2;
+  bytes shielded_TRC20_contract_address = 3;
+  bytes ivk = 4;
+  bytes ak = 5;
+  bytes nk = 6;
+  repeated string events = 7;
+}
+
+message OvkDecryptTRC20Parameters {
+  int64 start_block_index = 1;
+  int64 end_block_index = 2;
+  bytes ovk = 3;
+  bytes shielded_TRC20_contract_address = 4;
+  repeated string events = 5;
+}
+
+message DecryptNotesTRC20 {
+  message NoteTx {
+    Note note = 1;
+    int64 position = 2;
+    bool is_spent = 3;
+    bytes txid = 4;
+    int32 index = 5; //the index of note in txid
+    string to_amount = 6;
+    bytes transparent_to_address = 7;
+  }
+  repeated NoteTx noteTxs = 1;
+}
+
+message NfTRC20Parameters {
+  Note note = 1;
+  bytes ak = 2;
+  bytes nk = 3;
+  int64 position = 4;
+  bytes shielded_TRC20_contract_address = 5;
+}
+
+message NullifierResult {
+  bool is_spent = 1;
+}
+
+message ShieldedTRC20TriggerContractParameters {
+  ShieldedTRC20Parameters shielded_TRC20_Parameters = 1;
+  repeated BytesMessage spend_authority_signature = 2;
+  string amount = 3;
+  bytes transparent_to_address = 4;
 }

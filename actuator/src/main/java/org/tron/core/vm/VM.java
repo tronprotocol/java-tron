@@ -1,7 +1,7 @@
 package org.tron.core.vm;
 
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
@@ -59,7 +59,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size  number of bytes needed
+   * @param size number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -237,7 +237,7 @@ public class VM {
           //check to see if account does not exist and is not a precompiled contract
           if ((op == CALL || op == CALLTOKEN)
               && isDeadAccount(program, callAddressWord)
-              && !value.isZero()){
+              && !value.isZero()) {
             energyCost += energyCosts.getNEW_ACCT_CALL();
           }
 

@@ -119,8 +119,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
       ret.setAssetIssueID(Long.toString(tokenIdNum));
       ret.setStatus(fee, code.SUCESS);
-    }
-    catch (InvalidProtocolBufferException | BalanceInsufficientException | ArithmeticException e){
+    } catch (InvalidProtocolBufferException | BalanceInsufficientException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -173,7 +172,7 @@ public class AssetIssueActuator extends AbstractActuator {
     int precision = assetIssueContract.getPrecision();
     if (precision != 0
         && dynamicStore.getAllowSameTokenName() != 0
-        && (precision < 0 || precision > 6)) {
+        && (precision < 0 || precision > ActuatorConstant.PRECISION_DECIMAL)) {
       throw new ContractValidateException("precision cannot exceed 6");
     }
 

@@ -23,6 +23,11 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSoliditySer
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByAccountOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderListByPairOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketPairListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketPriceByPairOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
@@ -30,12 +35,15 @@ import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueLis
 import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionInfoByBlockNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.IsShieldedTRC20ContractNoteSpentOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.IsSpendOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanAndMarkNoteByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByOvkOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByIvkOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByOvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
 
 @Slf4j(topic = "API")
@@ -103,6 +111,13 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private IsSpendOnSolidityServlet isSpendOnSolidityServlet;
   @Autowired
+  private ScanShieldedTRC20NotesByIvkOnSolidityServlet scanShieldedTRC20NotesByIvkOnSolidityServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByOvkOnSolidityServlet scanShieldedTRC20NotesByOvkOnSolidityServlet;
+  @Autowired
+  private IsShieldedTRC20ContractNoteSpentOnSolidityServlet
+      isShieldedTRC20ContractNoteSpentOnSolidityServlet;
+  @Autowired
   private GetBrokerageOnSolidityServlet getBrokerageServlet;
   @Autowired
   private GetRewardOnSolidityServlet getRewardServlet;
@@ -111,6 +126,16 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetTransactionInfoByBlockNumOnSolidityServlet
       getTransactionInfoByBlockNumOnSolidityServlet;
+  @Autowired
+  private GetMarketOrderByAccountOnSolidityServlet getMarketOrderByAccountOnSolidityServlet;
+  @Autowired
+  private GetMarketOrderByIdOnSolidityServlet getMarketOrderByIdOnSolidityServlet;
+  @Autowired
+  private GetMarketPriceByPairOnSolidityServlet getMarketPriceByPairOnSolidityServlet;
+  @Autowired
+  private GetMarketOrderListByPairOnSolidityServlet getMarketOrderListByPairOnSolidityServlet;
+  @Autowired
+  private GetMarketPairListOnSolidityServlet getMarketPairListOnSolidityServlet;
 
   @Override
   public void init() {
@@ -174,10 +199,26 @@ public class HttpApiOnSolidityService implements Service {
       //     "/walletsolidity/scannotebyovk");
       // context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
       //     "/walletsolidity/isspend");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkOnSolidityServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkOnSolidityServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentOnSolidityServlet),
+          "/walletsolidity/isshieldedtrc20contractnotespent");
       context.addServlet(new ServletHolder(triggerConstantContractOnSolidityServlet),
           "/walletsolidity/triggerconstantcontract");
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumOnSolidityServlet),
           "/walletsolidity/gettransactioninfobyblocknum");
+      context.addServlet(new ServletHolder(getMarketOrderByAccountOnSolidityServlet),
+          "/walletsolidity/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdOnSolidityServlet),
+          "/walletsolidity/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairOnSolidityServlet),
+          "/walletsolidity/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairOnSolidityServlet),
+          "/walletsolidity/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListOnSolidityServlet),
+          "/walletsolidity/getmarketpairlist");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),

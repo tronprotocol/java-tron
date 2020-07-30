@@ -101,7 +101,7 @@ public class PbftMessageHandle {
     }
   }
 
-  public void onPrepare(PbftMessage message) {
+  public synchronized void onPrepare(PbftMessage message) {
     String key = message.getKey();
 
     if (!preVotes.contains(message.getNo())) {
@@ -138,7 +138,7 @@ public class PbftMessageHandle {
     //Subsequent votes will definitely not be satisfied, timeout will be automatically cleared.
   }
 
-  public void onCommit(PbftMessage message) {
+  public synchronized void onCommit(PbftMessage message) {
     String key = message.getKey();
     if (!pareVoteMap.containsKey(key)) {
       //Must be prepared
@@ -160,11 +160,11 @@ public class PbftMessageHandle {
     dataSignCache.getUnchecked(message.getDataKey())
         .add(message.getPbftMessage().getSignature());
     if (agCou >= Param.getInstance().getAgreeNodeCount()) {
+      srPbftMessage = null;
       remove(message.getNo());
       //commit,
       if (!isSyncing()) {
         pbftMessageAction.action(message, dataSignCache.getUnchecked(message.getDataKey()));
-        srPbftMessage = null;
       }
     }
   }

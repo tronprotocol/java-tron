@@ -94,7 +94,8 @@ public class CreateAccountActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR
+              + readableOwnerAddress + "] not exists");
     }
 
     final long fee = calcFee();
