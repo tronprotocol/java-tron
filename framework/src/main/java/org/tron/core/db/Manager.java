@@ -139,6 +139,7 @@ import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -1040,6 +1041,17 @@ public class Manager {
     return result;
   }
 
+  public void resetTx(final TransactionCapsule trxCap) {
+    if (getDynamicPropertiesStore().needSetTransactionRet() && trxCap.isContractType()) {
+      if (trxCap.getInstance().getRetCount() > 0 && Objects.nonNull(trxCap.getContractResult())) {
+        Result.contractResult contractResult = trxCap.getContractResult();
+        trxCap.resetResult();
+        trxCap.setResultCode(contractResult);
+      } else {
+        trxCap.resetResult();
+      }
+    }
+  }
   /**
    * Process transaction.
    */
@@ -1052,15 +1064,7 @@ public class Manager {
       return null;
     }
 
-    if (getDynamicPropertiesStore().needSetTransactionRet()) {
-      if (Objects.nonNull(trxCap.getContractResult())) {
-        Result.contractResult contractResult = trxCap.getContractResult();
-        trxCap.resetResult();
-        trxCap.setResultCode(contractResult);
-      } else {
-        trxCap.resetResult();
-      }
-    }
+    resetTx(trxCap);
 
     validateTapos(trxCap);
     validateCommon(trxCap);

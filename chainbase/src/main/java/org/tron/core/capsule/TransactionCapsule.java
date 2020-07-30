@@ -762,4 +762,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     return this.transaction.getRet(0).getContractRet();
   }
+
+  /**
+   * Check if a transaction capsule contains a smart contract transaction or not.
+   * @return
+   */
+  public boolean isContractType() {
+    try {
+      ContractType type = this.getInstance().getRawData().getContract(0).getType();
+      return  (type == ContractType.TriggerSmartContract || type == ContractType.CreateSmartContract);
+    } catch (Exception ex) {
+      logger.warn("check contract type failed, reason {}", ex.getMessage());
+      return false;
+    }
+  }
 }
