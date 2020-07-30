@@ -157,6 +157,7 @@ import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
@@ -1930,6 +1931,14 @@ public class RpcApiService implements Service {
     public void getContract(BytesMessage request,
         StreamObserver<SmartContract> responseObserver) {
       SmartContract contract = wallet.getContract(request);
+      responseObserver.onNext(contract);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getContractInfo(BytesMessage request,
+        StreamObserver<SmartContractDataWrapper> responseObserver) {
+      SmartContractDataWrapper contract = wallet.getContractInfo(request);
       responseObserver.onNext(contract);
       responseObserver.onCompleted();
     }

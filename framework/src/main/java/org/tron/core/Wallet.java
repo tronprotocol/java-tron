@@ -129,6 +129,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
@@ -221,6 +222,7 @@ import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
@@ -2529,6 +2531,36 @@ public class Wallet {
         .get(bytesMessage.getValue().toByteArray());
     if (Objects.nonNull(contractCapsule)) {
       return contractCapsule.getInstance();
+    }
+    return null;
+  }
+
+  /**
+   *
+   * Equivalent to getContract, except contract bytecode are runtime code
+   * rather than creation code
+   * @param bytesMessage
+   * @return
+   *
+   */
+  public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    if (accountCapsule == null) {
+      logger.error(
+          "Get contract failed, the account does not exist or the account does not have a code "
+              + "hash!");
+      return null;
+    }
+
+    ContractCapsule contractCapsule = dbManager.getContractStore()
+        .get(bytesMessage.getValue().toByteArray());
+    if (Objects.nonNull(contractCapsule)) {
+      CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
+      if(Objects.nonNull(codeCapsule)) {
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+        return contractCapsule.generateWrapper();
+      }
     }
     return null;
   }
