@@ -110,6 +110,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     int index = 0;
+    boolean first = false;
     Sha256Hash currentTransactionId = balanceTraceStore.getCurrentTransactionId();
     TransactionBalanceTrace transactionBalanceTrace = null;
     for(; index < blockBalanceTraceCapsule.getInstance().getTransactionBalanceTraceCount(); index++) {
@@ -124,6 +125,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       transactionBalanceTrace = TransactionBalanceTrace.newBuilder()
           .setTransactionIdentifier(currentTransactionId.getByteString())
           .build();
+      first = true;
     }
 
     ByteString currentOwner = balanceTraceStore.getCurrentOwner();
@@ -153,7 +155,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     transactionBalanceTrace = transactionBalanceTrace.toBuilder()
         .addOperation(operation)
         .build();
-    blockBalanceTraceCapsule.addTransactionBalanceTrace(transactionBalanceTrace);
+
+    if (first) {
+      blockBalanceTraceCapsule.addTransactionBalanceTrace(transactionBalanceTrace);
+    } else {
+      blockBalanceTraceCapsule.setTransactionBalanceTrace(index, transactionBalanceTrace);
+    }
     balanceTraceStore.putBlockBalanceTrace(blockBalanceTraceCapsule);
   }
 

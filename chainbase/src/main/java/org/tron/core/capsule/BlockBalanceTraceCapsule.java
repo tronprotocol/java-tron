@@ -44,6 +44,12 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
         .build();
   }
 
+  public void setTransactionBalanceTrace(int index, TransactionBalanceTrace transactionBalanceTrace) {
+    balanceTrace = balanceTrace.toBuilder()
+        .setTransactionBalanceTrace(index, transactionBalanceTrace)
+        .build();
+  }
+
   @Override
   public byte[] getData() {
     if (Objects.isNull(balanceTrace)) {
