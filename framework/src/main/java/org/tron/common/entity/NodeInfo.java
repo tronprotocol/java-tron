@@ -505,7 +505,6 @@ public class NodeInfo {
     /*node information*/
     private String codeVersion;
     private String versionName;
-    private String versionNum;
     private String p2pVersion;
     private int listenPort;
     private boolean discoverEnable;
@@ -542,13 +541,7 @@ public class NodeInfo {
       this.versionName = versionName;
     }
 
-    public String getVersionNum() {
-      return versionNum;
-    }
 
-    public void setVersionNum(String versionNum) {
-      this.versionNum = versionNum;
-    }
 
     public String getP2pVersion() {
       return p2pVersion;
