@@ -95,7 +95,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOTAL_STORAGE_TAX = "TOTAL_STORAGE_TAX".getBytes();
   private static final byte[] TOTAL_STORAGE_RESERVED = "TOTAL_STORAGE_RESERVED".getBytes();
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
-  private static final byte[] FORK_CONTROLLER = "FORK_CONTROLLER".getBytes();
+  private static final String FORK_CONTROLLER = "FORK_CONTROLLER";
   private static final String FORK_PREFIX = "FORK_VERSION_";
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
@@ -1922,8 +1922,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveTotalTransactionCost(newValue);
   }
 
-  public void forked() {
-    put(FORK_CONTROLLER, new BytesCapsule(Boolean.toString(true).getBytes()));
+  public void forked(int version, boolean value) {
+    String forkKey = FORK_CONTROLLER + version;
+    put(forkKey.getBytes(), new BytesCapsule(Boolean.toString(value).getBytes()));
   }
 
   public void statsByVersion(int version, byte[] stats) {
@@ -1936,9 +1937,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return revokingDB.getUnchecked(statsKey.getBytes());
   }
 
-  public boolean getForked() {
-    byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
-    return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
+  public Boolean getForked(int version) {
+    String forkKey = FORK_CONTROLLER + version;
+    byte[] value = revokingDB.getUnchecked(forkKey.getBytes());
+    return value == null ? null : Boolean.valueOf(new String(value));
   }
 
   /**

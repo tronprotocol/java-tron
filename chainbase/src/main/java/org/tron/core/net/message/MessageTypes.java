@@ -33,9 +33,7 @@ public enum MessageTypes {
 
   TRX_INVENTORY(0x13),
 
-  PBFT_BLOCK_MSG(0x14),
-
-  PBFT_SRL_MSG(0x15),
+  PBFT_COMMIT_MSG(0x14),
 
   P2P_HELLO(0x20),
 
@@ -96,7 +94,7 @@ public enum MessageTypes {
   }
 
   public static boolean inTronRange(byte code) {
-    return (code <= PBFT_SRL_MSG.asByte() && code >= FIRST.asByte())
+    return (code <= PBFT_COMMIT_MSG.asByte() && code >= FIRST.asByte())
         || (code <= EPOCH_MESSAGE.asByte() && code >= CROSS_MSG.asByte());
   }
 

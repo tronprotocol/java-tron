@@ -307,7 +307,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_PBFT: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_PBFT]");
         }
@@ -318,7 +318,7 @@ public class ProposalUtil {
         break;
       }
       case CROSS_CHAIN: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1 && value != 0) {
@@ -328,7 +328,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_SHIELDED_TRC20_TRANSACTION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_SHIELDED_TRC20_TRANSACTION]");
         }
@@ -426,7 +426,7 @@ public class ProposalUtil {
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
-    ALLOW_PBFT(47),// 1,40
+    ALLOW_PBFT(47),// 1,47
     CROSS_CHAIN(48);
 
     private long code;

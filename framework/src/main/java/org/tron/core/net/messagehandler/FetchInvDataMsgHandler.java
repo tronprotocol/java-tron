@@ -104,7 +104,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
   private void sendPbftCommitMessage(PeerConnection peer, BlockCapsule blockCapsule) {
     try {
-      if (!tronNetDelegate.allowPBFT()) {
+      if (!tronNetDelegate.allowPBFT() || peer.isSyncFinish()) {
         return;
       }
       long epoch = 0;
@@ -114,16 +114,16 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           .getMaintenanceTimeInterval();
       if (pbftSignCapsule != null) {
         Raw raw = Raw.parseFrom(pbftSignCapsule.getPbftCommitResult().getData());
-        epoch = raw.getEpoch() + maintenanceTimeInterval;
+        epoch = raw.getEpoch();
         peer.sendMessage(new PbftCommitMessage(pbftSignCapsule));
       } else {
         epoch =
             (blockCapsule.getTimeStamp() / maintenanceTimeInterval + 1) * maintenanceTimeInterval;
       }
       if (epochCache.getIfPresent(epoch) == null) {
-        epochCache.put(epoch, true);
         PbftSignCapsule srl = tronNetDelegate.getSRLPbftCommitData(epoch);
         if (srl != null) {
+          epochCache.put(epoch, true);
           peer.sendMessage(new PbftCommitMessage(srl));
         }
       }

@@ -66,8 +66,7 @@ public class TronMessageFactory extends MessageFactory {
         return new FetchBlockHeadersMessage(packed);
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
-      case PBFT_BLOCK_MSG:
-      case PBFT_SRL_MSG:
+      case PBFT_COMMIT_MSG:
         return new PbftCommitMessage(packed);
       case CROSS_MSG:
         return new CrossChainMessage(packed);

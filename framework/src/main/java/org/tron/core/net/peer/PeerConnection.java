@@ -183,4 +183,8 @@ public class PeerConnection extends Channel {
         + nodeStatistics.toString() + "\n";
   }
 
+  public boolean isSyncFinish() {
+    return !(needSyncFromPeer || needSyncFromUs);
+  }
+
 }
