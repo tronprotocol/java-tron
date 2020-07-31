@@ -60,7 +60,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   public void put(byte[] key, AccountCapsule item) {
     AccountCapsule old = super.getUnchecked(key);
     if (old == null) {
-      recordBalance(item, item.getBalance());
+      if (item.getBalance() != 0) {
+        recordBalance(item, item.getBalance());
+      }
     } else if (old.getBalance() != item.getBalance()){
       recordBalance(item, item.getBalance() - old.getBalance());
     }
