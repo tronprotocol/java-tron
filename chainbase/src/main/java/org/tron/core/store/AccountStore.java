@@ -69,6 +69,17 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     accountStateCallBackUtils.accountCallBack(key, item);
   }
 
+  @Override
+  public void delete(byte[] key) {
+    AccountCapsule old = super.getUnchecked(key);
+    if (old != null) {
+      recordBalance(old, -old.getBalance());
+    }
+
+    super.delete(key);
+  }
+
+
   /**
    * Max TRX account.
    */
@@ -98,37 +109,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   // do somethings
   // check old balance and new balance, if equals, do nothing, then get balance trace from balancetraceStore
   private void recordBalance(AccountCapsule accountCapsule, long diff) {
-    BlockBalanceTraceCapsule blockBalanceTraceCapsule = null;
-    try {
-      blockBalanceTraceCapsule = balanceTraceStore.getCurrentBlockBalanceTrace();
-    } catch (BadItemException e) {
-      logger.error(e.getMessage(), e);
-    }
+    TransactionBalanceTrace transactionBalanceTrace = balanceTraceStore.getCurrentTransactionBalanceTrace();
 
-    if (blockBalanceTraceCapsule == null) {
+    if (transactionBalanceTrace == null) {
       return;
     }
 
-    int index = 0;
-    boolean first = false;
-    Sha256Hash currentTransactionId = balanceTraceStore.getCurrentTransactionId();
-    TransactionBalanceTrace transactionBalanceTrace = null;
-    for(; index < blockBalanceTraceCapsule.getInstance().getTransactionBalanceTraceCount(); index++) {
-      TransactionBalanceTrace tmp = blockBalanceTraceCapsule.getInstance().getTransactionBalanceTrace(index);
-      if (tmp.getTransactionIdentifier().equals(currentTransactionId.getByteString())) {
-        transactionBalanceTrace = tmp;
-        break;
-      }
-    }
-
-    if (transactionBalanceTrace == null) {
-      transactionBalanceTrace = TransactionBalanceTrace.newBuilder()
-          .setTransactionIdentifier(currentTransactionId.getByteString())
-          .build();
-      first = true;
-    }
-
-    ByteString address = accountCapsule.getAddress();
     long operationIdentifier;
     OptionalLong max = transactionBalanceTrace.getOperationList().stream()
         .mapToLong(Operation::getOperationIdentifier)
@@ -136,9 +122,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     if (max.isPresent()) {
       operationIdentifier = max.getAsLong() + 1;
     } else {
-      operationIdentifier = 1;
+      operationIdentifier = 0;
     }
 
+    ByteString address = accountCapsule.getAddress();
     TransactionBalanceTrace.Operation operation = Operation.newBuilder()
         .setAddress(address)
         .setAmount(String.valueOf(diff))
@@ -147,13 +134,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     transactionBalanceTrace = transactionBalanceTrace.toBuilder()
         .addOperation(operation)
         .build();
-
-    if (first) {
-      blockBalanceTraceCapsule.addTransactionBalanceTrace(transactionBalanceTrace);
-    } else {
-      blockBalanceTraceCapsule.setTransactionBalanceTrace(index, transactionBalanceTrace);
-    }
-    balanceTraceStore.putBlockBalanceTrace(blockBalanceTraceCapsule);
+    balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
   }
 
 }

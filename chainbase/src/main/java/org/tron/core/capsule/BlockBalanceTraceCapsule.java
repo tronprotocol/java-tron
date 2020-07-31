@@ -21,6 +21,7 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
   public BlockBalanceTraceCapsule(BlockCapsule blockCapsule) {
     this();
     balanceTrace = balanceTrace.toBuilder()
+        .setBlockIdentifier(blockCapsule.getBlockId().getByteString())
         .setBlockNumber(blockCapsule.getNum())
         .setTimestamp(blockCapsule.getTimeStamp())
         .build();

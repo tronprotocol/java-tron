@@ -1051,7 +1051,7 @@ public class Manager {
     }
 
     if (Objects.nonNull(blockCap)) {
-      chainBaseManager.getBalanceTraceStore().setCurrentTransactionId(trxCap);
+      chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
 
     validateTapos(trxCap);
@@ -1119,10 +1119,9 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore()
-          .updateCurrentTransactionBalanceTrace(
-              trxCap.getInstance().getRawData().getContract(0).getType().name(),
-              trace.getReceipt().getResult().name());
-      chainBaseManager.getBalanceTraceStore().resetCurrentTransactionId();
+          .updateCurrentTransactionStatus(
+              trace.getRuntimeResult().getResultCode().name());
+      chainBaseManager.getBalanceTraceStore().resetCurrentTransactionTrace();
     }
 
     return transactionInfo.getInstance();
@@ -1353,7 +1352,8 @@ public class Manager {
     updateTransHashCache(block);
     updateRecentBlock(block);
     updateDynamicProperties(block);
-    chainBaseManager.getBalanceTraceStore().resetCurrentBlockId();
+
+    chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
   }
 
   private void payReward(BlockCapsule block) {

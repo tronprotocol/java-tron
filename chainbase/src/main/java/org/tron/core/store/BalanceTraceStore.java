@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,11 +32,22 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
   @Getter
   private Sha256Hash currentTransactionId;
 
+  @Getter
+  @Setter
+  private BlockBalanceTraceCapsule currentBlockBalanceTraceCapsule;
+
+  @Getter
+  @Setter
+  private TransactionBalanceTrace currentTransactionBalanceTrace;
+
   protected BalanceTraceStore(@Value("balance-trace") String dbName) {
     super(dbName);
   }
 
   public void setCurrentTransactionId(TransactionCapsule transactionCapsule) {
+    if (currentBlockId == null) {
+      return;
+    }
     currentTransactionId = transactionCapsule.getTransactionId();
   }
 
@@ -43,66 +55,54 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
     currentBlockId = blockCapsule.getBlockId();
   }
 
-  public void resetCurrentTransactionId() {
-    currentTransactionId = null;
-  }
-
-  public void resetCurrentBlockId() {
-    currentBlockId = null;
-  }
-
-  public void initCurrentBlockBalanceTrace(BlockCapsule blockCapsule) {
-    BlockBalanceTraceCapsule blockBalanceTraceCapsule = new BlockBalanceTraceCapsule(blockCapsule);
-    setCurrentBlockId(blockCapsule);
-    putBlockBalanceTrace(blockBalanceTraceCapsule);
-  }
-
-  public void updateCurrentTransactionBalanceTrace(String type, String status) {
-    TransactionBalanceTrace transactionBalanceTrace = null;
-    BlockBalanceTraceCapsule balanceTraceCapsule = null;
-    try {
-      balanceTraceCapsule = getCurrentBlockBalanceTrace();
-    } catch (BadItemException e) {
-      logger.error(e.getMessage(), e);
-    }
-
-    if (balanceTraceCapsule == null) {
+  public void resetCurrentTransactionTrace() {
+    if (currentBlockId == null) {
       return;
     }
 
-    int index = 0;
-    for(; index < balanceTraceCapsule.getInstance().getTransactionBalanceTraceCount(); index++) {
-      TransactionBalanceTrace tmp = balanceTraceCapsule.getInstance().getTransactionBalanceTrace(index);
-      if (tmp.getTransactionIdentifier().equals(getCurrentTransactionId().getByteString())) {
-        transactionBalanceTrace = tmp;
-        break;
-      }
+    if (!CollectionUtils.isEmpty(currentTransactionBalanceTrace.getOperationList())) {
+      currentBlockBalanceTraceCapsule.addTransactionBalanceTrace(currentTransactionBalanceTrace);
     }
 
-    if (transactionBalanceTrace != null) {
-      transactionBalanceTrace = transactionBalanceTrace.toBuilder()
-          .setStatus(type)
-          .setType(status)
-          .build();
-      BalanceContract.BlockBalanceTrace blockBalanceTrace =
-          balanceTraceCapsule.getInstance().toBuilder().setTransactionBalanceTrace(index, transactionBalanceTrace).build();
-      balanceTraceCapsule = new BlockBalanceTraceCapsule(blockBalanceTrace);
-      putBlockBalanceTrace(balanceTraceCapsule);
+    currentTransactionId = null;
+    currentTransactionBalanceTrace = null;
+  }
+
+  public void resetCurrentBlockTrace() {
+    putBlockBalanceTrace(currentBlockBalanceTraceCapsule);
+    currentBlockId = null;
+    currentBlockBalanceTraceCapsule = null;
+  }
+
+  public void initCurrentBlockBalanceTrace(BlockCapsule blockCapsule) {
+    setCurrentBlockId(blockCapsule);
+    currentBlockBalanceTraceCapsule = new BlockBalanceTraceCapsule(blockCapsule);
+  }
+
+  public void initCurrentTransactionBalanceTrace(TransactionCapsule transactionCapsule) {
+    if (currentBlockId == null) {
+      return;
     }
+
+    setCurrentTransactionId(transactionCapsule);
+    currentTransactionBalanceTrace = TransactionBalanceTrace.newBuilder()
+        .setTransactionIdentifier(transactionCapsule.getTransactionId().getByteString())
+        .setType(transactionCapsule.getInstance().getRawData().getContract(0).getType().name())
+        .build();
   }
 
-  public void putBlockBalanceTrace(BlockBalanceTraceCapsule blockBalanceTrace) {
-    put(getCurrentBlockId().getBytes(), blockBalanceTrace);
+  public void updateCurrentTransactionStatus(String status) {
+    if (currentBlockId == null) {
+      return;
+    }
+
+    currentTransactionBalanceTrace = currentTransactionBalanceTrace.toBuilder()
+        .setType(status)
+        .build();
   }
 
-  public BlockBalanceTraceCapsule getCurrentBlockBalanceTrace() throws BadItemException {
-    BlockCapsule.BlockId blockId = getCurrentBlockId();
-    return getBlockBalanceTrace(blockId);
-  }
-
-  public TransactionBalanceTrace getCurrentTransactionBalanceTrace() throws BadItemException {
-    BlockCapsule.BlockId blockId = getCurrentBlockId();
-    return getTransactionBalanceTrace(blockId, getCurrentTransactionId());
+  private void putBlockBalanceTrace(BlockBalanceTraceCapsule blockBalanceTrace) {
+    put(ByteArray.fromLong(getCurrentBlockId().getNum()), blockBalanceTrace);
   }
 
   public BlockBalanceTraceCapsule getBlockBalanceTrace(BlockCapsule.BlockId blockId) throws BadItemException {
@@ -146,5 +146,4 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
 
     return null;
   }
-
 }
