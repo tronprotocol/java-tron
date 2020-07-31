@@ -9,7 +9,7 @@ import org.tron.core.utils.ProposalUtil;
 
 /**
  * Notice:
- *
+ * <p>
  * if you want to add a proposal,you just should add a enum ProposalType and add the valid in the
  * validator method, add the process in the process method
  */
@@ -218,7 +218,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
           break;
         }
-
+        case ALLOW_SET_TRANSACTION_RET: {
+          manager.getDynamicPropertiesStore().saveAllowSetTransactionRet(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

@@ -921,6 +921,11 @@ public class Wallet {
                 dbManager.getDynamicPropertiesStore().getAllowShieldedTRC20Transaction())
             .build());
 
+    // ALLOW_SET_TRANSACTION_RET
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowSetTransactionRet")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowSetTransactionRet()).build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
         .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
