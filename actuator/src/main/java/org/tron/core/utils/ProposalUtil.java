@@ -307,7 +307,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_PBFT: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_8)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_PBFT]");
         }
@@ -318,7 +318,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_SHIELDED_TRC20_TRANSACTION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_SHIELDED_TRC20_TRANSACTION]");
         }

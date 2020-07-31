@@ -504,7 +504,6 @@ public class NodeInfo {
 
     /*node information*/
     private String codeVersion;
-    private String versionName;
     private String versionNum;
     private String p2pVersion;
     private int listenPort;
@@ -532,14 +531,6 @@ public class NodeInfo {
     public ConfigNodeInfo setCodeVersion(String codeVersion) {
       this.codeVersion = codeVersion;
       return this;
-    }
-
-    public String getVersionName() {
-      return versionName;
-    }
-
-    public void setVersionName(String versionName) {
-      this.versionName = versionName;
     }
 
     public String getVersionNum() {

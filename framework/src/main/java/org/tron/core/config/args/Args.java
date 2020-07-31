@@ -1040,7 +1040,6 @@ public class Args extends CommonParameter {
     logger.info("Backup member size: {}", parameter.getBackupMembers().size());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
-    logger.info("Version name: {}", Version.versionName);
     logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", parameter.getStorage().getDbVersion());

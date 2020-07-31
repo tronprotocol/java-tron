@@ -169,7 +169,6 @@ public class NodeInfoService {
   private void setConfigNodeInfo(NodeInfo nodeInfo) {
     ConfigNodeInfo configNodeInfo = new ConfigNodeInfo();
     configNodeInfo.setCodeVersion(Version.getVersion());
-    configNodeInfo.setVersionName(Version.versionName);
     configNodeInfo.setVersionNum(Version.versionCode);
     configNodeInfo.setP2pVersion(String.valueOf(parameter.getNodeP2pVersion()));
     configNodeInfo.setListenPort(parameter.getNodeListenPort());
