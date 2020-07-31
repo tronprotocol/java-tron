@@ -1,7 +1,10 @@
 package org.tron.core.store;
 
 import com.google.protobuf.ByteString;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -22,53 +25,55 @@ import java.util.Objects;
 @Slf4j(topic = "DB")
 public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCapsule>  {
 
-  private static final byte[] CURRENT_BLOCK_ID = "current_block_id".getBytes();
-  private static final byte[] CURRENT_TRANSACTION_ID = "current_transaction_id".getBytes();
-  private static final byte[] CURRENT_OWNER = "owner".getBytes();
-  private static final byte[] EMPTY = new byte[0];
+  @Getter
+  @Setter
+  private BlockCapsule.BlockId currentBlockId;
+
+  @Getter
+  @Setter
+  private Sha256Hash currentTransactionId;
+
+  @Getter
+  @Setter
+  private ByteString currentOwner;
 
   protected BalanceTraceStore(@Value("balance-trace") String dbName) {
     super(dbName);
   }
 
-  public void setCurrentTransactionId(Sha256Hash transactionId) {
-    revokingDB.put(CURRENT_TRANSACTION_ID, transactionId.getBytes());
+  public void setCurrentTransactionId(TransactionCapsule transactionCapsule) {
+    currentTransactionId = transactionCapsule.getTransactionId();
   }
 
-  public void setCurrentBlockId(Sha256Hash blockId) {
-    revokingDB.put(CURRENT_BLOCK_ID, blockId.getBytes());
+  public void setCurrentBlockId(BlockCapsule blockCapsule) {
+    currentBlockId = blockCapsule.getBlockId();
   }
 
   public void setCurrentOwner(TransactionCapsule transactionCapsule) {
     Protocol.Transaction.Contract contract = transactionCapsule.getInstance().getRawData().getContractList().get(0);
-    int permissionId = contract.getPermissionId();
     byte[] owner = TransactionCapsule.getOwner(contract);
-    revokingDB.put(CURRENT_OWNER, owner);
-  }
-
-  public Sha256Hash getCurrentTransactionId() {
-    return Sha256Hash.wrap(revokingDB.getUnchecked(CURRENT_TRANSACTION_ID));
-  }
-
-  public Sha256Hash getCurrentBlockId() {
-    return Sha256Hash.wrap(revokingDB.getUnchecked(CURRENT_BLOCK_ID));
+    currentOwner = ByteString.copyFrom(owner);
   }
 
   public ByteString getCurrentOwner() {
-    return ByteString.copyFrom(revokingDB.getUnchecked(CURRENT_OWNER));
+    return currentOwner;
   }
 
   public void resetCurrentTransactionId() {
-    revokingDB.put(CURRENT_TRANSACTION_ID, EMPTY);
+    currentTransactionId = null;
   }
 
   public void resetCurrentBlockId() {
-    revokingDB.put(CURRENT_BLOCK_ID, EMPTY);
+    currentBlockId = null;
+  }
+
+  public void resetCurrentOwner() {
+    currentOwner = null;
   }
 
   public void initCurrentBlockBalanceTrace(BlockCapsule blockCapsule) {
     BlockBalanceTraceCapsule blockBalanceTraceCapsule = new BlockBalanceTraceCapsule(blockCapsule);
-    setCurrentBlockId(blockCapsule.getBlockId());
+    setCurrentBlockId(blockCapsule);
     putBlockBalanceTrace(blockBalanceTraceCapsule);
   }
 
@@ -111,12 +116,12 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
   }
 
   public BlockBalanceTraceCapsule getCurrentBlockBalanceTrace() throws BadItemException {
-    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(getCurrentBlockId());
+    BlockCapsule.BlockId blockId = getCurrentBlockId();
     return getBlockBalanceTrace(blockId);
   }
 
   public TransactionBalanceTrace getCurrentTransactionBalanceTrace() throws BadItemException {
-    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(getCurrentBlockId());
+    BlockCapsule.BlockId blockId = getCurrentBlockId();
     return getTransactionBalanceTrace(blockId, getCurrentTransactionId());
   }
 
