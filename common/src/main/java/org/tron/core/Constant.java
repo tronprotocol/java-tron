@@ -245,4 +245,9 @@ public class Constant {
   public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
 
   public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
+  public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
+  public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
+  public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
+  public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
+  public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
 }
