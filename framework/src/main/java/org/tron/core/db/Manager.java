@@ -1051,7 +1051,6 @@ public class Manager {
     }
 
     if (Objects.nonNull(blockCap)) {
-      chainBaseManager.getBalanceTraceStore().setCurrentOwner(trxCap);
       chainBaseManager.getBalanceTraceStore().setCurrentTransactionId(trxCap);
     }
 
@@ -1123,7 +1122,6 @@ public class Manager {
           .updateCurrentTransactionBalanceTrace(
               trxCap.getInstance().getRawData().getContract(0).getType().name(),
               trace.getReceipt().getResult().name());
-      chainBaseManager.getBalanceTraceStore().resetCurrentOwner();
       chainBaseManager.getBalanceTraceStore().resetCurrentTransactionId();
     }
 

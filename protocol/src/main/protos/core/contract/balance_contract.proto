@@ -38,9 +38,8 @@ message TransferContract {
 message TransactionBalanceTrace {
   message Operation {
     int64 operation_identifier = 1;
-    repeated int64 related_operation = 2;
-    bytes address = 3;
-    string amount = 4;
+    bytes address = 2;
+    string amount = 3;
   }
 
   bytes transaction_identifier = 1;

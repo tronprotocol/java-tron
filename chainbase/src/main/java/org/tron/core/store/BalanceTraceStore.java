@@ -26,16 +26,10 @@ import java.util.Objects;
 public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCapsule>  {
 
   @Getter
-  @Setter
   private BlockCapsule.BlockId currentBlockId;
 
   @Getter
-  @Setter
   private Sha256Hash currentTransactionId;
-
-  @Getter
-  @Setter
-  private ByteString currentOwner;
 
   protected BalanceTraceStore(@Value("balance-trace") String dbName) {
     super(dbName);
@@ -49,26 +43,12 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
     currentBlockId = blockCapsule.getBlockId();
   }
 
-  public void setCurrentOwner(TransactionCapsule transactionCapsule) {
-    Protocol.Transaction.Contract contract = transactionCapsule.getInstance().getRawData().getContractList().get(0);
-    byte[] owner = TransactionCapsule.getOwner(contract);
-    currentOwner = ByteString.copyFrom(owner);
-  }
-
-  public ByteString getCurrentOwner() {
-    return currentOwner;
-  }
-
   public void resetCurrentTransactionId() {
     currentTransactionId = null;
   }
 
   public void resetCurrentBlockId() {
     currentBlockId = null;
-  }
-
-  public void resetCurrentOwner() {
-    currentOwner = null;
   }
 
   public void initCurrentBlockBalanceTrace(BlockCapsule blockCapsule) {

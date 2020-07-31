@@ -128,18 +128,15 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       first = true;
     }
 
-    ByteString currentOwner = balanceTraceStore.getCurrentOwner();
     ByteString address = accountCapsule.getAddress();
-    long operationIdentifier = 0;
-    if (!address.equals(currentOwner)) {
-      OptionalLong max = transactionBalanceTrace.getOperationList().stream()
-          .mapToLong(Operation::getOperationIdentifier)
-          .max();
-      if (max.isPresent()) {
-        operationIdentifier = max.getAsLong() + 1;
-      } else {
-        operationIdentifier = 1;
-      }
+    long operationIdentifier;
+    OptionalLong max = transactionBalanceTrace.getOperationList().stream()
+        .mapToLong(Operation::getOperationIdentifier)
+        .max();
+    if (max.isPresent()) {
+      operationIdentifier = max.getAsLong() + 1;
+    } else {
+      operationIdentifier = 1;
     }
 
     TransactionBalanceTrace.Operation operation = Operation.newBuilder()
@@ -147,11 +144,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         .setAmount(String.valueOf(diff))
         .setOperationIdentifier(operationIdentifier)
         .build();
-    if (operationIdentifier > 0) {
-      operation = operation.toBuilder()
-          .addRelatedOperation(0)
-          .build();
-    }
     transactionBalanceTrace = transactionBalanceTrace.toBuilder()
         .addOperation(operation)
         .build();
