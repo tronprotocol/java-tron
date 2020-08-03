@@ -124,8 +124,7 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      // TODO: java-tron 4.1 add hard fork here
-      if (false && (op == SELFBALANCE || op == CHAINID) ) {
+      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
       program.setLastOp(op.val());

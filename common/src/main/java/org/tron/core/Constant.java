@@ -172,6 +172,10 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
       + ".allowShieldedTRC20Transaction";
+
+  public static final String COMMITTEE_ALLOW_TVM_ISTANBUL = "committee"
+      + ".allowTvmIstanbul";
+
   public static final String COMMITTEE_ALLOW_CONTRACT_CREATION_IMPROVEMENT = "committee"
       + ".allowContractCreationImprovement";
 

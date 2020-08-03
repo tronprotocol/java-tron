@@ -889,6 +889,11 @@ public class Wallet {
         .setKey("getAllowTvmSolidity059")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
+    
+    // ALLOW_TVM_ISTANBUL
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmIstanbul")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmIstanbul()).build());
 
     // ALLOW_ZKSNARK_TRANSACTION
     //    builder.addChainParameter(

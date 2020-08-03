@@ -410,6 +410,10 @@ public class CommonParameter {
 
   @Getter/**/
   @Setter
+  public long allowTvmIstanbul;
+
+  @Getter/**/
+  @Setter
   public long allowContractCreationImprovement;
 
   private static double calcMaxTimeRatio() {

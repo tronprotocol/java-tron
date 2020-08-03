@@ -317,6 +317,18 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TVM_ISTANBUL: {
+        //TODO: java-tron 4.1, change the version to VERSION_4_1
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_ISTANBUL]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_ISTANBUL] is only allowed to be 1");
+        }
+        break;
+      }
       case ALLOW_SHIELDED_TRC20_TRANSACTION: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException(
@@ -426,10 +438,11 @@ public class ProposalUtil {
     FORBID_TRANSFER_TO_CONTRACT(35), // 1, {0, 1}
     ALLOW_SHIELDED_TRC20_TRANSACTION(39), // 1, 39
     ALLOW_PBFT(40),// 1,40
+    ALLOW_TVM_ISTANBUL(41),//1, {0,1}
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
-    ALLOW_CONTRACT_CREATION_IMPROVEMENT(47); //1, 47
+    ALLOW_CONTRACT_CREATION_IMPROVEMENT(47); //1, {0, 1}
 
     private long code;
 

@@ -574,8 +574,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      //TODO : java-tron 4.1 hard fork
-      if (true) {
+      if (VMConfig.allowTvmIstanbul()) {
         return getEnergyForDataIstanbul(data);
       }
       return 500;
@@ -629,8 +628,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      //TODO : java-tron 4.1 hard fork
-      if (true) {
+      if (VMConfig.allowTvmIstanbul()) {
         return getEnergyForDataIstanbul(data);
       }
       return 40000;
@@ -683,8 +681,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      //TODO : java-tron 4.1 hard fork
-      if (true) {
+      if (VMConfig.allowTvmIstanbul()) {
         return getEnergyForDataIstanbul(data);
       }
       if (data == null) {
