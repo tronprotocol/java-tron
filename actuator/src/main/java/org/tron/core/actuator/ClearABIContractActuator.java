@@ -106,7 +106,8 @@ public class ClearABIContractActuator extends AbstractActuator {
 
     if (!Arrays.equals(ownerAddress, deployedContractOwnerAddress)) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] is not the owner of the contract");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR
+              + readableOwnerAddress + "] is not the owner of the contract");
     }
 
     return true;
