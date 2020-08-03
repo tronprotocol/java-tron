@@ -921,10 +921,10 @@ public class Wallet {
                 dbManager.getDynamicPropertiesStore().getAllowShieldedTRC20Transaction())
             .build());
 
-    // ALLOW_SET_TRANSACTION_RET
+    // ALLOW_CONTRACT_CREATION_IMPROVEMENT
     builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowSetTransactionRet")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowSetTransactionRet()).build());
+        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowContractCreationImprovement")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowContractCreationImprovement()).build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
@@ -2542,8 +2542,8 @@ public class Wallet {
 
   /**
    *
-   * Equivalent to getContract, except contract bytecode are runtime code
-   * rather than creation code
+   * Add a wrapper for smart contract.
+   * Current additional information including runtime code for a smart contract.
    * @param bytesMessage
    * @return
    *

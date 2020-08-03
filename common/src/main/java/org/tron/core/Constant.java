@@ -172,8 +172,8 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
       + ".allowShieldedTRC20Transaction";
-  public static final String COMMITTEE_ALLOW_SET_TRANSACTION_RET = "committee"
-      + ".allowSetTransactionRetForContract";
+  public static final String COMMITTEE_ALLOW_CONTRACT_CREATION_IMPROVEMENT = "committee"
+      + ".allowContractCreationImprovement";
 
   public static final String COMMITTEE_ALLOW_MARKET_TRANSACTION =
       "committee.allowMarketTransaction";

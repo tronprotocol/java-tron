@@ -370,15 +370,15 @@ public class ProposalUtil {
         }
         break;
       }
-      case ALLOW_SET_TRANSACTION_RET: {
+      case ALLOW_CONTRACT_CREATION_IMPROVEMENT: {
         //TODO: java-tron 4.1, change the version to VERSION_4_1
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_SET_TRANSACTION_RET]");
+              "Bad chain parameter id [ALLOW_CONTRACT_CREATION_IMPROVEMENT]");
         }
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
-              "This value[ALLOW_SET_TRANSACTION_RET] is only allowed to be 1 or 0");
+              "This value[ALLOW_CONTRACT_CREATION_IMPROVEMENT] is only allowed to be 1 or 0");
         }
         break;
       }
@@ -429,7 +429,7 @@ public class ProposalUtil {
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
-    ALLOW_SET_TRANSACTION_RET(47); //1, 47
+    ALLOW_CONTRACT_CREATION_IMPROVEMENT(47); //1, 47
 
     private long code;
 

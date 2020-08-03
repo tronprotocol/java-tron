@@ -122,7 +122,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
       "ALLOW_SHIELDED_TRC20_TRANSACTION"
           .getBytes();
-  private static final byte[] ALLOW_SET_TRANSACTION_RET = "ALLOW_SET_TRANSACTION_RET".getBytes();
+  private static final byte[] ALLOW_CONTRACT_CREATION_IMPROVEMENT = "ALLOW_CONTRACT_CREATION_IMPROVEMENT".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
   private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
@@ -590,9 +590,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowSetTransactionRet();
+      this.getAllowContractCreationImprovement();
     } catch (IllegalArgumentException e) {
-      this.saveAllowSetTransactionRet(CommonParameter.getInstance().getAllowSetTransactionRet());
+      this.saveAllowContractCreationImprovement(CommonParameter.getInstance()
+          .getAllowContractCreationImprovement());
     }
 
     try {
@@ -1648,8 +1649,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowCreationOfContracts() == 1L;
   }
 
+  // handled with allow contract creation improvement proposal
   public boolean needSetTransactionRet() {
-    return getAllowSetTransactionRet() == 1L;
+    return getAllowContractCreationImprovement() == 1L;
   }
 
   public void saveAllowShieldedTransaction(long allowShieldedTransaction) {
@@ -1679,14 +1681,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
-  public void saveAllowSetTransactionRet(long allowSetTransactionRet) {
-    this.put(DynamicPropertiesStore.ALLOW_SET_TRANSACTION_RET,
-        new BytesCapsule(ByteArray.fromLong(allowSetTransactionRet)));
+  public void saveAllowContractCreationImprovement(long allowContractCreationImprovement) {
+    this.put(DynamicPropertiesStore.ALLOW_CONTRACT_CREATION_IMPROVEMENT,
+        new BytesCapsule(ByteArray.fromLong(allowContractCreationImprovement)));
   }
 
-  public long getAllowSetTransactionRet() {
-    String msg = "not found ALLOW_SET_TRANSACTION_RET";
-    return Optional.ofNullable(getUnchecked(ALLOW_SET_TRANSACTION_RET))
+  public long getAllowContractCreationImprovement() {
+    String msg = "not found ALLOW_CONTRACT_CREATION_IMPROVEMENT";
+    return Optional.ofNullable(getUnchecked(ALLOW_CONTRACT_CREATION_IMPROVEMENT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

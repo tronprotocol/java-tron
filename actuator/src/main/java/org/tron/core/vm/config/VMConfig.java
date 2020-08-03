@@ -44,7 +44,7 @@ public class VMConfig {
 
   private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
 
-  private static boolean ALLOW_SET_TRANSACTION_RET = false;
+  private static boolean ALLOW_CONTRACT_CREATION_IMPROVEMENT = false;
 
   private VMConfig() {
   }
@@ -85,6 +85,10 @@ public class VMConfig {
     ALLOW_SHIELDED_TRC20_TRANSACTION = allow == 1;
   }
 
+  public static void initAllowContractCreationImprovement(long allow) {
+    ALLOW_CONTRACT_CREATION_IMPROVEMENT = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -108,6 +112,8 @@ public class VMConfig {
   public static boolean allowShieldedTRC20Transaction() {
     return ALLOW_SHIELDED_TRC20_TRANSACTION;
   }
+
+  public static boolean allowContractCreationImprovement() { return ALLOW_CONTRACT_CREATION_IMPROVEMENT; }
 
   private static class SystemPropertiesInstance {
 

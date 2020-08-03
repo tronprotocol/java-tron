@@ -173,7 +173,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
-    PARAMETER.allowSetTransactionRet = 0;
+    PARAMETER.allowContractCreationImprovement = 0;
   }
 
   /**
@@ -642,9 +642,9 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
 
-    PARAMETER.allowSetTransactionRet =
-        config.hasPath(Constant.COMMITTEE_ALLOW_SET_TRANSACTION_RET) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_SET_TRANSACTION_RET) : 0;
+    PARAMETER.allowContractCreationImprovement =
+        config.hasPath(Constant.COMMITTEE_ALLOW_CONTRACT_CREATION_IMPROVEMENT) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_CONTRACT_CREATION_IMPROVEMENT) : 0;
 
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)

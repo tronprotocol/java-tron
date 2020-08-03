@@ -218,8 +218,8 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
           break;
         }
-        case ALLOW_SET_TRANSACTION_RET: {
-          manager.getDynamicPropertiesStore().saveAllowSetTransactionRet(entry.getValue());
+        case ALLOW_CONTRACT_CREATION_IMPROVEMENT: {
+          manager.getDynamicPropertiesStore().saveAllowContractCreationImprovement(entry.getValue());
           break;
         }
         default:
