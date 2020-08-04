@@ -1,6 +1,7 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
@@ -67,5 +68,21 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
   @Override
   public BlockBalanceTrace getInstance() {
     return balanceTrace;
+  }
+
+  public BlockBalanceTrace.BlockIdentifier getBlockIdentifier() {
+    return balanceTrace.getBlockIdentifier();
+  }
+
+  public BlockBalanceTrace.BlockIdentifier getParentBlockIdentifier() {
+    return balanceTrace.getParentBlockIdentifier();
+  }
+
+  public long getTimestamp() {
+    return balanceTrace.getTimestamp();
+  }
+
+  public List<TransactionBalanceTrace> getTransactions() {
+    return balanceTrace.getTransactionBalanceTraceList();
   }
 }
