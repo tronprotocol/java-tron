@@ -48,7 +48,17 @@ message TransactionBalanceTrace {
   string status = 4;
 }
 
+
+
 message BlockBalanceTrace {
+//  message BlockIdentifier {
+//    bytes hash = 1;
+//    int64 number = 2;
+//  }
+//
+//  BlockIdentifier block_identifier = 1;
+//  BlockIdentifier parent_block_identifier = 2;
+
   bytes block_identifier = 1;
   int64 block_number = 2;
   int64 timestamp = 3;
