@@ -123,8 +123,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
       "ALLOW_SHIELDED_TRC20_TRANSACTION"
           .getBytes();
-  private static final byte[] ALLOW_CONTRACT_CREATION_IMPROVEMENT =
-      "ALLOW_CONTRACT_CREATION_IMPROVEMENT".getBytes();
   private static final byte[] ALLOW_TVM_ISTANBUL = "ALLOW_TVM_ISTANBUL".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
@@ -597,13 +595,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmIstanbul(
           CommonParameter.getInstance().getAllowTvmIstanbul());
-    }
-
-    try {
-      this.getAllowContractCreationImprovement();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowContractCreationImprovement(CommonParameter.getInstance()
-          .getAllowContractCreationImprovement());
     }
 
     try {
@@ -1659,10 +1650,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowCreationOfContracts() == 1L;
   }
 
-  // handled with allow contract creation improvement proposal
-  public boolean needSetTransactionRet() {
-    return getAllowContractCreationImprovement() == 1L;
-  }
 
   public void saveAllowShieldedTransaction(long allowShieldedTransaction) {
     this.put(DynamicPropertiesStore.ALLOW_SHIELDED_TRANSACTION,
@@ -1699,20 +1686,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowTvmIstanbul() {
     String msg = "not found ALLOW_TVM_ISTANBUL";
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_ISTANBUL))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException(msg));
-  }
-
-  public void saveAllowContractCreationImprovement(long allowContractCreationImprovement) {
-    this.put(DynamicPropertiesStore.ALLOW_CONTRACT_CREATION_IMPROVEMENT,
-        new BytesCapsule(ByteArray.fromLong(allowContractCreationImprovement)));
-  }
-
-  public long getAllowContractCreationImprovement() {
-    String msg = "not found ALLOW_CONTRACT_CREATION_IMPROVEMENT";
-    return Optional.ofNullable(getUnchecked(ALLOW_CONTRACT_CREATION_IMPROVEMENT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

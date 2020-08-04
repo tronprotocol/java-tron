@@ -174,7 +174,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
     PARAMETER.allowTvmIstanbul = 0;
-    PARAMETER.allowContractCreationImprovement = 0;
   }
 
   /**
@@ -646,10 +645,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmIstanbul =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) : 0;
-
-    PARAMETER.allowContractCreationImprovement =
-        config.hasPath(Constant.COMMITTEE_ALLOW_CONTRACT_CREATION_IMPROVEMENT) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_CONTRACT_CREATION_IMPROVEMENT) : 0;
 
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)

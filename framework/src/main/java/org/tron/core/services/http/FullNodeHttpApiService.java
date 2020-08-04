@@ -404,7 +404,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(triggerConstantContractServlet),
           "/wallet/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/wallet/getcontract");
-      context.addServlet(new ServletHolder(getContractInfoServlet), "/getcontractinfo");
+      context.addServlet(new ServletHolder(getContractInfoServlet), "/wallet/getcontractinfo");
       context.addServlet(new ServletHolder(clearABIServlet), "/wallet/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/wallet/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/wallet/proposalapprove");

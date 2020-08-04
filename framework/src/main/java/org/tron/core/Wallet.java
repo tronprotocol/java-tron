@@ -926,11 +926,6 @@ public class Wallet {
                 dbManager.getDynamicPropertiesStore().getAllowShieldedTRC20Transaction())
             .build());
 
-    // ALLOW_CONTRACT_CREATION_IMPROVEMENT
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowContractCreationImprovement")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowContractCreationImprovement()).build());
-
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
         .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())

@@ -46,8 +46,6 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_ISTANBUL = false;
 
-  private static boolean ALLOW_CONTRACT_CREATION_IMPROVEMENT = false;
-
   private VMConfig() {
   }
 
@@ -91,10 +89,6 @@ public class VMConfig {
     ALLOW_TVM_ISTANBUL = allow == 1;
   }
 
-  public static void initAllowContractCreationImprovement(long allow) {
-    ALLOW_CONTRACT_CREATION_IMPROVEMENT = allow == 1;
-  }
-
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -119,11 +113,8 @@ public class VMConfig {
     return ALLOW_SHIELDED_TRC20_TRANSACTION;
   }
 
-  public static boolean allowTvmIstanbul() { return  ALLOW_TVM_ISTANBUL;}
+  public static boolean allowTvmIstanbul() {return ALLOW_TVM_ISTANBUL; }
 
-  public static boolean allowContractCreationImprovement() {
-    return ALLOW_CONTRACT_CREATION_IMPROVEMENT;
-  }
   private static class SystemPropertiesInstance {
 
     private static final VMConfig INSTANCE = new VMConfig();

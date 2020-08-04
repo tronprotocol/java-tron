@@ -1041,17 +1041,6 @@ public class Manager {
     return result;
   }
 
-  public void resetTx(final TransactionCapsule trxCap) {
-    if (getDynamicPropertiesStore().needSetTransactionRet() && trxCap.isContractType()) {
-      if (Objects.nonNull(trxCap.getContractResult())) {
-        Result.contractResult contractResult = trxCap.getContractResult();
-        trxCap.resetResult();
-        trxCap.setResultCode(contractResult);
-      } else {
-        trxCap.resetResult();
-      }
-    }
-  }
   /**
    * Process transaction.
    */
@@ -1063,8 +1052,6 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
-
-    resetTx(trxCap);
 
     validateTapos(trxCap);
     validateCommon(trxCap);
