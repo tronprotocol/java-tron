@@ -1,12 +1,10 @@
 package org.tron.core.store;
 
-import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -16,8 +14,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
-import org.tron.protos.Protocol;
-import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 
 import java.util.Objects;

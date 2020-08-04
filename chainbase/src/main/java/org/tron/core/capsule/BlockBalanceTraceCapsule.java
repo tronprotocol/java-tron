@@ -1,11 +1,7 @@
 package org.tron.core.capsule;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import lombok.Getter;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.BadItemException;
-import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 
@@ -20,9 +16,18 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
 
   public BlockBalanceTraceCapsule(BlockCapsule blockCapsule) {
     this();
+    BlockBalanceTrace.BlockIdentifier blockIdentifier = BlockBalanceTrace.BlockIdentifier.newBuilder()
+        .setHash(blockCapsule.getBlockId().getByteString())
+        .setNumber(blockCapsule.getNum())
+        .build();
+
+    BlockBalanceTrace.BlockIdentifier parentBlockIdentifier = BlockBalanceTrace.BlockIdentifier.newBuilder()
+        .setHash(blockCapsule.getNum() == 0 ? blockCapsule.getBlockId().getByteString() : blockCapsule.getParentHashStr())
+        .setNumber(blockCapsule.getNum() == 0 ? 0 : blockCapsule.getNum() - 1)
+        .build();
     balanceTrace = balanceTrace.toBuilder()
-        .setBlockIdentifier(blockCapsule.getBlockId().getByteString())
-        .setBlockNumber(blockCapsule.getNum())
+        .setBlockIdentifier(blockIdentifier)
+        .setParentBlockIdentifier(parentBlockIdentifier)
         .setTimestamp(blockCapsule.getTimeStamp())
         .build();
   }
