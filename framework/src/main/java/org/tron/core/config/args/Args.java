@@ -218,10 +218,6 @@ public class Args extends CommonParameter {
     } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
       localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
-      if (localwitness.size() > 1) {
-        logger.warn("localwitness size must be one, get the first one");
-        localwitness = localwitness.subList(0, 1);
-      }
       localWitnesses.setPrivateKeys(localwitness);
 
       if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
