@@ -2,6 +2,8 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Map;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
@@ -54,6 +56,13 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
   public void setTransactionBalanceTrace(int index, TransactionBalanceTrace transactionBalanceTrace) {
     balanceTrace = balanceTrace.toBuilder()
         .setTransactionBalanceTrace(index, transactionBalanceTrace)
+        .build();
+  }
+
+  public void recordBalance(byte[] key, AccountCapsule accountCapsule) {
+    String address = StringUtil.encode58Check(key);
+    balanceTrace = balanceTrace.toBuilder()
+        .putBalance(address, accountCapsule.getBalance())
         .build();
   }
 

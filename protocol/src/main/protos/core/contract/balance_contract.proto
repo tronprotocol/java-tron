@@ -61,4 +61,5 @@ message BlockBalanceTrace {
 
   int64 timestamp = 3;
   repeated TransactionBalanceTrace transaction_balance_trace = 4;
+  map<string, int64> balance = 5;
 }
