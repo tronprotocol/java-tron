@@ -1329,8 +1329,14 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    byte[] senderAddress = TransactionTrace
-        .convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] senderAddress;
+    if(VMConfig.allowTvmIstanbul()) {
+      senderAddress = TransactionTrace
+          .convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    } else {
+      senderAddress = TransactionTrace
+          .convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    }
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
     byte[] contractAddress = WalletUtil
