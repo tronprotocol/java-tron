@@ -3,6 +3,8 @@ package org.tron.core.store;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -179,8 +181,17 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
   }
 
   public void recordCurrentBlockNumber(byte[] address) {
+    BalanceContract.BlockNumber blockNumber = getAllBlockNumberByAddress(address);
+    blockNumber = blockNumber.toBuilder().addNumber(getCurrentBlockId().getNum()).build();
+
+    byte[] key = Bytes.concat(ACCOUNT_PREFIX, address);
+    revokingDB.put(key, blockNumber.toByteArray());
+  }
+
+  public BalanceContract.BlockNumber getAllBlockNumberByAddress(byte[] address) {
     byte[] key = Bytes.concat(ACCOUNT_PREFIX, address);
     byte[] value = revokingDB.getUnchecked(key);
+
     BalanceContract.BlockNumber blockNumber = BalanceContract.BlockNumber.newBuilder().build();
     if (!ArrayUtils.isEmpty(value)) {
       try {
@@ -190,8 +201,6 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
       }
     }
 
-    blockNumber = blockNumber.toBuilder().addNumber(getCurrentBlockId().getNum()).build();
-    revokingDB.put(key, blockNumber.toByteArray());
+    return blockNumber;
   }
-
 }
