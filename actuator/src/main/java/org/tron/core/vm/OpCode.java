@@ -577,6 +577,9 @@ public enum OpCode {
 
   ISCONTRACT(0xd4, 1, 1, OpCode.Tier.ExtTier),
 
+  REWARDBALANCE(0xd8, 1, 1, OpCode.Tier.ExtTier),
+
+  ISWITNESS(0xd9, 1, 1, OpCode.Tier.ExtTier),
   /**
    * (0xf0) Create a new account with associated code
    */

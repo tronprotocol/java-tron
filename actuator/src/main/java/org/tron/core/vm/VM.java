@@ -169,7 +169,9 @@ public class VM {
           break;
         case TOKENBALANCE:
         case BALANCE:
+        case REWARDBALANCE:
         case ISCONTRACT:
+        case ISWITNESS:
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -744,11 +746,33 @@ public class VM {
           program.step();
         }
         break;
+        case REWARDBALANCE: {
+          DataWord address = program.stackPop();
+          DataWord rewardBalance = program.getRewardBalance(address);
+
+          if (logger.isDebugEnabled()) {
+            hint = ADDRESS_LOG
+                    + Hex.toHexString(address.getLast20Bytes())
+                    + "reward balance: " + rewardBalance.toString();
+          }
+
+          program.stackPush(rewardBalance);
+          program.step();
+        }
+        break;
         case ISCONTRACT: {
           DataWord address = program.stackPop();
           DataWord isContract = program.isContract(address);
 
           program.stackPush(isContract);
+          program.step();
+        }
+        break;
+        case ISWITNESS: {
+          DataWord address = program.stackPop();
+          DataWord isWitness = program.isWitness(address);
+
+          program.stackPush(isWitness);
           program.step();
         }
         break;

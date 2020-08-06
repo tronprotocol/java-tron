@@ -23,6 +23,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -215,6 +216,11 @@ public class RepositoryImpl implements Repository {
       dynamicPropertiesCache.put(key, Value.create(bytesCapsule.getData()));
     }
     return bytesCapsule;
+  }
+
+  @Override
+  public WitnessCapsule getWitnessCapsule(byte[] address) {
+    return witnessStore.get(address);
   }
 
   @Override
