@@ -14,7 +14,7 @@ import org.tron.protos.contract.Common;
 public class UnstakeProcessor implements IContractProcessor {
     private UnstakeProcessor(){}
 
-    public UnstakeProcessor getInstance(){
+    public static UnstakeProcessor getInstance(){
         return UnstakeProcessor.Singleton.INSTANCE.getInstance();
     }
 

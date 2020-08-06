@@ -23,7 +23,7 @@ public class WithdrawRewardProcessor implements IContractProcessor {
 
     private WithdrawRewardProcessor(){}
 
-    public WithdrawRewardProcessor getInstance(){
+    public static WithdrawRewardProcessor getInstance(){
         return WithdrawRewardProcessor.Singleton.INSTANCE.getInstance();
     }
 

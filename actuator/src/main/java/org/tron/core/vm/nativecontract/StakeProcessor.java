@@ -22,7 +22,7 @@ import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 public class StakeProcessor implements IContractProcessor {
     private StakeProcessor(){}
 
-    public StakeProcessor getInstance(){
+    public static StakeProcessor getInstance(){
         return StakeProcessor.Singleton.INSTANCE.getInstance();
     }
 
