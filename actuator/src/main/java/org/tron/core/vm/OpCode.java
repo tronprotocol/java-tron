@@ -577,6 +577,12 @@ public enum OpCode {
 
   ISCONTRACT(0xd4, 1, 1, OpCode.Tier.ExtTier),
 
+  STAKE(0xd5, 2, 1, OpCode.Tier.ExtTier),
+
+  UNSTAKE(0xd6, 0, 1, OpCode.Tier.ExtTier),
+
+  WITHDRAWREWARD(0xd7, 1, 1, OpCode.Tier.ExtTier),
+
   REWARDBALANCE(0xd8, 1, 1, OpCode.Tier.ExtTier),
 
   ISWITNESS(0xd9, 1, 1, OpCode.Tier.ExtTier),
