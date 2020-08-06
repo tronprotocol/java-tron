@@ -2,16 +2,7 @@ package org.tron.core.vm.repository;
 
 import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.CodeCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.vm.config.VMConfig;
 
@@ -227,6 +218,20 @@ public class Value {
       return null;
     }
     return new BytesCapsule(any);
+  }
+
+  public DelegatedResourceCapsule getDelegatedResource() {
+    if (ArrayUtils.isEmpty(any)) {
+      return null;
+    }
+    return new DelegatedResourceCapsule(any);
+  }
+
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex() {
+    if (ArrayUtils.isEmpty(any)) {
+      return null;
+    }
+    return new DelegatedResourceAccountIndexCapsule(any);
   }
 
   @Override

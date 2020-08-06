@@ -67,6 +67,7 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.ContractService;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;

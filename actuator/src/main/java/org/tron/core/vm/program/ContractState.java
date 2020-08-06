@@ -19,15 +19,8 @@ package org.tron.core.vm.program;
 
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.capsule.*;
+import org.tron.core.store.*;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
@@ -243,4 +236,153 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.createNormalAccount(address);
   }
 
+  @Override
+  public DelegationStore getDelegationStore() {
+    return null;
+  }
+
+  @Override
+  public WitnessStore getWitnessStore() {
+    return null;
+  }
+
+  @Override
+  public DelegatedResourceCapsule getDelegatedResource(byte[] key) {
+    return null;
+  }
+
+  @Override
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address) {
+    return null;
+  }
+
+  @Override
+  public VotesCapsule getVotesCapsule(byte[] address) {
+    return null;
+  }
+
+  @Override
+  public long getBeginCycle(byte[] address) {
+    return 0;
+  }
+
+  @Override
+  public long getEndCycle(byte[] address) {
+    return 0;
+  }
+
+  @Override
+  public AccountCapsule getAccountVote(long cycle, byte[] address) {
+    return null;
+  }
+
+  @Override
+  public BytesCapsule getDelegationCache(Key key) {
+    return null;
+  }
+
+  @Override
+  public void updateDynamic(byte[] word, BytesCapsule bytesCapsule) {
+
+  }
+
+  @Override
+  public void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule) {
+
+  }
+
+  @Override
+  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+
+  }
+
+  @Override
+  public void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule) {
+
+  }
+
+  @Override
+  public void updateBeginCycle(byte[] word, long cycle) {
+
+  }
+
+  @Override
+  public void updateEndCycle(byte[] word, long cycle) {
+
+  }
+
+  @Override
+  public void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule) {
+
+  }
+
+  @Override
+  public void upRemark(byte[] word, long cycle) {
+
+  }
+
+  @Override
+  public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
+
+  }
+
+  @Override
+  public void updateLastWithdrawCycle(byte[] address, long cycle) {
+
+  }
+
+  @Override
+  public void putDynamic(Key key, Value value) {
+
+  }
+
+  @Override
+  public void putDelegatedResource(Key key, Value value) {
+
+  }
+
+  @Override
+  public void putDelegatedResourceAccountIndex(Key key, Value value) {
+
+  }
+
+  @Override
+  public void putVotesCapsule(Key key, Value value) {
+
+  }
+
+  @Override
+  public void addTotalNetWeight(long amount) {
+
+  }
+
+  @Override
+  public void addTotalEnergyWeight(long amount) {
+
+  }
+
+  @Override
+  public void saveTotalEnergyWeight(long totalEnergyWeight) {
+
+  }
+
+  @Override
+  public long getTotalEnergyWeight() {
+    return 0;
+  }
+
+  @Override
+  public void saveTotalNetWeight(long totalNetWeight) {
+
+  }
+
+  @Override
+  public long getTotalNetWeight() {
+    return 0;
+  }
+
+  @Override
+  public long getTotalEnergyCurrentLimit() {
+    return 0;
+  }
 }

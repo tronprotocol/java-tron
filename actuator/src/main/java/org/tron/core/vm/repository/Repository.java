@@ -1,15 +1,8 @@
 package org.tron.core.vm.repository;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.capsule.*;
+import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 
@@ -23,6 +16,10 @@ public interface Repository {
 
   DynamicPropertiesStore getDynamicPropertiesStore();
 
+  DelegationStore getDelegationStore();
+
+  WitnessStore getWitnessStore();
+
   AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
   AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
@@ -30,6 +27,20 @@ public interface Repository {
   AccountCapsule getAccount(byte[] address);
 
   BytesCapsule getDynamic(byte[] bytesKey);
+
+  DelegatedResourceCapsule getDelegatedResource(byte[] key);
+
+  DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address);
+
+  VotesCapsule getVotesCapsule(byte[] address);
+
+  long getBeginCycle(byte[] address);
+
+  long getEndCycle(byte[] address);
+
+  AccountCapsule getAccountVote(long cycle, byte[] address);
+
+  BytesCapsule getDelegationCache(Key key);
 
   void deleteContract(byte[] address);
 
@@ -40,6 +51,26 @@ public interface Repository {
   void updateContract(byte[] address, ContractCapsule contractCapsule);
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
+
+  void updateDynamic(byte[] word, BytesCapsule bytesCapsule);
+
+  void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule);
+
+  void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule);
+
+  void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule);
+
+  void updateBeginCycle(byte[] word, long cycle);
+
+  void updateEndCycle(byte[] word, long cycle);
+
+  void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule);
+
+  void upRemark(byte[] word, long cycle);
+
+  void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
+
+  void updateLastWithdrawCycle(byte[] address, long cycle);
 
   void saveCode(byte[] address, byte[] code);
 
@@ -71,6 +102,14 @@ public interface Repository {
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
 
+  void putDynamic(Key key, Value value);
+
+  void putDelegatedResource(Key key, Value value);
+
+  void putDelegatedResourceAccountIndex(Key key, Value value);
+
+  void putVotesCapsule(Key key, Value value);
+
   long addTokenBalance(byte[] address, byte[] tokenId, long value);
 
   long getTokenBalance(byte[] address, byte[] tokenId);
@@ -86,4 +125,18 @@ public interface Repository {
   AccountCapsule createNormalAccount(byte[] address);
 
   WitnessCapsule getWitnessCapsule(byte[] address);
+
+  void addTotalNetWeight(long amount);
+
+  void addTotalEnergyWeight(long amount);
+
+  void saveTotalEnergyWeight(long totalEnergyWeight);
+
+  long getTotalEnergyWeight();
+
+  void saveTotalNetWeight(long totalNetWeight);
+
+  long getTotalNetWeight();
+
+  long getTotalEnergyCurrentLimit();
 }
