@@ -69,7 +69,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
-    balanceTraceStore.getCurrentBlockBalanceTraceCapsule().recordBalance(key, item);
+    BlockBalanceTraceCapsule blockBalanceTraceCapsule = balanceTraceStore.getCurrentBlockBalanceTraceCapsule();
+    if (blockBalanceTraceCapsule != null) {
+      blockBalanceTraceCapsule.recordBalance(key, item);
+    }
   }
 
   @Override
