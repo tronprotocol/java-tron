@@ -308,6 +308,13 @@ public class VM {
           energyCost =
               (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
+        case STAKE:
+        case UNSTAKE:
+          energyCost = energyCosts.getSTAKE_UNSTAKE();
+          break;
+        case WITHDRAWREWARD:
+          energyCost = energyCosts.getWITHDRAW_REWARD();
+          break;
         default:
           break;
       }
@@ -1417,6 +1424,28 @@ public class VM {
 
           program.step();
           break;
+        }
+        case STAKE: {
+          DataWord srAddress = program.stackPop();
+          DataWord stakeAmount = program.stackPop();
+          boolean result = program.stake(srAddress, stakeAmount);
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
+        case UNSTAKE: {
+          boolean result = program.unstake();
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
+        case WITHDRAWREWARD: {
+          DataWord targetAddress = program.stackPop();
+          boolean result = program.withdrawReward(targetAddress);
+          program.stackPush(new DataWord(result ? 1 : 0));
+          program.step();
         }
         case RETURN:
         case REVERT: {

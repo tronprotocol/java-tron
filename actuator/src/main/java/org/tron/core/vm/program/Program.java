@@ -56,6 +56,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
@@ -68,6 +69,12 @@ import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.ContractService;
+import org.tron.core.vm.nativecontract.StakeProcessor;
+import org.tron.core.vm.nativecontract.UnstakeProcessor;
+import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
+import org.tron.core.vm.nativecontract.param.StakeParam;
+import org.tron.core.vm.nativecontract.param.UnstakeParam;
+import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -1624,6 +1631,58 @@ public class Program {
     }
   }
 
+  public boolean stake(DataWord srAddress, DataWord stakeAmount) {
+    Repository repository = getContractState();
+    StakeProcessor stakeProcessor = StakeProcessor.getInstance();
+    StakeParam stakeParam = new StakeParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    stakeParam.setOwnerAddress(owner);
+    stakeParam.setSrAddress(srAddress.getData());
+    stakeParam.setStakeAmount(stakeAmount.longValue());
+    try{
+      stakeProcessor.validate(stakeParam, repository);
+    }catch (ContractValidateException e){
+      throw new BytecodeExecutionException("validateForStake failure:%s", e.getMessage());
+    }
+    try{
+      return stakeProcessor.execute(stakeParam, repository);
+    }catch (ContractExeException e){
+      throw new BytecodeExecutionException("executeForStake failure:%s", e.getMessage());
+    }
+  }
+
+  public boolean unstake() {
+    Repository repository = getContractState();
+    UnstakeProcessor unstakeProcessor = UnstakeProcessor.getInstance();
+    UnstakeParam unstakeParam = new UnstakeParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    unstakeParam.setOwnerAddress(owner);
+    try{
+      unstakeProcessor.validate(unstakeParam, repository);
+    }catch (ContractValidateException e){
+      throw new BytecodeExecutionException("validateForUnstake failure:%s", e.getMessage());
+    }
+    try{
+      return unstakeProcessor.execute(unstakeParam, repository);
+    }catch (ContractExeException e){
+      throw new BytecodeExecutionException("executeForUnstake failure:%s", e.getMessage());
+    }
+  }
+
+  public boolean withdrawReward(DataWord targetAddress) {
+    Repository repository = getContractState();
+    WithdrawRewardProcessor withdrawRewardContractProcessor = WithdrawRewardProcessor.getInstance();
+    WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
+    if(targetAddress != null && !targetAddress.isZero()) {
+      withdrawRewardParam.setTargetAddress(targetAddress.getData());
+    }
+    try{
+      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository);
+    }catch (ContractValidateException e){
+      throw new BytecodeExecutionException("validateForWithdrawReward failure:%s", e.getMessage());
+    }
+    return withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
+  }
   /**
    * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is
    * quite normal situation and doesn't mean exceptional situation in terms of the program
