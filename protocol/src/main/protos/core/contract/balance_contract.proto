@@ -63,3 +63,7 @@ message BlockBalanceTrace {
   repeated TransactionBalanceTrace transaction_balance_trace = 4;
   map<string, int64> balance = 5;
 }
+
+message BlockNumber {
+  repeated int64 number = 1;
+}
