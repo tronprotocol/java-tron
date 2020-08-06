@@ -122,6 +122,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
       "ALLOW_SHIELDED_TRC20_TRANSACTION"
           .getBytes();
+  private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
   private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
@@ -586,6 +587,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowShieldedTRC20Transaction(
           CommonParameter.getInstance().getAllowShieldedTRC20Transaction());
+    }
+
+    try {
+      this.getAllowTvmVote();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmVote(
+              CommonParameter.getInstance().getAllowTvmVote());
     }
 
     try {
@@ -1666,6 +1674,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmVote(long allowTvmVote) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_VOTE,
+            new BytesCapsule(ByteArray.fromLong(allowTvmVote)));
+  }
+
+  public long getAllowTvmVote() {
+    String msg = "not found ALLOW_TVM_VOTE";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_VOTE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException(msg));
   }
 
   public boolean supportShieldedTransaction() {

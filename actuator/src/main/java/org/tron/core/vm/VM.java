@@ -3,19 +3,7 @@ package org.tron.core.vm;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
-import static org.tron.core.vm.OpCode.CALL;
-import static org.tron.core.vm.OpCode.CALLTOKEN;
-import static org.tron.core.vm.OpCode.CALLTOKENID;
-import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
-import static org.tron.core.vm.OpCode.CREATE2;
-import static org.tron.core.vm.OpCode.EXTCODEHASH;
-import static org.tron.core.vm.OpCode.ISCONTRACT;
-import static org.tron.core.vm.OpCode.PUSH1;
-import static org.tron.core.vm.OpCode.REVERT;
-import static org.tron.core.vm.OpCode.SAR;
-import static org.tron.core.vm.OpCode.SHL;
-import static org.tron.core.vm.OpCode.SHR;
-import static org.tron.core.vm.OpCode.TOKENBALANCE;
+import static org.tron.core.vm.OpCode.*;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -121,6 +109,13 @@ public class VM {
       if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
+
+      if (!VMConfig.allowTvmVote()
+              && (op == ISWITNESS || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+                || op == WITHDRAWREWARD)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      } 
+
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
       program.verifyStackOverflow(op.require(), op.ret()); //Check not exceeding stack limits

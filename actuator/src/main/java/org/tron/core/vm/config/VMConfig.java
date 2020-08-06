@@ -44,6 +44,8 @@ public class VMConfig {
 
   private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
 
+  private static boolean ALLOW_TVM_VOTE = false;
+
   private VMConfig() {
   }
 
@@ -83,6 +85,10 @@ public class VMConfig {
     ALLOW_SHIELDED_TRC20_TRANSACTION = allow == 1;
   }
 
+  public static void initAllowTvmVote(long allow) {
+    ALLOW_TVM_VOTE = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -105,6 +111,10 @@ public class VMConfig {
 
   public static boolean allowShieldedTRC20Transaction() {
     return ALLOW_SHIELDED_TRC20_TRANSACTION;
+  }
+
+  public static boolean allowTvmVote() {
+    return ALLOW_TVM_VOTE;
   }
 
   private static class SystemPropertiesInstance {
