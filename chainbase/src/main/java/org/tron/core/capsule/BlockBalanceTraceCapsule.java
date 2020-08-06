@@ -66,6 +66,10 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
         .build();
   }
 
+  public Long getBalance(String address) {
+    return balanceTrace.getBalanceMap().get(address);
+  }
+
   @Override
   public byte[] getData() {
     if (Objects.isNull(balanceTrace)) {
