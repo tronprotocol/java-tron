@@ -82,10 +82,12 @@ public class TokenIssueProcessor implements IContractProcessor {
         if (Objects.isNull(tokenIssueParam)) {
             throw new ContractValidateException(CONTRACT_NULL);
         }
+
         if (repository == null) {
-            throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
+            throw new ContractValidateException(STORE_NOT_EXIST);
         }
-        if (!DecodeUtil.addressValid(tokenIssueParam.getAbbr())) {
+
+        if (!DecodeUtil.addressValid(tokenIssueParam.getOwnerAddress())) {
             throw new ContractValidateException("Invalid ownerAddress");
         }
 
