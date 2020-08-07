@@ -116,6 +116,8 @@ public interface Repository {
 
   void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule);
 
+  void putDelegation(Key key, Value value);
+
   long addTokenBalance(byte[] address, byte[] tokenId, long value);
 
   long getTokenBalance(byte[] address, byte[] tokenId);

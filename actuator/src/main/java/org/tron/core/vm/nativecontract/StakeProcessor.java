@@ -15,11 +15,11 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.Common;
 
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 
 @Slf4j(topic = "Processor")
-public class StakeProcessor implements IContractProcessor {
+public class StakeProcessor{
     private StakeProcessor(){}
 
     public static StakeProcessor getInstance(){
@@ -37,40 +37,42 @@ public class StakeProcessor implements IContractProcessor {
         }
     }
 
-    @Override
-    public boolean execute(Object contract, Repository repository) throws ContractExeException {
-        StakeParam stakeParam = (StakeParam)contract;
-        byte[] ownerAddress = stakeParam.getOwnerAddress();
-        byte[] srAddress = stakeParam.getSrAddress();
-        long stakeAmount = stakeParam.getStakeAmount();
-        AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
-
-        long tronPower = accountCapsule.getTronPower();
-        // if need freeze balance
-        if(tronPower < stakeAmount){
-            long freezeBalance = stakeAmount - tronPower;
-            long duration = 3;
-            SampleFreezeBalanceParam freezeBalanceParam = new SampleFreezeBalanceParam();
-            freezeBalanceParam.setFrozenBalance(freezeBalance);
-            freezeBalanceParam.setFrozenDuration(duration);
-            freezeBalanceParam.setOwnerAddress(ownerAddress);
-            freezeBalanceParam.setResource(Common.ResourceCode.BANDWIDTH);
-
-            SampleFreezeBalanceProcessor freezeBalanceProcessor = SampleFreezeBalanceProcessor.getInstance();
-            freezeBalanceProcessor.execute(freezeBalanceParam, repository);
+    public boolean process(Object contract, Repository repository)  throws ContractValidateException,ContractExeException{
+        if(!selfValidate(contract, repository)){
+            return false;
         }
-
-        SampleVoteWitnessProcessor voteWitnessProcessor = SampleVoteWitnessProcessor.getInstance();
+        StakeParam stakeParam = (StakeParam)contract;
+        AccountCapsule accountCapsule = repository.getAccount(stakeParam.getOwnerAddress());
+        long tronPower = accountCapsule.getTronPower();
+        long freezeBalance = stakeParam.getStakeAmount() - tronPower;
+        // if need freeze balance
+        if(freezeBalance > 0) {
+            SampleFreezeBalanceParam freezeBalanceParam;
+            freezeBalanceParam = new SampleFreezeBalanceParam();
+            freezeBalanceParam.setFrozenBalance(freezeBalance);
+            freezeBalanceParam.setFrozenDuration(3);
+            freezeBalanceParam.setOwnerAddress(stakeParam.getOwnerAddress());
+            freezeBalanceParam.setResource(Common.ResourceCode.BANDWIDTH);
+            if(!validateFreeze(freezeBalanceParam, repository)){
+                return false;
+            }
+            if(!executeFreeze(freezeBalanceParam, repository)){
+                return false;
+            }
+        }
+        long voteCount = stakeParam.getStakeAmount() / TRX_PRECISION;
         SampleVoteWitnessParam voteWitnessParam = new SampleVoteWitnessParam();
-        voteWitnessParam.setOwnerAddress(ownerAddress);
-        voteWitnessParam.setVote(Protocol.Vote.newBuilder().setVoteAddress(ByteString.copyFrom(srAddress)).setVoteCount(stakeAmount).build());
-        voteWitnessProcessor.execute(voteWitnessParam, repository);
-
-        return false;
+        voteWitnessParam.setOwnerAddress(stakeParam.getOwnerAddress());
+        voteWitnessParam.setVote(Protocol.Vote.newBuilder()
+                .setVoteAddress(ByteString.copyFrom(stakeParam.getSrAddress()))
+                .setVoteCount(voteCount).build());
+        if(!validateVote(voteWitnessParam, repository)){
+            return false;
+        }
+        return executeVote(voteWitnessParam, repository);
     }
 
-    @Override
-    public boolean validate(Object contract, Repository repository) throws ContractValidateException {
+    private boolean selfValidate(Object contract, Repository repository) throws ContractValidateException {
         if (contract == null) {
             throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
         }
@@ -83,11 +85,9 @@ public class StakeProcessor implements IContractProcessor {
                     "contract type error,expected type [StakeParam],real type[" + contract
                             .getClass() + "]");
         }
+
         StakeParam stakeParam = (StakeParam)contract;
         byte[] ownerAddress = stakeParam.getOwnerAddress();
-        byte[] srAddress = stakeParam.getSrAddress();
-        long stakeAmount = stakeParam.getStakeAmount();
-
         if (!DecodeUtil.addressValid(ownerAddress)) {
             throw new ContractValidateException("Invalid address");
         }
@@ -98,27 +98,26 @@ public class StakeProcessor implements IContractProcessor {
             throw new ContractValidateException(
                     "Account[" + readableOwnerAddress + "] not exists");
         }
+        return true;
+    }
 
-        boolean freezeValidateResult = true;
-        long tronPower = accountCapsule.getTronPower();
-        // if need freeze balance
-        if(tronPower < stakeAmount){
-            long freezeBalance = stakeAmount - tronPower;
-            long duration = 3;
-            SampleFreezeBalanceParam freezeBalanceParam = new SampleFreezeBalanceParam();
-            freezeBalanceParam.setFrozenBalance(freezeBalance);
-            freezeBalanceParam.setFrozenDuration(duration);
-            freezeBalanceParam.setOwnerAddress(ownerAddress);
-            freezeBalanceParam.setResource(Common.ResourceCode.BANDWIDTH);
+    private boolean validateFreeze(SampleFreezeBalanceParam freezeBalanceParam, Repository repository) throws ContractValidateException {
+        SampleFreezeBalanceProcessor freezeBalanceProcessor = SampleFreezeBalanceProcessor.getInstance();
+        return freezeBalanceProcessor.validate(freezeBalanceParam, repository);
+    }
 
-            SampleFreezeBalanceProcessor freezeBalanceProcessor = SampleFreezeBalanceProcessor.getInstance();
-            freezeValidateResult = freezeBalanceProcessor.validate(freezeBalanceParam, repository);
-        }
-
+    private boolean validateVote(SampleVoteWitnessParam voteWitnessParam, Repository repository) throws ContractValidateException {
         SampleVoteWitnessProcessor voteWitnessProcessor = SampleVoteWitnessProcessor.getInstance();
-        SampleVoteWitnessParam voteWitnessParam = new SampleVoteWitnessParam();
-        voteWitnessParam.setOwnerAddress(ownerAddress);
-        voteWitnessParam.setVote(Protocol.Vote.newBuilder().setVoteAddress(ByteString.copyFrom(srAddress)).setVoteCount(stakeAmount).build());
-        return voteWitnessProcessor.validate(voteWitnessParam, repository) && freezeValidateResult;
+        return voteWitnessProcessor.validate(voteWitnessParam, repository);
+    }
+
+    private boolean executeFreeze(SampleFreezeBalanceParam freezeBalanceParam, Repository repository) throws ContractExeException{
+        SampleFreezeBalanceProcessor freezeBalanceProcessor = SampleFreezeBalanceProcessor.getInstance();
+        return freezeBalanceProcessor.execute(freezeBalanceParam, repository);
+    }
+
+    public boolean executeVote(SampleVoteWitnessParam voteWitnessParam, Repository repository) throws ContractExeException {
+        SampleVoteWitnessProcessor voteWitnessProcessor = SampleVoteWitnessProcessor.getInstance();
+        return voteWitnessProcessor.execute(voteWitnessParam, repository);
     }
 }

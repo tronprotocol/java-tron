@@ -1703,40 +1703,58 @@ public class Program {
   }
 
   public boolean stake(DataWord srAddress, DataWord stakeAmount) {
-    Repository repository = getContractState();
+    logger.info("srAddress:{}---{},stakeAmount:{}",Arrays.toString(srAddress.getData()), srAddress.toHexString(), stakeAmount.toString());
+    Repository repository = getContractState().newRepositoryChild();
     StakeProcessor stakeProcessor = StakeProcessor.getInstance();
     StakeParam stakeParam = new StakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     stakeParam.setOwnerAddress(owner);
     stakeParam.setSrAddress(TransactionTrace.convertToTronAddress(srAddress.getLast20Bytes()));
     stakeParam.setStakeAmount(stakeAmount.longValue());
+    logger.info("owner:{}, SrAddress:{}, StakeAmount:{}", Arrays.toString(owner), Arrays.toString(stakeParam.getSrAddress()), stakeParam.getStakeAmount());
+    logger.info("owner:{}, SrAddress:{}, StakeAmount:{}", Hex.toHexString(owner), Hex.toHexString(stakeParam.getSrAddress()), stakeParam.getStakeAmount());
     try{
-      stakeProcessor.validate(stakeParam, repository);
+      if(!stakeProcessor.process(stakeParam, repository)){
+        return false;
+      }
+      repository.commit();
+      return true;
     }catch (ContractValidateException e){
-      throw new BytecodeExecutionException("validateForStake failure:%s", e.getMessage());
-    }
-    try{
-      return stakeProcessor.execute(stakeParam, repository);
+      logger.info("validateForStake failure:{}", e.getMessage());
+      return false;
     }catch (ContractExeException e){
-      throw new BytecodeExecutionException("executeForStake failure:%s", e.getMessage());
+      logger.info("executeForStake failure:{}", e.getMessage());
+      return false;
+    }catch (RuntimeException e){
+      logger.error("stakeProcess unknown exception", e);
+      return false;
     }
   }
 
   public boolean unstake() {
-    Repository repository = getContractState();
+    Repository repository = getContractState().newRepositoryChild();
     UnstakeProcessor unstakeProcessor = UnstakeProcessor.getInstance();
     UnstakeParam unstakeParam = new UnstakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     unstakeParam.setOwnerAddress(owner);
     try{
-      unstakeProcessor.validate(unstakeParam, repository);
+      if(!unstakeProcessor.validate(unstakeParam, repository)) {
+        return false;
+      }
+      if(!unstakeProcessor.execute(unstakeParam, repository)) {
+        return false;
+      }
+      repository.commit();
+      return true;
     }catch (ContractValidateException e){
-      throw new BytecodeExecutionException("validateForUnstake failure:%s", e.getMessage());
-    }
-    try{
-      return unstakeProcessor.execute(unstakeParam, repository);
+      logger.info("validateForUnstake failure:{}", e.getMessage());
+      return false;
     }catch (ContractExeException e){
-      throw new BytecodeExecutionException("executeForUnstake failure:%s", e.getMessage());
+      logger.info("executeForUnstake failure:{}", e.getMessage());
+      return false;
+    }catch (RuntimeException e){
+      logger.error("unstakeProcess unknown exception", e);
+      return false;
     }
   }
 
@@ -1748,17 +1766,24 @@ public class Program {
       withdrawRewardParam.setTargetAddress(targetAddress.getData());
     }
     try{
-      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository);
+      if(!withdrawRewardContractProcessor.validate(withdrawRewardParam, repository)) {
+        return false;
+      }
+      if(!withdrawRewardContractProcessor.execute(withdrawRewardParam, repository)) {
+        return false;
+      }
+      repository.commit();
+      return true;
     }catch (ContractValidateException e){
+      logger.info("validateForWithdrawReward failure:{}", e.getMessage());
+      return false;
+    }catch (ContractExeException e){
+      logger.info("executeForWithdrawReward failure:{}", e.getMessage());
+      return false;
+    }catch (RuntimeException e){
+      logger.error("unstakeProcess unknown exception", e);
       return false;
     }
-    try {
-      withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
-    } catch (ContractExeException e) {
-      return false;
-    }
-    repository.commit();
-    return true;
   }
 
   public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
