@@ -1453,10 +1453,10 @@ public class VM {
           program.step();
         }
         case TOKENISSUE: {
-          DataWord precision = program.stackPop();
-          DataWord totalSupply = program.stackPop();
-          DataWord abbr = program.stackPop();
           DataWord name = program.stackPop();
+          DataWord abbr = program.stackPop();
+          DataWord totalSupply = program.stackPop();
+          DataWord precision = program.stackPop();
 
           if (logger.isDebugEnabled()) {
             hint = "name: " + ByteArray.toStr(name.getNoEndZeroesData())
@@ -1473,9 +1473,9 @@ public class VM {
           break;
         }
         case UPDATEASSET: {
-          DataWord descriptionDataOffs = program.stackPop();
-          DataWord urlDataOffs = program.stackPop();
           DataWord trcTokenId = program.stackPop();
+          DataWord urlDataOffs = program.stackPop();
+          DataWord descriptionDataOffs = program.stackPop();
 
           if (logger.isDebugEnabled()) {
             hint = "descriptionDataOffs: " + ByteArray.toLong(descriptionDataOffs.getData())

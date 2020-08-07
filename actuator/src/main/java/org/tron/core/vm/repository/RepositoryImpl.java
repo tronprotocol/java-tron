@@ -604,6 +604,7 @@ public class RepositoryImpl implements Repository {
     commitDelegatedResourceCache(repository);
     commitDelegatedResourceAccountIndexCache(repository);
     commitVotesCache(repository);
+    commitAssetIssue(repository);
   }
 
   @Override
@@ -645,6 +646,11 @@ public class RepositoryImpl implements Repository {
   @Override
   public void putDelegatedResourceAccountIndex(Key key, Value value){
     delegatedResourceAccountIndexCache.put(key, value);
+  }
+
+  @Override
+  public void putAssetIssue(Key key, Value value) {
+    assetIssueCache.put(key, value);
   }
 
   @Override
@@ -874,6 +880,22 @@ public class RepositoryImpl implements Repository {
         }
       }
     })));
+  }
+
+  private void commitAssetIssue(Repository deposit) {
+    AssetIssueStore assetIssueStoreFinal = Commons
+            .getAssetIssueStoreFinal(dynamicPropertiesStore, assetIssueStore, assetIssueV2Store);
+
+    assetIssueCache.forEach((key, value) -> {
+      if (value.getType().isCreate() || value.getType().isDirty()) {
+        if (deposit != null) {
+          deposit.putAssetIssue(key, value);
+        } else {
+          assetIssueStoreFinal
+                  .put(key.getData(), value.getAssetIssue());
+        }
+      }
+    });
   }
 
 

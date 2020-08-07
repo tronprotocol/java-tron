@@ -1762,7 +1762,7 @@ public class Program {
   public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
     Repository repository = getContractState().newRepositoryChild();
     byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    TokenIssueProcessor tokenIssueProcessor = TokenIssueProcessor.getInstance();
+    TokenIssueProcessor tokenIssueProcessor = new TokenIssueProcessor();
     TokenIssueParam tokenIssueParam = new TokenIssueParam();
     tokenIssueParam.setName(name.getNoEndZeroesData());
     tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
@@ -1797,7 +1797,7 @@ public class Program {
     updateAssetParam.setOwnerAddress(ownerAddress);
     updateAssetParam.setNewUrl(urlData);
     updateAssetParam.setNewDesc(descriptionData);
-    UpdateAssetProcessor updateAssetProcessor = UpdateAssetProcessor.getInstance();
+    UpdateAssetProcessor updateAssetProcessor = new UpdateAssetProcessor();
     try {
       updateAssetProcessor.validate(updateAssetParam, repository);
     } catch (ContractValidateException e) {

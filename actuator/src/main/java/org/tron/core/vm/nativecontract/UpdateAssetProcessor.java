@@ -17,23 +17,6 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.TOKEN_IS
 
 public class UpdateAssetProcessor implements IContractProcessor {
 
-    private UpdateAssetProcessor(){}
-
-    public static UpdateAssetProcessor getInstance(){
-        return UpdateAssetProcessor.Singleton.INSTANCE.getInstance();
-    }
-
-    private enum Singleton {
-        INSTANCE;
-        private UpdateAssetProcessor instance;
-        Singleton() {
-            instance = new UpdateAssetProcessor();
-        }
-        public UpdateAssetProcessor getInstance() {
-            return instance;
-        }
-    }
-
     @Override
     public boolean execute(Object contract, Repository repository) throws ContractExeException {
         UpdateAssetParam updateAssetParam = (UpdateAssetParam) contract;

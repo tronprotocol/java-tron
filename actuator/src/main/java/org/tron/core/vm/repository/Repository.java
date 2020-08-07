@@ -110,6 +110,8 @@ public interface Repository {
 
   void putDelegatedResourceAccountIndex(Key key, Value value);
 
+  void putAssetIssue(Key key, Value value);
+
   void putVotesCapsule(Key key, Value value);
 
   void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule);

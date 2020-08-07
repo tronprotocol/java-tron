@@ -16,23 +16,6 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.*;
 
 public class TokenIssueProcessor implements IContractProcessor {
 
-    private TokenIssueProcessor(){}
-
-    public static TokenIssueProcessor getInstance(){
-        return TokenIssueProcessor.Singleton.INSTANCE.getInstance();
-    }
-
-    private enum Singleton {
-        INSTANCE;
-        private TokenIssueProcessor instance;
-        Singleton() {
-            instance = new TokenIssueProcessor();
-        }
-        public TokenIssueProcessor getInstance() {
-            return instance;
-        }
-    }
-
     @Override
     public boolean execute(Object contract, Repository repository) throws ContractExeException {
         TokenIssueParam tokenIssueParam = (TokenIssueParam) contract;
@@ -64,10 +47,10 @@ public class TokenIssueProcessor implements IContractProcessor {
         accountCapsule
                 .addAssetV2(assetIssueCapsuleV2.createDbV2Key(), tokenIssueParam.getTotalSupply());
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().build());
-        repository.putAccountValue(tokenIssueParam.getOwnerAddress(), accountCapsule);
         // spend 1024trx for assetissue
         accountCapsule.setBalance(accountCapsule.getBalance()-TOKEN_ISSUE_FEE);
         repository.updateAccount(tokenIssueParam.getOwnerAddress(), accountCapsule);
+        repository.putAccountValue(tokenIssueParam.getOwnerAddress(), accountCapsule);
         return true;
     }
 

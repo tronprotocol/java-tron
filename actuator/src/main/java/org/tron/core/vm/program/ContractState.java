@@ -210,6 +210,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putAssetIssue(Key key, Value value) {
+    repository.putAssetIssue(key, value);
+  }
+
+  @Override
   public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
     repository.putAssetIssueValue(tokenId, assetIssueCapsule);
   }
