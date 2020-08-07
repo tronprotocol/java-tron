@@ -49,7 +49,7 @@ public class StakeProcessor implements IContractProcessor {
         // if need freeze balance
         if(tronPower < stakeAmount){
             long freezeBalance = stakeAmount - tronPower;
-            long duration = 3 * FROZEN_PERIOD;
+            long duration = 3;
             SampleFreezeBalanceParam freezeBalanceParam = new SampleFreezeBalanceParam();
             freezeBalanceParam.setFrozenBalance(freezeBalance);
             freezeBalanceParam.setFrozenDuration(duration);
@@ -104,7 +104,7 @@ public class StakeProcessor implements IContractProcessor {
         // if need freeze balance
         if(tronPower < stakeAmount){
             long freezeBalance = stakeAmount - tronPower;
-            long duration = 3 * FROZEN_PERIOD;
+            long duration = 3;
             SampleFreezeBalanceParam freezeBalanceParam = new SampleFreezeBalanceParam();
             freezeBalanceParam.setFrozenBalance(freezeBalance);
             freezeBalanceParam.setFrozenDuration(duration);

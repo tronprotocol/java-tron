@@ -1708,7 +1708,7 @@ public class Program {
     StakeParam stakeParam = new StakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     stakeParam.setOwnerAddress(owner);
-    stakeParam.setSrAddress(srAddress.getData());
+    stakeParam.setSrAddress(TransactionTrace.convertToTronAddress(srAddress.getLast20Bytes()));
     stakeParam.setStakeAmount(stakeAmount.longValue());
     try{
       stakeProcessor.validate(stakeParam, repository);

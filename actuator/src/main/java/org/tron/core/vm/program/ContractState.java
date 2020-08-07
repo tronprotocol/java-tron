@@ -266,151 +266,151 @@ public class ContractState implements Repository, ProgramListenerAware {
 
   @Override
   public DelegationStore getDelegationStore() {
-    return null;
+    return repository.getDelegationStore();
   }
 
   @Override
   public WitnessStore getWitnessStore() {
-    return null;
+    return repository.getWitnessStore();
   }
 
   @Override
   public DelegatedResourceCapsule getDelegatedResource(byte[] key) {
-    return null;
+    return repository.getDelegatedResource(key);
   }
 
   @Override
   public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address) {
-    return null;
+    return repository.getDelegatedResourceAccountIndex(address);
   }
 
   @Override
   public VotesCapsule getVotesCapsule(byte[] address) {
-    return null;
+    return repository.getVotesCapsule(address);
   }
 
   @Override
   public long getBeginCycle(byte[] address) {
-    return 0;
+    return repository.getBeginCycle(address);
   }
 
   @Override
   public long getEndCycle(byte[] address) {
-    return 0;
+    return repository.getEndCycle(address);
   }
 
   @Override
   public AccountCapsule getAccountVote(long cycle, byte[] address) {
-    return null;
+    return repository.getAccountVote(cycle, address);
   }
 
   @Override
   public BytesCapsule getDelegationCache(Key key) {
-    return null;
+    return repository.getDelegationCache(key);
   }
 
   @Override
   public void updateDynamic(byte[] word, BytesCapsule bytesCapsule) {
-
+    repository.updateDynamic(word, bytesCapsule);
   }
 
   @Override
   public void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule) {
-
+    repository.updateDelegatedResource(word, delegatedResourceCapsule);
   }
 
   @Override
   public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
-
+    repository.updateDelegatedResourceAccountIndex(word, delegatedResourceAccountIndexCapsule);
   }
 
   @Override
   public void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule) {
-
+    repository.updateVotesCapsule(word, votesCapsule);
   }
 
   @Override
   public void updateBeginCycle(byte[] word, long cycle) {
-
+    repository.updateBeginCycle(word, cycle);
   }
 
   @Override
   public void updateEndCycle(byte[] word, long cycle) {
-
+    repository.updateEndCycle(word, cycle);
   }
 
   @Override
   public void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule) {
-
+    repository.updateAccountVote(word, cycle, accountCapsule);
   }
 
   @Override
   public void upRemark(byte[] word, long cycle) {
-
+    repository.upRemark(word, cycle);
   }
 
   @Override
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
-
+    repository.updateDelegation(word, bytesCapsule);
   }
 
   @Override
   public void updateLastWithdrawCycle(byte[] address, long cycle) {
-
+    repository.updateLastWithdrawCycle(address, cycle);
   }
 
   @Override
   public void putDynamic(Key key, Value value) {
-
+    repository.putDynamic(key, value);
   }
 
   @Override
   public void putDelegatedResource(Key key, Value value) {
-
+    repository.putDelegatedResource(key, value);
   }
 
   @Override
   public void putDelegatedResourceAccountIndex(Key key, Value value) {
-
+    repository.putDelegatedResourceAccountIndex(key, value);
   }
 
   @Override
   public void putVotesCapsule(Key key, Value value) {
-
+    repository.putVotesCapsule(key, value);
   }
 
   @Override
   public void addTotalNetWeight(long amount) {
-
+    repository.addTotalNetWeight(amount);
   }
 
   @Override
   public void addTotalEnergyWeight(long amount) {
-
+    repository.addTotalEnergyWeight(amount);
   }
 
   @Override
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
-
+    repository.saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   @Override
   public long getTotalEnergyWeight() {
-    return 0;
+    return repository.getTotalEnergyWeight();
   }
 
   @Override
   public void saveTotalNetWeight(long totalNetWeight) {
-
+    repository.saveTotalNetWeight(totalNetWeight);
   }
 
   @Override
   public long getTotalNetWeight() {
-    return 0;
+    return repository.getTotalNetWeight();
   }
 
   @Override
   public long getTotalEnergyCurrentLimit() {
-    return 0;
+    return repository.getTotalEnergyCurrentLimit();
   }
 }
