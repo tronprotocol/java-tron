@@ -44,6 +44,9 @@ public class WithdrawRewardProcessor implements IContractProcessor {
         byte[] targetAddress = withdrawRewardParam.getTargetAddress();
         AccountCapsule accountCapsule = repository.getAccount(targetAddress);
 
+        ContractService contractService = ContractService.getInstance();
+        contractService.withdrawReward(targetAddress,repository);
+
         repository.updateLastWithdrawCycle(targetAddress, repository.getDynamicPropertiesStore().getCurrentCycleNumber()
                 );
 
