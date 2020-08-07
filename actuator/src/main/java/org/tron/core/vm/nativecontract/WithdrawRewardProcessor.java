@@ -22,23 +22,6 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT
 @Slf4j(topic = "Processor")
 public class WithdrawRewardProcessor implements IContractProcessor {
 
-    private WithdrawRewardProcessor(){}
-
-    public static WithdrawRewardProcessor getInstance(){
-        return WithdrawRewardProcessor.Singleton.INSTANCE.getInstance();
-    }
-
-    private enum Singleton {
-        INSTANCE;
-        private WithdrawRewardProcessor instance;
-        Singleton() {
-            instance = new WithdrawRewardProcessor();
-        }
-        public WithdrawRewardProcessor getInstance() {
-            return instance;
-        }
-    }
-
     @Override
     public boolean execute(Object contract, Repository repository) throws ContractExeException {
         WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;

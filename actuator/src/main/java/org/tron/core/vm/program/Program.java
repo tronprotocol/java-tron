@@ -1742,7 +1742,7 @@ public class Program {
 
   public boolean withdrawReward(DataWord targetAddress) {
     Repository repository = getContractState().newRepositoryChild();
-    WithdrawRewardProcessor withdrawRewardContractProcessor = WithdrawRewardProcessor.getInstance();
+    WithdrawRewardProcessor withdrawRewardContractProcessor = new WithdrawRewardProcessor();
     WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
     if(targetAddress != null && !targetAddress.isZero()) {
       withdrawRewardParam.setTargetAddress(targetAddress.getData());
