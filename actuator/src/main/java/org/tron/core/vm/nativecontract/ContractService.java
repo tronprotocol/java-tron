@@ -12,14 +12,24 @@ import org.tron.protos.Protocol;
 
 @Slf4j(topic = "contractService")
 public class ContractService {
+    private ContractService(){}
 
-    private Repository repository;
-
-    public ContractService(Repository repository) {
-        this.repository = repository;
+    public static ContractService getInstance(){
+        return ContractService.Singleton.INSTANCE.getInstance();
     }
 
-    public void withdrawReward(byte[] address) {
+    private enum Singleton {
+        INSTANCE;
+        private ContractService instance;
+        Singleton() {
+            instance = new ContractService();
+        }
+        public ContractService getInstance() {
+            return instance;
+        }
+    }
+
+    public void withdrawReward(byte[] address, Repository repository) {
         if (!repository.getDynamicPropertiesStore().allowChangeDelegation()) {
             return;
         }
@@ -41,9 +51,9 @@ public class ContractService {
         if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
             AccountCapsule account = repository.getAccountVote(beginCycle, address);
             if (account != null) {
-                reward = computeReward(beginCycle, account);
+                reward = computeReward(beginCycle, account, repository);
                 try {
-                    adjustAllowance(address, reward);
+                    adjustAllowance(address, reward, repository);
                 } catch (BalanceInsufficientException e) {
                     logger.error("withdrawReward error: {},{}", Hex.toHexString(address), address, e);
                 }
@@ -61,10 +71,10 @@ public class ContractService {
         }
         if (beginCycle < endCycle) {
             for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-                reward += computeReward(cycle, accountCapsule);
+                reward += computeReward(cycle, accountCapsule, repository);
             }
             try {
-                adjustAllowance(address, reward);
+                adjustAllowance(address, reward, repository);
             } catch (BalanceInsufficientException e) {
                 logger.error("withdrawReward error: {},{}", Hex.toHexString(address), address, e);
             }
@@ -77,7 +87,7 @@ public class ContractService {
                 beginCycle, endCycle, accountCapsule.getVotesList());
     }
 
-    private long computeReward(long cycle, AccountCapsule accountCapsule) {
+    private long computeReward(long cycle, AccountCapsule accountCapsule, Repository repository) {
         long reward = 0;
 
         for (Protocol.Vote vote : accountCapsule.getVotesList()) {
@@ -98,7 +108,7 @@ public class ContractService {
         return reward;
     }
 
-    public void adjustAllowance(byte[] address, long amount) throws BalanceInsufficientException {
+    public void adjustAllowance(byte[] address, long amount, Repository repository) throws BalanceInsufficientException {
         if (amount <= 0) {
             return;
         }
@@ -115,7 +125,7 @@ public class ContractService {
         repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
     }
 
-    public long queryReward(byte[] address) {
+    public long queryReward(byte[] address, Repository repository) {
         if (!repository.getDynamicPropertiesStore().allowChangeDelegation()) {
             return 0;
         }
@@ -134,7 +144,7 @@ public class ContractService {
         if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
             AccountCapsule account = repository.getAccountVote(beginCycle, address);
             if (account != null) {
-                reward = computeReward(beginCycle, account);
+                reward = computeReward(beginCycle, account, repository);
             }
             beginCycle += 1;
         }
@@ -144,7 +154,7 @@ public class ContractService {
         }
         if (beginCycle < endCycle) {
             for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-                reward += computeReward(cycle, accountCapsule);
+                reward += computeReward(cycle, accountCapsule, repository);
             }
         }
         return reward + accountCapsule.getAllowance();

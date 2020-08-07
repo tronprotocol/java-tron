@@ -536,8 +536,8 @@ public class Program {
 
     increaseNonce();
 
-    ContractService contractService = new ContractService(getContractState());
-    contractService.withdrawReward(owner);
+    ContractService contractService = ContractService.getInstance();
+    contractService.withdrawReward(owner, getContractState());
     //todo: Allowance to balance
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
@@ -1184,8 +1184,8 @@ public class Program {
   }
 
   public DataWord getRewardBalance(DataWord address) {
-    ContractService contractService = new ContractService(getContractState());
-    long rewardBalance = contractService.queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
+    ContractService contractService = ContractService.getInstance();
+    long rewardBalance = contractService.queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
     return new DataWord(rewardBalance);
   }
 

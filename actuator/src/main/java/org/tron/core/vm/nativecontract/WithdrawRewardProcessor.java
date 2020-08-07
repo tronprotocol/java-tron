@@ -80,7 +80,7 @@ public class WithdrawRewardProcessor implements IContractProcessor {
         }
         AccountCapsule accountCapsule = repository.getAccount(targetAddress);
         DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
-        ContractService contractService = new ContractService(repository);
+        ContractService contractService = ContractService.getInstance();
         if (accountCapsule == null) {
             String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
             throw new ContractValidateException(
@@ -106,7 +106,7 @@ public class WithdrawRewardProcessor implements IContractProcessor {
         }
 
         if (accountCapsule.getAllowance() <= 0 &&
-                contractService.queryReward(targetAddress) <= 0) {
+                contractService.queryReward(targetAddress, repository) <= 0) {
             throw new ContractValidateException("witnessAccount does not have any reward");
         }
         try {

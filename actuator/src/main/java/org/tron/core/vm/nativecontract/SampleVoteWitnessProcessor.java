@@ -116,8 +116,8 @@ public class SampleVoteWitnessProcessor implements IContractProcessor {
         AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
         VotesCapsule votesCapsule;
 
-        ContractService contractService = new ContractService(repository);
-        contractService.withdrawReward(ownerAddress);
+        ContractService contractService = ContractService.getInstance();
+        contractService.withdrawReward(ownerAddress, repository);
 
         if (repository.getVotesCapsule(ownerAddress) == null) {
             votesCapsule = new VotesCapsule(ByteString.copyFrom(voteWitnessParam.getOwnerAddress()),

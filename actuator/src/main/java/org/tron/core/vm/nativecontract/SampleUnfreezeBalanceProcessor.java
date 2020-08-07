@@ -47,8 +47,8 @@ public class SampleUnfreezeBalanceProcessor implements IContractProcessor {
 
         DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
 
-        ContractService contractService = new ContractService(repository);
-        contractService.withdrawReward(ownerAddress);
+        ContractService contractService = ContractService.getInstance();
+        contractService.withdrawReward(ownerAddress, repository);
 
         AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
         long oldBalance = accountCapsule.getBalance();
