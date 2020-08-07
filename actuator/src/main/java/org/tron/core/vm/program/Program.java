@@ -1741,7 +1741,7 @@ public class Program {
   }
 
   public boolean withdrawReward(DataWord targetAddress) {
-    Repository repository = getContractState();
+    Repository repository = getContractState().newRepositoryChild();
     WithdrawRewardProcessor withdrawRewardContractProcessor = WithdrawRewardProcessor.getInstance();
     WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
     if(targetAddress != null && !targetAddress.isZero()) {
@@ -1750,13 +1750,15 @@ public class Program {
     try{
       withdrawRewardContractProcessor.validate(withdrawRewardParam, repository);
     }catch (ContractValidateException e){
-      throw new BytecodeExecutionException("validateForWithdrawReward failure:%s", e.getMessage());
+      return false;
     }
     try {
-      return withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
+      withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
     } catch (ContractExeException e) {
-      throw new BytecodeExecutionException("executeForWithdrawReward failure:%s", e.getMessage());
+      return false;
     }
+    repository.commit();
+    return true;
   }
 
   public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
@@ -1772,16 +1774,19 @@ public class Program {
     try {
       tokenIssueProcessor.validate(tokenIssueParam, repository);
     } catch (ContractValidateException e) {
-      throw new AssetIssueException("tokenIssue trc10 validate failed: %s", e.getMessage());
+      stackPushZero();
+      return ;
     }
     try {
       tokenIssueProcessor.execute(tokenIssueParam, repository);
     } catch (ContractExeException e) {
-      throw new AssetIssueException("tokenIssue trc10 execute failed: %s", e.getMessage());
+      stackPushZero();
+      return ;
     }
     long tokenIdNum = repository.getTokenIdNum();
     tokenIdNum++;
     stackPush(new DataWord(tokenIdNum));
+    repository.commit();
   }
 
   public void updateAsset(DataWord urlDataOffs, DataWord descriptionDataOffs) {
@@ -1801,14 +1806,17 @@ public class Program {
     try {
       updateAssetProcessor.validate(updateAssetParam, repository);
     } catch (ContractValidateException e) {
-      throw new AssetIssueException("updateAsset validate trc10 failed: %s", e.getMessage());
+      stackPushZero();
+      return ;
     }
     try {
       updateAssetProcessor.execute(updateAssetParam, repository);
     } catch (ContractExeException e) {
-      throw new AssetIssueException("updateAsset execute trc10 failed: %s", e.getMessage());
+      stackPushZero();
+      return ;
     }
     stackPushOne();
+    repository.commit();
   }
 
   /**

@@ -22,23 +22,14 @@ public class UpdateAssetProcessor implements IContractProcessor {
         UpdateAssetParam updateAssetParam = (UpdateAssetParam) contract;
         AccountCapsule accountCapsule = repository.getAccount(updateAssetParam.getOwnerAddress());
 
-        AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+        AssetIssueCapsule assetIssueCapsuleV2;
 
         assetIssueCapsuleV2 = repository.getAssetIssue(accountCapsule.getAssetIssuedID().toByteArray());
 
         assetIssueCapsuleV2.setUrl(ByteString.copyFrom(updateAssetParam.getNewUrl()));
         assetIssueCapsuleV2.setDescription(ByteString.copyFrom(updateAssetParam.getNewDesc()));
 
-        if (repository.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-            assetIssueCapsule = repository
-                    .getAssetIssue(accountCapsule.getAssetIssuedName().toByteArray());
-            assetIssueCapsule.setUrl(ByteString.copyFrom(updateAssetParam.getNewUrl()));
-            assetIssueCapsule.setDescription(ByteString.copyFrom(updateAssetParam.getNewDesc()));
-            repository.putAssetIssueValue(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-            repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
-        } else {
-            repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
-        }
+        repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
         return true;
     }
 

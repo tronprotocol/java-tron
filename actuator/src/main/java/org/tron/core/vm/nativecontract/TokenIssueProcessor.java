@@ -30,18 +30,8 @@ public class TokenIssueProcessor implements IContractProcessor {
                 Long.toString(tokenIdNum), ByteArray.toStr(tokenIssueParam.getName()),
                 ByteArray.toStr(tokenIssueParam.getAbbr()), tokenIssueParam.getTotalSupply(),
                         tokenIssueParam.getPrecision());
-        if (repository.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-            assetIssueCapsuleV2.setPrecision(0);
-            repository.putAssetIssueValue(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-            repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
-        } else {
-            repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
-        }
+        repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
         AccountCapsule accountCapsule = repository.getAccount(tokenIssueParam.getOwnerAddress());
-        if (repository.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-            accountCapsule
-                    .addAsset(assetIssueCapsule.createDbKey(), tokenIssueParam.getTotalSupply());
-        }
         accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
         accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
         accountCapsule
