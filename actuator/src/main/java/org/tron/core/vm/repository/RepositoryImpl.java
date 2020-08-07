@@ -605,6 +605,7 @@ public class RepositoryImpl implements Repository {
     commitDelegatedResourceAccountIndexCache(repository);
     commitVotesCache(repository);
     commitAssetIssue(repository);
+    commitDelegationCache(repository);
   }
 
   @Override
@@ -663,6 +664,11 @@ public class RepositoryImpl implements Repository {
     Key key = new Key(tokenId);
     Value value = new Value(assetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE);
     assetIssueCache.put(key, value);
+  }
+
+  @Override
+  public void putDelegation(Key key, Value value){
+    delegationCache.put(key,value);
   }
 
 
@@ -898,6 +904,17 @@ public class RepositoryImpl implements Repository {
     });
   }
 
+  private void commitDelegationCache(Repository deposit) {
+    delegationCache.forEach((key, value) -> {
+      if(value.getType().isDirty() || value.getType().isCreate()) {
+        if(deposit != null) {
+          deposit.putDelegation(key, value);
+        } else {
+          getDelegationStore().put(key.getData(), value.getBytes());
+        }
+      }
+    });
+  }
 
   /**
    * Get the block id from the number.

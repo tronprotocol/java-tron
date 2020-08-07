@@ -220,6 +220,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putDelegation(Key key, Value value) {
+    repository.putDelegation(key, value);
+  }
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     return repository.addTokenBalance(address, tokenId, value);
   }
