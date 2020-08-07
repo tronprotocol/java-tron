@@ -26,17 +26,15 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Objects;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -51,14 +49,12 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
@@ -540,6 +536,10 @@ public class Program {
 
     increaseNonce();
 
+    ContractService contractService = new ContractService(getContractState());
+    contractService.withdrawReward(owner);
+    //todo: Allowance to balance
+
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
         getContractState().getAccount(owner).getAssetMapV2());
 
@@ -566,11 +566,102 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
+    suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
   public Repository getContractState() {
     return this.contractState;
+  }
+
+  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository){
+    DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
+    long duration = 3 * FROZEN_PERIOD;
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+
+    AccountCapsule ownerCapsule = repository.getAccount(owner);
+    AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+    //process owner frozen for self
+    {
+      long ownerBandwidthBalance = ownerCapsule.getFrozenBalance();
+      long obtainBandwidthBalance = obtainCapsule.getFrozenBalance();
+      long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
+      long newBandwidthExpire = now + (duration * ownerBandwidthBalance +
+              Long.max(0, now - obtainBandwidthExpire) * obtainBandwidthBalance) /
+                      (ownerBandwidthBalance + obtainBandwidthBalance);
+      long newFrozenBalanceForBandwidth = ownerBandwidthBalance + obtainBandwidthBalance;
+
+      long ownerEnergyBalance = ownerCapsule.getAccountResource()
+              .getFrozenBalanceForEnergy().getFrozenBalance();
+      long obtainEnergyBalance = obtainCapsule.getAccountResource()
+              .getFrozenBalanceForEnergy().getFrozenBalance();
+      long obtainEnergyExpire = obtainCapsule.getAccountResource()
+              .getFrozenBalanceForEnergy().getExpireTime();
+      long newEnergyExpire = now + (duration * ownerEnergyBalance +
+              Long.max(0, now - obtainEnergyExpire) * obtainEnergyBalance) /
+                      (ownerEnergyBalance + obtainEnergyBalance);
+      long newFrozenBalanceForEnergy = ownerEnergyBalance + obtainEnergyBalance;
+
+      obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
+      obtainCapsule.setFrozenForEnergy(newFrozenBalanceForEnergy, newEnergyExpire);
+    }
+
+    //vote
+    {
+      VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
+      VotesCapsule obtainVotesCapsule = repository.getVotesCapsule(obtainer);
+
+      if (obtainVotesCapsule != null || ownerVotesCapsule != null) {
+        if(obtainVotesCapsule == null){
+          obtainVotesCapsule = new VotesCapsule(obtainCapsule.getAddress(),
+                  obtainCapsule.getVotesList(), obtainCapsule.getVotesList());
+        }
+        if(ownerVotesCapsule == null){
+          ownerVotesCapsule = new VotesCapsule(ownerCapsule.getAddress(),
+                  ownerCapsule.getVotesList(), ownerCapsule.getVotesList());
+        }
+        //oldVotes
+        Map<ByteString, Long> ownerOldVotes = ownerVotesCapsule.getOldVotes().stream().collect(
+                Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+        List<Protocol.Vote> obtainOldVotes = new ArrayList<>(obtainVotesCapsule.getOldVotes());
+
+        obtainVotesCapsule.clearOldVotes();
+        for (Protocol.Vote vote : obtainOldVotes) {
+          obtainVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount() +
+                  ownerOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
+        }
+        ownerVotesCapsule.clearOldVotes();
+        //newVotes
+        Map<ByteString, Long> ownerNewVotes = ownerVotesCapsule.getNewVotes().stream().collect(
+                Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+        List<Protocol.Vote> obtainNewVotes = new ArrayList<>(obtainVotesCapsule.getNewVotes());
+
+        obtainVotesCapsule.clearNewVotes();
+        for (Protocol.Vote vote : obtainNewVotes) {
+          obtainVotesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount() +
+                  ownerNewVotes.getOrDefault(vote.getVoteAddress(), 0L));
+        }
+        ownerVotesCapsule.clearNewVotes();
+
+        repository.updateVotesCapsule(owner, ownerVotesCapsule);
+        repository.updateVotesCapsule(obtainer, obtainVotesCapsule);
+      }
+      //account.votes
+      Map<ByteString, Long> ownerAccountVotes = ownerCapsule.getVotesList().stream().collect(
+              Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+      List<Protocol.Vote> obtainAccountVotes = new ArrayList<>(obtainCapsule.getVotesList());
+
+      obtainCapsule.clearVotes();
+      obtainAccountVotes.forEach(vote -> {
+        obtainCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount() +
+                ownerAccountVotes.getOrDefault(vote.getVoteAddress(), 0L));
+      });
+      ownerCapsule.clearVotes();
+
+    }
+
+    repository.updateAccount(obtainer, obtainCapsule);
+    repository.updateAccount(owner, ownerCapsule);
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
