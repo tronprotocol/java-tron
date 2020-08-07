@@ -586,6 +586,10 @@ public enum OpCode {
   REWARDBALANCE(0xd8, 1, 1, OpCode.Tier.ExtTier),
 
   ISWITNESS(0xd9, 1, 1, OpCode.Tier.ExtTier),
+
+  TOKENISSUE(0xda, 1, 1, Tier.HighTier),
+
+  UPDATEASSET(0xdb, 1, 1, OpCode.Tier.HighTier),
   /**
    * (0xf0) Create a new account with associated code
    */

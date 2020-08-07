@@ -250,4 +250,6 @@ public class Constant {
   public static final String NODE_AGREE_NODE_COUNT = "node.agreeNodeCount";
 
   public static final String COMMITTEE_ALLOW_TVM_VOTE = "committee.allowTvmVote";
+
+  public static final String COMMITTEE_ALLOW_TVM_ASSETISSUE = "committee.allowTvmAssetIssue";
 }

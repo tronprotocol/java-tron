@@ -18,23 +18,7 @@
 
 package org.tron.core.vm.program;
 
-import static java.lang.StrictMath.min;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
-import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-
 import com.google.protobuf.ByteString;
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -44,11 +28,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.BIUtil;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.*;
 import org.tron.core.capsule.*;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
@@ -56,21 +36,10 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.EnergyCost;
-import org.tron.core.vm.MessageCall;
-import org.tron.core.vm.OpCode;
-import org.tron.core.vm.PrecompiledContracts;
-import org.tron.core.vm.VM;
-import org.tron.core.vm.VMConstant;
-import org.tron.core.vm.VMUtils;
+import org.tron.core.vm.*;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.nativecontract.ContractService;
-import org.tron.core.vm.nativecontract.StakeProcessor;
-import org.tron.core.vm.nativecontract.UnstakeProcessor;
-import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
-import org.tron.core.vm.nativecontract.param.StakeParam;
-import org.tron.core.vm.nativecontract.param.UnstakeParam;
-import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
+import org.tron.core.vm.nativecontract.*;
+import org.tron.core.vm.nativecontract.param.*;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -85,6 +54,17 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
+
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.*;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 /**
  * @author Roman Mandeleil
@@ -1772,8 +1752,65 @@ public class Program {
     }catch (ContractValidateException e){
       throw new BytecodeExecutionException("validateForWithdrawReward failure:%s", e.getMessage());
     }
-    return withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
+    try {
+      return withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
+    } catch (ContractExeException e) {
+      throw new BytecodeExecutionException("executeForWithdrawReward failure:%s", e.getMessage());
+    }
   }
+
+  public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    TokenIssueProcessor tokenIssueProcessor = TokenIssueProcessor.getInstance();
+    TokenIssueParam tokenIssueParam = new TokenIssueParam();
+    tokenIssueParam.setName(name.getNoEndZeroesData());
+    tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
+    tokenIssueParam.setTotalSupply(totalSupply.longValue());
+    tokenIssueParam.setPrecision(precision.intValue());
+    tokenIssueParam.setOwnerAddress(ownerAddress);
+    try {
+      tokenIssueProcessor.validate(tokenIssueParam, repository);
+    } catch (ContractValidateException e) {
+      throw new AssetIssueException("tokenIssue trc10 validate failed: %s", e.getMessage());
+    }
+    try {
+      tokenIssueProcessor.execute(tokenIssueParam, repository);
+    } catch (ContractExeException e) {
+      throw new AssetIssueException("tokenIssue trc10 execute failed: %s", e.getMessage());
+    }
+    long tokenIdNum = repository.getTokenIdNum();
+    tokenIdNum++;
+    stackPush(new DataWord(tokenIdNum));
+  }
+
+  public void updateAsset(DataWord urlDataOffs, DataWord descriptionDataOffs) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    DataWord urlSize = memoryLoad(urlDataOffs);
+    DataWord descriptionSize = memoryLoad(descriptionDataOffs);
+    byte[] urlData = memoryChunk(urlDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+            urlSize.intValueSafe());
+    byte[] descriptionData = memoryChunk(descriptionDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+            descriptionSize.intValueSafe());
+    UpdateAssetParam updateAssetParam = new UpdateAssetParam();
+    updateAssetParam.setOwnerAddress(ownerAddress);
+    updateAssetParam.setNewUrl(urlData);
+    updateAssetParam.setNewDesc(descriptionData);
+    UpdateAssetProcessor updateAssetProcessor = UpdateAssetProcessor.getInstance();
+    try {
+      updateAssetProcessor.validate(updateAssetParam, repository);
+    } catch (ContractValidateException e) {
+      throw new AssetIssueException("updateAsset validate trc10 failed: %s", e.getMessage());
+    }
+    try {
+      updateAssetProcessor.execute(updateAssetParam, repository);
+    } catch (ContractExeException e) {
+      throw new AssetIssueException("updateAsset execute trc10 failed: %s", e.getMessage());
+    }
+    stackPushOne();
+  }
+
   /**
    * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is
    * quite normal situation and doesn't mean exceptional situation in terms of the program
@@ -1787,6 +1824,13 @@ public class Program {
     }
 
     public BytecodeExecutionException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  public static class AssetIssueException extends BytecodeExecutionException {
+
+    public AssetIssueException(String message, Object... args) {
       super(format(message, args));
     }
   }

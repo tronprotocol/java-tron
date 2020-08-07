@@ -46,6 +46,8 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_VOTE = false;
 
+  private static boolean ALLOW_TVM_ASSET_ISSUE = false;
+
   private VMConfig() {
   }
 
@@ -89,6 +91,10 @@ public class VMConfig {
     ALLOW_TVM_VOTE = allow == 1;
   }
 
+  public static void initAllowTvmAssetIssue(long allow) {
+    ALLOW_TVM_ASSET_ISSUE = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -115,6 +121,10 @@ public class VMConfig {
 
   public static boolean allowTvmVote() {
     return ALLOW_TVM_VOTE;
+  }
+
+  public static boolean allowTvmAssetIssue() {
+    return ALLOW_TVM_ASSET_ISSUE;
   }
 
   private static class SystemPropertiesInstance {

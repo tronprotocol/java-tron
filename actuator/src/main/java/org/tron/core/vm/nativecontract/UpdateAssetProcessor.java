@@ -1,0 +1,113 @@
+package org.tron.core.vm.nativecontract;
+
+import com.google.protobuf.ByteString;
+import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.nativecontract.param.UpdateAssetParam;
+import org.tron.core.vm.repository.Repository;
+
+import java.util.Objects;
+
+import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT_NULL;
+import static org.tron.core.vm.nativecontract.ContractProcessorConstant.TOKEN_ISSUE_FEE;
+
+public class UpdateAssetProcessor implements IContractProcessor {
+
+    private UpdateAssetProcessor(){}
+
+    public static UpdateAssetProcessor getInstance(){
+        return UpdateAssetProcessor.Singleton.INSTANCE.getInstance();
+    }
+
+    private enum Singleton {
+        INSTANCE;
+        private UpdateAssetProcessor instance;
+        Singleton() {
+            instance = new UpdateAssetProcessor();
+        }
+        public UpdateAssetProcessor getInstance() {
+            return instance;
+        }
+    }
+
+    @Override
+    public boolean execute(Object contract, Repository repository) throws ContractExeException {
+        UpdateAssetParam updateAssetParam = (UpdateAssetParam) contract;
+        AccountCapsule accountCapsule = repository.getAccount(updateAssetParam.getOwnerAddress());
+
+        AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+
+        assetIssueCapsuleV2 = repository.getAssetIssue(accountCapsule.getAssetIssuedID().toByteArray());
+
+        assetIssueCapsuleV2.setUrl(ByteString.copyFrom(updateAssetParam.getNewUrl()));
+        assetIssueCapsuleV2.setDescription(ByteString.copyFrom(updateAssetParam.getNewDesc()));
+
+        if (repository.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+            assetIssueCapsule = repository
+                    .getAssetIssue(accountCapsule.getAssetIssuedName().toByteArray());
+            assetIssueCapsule.setUrl(ByteString.copyFrom(updateAssetParam.getNewUrl()));
+            assetIssueCapsule.setDescription(ByteString.copyFrom(updateAssetParam.getNewDesc()));
+            repository.putAssetIssueValue(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+            repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        } else {
+            repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean validate(Object contract, Repository repository) throws ContractValidateException {
+        if (!(contract instanceof UpdateAssetParam)) {
+            throw new ContractValidateException(
+                    "contract type error,expected type [TokenIssuedContract],real type[" + contract
+                            .getClass() + "]");
+        }
+        UpdateAssetParam updateAssetParam = (UpdateAssetParam) contract;
+        if (Objects.isNull(updateAssetParam)) {
+            throw new ContractValidateException(CONTRACT_NULL);
+        }
+        if (repository == null) {
+            throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
+        }
+        if (!DecodeUtil.addressValid(updateAssetParam.getOwnerAddress())) {
+            throw new ContractValidateException("Invalid ownerAddress");
+        }
+        AccountCapsule account = repository.getAccount(updateAssetParam.getOwnerAddress());
+        if (account == null) {
+            throw new ContractValidateException("Account does not exist");
+        }
+        if (repository.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+            if (account.getAssetIssuedName().isEmpty()) {
+                throw new ContractValidateException("Account has not issued any asset");
+            }
+
+            if (repository.getAssetIssue(account.getAssetIssuedName().toByteArray())
+                    == null) {
+                throw new ContractValidateException("Asset is not existed in AssetIssueStore");
+            }
+        } else {
+            if (account.getAssetIssuedID().isEmpty()) {
+                throw new ContractValidateException("Account has not issued any asset");
+            }
+
+            if (repository.getAssetIssue(account.getAssetIssuedID().toByteArray())
+                    == null) {
+                throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
+            }
+        }
+
+        if (!TransactionUtil.validUrl(updateAssetParam.getNewUrl())) {
+            throw new ContractValidateException("Invalid url");
+        }
+
+        if (!TransactionUtil.validAssetDescription(updateAssetParam.getNewDesc())) {
+            throw new ContractValidateException("Invalid description");
+        }
+
+        return true;
+    }
+}

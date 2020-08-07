@@ -202,6 +202,13 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public void saveDynamic(byte[] word, BytesCapsule bytesCapsule) {
+    Key key = Key.create(word);
+    Value value = Value.create(bytesCapsule.getData());
+    dynamicPropertiesCache.put(key, value);
+  }
+
+  @Override
   public BytesCapsule getDynamic(byte[] word) {
     Key key = Key.create(word);
     if (dynamicPropertiesCache.containsKey(key)) {
@@ -646,6 +653,14 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
+    Key key = new Key(tokenId);
+    Value value = new Value(assetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE);
+    assetIssueCache.put(key, value);
+  }
+
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
     AccountCapsule accountCapsule = getAccount(address);
@@ -880,6 +895,21 @@ public class RepositoryImpl implements Repository {
 
     accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
     return account;
+  }
+
+  @Override
+  public void saveTokenIdNum(long num) {
+    this.saveDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
+            new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  @Override
+  public long getTokenIdNum() {
+    return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("error in contract not found TOKEN_ID_NUM"));
   }
 
   //The unit is trx

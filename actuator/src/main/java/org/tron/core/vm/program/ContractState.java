@@ -19,6 +19,7 @@ package org.tron.core.vm.program;
 
 
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.*;
 import org.tron.core.store.*;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
@@ -26,8 +27,11 @@ import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.Type;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
+
+import java.util.Optional;
 
 public class ContractState implements Repository, ProgramListenerAware {
 
@@ -82,6 +86,10 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getAccount(addr);
   }
 
+  @Override
+  public void saveDynamic(byte[] word, BytesCapsule bytesCapsule) {
+    repository.saveDynamic(word, bytesCapsule);
+  }
 
   public BytesCapsule getDynamic(byte[] bytesKey) {
     return repository.getDynamic(bytesKey);
@@ -202,6 +210,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
+    repository.putAssetIssueValue(tokenId, assetIssueCapsule);
+  }
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     return repository.addTokenBalance(address, tokenId, value);
   }
@@ -234,6 +247,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public AccountCapsule createNormalAccount(byte[] address) {
     return repository.createNormalAccount(address);
+  }
+
+  @Override
+  public void saveTokenIdNum(long num) {
+    this.saveDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
+            new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  @Override
+  public long getTokenIdNum() {
+    return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("error in contract not found TOKEN_ID_NUM"));
   }
 
   @Override

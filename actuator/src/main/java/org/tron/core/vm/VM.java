@@ -13,6 +13,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -114,7 +115,11 @@ public class VM {
               && (op == ISWITNESS || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
                 || op == WITHDRAWREWARD)) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      } 
+      }
+
+      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
 
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
@@ -1446,6 +1451,44 @@ public class VM {
           boolean result = program.withdrawReward(targetAddress);
           program.stackPush(new DataWord(result ? 1 : 0));
           program.step();
+        }
+        case TOKENISSUE: {
+          DataWord precision = program.stackPop();
+          DataWord totalSupply = program.stackPop();
+          DataWord abbr = program.stackPop();
+          DataWord name = program.stackPop();
+
+          if (logger.isDebugEnabled()) {
+            hint = "name: " + ByteArray.toStr(name.getNoEndZeroesData())
+                    + " abbr: " + ByteArray.toStr(abbr.getNoEndZeroesData())
+                    + " totalSupply: " + ByteArray.toLong(totalSupply.getData())
+                    + " precision: " + ByteArray.toLong(precision.getData());
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
+                    String.format("%-12s", op.name()),
+                    program.getEnergyLimitLeft().value(),
+                    program.getCallDeep(), hint);
+          }
+          program.tokenIssue(name, abbr, totalSupply, precision);
+          program.step();
+          break;
+        }
+        case UPDATEASSET: {
+          DataWord descriptionDataOffs = program.stackPop();
+          DataWord urlDataOffs = program.stackPop();
+          DataWord trcTokenId = program.stackPop();
+
+          if (logger.isDebugEnabled()) {
+            hint = "descriptionDataOffs: " + ByteArray.toLong(descriptionDataOffs.getData())
+                    + " urlDataOffs: " + ByteArray.toLong(urlDataOffs.getData())
+                    + " trcTokenId: " + ByteArray.toLong(trcTokenId.getData());
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
+                    String.format("%-12s", op.name()),
+                    program.getEnergyLimitLeft().value(),
+                    program.getCallDeep(), hint);
+          }
+          program.updateAsset(urlDataOffs, descriptionDataOffs);
+          program.step();
+          break;
         }
         case RETURN:
         case REVERT: {

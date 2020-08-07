@@ -26,7 +26,9 @@ public interface Repository {
 
   AccountCapsule getAccount(byte[] address);
 
-  BytesCapsule getDynamic(byte[] bytesKey);
+    void saveDynamic(byte[] word, BytesCapsule bytesCapsule);
+
+    BytesCapsule getDynamic(byte[] bytesKey);
 
   DelegatedResourceCapsule getDelegatedResource(byte[] key);
 
@@ -110,6 +112,8 @@ public interface Repository {
 
   void putVotesCapsule(Key key, Value value);
 
+  void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule);
+
   long addTokenBalance(byte[] address, byte[] tokenId, long value);
 
   long getTokenBalance(byte[] address, byte[] tokenId);
@@ -125,6 +129,10 @@ public interface Repository {
   AccountCapsule createNormalAccount(byte[] address);
 
   WitnessCapsule getWitnessCapsule(byte[] address);
+
+  void saveTokenIdNum(long num);
+
+  long getTokenIdNum();
 
   void addTotalNetWeight(long amount);
 

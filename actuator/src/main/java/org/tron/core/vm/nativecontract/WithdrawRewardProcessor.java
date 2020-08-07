@@ -6,6 +6,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
@@ -39,7 +40,7 @@ public class WithdrawRewardProcessor implements IContractProcessor {
     }
 
     @Override
-    public boolean execute(Object contract, Repository repository) {
+    public boolean execute(Object contract, Repository repository) throws ContractExeException {
         WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
         byte[] targetAddress = withdrawRewardParam.getTargetAddress();
         AccountCapsule accountCapsule = repository.getAccount(targetAddress);

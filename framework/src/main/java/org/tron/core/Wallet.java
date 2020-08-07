@@ -971,6 +971,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowTvmAssetIssue")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
+            .build());
+
     return builder.build();
   }
 

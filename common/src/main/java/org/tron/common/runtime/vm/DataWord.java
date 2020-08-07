@@ -174,6 +174,10 @@ public class DataWord implements Comparable<DataWord> {
     return ByteUtil.stripLeadingZeroes(data);
   }
 
+  public byte[] getNoEndZeroesData() {
+    return ByteUtil.stripEndingZeroes(data);
+  }
+
   public byte[] getLast20Bytes() {
     return Arrays.copyOfRange(data, 12, data.length);
   }

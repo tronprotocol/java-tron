@@ -174,6 +174,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
     PARAMETER.allowTvmVote = 0;
+    PARAMETER.allowTvmAssetIssue = 0;
   }
 
   /**
@@ -708,6 +709,16 @@ public class Args extends CommonParameter {
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
         .getInstance().getStorage().getDbEngine().toUpperCase())) {
+      initRocksDbBackupProperty(config);
+      initRocksDbSettings(config);
+    }
+
+    PARAMETER.allowTvmAssetIssue =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
+    initBackupProperty(config);
+    if (Constant.ROCKSDB.equals(CommonParameter
+            .getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
