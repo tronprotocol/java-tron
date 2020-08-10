@@ -31,8 +31,8 @@ public class NodeStatistics {
   public final MessageStatistics messageStatistics = new MessageStatistics();
   public final MessageCount p2pHandShake = new MessageCount();
   public final MessageCount tcpFlow = new MessageCount();
-  public final SimpleStatter discoverMessageLatency;
-  public final SimpleStatter pingMessageLatency;
+  public final SimpleStarter discoverMessageLatency;
+  public final SimpleStarter pingMessageLatency;
   public final AtomicLong lastPongReplyTime = new AtomicLong(0L); // in milliseconds
   private final long MIN_DATA_LENGTH = Args.getInstance().getReceiveTcpMinDataLength();
   private boolean isPredefined = false;
@@ -48,8 +48,8 @@ public class NodeStatistics {
   private Reputation reputation;
 
   public NodeStatistics() {
-    discoverMessageLatency = new SimpleStatter();
-    pingMessageLatency = new SimpleStatter();
+    discoverMessageLatency = new SimpleStarter();
+    pingMessageLatency = new SimpleStarter();
     reputation = new Reputation(this);
   }
 
@@ -166,7 +166,7 @@ public class NodeStatistics {
         + " "
         + messageStatistics.discoverOutNeighbours + "/" + messageStatistics.discoverInFindNode
         + " "
-        + ((int) discoverMessageLatency.getAvrg()) + "ms"
+        + ((int) discoverMessageLatency.getAvg()) + "ms"
         + ", p2p: " + p2pHandShake + "/" + messageStatistics.p2pInHello + "/"
         + messageStatistics.p2pOutHello + " "
         + ", tron: " + messageStatistics.tronInMessage + "/" + messageStatistics.tronOutMessage
@@ -185,7 +185,7 @@ public class NodeStatistics {
     tcpFlow.reset();
   }
 
-  public class SimpleStatter {
+  public class SimpleStarter {
 
     private long sum;
     @Getter
@@ -205,7 +205,7 @@ public class NodeStatistics {
       count++;
     }
 
-    public long getAvrg() {
+    public long getAvg() {
       return count == 0 ? 0 : sum / count;
     }
 
