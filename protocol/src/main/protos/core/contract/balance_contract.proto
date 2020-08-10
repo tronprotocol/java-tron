@@ -39,7 +39,7 @@ message TransactionBalanceTrace {
   message Operation {
     int64 operation_identifier = 1;
     bytes address = 2;
-    string amount = 3;
+    int64 amount = 3;
   }
 
   bytes transaction_identifier = 1;
@@ -57,13 +57,10 @@ message BlockBalanceTrace {
   }
 
   BlockIdentifier block_identifier = 1;
-  BlockIdentifier parent_block_identifier = 2;
-
-  int64 timestamp = 3;
-  repeated TransactionBalanceTrace transaction_balance_trace = 4;
-  map<string, int64> balance = 5;
+  int64 timestamp = 2;
+  repeated TransactionBalanceTrace transaction_balance_trace = 3;
 }
 
-message BlockNumber {
-  repeated int64 number = 1;
+message AccountTrace {
+  int64 balance = 1;
 }

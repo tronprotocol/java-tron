@@ -24,13 +24,8 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
         .setNumber(blockCapsule.getNum())
         .build();
 
-    BlockBalanceTrace.BlockIdentifier parentBlockIdentifier = BlockBalanceTrace.BlockIdentifier.newBuilder()
-        .setHash(blockCapsule.getNum() == 0 ? blockCapsule.getBlockId().getByteString() : blockCapsule.getParentHashStr())
-        .setNumber(blockCapsule.getNum() == 0 ? 0 : blockCapsule.getNum() - 1)
-        .build();
     balanceTrace = balanceTrace.toBuilder()
         .setBlockIdentifier(blockIdentifier)
-        .setParentBlockIdentifier(parentBlockIdentifier)
         .setTimestamp(blockCapsule.getTimeStamp())
         .build();
   }
@@ -59,17 +54,6 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
         .build();
   }
 
-  public void recordBalance(byte[] key, AccountCapsule accountCapsule) {
-    String address = StringUtil.encode58Check(key);
-    balanceTrace = balanceTrace.toBuilder()
-        .putBalance(address, accountCapsule.getBalance())
-        .build();
-  }
-
-  public Long getBalance(String address) {
-    return balanceTrace.getBalanceMap().get(address);
-  }
-
   @Override
   public byte[] getData() {
     if (Objects.isNull(balanceTrace)) {
@@ -85,10 +69,6 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
 
   public BlockBalanceTrace.BlockIdentifier getBlockIdentifier() {
     return balanceTrace.getBlockIdentifier();
-  }
-
-  public BlockBalanceTrace.BlockIdentifier getParentBlockIdentifier() {
-    return balanceTrace.getParentBlockIdentifier();
   }
 
   public long getTimestamp() {

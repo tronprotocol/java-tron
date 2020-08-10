@@ -17,6 +17,7 @@ import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.core.exception.BadItemException;
@@ -34,6 +35,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Autowired
   private BalanceTraceStore balanceTraceStore;
+
+  @Autowired
+  private AccountTraceStore accountTraceStore;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -69,9 +73,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
-    BlockBalanceTraceCapsule blockBalanceTraceCapsule = balanceTraceStore.getCurrentBlockBalanceTraceCapsule();
-    if (blockBalanceTraceCapsule != null) {
-      blockBalanceTraceCapsule.recordBalance(key, item);
+    BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
+    if (blockId != null) {
+      accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
     }
   }
 
@@ -134,7 +138,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     ByteString address = accountCapsule.getAddress();
     TransactionBalanceTrace.Operation operation = Operation.newBuilder()
         .setAddress(address)
-        .setAmount(String.valueOf(diff))
+        .setAmount(diff)
         .setOperationIdentifier(operationIdentifier)
         .build();
     transactionBalanceTrace = transactionBalanceTrace.toBuilder()

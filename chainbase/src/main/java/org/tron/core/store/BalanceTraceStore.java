@@ -33,9 +33,6 @@ import java.util.Objects;
 @Slf4j(topic = "DB")
 public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCapsule>  {
 
-  private final static byte[] BLOCK_PREFIX = "block:".getBytes();
-  private final static byte[] ACCOUNT_PREFIX = "account:".getBytes();
-
   @Getter
   private BlockCapsule.BlockId currentBlockId;
 
@@ -81,7 +78,6 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
 
   public void resetCurrentBlockTrace() {
     putBlockBalanceTrace(currentBlockBalanceTraceCapsule);
-    recordCurrentBlockNumberToAllAccount();
     currentBlockId = null;
     currentBlockBalanceTraceCapsule = null;
   }
@@ -114,7 +110,7 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
   }
 
   private void putBlockBalanceTrace(BlockBalanceTraceCapsule blockBalanceTrace) {
-    byte[] key = Bytes.concat(BLOCK_PREFIX, ByteArray.fromLong(getCurrentBlockId().getNum()));
+    byte[] key = ByteArray.fromLong(getCurrentBlockId().getNum());
     put(key, blockBalanceTrace);
   }
 
@@ -124,7 +120,7 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
       return null;
     }
 
-    byte[] key = Bytes.concat(BLOCK_PREFIX, ByteArray.fromLong(blockNumber));
+    byte[] key = ByteArray.fromLong(blockNumber);
     byte[] value = revokingDB.getUnchecked(key);
     if (Objects.isNull(value)) {
       return null;
@@ -144,7 +140,7 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
       return null;
     }
 
-    byte[] key = Bytes.concat(BLOCK_PREFIX, ByteArray.fromLong(blockNumber));
+    byte[] key = ByteArray.fromLong(blockNumber);
     byte[] value = revokingDB.getUnchecked(key);
     if (Objects.isNull(value)) {
       return null;
@@ -162,45 +158,5 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
     }
 
     return null;
-  }
-
-  public void recordCurrentBlockNumberToAllAccount() {
-    if (CollectionUtils.isEmpty(getCurrentBlockBalanceTraceCapsule().getTransactions())) {
-      return;
-    }
-
-    getCurrentBlockBalanceTraceCapsule()
-        .getTransactions()
-        .stream()
-        .map(TransactionBalanceTrace::getOperationList)
-        .flatMap(List::stream)
-        .map(TransactionBalanceTrace.Operation::getAddress)
-        .distinct()
-        .map(ByteString::toByteArray)
-        .forEach(this::recordCurrentBlockNumber);
-  }
-
-  public void recordCurrentBlockNumber(byte[] address) {
-    BalanceContract.BlockNumber blockNumber = getAllBlockNumberByAddress(address);
-    blockNumber = blockNumber.toBuilder().addNumber(getCurrentBlockId().getNum()).build();
-
-    byte[] key = Bytes.concat(ACCOUNT_PREFIX, address);
-    revokingDB.put(key, blockNumber.toByteArray());
-  }
-
-  public BalanceContract.BlockNumber getAllBlockNumberByAddress(byte[] address) {
-    byte[] key = Bytes.concat(ACCOUNT_PREFIX, address);
-    byte[] value = revokingDB.getUnchecked(key);
-
-    BalanceContract.BlockNumber blockNumber = BalanceContract.BlockNumber.newBuilder().build();
-    if (!ArrayUtils.isEmpty(value)) {
-      try {
-        blockNumber = BalanceContract.BlockNumber.parseFrom(value);
-      } catch (InvalidProtocolBufferException e) {
-        logger.error(e.getMessage(), e);
-      }
-    }
-
-    return blockNumber;
   }
 }
