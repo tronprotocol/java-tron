@@ -533,6 +533,12 @@ public class FullNodeHttpApiService implements Service {
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+              EnumSet.allOf(DispatcherType.class));
+
       // filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
@@ -540,10 +546,6 @@ public class FullNodeHttpApiService implements Service {
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
 
-      // filters the specified APIs
-      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
-      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
-              EnumSet.allOf(DispatcherType.class));
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
