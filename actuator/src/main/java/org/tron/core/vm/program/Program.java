@@ -1799,12 +1799,14 @@ public class Program {
     try {
       tokenIssueProcessor.validate(tokenIssueParam, repository);
     } catch (ContractValidateException e) {
+      logger.info("validateForAssetIssue failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }
     try {
       tokenIssueProcessor.execute(tokenIssueParam, repository);
     } catch (ContractExeException e) {
+      logger.info("executeForAssetIssue failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }
@@ -1831,12 +1833,14 @@ public class Program {
     try {
       updateAssetProcessor.validate(updateAssetParam, repository);
     } catch (ContractValidateException e) {
+      logger.info("validateForUpdateAsset failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }
     try {
       updateAssetProcessor.execute(updateAssetParam, repository);
     } catch (ContractExeException e) {
+      logger.info("executeForUpdateAsset failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }
