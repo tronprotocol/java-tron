@@ -46,7 +46,8 @@ public class PeerStatusCheck {
 
       if (peer.isNeedSyncFromPeer()
           && peer.getBlockBothHaveUpdateTime() < now - blockUpdateTimeout) {
-        logger.warn("Peer {} not sync for a long time.", peer.getInetAddress());
+        logger.warn("Peer {} not sync for a long time. bothHaveUpdateTime:{}, now: {}",
+            peer.getInetAddress(), peer.getBlockBothHaveUpdateTime(), now);
         isDisconnected = true;
       }
 
