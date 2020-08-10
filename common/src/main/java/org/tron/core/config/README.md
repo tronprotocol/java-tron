@@ -1,11 +1,11 @@
 # Advanced Configurations
 
-we provide some configuration items for LevelDB and gRPC in `config.conf` file, for fine-grained performance tuning.   
-You may custom these items only if you have deep understanding on them, otherwise keep them as default.
+We provide some configuration items for LevelDB and gRPC in `config.conf` file for fine-grained performance tuning.   
+You may customize these items only if you have deep understanding on them, otherwise keep them as default.
 
 ## LevelDB
 
-You can custom LevelDB options in the `storage` part of `config.conf`, which looks like:
+You can customize LevelDB in the `storage` part of `config.conf`, which looks like:
 
 ```
 storage {
@@ -43,11 +43,11 @@ storage {
 
 ```
 
-As shown in the example above, the data of database `accout` will be stored in the path of `/path/to/accout/database` while the index be stored in `/path/to/accout/index`. And, the example also shows our default value of LevelDB options from `createIfMissing` to `maxOpenFiles`. You can just refer to the docs of [LevelDB](https://github.com/google/leveldb/blob/master/doc/index.md#performance) to figure out details of these options.
+As shown in the example above, the `accout` database will be stored in the path of `/path/to/accout/database` while the index be stored in `/path/to/accout/index`. And, the example also shows our default value of LevelDB options(Start from `createIfMissing` and end at `maxOpenFiles`). Please refer to the docs of [LevelDB](https://github.com/google/leveldb/blob/master/doc/index.md#performance) to figure out the details of these options.
 
 ## gRPC
 
-You can custom gPRC options in the `node.rpc` part of `config.conf`, which looks like:
+You can customize gPRC options in the `node.rpc` part of `config.conf`, which looks like:
 
 ```
 node {
@@ -79,7 +79,7 @@ node {
 ```
 
 ## backup
-You can custom backup options in the `node.backup` part of `config.conf`, which looks like:
+You can customize backup options in the `node.backup` part of `config.conf`, which looks like:
 ```
 node.backup {
     # my priority, each member should use different priority
@@ -116,4 +116,4 @@ node.backup {
 }
 ```
 
-You may refer to the source code of `io.grpc.netty.NettyServerBuilder` class to see details or just make a decision according to the brief comments above.  
+Please refer to the source code of `io.grpc.netty.NettyServerBuilder` class to see the details or just make a decision according to the brief comments above.  
