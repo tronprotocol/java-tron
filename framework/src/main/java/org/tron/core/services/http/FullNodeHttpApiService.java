@@ -23,6 +23,8 @@ import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.filter.HttpInterceptor;
+import org.tron.core.services.filter.LiteFnQueryHttpFilter;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -277,6 +279,9 @@ public class FullNodeHttpApiService implements Service {
   private GetMarketPairListServlet getMarketPairListServlet;
   @Autowired
   private CheckCrossTransactionCommitServlet checkCrossTransactionCommitServlet;
+
+  @Autowired
+  private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -533,12 +538,19 @@ public class FullNodeHttpApiService implements Service {
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+              EnumSet.allOf(DispatcherType.class));
+
       // filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

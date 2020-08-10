@@ -1382,7 +1382,7 @@ public class Wallet {
     ByteString txId = outPoint.getHash();
 
     //Get the tree in blockNum-1 position
-    byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
+    byte[] treeRoot = chainBaseManager.getMerkleTreeIndexStore().get(blockNumber - 1);
     if (treeRoot == null) {
       throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
@@ -1633,9 +1633,9 @@ public class Wallet {
     }
 
     try {
-      if (dbManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
+      if (chainBaseManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
         return IncrementalMerkleTree
-            .parseFrom(dbManager.getMerkleTreeIndexStore().get(blockNum));
+            .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage());

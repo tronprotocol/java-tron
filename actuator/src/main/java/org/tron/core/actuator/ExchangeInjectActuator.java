@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.ByteString;
@@ -180,7 +181,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
     if (dynamicStore.getAllowSameTokenName() == 1 &&
         !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
-        !TransactionUtil.isNumber(tokenID)) {
+        !isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
 

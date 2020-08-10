@@ -1,14 +1,18 @@
 package org.tron.core.services.interfaceOnPBFT.http.PBFT;
 
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnPBFT.http.CheckCrossTxCommitOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountOnPBFTServlet;
@@ -111,6 +115,9 @@ public class HttpApiOnPBFTService implements Service {
   @Autowired
   private CheckCrossTxCommitOnPBFTServlet checkCrossTxCommitOnPBFTServlet;
 
+  @Autowired
+  private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+
   @Override
   public void init() {
 
@@ -180,6 +187,12 @@ public class HttpApiOnPBFTService implements Service {
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

@@ -414,6 +414,14 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public boolean openHistoryQueryWhenLiteFN = false;
+
+  @Getter
+  @Setter
+  public boolean isLiteFullNode = false;
+
+  @Getter
+  @Setter
   public int crossChainPort;
 
   @Getter
