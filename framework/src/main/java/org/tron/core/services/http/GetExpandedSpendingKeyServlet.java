@@ -31,13 +31,10 @@ public class GetExpandedSpendingKeyServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
-      fillResponse(visible, build.getValue(), response);
+      JsonFormat.merge(params.getParams(), build);
+      fillResponse(params.isVisible(), build.getValue(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
