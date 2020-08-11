@@ -23,13 +23,7 @@ public class GetExpandedSpendingKeyServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String sk = request.getParameter("value");
-      ExpandedSpendingKeyMessage reply = wallet
-          .getExpandedSpendingKey(ByteString.copyFrom(ByteArray.fromHexString(sk)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(sk)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -40,15 +34,19 @@ public class GetExpandedSpendingKeyServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build);
-
-      ExpandedSpendingKeyMessage reply = wallet.getExpandedSpendingKey(build.getValue());
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, params.isVisible()));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(params.isVisible(), build.getValue(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, ByteString spendingKey, HttpServletResponse response)
+      throws Exception {
+    ExpandedSpendingKeyMessage reply = wallet.getExpandedSpendingKey(spendingKey);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }
