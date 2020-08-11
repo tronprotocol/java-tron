@@ -22,16 +22,10 @@ public class GetIncomingViewingKeyServlet extends RateLimiterServlet {
     try {
       PostParams params = PostParams.getPostParams(request);
       JSONObject jsonObject = JSONObject.parseObject(params.getParams());
-
       String ak = jsonObject.getString("ak");
       String nk = jsonObject.getString("nk");
 
-      GrpcAPI.IncomingViewingKeyMessage ivk = wallet
-          .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
-
-      response.getWriter()
-          .println(JsonFormat.printToString(ivk, params.isVisible()));
-
+      fillResponse(params.isVisible(), ak, nk, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -43,13 +37,19 @@ public class GetIncomingViewingKeyServlet extends RateLimiterServlet {
       String ak = request.getParameter("ak");
       String nk = request.getParameter("nk");
 
-      GrpcAPI.IncomingViewingKeyMessage ivk = wallet
-          .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
-
-      response.getWriter()
-          .println(JsonFormat.printToString(ivk, visible));
+      fillResponse(visible, ak, nk, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private void fillResponse(boolean visible, String ak, String nk, HttpServletResponse response)
+      throws Exception {
+
+    GrpcAPI.IncomingViewingKeyMessage ivk = wallet
+        .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
+
+    response.getWriter()
+        .println(JsonFormat.printToString(ivk, visible));
   }
 }
