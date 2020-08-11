@@ -19,11 +19,8 @@ public class GetDiversifierServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      fillResponse(visible, response);
+      PostParams params = PostParams.getPostParams(request);
+      fillResponse(params.isVisible(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
