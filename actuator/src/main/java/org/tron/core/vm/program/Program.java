@@ -1683,59 +1683,47 @@ public class Program {
   }
 
   public boolean stake(DataWord srAddress, DataWord stakeAmount) {
-    logger.info("srAddress:{}---{},stakeAmount:{}",Arrays.toString(srAddress.getData()), srAddress.toHexString(), stakeAmount.toString());
     Repository repository = getContractState().newRepositoryChild();
-    StakeProcessor stakeProcessor = StakeProcessor.getInstance();
+    StakeProcessor stakeProcessor = new StakeProcessor();
     StakeParam stakeParam = new StakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     stakeParam.setOwnerAddress(owner);
     stakeParam.setSrAddress(TransactionTrace.convertToTronAddress(srAddress.getLast20Bytes()));
-    stakeParam.setStakeAmount(stakeAmount.longValue());
-    logger.info("owner:{}, SrAddress:{}, StakeAmount:{}", Arrays.toString(owner), Arrays.toString(stakeParam.getSrAddress()), stakeParam.getStakeAmount());
-    logger.info("owner:{}, SrAddress:{}, StakeAmount:{}", Hex.toHexString(owner), Hex.toHexString(stakeParam.getSrAddress()), stakeParam.getStakeAmount());
-    try{
-      if(!stakeProcessor.process(stakeParam, repository)){
-        return false;
-      }
-      repository.commit();
-      return true;
-    }catch (ContractValidateException e){
-      logger.info("validateForStake failure:{}", e.getMessage());
-      return false;
-    }catch (ContractExeException e){
-      logger.info("executeForStake failure:{}", e.getMessage());
-      return false;
-    }catch (RuntimeException e){
-      logger.error("stakeProcess unknown exception", e);
+    if (stakeAmount.bytesOccupied() > 8) {
+      logger.error("validateForStake failure: stake amount bigger than long max value");
       return false;
     }
+    stakeParam.setStakeAmount(stakeAmount.longValue());
+    try {
+      stakeProcessor.process(stakeParam, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForStake failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForStake failure:{}", e.getMessage());
+    }
+    return false;
   }
 
   public boolean unstake() {
     Repository repository = getContractState().newRepositoryChild();
-    UnstakeProcessor unstakeProcessor = UnstakeProcessor.getInstance();
+    UnstakeProcessor unstakeProcessor = new UnstakeProcessor();
     UnstakeParam unstakeParam = new UnstakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     unstakeParam.setOwnerAddress(owner);
-    try{
-      if(!unstakeProcessor.validate(unstakeParam, repository)) {
-        return false;
-      }
-      if(!unstakeProcessor.execute(unstakeParam, repository)) {
-        return false;
-      }
+    unstakeParam.setNow(getTimestamp().longValue());
+    try {
+      unstakeProcessor.validate(unstakeParam, repository);
+      unstakeProcessor.execute(unstakeParam, repository);
       repository.commit();
       return true;
-    }catch (ContractValidateException e){
-      logger.info("validateForUnstake failure:{}", e.getMessage());
-      return false;
-    }catch (ContractExeException e){
-      logger.info("executeForUnstake failure:{}", e.getMessage());
-      return false;
-    }catch (RuntimeException e){
-      logger.error("unstakeProcess unknown exception", e);
-      return false;
+    } catch (ContractValidateException e) {
+      logger.error("validateForUnstake failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForUnstake failure:{}", e.getMessage());
     }
+    return false;
   }
 
   public void withdrawReward() {
@@ -1750,13 +1738,11 @@ public class Program {
       stackPush(new DataWord(allowance));
       repository.commit();
     }catch (ContractValidateException e){
-      logger.info("validateForWithdrawReward failure:{}", e.getMessage());
+      logger.error("validateForWithdrawReward failure:{}", e.getMessage());
       stackPushZero();
-      return ;
     }catch (ContractExeException e){
-      logger.info("executeForWithdrawReward failure:{}", e.getMessage());
+      logger.error("executeForWithdrawReward failure:{}", e.getMessage());
       stackPushZero();
-      return ;
     }
   }
 

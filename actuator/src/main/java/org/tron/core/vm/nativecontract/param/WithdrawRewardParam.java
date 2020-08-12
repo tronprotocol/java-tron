@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class WithdrawRewardParam {
 
-    private byte[] targetAddress;
+  private byte[] targetAddress;
 
 }

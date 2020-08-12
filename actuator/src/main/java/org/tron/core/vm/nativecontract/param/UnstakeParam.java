@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class UnstakeParam {
     private byte[] ownerAddress;
+    private long now;
 }
