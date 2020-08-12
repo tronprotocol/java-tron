@@ -556,37 +556,31 @@ public class Program {
   }
 
   private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository){
-    DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
-    long duration = 3 * FROZEN_PERIOD;
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
-
     AccountCapsule ownerCapsule = repository.getAccount(owner);
+    if(ownerCapsule.getFrozenCount() == 0) {
+      return;
+    }
+    if(!VMConfig.allowTvmVote()){
+      return;
+    }
     AccountCapsule obtainCapsule = repository.getAccount(obtainer);
     //process owner frozen for self
     {
-      long ownerBandwidthBalance = ownerCapsule.getFrozenBalance();
-      long obtainBandwidthBalance = obtainCapsule.getFrozenBalance();
-      long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
-      long newBandwidthExpire = now + (duration * ownerBandwidthBalance +
-              Long.max(0, now - obtainBandwidthExpire) * obtainBandwidthBalance) /
-                      (ownerBandwidthBalance + obtainBandwidthBalance);
-      long newFrozenBalanceForBandwidth = ownerBandwidthBalance + obtainBandwidthBalance;
-
-      long ownerEnergyBalance = ownerCapsule.getAccountResource()
-              .getFrozenBalanceForEnergy().getFrozenBalance();
-      long obtainEnergyBalance = obtainCapsule.getAccountResource()
-              .getFrozenBalanceForEnergy().getFrozenBalance();
-      long obtainEnergyExpire = obtainCapsule.getAccountResource()
-              .getFrozenBalanceForEnergy().getExpireTime();
-      long newEnergyExpire = now + (duration * ownerEnergyBalance +
-              Long.max(0, now - obtainEnergyExpire) * obtainEnergyBalance) /
-                      (ownerEnergyBalance + obtainEnergyBalance);
-      long newFrozenBalanceForEnergy = ownerEnergyBalance + obtainEnergyBalance;
-
+      long now = getTimestamp().longValue();
+      long ownerBandwidthBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+      long ownerBandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
+      long newBandwidthExpire = ownerBandwidthExpire;
+      long newFrozenBalanceForBandwidth = ownerBandwidthBalance;
+      if(obtainCapsule.getFrozenCount() > 0){
+        long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
+        long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
+        newBandwidthExpire = now + (Long.max(0, ownerBandwidthExpire - now) * ownerBandwidthBalance +
+                Long.max(0, obtainBandwidthExpire - now) * obtainBandwidthBalance) /
+                (ownerBandwidthBalance + obtainBandwidthBalance);
+        newFrozenBalanceForBandwidth = ownerBandwidthBalance + obtainBandwidthBalance;
+      }
       obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
-      obtainCapsule.setFrozenForEnergy(newFrozenBalanceForEnergy, newEnergyExpire);
     }
-
     //vote
     {
       VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
