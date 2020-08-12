@@ -1456,6 +1456,7 @@ public class VM {
           program.withdrawReward();
           program.step();
         }
+        break;
         case TOKENISSUE: {
           DataWord name = program.stackPop();
           DataWord abbr = program.stackPop();
