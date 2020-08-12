@@ -68,7 +68,6 @@ public class AccountTraceStore extends TronStoreWithRevoking<AccountTraceCapsule
     }
 
     Map.Entry<byte[], byte[]> entry = new ArrayList<>(result.entrySet()).get(0);
-
     byte[] resultAddress = Arrays.copyOf(entry.getKey(), 21);
     if (!Arrays.equals(address, resultAddress)) {
       return Pair.of(number, 0L);
