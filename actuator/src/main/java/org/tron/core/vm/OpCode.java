@@ -585,7 +585,7 @@ public enum OpCode {
 
   REWARDBALANCE(0xd8, 1, 1, OpCode.Tier.ExtTier),
 
-  ISWITNESS(0xd9, 1, 1, OpCode.Tier.ExtTier),
+  ISSRCANDIDATE(0xd9, 1, 1, OpCode.Tier.ExtTier),
 
   TOKENISSUE(0xda, 1, 1, Tier.HighTier),
 

@@ -1165,7 +1165,8 @@ public class Program {
 
   public DataWord getRewardBalance(DataWord address) {
     ContractService contractService = ContractService.getInstance();
-    long rewardBalance = contractService.queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
+    long rewardBalance = contractService
+            .queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
     return new DataWord(rewardBalance);
   }
 
@@ -1175,10 +1176,9 @@ public class Program {
     return contract != null ? new DataWord(1) : new DataWord(0);
   }
 
-  public DataWord isWitness(DataWord address) {
-    byte[] witnessAddress = TransactionTrace.convertToTronAddress(address.getLast20Bytes());
+  public DataWord isSRCandidate(DataWord address) {
     WitnessCapsule witnessCapsule = getContractState()
-            .getWitnessCapsule(witnessAddress);
+            .getWitnessCapsule(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return witnessCapsule != null ? new DataWord(1) : new DataWord(0);
   }
 
