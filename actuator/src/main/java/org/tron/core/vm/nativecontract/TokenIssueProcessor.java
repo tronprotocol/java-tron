@@ -36,8 +36,8 @@ public class TokenIssueProcessor {
         AccountCapsule bhAccountCapsule = repository.getAccount(repository.getBlackHoleAddress());
         bhAccountCapsule.setBalance(Math.addExact(bhAccountCapsule.getBalance(), TOKEN_ISSUE_FEE));
         accountCapsule.setBalance(Math.subtractExact(accountCapsule.getBalance(), TOKEN_ISSUE_FEE));
-        repository.updateAccount(tokenIssueParam.getOwnerAddress(), accountCapsule);
         repository.putAccountValue(tokenIssueParam.getOwnerAddress(), accountCapsule);
+        repository.putAccountValue(bhAccountCapsule.getAddress().toByteArray(), bhAccountCapsule);
     }
 
     public void validate(Object contract, Repository repository) throws ContractValidateException {

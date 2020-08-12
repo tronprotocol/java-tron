@@ -61,6 +61,8 @@ public class EnergyCost {
   private final int NEW_ACCT_SUICIDE = 0;
   private final int STAKE_UNSTAKE = 35000;
   private final int WITHDRAW_REWARD = 25000;
+  private final int TOKEN_ISSUE = 25000;
+  private final int UPDATE_ASSET = 5000;
 
   public static EnergyCost getInstance() {
     if (instance == null) {
@@ -288,5 +290,13 @@ public class EnergyCost {
 
   public int getWITHDRAW_REWARD() {
     return WITHDRAW_REWARD;
+  }
+
+  public int getTOKEN_ISSUE() {
+    return TOKEN_ISSUE;
+  }
+
+  public int getUPDATE_ASSET() {
+    return UPDATE_ASSET;
   }
 }

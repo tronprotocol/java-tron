@@ -320,6 +320,12 @@ public class VM {
         case WITHDRAWREWARD:
           energyCost = energyCosts.getWITHDRAW_REWARD();
           break;
+        case TOKENISSUE:
+          energyCost = energyCosts.getTOKEN_ISSUE();
+          break;
+        case UPDATEASSET:
+          energyCost = energyCosts.getUPDATE_ASSET();
+          break;
         default:
           break;
       }
