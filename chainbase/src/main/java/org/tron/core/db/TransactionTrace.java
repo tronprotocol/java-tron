@@ -30,11 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -68,6 +64,8 @@ public class TransactionTrace {
 
   private ForkController forkController;
 
+  private VotesStore votesStore;
+
   @Getter
   private TransactionContext transactionContext;
   @Getter
@@ -100,6 +98,8 @@ public class TransactionTrace {
     this.runtime = runtime;
     this.forkController = new ForkController();
     forkController.init(storeFactory.getChainBaseManager());
+
+    this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
   }
 
   public TransactionCapsule getTrx() {
@@ -190,6 +190,9 @@ public class TransactionTrace {
     if (StringUtils.isEmpty(transactionContext.getProgramResult().getRuntimeError())) {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+      }
+      for (DataWord votes : transactionContext.getProgramResult().getDeleteVotes()) {
+        votesStore.delete(votes.getData());
       }
     }
   }

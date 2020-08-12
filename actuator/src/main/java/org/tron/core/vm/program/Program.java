@@ -518,6 +518,7 @@ public class Program {
 
     ContractService contractService = ContractService.getInstance();
     contractService.withdrawReward(owner, getContractState());
+    contractService.withdrawReward(obtainer, getContractState());
     //todo: Allowance to balance
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
@@ -591,54 +592,39 @@ public class Program {
       VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
       VotesCapsule obtainVotesCapsule = repository.getVotesCapsule(obtainer);
 
-      if (obtainVotesCapsule != null || ownerVotesCapsule != null) {
-        if(obtainVotesCapsule == null){
-          obtainVotesCapsule = new VotesCapsule(obtainCapsule.getAddress(),
-                  obtainCapsule.getVotesList(), obtainCapsule.getVotesList());
-        }
-        if(ownerVotesCapsule == null){
-          ownerVotesCapsule = new VotesCapsule(ownerCapsule.getAddress(),
-                  ownerCapsule.getVotesList(), ownerCapsule.getVotesList());
-        }
-        //oldVotes
-        Map<ByteString, Long> ownerOldVotes = ownerVotesCapsule.getOldVotes().stream().collect(
-                Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
-        List<Protocol.Vote> obtainOldVotes = new ArrayList<>(obtainVotesCapsule.getOldVotes());
-
-        obtainVotesCapsule.clearOldVotes();
-        for (Protocol.Vote vote : obtainOldVotes) {
-          obtainVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount() +
-                  ownerOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
-        }
-        ownerVotesCapsule.clearOldVotes();
-        //newVotes
-        Map<ByteString, Long> ownerNewVotes = ownerVotesCapsule.getNewVotes().stream().collect(
-                Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
-        List<Protocol.Vote> obtainNewVotes = new ArrayList<>(obtainVotesCapsule.getNewVotes());
-
-        obtainVotesCapsule.clearNewVotes();
-        for (Protocol.Vote vote : obtainNewVotes) {
-          obtainVotesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount() +
-                  ownerNewVotes.getOrDefault(vote.getVoteAddress(), 0L));
-        }
-        ownerVotesCapsule.clearNewVotes();
-
-        repository.updateVotesCapsule(owner, ownerVotesCapsule);
-        repository.updateVotesCapsule(obtainer, obtainVotesCapsule);
+      //get owner oldVotes
+      List<Protocol.Vote> oldVotes;
+      if(ownerVotesCapsule == null){
+        oldVotes = ownerCapsule.getVotesList();
+      }else{
+        oldVotes = ownerVotesCapsule.getOldVotes();
+        //delete ownerVotesCapsule
+        getResult().addDeleteVotes(new DataWord(owner));
       }
-      //account.votes
-      Map<ByteString, Long> ownerAccountVotes = ownerCapsule.getVotesList().stream().collect(
-              Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
-      List<Protocol.Vote> obtainAccountVotes = new ArrayList<>(obtainCapsule.getVotesList());
-
-      obtainCapsule.clearVotes();
-      obtainAccountVotes.forEach(vote -> {
-        obtainCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount() +
-                ownerAccountVotes.getOrDefault(vote.getVoteAddress(), 0L));
-      });
       ownerCapsule.clearVotes();
+      //merge oldVotes to obtainer
+      Map<ByteString, Long> totalOldVotes = oldVotes.stream().collect(
+              Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+      if(obtainVotesCapsule != null){
+        obtainVotesCapsule.getOldVotes().forEach(vote -> {
+          totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount() +
+                  totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
+        });
+        obtainVotesCapsule.clearOldVotes();
+        totalOldVotes.forEach(obtainVotesCapsule::addOldVotes);
 
+        repository.updateVotesCapsule(obtainer, obtainVotesCapsule);
+      } else {
+        obtainCapsule.getVotesList().forEach(vote -> {
+          totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount() +
+                  totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
+        });
+        obtainCapsule.clearVotes();
+        totalOldVotes.forEach(obtainCapsule::addVotes);
+      }
     }
+
+    //todo delete delegationStore
 
     repository.updateAccount(obtainer, obtainCapsule);
     repository.updateAccount(owner, ownerCapsule);
