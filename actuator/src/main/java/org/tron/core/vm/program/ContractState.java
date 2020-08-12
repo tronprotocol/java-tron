@@ -290,16 +290,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public DelegatedResourceCapsule getDelegatedResource(byte[] key) {
-    return repository.getDelegatedResource(key);
-  }
-
-  @Override
-  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address) {
-    return repository.getDelegatedResourceAccountIndex(address);
-  }
-
-  @Override
   public VotesCapsule getVotesCapsule(byte[] address) {
     return repository.getVotesCapsule(address);
   }
@@ -327,16 +317,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void updateDynamic(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDynamic(word, bytesCapsule);
-  }
-
-  @Override
-  public void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule) {
-    repository.updateDelegatedResource(word, delegatedResourceCapsule);
-  }
-
-  @Override
-  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
-    repository.updateDelegatedResourceAccountIndex(word, delegatedResourceAccountIndexCapsule);
   }
 
   @Override
@@ -380,16 +360,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void putDelegatedResource(Key key, Value value) {
-    repository.putDelegatedResource(key, value);
-  }
-
-  @Override
-  public void putDelegatedResourceAccountIndex(Key key, Value value) {
-    repository.putDelegatedResourceAccountIndex(key, value);
-  }
-
-  @Override
   public void putVotesCapsule(Key key, Value value) {
     repository.putVotesCapsule(key, value);
   }
@@ -400,21 +370,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void addTotalEnergyWeight(long amount) {
-    repository.addTotalEnergyWeight(amount);
-  }
-
-  @Override
-  public void saveTotalEnergyWeight(long totalEnergyWeight) {
-    repository.saveTotalEnergyWeight(totalEnergyWeight);
-  }
-
-  @Override
-  public long getTotalEnergyWeight() {
-    return repository.getTotalEnergyWeight();
-  }
-
-  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
   }
@@ -422,10 +377,5 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
-  }
-
-  @Override
-  public long getTotalEnergyCurrentLimit() {
-    return repository.getTotalEnergyCurrentLimit();
   }
 }
