@@ -1,8 +1,10 @@
 package org.tron.core.db2.common;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.cglib.core.CollectionUtils;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -34,4 +36,7 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   List<byte[]> getKeysNext(byte[] key, long limit);
 
+  default Map<byte[], byte[]> getNext(byte[] key, long limit) {
+    return Collections.emptyMap();
+  }
 }

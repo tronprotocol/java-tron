@@ -2,11 +2,14 @@ package org.tron.core.store;
 
 import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.OptionalLong;
 
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -66,17 +69,21 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     if (old == null) {
       if (item.getBalance() != 0) {
         recordBalance(item, item.getBalance());
+        BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
+        if (blockId != null) {
+          accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
+        }
       }
     } else if (old.getBalance() != item.getBalance()){
       recordBalance(item, item.getBalance() - old.getBalance());
+      BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
+      if (blockId != null) {
+        accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
+      }
     }
 
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
-    BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
-    if (blockId != null) {
-      accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
-    }
   }
 
   @Override
@@ -84,6 +91,11 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     AccountCapsule old = super.getUnchecked(key);
     if (old != null) {
       recordBalance(old, -old.getBalance());
+    }
+
+    BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
+    if (blockId != null) {
+      accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
     }
 
     super.delete(key);
