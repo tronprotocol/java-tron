@@ -63,7 +63,7 @@ public class AccountTraceStore extends TronStoreWithRevoking<AccountTraceCapsule
     byte[] key = Bytes.concat(address, Longs.toByteArray(xor(number)));
     Map<byte[], byte[]> result = revokingDB.getNext(key, 1);
 
-    if (result.size() != 1) {
+    if (MapUtils.isEmpty(result)) {
       return Pair.of(number, 0L);
     }
 
