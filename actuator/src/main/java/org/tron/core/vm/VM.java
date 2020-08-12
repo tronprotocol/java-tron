@@ -112,7 +112,7 @@ public class VM {
       }
 
       if (!VMConfig.allowTvmVote()
-              && (op == ISWITNESS || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+              && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
                 || op == WITHDRAWREWARD)) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
@@ -171,7 +171,7 @@ public class VM {
         case BALANCE:
         case REWARDBALANCE:
         case ISCONTRACT:
-        case ISWITNESS:
+        case ISSRCANDIDATE:
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -760,7 +760,7 @@ public class VM {
           if (logger.isDebugEnabled()) {
             hint = ADDRESS_LOG
                     + Hex.toHexString(address.getLast20Bytes())
-                    + "reward balance: " + rewardBalance.toString();
+                    + " reward balance: " + rewardBalance.toString();
           }
 
           program.stackPush(rewardBalance);
@@ -775,11 +775,11 @@ public class VM {
           program.step();
         }
         break;
-        case ISWITNESS: {
+        case ISSRCANDIDATE: {
           DataWord address = program.stackPop();
-          DataWord isWitness = program.isWitness(address);
+          DataWord isSRCandidate = program.isSRCandidate(address);
 
-          program.stackPush(isWitness);
+          program.stackPush(isSRCandidate);
           program.step();
         }
         break;
