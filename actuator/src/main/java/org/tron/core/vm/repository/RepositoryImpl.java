@@ -943,6 +943,14 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public long getTokenId() {
+    if(this.dynamicPropertiesCache.containsKey(DynamicPropertiesStore.getTOKEN_ID_NUM())) {
+      return ByteArray.toLong(this.dynamicPropertiesCache.get(DynamicPropertiesStore.getTOKEN_ID_NUM()).getBytes().getData());
+    }
+    return getTokenIdNum();
+  }
+
+  @Override
   public long getTokenIdNum() {
     return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
             .map(BytesCapsule::getData)

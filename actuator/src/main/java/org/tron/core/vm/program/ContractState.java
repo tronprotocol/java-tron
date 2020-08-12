@@ -266,6 +266,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public long getTokenId() {
+    return repository.getTokenId();
+  }
+
+  @Override
   public long getTokenIdNum() {
     return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
             .map(BytesCapsule::getData)

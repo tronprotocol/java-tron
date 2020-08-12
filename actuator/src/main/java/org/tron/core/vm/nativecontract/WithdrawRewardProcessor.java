@@ -20,10 +20,9 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.ACCOUNT_
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT_NULL;
 
 @Slf4j(topic = "Processor")
-public class WithdrawRewardProcessor implements IContractProcessor {
+public class WithdrawRewardProcessor {
 
-    @Override
-    public boolean execute(Object contract, Repository repository) throws ContractExeException {
+    public long execute(Object contract, Repository repository) throws ContractExeException {
         WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
         byte[] targetAddress = withdrawRewardParam.getTargetAddress();
         AccountCapsule accountCapsule = repository.getAccount(targetAddress);
@@ -43,14 +42,17 @@ public class WithdrawRewardProcessor implements IContractProcessor {
                 .setAllowance(0L)
                 .setLatestWithdrawTime(now)
                 .build());
+        // todo internal tx
         repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
-        return true;
+        return allowance;
     }
 
-    @Override
-    public boolean validate(Object contract, Repository repository) throws ContractValidateException {
+    public void validate(Object contract, Repository repository) throws ContractValidateException {
         if (Objects.isNull(contract)) {
             throw new ContractValidateException(CONTRACT_NULL);
+        }
+        if (repository == null) {
+            throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
         }
         if (!(contract instanceof WithdrawRewardParam)) {
             throw new ContractValidateException(
@@ -58,9 +60,6 @@ public class WithdrawRewardProcessor implements IContractProcessor {
                             .getClass() + "]");
         }
         WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
-        if (repository == null) {
-            throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
-        }
         byte[] targetAddress = withdrawRewardParam.getTargetAddress();
         if (!DecodeUtil.addressValid(targetAddress)) {
             throw new ContractValidateException("Invalid address");
@@ -68,12 +67,12 @@ public class WithdrawRewardProcessor implements IContractProcessor {
         AccountCapsule accountCapsule = repository.getAccount(targetAddress);
         DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
         ContractService contractService = ContractService.getInstance();
+        String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
         if (accountCapsule == null) {
-            String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
             throw new ContractValidateException(
                     ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
         }
-        String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
+
         boolean isGP = CommonParameter.getInstance()
                 .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
                         Arrays.equals(targetAddress, witness.getAddress()));
@@ -102,8 +101,5 @@ public class WithdrawRewardProcessor implements IContractProcessor {
             logger.debug(e.getMessage(), e);
             throw new ContractValidateException(e.getMessage());
         }
-
-        return true;
     }
-
 }

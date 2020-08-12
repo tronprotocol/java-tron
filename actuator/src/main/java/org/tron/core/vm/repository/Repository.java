@@ -136,6 +136,8 @@ public interface Repository {
 
   void saveTokenIdNum(long num);
 
+  long getTokenId();
+
   long getTokenIdNum();
 
   void addTotalNetWeight(long amount);

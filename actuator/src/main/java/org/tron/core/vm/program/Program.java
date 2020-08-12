@@ -1758,31 +1758,25 @@ public class Program {
     }
   }
 
-  public boolean withdrawReward(DataWord targetAddress) {
+  public void withdrawReward() {
     Repository repository = getContractState().newRepositoryChild();
     WithdrawRewardProcessor withdrawRewardContractProcessor = new WithdrawRewardProcessor();
     WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
-    if(targetAddress != null && !targetAddress.isZero()) {
-      withdrawRewardParam.setTargetAddress(targetAddress.getData());
-    }
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    withdrawRewardParam.setTargetAddress(ownerAddress);
     try{
-      if(!withdrawRewardContractProcessor.validate(withdrawRewardParam, repository)) {
-        return false;
-      }
-      if(!withdrawRewardContractProcessor.execute(withdrawRewardParam, repository)) {
-        return false;
-      }
+      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository);
+      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
+      stackPush(new DataWord(allowance));
       repository.commit();
-      return true;
     }catch (ContractValidateException e){
       logger.info("validateForWithdrawReward failure:{}", e.getMessage());
-      return false;
+      stackPushZero();
+      return ;
     }catch (ContractExeException e){
       logger.info("executeForWithdrawReward failure:{}", e.getMessage());
-      return false;
-    }catch (RuntimeException e){
-      logger.error("unstakeProcess unknown exception", e);
-      return false;
+      stackPushZero();
+      return ;
     }
   }
 
@@ -1793,26 +1787,24 @@ public class Program {
     TokenIssueParam tokenIssueParam = new TokenIssueParam();
     tokenIssueParam.setName(name.getNoEndZeroesData());
     tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
-    tokenIssueParam.setTotalSupply(totalSupply.longValue());
-    tokenIssueParam.setPrecision(precision.intValue());
+    tokenIssueParam.setTotalSupply(totalSupply.sValue().longValueExact());
+    tokenIssueParam.setPrecision(precision.sValue().intValueExact());
     tokenIssueParam.setOwnerAddress(ownerAddress);
     try {
       tokenIssueProcessor.validate(tokenIssueParam, repository);
     } catch (ContractValidateException e) {
-      logger.info("validateForAssetIssue failure:{}", e.getMessage());
+      logger.error("validateForAssetIssue failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }
     try {
       tokenIssueProcessor.execute(tokenIssueParam, repository);
     } catch (ContractExeException e) {
-      logger.info("executeForAssetIssue failure:{}", e.getMessage());
+      logger.error("executeForAssetIssue failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }
-    long tokenIdNum = repository.getTokenIdNum();
-    tokenIdNum++;
-    stackPush(new DataWord(tokenIdNum));
+    stackPush(new DataWord(repository.getTokenId()));
     repository.commit();
   }
 
@@ -1833,14 +1825,14 @@ public class Program {
     try {
       updateAssetProcessor.validate(updateAssetParam, repository);
     } catch (ContractValidateException e) {
-      logger.info("validateForUpdateAsset failure:{}", e.getMessage());
+      logger.error("validateForUpdateAsset failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }
     try {
       updateAssetProcessor.execute(updateAssetParam, repository);
     } catch (ContractExeException e) {
-      logger.info("executeForUpdateAsset failure:{}", e.getMessage());
+      logger.error("executeForUpdateAsset failure:{}", e.getMessage());
       stackPushZero();
       return ;
     }

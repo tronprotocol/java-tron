@@ -52,17 +52,12 @@ public class ContractService {
             AccountCapsule account = repository.getAccountVote(beginCycle, address);
             if (account != null) {
                 reward = computeReward(beginCycle, account, repository);
-                try {
-                    adjustAllowance(address, reward, repository);
-                } catch (BalanceInsufficientException e) {
-                    logger.error("withdrawReward error: {},{}", Hex.toHexString(address), address, e);
-                }
+                adjustAllowance(address, reward, repository);
                 reward = 0;
                 logger.info("latest cycle reward {},{}", beginCycle, account.getVotesList());
             }
             beginCycle += 1;
         }
-        //
         endCycle = currentCycle;
         if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
             repository.upRemark(address, endCycle);
@@ -73,11 +68,8 @@ public class ContractService {
             for (long cycle = beginCycle; cycle < endCycle; cycle++) {
                 reward += computeReward(cycle, accountCapsule, repository);
             }
-            try {
-                adjustAllowance(address, reward, repository);
-            } catch (BalanceInsufficientException e) {
-                logger.error("withdrawReward error: {},{}", Hex.toHexString(address), address, e);
-            }
+            adjustAllowance(address, reward, repository);
+
         }
         repository.updateBeginCycle(address, endCycle);
         repository.updateEndCycle(address, endCycle + 1);
@@ -108,19 +100,12 @@ public class ContractService {
         return reward;
     }
 
-    public void adjustAllowance(byte[] address, long amount, Repository repository) throws BalanceInsufficientException {
+    public void adjustAllowance(byte[] address, long amount, Repository repository) {
         if (amount <= 0) {
             return;
         }
         AccountCapsule accountCapsule = repository.getAccount(address);
         long allowance = accountCapsule.getAllowance();
-        if (amount == 0) {
-            return;
-        }
-        if (amount < 0 && allowance < -amount) {
-            throw new BalanceInsufficientException(
-                    StringUtil.createReadableString(address) + " insufficient balance");
-        }
         accountCapsule.setAllowance(allowance + amount);
         repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
     }

@@ -1447,9 +1447,7 @@ public class VM {
         }
         break;
         case WITHDRAWREWARD: {
-          DataWord targetAddress = program.stackPop();
-          boolean result = program.withdrawReward(targetAddress);
-          program.stackPush(new DataWord(result ? 1 : 0));
+          program.withdrawReward();
           program.step();
         }
         case TOKENISSUE: {

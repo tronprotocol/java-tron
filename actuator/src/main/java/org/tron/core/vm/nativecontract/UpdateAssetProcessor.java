@@ -13,40 +13,34 @@ import org.tron.core.vm.repository.Repository;
 import java.util.Objects;
 
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT_NULL;
-import static org.tron.core.vm.nativecontract.ContractProcessorConstant.TOKEN_ISSUE_FEE;
 
-public class UpdateAssetProcessor implements IContractProcessor {
+public class UpdateAssetProcessor {
 
-    @Override
-    public boolean execute(Object contract, Repository repository) throws ContractExeException {
+    public void execute(Object contract, Repository repository) throws ContractExeException {
         UpdateAssetParam updateAssetParam = (UpdateAssetParam) contract;
         AccountCapsule accountCapsule = repository.getAccount(updateAssetParam.getOwnerAddress());
 
         AssetIssueCapsule assetIssueCapsuleV2;
-
         assetIssueCapsuleV2 = repository.getAssetIssue(accountCapsule.getAssetIssuedID().toByteArray());
-
         assetIssueCapsuleV2.setUrl(ByteString.copyFrom(updateAssetParam.getNewUrl()));
         assetIssueCapsuleV2.setDescription(ByteString.copyFrom(updateAssetParam.getNewDesc()));
 
         repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
-        return true;
     }
 
-    @Override
-    public boolean validate(Object contract, Repository repository) throws ContractValidateException {
+    public void validate(Object contract, Repository repository) throws ContractValidateException {
+        if (Objects.isNull(contract)) {
+            throw new ContractValidateException(CONTRACT_NULL);
+        }
+        if (repository == null) {
+            throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
+        }
         if (!(contract instanceof UpdateAssetParam)) {
             throw new ContractValidateException(
                     "contract type error,expected type [TokenIssuedContract],real type[" + contract
                             .getClass() + "]");
         }
         UpdateAssetParam updateAssetParam = (UpdateAssetParam) contract;
-        if (Objects.isNull(updateAssetParam)) {
-            throw new ContractValidateException(CONTRACT_NULL);
-        }
-        if (repository == null) {
-            throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
-        }
         if (!DecodeUtil.addressValid(updateAssetParam.getOwnerAddress())) {
             throw new ContractValidateException("Invalid ownerAddress");
         }
@@ -58,7 +52,6 @@ public class UpdateAssetProcessor implements IContractProcessor {
             if (account.getAssetIssuedName().isEmpty()) {
                 throw new ContractValidateException("Account has not issued any asset");
             }
-
             if (repository.getAssetIssue(account.getAssetIssuedName().toByteArray())
                     == null) {
                 throw new ContractValidateException("Asset is not existed in AssetIssueStore");
@@ -67,21 +60,16 @@ public class UpdateAssetProcessor implements IContractProcessor {
             if (account.getAssetIssuedID().isEmpty()) {
                 throw new ContractValidateException("Account has not issued any asset");
             }
-
             if (repository.getAssetIssue(account.getAssetIssuedID().toByteArray())
                     == null) {
                 throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
             }
         }
-
         if (!TransactionUtil.validUrl(updateAssetParam.getNewUrl())) {
             throw new ContractValidateException("Invalid url");
         }
-
         if (!TransactionUtil.validAssetDescription(updateAssetParam.getNewDesc())) {
             throw new ContractValidateException("Invalid description");
         }
-
-        return true;
     }
 }

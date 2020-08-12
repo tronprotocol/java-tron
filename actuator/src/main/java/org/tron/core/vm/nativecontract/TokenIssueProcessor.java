@@ -14,10 +14,9 @@ import java.util.Objects;
 
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.*;
 
-public class TokenIssueProcessor implements IContractProcessor {
+public class TokenIssueProcessor {
 
-    @Override
-    public boolean execute(Object contract, Repository repository) throws ContractExeException {
+    public void execute(Object contract, Repository repository) throws ContractExeException {
         TokenIssueParam tokenIssueParam = (TokenIssueParam) contract;
         long tokenIdNum = repository.getTokenIdNum();
         tokenIdNum++;
@@ -26,44 +25,37 @@ public class TokenIssueProcessor implements IContractProcessor {
                 Long.toString(tokenIdNum), ByteArray.toStr(tokenIssueParam.getName()),
                 ByteArray.toStr(tokenIssueParam.getAbbr()), tokenIssueParam.getTotalSupply(),
                 tokenIssueParam.getPrecision());
-        AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(tokenIssueParam.getOwnerAddress(),
-                Long.toString(tokenIdNum), ByteArray.toStr(tokenIssueParam.getName()),
-                ByteArray.toStr(tokenIssueParam.getAbbr()), tokenIssueParam.getTotalSupply(),
-                        tokenIssueParam.getPrecision());
-        repository.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        repository.putAssetIssueValue(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
         AccountCapsule accountCapsule = repository.getAccount(tokenIssueParam.getOwnerAddress());
-        accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
-        accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
+        accountCapsule.setAssetIssuedName(assetIssueCapsule.getName().toByteArray());
+        accountCapsule.setAssetIssuedID(ByteArray.fromString(assetIssueCapsule.getId()));
         accountCapsule
-                .addAssetV2(assetIssueCapsuleV2.createDbV2Key(), tokenIssueParam.getTotalSupply());
+                .addAssetV2(assetIssueCapsule.createDbV2Key(), tokenIssueParam.getTotalSupply());
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().build());
-        // spend 1024trx for assetissue
-        accountCapsule.setBalance(accountCapsule.getBalance()-TOKEN_ISSUE_FEE);
+        // spend 1024trx for assetissue, send to blackhole address
+        AccountCapsule bhAccountCapsule = repository.getAccount(repository.getBlackHoleAddress());
+        bhAccountCapsule.setBalance(Math.addExact(bhAccountCapsule.getBalance(), TOKEN_ISSUE_FEE));
+        accountCapsule.setBalance(Math.subtractExact(accountCapsule.getBalance(), TOKEN_ISSUE_FEE));
         repository.updateAccount(tokenIssueParam.getOwnerAddress(), accountCapsule);
         repository.putAccountValue(tokenIssueParam.getOwnerAddress(), accountCapsule);
-        return true;
     }
 
-    @Override
-    public boolean validate(Object contract, Repository repository) throws ContractValidateException {
+    public void validate(Object contract, Repository repository) throws ContractValidateException {
+        if (Objects.isNull(contract)) {
+            throw new ContractValidateException(CONTRACT_NULL);
+        }
         if (!(contract instanceof TokenIssueParam)) {
             throw new ContractValidateException(
                     "contract type error,expected type [TokenIssuedContract],real type[" + contract
                             .getClass() + "]");
         }
         TokenIssueParam tokenIssueParam = (TokenIssueParam) contract;
-        if (Objects.isNull(tokenIssueParam)) {
-            throw new ContractValidateException(CONTRACT_NULL);
-        }
-
         if (repository == null) {
             throw new ContractValidateException(STORE_NOT_EXIST);
         }
-
         if (!DecodeUtil.addressValid(tokenIssueParam.getOwnerAddress())) {
             throw new ContractValidateException("Invalid ownerAddress");
         }
-
         if (!TransactionUtil.validAssetName(tokenIssueParam.getName())) {
             throw new ContractValidateException("Invalid assetName");
         }
@@ -73,29 +65,21 @@ public class TokenIssueProcessor implements IContractProcessor {
         if (tokenIssueParam.getPrecision() < 0 || tokenIssueParam.getPrecision() > 6) {
             throw new ContractValidateException("precision cannot exceed 6");
         }
-
         if (Objects.nonNull(tokenIssueParam.getAbbr()) && !TransactionUtil.validAssetName(tokenIssueParam.getAbbr())) {
             throw new ContractValidateException("Invalid abbreviation for token");
         }
-
         if (tokenIssueParam.getTotalSupply() <= 0) {
             throw new ContractValidateException("TotalSupply must greater than 0!");
         }
-
         AccountCapsule accountCapsule = repository.getAccount(tokenIssueParam.getOwnerAddress());
         if (accountCapsule == null) {
             throw new ContractValidateException("Account not exists");
         }
-        if(accountCapsule.getBalance() < TOKEN_ISSUE_FEE) {
-            throw new ContractValidateException("Account insufficient balance");
-        }
         if (!accountCapsule.getAssetIssuedName().isEmpty()) {
             throw new ContractValidateException("An account can only issue one asset");
         }
-
         if (accountCapsule.getBalance() < repository.getDynamicPropertiesStore().getAssetIssueFee()) {
             throw new ContractValidateException("No enough balance for fee!");
         }
-        return true;
     }
 }
