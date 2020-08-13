@@ -86,11 +86,6 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getAccount(addr);
   }
 
-  @Override
-  public void saveDynamic(byte[] word, BytesCapsule bytesCapsule) {
-    repository.saveDynamic(word, bytesCapsule);
-  }
-
   public BytesCapsule getDynamic(byte[] bytesKey) {
     return repository.getDynamic(bytesKey);
   }
@@ -261,13 +256,8 @@ public class ContractState implements Repository, ProgramListenerAware {
 
   @Override
   public void saveTokenIdNum(long num) {
-    this.saveDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
+    this.updateDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
             new BytesCapsule(ByteArray.fromLong(num)));
-  }
-
-  @Override
-  public long getTokenId() {
-    return repository.getTokenId();
   }
 
   @Override

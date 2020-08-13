@@ -26,9 +26,7 @@ public interface Repository {
 
   AccountCapsule getAccount(byte[] address);
 
-  void saveDynamic(byte[] word, BytesCapsule bytesCapsule);
-
-  BytesCapsule getDynamic(byte[] bytesKey);
+    BytesCapsule getDynamic(byte[] bytesKey);
 
   VotesCapsule getVotesCapsule(byte[] address);
 
@@ -123,8 +121,6 @@ public interface Repository {
   WitnessCapsule getWitnessCapsule(byte[] address);
 
   void saveTokenIdNum(long num);
-
-  long getTokenId();
 
   long getTokenIdNum();
 

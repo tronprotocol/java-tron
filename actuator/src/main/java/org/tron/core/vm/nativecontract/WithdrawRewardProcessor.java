@@ -25,11 +25,11 @@ public class WithdrawRewardProcessor {
     public long execute(Object contract, Repository repository) throws ContractExeException {
         WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
         byte[] targetAddress = withdrawRewardParam.getTargetAddress();
-        AccountCapsule accountCapsule = repository.getAccount(targetAddress);
 
         ContractService contractService = ContractService.getInstance();
         contractService.withdrawReward(targetAddress,repository);
 
+        AccountCapsule accountCapsule = repository.getAccount(targetAddress);
         repository.updateLastWithdrawCycle(targetAddress, repository.getDynamicPropertiesStore().getCurrentCycleNumber()
                 );
 

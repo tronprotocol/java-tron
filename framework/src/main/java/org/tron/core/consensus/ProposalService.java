@@ -226,7 +226,6 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
           break;
         }
-
         default:
           find = false;
           break;

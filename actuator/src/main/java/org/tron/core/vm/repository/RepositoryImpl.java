@@ -194,13 +194,6 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void saveDynamic(byte[] word, BytesCapsule bytesCapsule) {
-    Key key = Key.create(word);
-    Value value = Value.create(bytesCapsule.getData());
-    dynamicPropertiesCache.put(key, value);
-  }
-
-  @Override
   public BytesCapsule getDynamic(byte[] word) {
     Key key = Key.create(word);
     if (dynamicPropertiesCache.containsKey(key)) {
@@ -834,16 +827,8 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void saveTokenIdNum(long num) {
-    this.saveDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
+    this.updateDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
             new BytesCapsule(ByteArray.fromLong(num)));
-  }
-
-  @Override
-  public long getTokenId() {
-    if(this.dynamicPropertiesCache.containsKey(DynamicPropertiesStore.getTOKEN_ID_NUM())) {
-      return ByteArray.toLong(this.dynamicPropertiesCache.get(DynamicPropertiesStore.getTOKEN_ID_NUM()).getBytes().getData());
-    }
-    return getTokenIdNum();
   }
 
   @Override

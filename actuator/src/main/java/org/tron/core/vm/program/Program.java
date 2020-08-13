@@ -1770,7 +1770,7 @@ public class Program {
       stackPushZero();
       return ;
     }
-    stackPush(new DataWord(repository.getTokenId()));
+    stackPush(new DataWord(repository.getTokenIdNum()));
     repository.commit();
   }
 
