@@ -27,7 +27,6 @@ import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
-import org.tron.core.vm.repository.Type;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
 
@@ -330,8 +329,8 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void upRemark(byte[] word, long cycle) {
-    repository.upRemark(word, cycle);
+  public void updateRemark(byte[] word, long cycle) {
+    repository.updateRemark(word, cycle);
   }
 
   @Override

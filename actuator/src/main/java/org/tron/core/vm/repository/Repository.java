@@ -58,7 +58,7 @@ public interface Repository {
 
   void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule);
 
-  void upRemark(byte[] word, long cycle);
+  void updateRemark(byte[] word, long cycle);
 
   void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
 

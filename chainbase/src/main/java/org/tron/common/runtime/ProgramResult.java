@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
@@ -133,12 +134,29 @@ public class ProgramResult {
     return deleteVotes;
   }
 
+  public Set<DataWord> getDeleteDelegation() {
+    if (deleteDelegation == null) {
+      deleteDelegation = new HashSet<>();
+    }
+    return deleteDelegation;
+  }
+
   public void addDeleteAccount(DataWord address) {
     getDeleteAccounts().add(address);
   }
 
   public void addDeleteVotes(DataWord address) {
     getDeleteVotes().add(address);
+  }
+
+  public void addDeleteDelegation(DataWord key) {
+    getDeleteDelegation().add(key);
+  }
+
+  public void addDeleteDelegationByAccount(byte[] address){
+    addDeleteDelegation(new DataWord(address)); //begin Cycle
+    addDeleteDelegation(new DataWord(("lastWithdraw-" + Hex.toHexString(address)).getBytes())); //last Withdraw cycle
+    addDeleteDelegation(new DataWord(("end-" + Hex.toHexString(address)).getBytes())); //end cycle
   }
 
   public void addDeleteAccounts(Set<DataWord> accounts) {
@@ -150,6 +168,12 @@ public class ProgramResult {
   public void addDeleteVotesSet(Set<DataWord> addresses) {
     if (!isEmpty(addresses)) {
       getDeleteVotes().addAll(addresses);
+    }
+  }
+
+  public void addDeleteDelegationSet(Set<DataWord> keys) {
+    if (!isEmpty(keys)) {
+      getDeleteDelegation().addAll(keys);
     }
   }
 
@@ -241,6 +265,7 @@ public class ProgramResult {
   public void reset() {
     getDeleteAccounts().clear();
     getDeleteVotes().clear();
+    getDeleteDelegation().clear();
     getLogInfoList().clear();
     resetFutureRefund();
   }
@@ -250,6 +275,7 @@ public class ProgramResult {
     if (another.getException() == null && !another.isRevert()) {
       addDeleteAccounts(another.getDeleteAccounts());
       addDeleteVotesSet(another.getDeleteVotes());
+      addDeleteDelegationSet(another.getDeleteDelegation());
       addLogInfos(another.getLogInfoList());
       addFutureRefund(another.getFutureRefund());
       addTouchAccounts(another.getTouchedAccounts());
