@@ -30,6 +30,7 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.*;
 import org.tron.core.capsule.*;
+import org.tron.core.config.Parameter;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -518,7 +519,6 @@ public class Program {
 
     ContractService contractService = ContractService.getInstance();
     contractService.withdrawReward(owner, getContractState());
-    contractService.withdrawReward(obtainer, getContractState());
     //todo: Allowance to balance
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
@@ -555,33 +555,54 @@ public class Program {
     return this.contractState;
   }
 
-  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository){
+  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository) {
     AccountCapsule ownerCapsule = repository.getAccount(owner);
-    if(ownerCapsule.getFrozenCount() == 0) {
+    if (ownerCapsule.getFrozenCount() == 0) {
       return;
     }
-    if(!VMConfig.allowTvmVote()){
+    if (!VMConfig.allowTvmVote()) {
       return;
     }
-    //todo obtainer == zero || obtainer == black_hole
-    
-    AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+
     //process owner frozen for self
-    {
+    if (FastByteComparisons.compareTo(obtainer, 0, 20,
+            TransactionTrace.convertToTronAddress(new byte[20]), 0, 20) == 0
+            || FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0
+            || FastByteComparisons.compareTo(obtainer, 0, 20,
+            repository.getBlackHoleAddress(), 0, 20) == 0) {
+      // if obtainer equal zero or black hole or owner
+      byte[] realObtain = obtainer;
+      if(FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0){
+        realObtain = repository.getBlackHoleAddress();
+      }
+      long unfreezeBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+      AccountCapsule realObtainCapsule = repository.getAccount(realObtain);
+      realObtainCapsule.setBalance(realObtainCapsule.getBalance() + unfreezeBalance);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+              .removeFrozen(0).build());
+      repository
+              .addTotalNetWeight(-unfreezeBalance / Parameter.ChainConstant.TRX_PRECISION);
+      repository.updateAccount(realObtain, realObtainCapsule);
+    } else {
+      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
       long now = getTimestamp().longValue();
       long ownerBandwidthBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
       long ownerBandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
       long newBandwidthExpire = ownerBandwidthExpire;
       long newFrozenBalanceForBandwidth = ownerBandwidthBalance;
-      if(obtainCapsule.getFrozenCount() > 0){
+      if (obtainCapsule.getFrozenCount() > 0) {
         long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
         long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
-        newBandwidthExpire = now + (Long.max(0, ownerBandwidthExpire - now) * ownerBandwidthBalance +
-                Long.max(0, obtainBandwidthExpire - now) * obtainBandwidthBalance) /
-                (ownerBandwidthBalance + obtainBandwidthBalance);
+        newBandwidthExpire = now
+                + (Long.max(0, ownerBandwidthExpire - now) * ownerBandwidthBalance
+                + Long.max(0, obtainBandwidthExpire - now) * obtainBandwidthBalance)
+                / (ownerBandwidthBalance + obtainBandwidthBalance);
         newFrozenBalanceForBandwidth = ownerBandwidthBalance + obtainBandwidthBalance;
       }
       obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
+      repository.updateAccount(obtainer, obtainCapsule);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+              .removeFrozen(0).build());
     }
     //vote
     {
@@ -589,39 +610,39 @@ public class Program {
 
       //get owner oldVotes
       List<Protocol.Vote> oldVotes;
-      if(ownerVotesCapsule == null){
+      if (ownerVotesCapsule == null) {
         oldVotes = ownerCapsule.getVotesList();
-      }else{
+      } else {
         oldVotes = ownerVotesCapsule.getOldVotes();
         //delete ownerVotesCapsule
         getResult().addDeleteVotes(new DataWord(owner));
       }
       // merge oldVotes to address(zero)
-      if(!oldVotes.isEmpty()) {
+      if (!oldVotes.isEmpty()) {
         ownerCapsule.clearVotes();
         //merge oldVotes to zero
         byte[] zeroAddress = TransactionTrace.convertToTronAddress(new byte[20]);
         VotesCapsule zeroVotesCapsule = repository.getVotesCapsule(zeroAddress);
-        if(zeroVotesCapsule == null){
+        if (zeroVotesCapsule == null) {
           zeroVotesCapsule = new VotesCapsule(ByteString.copyFrom(zeroAddress), oldVotes);
         } else {
           Map<ByteString, Long> totalOldVotes = oldVotes.stream().collect(
-                  Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+                  Collectors.toMap(
+                          Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
           zeroVotesCapsule.getOldVotes().forEach(vote -> {
-            totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount() +
-                    totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
+            totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount()
+                    + totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
           });
           zeroVotesCapsule.clearOldVotes();
           totalOldVotes.forEach(zeroVotesCapsule::addOldVotes);
         }
-        repository.updateVotesCapsule(obtainer, zeroVotesCapsule);
+        repository.updateVotesCapsule(zeroAddress, zeroVotesCapsule);
       }
     }
 
     //delete delegationStore
     getResult().addDeleteDelegationByAccount(owner);
 
-    repository.updateAccount(obtainer, obtainCapsule);
     repository.updateAccount(owner, ownerCapsule);
   }
 
