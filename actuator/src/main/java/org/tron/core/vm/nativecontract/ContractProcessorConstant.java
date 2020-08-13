@@ -17,4 +17,6 @@ public class ContractProcessorConstant {
     public static final String TRX = "trx";
 
     public static final long TOKEN_ISSUE_FEE = 1024000000;
+
+    public static final int TOKEN_ISSUE_PRECISION = 6;
 }

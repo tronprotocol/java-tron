@@ -73,10 +73,10 @@ public class WithdrawRewardProcessor {
                     ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
         }
 
-        boolean isGP = CommonParameter.getInstance()
+        boolean isGp = CommonParameter.getInstance()
                 .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
                         Arrays.equals(targetAddress, witness.getAddress()));
-        if (isGP) {
+        if (isGp) {
             throw new ContractValidateException(
                     ACCOUNT_EXCEPTION_STR + readableOwnerAddress
                             + "] is a guard representative and is not allowed to withdraw Balance");

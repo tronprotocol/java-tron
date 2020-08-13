@@ -59,10 +59,10 @@ public class TokenIssueProcessor {
         if (!TransactionUtil.validAssetName(tokenIssueParam.getName())) {
             throw new ContractValidateException("Invalid assetName");
         }
-        if ((TRX.equals(tokenIssueParam.getName().toString().toLowerCase()))) {
-            throw new ContractValidateException("assetName can't be trx");
+        if ((TRX.equals(ByteArray.toStr(tokenIssueParam.getName()).toLowerCase()))) {
+            throw new ContractValidateException("assetName can't be trx or null");
         }
-        if (tokenIssueParam.getPrecision() < 0 || tokenIssueParam.getPrecision() > 6) {
+        if (tokenIssueParam.getPrecision() < 0 || tokenIssueParam.getPrecision() > TOKEN_ISSUE_PRECISION) {
             throw new ContractValidateException("precision cannot exceed 6");
         }
         if (Objects.nonNull(tokenIssueParam.getAbbr()) && !TransactionUtil.validAssetName(tokenIssueParam.getAbbr())) {
