@@ -3,9 +3,7 @@ package org.tron.core.vm.nativecontract;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
@@ -60,7 +58,7 @@ public class ContractService {
         }
         endCycle = currentCycle;
         if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
-            repository.upRemark(address, endCycle);
+            repository.updateRemark(address, endCycle);
             repository.updateBeginCycle(address, endCycle + 1);
             return;
         }

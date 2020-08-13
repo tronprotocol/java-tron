@@ -255,7 +255,7 @@ public class RepositoryImpl implements Repository {
     byte[] key = ("end-" + Hex.toHexString(address)).getBytes();
     Key cacheKey = new Key(key);
     BytesCapsule bytesCapsule = getDelegationCache(cacheKey);
-    return bytesCapsule == null ? -1 : ByteArray.toLong(bytesCapsule.getData());
+    return bytesCapsule == null ? DelegationStore.REMARK : ByteArray.toLong(bytesCapsule.getData());
   }
 
   @Override
@@ -371,9 +371,10 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void upRemark(byte[] word, long cycle) {
-    BytesCapsule bytesCapsule = new BytesCapsule(ByteArray.fromLong(cycle));
-    updateDelegation(word, bytesCapsule);
+  public void updateRemark(byte[] word, long cycle) {
+    BytesCapsule bytesCapsule = new BytesCapsule(ByteArray.fromLong(DelegationStore.REMARK));
+    byte[] key = (cycle + "-" + Hex.toHexString(word) + "-remark").getBytes();
+    updateDelegation(key, bytesCapsule);
   }
 
   @Override
@@ -386,7 +387,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public void updateLastWithdrawCycle(byte[] address, long cycle) {
     BytesCapsule bytesCapsule = new BytesCapsule(ByteArray.fromLong(cycle));
-    updateDynamic(address, bytesCapsule);
+    updateDelegation(("lastWithdraw-" + Hex.toHexString(address)).getBytes(), bytesCapsule);
   }
 
   @Override

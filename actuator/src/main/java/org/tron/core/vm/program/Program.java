@@ -563,6 +563,8 @@ public class Program {
     if(!VMConfig.allowTvmVote()){
       return;
     }
+    //todo obtainer == zero || obtainer == black_hole
+    
     AccountCapsule obtainCapsule = repository.getAccount(obtainer);
     //process owner frozen for self
     {
@@ -584,7 +586,6 @@ public class Program {
     //vote
     {
       VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
-      VotesCapsule obtainVotesCapsule = repository.getVotesCapsule(obtainer);
 
       //get owner oldVotes
       List<Protocol.Vote> oldVotes;
@@ -595,30 +596,30 @@ public class Program {
         //delete ownerVotesCapsule
         getResult().addDeleteVotes(new DataWord(owner));
       }
-      ownerCapsule.clearVotes();
-      //merge oldVotes to obtainer
-      Map<ByteString, Long> totalOldVotes = oldVotes.stream().collect(
-              Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
-      if(obtainVotesCapsule != null){
-        obtainVotesCapsule.getOldVotes().forEach(vote -> {
-          totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount() +
-                  totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
-        });
-        obtainVotesCapsule.clearOldVotes();
-        totalOldVotes.forEach(obtainVotesCapsule::addOldVotes);
-
-        repository.updateVotesCapsule(obtainer, obtainVotesCapsule);
-      } else {
-        obtainCapsule.getVotesList().forEach(vote -> {
-          totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount() +
-                  totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
-        });
-        obtainCapsule.clearVotes();
-        totalOldVotes.forEach(obtainCapsule::addVotes);
+      // merge oldVotes to address(zero)
+      if(!oldVotes.isEmpty()) {
+        ownerCapsule.clearVotes();
+        //merge oldVotes to zero
+        byte[] zeroAddress = TransactionTrace.convertToTronAddress(new byte[20]);
+        VotesCapsule zeroVotesCapsule = repository.getVotesCapsule(zeroAddress);
+        if(zeroVotesCapsule == null){
+          zeroVotesCapsule = new VotesCapsule(ByteString.copyFrom(zeroAddress), oldVotes);
+        } else {
+          Map<ByteString, Long> totalOldVotes = oldVotes.stream().collect(
+                  Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+          zeroVotesCapsule.getOldVotes().forEach(vote -> {
+            totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount() +
+                    totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
+          });
+          zeroVotesCapsule.clearOldVotes();
+          totalOldVotes.forEach(zeroVotesCapsule::addOldVotes);
+        }
+        repository.updateVotesCapsule(obtainer, zeroVotesCapsule);
       }
     }
 
-    //todo delete delegationStore
+    //delete delegationStore
+    getResult().addDeleteDelegationByAccount(owner);
 
     repository.updateAccount(obtainer, obtainCapsule);
     repository.updateAccount(owner, ownerCapsule);

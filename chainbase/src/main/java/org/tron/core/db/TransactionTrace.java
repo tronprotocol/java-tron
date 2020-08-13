@@ -66,6 +66,8 @@ public class TransactionTrace {
 
   private VotesStore votesStore;
 
+  private DelegationStore delegationStore;
+
   @Getter
   private TransactionContext transactionContext;
   @Getter
@@ -100,6 +102,7 @@ public class TransactionTrace {
     forkController.init(storeFactory.getChainBaseManager());
 
     this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
+    this.delegationStore = storeFactory.getChainBaseManager().getDelegationStore();
   }
 
   public TransactionCapsule getTrx() {
@@ -193,6 +196,9 @@ public class TransactionTrace {
       }
       for (DataWord votes : transactionContext.getProgramResult().getDeleteVotes()) {
         votesStore.delete(votes.getData());
+      }
+      for (DataWord key : transactionContext.getProgramResult().getDeleteDelegation()) {
+        delegationStore.delete(key.getData());
       }
     }
   }
