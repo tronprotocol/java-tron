@@ -1,5 +1,7 @@
 package org.tron.core.store;
 
+import static org.tron.core.Constant.ONE_YEAR_MS;
+
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Optional;
@@ -151,6 +153,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MARKET_SELL_FEE = "MARKET_SELL_FEE".getBytes();
   private static final byte[] MARKET_CANCEL_FEE = "MARKET_CANCEL_FEE".getBytes();
   private static final byte[] MARKET_QUANTITY_LIMIT = "MARKET_QUANTITY_LIMIT".getBytes();
+
+  private static final byte[] AUTION_END_TIME = "AUTION_END_TIME".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -698,6 +702,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBurnedForRegisterCross();
     } catch (IllegalArgumentException e) {
       this.saveBurnedForRegisterCross();
+    }
+
+    try {
+      this.getAuctionEndTime();
+    } catch (IllegalArgumentException e) {
+      this.saveAuctionEndTime(System.currentTimeMillis() + ONE_YEAR_MS);
     }
 
   }
@@ -2046,6 +2056,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowCrossChain() {
     return getCrossChain() == 1;
+  }
+
+  public void saveAuctionEndTime(long number) {
+    this.put(AUTION_END_TIME,
+            new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getAuctionEndTime() {
+    return Optional.ofNullable(getUnchecked(AUTION_END_TIME))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found AUTION_END_TIME"));
   }
 
   public long getSrListCurrentCycle() {

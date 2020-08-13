@@ -1,15 +1,27 @@
 package org.tron.core.db;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Streams;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.JsonUtil;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 
 @Slf4j
 @Component
 public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
+
+  private static final byte[] PARACHAINS_KEY = "k_parachain".getBytes();
 
   public CrossRevokingStore() {
     super("cross-revoke-database");
@@ -64,22 +76,26 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public byte[] getCrossInfoById(String chainId) {
+  public byte[] getChainInfo(String chainId) {
     return getUnchecked(buildRegisterKey(chainId)).getData();
   }
 
-  public void putCrossInfo(String chainId, byte[] crossInfo) {
+  public void putChainInfo(String chainId, byte[] chainInfo) {
     byte[] key = buildRegisterKey(chainId);
-    this.put(key, new BytesCapsule(crossInfo));
+    this.put(key, new BytesCapsule(chainInfo));
   }
 
   // todo: vote-infos are only stored in the db, but not stored on the chain,
   // can track the details of the withdraw and deposit
-  public void putCrossVote(String chainId, String address, long amount) {
+  public void putChainVote(String chainId, String address, long amount) {
     this.put(buildVoteKey(chainId, address), new BytesCapsule(ByteArray.fromLong(amount)));
   }
 
-  public Long getCrossVote(String chainId, String address) {
+  public void deleteChainVote(String chainId, String address) {
+    this.delete(buildVoteKey(chainId, address));
+  }
+
+  public Long getChainVote(String chainId, String address) {
     BytesCapsule data = getUnchecked(buildVoteKey(chainId, address));
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return ByteArray.toLong(data.getData());
@@ -88,9 +104,53 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  // todo
-  public Long getVoteCountByChainId(String chainId) {
-    return 0L;
+  public void updateTotalChainVote(String chainId, long amount) {
+    BytesCapsule value = getUnchecked(buildVoteChainKey(chainId));
+    if (value != null && !ByteUtil.isNullOrZeroArray(value.getData())) {
+      amount += ByteArray.toLong(value.getData());
+    }
+    put(buildVoteChainKey(chainId), new BytesCapsule(ByteArray.fromLong(amount)));
+  }
+
+  public long getTotalChainVote(String chainId) {
+    BytesCapsule value = getUnchecked(buildVoteChainKey(chainId));
+    if (value != null && !ByteUtil.isNullOrZeroArray(value.getData())) {
+      return ByteArray.toLong(value.getData());
+    } else {
+      return 0L;
+    }
+  }
+
+  public List<Pair<String, Long>> getChainVoteCountList() {
+    return Streams.stream(iterator())
+            .filter(entry -> "voted_".startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+            .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey()).substring(6), ByteArray.toLong(entry.getValue().getData())))
+            .sorted((v1, v2) -> Long.compare(v2.getValue(), v1.getValue()))
+            .collect(Collectors.toList());
+  }
+
+  public List<Pair<String, Long>> getEligibleChainLists() {
+    // todo: 3 should be a variant
+    List<Pair<String, Long>> chainVoteCountList = getChainVoteCountList();
+    if (chainVoteCountList.size() < 3) {
+      return chainVoteCountList;
+    } else {
+      return getChainVoteCountList().subList(0, 3);
+    }
+  }
+
+  public void updateParaChains(List<String> chainIds) {
+    put(PARACHAINS_KEY, new BytesCapsule(JsonUtil.obj2Json(chainIds).getBytes()));
+  }
+
+  public List<String> getParaChainList() {
+    BytesCapsule value = getUnchecked(PARACHAINS_KEY);
+    if (value != null && !ByteUtil.isNullOrZeroArray(value.getData())) {
+      return JsonUtil.json2Obj(ByteArray.toStr(value.getData()),
+              new TypeReference<List<String>>(){});
+    } else {
+      return null;
+    }
   }
 
   private byte[] buildTokenKey(String chainId, String tokenId) {
@@ -111,6 +171,10 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildVoteKey(String chainId, String address) {
     return ("vote_" + chainId + address).getBytes();
+  }
+
+  private byte[] buildVoteChainKey(String chainId) {
+    return ("voted_" + chainId).getBytes();
   }
 
 }

@@ -12,3 +12,8 @@ message VoteCrossContract {
     bytes chain_id = 2;
     int64 amount = 3;
 }
+
+message UnvoteCrossContract {
+    bytes owner_address = 1;
+    bytes chain_id = 2;
+}

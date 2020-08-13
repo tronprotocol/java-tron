@@ -43,7 +43,7 @@ public class CrossUpdateActuator extends AbstractActuator {
       String chainId = updateCrossContract.getCrossChainInfo().getChainId().toString();
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-      crossRevokingStore.putCrossInfo(chainId, updateCrossContract.getCrossChainInfo().toByteArray());
+      crossRevokingStore.putChainInfo(chainId, updateCrossContract.getCrossChainInfo().toByteArray());
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -79,7 +79,7 @@ public class CrossUpdateActuator extends AbstractActuator {
     byte[] chainId = updateCrossContract.getCrossChainInfo().getChainId().toByteArray();
     byte[] ownerAddress = updateCrossContract.getOwnerAddress().toByteArray();
 
-    byte[] crossChainInfoBytes = crossRevokingStore.getCrossInfoById(ByteArray.toStr(chainId));
+    byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(ByteArray.toStr(chainId));
     BalanceContract.CrossChainInfo crossChainInfo = null;
 
     if (crossChainInfoBytes == null) {
