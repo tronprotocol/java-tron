@@ -617,7 +617,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      getTransactionCountByBlockNum(request, responseObserver);
+      getTransactionCountByBlockNumCommon(request, responseObserver);
     }
 
     @Override
@@ -663,7 +663,7 @@ public class RpcApiService implements Service {
     @Override
     public void getBrokerageInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      getBrokerageInfo(request, responseObserver);
+      getBrokerageInfoCommon(request, responseObserver);
     }
 
     @Override
@@ -1544,7 +1544,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      getTransactionCountByBlockNum(request, responseObserver);
+      getTransactionCountByBlockNumCommon(request, responseObserver);
     }
     
     @Override
@@ -2463,7 +2463,7 @@ public class RpcApiService implements Service {
     @Override
     public void getBrokerageInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      getBrokerageInfo(request, responseObserver);
+      getBrokerageInfoCommon(request, responseObserver);
     }
 
     @Override
@@ -2615,7 +2615,7 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
   
-  public void getBrokerageInfo(BytesMessage request,
+  public void getBrokerageInfoCommon(BytesMessage request,
       StreamObserver<NumberMessage> responseObserver) {
     try {
       long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
@@ -2630,7 +2630,7 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
   
-  public void getTransactionCountByBlockNum(NumberMessage request,
+  public void getTransactionCountByBlockNumCommon(NumberMessage request,
       StreamObserver<NumberMessage> responseObserver) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
     try {
