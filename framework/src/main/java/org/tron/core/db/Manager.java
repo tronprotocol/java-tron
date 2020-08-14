@@ -1064,10 +1064,10 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
-        chainBaseManager.getDynamicPropertiesStore())) {
-      throw new ValidateSignatureException("transaction signature validate failed");
-    }
+//    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
+//        chainBaseManager.getDynamicPropertiesStore())) {
+//      throw new ValidateSignatureException("transaction signature validate failed");
+//    }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
