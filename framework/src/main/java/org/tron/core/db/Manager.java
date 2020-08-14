@@ -734,6 +734,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
+    block.getTransactions().forEach(t -> t.setVerified(true));
     processBlock(block);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -1064,10 +1065,10 @@ public class Manager {
 
     validateDup(trxCap);
 
-//    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
-//        chainBaseManager.getDynamicPropertiesStore())) {
-//      throw new ValidateSignatureException("transaction signature validate failed");
-//    }
+    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
+        chainBaseManager.getDynamicPropertiesStore())) {
+      throw new ValidateSignatureException("transaction signature validate failed");
+    }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
