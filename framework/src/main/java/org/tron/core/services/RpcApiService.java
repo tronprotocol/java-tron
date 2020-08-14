@@ -1007,10 +1007,10 @@ public class RpcApiService implements Service {
     @Override
     public void createTransaction2(TransferContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.TransferContract, responseObserver);
+      createTransactionExtension(request, ContractType.TransferContract, responseObserver);
     }
 
-    private void createTransactionExtention(Message request, ContractType contractType,
+    private void createTransactionExtension(Message request, ContractType contractType,
         StreamObserver<TransactionExtention> responseObserver) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
@@ -1237,7 +1237,7 @@ public class RpcApiService implements Service {
     @Override
     public void createAssetIssue2(AssetIssueContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.AssetIssueContract, responseObserver);
+      createTransactionExtension(request, ContractType.AssetIssueContract, responseObserver);
     }
 
     @Override
@@ -1256,7 +1256,7 @@ public class RpcApiService implements Service {
     @Override
     public void unfreezeAsset2(UnfreezeAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.UnfreezeAssetContract, responseObserver);
+      createTransactionExtension(request, ContractType.UnfreezeAssetContract, responseObserver);
     }
 
     //refactor、test later
@@ -1304,27 +1304,27 @@ public class RpcApiService implements Service {
     @Override
     public void voteWitnessAccount2(VoteWitnessContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.VoteWitnessContract, responseObserver);
+      createTransactionExtension(request, ContractType.VoteWitnessContract, responseObserver);
     }
 
     @Override
     public void updateSetting(UpdateSettingContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.UpdateSettingContract,
+      createTransactionExtension(request, ContractType.UpdateSettingContract,
           responseObserver);
     }
 
     @Override
     public void updateEnergyLimit(UpdateEnergyLimitContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.UpdateEnergyLimitContract,
+      createTransactionExtension(request, ContractType.UpdateEnergyLimitContract,
           responseObserver);
     }
 
     @Override
     public void clearContractABI(ClearABIContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ClearABIContract,
+      createTransactionExtension(request, ContractType.ClearABIContract,
           responseObserver);
     }
 
@@ -1345,7 +1345,7 @@ public class RpcApiService implements Service {
     @Override
     public void createWitness2(WitnessCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.WitnessCreateContract, responseObserver);
+      createTransactionExtension(request, ContractType.WitnessCreateContract, responseObserver);
     }
 
     @Override
@@ -1365,7 +1365,7 @@ public class RpcApiService implements Service {
     @Override
     public void createAccount2(AccountCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.AccountCreateContract, responseObserver);
+      createTransactionExtension(request, ContractType.AccountCreateContract, responseObserver);
     }
 
     @Override
@@ -1385,7 +1385,7 @@ public class RpcApiService implements Service {
     @Override
     public void updateWitness2(WitnessUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.WitnessUpdateContract, responseObserver);
+      createTransactionExtension(request, ContractType.WitnessUpdateContract, responseObserver);
     }
 
     @Override
@@ -1419,7 +1419,7 @@ public class RpcApiService implements Service {
     @Override
     public void updateAccount2(AccountUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.AccountUpdateContract, responseObserver);
+      createTransactionExtension(request, ContractType.AccountUpdateContract, responseObserver);
     }
 
     @Override
@@ -1440,7 +1440,7 @@ public class RpcApiService implements Service {
     @Override
     public void updateAsset2(UpdateAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.UpdateAssetContract, responseObserver);
+      createTransactionExtension(request, ContractType.UpdateAssetContract, responseObserver);
     }
 
     @Override
@@ -1460,7 +1460,7 @@ public class RpcApiService implements Service {
     @Override
     public void freezeBalance2(FreezeBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.FreezeBalanceContract, responseObserver);
+      createTransactionExtension(request, ContractType.FreezeBalanceContract, responseObserver);
     }
 
     @Override
@@ -1481,7 +1481,7 @@ public class RpcApiService implements Service {
     @Override
     public void unfreezeBalance2(UnfreezeBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.UnfreezeBalanceContract, responseObserver);
+      createTransactionExtension(request, ContractType.UnfreezeBalanceContract, responseObserver);
     }
 
     @Override
@@ -1502,51 +1502,51 @@ public class RpcApiService implements Service {
     @Override
     public void withdrawBalance2(WithdrawBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.WithdrawBalanceContract, responseObserver);
+      createTransactionExtension(request, ContractType.WithdrawBalanceContract, responseObserver);
     }
 
     @Override
     public void proposalCreate(ProposalCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ProposalCreateContract, responseObserver);
+      createTransactionExtension(request, ContractType.ProposalCreateContract, responseObserver);
     }
 
 
     @Override
     public void proposalApprove(ProposalApproveContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ProposalApproveContract, responseObserver);
+      createTransactionExtension(request, ContractType.ProposalApproveContract, responseObserver);
     }
 
     @Override
     public void proposalDelete(ProposalDeleteContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
+      createTransactionExtension(request, ContractType.ProposalDeleteContract, responseObserver);
     }
 
     @Override
     public void exchangeCreate(ExchangeCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ExchangeCreateContract, responseObserver);
+      createTransactionExtension(request, ContractType.ExchangeCreateContract, responseObserver);
     }
 
 
     @Override
     public void exchangeInject(ExchangeInjectContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ExchangeInjectContract, responseObserver);
+      createTransactionExtension(request, ContractType.ExchangeInjectContract, responseObserver);
     }
 
     @Override
     public void exchangeWithdraw(ExchangeWithdrawContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ExchangeWithdrawContract, responseObserver);
+      createTransactionExtension(request, ContractType.ExchangeWithdrawContract, responseObserver);
     }
 
     @Override
     public void exchangeTransaction(ExchangeTransactionContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ExchangeTransactionContract,
+      createTransactionExtension(request, ContractType.ExchangeTransactionContract,
           responseObserver);
     }
 
@@ -1635,7 +1635,7 @@ public class RpcApiService implements Service {
     @Override
     public void transferAsset2(TransferAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.TransferAssetContract, responseObserver);
+      createTransactionExtension(request, ContractType.TransferAssetContract, responseObserver);
     }
 
     @Override
@@ -1656,7 +1656,7 @@ public class RpcApiService implements Service {
     @Override
     public void participateAssetIssue2(ParticipateAssetIssueContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ParticipateAssetIssueContract,
+      createTransactionExtension(request, ContractType.ParticipateAssetIssueContract,
           responseObserver);
     }
 
@@ -1851,7 +1851,7 @@ public class RpcApiService implements Service {
     @Override
     public void deployContract(CreateSmartContract request,
         io.grpc.stub.StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.CreateSmartContract, responseObserver);
+      createTransactionExtension(request, ContractType.CreateSmartContract, responseObserver);
     }
 
     public void totalTransaction(EmptyMessage request,
@@ -2044,7 +2044,7 @@ public class RpcApiService implements Service {
     @Override
     public void accountPermissionUpdate(AccountPermissionUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.AccountPermissionUpdateContract,
+      createTransactionExtension(request, ContractType.AccountPermissionUpdateContract,
           responseObserver);
     }
 
@@ -2543,7 +2543,7 @@ public class RpcApiService implements Service {
     @Override
     public void updateBrokerage(UpdateBrokerageContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.UpdateBrokerageContract,
+      createTransactionExtension(request, ContractType.UpdateBrokerageContract,
           responseObserver);
     }
 
@@ -2551,7 +2551,7 @@ public class RpcApiService implements Service {
     public void createCommonTransaction(Transaction request,
         StreamObserver<TransactionExtention> responseObserver) {
       Transaction.Contract contract = request.getRawData().getContract(0);
-      createTransactionExtention(contract.getParameter(), contract.getType(),
+      createTransactionExtension(contract.getParameter(), contract.getType(),
           responseObserver);
     }
 
@@ -2570,14 +2570,14 @@ public class RpcApiService implements Service {
     @Override
     public void marketSellAsset(MarketSellAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.MarketSellAssetContract,
+      createTransactionExtension(request, ContractType.MarketSellAssetContract,
           responseObserver);
     }
 
     @Override
     public void marketCancelOrder(MarketCancelOrderContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.MarketCancelOrderContract, responseObserver);
+      createTransactionExtension(request, ContractType.MarketCancelOrderContract, responseObserver);
     }
 
     @Override
