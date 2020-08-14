@@ -158,12 +158,12 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static String printTransactionExtension(TransactionExtention transactionExtension,
+  public static String printTransactionExtention(TransactionExtention transactionExtention,
       boolean selfType) {
-    String string = JsonFormat.printToString(transactionExtension, selfType);
+    String string = JsonFormat.printToString(transactionExtention, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
-    if (transactionExtension.getResult().getResult()) {
-      JSONObject transactionObject = printTransactionToJSON(transactionExtension.getTransaction(),
+    if (transactionExtention.getResult().getResult()) {
+      JSONObject transactionObject = printTransactionToJSON(transactionExtention.getTransaction(),
           selfType);
       transactionObject.put(VISIBLE, selfType);
       jsonObject.put(TRANSACTION, transactionObject);
