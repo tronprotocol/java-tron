@@ -173,21 +173,23 @@ public class Util {
 
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,
       boolean selfType) {
-    return printTransactionExt(transactionSignWeight, selfType);
+    String string = JsonFormat.printToString(transactionSignWeight, selfType);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
+    jsonObjectExt.put(TRANSACTION,
+        printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(), selfType));
+    jsonObject.put(TRANSACTION, jsonObjectExt);
+    return jsonObject.toJSONString();
   }
 
   public static String printTransactionApprovedList(TransactionApprovedList transactionApprovedList,
       boolean selfType) {
-    return printTransactionExt(transactionApprovedList, selfType);
-  }
-  
-  public static String printTransactionExt(GeneratedMessageV3 transactionExt, boolean selfType) {
-    String string = JsonFormat.printToString(transactionExt, selfType);
+    String string = JsonFormat.printToString(transactionApprovedList, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
     jsonObjectExt.put(TRANSACTION,
-            printTransactionToJSON(transactionExt.getTransaction().getTransaction(),
-                    selfType));
+        printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction(),
+            selfType));
     jsonObject.put(TRANSACTION, jsonObjectExt);
     return jsonObject.toJSONString();
   }
