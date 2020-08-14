@@ -5,13 +5,13 @@ import lombok.Data;
 @Data
 public class TokenIssueParam {
 
-    byte[] ownerAddress;
+    private byte[] ownerAddress;
 
-    byte[] name;
+    private byte[] name;
 
-    byte[] abbr;
+    private byte[] abbr;
 
-    long totalSupply;
+    private long totalSupply;
 
-    int precision;
+    private int precision;
 }

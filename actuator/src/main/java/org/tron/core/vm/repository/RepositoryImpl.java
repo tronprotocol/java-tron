@@ -37,9 +37,7 @@ public class RepositoryImpl implements Repository {
   private long precision = Parameter.ChainConstant.PRECISION;
   private long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
           BLOCK_PRODUCED_INTERVAL;
-  private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
-  private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
 
   private StoreFactory storeFactory;
   @Getter
@@ -767,7 +765,7 @@ public class RepositoryImpl implements Repository {
   }
 
   private void commitVotesCache(Repository deposit) {
-    votesCache.forEach((((key, value) -> {
+    votesCache.forEach(((key, value) -> {
       if(value.getType().isDirty() || value.getType().isCreate()) {
         if(deposit != null) {
           deposit.putVotesCapsule(key, value);
@@ -775,7 +773,7 @@ public class RepositoryImpl implements Repository {
           getVotesStore().put(key.getData(), value.getVotes());
         }
       }
-    })));
+    }));
   }
 
   private void commitAssetIssue(Repository deposit) {

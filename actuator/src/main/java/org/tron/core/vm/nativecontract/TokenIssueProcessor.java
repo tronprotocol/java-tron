@@ -4,7 +4,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.nativecontract.param.TokenIssueParam;
@@ -16,7 +15,7 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.*;
 
 public class TokenIssueProcessor {
 
-    public void execute(Object contract, Repository repository) throws ContractExeException {
+    public void execute(Object contract, Repository repository) {
         TokenIssueParam tokenIssueParam = (TokenIssueParam) contract;
         long tokenIdNum = repository.getTokenIdNum();
         tokenIdNum++;
@@ -59,7 +58,7 @@ public class TokenIssueProcessor {
         if (!TransactionUtil.validAssetName(tokenIssueParam.getName())) {
             throw new ContractValidateException("Invalid assetName");
         }
-        if ((TRX.equals(ByteArray.toStr(tokenIssueParam.getName()).toLowerCase()))) {
+        if ((TRX.equalsIgnoreCase(ByteArray.toStr(tokenIssueParam.getName())))) {
             throw new ContractValidateException("assetName can't be trx or null");
         }
         if (tokenIssueParam.getPrecision() < 0 || tokenIssueParam.getPrecision() > TOKEN_ISSUE_PRECISION) {

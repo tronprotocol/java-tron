@@ -6,7 +6,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
@@ -22,7 +21,7 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT
 @Slf4j(topic = "Processor")
 public class WithdrawRewardProcessor {
 
-    public long execute(Object contract, Repository repository) throws ContractExeException {
+    public long execute(Object contract, Repository repository) {
         WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
         byte[] targetAddress = withdrawRewardParam.getTargetAddress();
 

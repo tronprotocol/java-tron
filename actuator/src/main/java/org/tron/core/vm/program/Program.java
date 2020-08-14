@@ -1741,9 +1741,6 @@ public class Program {
     }catch (ContractValidateException e){
       logger.error("validateForWithdrawReward failure:{}", e.getMessage());
       stackPushZero();
-    }catch (ContractExeException e){
-      logger.error("executeForWithdrawReward failure:{}", e.getMessage());
-      stackPushZero();
     }
   }
 
@@ -1759,20 +1756,13 @@ public class Program {
     tokenIssueParam.setOwnerAddress(ownerAddress);
     try {
       tokenIssueProcessor.validate(tokenIssueParam, repository);
+      tokenIssueProcessor.execute(tokenIssueParam, repository);
+      stackPush(new DataWord(repository.getTokenIdNum()));
+      repository.commit();
     } catch (ContractValidateException e) {
       logger.error("validateForAssetIssue failure:{}", e.getMessage());
       stackPushZero();
-      return ;
     }
-    try {
-      tokenIssueProcessor.execute(tokenIssueParam, repository);
-    } catch (ContractExeException e) {
-      logger.error("executeForAssetIssue failure:{}", e.getMessage());
-      stackPushZero();
-      return ;
-    }
-    stackPush(new DataWord(repository.getTokenIdNum()));
-    repository.commit();
   }
 
   public void updateAsset(DataWord urlDataOffs, DataWord descriptionDataOffs) {
@@ -1791,20 +1781,13 @@ public class Program {
     UpdateAssetProcessor updateAssetProcessor = new UpdateAssetProcessor();
     try {
       updateAssetProcessor.validate(updateAssetParam, repository);
+      updateAssetProcessor.execute(updateAssetParam, repository);
+      stackPushOne();
+      repository.commit();
     } catch (ContractValidateException e) {
       logger.error("validateForUpdateAsset failure:{}", e.getMessage());
       stackPushZero();
-      return ;
     }
-    try {
-      updateAssetProcessor.execute(updateAssetParam, repository);
-    } catch (ContractExeException e) {
-      logger.error("executeForUpdateAsset failure:{}", e.getMessage());
-      stackPushZero();
-      return ;
-    }
-    stackPushOne();
-    repository.commit();
   }
 
   /**

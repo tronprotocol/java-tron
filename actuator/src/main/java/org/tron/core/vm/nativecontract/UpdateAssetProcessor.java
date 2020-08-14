@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.nativecontract.param.UpdateAssetParam;
@@ -16,7 +15,7 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT
 
 public class UpdateAssetProcessor {
 
-    public void execute(Object contract, Repository repository) throws ContractExeException {
+    public void execute(Object contract, Repository repository) {
         UpdateAssetParam updateAssetParam = (UpdateAssetParam) contract;
         AccountCapsule accountCapsule = repository.getAccount(updateAssetParam.getOwnerAddress());
 

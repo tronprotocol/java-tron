@@ -5,9 +5,9 @@ import lombok.Data;
 @Data
 public class UpdateAssetParam {
 
-    byte[] ownerAddress;
+    private byte[] ownerAddress;
 
-    byte[] newUrl;
+    private byte[] newUrl;
 
-    byte[] newDesc;
+    private byte[] newDesc;
 }
