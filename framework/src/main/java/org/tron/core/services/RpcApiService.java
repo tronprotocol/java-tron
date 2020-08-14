@@ -651,7 +651,7 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-       generateAddressCommon(request, responseObserver);
+      generateAddressCommon(request, responseObserver);
     }
 
     @Override
