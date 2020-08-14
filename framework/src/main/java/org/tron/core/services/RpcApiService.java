@@ -1007,10 +1007,10 @@ public class RpcApiService implements Service {
     @Override
     public void createTransaction2(TransferContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.TransferContract, responseObserver);
+      createTransactionExtention(request, ContractType.TransferContract, responseObserver);
     }
 
-    private void createTransactionExtension(Message request, ContractType contractType,
+    private void createTransactionExtention(Message request, ContractType contractType,
         StreamObserver<TransactionExtention> responseObserver) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
@@ -1237,7 +1237,7 @@ public class RpcApiService implements Service {
     @Override
     public void createAssetIssue2(AssetIssueContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.AssetIssueContract, responseObserver);
+      createTransactionExtention(request, ContractType.AssetIssueContract, responseObserver);
     }
 
     @Override
@@ -1256,7 +1256,7 @@ public class RpcApiService implements Service {
     @Override
     public void unfreezeAsset2(UnfreezeAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.UnfreezeAssetContract, responseObserver);
+      createTransactionExtention(request, ContractType.UnfreezeAssetContract, responseObserver);
     }
 
     //refactor、test later
@@ -1304,27 +1304,27 @@ public class RpcApiService implements Service {
     @Override
     public void voteWitnessAccount2(VoteWitnessContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.VoteWitnessContract, responseObserver);
+      createTransactionExtention(request, ContractType.VoteWitnessContract, responseObserver);
     }
 
     @Override
     public void updateSetting(UpdateSettingContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.UpdateSettingContract,
+      createTransactionExtention(request, ContractType.UpdateSettingContract,
           responseObserver);
     }
 
     @Override
     public void updateEnergyLimit(UpdateEnergyLimitContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.UpdateEnergyLimitContract,
+      createTransactionExtention(request, ContractType.UpdateEnergyLimitContract,
           responseObserver);
     }
 
     @Override
     public void clearContractABI(ClearABIContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ClearABIContract,
+      createTransactionExtention(request, ContractType.ClearABIContract,
           responseObserver);
     }
 
@@ -1345,7 +1345,7 @@ public class RpcApiService implements Service {
     @Override
     public void createWitness2(WitnessCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.WitnessCreateContract, responseObserver);
+      createTransactionExtention(request, ContractType.WitnessCreateContract, responseObserver);
     }
 
     @Override
@@ -1365,7 +1365,7 @@ public class RpcApiService implements Service {
     @Override
     public void createAccount2(AccountCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.AccountCreateContract, responseObserver);
+      createTransactionExtention(request, ContractType.AccountCreateContract, responseObserver);
     }
 
     @Override
@@ -1385,7 +1385,7 @@ public class RpcApiService implements Service {
     @Override
     public void updateWitness2(WitnessUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.WitnessUpdateContract, responseObserver);
+      createTransactionExtention(request, ContractType.WitnessUpdateContract, responseObserver);
     }
 
     @Override
@@ -1419,7 +1419,7 @@ public class RpcApiService implements Service {
     @Override
     public void updateAccount2(AccountUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.AccountUpdateContract, responseObserver);
+      createTransactionExtention(request, ContractType.AccountUpdateContract, responseObserver);
     }
 
     @Override
@@ -1440,7 +1440,7 @@ public class RpcApiService implements Service {
     @Override
     public void updateAsset2(UpdateAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.UpdateAssetContract, responseObserver);
+      createTransactionExtention(request, ContractType.UpdateAssetContract, responseObserver);
     }
 
     @Override
@@ -1460,7 +1460,7 @@ public class RpcApiService implements Service {
     @Override
     public void freezeBalance2(FreezeBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.FreezeBalanceContract, responseObserver);
+      createTransactionExtention(request, ContractType.FreezeBalanceContract, responseObserver);
     }
 
     @Override
@@ -1481,7 +1481,7 @@ public class RpcApiService implements Service {
     @Override
     public void unfreezeBalance2(UnfreezeBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.UnfreezeBalanceContract, responseObserver);
+      createTransactionExtention(request, ContractType.UnfreezeBalanceContract, responseObserver);
     }
 
     @Override
@@ -1502,51 +1502,51 @@ public class RpcApiService implements Service {
     @Override
     public void withdrawBalance2(WithdrawBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.WithdrawBalanceContract, responseObserver);
+      createTransactionExtention(request, ContractType.WithdrawBalanceContract, responseObserver);
     }
 
     @Override
     public void proposalCreate(ProposalCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ProposalCreateContract, responseObserver);
+      createTransactionExtention(request, ContractType.ProposalCreateContract, responseObserver);
     }
 
 
     @Override
     public void proposalApprove(ProposalApproveContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ProposalApproveContract, responseObserver);
+      createTransactionExtention(request, ContractType.ProposalApproveContract, responseObserver);
     }
 
     @Override
     public void proposalDelete(ProposalDeleteContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ProposalDeleteContract, responseObserver);
+      createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
 
     @Override
     public void exchangeCreate(ExchangeCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ExchangeCreateContract, responseObserver);
+      createTransactionExtention(request, ContractType.ExchangeCreateContract, responseObserver);
     }
 
 
     @Override
     public void exchangeInject(ExchangeInjectContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ExchangeInjectContract, responseObserver);
+      createTransactionExtention(request, ContractType.ExchangeInjectContract, responseObserver);
     }
 
     @Override
     public void exchangeWithdraw(ExchangeWithdrawContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ExchangeWithdrawContract, responseObserver);
+      createTransactionExtention(request, ContractType.ExchangeWithdrawContract, responseObserver);
     }
 
     @Override
     public void exchangeTransaction(ExchangeTransactionContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ExchangeTransactionContract,
+      createTransactionExtention(request, ContractType.ExchangeTransactionContract,
           responseObserver);
     }
 
@@ -1575,21 +1575,6 @@ public class RpcApiService implements Service {
         StreamObserver<BlockExtention> responseObserver) {
       Block block = wallet.getBlockByNum(request.getNum());
       responseObserver.onNext(block2Extention(block));
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionCountByBlockNum(NumberMessage request,
-        StreamObserver<NumberMessage> responseObserver) {
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      try {
-        Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
-        builder.setNum(block.getTransactionsCount());
-      } catch (StoreException e) {
-        logger.error(e.getMessage());
-        builder.setNum(-1);
-      }
-      responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
 
@@ -1635,7 +1620,7 @@ public class RpcApiService implements Service {
     @Override
     public void transferAsset2(TransferAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.TransferAssetContract, responseObserver);
+      createTransactionExtention(request, ContractType.TransferAssetContract, responseObserver);
     }
 
     @Override
@@ -1656,7 +1641,7 @@ public class RpcApiService implements Service {
     @Override
     public void participateAssetIssue2(ParticipateAssetIssueContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.ParticipateAssetIssueContract,
+      createTransactionExtention(request, ContractType.ParticipateAssetIssueContract,
           responseObserver);
     }
 
@@ -1851,7 +1836,7 @@ public class RpcApiService implements Service {
     @Override
     public void deployContract(CreateSmartContract request,
         io.grpc.stub.StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.CreateSmartContract, responseObserver);
+      createTransactionExtention(request, ContractType.CreateSmartContract, responseObserver);
     }
 
     public void totalTransaction(EmptyMessage request,
@@ -2002,22 +1987,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void generateAddress(EmptyMessage request,
-        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-          Args.getInstance().isECKeyCryptoEngine());
-      byte[] priKey = cryptoEngine.getPrivateKey();
-      byte[] address = cryptoEngine.getAddress();
-      String addressStr = StringUtil.encode58Check(address);
-      String priKeyStr = Hex.encodeHexString(priKey);
-      AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
-      builder.setAddress(addressStr);
-      builder.setPrivateKey(priKeyStr);
-      responseObserver.onNext(builder.build());
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void getTransactionInfoById(BytesMessage request,
         StreamObserver<TransactionInfo> responseObserver) {
       ByteString id = request.getValue();
@@ -2044,7 +2013,7 @@ public class RpcApiService implements Service {
     @Override
     public void accountPermissionUpdate(AccountPermissionUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.AccountPermissionUpdateContract,
+      createTransactionExtention(request, ContractType.AccountPermissionUpdateContract,
           responseObserver);
     }
 
@@ -2511,39 +2480,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getRewardInfo(BytesMessage request,
-        StreamObserver<NumberMessage> responseObserver) {
-      try {
-        long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
-        NumberMessage.Builder builder = NumberMessage.newBuilder();
-        builder.setNum(value);
-        responseObserver.onNext(builder.build());
-      } catch (Exception e) {
-        responseObserver.onError(e);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getBrokerageInfo(BytesMessage request,
-        StreamObserver<NumberMessage> responseObserver) {
-      try {
-        long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
-        long value = dbManager.getDelegationStore()
-            .getBrokerage(cycle, request.getValue().toByteArray());
-        NumberMessage.Builder builder = NumberMessage.newBuilder();
-        builder.setNum(value);
-        responseObserver.onNext(builder.build());
-      } catch (Exception e) {
-        responseObserver.onError(e);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void updateBrokerage(UpdateBrokerageContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.UpdateBrokerageContract,
+      createTransactionExtention(request, ContractType.UpdateBrokerageContract,
           responseObserver);
     }
 
@@ -2551,7 +2490,7 @@ public class RpcApiService implements Service {
     public void createCommonTransaction(Transaction request,
         StreamObserver<TransactionExtention> responseObserver) {
       Transaction.Contract contract = request.getRawData().getContract(0);
-      createTransactionExtension(contract.getParameter(), contract.getType(),
+      createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);
     }
 
@@ -2570,14 +2509,14 @@ public class RpcApiService implements Service {
     @Override
     public void marketSellAsset(MarketSellAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.MarketSellAssetContract,
+      createTransactionExtention(request, ContractType.MarketSellAssetContract,
           responseObserver);
     }
 
     @Override
     public void marketCancelOrder(MarketCancelOrderContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtension(request, ContractType.MarketCancelOrderContract, responseObserver);
+      createTransactionExtention(request, ContractType.MarketCancelOrderContract, responseObserver);
     }
 
     @Override
