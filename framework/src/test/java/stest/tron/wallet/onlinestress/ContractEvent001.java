@@ -286,7 +286,7 @@ public class ContractEvent001 {
   }
 
   @Test(enabled = true)
-  public void test2221ContractEventAndLog() {
+  public void testSingForHex() {
     try {
       SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray
           .fromHexString("6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC"),
