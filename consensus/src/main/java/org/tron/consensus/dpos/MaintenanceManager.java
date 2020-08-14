@@ -158,14 +158,15 @@ public class MaintenanceManager {
     }
 
     // update parachains
-    if (dynamicPropertiesStore.getAuctionEndTime() < System.currentTimeMillis()) {
+    long currentBlockHeaderTimestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+    if (dynamicPropertiesStore.getAuctionEndTime() < currentBlockHeaderTimestamp) {
       // 1. update parachains
       CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
       List<Pair<String, Long>> eligibleChainLists = crossRevokingStore.getEligibleChainLists();
       List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey).collect(Collectors.toList());
       crossRevokingStore.updateParaChains(chainIds);
       // 2. set next auction time, default: 1 years later
-      dynamicPropertiesStore.saveAuctionEndTime(System.currentTimeMillis() + ONE_YEAR_MS);
+      dynamicPropertiesStore.saveAuctionEndTime(currentBlockHeaderTimestamp + ONE_YEAR_MS);
     }
   }
 
