@@ -100,6 +100,6 @@ public class TriggerSmartContractServlet extends RateLimiterServlet {
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
     }
     trxExtBuilder.setResult(retBuilder);
-    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible));
+    response.getWriter().println(Util.printTransactionExtension(trxExtBuilder.build(), visible));
   }
 }
