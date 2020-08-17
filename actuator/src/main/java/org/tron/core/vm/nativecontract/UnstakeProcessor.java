@@ -21,8 +21,6 @@ public class UnstakeProcessor {
       throws ContractExeException {
     byte[] ownerAddress = unstakeParam.getOwnerAddress();
 
-    DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
-
     ContractService contractService = ContractService.getInstance();
     contractService.withdrawReward(ownerAddress, repository);
 
@@ -31,24 +29,23 @@ public class UnstakeProcessor {
 
     long unfreezeBalance = accountCapsule.getFrozenList().get(0).getFrozenBalance();
 
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-        .setBalance(oldBalance + unfreezeBalance)
-        .removeFrozen(0).build());
-
-    dynamicStore
-        .addTotalNetWeight(-unfreezeBalance / ChainConstant.TRX_PRECISION);
-
     VotesCapsule votesCapsule = repository.getVotesCapsule(ownerAddress);
     if (votesCapsule == null) {
       votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
-          accountCapsule.getVotesList());
+              accountCapsule.getVotesList());
     }
-    accountCapsule.clearVotes();
-    votesCapsule.clearNewVotes();
 
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+        .setBalance(oldBalance + unfreezeBalance)
+        .removeFrozen(0).build());
+    accountCapsule.clearVotes();
     repository.updateAccount(ownerAddress, accountCapsule);
 
+    votesCapsule.clearNewVotes();
     repository.updateVotesCapsule(ownerAddress, votesCapsule);
+
+    repository
+            .addTotalNetWeight(-unfreezeBalance / ChainConstant.TRX_PRECISION);
   }
 
   public void validate(UnstakeParam unstakeParam, Repository repository)

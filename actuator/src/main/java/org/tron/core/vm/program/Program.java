@@ -507,6 +507,9 @@ public class Program {
 
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
+
+    withdrawRewardToBalance(owner, getContractState());
+
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -516,10 +519,6 @@ public class Program {
     }
 
     increaseNonce();
-
-    ContractService contractService = ContractService.getInstance();
-    contractService.withdrawReward(owner, getContractState());
-    //todo: Allowance to balance
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
         getContractState().getAccount(owner).getAssetMapV2());
@@ -549,18 +548,38 @@ public class Program {
     }
     suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
     getResult().addDeleteAccount(this.getContractAddress());
+    //delete delegationStore
+    getResult().addDeleteDelegation(this.getContractAddress());
   }
 
   public Repository getContractState() {
     return this.contractState;
   }
 
+  private void withdrawRewardToBalance(byte[] owner, Repository repository){
+    ContractService contractService = ContractService.getInstance();
+    contractService.withdrawReward(owner, getContractState());
+    AccountCapsule accountCapsule = repository.getAccount(owner);
+    long oldBalance = accountCapsule.getBalance();
+    long allowance = accountCapsule.getAllowance();
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .setBalance(oldBalance + allowance)
+            .setAllowance(0L)
+            .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
+            .build());
+    // todo internal tx
+    repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Transfer withdraw allowance to balance {}", allowance);
+    }
+  }
+
   private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository) {
-    AccountCapsule ownerCapsule = repository.getAccount(owner);
-    if (ownerCapsule.getFrozenCount() == 0) {
+    if (!VMConfig.allowTvmVote()) {
       return;
     }
-    if (!VMConfig.allowTvmVote()) {
+    AccountCapsule ownerCapsule = repository.getAccount(owner);
+    if (ownerCapsule.getFrozenCount() == 0) {
       return;
     }
 
@@ -572,7 +591,7 @@ public class Program {
             repository.getBlackHoleAddress(), 0, 20) == 0) {
       // if obtainer equal zero or black hole or owner
       byte[] realObtain = obtainer;
-      if(FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0){
+      if(FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
         realObtain = repository.getBlackHoleAddress();
       }
       long unfreezeBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
@@ -580,12 +599,12 @@ public class Program {
       realObtainCapsule.setBalance(realObtainCapsule.getBalance() + unfreezeBalance);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
               .removeFrozen(0).build());
+      repository.updateAccount(realObtain, realObtainCapsule);
       repository
               .addTotalNetWeight(-unfreezeBalance / Parameter.ChainConstant.TRX_PRECISION);
-      repository.updateAccount(realObtain, realObtainCapsule);
     } else {
       AccountCapsule obtainCapsule = repository.getAccount(obtainer);
-      long now = getTimestamp().longValue();
+      long now = getTimestamp().longValue() * 1000;
       long ownerBandwidthBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
       long ownerBandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
       long newBandwidthExpire = ownerBandwidthExpire;
@@ -594,10 +613,14 @@ public class Program {
         long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
         long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
         newBandwidthExpire = now
-                + (Long.max(0, ownerBandwidthExpire - now) * ownerBandwidthBalance
-                + Long.max(0, obtainBandwidthExpire - now) * obtainBandwidthBalance)
-                / (ownerBandwidthBalance + obtainBandwidthBalance);
-        newFrozenBalanceForBandwidth = ownerBandwidthBalance + obtainBandwidthBalance;
+                + BigInteger.valueOf(Long.max(0, ownerBandwidthExpire - now))
+                .multiply(BigInteger.valueOf(ownerBandwidthBalance))
+                .add(BigInteger.valueOf(Long.max(0, obtainBandwidthExpire - now))
+                        .multiply(BigInteger.valueOf(obtainBandwidthBalance)))
+                .divide(BigInteger.valueOf(
+                        Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance)))
+                .longValue();
+        newFrozenBalanceForBandwidth = Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance);
       }
       obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
       repository.updateAccount(obtainer, obtainCapsule);
@@ -615,7 +638,7 @@ public class Program {
       } else {
         oldVotes = ownerVotesCapsule.getOldVotes();
         //delete ownerVotesCapsule
-        getResult().addDeleteVotes(new DataWord(owner));
+        getResult().addDeleteVotes(this.getContractAddress());
       }
       // merge oldVotes to address(zero)
       if (!oldVotes.isEmpty()) {
@@ -639,9 +662,6 @@ public class Program {
         repository.updateVotesCapsule(zeroAddress, zeroVotesCapsule);
       }
     }
-
-    //delete delegationStore
-    getResult().addDeleteDelegationByAccount(owner);
 
     repository.updateAccount(owner, ownerCapsule);
   }
@@ -1711,12 +1731,9 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     stakeParam.setOwnerAddress(owner);
     stakeParam.setSrAddress(TransactionTrace.convertToTronAddress(srAddress.getLast20Bytes()));
-    if (stakeAmount.bytesOccupied() > 8) {
-      logger.error("validateForStake failure: stake amount bigger than long max value");
-      return false;
-    }
-    stakeParam.setStakeAmount(stakeAmount.longValue());
+    stakeParam.setNow(getTimestamp().longValue() * 1000);
     try {
+      stakeParam.setStakeAmount(stakeAmount.sValue().longValueExact());
       stakeProcessor.process(stakeParam, repository);
       repository.commit();
       return true;
@@ -1724,6 +1741,8 @@ public class Program {
       logger.error("validateForStake failure:{}", e.getMessage());
     } catch (ContractExeException e) {
       logger.error("executeForStake failure:{}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("stakeAmount out of long range");
     }
     return false;
   }
@@ -1734,7 +1753,7 @@ public class Program {
     UnstakeParam unstakeParam = new UnstakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     unstakeParam.setOwnerAddress(owner);
-    unstakeParam.setNow(getTimestamp().longValue());
+    unstakeParam.setNow(getTimestamp().longValue() * 1000);
     try {
       unstakeProcessor.validate(unstakeParam, repository);
       unstakeProcessor.execute(unstakeParam, repository);

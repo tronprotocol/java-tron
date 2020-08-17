@@ -32,7 +32,7 @@ public class StakeProcessor {
     if (freezeBalance > 0) {
       long frozenDuration = repository.getDynamicPropertiesStore().getMinFrozenTime();
       validateFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, repository);
-      executeFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, repository);
+      executeFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, stakeParam.getNow(), repository);
     }
     long voteCount = stakeParam.getStakeAmount() / ChainConstant.TRX_PRECISION;
     Protocol.Vote vote = Protocol.Vote.newBuilder()
@@ -129,12 +129,11 @@ public class StakeProcessor {
   }
 
   private void executeFreeze(byte[] ownerAddress, long frozenDuration,
-                             long frozenBalance, Repository repository)
+                             long frozenBalance, long now, Repository repository)
       throws ContractExeException {
     DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
     AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
 
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
     long duration = frozenDuration * ChainConstant.FROZEN_PERIOD;
 
     long newBalance = accountCapsule.getBalance() - frozenBalance;
@@ -143,21 +142,21 @@ public class StakeProcessor {
     long newFrozenBalanceForBandwidth =
         frozenBalance + accountCapsule.getFrozenBalance();
     accountCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, expireTime);
-    repository
-        .addTotalNetWeight(frozenBalance / ChainConstant.TRX_PRECISION);
 
     accountCapsule.setBalance(newBalance);
     repository.updateAccount(accountCapsule.createDbKey(), accountCapsule);
+    repository
+            .addTotalNetWeight(frozenBalance / ChainConstant.TRX_PRECISION);
   }
 
   private void executeVote(byte[] ownerAddress, Protocol.Vote vote, Repository repository)
       throws ContractExeException {
-    AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
     VotesCapsule votesCapsule;
 
     ContractService contractService = ContractService.getInstance();
     contractService.withdrawReward(ownerAddress, repository);
 
+    AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
     if (repository.getVotesCapsule(ownerAddress) == null) {
       votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
           accountCapsule.getVotesList());
