@@ -43,10 +43,10 @@ public class CrossChainMsgProcess {
           crossHeaderMsgProcess.handleInventory(peer, msg);
           break;
         case SR_LIST:
-//          blockHeaderSyncHandler.handleSrList(peer, msg);
+          //blockHeaderSyncHandler.handleSrList(peer, msg);
           break;
         case EPOCH_MESSAGE:
-//          blockHeaderSyncHandler.handleEpoch(peer, msg);
+          //blockHeaderSyncHandler.handleEpoch(peer, msg);
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }

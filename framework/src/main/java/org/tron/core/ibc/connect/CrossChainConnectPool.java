@@ -54,7 +54,7 @@ public class CrossChainConnectPool {
 
     logExecutor.scheduleAtFixedRate(() -> {
       try {
-//        writeCrossNode();
+        //writeCrossNode();
         logActivePeers();
       } catch (Throwable t) {
         logger.error("CrossChainConnectPool Exception in sync worker", t);

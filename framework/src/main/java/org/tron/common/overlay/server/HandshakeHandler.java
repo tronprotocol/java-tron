@@ -120,7 +120,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(), chainBaseManager.getHeadBlockId(), false);
+        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
+        chainBaseManager.getHeadBlockId(), false);
     fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);

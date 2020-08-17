@@ -16,14 +16,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.CrossChain.VoteCrossContract;
+import org.tron.protos.contract.CrossChain.UnvoteCrossContract;
 
 @Slf4j(topic = "actuator")
-public class VoteCrossActuator extends AbstractActuator {
+public class UnvoteCrossActuator extends AbstractActuator {
 
 
-  public VoteCrossActuator() {
-    super(ContractType.VoteCrossContract, VoteCrossContract.class);
+  public UnvoteCrossActuator() {
+    super(ContractType.UnvoteCrossContract, UnvoteCrossContract.class);
   }
 
   @Override
@@ -35,16 +35,15 @@ public class VoteCrossActuator extends AbstractActuator {
 
     long fee = calcFee();
     try {
-      VoteCrossContract voteCrossContract = any.unpack(VoteCrossContract.class);
+      UnvoteCrossContract voteCrossContract = any.unpack(UnvoteCrossContract.class);
       AccountStore accountStore = chainBaseManager.getAccountStore();
       CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
       String chainId = voteCrossContract.getChainId().toString();
-      long amount = voteCrossContract.getAmount();
       byte[] address = voteCrossContract.getOwnerAddress().toByteArray();
       long voted = crossRevokingStore.getChainVote(chainId, ByteArray.toHexString(address));
-      Commons.adjustBalance(accountStore, address, -amount);
-      crossRevokingStore.putChainVote(chainId, ByteArray.toHexString(address), voted + amount);
-      crossRevokingStore.updateTotalChainVote(chainId, amount);
+      Commons.adjustBalance(accountStore, address, voted);
+      crossRevokingStore.deleteChainVote(chainId, ByteArray.toHexString(address));
+      crossRevokingStore.updateTotalChainVote(chainId, -voted);
 
       Commons.adjustBalance(accountStore, address, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
@@ -67,37 +66,31 @@ public class VoteCrossActuator extends AbstractActuator {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    if (!this.any.is(VoteCrossContract.class)) {
+    if (!this.any.is(UnvoteCrossContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [VoteCrossContract], real type[" + any
               .getClass() + "]");
     }
-    final VoteCrossContract contract;
+    final UnvoteCrossContract contract;
     try {
-      contract = this.any.unpack(VoteCrossContract.class);
+      contract = this.any.unpack(UnvoteCrossContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
     String chainId = contract.getChainId().toString();
-    long amount = contract.getAmount();
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
-    }
-    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-    if (accountCapsule.getBalance() - amount < 0) {
-      throw new ContractValidateException(
-              "Validate VoteCrossContract error, balance is not sufficient.");
     }
 
     String readableOwnerAddress = ByteArray.toHexString(ownerAddress);
     long voteCountBefore = crossRevokingStore.getChainVote(chainId, readableOwnerAddress);
 
-    if (voteCountBefore + amount < 0) {
+    if (voteCountBefore == 0) {
       throw new ContractValidateException(
-          "the amount for revoke is larger than the vote count.");
+          "this address has not voted for this chain.");
     }
 
     return true;
@@ -105,7 +98,7 @@ public class VoteCrossActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(VoteCrossContract.class).getOwnerAddress();
+    return any.unpack(UnvoteCrossContract.class).getOwnerAddress();
   }
 
   @Override

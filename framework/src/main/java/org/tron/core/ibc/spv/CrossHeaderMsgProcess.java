@@ -102,7 +102,7 @@ public class CrossHeaderMsgProcess {
     long localLatestHeight = chainBaseManager.getCommonDataBase()
         .getLatestHeaderBlockNum(chainIdStr);
     if (noticeMessage.getCurrentBlockHeight() - localLatestHeight <= 1
-        && noticeMessage.getCurrentBlockHeight() - localLatestHeight >= 0) {//
+        && noticeMessage.getCurrentBlockHeight() - localLatestHeight >= 0) {
       syncDisabledMap.put(chainIdStr, true);
       sendHeaderNumCache.invalidate(chainIdStr);
       headerManager.pushBlockHeader(noticeMessage.getSignedBlockHeader());
@@ -110,7 +110,8 @@ public class CrossHeaderMsgProcess {
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
       missBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
-    } else {//sync
+    } else {
+      //sync
       syncDisabledMap.put(chainIdStr, false);
     }
     //notice local node
@@ -129,8 +130,8 @@ public class CrossHeaderMsgProcess {
     long blockHeight = requestMessage.getBlockHeight();
     long currentBlockheight = chainBaseManager.getCommonDataBase().getLatestPbftBlockNum();
 
-    logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, "
-        , peer, chainIdString, blockHeight, currentBlockheight);
+    logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, ",
+            peer, chainIdString, blockHeight, currentBlockheight);
     List<SignedBlockHeader> blockHeaders = new ArrayList<>();
     if (currentBlockheight > blockHeight) {
       long height = blockHeight + 1;
@@ -149,9 +150,8 @@ public class CrossHeaderMsgProcess {
         setSrList(builder, chainIdString, blockHeaderCapsule.getTimeStamp());
         blockHeaders.add(builder.build());
       }
-
-    } else {//todo
-
+    } else {
+      //todo
     }
     BlockHeaderInventoryMesasge inventoryMesasge =
         new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);
@@ -163,7 +163,8 @@ public class CrossHeaderMsgProcess {
     List<SignedBlockHeader> blockHeaders = blockHeaderInventoryMesasge.getBlockHeaders();
     String chainIdStr = ByteArray.toHexString(blockHeaderInventoryMesasge.getChainId());
     Long sendHeight = sendHeaderNumCache.getIfPresent(chainIdStr);
-    if (CollectionUtils.isEmpty(blockHeaders)) {//todo
+    if (CollectionUtils.isEmpty(blockHeaders)) {
+      //todo
       syncFailPeerSet.add(peer);
       sendHeaderNumCache.invalidate(chainIdStr);
       return;

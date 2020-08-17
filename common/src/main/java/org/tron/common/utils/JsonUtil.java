@@ -1,5 +1,6 @@
 package org.tron.common.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.util.StringUtils;
 
@@ -10,6 +11,19 @@ public class JsonUtil {
       try {
         ObjectMapper om = new ObjectMapper();
         return om.readValue(jsonString, clazz);
+      } catch (Exception var3) {
+        throw new RuntimeException(var3);
+      }
+    } else {
+      return null;
+    }
+  }
+
+  public static final <T> T json2Obj(String jsonString, TypeReference<T> valueTypeRef) {
+    if (!StringUtils.isEmpty(jsonString) && valueTypeRef != null) {
+      try {
+        ObjectMapper om = new ObjectMapper();
+        return om.readValue(jsonString, valueTypeRef);
       } catch (Exception var3) {
         throw new RuntimeException(var3);
       }

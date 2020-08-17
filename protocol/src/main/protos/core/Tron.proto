@@ -346,6 +346,7 @@ message Transaction {
       RegisterCrossContract = 55;
       UpdateCrossContract = 56;
       VoteCrossContract = 57;
+      UnvoteCrossContract = 58;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

@@ -980,6 +980,7 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.RegisterCrossContract
           || contractType == ContractType.UpdateCrossContract
           || contractType == ContractType.VoteCrossContract
+          || contractType == ContractType.UnvoteCrossContract
           ) {
         continue;
       }
@@ -1013,6 +1014,7 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.RegisterCrossContract
           || contractType == ContractType.UpdateCrossContract
           || contractType == ContractType.VoteCrossContract
+          || contractType == ContractType.UnvoteCrossContract
           ) {
         continue;
       }
@@ -1038,7 +1040,8 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.CrossContract
           || contractType == ContractType.RegisterCrossContract
           || contractType == ContractType.UpdateCrossContract
-          || contractType == ContractType.VoteCrossContract) {
+          || contractType == ContractType.VoteCrossContract
+          || contractType == ContractType.UnvoteCrossContract) {
         continue;
       }
       int id = contractType.getNumber();
@@ -1064,7 +1067,8 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.CrossContract
           || contractType == ContractType.RegisterCrossContract
           || contractType == ContractType.UpdateCrossContract
-          || contractType == ContractType.VoteCrossContract) {
+          || contractType == ContractType.VoteCrossContract
+          || contractType == ContractType.UnvoteCrossContract) {
         continue;
       }
       int id = contractType.getNumber();

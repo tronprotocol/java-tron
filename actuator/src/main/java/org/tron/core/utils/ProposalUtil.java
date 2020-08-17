@@ -1,6 +1,7 @@
 package org.tron.core.utils;
 
 import org.tron.common.utils.ForkController;
+import org.tron.common.utils.Time;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
@@ -377,6 +378,25 @@ public class ProposalUtil {
         }
         break;
       }
+      case AUCTION_END_TIME: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException("Bad chain parameter id [AUCTION_END_TIME]");
+        }
+        if (!dynamicPropertiesStore.allowCrossChain()) {
+          throw new ContractValidateException(
+                  "CrossChain is not activated, can not set auction end time");
+        }
+        // check value is a Timestamp and make sure the timestamp is greater than now()
+        if (value < System.currentTimeMillis()) {
+          throw new ContractValidateException(
+                  "Bad AUCTION_END_TIME parameter value, value must greater than current timestamp.");
+        }
+//        if (value > MAX_TIMESTAMP) {
+//          throw new ContractValidateException(
+//                  "Bad AUCTION_END_TIME parameter value, value is too large.");
+//        }
+        break;
+      }
       default:
         break;
     }
@@ -424,7 +444,8 @@ public class ProposalUtil {
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
     ALLOW_PBFT(47),// 1,47
-    CROSS_CHAIN(48);
+    CROSS_CHAIN(48),
+    AUCTION_END_TIME(49); // timestamp
 
     private long code;
 

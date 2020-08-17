@@ -161,11 +161,11 @@ public class CreateCommonTransactionTest {
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
             .usePlaintext(true)
             .build());
-//    NumberMessage.Builder builder = NumberMessage.newBuilder();
-//    builder.setNum(0);
-//    System.out.println(new Sha256Hash
-//        (0, Sha256Hash.of(walletStub.getBlockByNum(builder.build()).getBlockHeader().getRawData()
-//            .toByteArray())));
+    //NumberMessage.Builder builder = NumberMessage.newBuilder();
+    //builder.setNum(0);
+    //System.out.println(new Sha256Hash
+    //    (0, Sha256Hash.of(walletStub.getBlockByNum(builder.build()).getBlockHeader().getRawData()
+    //        .toByteArray())));
     Account.Builder account = Account.newBuilder();
     account.setAddress(owner);
     System.out.println(walletStub.getAccount(account.build()));
@@ -204,12 +204,12 @@ public class CreateCommonTransactionTest {
   }
 
   public static void main(String[] args) {
-//    testCreateUpdateBrokerageContract();
-//    testCrossTx();
-//    testFalseCrossTxBack();
-//    testRightCrossTxBack();
+    //testCreateUpdateBrokerageContract();
+    //testCrossTx();
+    //testFalseCrossTxBack();
+    //testRightCrossTxBack();
     query();
-//    createAsset("testCross111");
+    //createAsset("testCross111");
   }
 
 }

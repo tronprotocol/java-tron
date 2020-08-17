@@ -768,6 +768,9 @@ service Wallet {
   rpc VoteCross (VoteCrossContract) returns (TransactionExtention) {
   };
 
+  rpc UnvoteCross (UnvoteCrossContract) returns (TransactionExtention) {
+  };
+
   // TODO: the data structure of PARAM and RETURN need to be discussed
   rpc GetVoteCrossList (BytesMessage) returns (VoteCrossList) {
   };

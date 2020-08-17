@@ -1,10 +1,7 @@
 package org.tron.core.actuator;
 
-import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -47,7 +44,7 @@ public class CrossRegisterActuator extends AbstractActuator {
       long burn = dynamicStore.getBurnedForRegisterCross();
       Commons.adjustBalance(accountStore, ownerAddress, -burn);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), burn);
-      crossRevokingStore.putCrossInfo(chainId, registerCrossContract.getCrossChainInfo().toByteArray());
+      crossRevokingStore.putChainInfo(chainId, registerCrossContract.getCrossChainInfo().toByteArray());
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -85,7 +82,7 @@ public class CrossRegisterActuator extends AbstractActuator {
     byte[] ownerAddress = registerCrossContract.getOwnerAddress().toByteArray();
 
     // check chain_id is exist
-    if (crossRevokingStore.getCrossInfoById(ByteArray.toStr(chainId)) != null) {
+    if (crossRevokingStore.getChainInfo(ByteArray.toStr(chainId)) != null) {
       throw new ContractValidateException("ChainId has already been registered!");
     }
 

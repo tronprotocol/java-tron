@@ -1,6 +1,7 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.common.utils.WalletUtil.getAddressStringList;
+import static org.tron.core.Constant.ONE_YEAR_MS;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -9,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -16,12 +18,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Pair;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
@@ -151,6 +155,18 @@ public class MaintenanceManager {
             delegationStore.getBrokerage(witness.createDbKey()));
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
+    }
+
+    // update parachains
+    long currentBlockHeaderTimestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+    if (dynamicPropertiesStore.getAuctionEndTime() < currentBlockHeaderTimestamp) {
+      // 1. update parachains
+      CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
+      List<Pair<String, Long>> eligibleChainLists = crossRevokingStore.getEligibleChainLists();
+      List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey).collect(Collectors.toList());
+      crossRevokingStore.updateParaChains(chainIds);
+      // 2. set next auction time, default: 1 years later
+      dynamicPropertiesStore.saveAuctionEndTime(currentBlockHeaderTimestamp + ONE_YEAR_MS);
     }
   }
 

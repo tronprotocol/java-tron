@@ -43,6 +43,9 @@ public class Constant {
   public static final int ZC_DIVERSIFIER_SIZE = 11;
   public static final int ZC_OUTPUT_DESC_MAX_SIZE = 10;
 
+  // time
+  public static final long ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000L; // ms
+
 
   /**
    * normal transaction is 0 representing normal transaction unexecuted deferred transaction is 1
