@@ -129,12 +129,12 @@ public class EventQuery003 {
 
       if (message != null) {
         transactionMessage = new String(message);
-        if (!transactionMessage.equals("contractEventTrigger")) {
+        if (!transactionMessage.equals("contractEventTrigger") && !transactionMessage.isEmpty()) {
           break;
         }
       }
     }
-
+    Assert.assertTrue(retryTimes > 0);
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
@@ -182,12 +182,12 @@ public class EventQuery003 {
 
         transactionMessage = new String(message);
         logger.info("transaction message:" + transactionMessage);
-        if (!transactionMessage.equals("solidityEventTrigger")) {
+        if (!transactionMessage.equals("solidityEventTrigger") && !transactionMessage.isEmpty()) {
           break;
         }
       }
     }
-
+    Assert.assertTrue(retryTimes > 0);
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
