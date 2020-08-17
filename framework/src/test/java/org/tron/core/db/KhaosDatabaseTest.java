@@ -174,7 +174,10 @@ public class KhaosDatabaseTest {
               block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()));
       Assert.assertEquals(forkB, result2.getKey());
       Assert.assertEquals(forkA, result2.getValue());
-    } catch (UnLinkedBlockException | BadNumberBlockException | NonCommonBlockException | BlockNotInMainForkException e) {
+    } catch (UnLinkedBlockException
+            | BadNumberBlockException
+            | NonCommonBlockException
+            | BlockNotInMainForkException e) {
       System.out.println(e.getMessage());
     }
   }

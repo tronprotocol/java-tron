@@ -41,8 +41,8 @@ public class LocalHeaderMsgProcess {
     long currentBlockheight = chainBaseManager.getCommonDataBase()
         .getLatestHeaderBlockNum(chainIdString);
 
-    logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, "
-        , peer, chainIdString, blockHeight, currentBlockheight);
+    logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, ",
+            peer, chainIdString, blockHeight, currentBlockheight);
     List<SignedBlockHeader> blockHeaders = new ArrayList<>();
     if (currentBlockheight > blockHeight) {
       long height = blockHeight + 1;
@@ -63,8 +63,8 @@ public class LocalHeaderMsgProcess {
         setSrList(builder, chainIdString, blockHeaderCapsule.getTimeStamp());
         blockHeaders.add(builder.build());
       }
-    } else {//todo
-
+    } else {
+      //todo
     }
     BlockHeaderInventoryMesasge inventoryMesasge =
         new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);

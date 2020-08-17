@@ -1438,7 +1438,8 @@ public class Manager {
     session.reset();
 
     logger.info(
-        "Generate block success, pendingCount: {}, repushCount: {}, postponedCount: {}, crossCount: {}",
+        "Generate block success, pendingCount: {}," +
+                " repushCount: {}, postponedCount: {}, crossCount: {}",
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount,
         crossTxQueue.size());
 
@@ -1585,7 +1586,17 @@ public class Manager {
 
   private void processTx(BlockCapsule block, TransactionRetCapsule transationRetCapsule,
       TransactionCapsule transactionCapsule)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
+      throws ValidateSignatureException,
+          ContractValidateException,
+          ContractExeException,
+          AccountResourceInsufficientException,
+          TransactionExpirationException,
+          TooBigTransactionException,
+          TooBigTransactionResultException,
+          DupTransactionException,
+          TaposException,
+          ReceiptCheckErrException,
+          VMIllegalException {
     transactionCapsule.setBlockNum(block.getNum());
     if (block.generatedByMyself) {
       transactionCapsule.setVerified(true);

@@ -30,6 +30,7 @@ public class SRLMessage extends TronMessage {
     raw = Protocol.PBFTMessage.Raw.parseFrom(this.dataSign.getData());
     srl = Protocol.SRL.parseFrom(raw.getData());
   }
+
   public long getEpoch() {
     return raw.getEpoch();
   }

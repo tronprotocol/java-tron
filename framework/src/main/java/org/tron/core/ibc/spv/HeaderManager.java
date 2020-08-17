@@ -63,7 +63,7 @@ public class HeaderManager {
 
   public synchronized void pushBlockHeader(SignedBlockHeader signedBlockHeader)
       throws BadBlockException, ValidateSignatureException, InvalidProtocolBufferException {
-//    isExist(header);
+    //isExist(header);
     boolean validBlock = false;
     BlockHeaderCapsule header = new BlockHeaderCapsule(signedBlockHeader.getBlockHeader());
     String chainId = header.getChainId();
