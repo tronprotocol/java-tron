@@ -204,8 +204,16 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
         .setUrl(newUrl).build();
   }
 
+  public ByteString getUrl() {
+    return this.assetIssueContract.getUrl();
+  }
+
   public void setDescription(ByteString description) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setDescription(description).build();
+  }
+
+  public ByteString getDesc() {
+    return this.assetIssueContract.getDescription();
   }
 }

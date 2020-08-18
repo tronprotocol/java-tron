@@ -47,22 +47,12 @@ public class UpdateAssetProcessor {
         if (account == null) {
             throw new ContractValidateException("Account does not exist");
         }
-        if (repository.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-            if (account.getAssetIssuedName().isEmpty()) {
-                throw new ContractValidateException("Account has not issued any asset");
-            }
-            if (repository.getAssetIssue(account.getAssetIssuedName().toByteArray())
-                    == null) {
-                throw new ContractValidateException("Asset is not existed in AssetIssueStore");
-            }
-        } else {
-            if (account.getAssetIssuedID().isEmpty()) {
-                throw new ContractValidateException("Account has not issued any asset");
-            }
-            if (repository.getAssetIssue(account.getAssetIssuedID().toByteArray())
-                    == null) {
-                throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
-            }
+        if (account.getAssetIssuedID().isEmpty()) {
+            throw new ContractValidateException("Account has not issued any asset");
+        }
+        if (repository.getAssetIssue(account.getAssetIssuedID().toByteArray())
+                == null) {
+            throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
         }
         if (!TransactionUtil.validUrl(updateAssetParam.getNewUrl())) {
             throw new ContractValidateException("Invalid url");
