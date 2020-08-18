@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import static org.tron.core.services.http.PostParams.S_VALUE;
+
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -25,12 +27,12 @@ public class CreateAddressServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      String input = request.getParameter("value");
+      String input = request.getParameter(S_VALUE);
       if (visible) {
         input = Util.getHexString(input);
       }
       JSONObject jsonObject = new JSONObject();
-      jsonObject.put("value", input);
+      jsonObject.put(S_VALUE, input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
       fillResponse(build.getValue(), response);
@@ -58,8 +60,8 @@ public class CreateAddressServlet extends RateLimiterServlet {
 
   private String covertStringToHex(String input) {
     JSONObject jsonObject = JSONObject.parseObject(input);
-    String value = jsonObject.getString("value");
-    jsonObject.put("value", Util.getHexString(value));
+    String value = jsonObject.getString(S_VALUE);
+    jsonObject.put(S_VALUE, Util.getHexString(value));
     return jsonObject.toJSONString();
   }
 
@@ -69,7 +71,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
     String hexString = ByteArray.toHexString(address);
     JSONObject jsonAddress = new JSONObject();
     jsonAddress.put("base58checkAddress", base58check);
-    jsonAddress.put("value", hexString);
+    jsonAddress.put(S_VALUE, hexString);
     response.getWriter().println(jsonAddress.toJSONString());
   }
 }
