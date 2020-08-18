@@ -45,7 +45,7 @@ public class WithdrawRewardProcessor {
         return allowance;
     }
 
-    public void validate(Object contract, Repository repository) throws ContractValidateException {
+    public void validate(Object contract, Repository repository, long now) throws ContractValidateException {
         if (Objects.isNull(contract)) {
             throw new ContractValidateException(CONTRACT_NULL);
         }
@@ -81,7 +81,6 @@ public class WithdrawRewardProcessor {
         }
 
         long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
-        long now = dynamicStore.getLatestBlockHeaderTimestamp();
         long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * FROZEN_PERIOD;
 
         if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
