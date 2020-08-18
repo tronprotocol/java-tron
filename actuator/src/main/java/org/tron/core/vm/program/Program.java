@@ -582,9 +582,6 @@ public class Program {
     if (ownerCapsule.getFrozenCount() == 0) {
       return;
     }
-    if(!VMConfig.allowTvmStake()){
-      return;
-    }
 
     //process owner frozen for self
     if (FastByteComparisons.compareTo(obtainer, 0, 20,
