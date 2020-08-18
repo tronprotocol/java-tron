@@ -7,4 +7,5 @@ public class StakeParam {
     private byte[] ownerAddress;
     private byte[] srAddress;
     private long stakeAmount;
+    private long now;
 }

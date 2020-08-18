@@ -329,7 +329,8 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_STAKE: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0_1)) {
+          // todo ,version
+          if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TVM_STAKE]");
         }
@@ -340,6 +341,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_ASSET_ISSUE: {
+        // todo ,version
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TVM_ASSET_ISSUE]");

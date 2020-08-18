@@ -194,11 +194,11 @@ public class TransactionTrace {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
       }
-      for (DataWord votes : transactionContext.getProgramResult().getDeleteVotes()) {
-        votesStore.delete(votes.getData());
+      for (DataWord address : transactionContext.getProgramResult().getDeleteVotes()) {
+        votesStore.delete(convertToTronAddress((address.getLast20Bytes())));
       }
-      for (DataWord key : transactionContext.getProgramResult().getDeleteDelegation()) {
-        delegationStore.delete(key.getData());
+      for (DataWord address : transactionContext.getProgramResult().getDeleteDelegation()) {
+        deleteDelegationByAddress(convertToTronAddress((address.getLast20Bytes())));
       }
     }
   }
@@ -307,6 +307,12 @@ public class TransactionTrace {
       address = newAddress;
     }
     return address;
+  }
+
+  public void deleteDelegationByAddress(byte[] address){
+    delegationStore.delete(address); //begin Cycle
+    delegationStore.delete(("lastWithdraw-" + Hex.toHexString(address)).getBytes()); //last Withdraw cycle
+    delegationStore.delete(("end-" + Hex.toHexString(address)).getBytes()); //end cycle
   }
 
 

@@ -149,14 +149,8 @@ public class ProgramResult {
     getDeleteVotes().add(address);
   }
 
-  public void addDeleteDelegation(DataWord key) {
-    getDeleteDelegation().add(key);
-  }
-
-  public void addDeleteDelegationByAccount(byte[] address){
-    addDeleteDelegation(new DataWord(address)); //begin Cycle
-    addDeleteDelegation(new DataWord(("lastWithdraw-" + Hex.toHexString(address)).getBytes())); //last Withdraw cycle
-    addDeleteDelegation(new DataWord(("end-" + Hex.toHexString(address)).getBytes())); //end cycle
+  public void addDeleteDelegation(DataWord address) {
+    getDeleteDelegation().add(address);
   }
 
   public void addDeleteAccounts(Set<DataWord> accounts) {
@@ -171,9 +165,9 @@ public class ProgramResult {
     }
   }
 
-  public void addDeleteDelegationSet(Set<DataWord> keys) {
-    if (!isEmpty(keys)) {
-      getDeleteDelegation().addAll(keys);
+  public void addDeleteDelegationSet(Set<DataWord> addresses) {
+    if (!isEmpty(addresses)) {
+      getDeleteDelegation().addAll(addresses);
     }
   }
 
