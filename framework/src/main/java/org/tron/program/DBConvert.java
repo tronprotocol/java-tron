@@ -217,7 +217,7 @@ public class DBConvert {
     try {
       level = newLevelDb(srcDbPath);
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error("{}", e);
     }
 
     FileUtil.createDirIfNotExists(dstDir);
