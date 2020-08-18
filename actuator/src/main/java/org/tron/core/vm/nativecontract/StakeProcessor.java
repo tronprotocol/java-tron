@@ -67,22 +67,7 @@ public class StakeProcessor {
   private void validateFreeze(byte[] ownerAddress, long frozenDuration,
                               long frozenBalance, Repository repository)
       throws ContractValidateException {
-    if (repository == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
-    }
-
-    DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
-
-    if (!DecodeUtil.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalid address");
-    }
-
     AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
-    if (accountCapsule == null) {
-      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-      throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
-    }
 
     if (frozenBalance <= 0) {
       throw new ContractValidateException("frozenBalance must be positive");
@@ -102,20 +87,7 @@ public class StakeProcessor {
 
   private void validateVote(byte[] ownerAddress, Protocol.Vote vote, Repository repository)
       throws ContractValidateException {
-    if (repository == null) {
-      throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
-    }
-    if (!DecodeUtil.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalid address");
-    }
     AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
-    if (accountCapsule == null) {
-      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-      throw new ContractValidateException(
-          ContractProcessorConstant.ACCOUNT_EXCEPTION_STR
-              + readableOwnerAddress + ContractProcessorConstant.NOT_EXIST_STR);
-    }
-
     WitnessStore witnessStore = repository.getWitnessStore();
     try {
       long sum = 0L;
