@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
@@ -301,5 +303,35 @@ public class Chainbase implements IRevokingDB {
     }
 
     return result;
+  }
+
+  @Override
+  public List<Pair<byte[], byte[]>> prefixQuery(byte[] prefixKey) {
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head().getPrevious() != null) {
+      ((SnapshotImpl) head()).collect(collection);
+    }
+    // get kvs in snapshotRoot
+    Map<WrappedByteArray, WrappedByteArray> dbMap = new HashMap<>();
+
+    if (((SnapshotRoot) head().getRoot()).db.getClass() == LevelDB.class) {
+      ((LevelDB) ((SnapshotRoot) head().getRoot()).db).getDb().prefixQuery(prefixKey).entrySet().stream()
+              .map(e -> Maps
+                      .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+              .forEach(e -> dbMap.put(e.getKey(), e.getValue()));
+    } else if (((SnapshotRoot) head().getRoot()).db.getClass() == RocksDB.class) {
+      ((RocksDB) ((SnapshotRoot) head().getRoot()).db).getDb().prefixQuery(prefixKey).entrySet().stream()
+              .map(e -> Maps
+                      .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+              .forEach(e -> dbMap.put(e.getKey(), e.getValue()));
+    }
+
+    dbMap.putAll(collection);
+
+    return dbMap.entrySet().stream()
+            .filter(e -> ByteUtil.equalPrefix(e.getKey().getBytes(), prefixKey))
+            .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
+            .map(e -> new Pair<>(e.getKey().getBytes(), e.getValue().getBytes()))
+            .collect(Collectors.toList());
   }
 }

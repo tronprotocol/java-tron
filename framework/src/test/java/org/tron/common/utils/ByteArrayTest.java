@@ -17,6 +17,8 @@ package org.tron.common.utils;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -79,5 +81,19 @@ public class ByteArrayTest {
     byte[] bss = new byte[]{8, 9, 12, 13, 14, 15, 16};
     assertEquals("ByteArray.toHexString is not equals Hex.toHexString", ByteArray.toHexString(bss),
         Hex.toHexString(bss));
+  }
+
+  @Test
+  public void testEqualPrefix() {
+    byte[] origin = "123_abc".getBytes();
+    byte[] prefix = "123".getBytes();
+    byte[] notPrefix1 = "0123".getBytes();
+    byte[] notPrefix2 = "124".getBytes();
+    byte[] lenLongerThanOrigin = "123_abcde".getBytes();
+
+    assertTrue(ByteUtil.equalPrefix(origin, prefix));
+    assertFalse(ByteUtil.equalPrefix(origin, notPrefix1));
+    assertFalse(ByteUtil.equalPrefix(origin, notPrefix2));
+    assertFalse(ByteUtil.equalPrefix(origin, lenLongerThanOrigin));
   }
 }

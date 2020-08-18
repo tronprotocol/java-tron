@@ -8,8 +8,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db2.common.DB;
@@ -194,5 +197,19 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   public void setCursor(Chainbase.Cursor cursor) {
     revokingDB.setCursor(cursor);
+  }
+
+  @Override
+  public List<Pair<byte[], T>> prefixQuery(byte[] prefixKey) {
+    return revokingDB.prefixQuery(prefixKey).stream()
+            .map(e -> {
+              try {
+                return new Pair<>(e.getKey(), of(e.getValue()));
+              } catch (BadItemException ex) {
+                logger.error("parse value failed: {}", ex.getMessage());
+                return null;
+              }
+            })
+            .collect(Collectors.toList());
   }
 }

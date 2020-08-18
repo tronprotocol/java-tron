@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -12,6 +13,8 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
@@ -161,6 +164,15 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public List<byte[]> getKeysNext(byte[] key, long limit) {
     return dbSource.getKeysNext(key, limit);
+  }
+
+  @Override
+  public List<Pair<byte[], byte[]>> prefixQuery(byte[] prefixKey) {
+    return dbSource.prefixQuery(prefixKey).entrySet().stream()
+            .filter(e -> ByteUtil.equalPrefix(e.getKey(), prefixKey))
+            .sorted((e1, e2) -> ByteUtil.compare(e1.getKey(), e2.getKey()))
+            .map(e -> new Pair<>(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
   }
 
   @Override

@@ -46,7 +46,9 @@ import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
@@ -360,6 +362,26 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
       for (iterator.seek(key); iterator.hasPrev() && i++ < limit; iterator.prev()) {
         result.add(iterator.peekPrev().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> prefixQuery(byte[] prefixKey) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iterator.seek(prefixKey); iterator.hasNext(); iterator.next()) {
+        Entry<byte[], byte[]> entry = iterator.peekNext();
+        if (!ByteUtil.equalPrefix(entry.getKey(), prefixKey)) {
+          break;
+        }
+        result.put(entry.getKey(), entry.getValue());
       }
       return result;
     } catch (IOException e) {

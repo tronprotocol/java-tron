@@ -106,6 +106,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
             e -> !keys.contains(WrappedByteArray.of(e.getKey()))));
   }
 
+  // todo: if set solidity/pbft, this method should filter the unsolidified snapshotImpl
   synchronized void collect(Map<WrappedByteArray, WrappedByteArray> all) {
     Snapshot next = getRoot().getNext();
     while (next != null) {

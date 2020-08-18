@@ -1,13 +1,7 @@
 package org.tron.core.db;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Streams;
-import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,6 +16,13 @@ import org.tron.core.capsule.BytesCapsule;
 public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final byte[] PARACHAINS_KEY = "k_parachain".getBytes();
+  public static final String CHAIN_VOTED_PREFIX = "voted_";
+  public static final String VOTED_PREFIX = "vote_";
+  public static final String CHAIN_REGISTER_PREFIX = "register_";
+
+  // todo: this param should can be customized
+  public static int MAX_PARACHAIN_NUM = 3;
+
 
   public CrossRevokingStore() {
     super("cross-revoke-database");
@@ -121,21 +122,21 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
+  // todo: if two chains have the same voted, how to deal?
   public List<Pair<String, Long>> getChainVoteCountList() {
-    return Streams.stream(iterator())
-            .filter(entry -> "voted_".startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
-            .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey()).substring(6), ByteArray.toLong(entry.getValue().getData())))
+    return prefixQuery(CHAIN_VOTED_PREFIX.getBytes()).stream()
+            .map(entry -> new Pair<>(ByteArray.toStr(entry.getKey()).substring(6),
+                    ByteArray.toLong(entry.getValue().getData())))
             .sorted((v1, v2) -> Long.compare(v2.getValue(), v1.getValue()))
             .collect(Collectors.toList());
   }
 
   public List<Pair<String, Long>> getEligibleChainLists() {
-    // todo: 3 should be a variant
     List<Pair<String, Long>> chainVoteCountList = getChainVoteCountList();
-    if (chainVoteCountList.size() < 3) {
+    if (chainVoteCountList.size() < MAX_PARACHAIN_NUM) {
       return chainVoteCountList;
     } else {
-      return getChainVoteCountList().subList(0, 3);
+      return getChainVoteCountList().subList(0, MAX_PARACHAIN_NUM);
     }
   }
 
@@ -166,15 +167,15 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   private byte[] buildRegisterKey(String chainId) {
-    return ("register_" + chainId).getBytes();
+    return (CHAIN_REGISTER_PREFIX + chainId).getBytes();
   }
 
   private byte[] buildVoteKey(String chainId, String address) {
-    return ("vote_" + chainId + address).getBytes();
+    return (VOTED_PREFIX + chainId + address).getBytes();
   }
 
   private byte[] buildVoteChainKey(String chainId) {
-    return ("voted_" + chainId).getBytes();
+    return (CHAIN_VOTED_PREFIX + chainId).getBytes();
   }
 
 }

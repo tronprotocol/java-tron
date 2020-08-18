@@ -430,4 +430,13 @@ public class ByteUtil {
     return ByteUtil.merge(zeroBytes, longBytes);
   }
 
+  public static boolean equalPrefix(byte[] origin, byte[] prefix) {
+    if (origin.length < prefix.length) {
+      return false;
+    }
+    byte[] subOrigin = new byte[prefix.length];
+    System.arraycopy(origin, 0, subOrigin, 0, prefix.length);
+    return Arrays.equals(subOrigin, prefix);
+  }
+
 }

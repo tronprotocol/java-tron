@@ -17,10 +17,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.rocksdb.AbstractComparator;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
+import org.rocksdb.Comparator;
 import org.rocksdb.DirectComparator;
+import org.rocksdb.DirectSlice;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -31,7 +34,10 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.RockStoreIterator;
@@ -486,6 +492,25 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       long i = 0;
       for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
         result.add(iter.value());
+      }
+      return result;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> prefixQuery(byte[] prefixKey) {
+    if (quitIfNotAlive()) {
+      return null;
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iter = database.newIterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      for (iter.seek(prefixKey); iter.isValid(); iter.next()) {
+        if (!ByteUtil.equalPrefix(iter.key(), prefixKey)) {
+          break;
+        }
+        result.put(iter.key(), iter.value());
       }
       return result;
     } finally {

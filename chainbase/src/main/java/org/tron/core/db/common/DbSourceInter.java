@@ -17,8 +17,10 @@
  */
 package org.tron.core.db.common;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.tron.common.utils.Pair;
 
 
 public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
@@ -41,5 +43,7 @@ public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
   Set<byte[]> allValues() throws RuntimeException;
 
   long getTotal() throws RuntimeException;
+
+  Map<byte[], byte[]> prefixQuery(byte[] prefixKey);
 
 }

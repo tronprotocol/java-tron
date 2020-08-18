@@ -1,7 +1,9 @@
 package org.tron.core.db2.core;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import java.util.Map.Entry;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.Quitable;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -31,5 +33,7 @@ public interface ITronChainBase<T> extends Iterable<Entry<byte[], T>>, Quitable 
   String getName();
 
   String getDbName();
+
+  List<Pair<byte[], T>> prefixQuery(byte[] prefixKey);
 
 }
