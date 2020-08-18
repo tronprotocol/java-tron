@@ -111,7 +111,7 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      if (!VMConfig.allowTvmVote()
+      if (!VMConfig.allowTvmStake()
               && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
                 || op == WITHDRAWREWARD)) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());

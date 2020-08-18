@@ -44,7 +44,7 @@ public class VMConfig {
 
   private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
 
-  private static boolean ALLOW_TVM_VOTE = false;
+  private static boolean ALLOW_TVM_STAKE = false;
 
   private static boolean ALLOW_TVM_ASSET_ISSUE = false;
 
@@ -87,8 +87,8 @@ public class VMConfig {
     ALLOW_SHIELDED_TRC20_TRANSACTION = allow == 1;
   }
 
-  public static void initAllowTvmVote(long allow) {
-    ALLOW_TVM_VOTE = allow == 1;
+  public static void initAllowTvmStake(long allow) {
+    ALLOW_TVM_STAKE = allow == 1;
   }
 
   public static void initAllowTvmAssetIssue(long allow) {
@@ -119,8 +119,8 @@ public class VMConfig {
     return ALLOW_SHIELDED_TRC20_TRANSACTION;
   }
 
-  public static boolean allowTvmVote() {
-    return ALLOW_TVM_VOTE;
+  public static boolean allowTvmStake() {
+    return ALLOW_TVM_STAKE;
   }
 
   public static boolean allowTvmAssetIssue() {

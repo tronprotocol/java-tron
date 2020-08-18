@@ -410,7 +410,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowTvmVote;
+  public long allowTvmStake;
 
   @Getter
   @Setter

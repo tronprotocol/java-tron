@@ -173,7 +173,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
-    PARAMETER.allowTvmVote = 0;
+    PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
   }
 
@@ -703,9 +703,9 @@ public class Args extends CommonParameter {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
-    PARAMETER.allowTvmVote =
-            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
+    PARAMETER.allowTvmStake =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_STAKE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_STAKE) : 0;
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
         .getInstance().getStorage().getDbEngine().toUpperCase())) {

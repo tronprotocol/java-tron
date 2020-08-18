@@ -560,7 +560,7 @@ public class Program {
     if(ownerCapsule.getFrozenCount() == 0) {
       return;
     }
-    if(!VMConfig.allowTvmVote()){
+    if(!VMConfig.allowTvmStake()){
       return;
     }
     //todo obtainer == zero || obtainer == black_hole
@@ -1735,7 +1735,7 @@ public class Program {
     withdrawRewardParam.setTargetAddress(ownerAddress);
     try{
       withdrawRewardContractProcessor.validate(withdrawRewardParam, repository);
-      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository);
+      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository, getTimestamp().longValue());
       stackPush(new DataWord(allowance));
       repository.commit();
     }catch (ContractValidateException e){

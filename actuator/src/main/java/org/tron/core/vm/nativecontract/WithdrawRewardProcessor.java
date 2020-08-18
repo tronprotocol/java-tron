@@ -21,7 +21,7 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT
 @Slf4j(topic = "Processor")
 public class WithdrawRewardProcessor {
 
-    public long execute(Object contract, Repository repository) {
+    public long execute(Object contract, Repository repository, long now) {
         WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
         byte[] targetAddress = withdrawRewardParam.getTargetAddress();
 
@@ -35,7 +35,6 @@ public class WithdrawRewardProcessor {
         long oldBalance = accountCapsule.getBalance();
         long allowance = accountCapsule.getAllowance();
 
-        long now = repository.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
         accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
                 .setBalance(oldBalance + allowance)
                 .setAllowance(0L)
