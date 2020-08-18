@@ -119,7 +119,7 @@ public class IsSRCandidateTest extends VMTestBase {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmVote(1);
+    VMConfig.initAllowTvmStake(1);
     String contractName = "TestIsSRCandidate";
 
 //    String key = "11aba859e4477a6615c8b121e9fdbbf1bc32ca31cf06d46733e539bf94c677e0";

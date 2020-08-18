@@ -30,7 +30,7 @@ public class RewardBalanceTest extends VMTestBase {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmVote(1);
+    VMConfig.initAllowTvmStake(1);
     String contractName = "TestRewardBalance";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},"

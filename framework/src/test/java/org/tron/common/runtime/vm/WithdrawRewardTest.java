@@ -107,7 +107,7 @@ public class WithdrawRewardTest {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmVote(1);
+    VMConfig.initAllowTvmStake(1);
 
     String contractName = "TestWithdrawReward";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -294,7 +294,7 @@ public class WithdrawRewardTest {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmVote(1);
+    VMConfig.initAllowTvmStake(1);
 
     String contractName = "TestWithdrawRewardWithContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
