@@ -52,7 +52,9 @@ public class HttpTestQueryReward001 {
    */
   @BeforeSuite(enabled = true)
   public void beforeSuite() {
-    HttpMethed.freezeBalance(httpnode,foundationAddress,30000000L,3,0,foundationKey);
+    HttpMethed.sendCoin(httpnode,foundationAddress,witnessAddress,50000000L,foundationKey);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.freezeBalance(httpnode,witnessAddress,30000000L,3,0,witnessKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
     JsonArray voteKeys = new JsonArray();
     JsonObject voteElement = new JsonObject();
@@ -61,7 +63,7 @@ public class HttpTestQueryReward001 {
     voteElement.addProperty("vote_count", 20);
     voteKeys.add(voteElement);
     HttpMethed.voteWitnessAccount(httpnode, Base58.encode58Check(PublicMethed
-        .getFinalAddress(foundationKey)), voteKeys, foundationKey);
+        .getFinalAddress(witnessKey)), voteKeys, witnessKey);
 
   }
 
@@ -82,8 +84,8 @@ public class HttpTestQueryReward001 {
     }
 
     response = HttpMethed
-        .getAccountRewardByCycle(httpnode, foundationAddressString,
-            cycle - 2, cycle + 1);
+        .getAccountRewardByCycle(httpnode, witnessAddressString,
+            0, cycle + 1);
     accountReward = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(accountReward);
     Assert.assertTrue(accountReward.getLong("totalReward") > 0);
@@ -98,7 +100,7 @@ public class HttpTestQueryReward001 {
   @Test(enabled = true, description = "Get llast unwithdraw account reward")
   public void test02GetLastUnwithdrawAccountReward() {
     response = HttpMethed
-        .getAccountLastUnwithdrawReward(httpnode, foundationAddressString);
+        .getAccountLastUnwithdrawReward(httpnode, witnessAddressString);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.getLong("totalReward") > 0);
