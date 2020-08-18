@@ -43,15 +43,15 @@ public class TokenIssueProcessor {
         if (Objects.isNull(contract)) {
             throw new ContractValidateException(CONTRACT_NULL);
         }
+        if (repository == null) {
+            throw new ContractValidateException(STORE_NOT_EXIST);
+        }
         if (!(contract instanceof TokenIssueParam)) {
             throw new ContractValidateException(
                     "contract type error,expected type [TokenIssuedContract],real type[" + contract
                             .getClass() + "]");
         }
         TokenIssueParam tokenIssueParam = (TokenIssueParam) contract;
-        if (repository == null) {
-            throw new ContractValidateException(STORE_NOT_EXIST);
-        }
         if (!DecodeUtil.addressValid(tokenIssueParam.getOwnerAddress())) {
             throw new ContractValidateException("Invalid ownerAddress");
         }
