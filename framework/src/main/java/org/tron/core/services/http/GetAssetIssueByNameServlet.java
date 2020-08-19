@@ -3,7 +3,6 @@ package org.tron.core.services.http;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -36,16 +35,14 @@ public class GetAssetIssueByNameServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSON.parseObject(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSON.parseObject(params.getParams());
       String value = jsonObject.getString("value");
-      if (visible) {
+      if (params.isVisible()) {
         value = Util.getHexString(value);
       }
-      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(value)), response);
+      fillResponse(params.isVisible(), ByteString.copyFrom(
+          ByteArray.fromHexString(value)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }

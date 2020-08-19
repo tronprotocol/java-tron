@@ -2,7 +2,6 @@ package org.tron.core.db.accountstate;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
 @Slf4j(topic = "AccountState")

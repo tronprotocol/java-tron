@@ -5,12 +5,12 @@ import static org.tron.common.utils.DbOptionalsUtils.createDefaultDbOptions;
 
 import java.io.File;
 import org.apache.commons.lang3.StringUtils;
-import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.parameter.CommonParameter;
 
 
 public class StorageUtils {
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }

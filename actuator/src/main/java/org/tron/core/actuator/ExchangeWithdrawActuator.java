@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.ByteString;
@@ -168,7 +169,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
           get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
+      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + ActuatorConstant
+          .NOT_EXIST_STR);
     }
 
     if (!accountCapsule.getAddress().equals(exchangeCapsule.getCreatorAddress())) {
@@ -185,9 +187,9 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     long anotherTokenQuant;
 
-    if (dynamicStore.getAllowSameTokenName() == 1 && 
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) && 
-        !TransactionUtil.isNumber(tokenID)) {
+    if (dynamicStore.getAllowSameTokenName() == 1 &&
+        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
+        !isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
 

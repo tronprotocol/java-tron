@@ -16,7 +16,7 @@ import org.tron.protos.Protocol;
 public class MetricsApiService {
 
   private static final long time = System.currentTimeMillis();
-  
+
   @Autowired
   private BlockChainMetricManager blockChainMetricManager;
 

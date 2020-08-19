@@ -19,6 +19,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -44,7 +45,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
@@ -269,5 +269,17 @@ public class TronNetDelegate {
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public PbftSignCapsule getBlockPbftCommitData(long blockNum) {
+    return chainBaseManager.getPbftSignDataStore().getBlockSignData(blockNum);
+  }
+
+  public PbftSignCapsule getSRLPbftCommitData(long epoch) {
+    return chainBaseManager.getPbftSignDataStore().getSrSignData(epoch);
+  }
+
+  public boolean allowPBFT() {
+    return chainBaseManager.getDynamicPropertiesStore().allowPBFT();
   }
 }

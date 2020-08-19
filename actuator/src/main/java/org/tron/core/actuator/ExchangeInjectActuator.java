@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.ByteString;
@@ -159,7 +160,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
           get(ByteArray.fromLong(contract.getExchangeId()));
 
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
+      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + ActuatorConstant
+          .NOT_EXIST_STR);
     }
 
     if (!accountCapsule.getAddress().equals(exchangeCapsule.getCreatorAddress())) {
@@ -177,9 +179,9 @@ public class ExchangeInjectActuator extends AbstractActuator {
     byte[] anotherTokenID;
     long anotherTokenQuant;
 
-    if (dynamicStore.getAllowSameTokenName() == 1 && 
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) && 
-        !TransactionUtil.isNumber(tokenID)) {
+    if (dynamicStore.getAllowSameTokenName() == 1 &&
+        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
+        !isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
 
@@ -201,7 +203,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
     long newTokenBalance;
     long newAnotherTokenBalance;
-    
+
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenID = secondTokenID;
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)

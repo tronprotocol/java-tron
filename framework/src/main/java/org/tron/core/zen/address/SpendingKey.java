@@ -2,7 +2,6 @@ package org.tron.core.zen.address;
 
 import java.security.SecureRandom;
 import java.util.Optional;
-import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,8 +33,7 @@ public class SpendingKey {
   }
 
   public static SpendingKey decode(String hex) {
-    SpendingKey sk = new SpendingKey(ByteArray.fromHexString(hex));
-    return sk;
+    return new SpendingKey(ByteArray.fromHexString(hex));
   }
 
   private static byte[] randomUint256() {

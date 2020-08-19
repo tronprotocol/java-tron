@@ -1,6 +1,7 @@
 package org.tron.core.metrics.blockchain;
 
 public class WitnessInfo {
+
   private String address;
   private int version;
 

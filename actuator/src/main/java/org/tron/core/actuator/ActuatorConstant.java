@@ -9,5 +9,7 @@ public class ActuatorConstant {
   public static final String TX_RESULT_NULL = "TransactionResultCapsule is null";
   public static final String CONTRACT_NOT_EXIST = "No contract!";
   public static final String STORE_NOT_EXIST = "No account store or dynamic store!";
+  public static final int ONE_HUNDRED = 100;
+  public static final int PRECISION_DECIMAL = 6;
 
 }

@@ -33,6 +33,8 @@ public enum MessageTypes {
 
   TRX_INVENTORY(0x13),
 
+  PBFT_COMMIT_MSG(0x14),
+
   P2P_HELLO(0x20),
 
   P2P_DISCONNECT(0x21),
@@ -48,6 +50,8 @@ public enum MessageTypes {
   DISCOVER_FIND_PEER(0x32),
 
   DISCOVER_PEERS(0x33),
+
+  PBFT_MSG(0x34),
 
   LAST(0xFF);
 
@@ -78,11 +82,15 @@ public enum MessageTypes {
   }
 
   public static boolean inTronRange(byte code) {
-    return code <= TRX_INVENTORY.asByte() && code >= FIRST.asByte();
+    return code <= PBFT_COMMIT_MSG.asByte() && code >= FIRST.asByte();
   }
 
   public byte asByte() {
     return (byte) (type);
+  }
+
+  public static boolean inPbftRange(byte code) {
+    return code == PBFT_MSG.asByte();
   }
 
   @Override

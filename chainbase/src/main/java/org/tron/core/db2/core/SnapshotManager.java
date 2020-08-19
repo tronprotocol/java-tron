@@ -102,8 +102,13 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void setMode(boolean mode) {
-    dbs.forEach(db -> db.setMode(mode));
+  public void setCursor(Chainbase.Cursor cursor) {
+    dbs.forEach(db -> db.setCursor(cursor));
+  }
+
+  @Override
+  public void setCursor(Chainbase.Cursor cursor, long offset) {
+    dbs.forEach(db -> db.setCursor(cursor, offset));
   }
 
   @Override

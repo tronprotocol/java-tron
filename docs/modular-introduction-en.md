@@ -14,7 +14,7 @@ The aim of java-tron modularization is to enable developers to easily build a de
 
 ## Architecture of modularized java-tron
 
-![modular-structure](https://github.com/tronprotocol/java-tron/tree/develop/docs/images/module.png)
+![modular-structure](https://github.com/tronprotocol/java-tron/blob/develop/docs/images/module.png)
 
 A modularized java-tron consists of six modules: framework, protocol, common, chainbase, consensus and actuator. The function of each module is elaborated below.
 

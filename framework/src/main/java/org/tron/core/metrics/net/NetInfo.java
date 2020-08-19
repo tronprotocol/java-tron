@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NetInfo {
+
   private int errorProtoCount;
   private ApiInfo api;
   private int connectionCount;

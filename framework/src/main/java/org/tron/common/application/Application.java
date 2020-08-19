@@ -18,7 +18,6 @@ package org.tron.common.application;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 
 public interface Application {
@@ -36,8 +35,6 @@ public interface Application {
   void startServices();
 
   void shutdownServices();
-
-  BlockStore getBlockStoreS();
 
   void addService(Service service);
 

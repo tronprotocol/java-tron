@@ -5,6 +5,7 @@ import org.tron.core.metrics.net.NetInfo;
 import org.tron.core.metrics.node.NodeInfo;
 
 public class MetricsInfo {
+
   private long interval;
 
   private NodeInfo node;
@@ -36,7 +37,7 @@ public class MetricsInfo {
   public void setBlockchain(BlockChainInfo blockChain) {
     this.blockchain = blockChain;
   }
-  
+
   public NetInfo getNet() {
     return net;
   }

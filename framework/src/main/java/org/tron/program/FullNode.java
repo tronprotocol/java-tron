@@ -15,6 +15,8 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
+import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
@@ -77,7 +79,7 @@ public class FullNode {
     if (CommonParameter.getInstance().fullNodeHttpEnable) {
       appT.addService(httpApiService);
     }
-    
+
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.
     if (Args.getInstance().getStorage().getDbVersion() == 2) {
@@ -89,6 +91,16 @@ public class FullNode {
       if (CommonParameter.getInstance().solidityNodeHttpEnable) {
         appT.addService(httpApiOnSolidityService);
       }
+    }
+
+    // PBFT API (HTTP and GRPC)
+    if (Args.getInstance().getStorage().getDbVersion() == 2) {
+      RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
+          .getBean(RpcApiServiceOnPBFT.class);
+      appT.addService(rpcApiServiceOnPBFT);
+      HttpApiOnPBFTService httpApiOnPBFTService = context
+          .getBean(HttpApiOnPBFTService.class);
+      appT.addService(httpApiOnPBFTService);
     }
 
     appT.initServices(parameter);

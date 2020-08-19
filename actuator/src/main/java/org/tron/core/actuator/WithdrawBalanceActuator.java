@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import com.google.common.math.LongMath;
@@ -10,7 +11,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -53,6 +53,10 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     delegationService.withdrawReward(withdrawBalanceContract.getOwnerAddress()
         .toByteArray());
+
+    delegationService.getDelegationStore().setLastWithdrawCycle(
+        dynamicStore.getCurrentCycleNumber(), withdrawBalanceContract.getOwnerAddress()
+            .toByteArray());
 
     AccountCapsule accountCapsule = accountStore.
         get(withdrawBalanceContract.getOwnerAddress().toByteArray());
@@ -104,14 +108,14 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
     boolean isGP = CommonParameter.getInstance()
         .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
-        Arrays.equals(ownerAddress, witness.getAddress()));
+            Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress

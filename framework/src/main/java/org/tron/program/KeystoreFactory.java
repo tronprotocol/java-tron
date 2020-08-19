@@ -65,6 +65,7 @@ public class KeystoreFactory {
     }
   }
 
+
   private void genKeystore() throws CipherException, IOException {
     String password = WalletUtils.inputPassword2Twice();
 

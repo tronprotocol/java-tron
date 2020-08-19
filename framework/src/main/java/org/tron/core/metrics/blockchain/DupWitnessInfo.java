@@ -1,6 +1,7 @@
 package org.tron.core.metrics.blockchain;
 
 public class DupWitnessInfo {
+
   private String address;
   private long blockNum;
   private int count;

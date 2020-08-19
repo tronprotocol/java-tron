@@ -21,10 +21,10 @@ package org.tron.core.vm.program.invoke;
 import com.google.protobuf.ByteString;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
@@ -101,7 +101,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     byte[] cowPrivKey = Hash.sha3("monkey".getBytes());
     byte[] addr = SignUtils.fromPrivate(cowPrivKey
         , CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress();
-
     return new DataWord(addr);
   }
 

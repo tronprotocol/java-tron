@@ -1,6 +1,7 @@
 package org.tron.core.metrics.net;
 
 public class DisconnectionDetailInfo {
+
   private String reason;
   private int count;
 

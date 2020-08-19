@@ -1,6 +1,6 @@
 package org.tron.consensus.dpos;
 
-
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 
 import com.google.protobuf.ByteString;
@@ -17,6 +17,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.BlockHandle;
@@ -24,6 +25,7 @@ import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -83,15 +85,17 @@ public class DposService implements ConsensusInterface {
 
     if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
       List<ByteString> witnesses = new ArrayList<>();
-      consensusDelegate.getAllWitnesses().forEach(witnessCapsule -> {
-        if (witnessCapsule.getIsJobs()) {
-          witnesses.add(witnessCapsule.getAddress());
-        }
+      consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->
+          witnesses.add(witnessCapsule.getAddress()));
+      updateWitness(witnesses);
+      List<ByteString> addresses = consensusDelegate.getActiveWitnesses();
+      addresses.forEach(address -> {
+        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
+        witnessCapsule.setIsJobs(true);
+        consensusDelegate.saveWitness(witnessCapsule);
       });
-      sortWitness(witnesses);
-      consensusDelegate.saveActiveWitnesses(witnesses);
     }
-
+    maintenanceManager.init();
     dposTask.init();
   }
 
@@ -152,15 +156,24 @@ public class DposService implements ConsensusInterface {
       logger.warn("Update solid block number failed, new: {} < old: {}", newSolidNum, oldSolidNum);
       return;
     }
+    CommonParameter.getInstance()
+        .setOldSolidityBlockNum(consensusDelegate.getLatestSolidifiedBlockNum());
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);
     logger.info("Update solid block number to {}", newSolidNum);
   }
 
-  public void sortWitness(List<ByteString> list) {
+  public void updateWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) ->
         consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
         .reversed()
         .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+
+    if (list.size() > MAX_ACTIVE_WITNESS_NUM) {
+      consensusDelegate
+          .saveActiveWitnesses(list.subList(0, MAX_ACTIVE_WITNESS_NUM));
+    } else {
+      consensusDelegate.saveActiveWitnesses(list);
+    }
   }
 
 }

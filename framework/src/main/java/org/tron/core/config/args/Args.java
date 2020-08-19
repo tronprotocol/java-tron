@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
@@ -17,12 +18,14 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,6 +33,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
@@ -39,20 +43,23 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PropUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.store.AccountStore;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -66,6 +73,16 @@ public class Args extends CommonParameter {
   @Getter
   @Setter
   private static LocalWitnesses localWitnesses = new LocalWitnesses();
+
+  @Autowired(required = false)
+  @Getter
+  private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
+      solidityContractLogTriggerMap = new ConcurrentHashMap<>();
+
+  @Autowired(required = false)
+  @Getter
+  private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
+      solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -109,8 +126,10 @@ public class Args extends CommonParameter {
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
+    PARAMETER.rpcOnPBFTPort = 0;
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
+    PARAMETER.pBFTHttpPort = 0;
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -139,7 +158,7 @@ public class Args extends CommonParameter {
     PARAMETER.minTimeRatio = 0.0;
     PARAMETER.maxTimeRatio = 5.0;
     PARAMETER.longRunningTime = 10;
-    PARAMETER.allowShieldedTransaction = 0;
+    // PARAMETER.allowShieldedTransaction = 0;
     PARAMETER.maxHttpConnectNumber = 50;
     PARAMETER.allowMultiSign = 0;
     PARAMETER.trxExpirationTimeInMilliseconds = 0;
@@ -154,6 +173,10 @@ public class Args extends CommonParameter {
     PARAMETER.solidityNodeHttpEnable = true;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
+    PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.allowPBFT = 0;
+    PARAMETER.allowShieldedTRC20Transaction = 0;
+    PARAMETER.allowMarketTransaction = 0;
   }
 
   /**
@@ -196,13 +219,9 @@ public class Args extends CommonParameter {
       }
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
       logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath(Constant.LOCAL_WITENSS)) {
+    } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
       localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList(Constant.LOCAL_WITENSS);
-      if (localwitness.size() > 1) {
-        logger.warn("localwitness size must be one, get the first one");
-        localwitness = localwitness.subList(0, 1);
-      }
+      List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
       localWitnesses.setPrivateKeys(localwitness);
 
       if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
@@ -216,7 +235,6 @@ public class Args extends CommonParameter {
         }
       }
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
       localWitnesses = new LocalWitnesses();
@@ -280,6 +298,11 @@ public class Args extends CommonParameter {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
     }
 
+    if (config.hasPath(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH)) {
+      PARAMETER.nodeHttpStatisticsSRRewardEnable = config
+          .getBoolean(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH);
+    }
+
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
       PARAMETER.minTimeRatio = config.getDouble(Constant.VM_MIN_TIME_RATIO);
     }
@@ -330,10 +353,10 @@ public class Args extends CommonParameter {
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
     PARAMETER.storage
-        .setTransactionHistoreSwitch(
-            Optional.ofNullable(PARAMETER.storageTransactionHistoreSwitch)
+        .setTransactionHistorySwitch(
+            Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
                 .filter(StringUtils::isNotEmpty)
-                .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+                .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
 
     PARAMETER.storage.setPropertyMapFromConfig(config);
 
@@ -421,6 +444,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
 
+    PARAMETER.rpcOnPBFTPort =
+        config.hasPath(Constant.NODE_RPC_PBFT_PORT)
+            ? config.getInt(Constant.NODE_RPC_PBFT_PORT) : 50071;
+
     PARAMETER.fullNodeHttpPort =
         config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT)
             ? config.getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
@@ -429,9 +456,13 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
 
+    PARAMETER.pBFTHttpPort =
+        config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
+            ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
+
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
-            : Runtime.getRuntime().availableProcessors() / 2;
+            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
 
     PARAMETER.solidityThreads =
         config.hasPath(Constant.NODE_SOLIDITY_THREADS)
@@ -478,8 +509,8 @@ public class Args extends CommonParameter {
     PARAMETER.maxMessageSize = config.hasPath(Constant.NODE_RPC_MAX_MESSAGE_SIZE)
         ? config.getInt(Constant.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
 
-    PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE)
-        ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE)
+    PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
+        ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
         : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
     PARAMETER.maintenanceTimeInterval =
@@ -568,6 +599,10 @@ public class Args extends CommonParameter {
         && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
     PARAMETER.maxTransactionPendingSize = config.hasPath(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE)
         ? config.getInt(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
+
+    PARAMETER.pendingTransactionTimeout = config.hasPath(Constant.NODE_PENDING_TRANSACTION_TIMEOUT)
+        ? config.getLong(Constant.NODE_PENDING_TRANSACTION_TIMEOUT) : 60_000;
+
     PARAMETER.needToUpdateAsset =
         config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) ? config
             .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET)
@@ -584,7 +619,7 @@ public class Args extends CommonParameter {
     PARAMETER.minEffectiveConnection = config.hasPath(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION)
         ? config.getInt(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION) : 1;
 
-    PARAMETER.blockNumForEneryLimit = config.hasPath(Constant.ENERGY_LIMIT_BLOCK_NUM)
+    PARAMETER.blockNumForEnergyLimit = config.hasPath(Constant.ENERGY_LIMIT_BLOCK_NUM)
         ? config.getInt(Constant.ENERGY_LIMIT_BLOCK_NUM) : 4727890L;
 
     PARAMETER.vmTrace =
@@ -594,9 +629,17 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX)
             && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
-    PARAMETER.allowShieldedTransaction =
-        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+    // PARAMETER.allowShieldedTransaction =
+    //     config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
+    //         .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+
+    PARAMETER.allowShieldedTRC20Transaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) : 0;
+
+    PARAMETER.allowMarketTransaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
 
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
@@ -646,6 +689,18 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
             .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
 
+    PARAMETER.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
+    PARAMETER.agreeNodeCount = config.hasPath(Constant.NODE_AGREE_NODE_COUNT) ? config
+        .getInt(Constant.NODE_AGREE_NODE_COUNT) : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
+        ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
+    if (PARAMETER.isWitness()) {
+      //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    }
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
         .getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -672,6 +727,12 @@ public class Args extends CommonParameter {
             .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
     PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
             .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
+
+    // lite fullnode params
+    PARAMETER.setLiteFullNode(checkIsLiteFullNode());
+    PARAMETER.setOpenHistoryQueryWhenLiteFN(
+            config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
+                    && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
 
     logConfig();
   }
@@ -781,8 +842,8 @@ public class Args extends CommonParameter {
         }
       }
 
-      if (config.hasPath(Constant.EVENT_SUBSCIBE_DB_CONFIG)) {
-        String dbConfig = config.getString(Constant.EVENT_SUBSCIBE_DB_CONFIG);
+      if (config.hasPath(Constant.EVENT_SUBSCRIBE_DB_CONFIG)) {
+        String dbConfig = config.getString(Constant.EVENT_SUBSCRIBE_DB_CONFIG);
         if (StringUtils.isNotEmpty(dbConfig)) {
           eventPluginConfig.setDbConfig(dbConfig.trim());
         }
@@ -876,8 +937,8 @@ public class Args extends CommonParameter {
   }
 
   private static void externalIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath(Constant.NODE_DISCOVERY_EXTENNAL_IP) || config
-        .getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim().isEmpty()) {
+    if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
+        .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
       if (PARAMETER.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         BufferedReader in = null;
@@ -912,7 +973,7 @@ public class Args extends CommonParameter {
         }
       }
     } else {
-      PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim();
+      PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim();
     }
   }
 
@@ -997,7 +1058,6 @@ public class Args extends CommonParameter {
     logger.info("Backup member size: {}", parameter.getBackupMembers().size());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
-    logger.info("Version name: {}", Version.versionName);
     logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", parameter.getStorage().getDbVersion());
@@ -1011,6 +1071,19 @@ public class Args extends CommonParameter {
   }
 
   /**
+   * set isLiteFullNode=true when this node is a lite fullnode.
+   */
+  public static boolean checkIsLiteFullNode() {
+    String infoFile = Paths.get(PARAMETER.outputDirectory,
+            PARAMETER.storage.getDbDirectory(), Constant.INFO_FILE_NAME).toString();
+    if (FileUtil.isExists(infoFile)) {
+      String value = PropUtil.readProperty(infoFile, Constant.SPLIT_BLOCK_NUM);
+      return !"".equals(value) && Long.parseLong(value) > 0;
+    }
+    return false;
+  }
+
+  /**
    * get output directory.
    */
   public String getOutputDirectory() {
@@ -1020,3 +1093,4 @@ public class Args extends CommonParameter {
     return this.outputDirectory;
   }
 }
+

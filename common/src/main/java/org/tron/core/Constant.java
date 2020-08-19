@@ -1,16 +1,6 @@
 package org.tron.core;
 
-import org.tron.common.utils.ByteArray;
-
 public class Constant {
-
-  // whole
-  public static final byte[] LAST_HASH = ByteArray.fromString("lastHash");
-  public static final String DIFFICULTY = "2001";
-
-  // DB
-  public static final String BLOCK_DB_NAME = "block_data";
-  public static final String TRANSACTION_DB_NAME = "transaction_data";
 
   //config for testnet, mainnet, beta
   public static final String TESTNET_CONF = "config.conf";
@@ -19,6 +9,12 @@ public class Constant {
   public static final String TEST_CONF = "config-test.conf";
 
   public static final String DATABASE_DIR = "storage.directory";
+
+  // locate in storageDbDirectory, store the db infos,
+  // now only has the split block number
+  public static final String INFO_FILE_NAME = "info.properties";
+  // the block number that split between the snapshot and history
+  public static final String SPLIT_BLOCK_NUM = "split_block_num";
 
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
   public static final String ADD_PRE_FIX_STRING_MAINNET = "41";
@@ -61,7 +57,7 @@ public class Constant {
   // Configuration items
   public static final String NET_TYPE = "net.type";
   public static final String TESTNET = "testnet";
-  public static final String LOCAL_WITENSS = "localwitness";
+  public static final String LOCAL_WITNESS = "localwitness";
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
   public static final String VM_SUPPORT_CONSTANT = "vm.supportConstant";
@@ -92,10 +88,13 @@ public class Constant {
   public static final String NODE_P2P_VERSION = "node.p2p.version";
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
+  public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
+  public static final String NODE_HTTP_STATISTICS_SR_REWARD_SWITCH = "node.http.statisticsSRRewardSwitch";
+  public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
   public static final String NODE_SOLIDITY_THREADS = "node.solidity.threads";
@@ -110,7 +109,9 @@ public class Constant {
   public static final String NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS = "node.rpc.maxConnectionAgeInMillis";
   public static final String NODE_RPC_MAX_MESSAGE_SIZE = "node.rpc.maxMessageSize";
 
-  public static final String NODE_RPC_MAX_HEADER_LIST_ISZE = "node.rpc.maxHeaderListSize";
+  public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
+
+  public static final String NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN = "node.openHistoryQueryWhenLiteFN";
 
   public static final String BLOCK_MAINTENANCE_TIME_INTERVAL = "block.maintenanceTimeInterval";
   public static final String BLOCK_PROPOSAL_EXPIRE_TIME = "block.proposalExpireTime";
@@ -159,6 +160,8 @@ public class Constant {
 
   public static final String NODE_MAX_TRANSACTION_PENDING_SIZE = "node.maxTransactionPendingSize";
 
+  public static final String NODE_PENDING_TRANSACTION_TIMEOUT = "node.pendingTransactionTimeout";
+
   public static final String STORAGE_NEEDTO_UPDATE_ASSET = "storage.needToUpdateAsset";
 
   public static final String TRX_REFERENCE_BLOCK = "trx.reference.block";
@@ -173,13 +176,20 @@ public class Constant {
 
   public static final String VM_SAVE_INTERNAL_TX = "vm.saveInternalTx";
 
-  public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
+  // public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
+
+  public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
+      + ".allowShieldedTRC20Transaction";
+
+  public static final String COMMITTEE_ALLOW_MARKET_TRANSACTION =
+      "committee.allowMarketTransaction";
 
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
 
   public static final String EVENT_SUBSCRIBE_FILTER = "event.subscribe.filter";
 
-  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node.fullNodeAllowShieldedTransaction";
+  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node"
+      + ".fullNodeAllowShieldedTransaction";
 
   public static final String NODE_ZEN_TOKENID = "node.zenTokenId";
 
@@ -213,7 +223,7 @@ public class Constant {
 
   public static final String EVENT_SUBSCRIBE_PATH = "event.subscribe.path";
   public static final String EVENT_SUBSCRIBE_SERVER = "event.subscribe.server";
-  public static final String EVENT_SUBSCIBE_DB_CONFIG = "event.subscribe.dbconfig";
+  public static final String EVENT_SUBSCRIBE_DB_CONFIG = "event.subscribe.dbconfig";
   public static final String EVENT_SUBSCRIBE_TOPICS = "event.subscribe.topics";
   public static final String EVENT_SUBSCRIBE_FROM_BLOCK = "event.subscribe.filter.fromblock";
   public static final String EVENT_SUBSCRIBE_TO_BLOCK = "event.subscribe.filter.toblock";
@@ -222,7 +232,7 @@ public class Constant {
 
   public static final String NODE_DISCOVERY_BIND_IP = "node.discovery.bind.ip";
 
-  public static final String NODE_DISCOVERY_EXTENNAL_IP = "node.discovery.external.ip";
+  public static final String NODE_DISCOVERY_EXTERNAL_IP = "node.discovery.external.ip";
   public static final String AMAZONAWS_URL = "http://checkip.amazonaws.com";
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
@@ -243,8 +253,9 @@ public class Constant {
   public static final String RATE_LIMITER_RPC = "rate.limiter.rpc";
 
   public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
-
   public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
+  public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
+  public static final String NODE_AGREE_NODE_COUNT = "node.agreeNodeCount";
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";

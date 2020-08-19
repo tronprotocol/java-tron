@@ -62,7 +62,7 @@ public class Storage {
   private static final String WRITE_BUFFER_SIZE_CONFIG_KEY = "writeBufferSize";
   private static final String CACHE_SIZE_CONFIG_KEY = "cacheSize";
   private static final String MAX_OPEN_FILES_CONFIG_KEY = "maxOpenFiles";
-  private static final String EVENT_SUBSCRIB_CONTRACT_PARSE = "event.subscribe.contractParse";
+  private static final String EVENT_SUBSCRIBE_CONTRACT_PARSE = "event.subscribe.contractParse";
 
   /**
    * Default values of directory
@@ -70,10 +70,10 @@ public class Storage {
   private static final int DEFAULT_DB_VERSION = 2;
   private static final String DEFAULT_DB_ENGINE = "LEVELDB";
   private static final boolean DEFAULT_DB_SYNC = false;
-  private static final boolean DEFAULT_EVENT_SUBSCRIB_CONTRACT_PARSE = true;
+  private static final boolean DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE = true;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
-  private static final String DEFAULT_INDEX_SWTICH = "on";
+  private static final String DEFAULT_INDEX_SWITCH = "on";
 
   /**
    * Database storage directory: /path/to/{dbDirectory}
@@ -111,7 +111,7 @@ public class Storage {
 
   @Getter
   @Setter
-  private String transactionHistoreSwitch;
+  private String transactionHistorySwitch;
 
   /**
    * Key: dbName, Value: Property object of that database
@@ -135,8 +135,9 @@ public class Storage {
   }
 
   public static Boolean getContractParseSwitchFromConfig(final Config config) {
-    return config.hasPath(EVENT_SUBSCRIB_CONTRACT_PARSE)
-        ? config.getBoolean(EVENT_SUBSCRIB_CONTRACT_PARSE) : DEFAULT_EVENT_SUBSCRIB_CONTRACT_PARSE;
+    return config.hasPath(EVENT_SUBSCRIBE_CONTRACT_PARSE)
+        ? config.getBoolean(EVENT_SUBSCRIBE_CONTRACT_PARSE)
+        : DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE;
   }
 
   public static String getDbDirectoryFromConfig(final Config config) {
@@ -152,10 +153,10 @@ public class Storage {
   public static String getIndexSwitchFromConfig(final Config config) {
     return config.hasPath(INDEX_SWITCH_CONFIG_KEY)
         && StringUtils.isNotEmpty(config.getString(INDEX_SWITCH_CONFIG_KEY))
-        ? config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWTICH;
+        ? config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWITCH;
   }
 
-  public static String getTransactionHistoreSwitchFromConfig(final Config config) {
+  public static String getTransactionHistorySwitchFromConfig(final Config config) {
     return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
         ? config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
         : DEFAULT_TRANSACTIONHISTORY_SWITCH;
@@ -314,3 +315,4 @@ public class Storage {
     }
   }
 }
+

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
@@ -18,9 +19,11 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
@@ -41,11 +44,16 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.TransactionHistoryStore;
 import org.tron.core.store.TransactionRetStore;
+import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -98,6 +106,18 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private ExchangeV2Store exchangeV2Store;
+  @Autowired
+  @Getter
+  private MarketAccountStore marketAccountStore;
+  @Autowired
+  @Getter
+  private MarketOrderStore marketOrderStore;
+  @Autowired
+  @Getter
+  private MarketPairPriceToOrderStore marketPairPriceToOrderStore;
+  @Autowired
+  @Getter
+  private MarketPairToPriceStore marketPairToPriceStore;
   @Autowired
   @Getter
   private CodeStore codeStore;
@@ -161,6 +181,22 @@ public class ChainBaseManager {
   @Setter
   private BlockCapsule genesisBlock;
 
+  @Autowired
+  @Getter
+  private CommonDataBase commonDataBase;
+
+  @Autowired
+  @Getter
+  private PbftSignDataStore pbftSignDataStore;
+
+  @Getter
+  private ForkController forkController = ForkController.instance();
+
+  @Autowired
+  @Getter
+  @Setter
+  private TreeBlockIndexStore merkleTreeIndexStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -200,6 +236,8 @@ public class ChainBaseManager {
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
     closeOneStore(commonStore);
+    closeOneStore(commonDataBase);
+    closeOneStore(pbftSignDataStore);
   }
 
   // for test only
@@ -239,7 +277,7 @@ public class ChainBaseManager {
     return dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
   }
 
-  public void initGenesis(){
+  public void initGenesis() {
     genesisBlock = BlockUtil.newGenesisBlockCapsule();
   }
 
@@ -247,7 +285,6 @@ public class ChainBaseManager {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
   }
-
 
 
   /**
@@ -272,7 +309,6 @@ public class ChainBaseManager {
       return false;
     }
   }
-
 
 
   /**

@@ -1,6 +1,7 @@
 package org.tron.core.metrics.net;
 
 public class LatencyDetailInfo {
+
   private String witness;
   private int top99;
   private int top95;

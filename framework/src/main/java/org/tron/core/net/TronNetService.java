@@ -13,6 +13,7 @@ import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
 import org.tron.core.net.messagehandler.InventoryMsgHandler;
+import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
@@ -55,6 +56,9 @@ public class TronNetService {
 
   @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
+
+  @Autowired
+  private PbftDataSyncHandler pbftDataSyncHandler;
 
   public void start() {
     channelManager.init();
@@ -102,6 +106,9 @@ public class TronNetService {
           break;
         case TRXS:
           transactionsMsgHandler.processMessage(peer, msg);
+          break;
+        case PBFT_COMMIT_MSG:
+          pbftDataSyncHandler.processMessage(peer, msg);
           break;
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());

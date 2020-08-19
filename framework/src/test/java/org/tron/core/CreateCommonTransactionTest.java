@@ -1,6 +1,6 @@
 package org.tron.core;
 
-import static org.tron.common.utils.Commons.decodeFromBase58Check;
+import static stest.tron.wallet.common.client.WalletClient.decodeFromBase58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -23,9 +23,7 @@ public class CreateCommonTransactionTest {
    */
   public static void testCreateUpdateBrokerageContract() {
     WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
-            .build());
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build());
     UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
     updateBrokerageContract.setOwnerAddress(
         ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))

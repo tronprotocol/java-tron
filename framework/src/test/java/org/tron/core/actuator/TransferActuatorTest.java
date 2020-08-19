@@ -112,6 +112,16 @@ public class TransferActuatorTest {
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
+  private Any getContract(long count, byte[] address) {
+    long nowTime = new Date().getTime();
+    return Any.pack(
+        TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(address))
+            .setAmount(count)
+            .build());
+  }
+
   private Any getContract(long count) {
     return Any.pack(
         TransferContract.newBuilder()
@@ -126,16 +136,6 @@ public class TransferActuatorTest {
         TransferContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owneraddress)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toaddress)))
-            .setAmount(count)
-            .build());
-  }
-
-  private Any getContract(long count, byte[] address) {
-    long nowTime = new Date().getTime();
-    return Any.pack(
-        TransferContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(address))
             .setAmount(count)
             .build());
   }
@@ -483,7 +483,6 @@ public class TransferActuatorTest {
     }
   }
 
-
   @Test
   public void commonErrorCheck() {
     TransferActuator actuator = new TransferActuator();
@@ -549,6 +548,5 @@ public class TransferActuatorTest {
       Assert.assertTrue(e.getMessage().contains("Cannot transfer"));
     }
   }
-
 
 }

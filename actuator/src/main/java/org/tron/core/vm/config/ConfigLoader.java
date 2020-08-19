@@ -1,6 +1,8 @@
 package org.tron.core.vm.config;
 
 
+import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
+
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -22,15 +24,8 @@ public class ConfigLoader {
         VMConfig.initAllowTvmTransferTrc10(ds.getAllowTvmTransferTrc10());
         VMConfig.initAllowTvmConstantinople(ds.getAllowTvmConstantinople());
         VMConfig.initAllowTvmSolidity059(ds.getAllowTvmSolidity059());
-
+        VMConfig.initAllowShieldedTRC20Transaction(ds.getAllowShieldedTRC20Transaction());
       }
     }
   }
-
-  private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
-    long blockNum = ds.getLatestBlockHeaderNumber();
-    return blockNum >= CommonParameter.getInstance()
-        .getBlockNumForEneryLimit();
-  }
-
 }

@@ -9,28 +9,28 @@ option go_package = "github.com/tronprotocol/grpc-gateway/core";
 import "core/contract/common.proto";
 
 message FreezeBalanceContract {
-    bytes owner_address = 1;
-    int64 frozen_balance = 2;
-    int64 frozen_duration = 3;
+  bytes owner_address = 1;
+  int64 frozen_balance = 2;
+  int64 frozen_duration = 3;
 
-    ResourceCode resource = 10;
-    bytes receiver_address = 15;
+  ResourceCode resource = 10;
+  bytes receiver_address = 15;
 }
 
 
 message UnfreezeBalanceContract {
-    bytes owner_address = 1;
+  bytes owner_address = 1;
 
-    ResourceCode resource = 10;
-    bytes receiver_address = 15;
+  ResourceCode resource = 10;
+  bytes receiver_address = 15;
 }
 
 message WithdrawBalanceContract {
-    bytes owner_address = 1;
+  bytes owner_address = 1;
 }
 
 message TransferContract {
-    bytes owner_address = 1;
-    bytes to_address = 2;
-    int64 amount = 3;
+  bytes owner_address = 1;
+  bytes to_address = 2;
+  int64 amount = 3;
 }

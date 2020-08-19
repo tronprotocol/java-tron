@@ -14,7 +14,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -38,9 +40,13 @@ public class ContractTrcToken011 {
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
   private byte[] transferTokenContractAddress = null;
@@ -75,6 +81,10 @@ public class ContractTrcToken011 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
     PublicMethed.printAddress(dev001Key);
     PublicMethed.printAddress(user001Key);
@@ -464,6 +474,103 @@ public class ContractTrcToken011 {
         dev001Address, blockingStubFull);
     PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
         user001Address, blockingStubFull);
+  }
+
+  @Test(enabled = true, description = "TransferToken after get transaction info by blocknum")
+  public void test05GetTransactionInfoByBlocknum() {
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
+            blockingStubFull), 0, 1,
+        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(user001Address,
+        assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String tokenId = assetAccountId.toStringUtf8();
+    Long tokenValue = Long.valueOf(1);
+    Long callValue = Long.valueOf(0);
+    String param = "\"" + Base58.encode58Check(resultContractAddress)
+        + "\",\"" + tokenValue + "\"," + tokenId;
+    final String triggerTxid1 = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+    final String triggerTxid2 = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Optional<TransactionInfo> infoById1 = PublicMethed
+        .getTransactionInfoById(triggerTxid1, blockingStubFull);
+    TransactionInfo transactionInfo1 = infoById1.get();
+    Optional<TransactionInfo> infoById2 = PublicMethed
+        .getTransactionInfoById(triggerTxid2, blockingStubFull);
+    TransactionInfo transactionInfo2 = infoById2.get();
+
+    if (infoById1.get().getBlockNumber() == infoById2.get().getBlockNumber()) {
+      Optional<TransactionInfoList> transactionInfoByBlockNum = PublicMethed
+          .getTransactionInfoByBlockNum(infoById1.get().getBlockNumber(), blockingStubFull);
+      TransactionInfoList transactionInfoList = transactionInfoByBlockNum.get();
+      Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
+      if (transactionInfo1.getId().equals(transactionInfoList.getTransactionInfo(0).getId())) {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(0));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(1));
+      } else {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(1));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(0));
+      }
+    }
+  }
+
+  @Test(enabled = true, description = "get transaction info by blocknum from solidity")
+  public void test06GetTransactionInfoByBlocknumFromSolidity() {
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
+            blockingStubFull), 0, 1,
+        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(user001Address,
+        assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String tokenId = assetAccountId.toStringUtf8();
+    Long tokenValue = Long.valueOf(1);
+    Long callValue = Long.valueOf(0);
+    String param = "\"" + Base58.encode58Check(resultContractAddress)
+        + "\",\"" + tokenValue + "\"," + tokenId;
+    final String triggerTxid1 = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+    final String triggerTxid2 = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Optional<TransactionInfo> infoById1 = PublicMethed
+        .getTransactionInfoById(triggerTxid1, blockingStubFull);
+    TransactionInfo transactionInfo1 = infoById1.get();
+    Optional<TransactionInfo> infoById2 = PublicMethed
+        .getTransactionInfoById(triggerTxid2, blockingStubFull);
+    TransactionInfo transactionInfo2 = infoById2.get();
+
+    if (infoById1.get().getBlockNumber() == infoById2.get().getBlockNumber()) {
+      Optional<TransactionInfoList> transactionInfoByBlockNum = PublicMethed
+          .getTransactionInfoByBlockNumFromSolidity(infoById1.get().getBlockNumber(),
+              blockingStubSolidity);
+      TransactionInfoList transactionInfoList = transactionInfoByBlockNum.get();
+      Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
+      if (transactionInfo1.getId().equals(transactionInfoList.getTransactionInfo(0).getId())) {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(0));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(1));
+      } else {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(1));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(0));
+      }
+    }
   }
 
   /**

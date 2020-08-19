@@ -19,8 +19,8 @@ package org.tron.core.vm.trace;
 
 import static java.lang.String.format;
 import static org.tron.common.utils.ByteArray.toHexString;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import static org.tron.core.vm.trace.Serializers.serializeFieldsOnly;
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.util.ArrayList;
 import java.util.List;

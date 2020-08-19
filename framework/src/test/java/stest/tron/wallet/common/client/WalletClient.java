@@ -1,7 +1,5 @@
 package stest.tron.wallet.common.client;
 
-import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.typesafe.config.Config;
@@ -376,11 +374,11 @@ public class WalletClient {
   public static AccountCreateContract createAccountCreateContract(
       AccountType accountType, byte[] accountName, byte[] address) {
     AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
-    ByteString bsaAdress = ByteString.copyFrom(address);
+    ByteString bsAddress = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
     builder.setType(accountType);
     builder.setAccountAddress(bsAccountName);
-    builder.setOwnerAddress(bsaAdress);
+    builder.setOwnerAddress(bsAddress);
     return builder.build();
   }
 
@@ -400,11 +398,11 @@ public class WalletClient {
   public static AccountUpdateContract createAccountUpdateContract(byte[] accountName,
       byte[] address) {
     AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
-    ByteString basAddreess = ByteString.copyFrom(address);
+    ByteString bsAddress = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
 
     builder.setAccountName(bsAccountName);
-    builder.setOwnerAddress(basAddreess);
+    builder.setOwnerAddress(bsAddress);
 
     return builder.build();
   }
@@ -625,6 +623,26 @@ public class WalletClient {
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
     return Base58.encode(inputCheck);
+  }
+
+  private static byte[] decode58Check(String input) {
+    byte[] decodeCheck = Base58.decode(input);
+    if (decodeCheck.length <= 4) {
+      return null;
+    }
+    byte[] decodeData = new byte[decodeCheck.length - 4];
+    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
+    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), decodeData);
+    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), hash0);
+    if (hash1[0] == decodeCheck[decodeData.length]
+        && hash1[1] == decodeCheck[decodeData.length + 1]
+        && hash1[2] == decodeCheck[decodeData.length + 2]
+        && hash1[3] == decodeCheck[decodeData.length + 3]) {
+      return decodeData;
+    }
+    return null;
   }
 
   /**
@@ -906,9 +924,9 @@ public class WalletClient {
       long frozenDuration) {
     byte[] address = getAddress();
     FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+    builder.setOwnerAddress(byteAddress).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
     return builder.build();
@@ -936,8 +954,8 @@ public class WalletClient {
     byte[] address = getAddress();
     UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
-    builder.setOwnerAddress(byteAddreess);
+    ByteString byteAddress = ByteString.copyFrom(address);
+    builder.setOwnerAddress(byteAddress);
 
     return builder.build();
   }
@@ -963,9 +981,9 @@ public class WalletClient {
     byte[] address = getAddress();
     WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess);
+    builder.setOwnerAddress(byteAddress);
 
     return builder.build();
   }

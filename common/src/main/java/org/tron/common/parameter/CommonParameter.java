@@ -93,7 +93,7 @@ public class CommonParameter {
   public String storageIndexSwitch = "";
   @Parameter(names = {"--storage-transactionHistory-switch"},
       description = "Storage transaction history switch.(on or off)")
-  public String storageTransactionHistoreSwitch = "";
+  public String storageTransactionHistorySwitch = "";
   @Getter
   @Parameter(names = {"--fast-forward"})
   public boolean fastForward = false;
@@ -293,16 +293,21 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minEffectiveConnection;
+
   @Getter
   @Setter
-  public long allowShieldedTransaction; //committee parameter
+  public long allowMarketTransaction; //committee parameter
+
+  // @Getter
+  // @Setter
+  // public long allowShieldedTransaction; //committee parameter
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
   public boolean fullNodeAllowShieldedTransactionArgs;
   @Getter
   @Setter
-  public long blockNumForEneryLimit;
+  public long blockNumForEnergyLimit;
   @Getter
   @Setter
   @Parameter(names = {"--es"})
@@ -371,8 +376,13 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
+  public boolean nodeHttpStatisticsSRRewardEnable = false;
+  @Getter
+  @Setter
   public int maxTransactionPendingSize;
-
+  @Getter
+  @Setter
+  public long pendingTransactionTimeout;
   @Getter
   @Setter
   public boolean nodeMetricsEnable = false;
@@ -396,6 +406,35 @@ public class CommonParameter {
   @Getter
   @Setter
   public int metricsReportInterval = 10;
+
+  @Getter
+  @Setter
+  public int agreeNodeCount;
+
+  @Getter
+  @Setter
+  public long allowPBFT;
+  @Getter
+  @Setter
+  public int rpcOnPBFTPort;
+  @Getter
+  @Setter
+  public int pBFTHttpPort;
+  @Getter
+  @Setter
+  public long oldSolidityBlockNum = -1;
+
+  @Getter/**/
+  @Setter
+  public long allowShieldedTRC20Transaction;
+
+  @Getter
+  @Setter
+  public boolean openHistoryQueryWhenLiteFN = false;
+
+  @Getter
+  @Setter
+  public boolean isLiteFullNode = false;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

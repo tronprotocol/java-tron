@@ -39,7 +39,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
@@ -97,6 +96,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private TransactionTrace trxTrace;
+
   private StringBuilder toStringBuff = new StringBuilder();
   @Getter
   @Setter
@@ -210,7 +210,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = SignUtils.signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine());
+      byte[] address = SignUtils
+          .signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine());
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -526,11 +527,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void sign(byte[] privateKey) {
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils
+        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     //    ByteString sig = ByteString.copyFrom(signature.getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-            .signHash(getRawHash().getBytes())));
+        .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
@@ -557,7 +559,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
     }
     List<ByteString> approveList = new ArrayList<>();
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils
+        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
@@ -575,7 +578,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-            .signHash(getRawHash().getBytes())));
+        .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
@@ -617,7 +620,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public boolean validateSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
-    if (isVerified == true) {
+    if (isVerified) {
       return true;
     }
     //Do not support multi contracts in one transaction

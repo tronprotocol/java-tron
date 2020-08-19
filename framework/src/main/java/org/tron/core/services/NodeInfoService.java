@@ -76,7 +76,7 @@ public class NodeInfoService {
     machineInfo.setJavaVersion(runtimeMXBean.getSystemProperties().get("java.version"));
     machineInfo
         .setOsName(operatingSystemMXBean.getName() + " " + operatingSystemMXBean.getVersion());
-    machineInfo.setJvmTotalMemoery(memoryMXBean.getHeapMemoryUsage().getMax());
+    machineInfo.setJvmTotalMemory(memoryMXBean.getHeapMemoryUsage().getMax());
     machineInfo.setJvmFreeMemory(
         memoryMXBean.getHeapMemoryUsage().getMax() - memoryMXBean.getHeapMemoryUsage().getUsed());
     machineInfo.setProcessCpuRate(operatingSystemMXBean.getProcessCpuLoad());
@@ -169,7 +169,6 @@ public class NodeInfoService {
   private void setConfigNodeInfo(NodeInfo nodeInfo) {
     ConfigNodeInfo configNodeInfo = new ConfigNodeInfo();
     configNodeInfo.setCodeVersion(Version.getVersion());
-    configNodeInfo.setVersionName(Version.versionName);
     configNodeInfo.setVersionNum(Version.versionCode);
     configNodeInfo.setP2pVersion(String.valueOf(parameter.getNodeP2pVersion()));
     configNodeInfo.setListenPort(parameter.getNodeListenPort());

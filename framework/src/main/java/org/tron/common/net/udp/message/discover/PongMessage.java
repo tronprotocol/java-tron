@@ -19,7 +19,7 @@ public class PongMessage extends Message {
     this.pongMessage = Discover.PongMessage.parseFrom(data);
   }
 
-  public PongMessage(Node from, long sequence) {
+  public PongMessage(Node from) {
     super(DISCOVER_PONG, null);
     Endpoint toEndpoint = Endpoint.newBuilder()
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
@@ -29,7 +29,7 @@ public class PongMessage extends Message {
     this.pongMessage = Discover.PongMessage.newBuilder()
         .setFrom(toEndpoint)
         .setEcho(Args.getInstance().getNodeP2pVersion())
-        .setTimestamp(sequence)
+        .setTimestamp(System.currentTimeMillis())
         .build();
     this.data = this.pongMessage.toByteArray();
   }
