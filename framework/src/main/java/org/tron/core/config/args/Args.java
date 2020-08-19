@@ -174,6 +174,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
     PARAMETER.allowTvmIstanbul = 0;
+    PARAMETER.allowTvmStake = 0;
+    PARAMETER.allowTvmAssetIssue = 0;
   }
 
   /**
@@ -706,9 +708,22 @@ public class Args extends CommonParameter {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
+    PARAMETER.allowTvmStake =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_STAKE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_STAKE) : 0;
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
         .getInstance().getStorage().getDbEngine().toUpperCase())) {
+      initRocksDbBackupProperty(config);
+      initRocksDbSettings(config);
+    }
+
+    PARAMETER.allowTvmAssetIssue =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
+    initBackupProperty(config);
+    if (Constant.ROCKSDB.equals(CommonParameter
+            .getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
@@ -1045,7 +1060,6 @@ public class Args extends CommonParameter {
     logger.info("Backup member size: {}", parameter.getBackupMembers().size());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
-    logger.info("Version name: {}", Version.versionName);
     logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", parameter.getStorage().getDbVersion());

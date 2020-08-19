@@ -19,6 +19,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -268,5 +269,17 @@ public class TronNetDelegate {
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public PbftSignCapsule getBlockPbftCommitData(long blockNum) {
+    return chainBaseManager.getPbftSignDataStore().getBlockSignData(blockNum);
+  }
+
+  public PbftSignCapsule getSRLPbftCommitData(long epoch) {
+    return chainBaseManager.getPbftSignDataStore().getSrSignData(epoch);
+  }
+
+  public boolean allowPBFT() {
+    return chainBaseManager.getDynamicPropertiesStore().allowPBFT();
   }
 }

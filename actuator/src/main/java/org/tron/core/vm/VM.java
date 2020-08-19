@@ -3,21 +3,7 @@ package org.tron.core.vm;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
-import static org.tron.core.vm.OpCode.CALL;
-import static org.tron.core.vm.OpCode.CALLTOKEN;
-import static org.tron.core.vm.OpCode.CALLTOKENID;
-import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
-import static org.tron.core.vm.OpCode.CHAINID;
-import static org.tron.core.vm.OpCode.CREATE2;
-import static org.tron.core.vm.OpCode.EXTCODEHASH;
-import static org.tron.core.vm.OpCode.ISCONTRACT;
-import static org.tron.core.vm.OpCode.PUSH1;
-import static org.tron.core.vm.OpCode.REVERT;
-import static org.tron.core.vm.OpCode.SAR;
-import static org.tron.core.vm.OpCode.SELFBALANCE;
-import static org.tron.core.vm.OpCode.SHL;
-import static org.tron.core.vm.OpCode.SHR;
-import static org.tron.core.vm.OpCode.TOKENBALANCE;
+import static org.tron.core.vm.OpCode.*;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -27,6 +13,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -127,6 +114,17 @@ public class VM {
       if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
+
+      if (!VMConfig.allowTvmStake()
+              && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+                || op == WITHDRAWREWARD)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+
+      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
       program.verifyStackOverflow(op.require(), op.ret()); //Check not exceeding stack limits
@@ -175,7 +173,9 @@ public class VM {
           break;
         case TOKENBALANCE:
         case BALANCE:
+        case REWARDBALANCE:
         case ISCONTRACT:
+        case ISSRCANDIDATE:
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -316,6 +316,19 @@ public class VM {
           int bytesOccupied = exp.bytesOccupied();
           energyCost =
               (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
+          break;
+        case STAKE:
+        case UNSTAKE:
+          energyCost = energyCosts.getSTAKE_UNSTAKE();
+          break;
+        case WITHDRAWREWARD:
+          energyCost = energyCosts.getWITHDRAW_REWARD();
+          break;
+        case TOKENISSUE:
+          energyCost = energyCosts.getTOKEN_ISSUE();
+          break;
+        case UPDATEASSET:
+          energyCost = energyCosts.getUPDATE_ASSET();
           break;
         default:
           break;
@@ -750,11 +763,33 @@ public class VM {
           program.step();
         }
         break;
+        case REWARDBALANCE: {
+          DataWord address = program.stackPop();
+          DataWord rewardBalance = program.getRewardBalance(address);
+
+          if (logger.isDebugEnabled()) {
+            hint = ADDRESS_LOG
+                    + Hex.toHexString(address.getLast20Bytes())
+                    + " reward balance: " + rewardBalance.toString();
+          }
+
+          program.stackPush(rewardBalance);
+          program.step();
+        }
+        break;
         case ISCONTRACT: {
           DataWord address = program.stackPop();
           DataWord isContract = program.isContract(address);
 
           program.stackPush(isContract);
+          program.step();
+        }
+        break;
+        case ISSRCANDIDATE: {
+          DataWord address = program.stackPop();
+          DataWord isSRCandidate = program.isSRCandidate(address);
+
+          program.stackPush(isSRCandidate);
           program.step();
         }
         break;
@@ -1414,6 +1449,65 @@ public class VM {
             program.callToAddress(msg);
           }
 
+          program.step();
+          break;
+        }
+        case STAKE: {
+          DataWord srAddress = program.stackPop();
+          DataWord stakeAmount = program.stackPop();
+          boolean result = program.stake(srAddress, stakeAmount);
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
+        case UNSTAKE: {
+          boolean result = program.unstake();
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
+        case WITHDRAWREWARD: {
+          program.withdrawReward();
+          program.step();
+        }
+        break;
+        case TOKENISSUE: {
+          DataWord name = program.stackPop();
+          DataWord abbr = program.stackPop();
+          DataWord totalSupply = program.stackPop();
+          DataWord precision = program.stackPop();
+
+          if (logger.isDebugEnabled()) {
+            hint = "name: " + ByteArray.toStr(name.getNoEndZeroesData())
+                    + " abbr: " + ByteArray.toStr(abbr.getNoEndZeroesData())
+                    + " totalSupply: " + ByteArray.toLong(totalSupply.getData())
+                    + " precision: " + ByteArray.toLong(precision.getData());
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
+                    String.format("%-12s", op.name()),
+                    program.getEnergyLimitLeft().value(),
+                    program.getCallDeep(), hint);
+          }
+          program.tokenIssue(name, abbr, totalSupply, precision);
+          program.step();
+          break;
+        }
+        case UPDATEASSET: {
+          DataWord trcTokenId = program.stackPop();
+          DataWord urlDataOffs = program.stackPop();
+          DataWord descriptionDataOffs = program.stackPop();
+
+          if (logger.isDebugEnabled()) {
+            hint = "descriptionDataOffs: " + ByteArray.toLong(descriptionDataOffs.getData())
+                    + " urlDataOffs: " + ByteArray.toLong(urlDataOffs.getData())
+                    + " trcTokenId: " + ByteArray.toLong(trcTokenId.getData());
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
+                    String.format("%-12s", op.name()),
+                    program.getEnergyLimitLeft().value(),
+                    program.getCallDeep(), hint);
+          }
+          program.updateAsset(urlDataOffs, descriptionDataOffs);
           program.step();
           break;
         }

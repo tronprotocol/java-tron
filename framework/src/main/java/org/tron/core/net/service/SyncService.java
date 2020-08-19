@@ -29,6 +29,7 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.SyncBlockChainMessage;
+import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
@@ -39,6 +40,9 @@ public class SyncService {
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
+
+  @Autowired
+  private PbftDataSyncHandler pbftDataSyncHandler;
 
   private Map<BlockMessage, PeerConnection> blockWaitToProcess = new ConcurrentHashMap<>();
 
@@ -260,6 +264,7 @@ public class SyncService {
     BlockId blockId = block.getBlockId();
     try {
       tronNetDelegate.processBlock(block, true);
+      pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (Exception e) {
       logger.error("Process sync block {} failed.", blockId.getString(), e);
       flag = false;

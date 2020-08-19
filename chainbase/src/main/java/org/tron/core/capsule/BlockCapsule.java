@@ -68,7 +68,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
-    // blockheader raw
+    // block header raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
         .setNumber(number)
@@ -91,7 +91,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockCapsule(long timestamp, ByteString parentHash, long number,
       List<Transaction> transactionList) {
-    // blockheader raw
+    // block header raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
         .setTimestamp(timestamp)
