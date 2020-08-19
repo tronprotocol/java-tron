@@ -7,6 +7,7 @@ import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.WalletUtil;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -78,6 +79,8 @@ public class UnStakeTest extends VMContractTestBase {
         rootRepository.commit();
         Assert.assertEquals(rootRepository.getBalance(factoryAddress), 10000000000L);
 
+        manager.getDynamicPropertiesStore().saveMinFrozenTime(0);
+
         // Trigger contract method: stakeTest(address,uint256)
         String stakeTest = "stakeTest(address,uint256)";
         String witness = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
@@ -90,12 +93,16 @@ public class UnStakeTest extends VMContractTestBase {
         Assert.assertEquals(Hex.toHexString(returnValue),
                 "0000000000000000000000000000000000000000000000000000000000000001");
 
+        //vote
         String unstakeTest = "unstakeTest()";
         hexInput = AbiUtil.parseMethod(unstakeTest, Arrays.asList(""));
         result = TvmTestUtils
                 .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                         factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
         Assert.assertNull(result.getRuntime().getRuntimeError());
+        returnValue = result.getRuntime().getResult().getHReturn();
+        Assert.assertEquals(Hex.toHexString(returnValue),
+                "0000000000000000000000000000000000000000000000000000000000000001");
     }
 
 }
