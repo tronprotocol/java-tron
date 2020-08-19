@@ -22,6 +22,49 @@ import java.util.Arrays;
 @Slf4j
 public class RewardBalanceTest extends VMTestBase {
 
+/*  pragma solidity ^0.5.0;
+
+  contract ContractB{
+    address user;
+  }
+
+  contract TestRewardBalance{
+    address user;
+    address payable owner;
+
+    ContractB contractB = new ContractB();
+
+    constructor() public {
+      user = msg.sender;
+    }
+
+    function rewardBalanceTest(address addr) view public returns (uint256) {
+      return addr.rewardbalance;
+    }
+
+    function nullAddressTest() view public returns (uint256) {
+      return address(0x0).rewardbalance;
+    }
+
+    function localContractAddrTest() view public returns (uint256) {
+      address payable localContract = address(uint160(address(this)));
+      return localContract.rewardbalance;
+    }
+
+    function otherContractAddrTest() view public returns (uint256) {
+      address payable localContract = address(uint160(address(contractB)));
+      return localContract.rewardbalance;
+    }
+
+    function nonpayableAddrTest(address addr) view public returns (uint256) {
+      return addr.rewardbalance;
+    }
+
+    function payableAddrTest(address payable addr) view public returns (uint256) {
+      return addr.rewardbalance;
+    }
+  }*/
+
   @Test
   public void testRewardBalance()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
