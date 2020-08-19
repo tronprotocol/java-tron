@@ -1,6 +1,9 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -16,17 +19,12 @@ import org.tron.common.utils.WalletUtil;
 import org.tron.consensus.base.Param;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.consensus.ConsensusService;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.HeaderNotFound;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TaposException;
@@ -42,86 +40,87 @@ import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class WithdrawRewardTest extends VMContractTestBase {
 
-/*
-  pragma solidity ^0.5.0;
+  /*
+    pragma solidity ^0.5.0;
 
-  contract ContractB{
-    address user;
+    contract ContractB{
+      address user;
 
-    constructor() payable public {
-      user = msg.sender;
+      constructor() payable public {
+        user = msg.sender;
+      }
+
+      function stakeTest(address sr, uint256 amount) public returns (bool) {
+        return stake(sr, amount);
+      }
+
+      function withdrawRewardTest() public returns (uint) {
+        return withdrawreward();
+      }
     }
 
-    function stakeTest(address sr, uint256 amount) public returns (bool) {
-      return stake(sr, amount);
+    contract TestRewardBalance{
+      address user;
+
+      ContractB contractB = new ContractB();
+
+      constructor() payable public {
+        user = msg.sender;
+      }
+
+      function stakeTest(address sr, uint256 amount) public returns (bool) {
+        return stake(sr, amount);
+      }
+
+      function unstakeTest() public {
+        unstake();
+      }
+
+      function contractBStakeTest(address sr, uint256 amount) public returns (bool) {
+        return contractB.stakeTest(sr, amount);
+      }
+
+      function withdrawRewardTest() public returns (uint) {
+        return withdrawreward();
+      }
+
+      function rewardBalanceTest(address addr) public returns (uint) {
+        return addr.rewardbalance;
+      }
+
+      function localContractAddrTest() view public returns (uint256) {
+        address payable localContract = address(uint160(address(this)));
+        return localContract.rewardbalance;
+      }
+
+      function otherContractAddrTest() view public returns (uint256) {
+        address payable localContract = address(uint160(address(contractB)));
+        return localContract.rewardbalance;
+      }
+
+      function contractBWithdrawRewardTest() public returns (uint) {
+        return contractB.withdrawRewardTest();
+      }
+
+      function getContractBAddressTest() public returns (address) {
+        return address(contractB);
+      }
     }
-
-    function withdrawRewardTest() public returns (uint) {
-      return withdrawreward();
-    }
-  }
-
-  contract TestRewardBalance{
-    address user;
-
-    ContractB contractB = new ContractB();
-
-    constructor() payable public {
-      user = msg.sender;
-    }
-
-    function stakeTest(address sr, uint256 amount) public returns (bool) {
-      return stake(sr, amount);
-    }
-
-    function unstakeTest() public {
-      unstake();
-    }
-
-    function contractBStakeTest(address sr, uint256 amount) public returns (bool) {
-      return contractB.stakeTest(sr, amount);
-    }
-
-    function withdrawRewardTest() public returns (uint) {
-      return withdrawreward();
-    }
-
-    function rewardBalanceTest(address addr) public returns (uint) {
-      return addr.rewardbalance;
-    }
-
-    function localContractAddrTest() view public returns (uint256) {
-      address payable localContract = address(uint160(address(this)));
-      return localContract.rewardbalance;
-    }
-
-    function otherContractAddrTest() view public returns (uint256) {
-      address payable localContract = address(uint160(address(contractB)));
-      return localContract.rewardbalance;
-    }
-
-    function contractBWithdrawRewardTest() public returns (uint) {
-      return contractB.withdrawRewardTest();
-    }
-
-    function getContractBAddressTest() public returns (address) {
-      return address(contractB);
-    }
-  }
-*/
+  */
 
   @Test
   public void testWithdrawRewardInLocalContract()
           throws ContractExeException, ReceiptCheckErrException, ValidateSignatureException,
-          BadNumberBlockException, ValidateScheduleException, ContractValidateException, VMIllegalException, DupTransactionException, TooBigTransactionException, TooBigTransactionResultException, BadBlockException, NonCommonBlockException, TransactionExpirationException, UnLinkedBlockException, TaposException, ZksnarkException, AccountResourceInsufficientException {
+          BadNumberBlockException, ValidateScheduleException, ContractValidateException,
+          VMIllegalException, DupTransactionException, TooBigTransactionException,
+          TooBigTransactionResultException, BadBlockException, NonCommonBlockException,
+          TransactionExpirationException, UnLinkedBlockException, TaposException,
+          ZksnarkException, AccountResourceInsufficientException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -271,7 +270,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
     Assert.assertEquals(Hex.toHexString(returnValue),
             "0000000000000000000000000000000000000000000000000000000000000000");
 
-    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(), System.currentTimeMillis(), privateKey);
+    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(),
+            System.currentTimeMillis(), privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(newBlock);
     blockCapsule.generatedByMyself = true;
 
@@ -305,13 +305,14 @@ public class WithdrawRewardTest extends VMContractTestBase {
     BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
 
     // Current Reward: Total Reward * Vote Rate
-//    BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
-//    byte[] sr1 = decodeFromBase58Check(witness);
-//    long totalReward = (long) ((double) rootRepository.getDelegationStore().getReward(1, sr1));
-//    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
-//    double voteRate = (double) 100 / totalVote;
-//    long curReward = (long) (totalReward * voteRate);
-//    Assert.assertEquals(reward.longValue(), curReward);
+    //    BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
+    //    byte[] sr1 = decodeFromBase58Check(witness);
+    //    long totalReward = (long) ((double) rootRepository
+    //            .getDelegationStore().getReward(1, sr1));
+    //    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
+    //    double voteRate = (double) 100 / totalVote;
+    //    long curReward = (long) (totalReward * voteRate);
+    //    Assert.assertEquals(reward.longValue(), curReward);
 
     //total reward: block reward + vote reward
     long blockReward = 25600000;
@@ -390,7 +391,11 @@ public class WithdrawRewardTest extends VMContractTestBase {
   @Test
   public void testWithdrawRewardInAnotherContract()
           throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
-          ContractValidateException, DupTransactionException, TooBigTransactionException, AccountResourceInsufficientException, BadBlockException, NonCommonBlockException, TransactionExpirationException, UnLinkedBlockException, ZksnarkException, TaposException, TooBigTransactionResultException, ValidateSignatureException, BadNumberBlockException, ValidateScheduleException {
+          ContractValidateException, DupTransactionException, TooBigTransactionException,
+          AccountResourceInsufficientException, BadBlockException, NonCommonBlockException,
+          TransactionExpirationException, UnLinkedBlockException, ZksnarkException,
+          TaposException, TooBigTransactionResultException, ValidateSignatureException,
+          BadNumberBlockException, ValidateScheduleException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -556,7 +561,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
             "0000000000000000000000000000000000000000000000000000000000000000");
 
     // Trigger contract method: contractBWithdrawRewardTest()
-    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(), System.currentTimeMillis(), privateKey);
+    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(),
+            System.currentTimeMillis(), privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(newBlock);
     blockCapsule.generatedByMyself = true;
 
@@ -590,12 +596,13 @@ public class WithdrawRewardTest extends VMContractTestBase {
     BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
 
     // Current Reward: Total Reward * Vote Rate
-//    byte[] sr1 = decodeFromBase58Check(witness);
-//    long totalReward = (long) ((double) rootRepository.getDelegationStore().getReward(1, sr1));
-//    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
-//    double voteRate = (double) 200 / totalVote;
-//    long curReward = (long) (totalReward * voteRate);
-//    Assert.assertEquals(curReward, reward.longValue());
+    //    byte[] sr1 = decodeFromBase58Check(witness);
+    //    long totalReward = (long) ((double) rootRepository
+    //            .getDelegationStore().getReward(1, sr1));
+    //    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
+    //    double voteRate = (double) 200 / totalVote;
+    //    long curReward = (long) (totalReward * voteRate);
+    //    Assert.assertEquals(curReward, reward.longValue());
 
     //total reward: block reward + vote reward
     long blockReward = 25600000;
@@ -690,7 +697,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
             .setParentHash(ByteString
                     .copyFrom(chainBaseManager.getDynamicPropertiesStore()
                             .getLatestBlockHeaderHash().getBytes()))
-            .setNumber(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1)
+            .setNumber(chainBaseManager.getDynamicPropertiesStore()
+                    .getLatestBlockHeaderNumber() + 1)
             .setTimestamp(blockTime)
             .setWitnessAddress(witness)
             .build();
@@ -728,7 +736,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
             .setParentHash(ByteString
                     .copyFrom(chainBaseManager.getDynamicPropertiesStore()
                             .getLatestBlockHeaderHash().getBytes()))
-            .setNumber(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1)
+            .setNumber(chainBaseManager.getDynamicPropertiesStore()
+                    .getLatestBlockHeaderNumber() + 1)
             .setTimestamp(blockTime)
             .setWitnessAddress(witness)
             .build();

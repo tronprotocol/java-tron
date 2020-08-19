@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -15,56 +16,55 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
-import java.util.Collections;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class RewardBalanceTest extends VMTestBase {
 
-/*
-  pragma solidity ^0.5.0;
+  /*
+    pragma solidity ^0.5.0;
 
-  contract ContractB{
-    address user;
-  }
-
-  contract TestRewardBalance{
-    address user;
-    address payable owner;
-
-    ContractB contractB = new ContractB();
-
-    constructor() public {
-      user = msg.sender;
+    contract ContractB{
+      address user;
     }
 
-    function rewardBalanceTest(address addr) view public returns (uint256) {
-      return addr.rewardbalance;
-    }
+    contract TestRewardBalance{
+      address user;
+      address payable owner;
 
-    function nullAddressTest() view public returns (uint256) {
-      return address(0x0).rewardbalance;
-    }
+      ContractB contractB = new ContractB();
 
-    function localContractAddrTest() view public returns (uint256) {
-      address payable localContract = address(uint160(address(this)));
-      return localContract.rewardbalance;
-    }
+      constructor() public {
+        user = msg.sender;
+      }
 
-    function otherContractAddrTest() view public returns (uint256) {
-      address payable localContract = address(uint160(address(contractB)));
-      return localContract.rewardbalance;
-    }
+      function rewardBalanceTest(address addr) view public returns (uint256) {
+        return addr.rewardbalance;
+      }
 
-    function nonpayableAddrTest(address addr) view public returns (uint256) {
-      return addr.rewardbalance;
-    }
+      function nullAddressTest() view public returns (uint256) {
+        return address(0x0).rewardbalance;
+      }
 
-    function payableAddrTest(address payable addr) view public returns (uint256) {
-      return addr.rewardbalance;
+      function localContractAddrTest() view public returns (uint256) {
+        address payable localContract = address(uint160(address(this)));
+        return localContract.rewardbalance;
+      }
+
+      function otherContractAddrTest() view public returns (uint256) {
+        address payable localContract = address(uint160(address(contractB)));
+        return localContract.rewardbalance;
+      }
+
+      function nonpayableAddrTest(address addr) view public returns (uint256) {
+        return addr.rewardbalance;
+      }
+
+      function payableAddrTest(address payable addr) view public returns (uint256) {
+        return addr.rewardbalance;
+      }
     }
-  }
-*/
+  */
 
   @Test
   public void testRewardBalance()
@@ -142,7 +142,8 @@ public class RewardBalanceTest extends VMTestBase {
     // Trigger contract method: rewardBalanceTest(address)
     String methodByAddr = "rewardBalanceTest(address)";
     String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
+    String hexInput = AbiUtil.parseMethod(methodByAddr,
+            Collections.singletonList(nonexistentAccount));
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -190,7 +191,7 @@ public class RewardBalanceTest extends VMTestBase {
     // check deployed contract
     Assert.assertEquals(Hex.toHexString(returnValue),
             "0000000000000000000000000000000000000000000000000000000000000000");
-//
+
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));

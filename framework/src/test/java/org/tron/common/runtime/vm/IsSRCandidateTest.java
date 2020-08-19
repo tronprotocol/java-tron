@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -15,56 +16,55 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
-import java.util.Collections;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class IsSRCandidateTest extends VMTestBase {
 
-/*
-  pragma solidity ^0.5.0;
+  /*
+    pragma solidity ^0.5.0;
 
-  contract ContractB{
-    address others;
-  }
-
-  contract TestIsSRCandidate{
-    address user;
-
-    ContractB contractB = new ContractB();
-
-    constructor() public {
-      user = msg.sender;
+    contract ContractB{
+      address others;
     }
 
-    function isSRCandidateTest(address addr) public returns (bool) {
-      return address(addr).isSRCandidate;
-    }
+    contract TestIsSRCandidate{
+      address user;
 
-    function nullAddressTest() public returns (bool) {
-      return address(0x0).isSRCandidate;
-    }
+      ContractB contractB = new ContractB();
 
-    function localContractAddrTest() public returns (bool) {
-      address payable localContract = address(uint160(address(this)));
-      return localContract.isSRCandidate;
+      constructor() public {
+        user = msg.sender;
+      }
 
-      return address(this).isSRCandidate;
-    }
+      function isSRCandidateTest(address addr) public returns (bool) {
+        return address(addr).isSRCandidate;
+      }
 
-    function otherContractAddrTest() public returns (bool) {
-      return address(contractB).isSRCandidate;
-    }
+      function nullAddressTest() public returns (bool) {
+        return address(0x0).isSRCandidate;
+      }
 
-    function nonpayableAddrTest(address addr) public returns (bool) {
-      return addr.isSRCandidate;
-    }
+      function localContractAddrTest() public returns (bool) {
+        address payable localContract = address(uint160(address(this)));
+        return localContract.isSRCandidate;
 
-    function payableAddrTest(address payable addr) public returns (bool) {
-      return addr.isSRCandidate;
+        return address(this).isSRCandidate;
+      }
+
+      function otherContractAddrTest() public returns (bool) {
+        return address(contractB).isSRCandidate;
+      }
+
+      function nonpayableAddrTest(address addr) public returns (bool) {
+        return addr.isSRCandidate;
+      }
+
+      function payableAddrTest(address payable addr) public returns (bool) {
+        return addr.isSRCandidate;
+      }
     }
-  }
-*/
+  */
 
   @Test
   public void testIsSRCandidate()
@@ -141,7 +141,8 @@ public class IsSRCandidateTest extends VMTestBase {
     // Trigger contract method: isSRCandidateTest(address)
     String methodByAddr = "isSRCandidateTest(address)";
     String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
+    String hexInput = AbiUtil.parseMethod(methodByAddr,
+            Collections.singletonList(nonexistentAccount));
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
