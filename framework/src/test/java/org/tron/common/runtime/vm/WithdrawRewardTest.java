@@ -42,62 +42,73 @@ import java.util.Arrays;
 import static stest.tron.wallet.common.client.utils.Base58.decodeFromBase58Check;
 
 @Slf4j
-public class WithdrawRewardTest {
+public class WithdrawRewardTest extends VMContractTestBase {
 
-  private String dbPath;
-  private Runtime runtime;
-  private Manager manager;;
-  private Repository rootRepository;
-  private TronApplicationContext context;
-  private ConsensusService consensusService;
-  private ChainBaseManager chainBaseManager;
-  private MaintenanceManager maintenanceManager;
+/*  pragma solidity ^0.5.0;
 
-  private static String OWNER_ADDRESS;
-  private static String WITNESS_SR1_ADDRESS;
+  contract ContractB{
+    address user;
 
-  WitnessStore witnessStore;
-  DelegationService delegationService;
+    constructor() payable public {
+      user = msg.sender;
+    }
 
-  static {
-    // 27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1 (test.config)
-    WITNESS_SR1_ADDRESS =
-            Constant.ADD_PRE_FIX_STRING_TESTNET + "299F3DB80A24B20A254B89CE639D59132F157F13";
-  }
+    function stakeTest(address sr, uint256 amount) public returns (bool) {
+      return stake(sr, amount);
+    }
 
-  @Before
-  public void init() {
-    dbPath = "output_" + this.getClass().getName();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-
-    // TRdmP9bYvML7dGUX9Rbw2kZrE2TayPZmZX - 41abd4b9367799eaa3197fecb144eb71de1e049abc
-    OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-
-    rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
-    rootRepository.createAccount(Hex.decode(OWNER_ADDRESS), Protocol.AccountType.Normal);
-    rootRepository.addBalance(Hex.decode(OWNER_ADDRESS), 30000000000000L);
-    rootRepository.commit();
-
-    manager = context.getBean(Manager.class);
-    chainBaseManager = manager.getChainBaseManager();
-    witnessStore = context.getBean(WitnessStore.class);
-    consensusService = context.getBean(ConsensusService.class);
-    maintenanceManager = context.getBean(MaintenanceManager.class);
-    delegationService = context.getBean(DelegationService.class);
-    consensusService.start();
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
+    function withdrawRewardTest() public returns (uint) {
+      return withdrawreward();
     }
   }
+
+  contract TestRewardBalance{
+    address user;
+
+    ContractB contractB = new ContractB();
+
+    constructor() payable public {
+      user = msg.sender;
+    }
+
+    function stakeTest(address sr, uint256 amount) public returns (bool) {
+      return stake(sr, amount);
+    }
+
+    function unstakeTest() public {
+      unstake();
+    }
+
+    function contractBStakeTest(address sr, uint256 amount) public returns (bool) {
+      return contractB.stakeTest(sr, amount);
+    }
+
+    function withdrawRewardTest() public returns (uint) {
+      return withdrawreward();
+    }
+
+    function rewardBalanceTest(address addr) public returns (uint) {
+      return addr.rewardbalance;
+    }
+
+    function localContractAddrTest() view public returns (uint256) {
+      address payable localContract = address(uint160(address(this)));
+      return localContract.rewardbalance;
+    }
+
+    function otherContractAddrTest() view public returns (uint256) {
+      address payable localContract = address(uint160(address(contractB)));
+      return localContract.rewardbalance;
+    }
+
+    function contractBWithdrawRewardTest() public returns (uint) {
+      return contractB.withdrawRewardTest();
+    }
+
+    function getContractBAddressTest() public returns (address) {
+      return address(contractB);
+    }
+  }*/
 
   @Test
   public void testWithdrawRewardInLocalContract()
@@ -119,16 +130,16 @@ public class WithdrawRewardTest {
 
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
-        null);
+            contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+            null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
-        null);
+            "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+            null);
     byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
     String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
@@ -139,13 +150,13 @@ public class WithdrawRewardTest {
     String witness = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witness, 100000000));
     TVMTestResult result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
+                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     Assert.assertEquals(Hex.toHexString(returnValue),
-        "0000000000000000000000000000000000000000000000000000000000000001");
+            "0000000000000000000000000000000000000000000000000000000000000001");
 
     // Do Maintenance & Generate New Block
     maintenanceManager.doMaintenance();
@@ -217,8 +228,8 @@ public class WithdrawRewardTest {
     byte[] sr1 = decodeFromBase58Check(witness);
     long totalReward = (long) ((double) rootRepository.getDelegationStore().getReward(1, sr1));
     long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
-    double voteRate = (double)100 / totalVote;
-    long curReward = (long)(totalReward * voteRate);
+    double voteRate = (double) 100 / totalVote;
+    long curReward = (long) (totalReward * voteRate);
     Assert.assertEquals(curReward, reward.longValue());
 
     // Trigger contract method: localContractAddrTest()
@@ -422,8 +433,8 @@ public class WithdrawRewardTest {
     byte[] sr1 = decodeFromBase58Check(witness);
     long totalReward = (long) ((double) rootRepository.getDelegationStore().getReward(1, sr1));
     long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
-    double voteRate = (double)200 / totalVote;
-    long curReward = (long)(totalReward * voteRate);
+    double voteRate = (double) 200 / totalVote;
+    long curReward = (long) (totalReward * voteRate);
     Assert.assertEquals(curReward, reward.longValue());
 
     // Trigger contract method: otherContractAddrTest()

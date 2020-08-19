@@ -1,115 +1,66 @@
 package org.tron.common.runtime.vm;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
-import org.tron.consensus.base.Param;
-import org.tron.consensus.dpos.DposSlot;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
-import org.tron.core.Wallet;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
-import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.*;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class IsSRCandidateTest extends VMTestBase {
 
-  private static Manager manager;
-  private static ChainBaseManager chainBaseManager;
-  private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
-  private static Manager dbManager;
-  private static ChainBaseManager chainManager;
-  private static ConsensusService consensusService;
-  private static DposSlot dposSlot;
-  private static TronApplicationContext context;
-  private static BlockCapsule blockCapsule2;
-  private static String dbPath = "output_manager_test";
-  private static AtomicInteger port = new AtomicInteger(0);
-  private static String accountAddress =
-          Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+/*  pragma solidity ^0.5.0;
 
-//  @Before
-//  public void init() {
-//    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
-//    Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
-//    context = new TronApplicationContext(DefaultConfig.class);
-//
-//    dbManager = context.getBean(Manager.class);
-//    setManager(dbManager);
-//    dposSlot = context.getBean(DposSlot.class);
-//    consensusService = context.getBean(ConsensusService.class);
-//    consensusService.start();
-//    chainManager = dbManager.getChainBaseManager();
-//  }
-//
-//  public static void setManager(Manager dbManager) {
-//    manager = dbManager;
-//    chainBaseManager = dbManager.getChainBaseManager();
-//  }
-
-  public Protocol.Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {
-    long blockTime = System.currentTimeMillis() / 3000 * 3000;
-    if (time != 0) {
-      blockTime = time;
-    } else {
-      if (chainBaseManager.getHeadBlockId().getNum() != 0) {
-        blockTime = chainBaseManager.getHeadBlockTimeStamp() + 3000;
-      }
-    }
-    Param param = Param.getInstance();
-    Param.Miner miner = param.new Miner(privateKey, witness, witness);
-    BlockCapsule blockCapsule = manager
-            .generateBlock(miner, time, System.currentTimeMillis() + 1000);
-    Protocol.Block block = blockCapsule.getInstance();
-
-    Protocol.BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()
-            .setParentHash(ByteString
-                    .copyFrom(chainBaseManager.getDynamicPropertiesStore()
-                            .getLatestBlockHeaderHash().getBytes()))
-            .setNumber(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1)
-            .setTimestamp(blockTime)
-            .setWitnessAddress(witness)
-            .build();
-
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECKey.ECDSASignature signature = ecKey.sign(Sha256Hash.of(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), raw.toByteArray()).getBytes());
-    ByteString sign = ByteString.copyFrom(signature.toByteArray());
-
-    Protocol.BlockHeader blockHeader = block.getBlockHeader().toBuilder()
-            .setRawData(raw)
-            .setWitnessSignature(sign)
-            .build();
-
-    Protocol.Block signedBlock = block.toBuilder().setBlockHeader(blockHeader).build();
-
-    return signedBlock;
+  contract ContractB{
+    address others;
   }
+
+  contract TestIsSRCandidate{
+    address user;
+
+    ContractB contractB = new ContractB();
+
+    constructor() public {
+      user = msg.sender;
+    }
+
+    function isSRCandidateTest(address addr) public returns (bool) {
+      return address(addr).isSRCandidate;
+    }
+
+    function nullAddressTest() public returns (bool) {
+      return address(0x0).isSRCandidate;
+    }
+
+    function localContractAddrTest() public returns (bool) {
+      address payable localContract = address(uint160(address(this)));
+      return localContract.isSRCandidate;
+
+      return address(this).isSRCandidate;
+    }
+
+    function otherContractAddrTest() public returns (bool) {
+      return address(contractB).isSRCandidate;
+    }
+
+    function nonpayableAddrTest(address addr) public returns (bool) {
+      return addr.isSRCandidate;
+    }
+
+    function payableAddrTest(address payable addr) public returns (bool) {
+      return addr.isSRCandidate;
+    }
+  }*/
 
   @Test
   public void testIsSRCandidate()
