@@ -58,6 +58,10 @@ public class VotesCapsule implements ProtoCapsule<Votes> {
         .build();
   }
 
+  public void setOldVote(int index, Vote oldVote){
+    this.votes = this.votes.toBuilder().setOldVotes(index, oldVote).build();
+  }
+
   public List<Vote> getNewVotes() {
     return this.votes.getNewVotesList();
   }

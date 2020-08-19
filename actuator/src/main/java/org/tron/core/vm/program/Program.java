@@ -612,10 +612,11 @@ public class Program {
       if (obtainCapsule.getFrozenCount() > 0) {
         long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
         long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
+        long maxExpire = repository.getDynamicPropertiesStore().getMinFrozenTime() * Parameter.ChainConstant.FROZEN_PERIOD;
         newBandwidthExpire = now
-                + BigInteger.valueOf(Long.max(0, ownerBandwidthExpire - now))
+                + BigInteger.valueOf(Long.max(0, Long.min(ownerBandwidthExpire - now, maxExpire)))
                 .multiply(BigInteger.valueOf(ownerBandwidthBalance))
-                .add(BigInteger.valueOf(Long.max(0, obtainBandwidthExpire - now))
+                .add(BigInteger.valueOf(Long.max(0, Long.min(obtainBandwidthExpire - now, maxExpire)))
                         .multiply(BigInteger.valueOf(obtainBandwidthBalance)))
                 .divide(BigInteger.valueOf(
                         Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance)))
@@ -649,15 +650,22 @@ public class Program {
         if (zeroVotesCapsule == null) {
           zeroVotesCapsule = new VotesCapsule(ByteString.copyFrom(zeroAddress), oldVotes);
         } else {
-          Map<ByteString, Long> totalOldVotes = oldVotes.stream().collect(
-                  Collectors.toMap(
-                          Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
-          zeroVotesCapsule.getOldVotes().forEach(vote -> {
-            totalOldVotes.put(vote.getVoteAddress(), vote.getVoteCount()
-                    + totalOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
-          });
-          zeroVotesCapsule.clearOldVotes();
-          totalOldVotes.forEach(zeroVotesCapsule::addOldVotes);
+          int zeroOldVoteSize = zeroVotesCapsule.getOldVotes().size();
+          Map<ByteString, Integer> zeroOldVotesIndex = new HashMap<>(zeroOldVoteSize);
+          for(int i = 0; i < zeroOldVoteSize; i++){
+            zeroOldVotesIndex.put(zeroVotesCapsule.getOldVotes().get(i).getVoteAddress(), i);
+          }
+          for (Protocol.Vote vote : oldVotes) {
+            if (zeroOldVotesIndex.containsKey(vote.getVoteAddress())) {
+              int index = zeroOldVotesIndex.get(vote.getVoteAddress());
+              long newOldVoteCount = vote.getVoteCount() + zeroVotesCapsule.getOldVotes().get(index).getVoteCount();
+              zeroVotesCapsule.setOldVote(index, Protocol.Vote.newBuilder()
+                      .setVoteAddress(vote.getVoteAddress())
+                      .setVoteCount(newOldVoteCount).build());
+            } else {
+              zeroVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount());
+            }
+          }
         }
         repository.updateVotesCapsule(zeroAddress, zeroVotesCapsule);
       }
