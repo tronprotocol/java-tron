@@ -8,18 +8,21 @@ import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.exception.*;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-
 import java.util.Arrays;
+import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class IsSRCandidateTest extends VMTestBase {
 
-/*  pragma solidity ^0.5.0;
+/*
+  pragma solidity ^0.5.0;
 
   contract ContractB{
     address others;
@@ -60,12 +63,13 @@ public class IsSRCandidateTest extends VMTestBase {
     function payableAddrTest(address payable addr) public returns (bool) {
       return addr.isSRCandidate;
     }
-  }*/
+  }
+*/
 
   @Test
   public void testIsSRCandidate()
           throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
-          ContractValidateException, DupTransactionException, TooBigTransactionException, AccountResourceInsufficientException, BadBlockException, NonCommonBlockException, TransactionExpirationException, UnLinkedBlockException, ZksnarkException, TaposException, TooBigTransactionResultException, ValidateSignatureException, BadNumberBlockException, ValidateScheduleException {
+          ContractValidateException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -73,53 +77,62 @@ public class IsSRCandidateTest extends VMTestBase {
     VMConfig.initAllowTvmStake(1);
     String contractName = "TestIsSRCandidate";
 
-//    String key = "11aba859e4477a6615c8b121e9fdbbf1bc32ca31cf06d46733e539bf94c677e0";
-//    byte[] privateKey = ByteArray.fromHexString(key);
-//    final ECKey ecKey = ECKey.fromPrivate(privateKey);
-//    byte[] witnessAddress = ecKey.getAddress();
-
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},"
-        + "{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}]"
-        + ",\"name\":\"isSRCandidateTest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\""
-        + "}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":"
-        + "[],\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\""
-        + "bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs"
-        + "\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"nonpayableAddrTest\","
-        + "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability"
-        + "\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"nullAddressTest\",\"outputs\":"
-        + "[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\","
-        + "\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"otherContractAddrTest\",\"outputs\":[{\""
-        + "internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type"
-        + "\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address payable\",\"name\":\"addr\",\"type\""
-        + ":\"address\"}],\"name\":\"payableAddrTest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool"
-        + "\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]";
+    String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"constructor\"},{\"constant\":false," +
+            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\"," +
+            "\"type\":\"address\"}],\"name\":\"isSRCandidateTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"localContractAddrTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[{\"internalType\":\"address\"," +
+            "\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"nonpayableAddrTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"nullAddressTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"otherContractAddrTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[{\"internalType\":\"address payable\"," +
+            "\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"payableAddrTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
-    String factoryCode = "60806040526040516100109061008b565b604051809103906000f08015801561002c573d6000803e"
-        + "3d6000fd5b50600180546001600160a01b0319166001600160a01b03929092169190911790553480156100595760008"
-        + "0fd5b50d3801561006657600080fd5b50d2801561007357600080fd5b50600080546001600160a01b03191633179055"
-        + "610097565b6072806101c283390190565b61011c806100a66000396000f3fe6080604052348015600f57600080fd5b5"
-        + "0d38015601b57600080fd5b50d28015602757600080fd5b506004361060725760003560e01c80632e48f1ac14607757"
-        + "806356b42994146077578063627bfa45146077578063af4a11051460ae578063cb2d51cf1460b4578063d30a28ee146"
-        + "0ba575b600080fd5b609a60048036036020811015608b57600080fd5b50356001600160a01b031660c0565b60408051"
-        + "9115158252519081900360200190f35b609a60cd565b609a60d3565b609a60d8565b6001600160a01b0316d990565b6"
-        + "000d990565b30d990565b6001546001600160a01b0316d99056fea26474726f6e5820157bf32a47535ba252072c142a"
-        + "c465305387ea5890db032f2c5280a69978fb3c64736f6c634300050d00316080604052348015600f57600080fd5b50d"
-        + "38015601b57600080fd5b50d28015602757600080fd5b50603d8060356000396000f3fe6080604052600080fdfea264"
-        + "74726f6e5820d254d85864038ebfa30d75f1458ca4289cc5edb6406ee70315369c3d5a1e8eaa64736f6c634300050d0"
-        + "031";
+    String factoryCode = "60806040526040516100109061008b565b6" +
+            "04051809103906000f08015801561002c573d6000803e3d6" +
+            "000fd5b50600180546001600160a01b0319166001600160a" +
+            "01b039290921691909117905534801561005957600080fd5" +
+            "b50d3801561006657600080fd5b50d280156100735760008" +
+            "0fd5b50600080546001600160a01b0319163317905561009" +
+            "7565b6072806101c283390190565b61011c806100a660003" +
+            "96000f3fe6080604052348015600f57600080fd5b50d3801" +
+            "5601b57600080fd5b50d28015602757600080fd5b5060043" +
+            "61060725760003560e01c80632e48f1ac14607757806356b" +
+            "42994146077578063627bfa45146077578063af4a1105146" +
+            "0ae578063cb2d51cf1460b4578063d30a28ee1460ba575b6" +
+            "00080fd5b609a60048036036020811015608b57600080fd5" +
+            "b50356001600160a01b031660c0565b60408051911515825" +
+            "2519081900360200190f35b609a60cd565b609a60d3565b6" +
+            "09a60d8565b6001600160a01b0316d990565b6000d990565" +
+            "b30d990565b6001546001600160a01b0316d99056fea2647" +
+            "4726f6e5820509553fa5821ca76ddf8a0d074cd74dcb1f74" +
+            "e068ca148b983f1b0bea447b99f64736f6c634300050d003" +
+            "16080604052348015600f57600080fd5b50d38015601b576" +
+            "00080fd5b50d28015602757600080fd5b50603d806035600" +
+            "0396000f3fe6080604052600080fdfea26474726f6e58209" +
+            "afab2d7a84ca331e2eb33393a62310b1a53e77c37a287407" +
+            "53ae0a3a99980ba64736f6c634300050d0031";
     long value = 0;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
-//    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
-//    chainManager.addWitness(ByteString.copyFrom(witnessAddress));
-//    Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
-//    dbManager.pushBlock(new BlockCapsule(block));
-
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+        contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
@@ -127,7 +140,7 @@ public class IsSRCandidateTest extends VMTestBase {
     Assert.assertNull(runtime.getRuntimeError());
 
     trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+        "", address, abi, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
     String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);

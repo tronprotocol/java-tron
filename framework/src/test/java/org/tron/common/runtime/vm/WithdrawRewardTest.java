@@ -2,31 +2,50 @@ package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.*;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.consensus.base.Param;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.exception.*;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.BadNumberBlockException;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
+import org.tron.core.exception.BadBlockException;
+import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.ZksnarkException;
+import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-
 import java.math.BigInteger;
 import java.util.Arrays;
+import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class WithdrawRewardTest extends VMContractTestBase {
 
-/*  pragma solidity ^0.5.0;
+/*
+  pragma solidity ^0.5.0;
 
   contract ContractB{
     address user;
@@ -90,12 +109,13 @@ public class WithdrawRewardTest extends VMContractTestBase {
     function getContractBAddressTest() public returns (address) {
       return address(contractB);
     }
-  }*/
+  }
+*/
 
   @Test
   public void testWithdrawRewardInLocalContract()
-          throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
-          ContractValidateException, DupTransactionException, TooBigTransactionException, AccountResourceInsufficientException, BadBlockException, NonCommonBlockException, TransactionExpirationException, UnLinkedBlockException, ZksnarkException, TaposException, TooBigTransactionResultException, ValidateSignatureException, BadNumberBlockException, ValidateScheduleException {
+          throws ContractExeException, ReceiptCheckErrException, ValidateSignatureException,
+          BadNumberBlockException, ValidateScheduleException, ContractValidateException, VMIllegalException, DupTransactionException, TooBigTransactionException, TooBigTransactionResultException, BadBlockException, NonCommonBlockException, TransactionExpirationException, UnLinkedBlockException, TaposException, ZksnarkException, AccountResourceInsufficientException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -105,61 +125,90 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     String contractName = "TestWithdrawReward";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}" +
-            ",{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\",\"type\":\"address" +
-            "\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"" +
-            "contractBStakeTest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
-            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false," +
-            "\"inputs\":[],\"name\":\"contractBWithdrawRewardTest\",\"outputs\":[{\"internalType\":\"uint256\"," +
-            "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":" +
-            "\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"localContractAddrTest\",\"outputs\":" +
-            "[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\"" +
-            ":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"otherContractAddrTest\"" +
-            ",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"" +
-            "stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":" +
-            "\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"rewardBalanceTest\",\"outputs\":[{\"" +
-            "internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\"" +
-            ":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\"," +
-            "\"name\":\"sr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":" +
-            "\"uint256\"}],\"name\":\"stakeTest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\"" +
-            ":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\"" +
-            ":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"" +
-            "nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"" +
-            "stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    String factoryCode = "60806040526040516100109061005c565b604051809103906000f08015801561002c573d600080" +
-            "3e3d6000fd5b50600180546001600160a01b03929092166001600160a01b0319928316179055600080549091163" +
-            "3179055610069565b6101258061035e83390190565b6102e6806100786000396000f3fe60806040523480156100" +
-            "1057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100a2576000356" +
-            "0e01c8063c290120a11610075578063c290120a14610131578063cb2d51cf14610139578063d30a28ee14610141" +
-            "578063e49de2d014610149576100a2565b806325a26c30146100a75780638db848f1146100e7578063a223c65f1" +
-            "4610101578063b3e835e114610127575b600080fd5b6100d3600480360360408110156100bd57600080fd5b5060" +
-            "01600160a01b038135169060200135610175565b604080519115158252519081900360200190f35b6100ef61020" +
-            "1565b60408051918252519081900360200190f35b6100ef6004803603602081101561011757600080fd5b503560" +
-            "01600160a01b0316610278565b61012f610285565b005b6100ef610289565b6100ef610291565b6100ef6102965" +
-            "65b6100d36004803603604081101561015f57600080fd5b506001600160a01b0381351690602001356102a6565b" +
-            "60015460408051630e49de2d60e41b81526001600160a01b0385811660048301526024820185905291516000939" +
-            "29092169163e49de2d09160448082019260209290919082900301818787803b1580156101ce57600080fd5b505a" +
-            "f11580156101e2573d6000803e3d6000fd5b505050506040513d60208110156101f857600080fd5b50519392505" +
-            "050565b60015460408051636148090560e11b815290516000926001600160a01b03169163c290120a9160048083" +
-            "0192602092919082900301818787803b15801561024757600080fd5b505af115801561025b573d6000803e3d600" +
-            "0fd5b505050506040513d602081101561027157600080fd5b5051905090565b6001600160a01b0316d890565bd6" +
-            "50565b6000d7905090565b30d890565b6001546001600160a01b0316d890565b60008183d5939250505056fea26" +
-            "474726f6e5820b122fe49503fd85399547fe5895d4a9a7f4a4abc9d439d86890b31417534437464736f6c634300" +
-            "050d0031608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080f" +
-            "d5b5060ec806100396000396000f3fe6080604052348015600f57600080fd5b50d38015601b57600080fd5b50d2" +
-            "8015602757600080fd5b5060043610604a5760003560e01c8063c290120a14604f578063e49de2d0146067575b6" +
-            "00080fd5b605560a4565b60408051918252519081900360200190f35b609060048036036040811015607b576000" +
-            "80fd5b506001600160a01b03813516906020013560ac565b604080519115158252519081900360200190f35b600" +
-            "0d7905090565b60008183d5939250505056fea26474726f6e582072b0b3cf06e26167acb5abfb54a4059620fb9c" +
-            "f6c3d2f5006c4376049df4c53164736f6c634300050d0031";
+    String abi = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\"," +
+            "\"type\":\"constructor\"},{\"constant\":false," +
+            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
+            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
+            "\"type\":\"uint256\"}],\"name\":\"contractBStakeTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"contractBWithdrawRewardTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
+            "\"name\":\"getContractBAddressTest\"," +
+            "\"outputs\":[{\"internalType\":\"address\",\"name\":\"\"," +
+            "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
+            "\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"uint256\"," +
+            "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false," +
+            "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false," +
+            "\"inputs\":[],\"name\":\"otherContractAddrTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false," +
+            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\"," +
+            "\"type\":\"address\"}],\"name\":\"rewardBalanceTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false," +
+            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
+            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
+            "\"type\":\"uint256\"}],\"name\":\"stakeTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"}]";
+    String factoryCode = "60806040526040516100109061005c565b604051809103906" +
+            "000f08015801561002c573d6000803e3d6000fd5b50600180546001600160a" +
+            "01b03929092166001600160a01b03199283161790556000805490911633179" +
+            "055610069565b6101108061039c83390190565b61032480610078600039600" +
+            "0f3fe608060405234801561001057600080fd5b50d3801561001d57600080f" +
+            "d5b50d2801561002a57600080fd5b50600436106100ad5760003560e01c806" +
+            "3b3e835e111610080578063b3e835e114610156578063c290120a146101605" +
+            "78063cb2d51cf14610168578063d30a28ee14610170578063e49de2d014610" +
+            "178576100ad565b806310198157146100b257806325a26c30146100d657806" +
+            "38db848f114610116578063a223c65f14610130575b600080fd5b6100ba610" +
+            "1a4565b604080516001600160a01b039092168252519081900360200190f35" +
+            "b610102600480360360408110156100ec57600080fd5b506001600160a01b0" +
+            "381351690602001356101b3565b60408051911515825251908190036020019" +
+            "0f35b61011e61023f565b60408051918252519081900360200190f35b61011" +
+            "e6004803603602081101561014657600080fd5b50356001600160a01b03166" +
+            "102b6565b61015e6102c3565b005b61011e6102c7565b61011e6102cf565b6" +
+            "1011e6102d4565b6101026004803603604081101561018e57600080fd5b506" +
+            "001600160a01b0381351690602001356102e4565b6001546001600160a01b0" +
+            "31690565b60015460408051630e49de2d60e41b81526001600160a01b03858" +
+            "1166004830152602482018590529151600093929092169163e49de2d091604" +
+            "48082019260209290919082900301818787803b15801561020c57600080fd5" +
+            "b505af1158015610220573d6000803e3d6000fd5b505050506040513d60208" +
+            "1101561023657600080fd5b50519392505050565b600154604080516361480" +
+            "90560e11b815290516000926001600160a01b03169163c290120a916004808" +
+            "30192602092919082900301818787803b15801561028557600080fd5b505af" +
+            "1158015610299573d6000803e3d6000fd5b505050506040513d60208110156" +
+            "102af57600080fd5b5051905090565b6001600160a01b0316d890565bd6505" +
+            "65b6000d7905090565b30d890565b6001546001600160a01b0316d890565b6" +
+            "0008183d5939250505056fea26474726f6e582064d946716e1b0c5f00dcf70" +
+            "b3ff065ea0587cd3719b2ba94783edeb58413020464736f6c634300050d003" +
+            "16080604052600080546001600160a01b0319163317905560ec80610024600" +
+            "0396000f3fe6080604052348015600f57600080fd5b50d38015601b5760008" +
+            "0fd5b50d28015602757600080fd5b5060043610604a5760003560e01c8063c" +
+            "290120a14604f578063e49de2d0146067575b600080fd5b605560a4565b604" +
+            "08051918252519081900360200190f35b609060048036036040811015607b5" +
+            "7600080fd5b506001600160a01b03813516906020013560ac565b604080519" +
+            "115158252519081900360200190f35b6000d7905090565b60008183d593925" +
+            "0505056fea26474726f6e5820f52f0d803d46c1926596c7faa3b969812b567" +
+            "66163eb8ca0270d34e3cff1d3b164736f6c634300050d0031";
     long value = 1000000000;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-            contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+            contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
             null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
@@ -167,7 +216,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     Assert.assertNull(runtime.getRuntimeError());
 
     trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-            "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+            "", address, abi, factoryCode, value, fee, consumeUserResourcePercent,
             null);
     byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
     String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);
