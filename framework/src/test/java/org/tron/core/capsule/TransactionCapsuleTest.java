@@ -1078,12 +1078,14 @@ public class TransactionCapsuleTest {
 
   @Test
   public void trxCapsuleClearTest() {
-    Transaction tx = Transaction.newBuilder().addRet(Result.newBuilder().setContractRet(contractResult.OUT_OF_TIME).build()).build();
+    Transaction tx = Transaction.newBuilder()
+        .addRet(Result.newBuilder().setContractRet(contractResult.OUT_OF_TIME).build()).build();
     TransactionCapsule trxCap = new TransactionCapsule(tx);
     Result.contractResult contractResult = trxCap.getContractResult();
     trxCap.resetResult();
-    Assert.assertTrue(trxCap.getInstance().getRetCount() == 0);
+    Assert.assertEquals(trxCap.getInstance().getRetCount(), 0);
     trxCap.setResultCode(contractResult);
-    Assert.assertTrue(trxCap.getInstance().getRet(0).getContractRet() == contractResult.OUT_OF_TIME);
+    Assert.assertEquals(trxCap.getInstance()
+        .getRet(0).getContractRet(), contractResult.OUT_OF_TIME);
   }
 }
