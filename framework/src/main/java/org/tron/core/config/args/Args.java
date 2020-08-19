@@ -710,12 +710,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmStake =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_STAKE) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_TVM_STAKE) : 0;
-    initBackupProperty(config);
-    if (Constant.ROCKSDB.equals(CommonParameter
-        .getInstance().getStorage().getDbEngine().toUpperCase())) {
-      initRocksDbBackupProperty(config);
-      initRocksDbSettings(config);
-    }
 
     PARAMETER.allowTvmAssetIssue =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
