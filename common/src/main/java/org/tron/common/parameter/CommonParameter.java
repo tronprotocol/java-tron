@@ -375,7 +375,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public boolean nodeMetricsEnable = true;
+  public boolean nodeMetricsEnable = false;
 
   @Getter
   @Setter
