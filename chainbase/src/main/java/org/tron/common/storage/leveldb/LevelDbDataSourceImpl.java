@@ -375,7 +375,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     resetDbLock.readLock().lock();
     try (DBIterator iterator = database.iterator()) {
       Map<byte[], byte[]> result = new HashMap<>();
-      long i = 0;
       for (iterator.seek(prefixKey); iterator.hasNext(); iterator.next()) {
         Entry<byte[], byte[]> entry = iterator.peekNext();
         if (!ByteUtil.equalPrefix(entry.getKey(), prefixKey)) {

@@ -64,7 +64,6 @@ public class UnvoteCrossActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
-    AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     if (!this.any.is(UnvoteCrossContract.class)) {
       throw new ContractValidateException(

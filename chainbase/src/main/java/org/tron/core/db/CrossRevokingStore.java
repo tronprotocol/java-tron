@@ -21,7 +21,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
   public static final String CHAIN_REGISTER_PREFIX = "register_";
 
   // todo: this param should can be customized
-  public static int MAX_PARACHAIN_NUM = 3;
+  public static final int MAX_PARACHAIN_NUM = 3;
 
 
   public CrossRevokingStore() {
