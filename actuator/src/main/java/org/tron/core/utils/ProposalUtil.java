@@ -318,8 +318,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_ISTANBUL: {
-        //TODO: java-tron 4.1, change the version to VERSION_4_1
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TVM_ISTANBUL]");
         }
@@ -341,8 +340,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_STAKE: {
-          // todo ,version
-          if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TVM_STAKE]");
         }
@@ -353,8 +351,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_ASSET_ISSUE: {
-        // todo ,version
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TVM_ASSET_ISSUE]");
         }
