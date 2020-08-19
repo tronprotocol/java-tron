@@ -13,8 +13,8 @@ public class MetricsUtilTest {
   @Test
   public void testCounterInc() {
     MetricsUtil.counterInc(test1);
-//    Assert
-//        .assertEquals(1, MetricsUtil.getCounter(test1).getCount());
+    //Assert
+    //    .assertEquals(1, MetricsUtil.getCounter(test1).getCount());
   }
 
   //@Test
