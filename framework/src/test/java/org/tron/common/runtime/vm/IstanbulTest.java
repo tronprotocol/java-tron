@@ -222,7 +222,7 @@ public class IstanbulTest extends VMTestBase {
 
     // bn128 add
     String methodAdd = "callBn256Add(bytes32,bytes32,bytes32,bytes32)";
-    TVMTestResult result = TvmTestUtils
+    TVMTestResult result1 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             istanbulAddress, TvmTestUtils.parseAbi(methodAdd,
                 "0000000000000000000000000000000000000000000000000000000000000001\n"
@@ -230,28 +230,26 @@ public class IstanbulTest extends VMTestBase {
                 + "0000000000000000000000000000000000000000000000000000000000000001\n"
                 + "0000000000000000000000000000000000000000000000000000000000000002"),
             0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-    long energyAddFuncIstanbul = result.getRuntime().getResult().getEnergyUsed();
+    Assert.assertNull(result1.getRuntime().getRuntimeError());
 
 
     //bn128 mul
     String methodMul = "callBn256ScalarMul(bytes32,bytes32,bytes32)";
-    result = TvmTestUtils
+    TVMTestResult result2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             istanbulAddress, TvmTestUtils.parseAbi(methodMul,
                 "0000000000000000000000000000000000000000000000000000000000000001\n"
                     + "0000000000000000000000000000000000000000000000000000000000000002\n"
                     + "0000000000000000000000000000000000000000000000000000000000000001\n"),
             0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-    long energyMulFuncIstanbul = result.getRuntime().getResult().getEnergyUsed();
+    Assert.assertNull(result2.getRuntime().getRuntimeError());
 
 
     VMConfig.initAllowTvmIstanbul(0);
 
     // bn128 add
     methodAdd = "callBn256Add(bytes32,bytes32,bytes32,bytes32)";
-    result = TvmTestUtils
+    TVMTestResult result3 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             istanbulAddress, TvmTestUtils.parseAbi(methodAdd,
                 "0000000000000000000000000000000000000000000000000000000000000001\n"
@@ -259,20 +257,24 @@ public class IstanbulTest extends VMTestBase {
                     + "0000000000000000000000000000000000000000000000000000000000000001\n"
                     + "0000000000000000000000000000000000000000000000000000000000000002"),
             0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-    long energyAddFunc = result.getRuntime().getResult().getEnergyUsed();
+    Assert.assertNull(result3.getRuntime().getRuntimeError());
+
 
     //bn128 mul
     methodMul = "callBn256ScalarMul(bytes32,bytes32,bytes32)";
-    result = TvmTestUtils
+    TVMTestResult result4 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             istanbulAddress, TvmTestUtils.parseAbi(methodMul,
                 "0000000000000000000000000000000000000000000000000000000000000001\n"
                     + "0000000000000000000000000000000000000000000000000000000000000002\n"
                     + "0000000000000000000000000000000000000000000000000000000000000001\n"),
             0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-    long energyMulFunc = result.getRuntime().getResult().getEnergyUsed();
+    Assert.assertNull(result4.getRuntime().getRuntimeError());
+
+    long energyAddFuncIstanbul = result1.getRuntime().getResult().getEnergyUsed();
+    long energyMulFuncIstanbul = result2.getRuntime().getResult().getEnergyUsed();
+    long energyAddFunc = result3.getRuntime().getResult().getEnergyUsed();
+    long energyMulFunc = result4.getRuntime().getResult().getEnergyUsed();
 
     Assert.assertEquals(energyAddFunc - energyAddFuncIstanbul,500 - 150);
     Assert.assertEquals(energyMulFunc - energyMulFuncIstanbul,40000 - 6000);
@@ -450,27 +452,25 @@ public class IstanbulTest extends VMTestBase {
 
     // bn128 add
     String methodAdd = "verifyBGLS2()";
-    TVMTestResult result = TvmTestUtils
+    TVMTestResult result1 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             istanbulAddress, TvmTestUtils.parseAbi(methodAdd,
                 null),
             0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-    long energyParingFuncIstanbul = result.getRuntime().getResult().getEnergyUsed();
-
-
+    Assert.assertNull(result1.getRuntime().getRuntimeError());
 
     VMConfig.initAllowTvmIstanbul(0);
 
     // bn128 add
     methodAdd = "verifyBGLS2()";
-    result = TvmTestUtils
+    TVMTestResult result2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             istanbulAddress, TvmTestUtils.parseAbi(methodAdd,
                 null),
             0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-    long energyParingFunc = result.getRuntime().getResult().getEnergyUsed();
+    Assert.assertNull(result2.getRuntime().getRuntimeError());
+    long energyParingFuncIstanbul = result1.getRuntime().getResult().getEnergyUsed();
+    long energyParingFunc = result2.getRuntime().getResult().getEnergyUsed();
 
     //verifyBGLS2() = 3 * paring + 2 * mul
     Assert.assertEquals(energyParingFunc - energyParingFuncIstanbul,
