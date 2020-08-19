@@ -7,7 +7,6 @@ import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -28,8 +27,8 @@ public class UnStakeTest extends VMContractTestBase {
         function stakeTest(address sr, uint256 amount) public returns (bool) {
             return stake(sr, amount);
         }
-        function unstakeTest() public {
-            unstake();
+        function unstakeTest() public public returns (bool) {
+            return unstake();
         }
         function withdrawRewardTest() public returns (uint) {
             return withdrawreward();
@@ -58,12 +57,13 @@ public class UnStakeTest extends VMContractTestBase {
                 "\"name\":\"sr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
                 "\"type\":\"uint256\"}],\"name\":\"stakeTest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\"," +
                 "\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
-                "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[],\"payable\":false," +
-                "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
-                "\"name\":\"withdrawRewardTest\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-                "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+                "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[{\"internalType\":\"bool\"," +
+                "\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+                "\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\"," +
+                "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false," +
+                "\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
         String factoryCode =
-                "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506101e58061003a6000396000f3fe608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100665760003560e01c8063a223c65f1461006b578063b3e835e1146100c3578063c290120a146100cd578063e49de2d0146100eb575b600080fd5b6100ad6004803603602081101561008157600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610151565b6040518082815260200191505060405180910390f35b6100cb610172565b005b6100d5610176565b6040518082815260200191505060405180910390f35b6101376004803603604081101561010157600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291908035906020019092919050505061017e565b604051808215151515815260200191505060405180910390f35b60008173ffffffffffffffffffffffffffffffffffffffff16d89050919050565bd650565b6000d7905090565b60008183d590509291505056fea26474726f6e5820d70033468f5877ae5eac4c7b8fa0f7aac039c39d95722d15bb52ab8c17a7097b64736f6c637828302e352e31332d646576656c6f702e323032302e382e31332b636f6d6d69742e37633236393863300057";
+                "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506102018061003a6000396000f3fe608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100665760003560e01c8063a223c65f1461006b578063b3e835e1146100c3578063c290120a146100e5578063e49de2d014610103575b600080fd5b6100ad6004803603602081101561008157600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610169565b6040518082815260200191505060405180910390f35b6100cb61018a565b604051808215151515815260200191505060405180910390f35b6100ed610192565b6040518082815260200191505060405180910390f35b61014f6004803603604081101561011957600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291908035906020019092919050505061019a565b604051808215151515815260200191505060405180910390f35b60008173ffffffffffffffffffffffffffffffffffffffff16d89050919050565b6000d6905090565b6000d7905090565b60008183d590509291505056fea26474726f6e58204ba2e62e49bd76cb49dd0e1ce7be45dcae5f764ea02b1a11a34c7ef83ca3362764736f6c637828302e352e31332d646576656c6f702e323032302e382e31332b636f6d6d69742e37633236393863300057";
         long value = 0;
         long fee = 100000000;
         long consumeUserResourcePercent = 0;
