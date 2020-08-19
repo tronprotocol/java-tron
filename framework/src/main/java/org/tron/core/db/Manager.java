@@ -1438,8 +1438,8 @@ public class Manager {
     session.reset();
 
     logger.info(
-        "Generate block success, pendingCount: {}," +
-                " repushCount: {}, postponedCount: {}, crossCount: {}",
+        "Generate block success, pendingCount: {}," 
+                + " repushCount: {}, postponedCount: {}, crossCount: {}",
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount,
         crossTxQueue.size());
 
