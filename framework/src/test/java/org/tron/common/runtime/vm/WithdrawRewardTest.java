@@ -39,6 +39,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
@@ -215,14 +216,6 @@ public class WithdrawRewardTest extends VMContractTestBase {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-            "", address, abi, factoryCode, value, fee, consumeUserResourcePercent,
-            null);
-    byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
-    String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
-    Assert.assertNull(runtime.getRuntimeError());
-
     // Trigger contract method: stakeTest(address,uint256)
     String methodByAddr = "stakeTest(address,uint256)";
     String witness = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
@@ -249,7 +242,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStr));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -262,7 +255,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -279,7 +272,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, blockCapsule);
@@ -297,7 +290,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStr));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -325,7 +318,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -338,7 +331,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
 
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, blockCapsule);
@@ -350,7 +343,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStr));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -363,7 +356,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -376,7 +369,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, blockCapsule);
@@ -402,84 +395,98 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     String contractName = "TestWithdrawRewardWithContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":" +
-            "\"constructor\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\"," +
-            "\"name\":\"sr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"" +
-            "amount\",\"type\":\"uint256\"}],\"name\":\"contractBStakeTest\",\"outputs\":[{\"" +
-            "internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"" +
-            "stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\"" +
-            ":[],\"name\":\"contractBWithdrawRewardTest\",\"outputs\":[{\"internalType\":\"uint256\"" +
-            ",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"" +
-            ",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"getContractBAddressTest\"" +
-            ",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\"" +
-            ":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true," +
-            "\"inputs\":[],\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"uint256\"," +
-            "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":" +
-            "\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"otherContractAddrTest\",\"outputs\":" +
-            "[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false," +
-            "\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\"" +
-            ":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"rewardBalanceTest\",\"outputs\":" +
-            "[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\"" +
-            ":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\"," +
-            "\"name\":\"sr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\"" +
-            ":\"uint256\"}],\"name\":\"stakeTest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\"" +
-            ":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\"" +
-            ":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[],\"payable\":false,\"stateMutability\":" +
-            "\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\"" +
-            ",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"" +
-            "stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    String factoryCode = "60806040526040516100109061005c565b604051809103906000f08015801561002c573d6000803" +
-            "e3d6000fd5b50600180546001600160a01b03929092166001600160a01b031992831617905560008054909116331" +
-            "79055610069565b6101108061039c83390190565b610324806100786000396000f3fe60806040523480156100105" +
-            "7600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100ad5760003560e01" +
-            "c8063b3e835e111610080578063b3e835e114610156578063c290120a14610160578063cb2d51cf1461016857806" +
-            "3d30a28ee14610170578063e49de2d014610178576100ad565b806310198157146100b257806325a26c30146100d" +
-            "65780638db848f114610116578063a223c65f14610130575b600080fd5b6100ba6101a4565b60408051600160016" +
-            "0a01b039092168252519081900360200190f35b610102600480360360408110156100ec57600080fd5b506001600" +
-            "160a01b0381351690602001356101b3565b604080519115158252519081900360200190f35b61011e61023f565b6" +
-            "0408051918252519081900360200190f35b61011e6004803603602081101561014657600080fd5b5035600160016" +
-            "0a01b03166102b6565b61015e6102c3565b005b61011e6102c7565b61011e6102cf565b61011e6102d4565b61010" +
-            "26004803603604081101561018e57600080fd5b506001600160a01b0381351690602001356102e4565b600154600" +
-            "1600160a01b031690565b60015460408051630e49de2d60e41b81526001600160a01b03858116600483015260248" +
-            "2018590529151600093929092169163e49de2d09160448082019260209290919082900301818787803b158015610" +
-            "20c57600080fd5b505af1158015610220573d6000803e3d6000fd5b505050506040513d602081101561023657600" +
-            "080fd5b50519392505050565b60015460408051636148090560e11b815290516000926001600160a01b03169163c" +
-            "290120a91600480830192602092919082900301818787803b15801561028557600080fd5b505af11580156102995" +
-            "73d6000803e3d6000fd5b505050506040513d60208110156102af57600080fd5b5051905090565b6001600160a01" +
-            "b0316d890565bd650565b6000d7905090565b30d890565b6001546001600160a01b0316d890565b60008183d5939" +
-            "250505056fea26474726f6e58200f159acc541e931dc3493937394669085432201f51cc879b468fd11e81e425dc6" +
-            "4736f6c634300050d00316080604052600080546001600160a01b0319163317905560ec806100246000396000f3f" +
-            "e6080604052348015600f57600080fd5b50d38015601b57600080fd5b50d28015602757600080fd5b50600436106" +
-            "04a5760003560e01c8063c290120a14604f578063e49de2d0146067575b600080fd5b605560a4565b60408051918" +
-            "252519081900360200190f35b609060048036036040811015607b57600080fd5b506001600160a01b03813516906" +
-            "020013560ac565b604080519115158252519081900360200190f35b6000d7905090565b60008183d593925050505" +
-            "6fea26474726f6e58206c8eb8040501e8bc775fed429ec6e2ff16ae8313e3b626c7320c11844e7aca7a64736f6c6" +
-            "34300050d0031";
+    String abi = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\"," +
+            "\"type\":\"constructor\"},{\"constant\":false," +
+            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
+            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
+            "\"type\":\"uint256\"}],\"name\":\"contractBStakeTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"contractBWithdrawRewardTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
+            "\"name\":\"getContractBAddressTest\"," +
+            "\"outputs\":[{\"internalType\":\"address\",\"name\":\"\"," +
+            "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
+            "\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"uint256\"," +
+            "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false," +
+            "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false," +
+            "\"inputs\":[],\"name\":\"otherContractAddrTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false," +
+            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\"," +
+            "\"type\":\"address\"}],\"name\":\"rewardBalanceTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"},{\"constant\":false," +
+            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
+            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
+            "\"type\":\"uint256\"}],\"name\":\"stakeTest\"," +
+            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[]," +
+            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
+            "{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\"," +
+            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
+            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
+            "\"type\":\"function\"}]";
+    String factoryCode = "60806040526040516100109061005c565b604051809103906" +
+            "000f08015801561002c573d6000803e3d6000fd5b50600180546001600160a" +
+            "01b03929092166001600160a01b03199283161790556000805490911633179" +
+            "055610069565b6101108061039c83390190565b61032480610078600039600" +
+            "0f3fe608060405234801561001057600080fd5b50d3801561001d57600080f" +
+            "d5b50d2801561002a57600080fd5b50600436106100ad5760003560e01c806" +
+            "3b3e835e111610080578063b3e835e114610156578063c290120a146101605" +
+            "78063cb2d51cf14610168578063d30a28ee14610170578063e49de2d014610" +
+            "178576100ad565b806310198157146100b257806325a26c30146100d657806" +
+            "38db848f114610116578063a223c65f14610130575b600080fd5b6100ba610" +
+            "1a4565b604080516001600160a01b039092168252519081900360200190f35" +
+            "b610102600480360360408110156100ec57600080fd5b506001600160a01b0" +
+            "381351690602001356101b3565b60408051911515825251908190036020019" +
+            "0f35b61011e61023f565b60408051918252519081900360200190f35b61011" +
+            "e6004803603602081101561014657600080fd5b50356001600160a01b03166" +
+            "102b6565b61015e6102c3565b005b61011e6102c7565b61011e6102cf565b6" +
+            "1011e6102d4565b6101026004803603604081101561018e57600080fd5b506" +
+            "001600160a01b0381351690602001356102e4565b6001546001600160a01b0" +
+            "31690565b60015460408051630e49de2d60e41b81526001600160a01b03858" +
+            "1166004830152602482018590529151600093929092169163e49de2d091604" +
+            "48082019260209290919082900301818787803b15801561020c57600080fd5" +
+            "b505af1158015610220573d6000803e3d6000fd5b505050506040513d60208" +
+            "1101561023657600080fd5b50519392505050565b600154604080516361480" +
+            "90560e11b815290516000926001600160a01b03169163c290120a916004808" +
+            "30192602092919082900301818787803b15801561028557600080fd5b505af" +
+            "1158015610299573d6000803e3d6000fd5b505050506040513d60208110156" +
+            "102af57600080fd5b5051905090565b6001600160a01b0316d890565bd6505" +
+            "65b6000d7905090565b30d890565b6001546001600160a01b0316d890565b6" +
+            "0008183d5939250505056fea26474726f6e582064d946716e1b0c5f00dcf70" +
+            "b3ff065ea0587cd3719b2ba94783edeb58413020464736f6c634300050d003" +
+            "16080604052600080546001600160a01b0319163317905560ec80610024600" +
+            "0396000f3fe6080604052348015600f57600080fd5b50d38015601b5760008" +
+            "0fd5b50d28015602757600080fd5b5060043610604a5760003560e01c8063c" +
+            "290120a14604f578063e49de2d0146067575b600080fd5b605560a4565b604" +
+            "08051918252519081900360200190f35b609060048036036040811015607b5" +
+            "7600080fd5b506001600160a01b03813516906020013560ac565b604080519" +
+            "115158252519081900360200190f35b6000d7905090565b60008183d593925" +
+            "0505056fea26474726f6e5820f52f0d803d46c1926596c7faa3b969812b567" +
+            "66163eb8ca0270d34e3cff1d3b164736f6c634300050d0031";
     long value = 1000000000;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
     // deploy contract - 27kR8yXGYQykQ2fgH3h9sqfNBSeEh23ggja
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-            contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+            contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
             null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
-    Assert.assertNull(runtime.getRuntimeError());
-
-    // deploy contract - 27QGwFVehKHrjhjoLXsUtmS7BuaqAVGdHR3
-    trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-            "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
-            null);
-    byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
-    String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: getContractBAddressTest()
     String methodByAddr = "getContractBAddressTest()";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     TVMTestResult result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -519,7 +526,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(contractBAddress));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(contractBAddress));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -532,7 +539,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: otherContractAddrTest()
     methodByAddr = "otherContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -549,7 +556,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     blockCapsule.generatedByMyself = true;
 
     methodByAddr = "contractBWithdrawRewardTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, blockCapsule);
@@ -568,7 +575,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(contractBAddress));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(contractBAddress));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -595,7 +602,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: otherContractAddrTest()
     methodByAddr = "otherContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -607,7 +614,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: contractBWithdrawRewardTest()
     methodByAddr = "contractBWithdrawRewardTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, blockCapsule);
@@ -619,7 +626,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(contractBAddress));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(contractBAddress));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -632,7 +639,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: otherContractAddrTest()
     methodByAddr = "otherContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -645,7 +652,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     // Trigger contract method: contractBWithdrawRewardTest()
     methodByAddr = "contractBWithdrawRewardTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -723,7 +730,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECKey.ECDSASignature signature = ecKey.sign(Sha256Hash.of(CommonParameter
             .getInstance().isECKeyCryptoEngine(), raw.toByteArray()).getBytes());
-    ByteString sign = ByteString.copyFrom(signature.toByteArray());
+    // ByteString sign = ByteString.copyFrom(signature.toByteArray());
     Protocol.BlockHeader blockHeader = block.getBlockHeader().toBuilder()
             .setRawData(raw)
             .setWitnessSignature(ByteString.copyFromUtf8(""))

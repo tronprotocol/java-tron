@@ -15,7 +15,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
-import java.util.Arrays;
+import java.util.Collections;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
@@ -76,7 +76,6 @@ public class IsSRCandidateTest extends VMTestBase {
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmStake(1);
     String contractName = "TestIsSRCandidate";
-
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
             "\"type\":\"constructor\"},{\"constant\":false," +
@@ -139,18 +138,10 @@ public class IsSRCandidateTest extends VMTestBase {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        "", address, abi, factoryCode, value, fee, consumeUserResourcePercent,
-        null);
-    byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
-    String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
-    Assert.assertNull(runtime.getRuntimeError());
-
     // Trigger contract method: isSRCandidateTest(address)
     String methodByAddr = "isSRCandidateTest(address)";
     String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(nonexistentAccount));
+    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -162,7 +153,7 @@ public class IsSRCandidateTest extends VMTestBase {
         "0000000000000000000000000000000000000000000000000000000000000000");
 
     // trigger deployed contract
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStr));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -175,7 +166,7 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // trigger deployed contract
     String witnessAccount = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witnessAccount));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(witnessAccount));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -188,7 +179,7 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // Trigger contract method: nullAddressTest(address)
     methodByAddr = "nullAddressTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -201,7 +192,7 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -214,7 +205,7 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // Trigger contract method: otherContractAddrTest()
     methodByAddr = "otherContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(""));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -227,7 +218,7 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // Trigger contract method: nonpayableAddrTest(address)
     methodByAddr = "nonpayableAddrTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witnessAccount));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(witnessAccount));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -240,7 +231,7 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // Trigger contract method: nonpayableAddrTest(address)
     methodByAddr = "nonpayableAddrTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(nonexistentAccount));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
@@ -253,7 +244,7 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // Trigger contract method: payableAddrTest(address)
     methodByAddr = "payableAddrTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(nonexistentAccount));
+    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
     result = TvmTestUtils
             .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                     factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
