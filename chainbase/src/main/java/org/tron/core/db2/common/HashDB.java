@@ -49,6 +49,11 @@ public class HashDB implements DB<Key, Value> {
   }
 
   @Override
+  public void close() {
+    db.clear();
+  }
+
+  @Override
   public HashDB newInstance() {
     return new HashDB(name);
   }

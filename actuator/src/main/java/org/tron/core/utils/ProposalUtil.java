@@ -362,8 +362,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_MARKET_TRANSACTION: {
-        // todo ,version
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_MARKET_TRANSACTION]");
         }
@@ -374,8 +373,7 @@ public class ProposalUtil {
         break;
       }
       case MARKET_SELL_FEE: {
-        // todo ,version
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException("Bad chain parameter id [MARKET_SELL_FEE]");
         }
         if (!dynamicPropertiesStore.supportAllowMarketTransaction()) {
@@ -389,8 +387,7 @@ public class ProposalUtil {
         break;
       }
       case MARKET_CANCEL_FEE: {
-        // todo ,version
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
           throw new ContractValidateException("Bad chain parameter id [MARKET_CANCEL_FEE]");
         }
         if (!dynamicPropertiesStore.supportAllowMarketTransaction()) {

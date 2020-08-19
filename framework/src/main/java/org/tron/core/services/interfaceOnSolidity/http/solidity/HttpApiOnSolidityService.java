@@ -1,14 +1,18 @@
 package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -137,6 +141,9 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetMarketPairListOnSolidityServlet getMarketPairListOnSolidityServlet;
 
+  @Autowired
+  private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+
   @Override
   public void init() {
 
@@ -232,6 +239,12 @@ public class HttpApiOnSolidityService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+              EnumSet.allOf(DispatcherType.class));
+
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
