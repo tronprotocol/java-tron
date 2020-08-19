@@ -48,6 +48,7 @@ public class UnStakeTest extends VMContractTestBase {
         VMConfig.initAllowTvmConstantinople(1);
         VMConfig.initAllowTvmSolidity059(1);
         VMConfig.initAllowTvmStake(1);
+        manager.getDynamicPropertiesStore().saveChangeDelegation(1);
         String contractName = "unstakeTest";
         byte[] address = Hex.decode(OWNER_ADDRESS);
         String ABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\"," +

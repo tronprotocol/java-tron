@@ -47,6 +47,7 @@ public class TRC10Test extends VMContractTestBase {
         VMConfig.initAllowTvmConstantinople(1);
         VMConfig.initAllowTvmSolidity059(1);
         VMConfig.initAllowTvmAssetIssue(1);
+        manager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
         String contractName = "AssetIssueTest";
         byte[] address = Hex.decode(OWNER_ADDRESS);
         String ABI = "[{\"constant\":false," +
@@ -165,10 +166,10 @@ public class TRC10Test extends VMContractTestBase {
                 factoryAddress,
                 Hex.decode(hexInput), value, fee, manager, null);
         Assert.assertNull(result.getRuntime().getRuntimeError());
-        /*Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
+        Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
                 "abc");
         Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getDesc().toByteArray()),
-                "abc");*/
+                "abc");
         // validate energy cost
         expectEnergyUsageTotal = 5000;
         expectEnergyUsageTotalMax = 10000;
@@ -185,10 +186,10 @@ public class TRC10Test extends VMContractTestBase {
         result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                 factoryAddress,
                 Hex.decode(hexInput), value, fee, manager, null);
-        /*Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
+        Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
                 "abc");
         Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getDesc().toByteArray()),
-                "abc");*/
+                "abc");
         Assert.assertNull(result.getRuntime().getRuntimeError());
 
         // validate url less than 256
@@ -225,6 +226,7 @@ public class TRC10Test extends VMContractTestBase {
         VMConfig.initAllowTvmConstantinople(1);
         VMConfig.initAllowTvmSolidity059(1);
         VMConfig.initAllowTvmAssetIssue(1);
+        manager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
         String contractName = "AssetIssueTest";
         byte[] address = Hex.decode(OWNER_ADDRESS);
         String ABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"name\"," +
@@ -283,16 +285,16 @@ public class TRC10Test extends VMContractTestBase {
         methodUpdateAsset = "UpdateAsset(trcToken,string,string)";
         // 1,abc,abc,
         updateP1 = 1000001;
-        updateP2 = "616263";
+        updateP2 = "abc";
         updateP3 = updateP2;
         hexInput = AbiUtil.parseMethod(methodUpdateAsset, Arrays.asList(updateP1, updateP2, updateP3));
         result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
                 factoryAddress,
                 Hex.decode(hexInput), value, fee, manager, null);
-        /*Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
+        Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
                 "abc");
         Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getDesc().toByteArray()),
-                "abc");*/
+                "abc");
         Assert.assertNull(result.getRuntime().getRuntimeError());
     }
 
@@ -425,6 +427,7 @@ public class TRC10Test extends VMContractTestBase {
         VMConfig.initAllowTvmConstantinople(1);
         VMConfig.initAllowTvmSolidity059(1);
         VMConfig.initAllowTvmAssetIssue(1);
+        manager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
         String contractName = "AssetIssueTest";
         byte[] address = Hex.decode(OWNER_ADDRESS);
         String ABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"name\"," +
@@ -494,10 +497,10 @@ public class TRC10Test extends VMContractTestBase {
                 factoryAddress,
                 Hex.decode(hexInput), value, fee, manager, null);
         Assert.assertNull(result.getRuntime().getRuntimeError());
-       /* Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
+        Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getUrl().toByteArray()),
                 "abc");
         Assert.assertEquals(ByteArray.toStr(manager.getAssetIssueV2Store().getAllAssetIssues().get(0).getDesc().toByteArray()),
-                "abc");*/
+                "abc");
     }
 }
 
