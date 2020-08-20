@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -64,7 +63,6 @@ public class UnvoteCrossActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
-    AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     if (!this.any.is(UnvoteCrossContract.class)) {
       throw new ContractValidateException(

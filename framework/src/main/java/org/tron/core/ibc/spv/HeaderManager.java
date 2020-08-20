@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -92,7 +93,9 @@ public class HeaderManager {
           .saveSRL(chainId, raw.getEpoch(), signedBlockHeader.getSrList());
     }
     // DB don't need lower block
-    if (chainBaseManager.getCommonDataBase().getLatestBlockHeaderHash(chainId) == null) {
+    String latestHeaderHash = chainBaseManager.getCommonDataBase()
+        .getLatestBlockHeaderHash(chainId);
+    if (StringUtils.isBlank(latestHeaderHash)) {
       if (header.getNum() != 1) {
         throw new BadBlockException("header number not 1 is " + header.getNum());
       }
@@ -103,7 +106,10 @@ public class HeaderManager {
             latestHeaderNum);
         return;
       }
-      if (blockHeaderStore.getUnchecked(chainId, header.getParentBlockId()) == null) {
+//      if (blockHeaderStore.getUnchecked(chainId, header.getParentBlockId()) == null) {
+//        throw new BadBlockException("not exist parent");
+//      }
+      if (!latestHeaderHash.equals(header.getParentBlockId().toString())) {
         throw new BadBlockException("not exist parent");
       }
     }

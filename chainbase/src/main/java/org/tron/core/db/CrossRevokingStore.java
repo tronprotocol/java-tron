@@ -1,11 +1,8 @@
 package org.tron.core.db;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Streams;
-import java.io.IOException;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -123,10 +120,12 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public List<Pair<String, Long>> getChainVoteCountList() {
     return Streams.stream(iterator())
-            .filter(entry -> "voted_".startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
-            .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey()).substring(6), ByteArray.toLong(entry.getValue().getData())))
-            .sorted((v1, v2) -> Long.compare(v2.getValue(), v1.getValue()))
-            .collect(Collectors.toList());
+        .filter(
+            entry -> "voted_".startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+        .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey()).substring(6),
+            ByteArray.toLong(entry.getValue().getData())))
+        .sorted((v1, v2) -> Long.compare(v2.getValue(), v1.getValue()))
+        .collect(Collectors.toList());
   }
 
   public List<Pair<String, Long>> getEligibleChainLists() {
@@ -147,9 +146,10 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     BytesCapsule value = getUnchecked(PARACHAINS_KEY);
     if (value != null && !ByteUtil.isNullOrZeroArray(value.getData())) {
       return JsonUtil.json2Obj(ByteArray.toStr(value.getData()),
-              new TypeReference<List<String>>(){});
+          new TypeReference<List<String>>() {
+          });
     } else {
-      return null;
+      return Collections.emptyList();
     }
   }
 

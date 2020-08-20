@@ -97,6 +97,10 @@ public class CrossHeaderMsgProcess {
       return;
     }
 
+    if (!chainBaseManager.chainIsSelected(chainId)) {
+      return;
+    }
+
     logger.debug("HandleUpdatedNotice, peer:{}, notice num:{}, chainId:{}",
         peer, noticeMessage.getCurrentBlockHeight(), chainIdStr);
     long localLatestHeight = chainBaseManager.getCommonDataBase()
@@ -125,13 +129,15 @@ public class CrossHeaderMsgProcess {
   public void handleRequest(PeerConnection peer, TronMessage msg)
       throws ItemNotFoundException, BadItemException {
     BlockHeaderRequestMessage requestMessage = (BlockHeaderRequestMessage) msg;
-    byte[] chainId = requestMessage.getChainId();
+    byte[] chainId = requestMessage.getChainId().toByteArray();
     String chainIdString = ByteArray.toHexString(chainId);
     long blockHeight = requestMessage.getBlockHeight();
     long currentBlockheight = chainBaseManager.getCommonDataBase().getLatestPbftBlockNum();
-
+    if (!chainBaseManager.chainIsSelected(requestMessage.getChainId())) {
+      return;
+    }
     logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, ",
-            peer, chainIdString, blockHeight, currentBlockheight);
+        peer, chainIdString, blockHeight, currentBlockheight);
     List<SignedBlockHeader> blockHeaders = new ArrayList<>();
     if (currentBlockheight > blockHeight) {
       long height = blockHeight + 1;
@@ -161,8 +167,12 @@ public class CrossHeaderMsgProcess {
   public void handleInventory(PeerConnection peer, TronMessage msg) {
     BlockHeaderInventoryMesasge blockHeaderInventoryMesasge = (BlockHeaderInventoryMesasge) msg;
     List<SignedBlockHeader> blockHeaders = blockHeaderInventoryMesasge.getBlockHeaders();
-    String chainIdStr = ByteArray.toHexString(blockHeaderInventoryMesasge.getChainId());
+    String chainIdStr = ByteArray
+        .toHexString(blockHeaderInventoryMesasge.getChainId().toByteArray());
     Long sendHeight = sendHeaderNumCache.getIfPresent(chainIdStr);
+    if (!chainBaseManager.chainIsSelected(blockHeaderInventoryMesasge.getChainId())) {
+      return;
+    }
     if (CollectionUtils.isEmpty(blockHeaders)) {
       //todo
       syncFailPeerSet.add(peer);

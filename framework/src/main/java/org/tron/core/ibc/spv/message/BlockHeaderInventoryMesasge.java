@@ -37,8 +37,8 @@ public class BlockHeaderInventoryMesasge extends TronMessage {
     return blockHeaderInventory.getCurrentBlockHeight();
   }
 
-  public byte[] getChainId() {
-    return blockHeaderInventory.getChainId().toByteArray();
+  public ByteString getChainId() {
+    return blockHeaderInventory.getChainId();
   }
 
 

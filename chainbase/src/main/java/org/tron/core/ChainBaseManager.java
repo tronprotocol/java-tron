@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
@@ -383,6 +384,14 @@ public class ChainBaseManager {
   public BlockCapsule getBlockByNum(final long num) throws
       ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
+  }
+
+  public boolean chainIsSelected(ByteString chainId) {
+    if (!getCrossRevokingStore().getParaChainList().contains(chainId.toString())) {
+      logger.error("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
+      return false;
+    }
+    return true;
   }
 
 }

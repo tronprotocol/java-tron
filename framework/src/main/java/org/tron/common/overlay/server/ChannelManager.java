@@ -206,6 +206,10 @@ public class ChannelManager {
       peer.disconnect(ReasonCode.USER_REASON);
       return false;
     }
+    if (!chainBaseManager.chainIsSelected(chainId)) {
+      peer.disconnect(ReasonCode.USER_REASON);
+      return false;
+    }
     List<PeerConnection> peerConnectionList = crossChainConnectPool.getPeerConnect(chainId);
     Channel channel = CrossUtils.listToMap(peerConnectionList).get(peer.getNodeIdWrapper());
     if (channel != null) {

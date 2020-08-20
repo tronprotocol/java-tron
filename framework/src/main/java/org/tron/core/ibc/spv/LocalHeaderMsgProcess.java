@@ -35,14 +35,16 @@ public class LocalHeaderMsgProcess {
   //todo:blockHeight should valid
   public void handleRequest(PeerConnection peer, TronMessage msg) {
     BlockHeaderRequestMessage requestMessage = (BlockHeaderRequestMessage) msg;
-    byte[] chainId = requestMessage.getChainId();
+    byte[] chainId = requestMessage.getChainId().toByteArray();
     String chainIdString = ByteArray.toHexString(chainId);
     long blockHeight = requestMessage.getBlockHeight();
     long currentBlockheight = chainBaseManager.getCommonDataBase()
         .getLatestHeaderBlockNum(chainIdString);
-
+    if (!chainBaseManager.chainIsSelected(requestMessage.getChainId())) {
+      return;
+    }
     logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, ",
-            peer, chainIdString, blockHeight, currentBlockheight);
+        peer, chainIdString, blockHeight, currentBlockheight);
     List<SignedBlockHeader> blockHeaders = new ArrayList<>();
     if (currentBlockheight > blockHeight) {
       long height = blockHeight + 1;

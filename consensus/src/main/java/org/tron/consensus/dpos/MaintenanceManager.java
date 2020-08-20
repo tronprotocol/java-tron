@@ -5,6 +5,7 @@ import static org.tron.core.Constant.ONE_YEAR_MS;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.pbft.PbftManager;
@@ -25,10 +27,15 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
+import org.tron.protos.Protocol.PBFTCommitResult;
+import org.tron.protos.Protocol.PBFTMessage;
+import org.tron.protos.Protocol.PBFTMessage.Raw;
+import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -163,11 +170,48 @@ public class MaintenanceManager {
       // 1. update parachains
       CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
       List<Pair<String, Long>> eligibleChainLists = crossRevokingStore.getEligibleChainLists();
-      List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey).collect(Collectors.toList());
+      List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
+          .collect(Collectors.toList());
       crossRevokingStore.updateParaChains(chainIds);
+      //
+      setChainInfo(chainIds);
       // 2. set next auction time, default: 1 years later
       dynamicPropertiesStore.saveAuctionEndTime(currentBlockHeaderTimestamp + ONE_YEAR_MS);
     }
+  }
+
+  private void setChainInfo(List<String> chainIds) {
+    CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
+    CommonDataBase commonDataBase = consensusDelegate.getChainBaseManager().getCommonDataBase();
+    chainIds.forEach(chainId -> {
+      try {
+        byte[] chainInfoData = crossRevokingStore.getChainInfo(chainId);
+        if (ByteArray.isEmpty(chainInfoData)) {
+          return;
+        }
+        CrossChainInfo crossChainInfo = CrossChainInfo.parseFrom(chainInfoData);
+        if (crossChainInfo.getBeginSyncHeight() - 1 <= commonDataBase
+            .getLatestHeaderBlockNum(chainId)) {
+          return;
+        }
+        commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
+        commonDataBase.saveLatestBlockHeaderHash(chainId,
+            ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
+        long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
+        long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
+        if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {
+          epoch = epoch - crossChainInfo.getMaintenanceTimeInterval();
+          epoch = epoch < 0 ? 0 : epoch;
+        }
+        PBFTMessage.Raw pbftMsgRaw = Raw.newBuilder().setData(crossChainInfo.getSrList())
+            .setEpoch(epoch).build();
+        PBFTCommitResult.Builder builder = PBFTCommitResult.newBuilder();
+        builder.setData(pbftMsgRaw.toByteString());
+        commonDataBase.saveSRL(chainId, epoch, builder.build());
+      } catch (InvalidProtocolBufferException e) {
+        logger.error("chain {} get the info fail!", chainId, e);
+      }
+    });
   }
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {

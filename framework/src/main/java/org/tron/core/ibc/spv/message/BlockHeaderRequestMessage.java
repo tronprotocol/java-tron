@@ -38,8 +38,8 @@ public class BlockHeaderRequestMessage extends TronMessage {
     return blockHeaderRequestMessage.getLength();
   }
 
-  public byte[] getChainId() {
-    return blockHeaderRequestMessage.getChainId().toByteArray();
+  public ByteString getChainId() {
+    return blockHeaderRequestMessage.getChainId();
   }
 
   @Override
