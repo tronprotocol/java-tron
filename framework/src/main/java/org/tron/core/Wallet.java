@@ -2551,11 +2551,10 @@ public class Wallet {
   }
 
   /**
-   *
    * Add a wrapper for smart contract.
    * Current additional information including runtime code for a smart contract.
-   * @param bytesMessage
-   * @return
+   * @param bytesMessage the contract address message
+   * @return contract info
    *
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
@@ -2572,7 +2571,7 @@ public class Wallet {
         .get(bytesMessage.getValue().toByteArray());
     if (Objects.nonNull(contractCapsule)) {
       CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
-      if(Objects.nonNull(codeCapsule)) {
+      if (Objects.nonNull(codeCapsule)) {
         contractCapsule.setRuntimecode(codeCapsule.getData());
         return contractCapsule.generateWrapper();
       }
