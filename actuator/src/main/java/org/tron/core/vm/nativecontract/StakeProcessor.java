@@ -90,7 +90,7 @@ public class StakeProcessor {
     AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
     WitnessStore witnessStore = repository.getWitnessStore();
     try {
-      long sum = 0L;
+      long sum;
       {
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
         if (!DecodeUtil.addressValid(witnessCandidate)) {
@@ -131,7 +131,6 @@ public class StakeProcessor {
   private void executeFreeze(byte[] ownerAddress, long frozenDuration,
                              long frozenBalance, long now, Repository repository)
       throws ContractExeException {
-    DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
     AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
 
     long duration = frozenDuration * ChainConstant.FROZEN_PERIOD;

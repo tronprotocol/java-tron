@@ -1,6 +1,9 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -16,107 +19,108 @@ import org.tron.common.utils.WalletUtil;
 import org.tron.consensus.base.Param;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadNumberBlockException;
-import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
-import org.tron.core.exception.BadBlockException;
-import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.core.exception.TaposException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class WithdrawRewardTest extends VMContractTestBase {
 
-/*
-  pragma solidity ^0.5.0;
+  /*
+    pragma solidity ^0.5.0;
 
-  contract ContractB{
-    address user;
+    contract ContractB{
+      address user;
 
-    constructor() payable public {
-      user = msg.sender;
+      constructor() payable public {
+        user = msg.sender;
+      }
+
+      function stakeTest(address sr, uint256 amount) public returns (bool) {
+        return stake(sr, amount);
+      }
+
+      function withdrawRewardTest() public returns (uint) {
+        return withdrawreward();
+      }
     }
 
-    function stakeTest(address sr, uint256 amount) public returns (bool) {
-      return stake(sr, amount);
+    contract TestRewardBalance{
+      address user;
+
+      ContractB contractB = new ContractB();
+
+      constructor() payable public {
+        user = msg.sender;
+      }
+
+      function stakeTest(address sr, uint256 amount) public returns (bool) {
+        return stake(sr, amount);
+      }
+
+      function unstakeTest() public {
+        unstake();
+      }
+
+      function contractBStakeTest(address sr, uint256 amount) public returns (bool) {
+        return contractB.stakeTest(sr, amount);
+      }
+
+      function withdrawRewardTest() public returns (uint) {
+        return withdrawreward();
+      }
+
+      function rewardBalanceTest(address addr) public returns (uint) {
+        return addr.rewardbalance;
+      }
+
+      function localContractAddrTest() view public returns (uint256) {
+        address payable localContract = address(uint160(address(this)));
+        return localContract.rewardbalance;
+      }
+
+      function otherContractAddrTest() view public returns (uint256) {
+        address payable localContract = address(uint160(address(contractB)));
+        return localContract.rewardbalance;
+      }
+
+      function contractBWithdrawRewardTest() public returns (uint) {
+        return contractB.withdrawRewardTest();
+      }
+
+      function getContractBAddressTest() public returns (address) {
+        return address(contractB);
+      }
     }
-
-    function withdrawRewardTest() public returns (uint) {
-      return withdrawreward();
-    }
-  }
-
-  contract TestRewardBalance{
-    address user;
-
-    ContractB contractB = new ContractB();
-
-    constructor() payable public {
-      user = msg.sender;
-    }
-
-    function stakeTest(address sr, uint256 amount) public returns (bool) {
-      return stake(sr, amount);
-    }
-
-    function unstakeTest() public {
-      unstake();
-    }
-
-    function contractBStakeTest(address sr, uint256 amount) public returns (bool) {
-      return contractB.stakeTest(sr, amount);
-    }
-
-    function withdrawRewardTest() public returns (uint) {
-      return withdrawreward();
-    }
-
-    function rewardBalanceTest(address addr) public returns (uint) {
-      return addr.rewardbalance;
-    }
-
-    function localContractAddrTest() view public returns (uint256) {
-      address payable localContract = address(uint160(address(this)));
-      return localContract.rewardbalance;
-    }
-
-    function otherContractAddrTest() view public returns (uint256) {
-      address payable localContract = address(uint160(address(contractB)));
-      return localContract.rewardbalance;
-    }
-
-    function contractBWithdrawRewardTest() public returns (uint) {
-      return contractB.withdrawRewardTest();
-    }
-
-    function getContractBAddressTest() public returns (address) {
-      return address(contractB);
-    }
-  }
-*/
+  */
 
   @Test
   public void testWithdrawRewardInLocalContract()
           throws ContractExeException, ReceiptCheckErrException, ValidateSignatureException,
-          BadNumberBlockException, ValidateScheduleException, ContractValidateException, VMIllegalException, DupTransactionException, TooBigTransactionException, TooBigTransactionResultException, BadBlockException, NonCommonBlockException, TransactionExpirationException, UnLinkedBlockException, TaposException, ZksnarkException, AccountResourceInsufficientException {
+          BadNumberBlockException, ValidateScheduleException, ContractValidateException,
+          VMIllegalException, DupTransactionException, TooBigTransactionException,
+          TooBigTransactionResultException, BadBlockException, NonCommonBlockException,
+          TransactionExpirationException, UnLinkedBlockException, TaposException,
+          ZksnarkException, AccountResourceInsufficientException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -126,83 +130,83 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     String contractName = "TestWithdrawReward";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String abi = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\"," +
-            "\"type\":\"constructor\"},{\"constant\":false," +
-            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
-            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
-            "\"type\":\"uint256\"}],\"name\":\"contractBStakeTest\"," +
-            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
-            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
-            "{\"constant\":false,\"inputs\":[],\"name\":\"contractBWithdrawRewardTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
-            "\"name\":\"getContractBAddressTest\"," +
-            "\"outputs\":[{\"internalType\":\"address\",\"name\":\"\"," +
-            "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
-            "\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"uint256\"," +
-            "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false," +
-            "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false," +
-            "\"inputs\":[],\"name\":\"otherContractAddrTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false," +
-            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\"," +
-            "\"type\":\"address\"}],\"name\":\"rewardBalanceTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false," +
-            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
-            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
-            "\"type\":\"uint256\"}],\"name\":\"stakeTest\"," +
-            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
-            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
-            "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[]," +
-            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
-            "{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"}]";
-    String factoryCode = "60806040526040516100109061005c565b604051809103906" +
-            "000f08015801561002c573d6000803e3d6000fd5b50600180546001600160a" +
-            "01b03929092166001600160a01b03199283161790556000805490911633179" +
-            "055610069565b6101108061039c83390190565b61032480610078600039600" +
-            "0f3fe608060405234801561001057600080fd5b50d3801561001d57600080f" +
-            "d5b50d2801561002a57600080fd5b50600436106100ad5760003560e01c806" +
-            "3b3e835e111610080578063b3e835e114610156578063c290120a146101605" +
-            "78063cb2d51cf14610168578063d30a28ee14610170578063e49de2d014610" +
-            "178576100ad565b806310198157146100b257806325a26c30146100d657806" +
-            "38db848f114610116578063a223c65f14610130575b600080fd5b6100ba610" +
-            "1a4565b604080516001600160a01b039092168252519081900360200190f35" +
-            "b610102600480360360408110156100ec57600080fd5b506001600160a01b0" +
-            "381351690602001356101b3565b60408051911515825251908190036020019" +
-            "0f35b61011e61023f565b60408051918252519081900360200190f35b61011" +
-            "e6004803603602081101561014657600080fd5b50356001600160a01b03166" +
-            "102b6565b61015e6102c3565b005b61011e6102c7565b61011e6102cf565b6" +
-            "1011e6102d4565b6101026004803603604081101561018e57600080fd5b506" +
-            "001600160a01b0381351690602001356102e4565b6001546001600160a01b0" +
-            "31690565b60015460408051630e49de2d60e41b81526001600160a01b03858" +
-            "1166004830152602482018590529151600093929092169163e49de2d091604" +
-            "48082019260209290919082900301818787803b15801561020c57600080fd5" +
-            "b505af1158015610220573d6000803e3d6000fd5b505050506040513d60208" +
-            "1101561023657600080fd5b50519392505050565b600154604080516361480" +
-            "90560e11b815290516000926001600160a01b03169163c290120a916004808" +
-            "30192602092919082900301818787803b15801561028557600080fd5b505af" +
-            "1158015610299573d6000803e3d6000fd5b505050506040513d60208110156" +
-            "102af57600080fd5b5051905090565b6001600160a01b0316d890565bd6505" +
-            "65b6000d7905090565b30d890565b6001546001600160a01b0316d890565b6" +
-            "0008183d5939250505056fea26474726f6e582064d946716e1b0c5f00dcf70" +
-            "b3ff065ea0587cd3719b2ba94783edeb58413020464736f6c634300050d003" +
-            "16080604052600080546001600160a01b0319163317905560ec80610024600" +
-            "0396000f3fe6080604052348015600f57600080fd5b50d38015601b5760008" +
-            "0fd5b50d28015602757600080fd5b5060043610604a5760003560e01c8063c" +
-            "290120a14604f578063e49de2d0146067575b600080fd5b605560a4565b604" +
-            "08051918252519081900360200190f35b609060048036036040811015607b5" +
-            "7600080fd5b506001600160a01b03813516906020013560ac565b604080519" +
-            "115158252519081900360200190f35b6000d7905090565b60008183d593925" +
-            "0505056fea26474726f6e5820f52f0d803d46c1926596c7faa3b969812b567" +
-            "66163eb8ca0270d34e3cff1d3b164736f6c634300050d0031";
+    String abi = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\","
+            + "\"type\":\"constructor\"},{\"constant\":false,"
+            + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\","
+            + "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\","
+            + "\"type\":\"uint256\"}],\"name\":\"contractBStakeTest\","
+            + "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],"
+            + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+            + "{\"constant\":false,\"inputs\":[],\"name\":\"contractBWithdrawRewardTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,\"inputs\":[],"
+            + "\"name\":\"getContractBAddressTest\","
+            + "\"outputs\":[{\"internalType\":\"address\",\"name\":\"\","
+            + "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,\"inputs\":[],"
+            + "\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"uint256\","
+            + "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,"
+            + "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,"
+            + "\"inputs\":[],\"name\":\"otherContractAddrTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,"
+            + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\","
+            + "\"type\":\"address\"}],\"name\":\"rewardBalanceTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,"
+            + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\","
+            + "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\","
+            + "\"type\":\"uint256\"}],\"name\":\"stakeTest\","
+            + "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],"
+            + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+            + "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[],"
+            + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+            + "{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"}]";
+    String factoryCode = "60806040526040516100109061005c565b604051809103906"
+            + "000f08015801561002c573d6000803e3d6000fd5b50600180546001600160a"
+            + "01b03929092166001600160a01b03199283161790556000805490911633179"
+            + "055610069565b6101108061039c83390190565b61032480610078600039600"
+            + "0f3fe608060405234801561001057600080fd5b50d3801561001d57600080f"
+            + "d5b50d2801561002a57600080fd5b50600436106100ad5760003560e01c806"
+            + "3b3e835e111610080578063b3e835e114610156578063c290120a146101605"
+            + "78063cb2d51cf14610168578063d30a28ee14610170578063e49de2d014610"
+            + "178576100ad565b806310198157146100b257806325a26c30146100d657806"
+            + "38db848f114610116578063a223c65f14610130575b600080fd5b6100ba610"
+            + "1a4565b604080516001600160a01b039092168252519081900360200190f35"
+            + "b610102600480360360408110156100ec57600080fd5b506001600160a01b0"
+            + "381351690602001356101b3565b60408051911515825251908190036020019"
+            + "0f35b61011e61023f565b60408051918252519081900360200190f35b61011"
+            + "e6004803603602081101561014657600080fd5b50356001600160a01b03166"
+            + "102b6565b61015e6102c3565b005b61011e6102c7565b61011e6102cf565b6"
+            + "1011e6102d4565b6101026004803603604081101561018e57600080fd5b506"
+            + "001600160a01b0381351690602001356102e4565b6001546001600160a01b0"
+            + "31690565b60015460408051630e49de2d60e41b81526001600160a01b03858"
+            + "1166004830152602482018590529151600093929092169163e49de2d091604"
+            + "48082019260209290919082900301818787803b15801561020c57600080fd5"
+            + "b505af1158015610220573d6000803e3d6000fd5b505050506040513d60208"
+            + "1101561023657600080fd5b50519392505050565b600154604080516361480"
+            + "90560e11b815290516000926001600160a01b03169163c290120a916004808"
+            + "30192602092919082900301818787803b15801561028557600080fd5b505af"
+            + "1158015610299573d6000803e3d6000fd5b505050506040513d60208110156"
+            + "102af57600080fd5b5051905090565b6001600160a01b0316d890565bd6505"
+            + "65b6000d7905090565b30d890565b6001546001600160a01b0316d890565b6"
+            + "0008183d5939250505056fea26474726f6e582064d946716e1b0c5f00dcf70"
+            + "b3ff065ea0587cd3719b2ba94783edeb58413020464736f6c634300050d003"
+            + "16080604052600080546001600160a01b0319163317905560ec80610024600"
+            + "0396000f3fe6080604052348015600f57600080fd5b50d38015601b5760008"
+            + "0fd5b50d28015602757600080fd5b5060043610604a5760003560e01c8063c"
+            + "290120a14604f578063e49de2d0146067575b600080fd5b605560a4565b604"
+            + "08051918252519081900360200190f35b609060048036036040811015607b5"
+            + "7600080fd5b506001600160a01b03813516906020013560ac565b604080519"
+            + "115158252519081900360200190f35b6000d7905090565b60008183d593925"
+            + "0505056fea26474726f6e5820f52f0d803d46c1926596c7faa3b969812b567"
+            + "66163eb8ca0270d34e3cff1d3b164736f6c634300050d0031";
     long value = 1000000000;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
@@ -266,7 +270,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
     Assert.assertEquals(Hex.toHexString(returnValue),
             "0000000000000000000000000000000000000000000000000000000000000000");
 
-    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(), System.currentTimeMillis(), privateKey);
+    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(),
+            System.currentTimeMillis(), privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(newBlock);
     blockCapsule.generatedByMyself = true;
 
@@ -300,13 +305,14 @@ public class WithdrawRewardTest extends VMContractTestBase {
     BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
 
     // Current Reward: Total Reward * Vote Rate
-//    BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
-//    byte[] sr1 = decodeFromBase58Check(witness);
-//    long totalReward = (long) ((double) rootRepository.getDelegationStore().getReward(1, sr1));
-//    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
-//    double voteRate = (double) 100 / totalVote;
-//    long curReward = (long) (totalReward * voteRate);
-//    Assert.assertEquals(reward.longValue(), curReward);
+    //    BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
+    //    byte[] sr1 = decodeFromBase58Check(witness);
+    //    long totalReward = (long) ((double) rootRepository
+    //            .getDelegationStore().getReward(1, sr1));
+    //    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
+    //    double voteRate = (double) 100 / totalVote;
+    //    long curReward = (long) (totalReward * voteRate);
+    //    Assert.assertEquals(reward.longValue(), curReward);
 
     //total reward: block reward + vote reward
     long blockReward = 25600000;
@@ -385,7 +391,11 @@ public class WithdrawRewardTest extends VMContractTestBase {
   @Test
   public void testWithdrawRewardInAnotherContract()
           throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
-          ContractValidateException, DupTransactionException, TooBigTransactionException, AccountResourceInsufficientException, BadBlockException, NonCommonBlockException, TransactionExpirationException, UnLinkedBlockException, ZksnarkException, TaposException, TooBigTransactionResultException, ValidateSignatureException, BadNumberBlockException, ValidateScheduleException {
+          ContractValidateException, DupTransactionException, TooBigTransactionException,
+          AccountResourceInsufficientException, BadBlockException, NonCommonBlockException,
+          TransactionExpirationException, UnLinkedBlockException, ZksnarkException,
+          TaposException, TooBigTransactionResultException, ValidateSignatureException,
+          BadNumberBlockException, ValidateScheduleException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -395,83 +405,83 @@ public class WithdrawRewardTest extends VMContractTestBase {
 
     String contractName = "TestWithdrawRewardWithContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String abi = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\"," +
-            "\"type\":\"constructor\"},{\"constant\":false," +
-            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
-            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
-            "\"type\":\"uint256\"}],\"name\":\"contractBStakeTest\"," +
-            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
-            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
-            "{\"constant\":false,\"inputs\":[],\"name\":\"contractBWithdrawRewardTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
-            "\"name\":\"getContractBAddressTest\"," +
-            "\"outputs\":[{\"internalType\":\"address\",\"name\":\"\"," +
-            "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false,\"inputs\":[]," +
-            "\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"uint256\"," +
-            "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false," +
-            "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false," +
-            "\"inputs\":[],\"name\":\"otherContractAddrTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false," +
-            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\"," +
-            "\"type\":\"address\"}],\"name\":\"rewardBalanceTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"},{\"constant\":false," +
-            "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\"," +
-            "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\"," +
-            "\"type\":\"uint256\"}],\"name\":\"stakeTest\"," +
-            "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}]," +
-            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
-            "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[]," +
-            "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}," +
-            "{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\"," +
-            "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\"," +
-            "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\"," +
-            "\"type\":\"function\"}]";
-    String factoryCode = "60806040526040516100109061005c565b604051809103906" +
-            "000f08015801561002c573d6000803e3d6000fd5b50600180546001600160a" +
-            "01b03929092166001600160a01b03199283161790556000805490911633179" +
-            "055610069565b6101108061039c83390190565b61032480610078600039600" +
-            "0f3fe608060405234801561001057600080fd5b50d3801561001d57600080f" +
-            "d5b50d2801561002a57600080fd5b50600436106100ad5760003560e01c806" +
-            "3b3e835e111610080578063b3e835e114610156578063c290120a146101605" +
-            "78063cb2d51cf14610168578063d30a28ee14610170578063e49de2d014610" +
-            "178576100ad565b806310198157146100b257806325a26c30146100d657806" +
-            "38db848f114610116578063a223c65f14610130575b600080fd5b6100ba610" +
-            "1a4565b604080516001600160a01b039092168252519081900360200190f35" +
-            "b610102600480360360408110156100ec57600080fd5b506001600160a01b0" +
-            "381351690602001356101b3565b60408051911515825251908190036020019" +
-            "0f35b61011e61023f565b60408051918252519081900360200190f35b61011" +
-            "e6004803603602081101561014657600080fd5b50356001600160a01b03166" +
-            "102b6565b61015e6102c3565b005b61011e6102c7565b61011e6102cf565b6" +
-            "1011e6102d4565b6101026004803603604081101561018e57600080fd5b506" +
-            "001600160a01b0381351690602001356102e4565b6001546001600160a01b0" +
-            "31690565b60015460408051630e49de2d60e41b81526001600160a01b03858" +
-            "1166004830152602482018590529151600093929092169163e49de2d091604" +
-            "48082019260209290919082900301818787803b15801561020c57600080fd5" +
-            "b505af1158015610220573d6000803e3d6000fd5b505050506040513d60208" +
-            "1101561023657600080fd5b50519392505050565b600154604080516361480" +
-            "90560e11b815290516000926001600160a01b03169163c290120a916004808" +
-            "30192602092919082900301818787803b15801561028557600080fd5b505af" +
-            "1158015610299573d6000803e3d6000fd5b505050506040513d60208110156" +
-            "102af57600080fd5b5051905090565b6001600160a01b0316d890565bd6505" +
-            "65b6000d7905090565b30d890565b6001546001600160a01b0316d890565b6" +
-            "0008183d5939250505056fea26474726f6e582064d946716e1b0c5f00dcf70" +
-            "b3ff065ea0587cd3719b2ba94783edeb58413020464736f6c634300050d003" +
-            "16080604052600080546001600160a01b0319163317905560ec80610024600" +
-            "0396000f3fe6080604052348015600f57600080fd5b50d38015601b5760008" +
-            "0fd5b50d28015602757600080fd5b5060043610604a5760003560e01c8063c" +
-            "290120a14604f578063e49de2d0146067575b600080fd5b605560a4565b604" +
-            "08051918252519081900360200190f35b609060048036036040811015607b5" +
-            "7600080fd5b506001600160a01b03813516906020013560ac565b604080519" +
-            "115158252519081900360200190f35b6000d7905090565b60008183d593925" +
-            "0505056fea26474726f6e5820f52f0d803d46c1926596c7faa3b969812b567" +
-            "66163eb8ca0270d34e3cff1d3b164736f6c634300050d0031";
+    String abi = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\","
+            + "\"type\":\"constructor\"},{\"constant\":false,"
+            + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\","
+            + "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\","
+            + "\"type\":\"uint256\"}],\"name\":\"contractBStakeTest\","
+            + "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],"
+            + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+            + "{\"constant\":false,\"inputs\":[],\"name\":\"contractBWithdrawRewardTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,\"inputs\":[],"
+            + "\"name\":\"getContractBAddressTest\","
+            + "\"outputs\":[{\"internalType\":\"address\",\"name\":\"\","
+            + "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,\"inputs\":[],"
+            + "\"name\":\"localContractAddrTest\",\"outputs\":[{\"internalType\":\"uint256\","
+            + "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,"
+            + "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,"
+            + "\"inputs\":[],\"name\":\"otherContractAddrTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,"
+            + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\","
+            + "\"type\":\"address\"}],\"name\":\"rewardBalanceTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"},{\"constant\":false,"
+            + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\","
+            + "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\","
+            + "\"type\":\"uint256\"}],\"name\":\"stakeTest\","
+            + "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],"
+            + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+            + "{\"constant\":false,\"inputs\":[],\"name\":\"unstakeTest\",\"outputs\":[],"
+            + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+            + "{\"constant\":false,\"inputs\":[],\"name\":\"withdrawRewardTest\","
+            + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+            + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+            + "\"type\":\"function\"}]";
+    String factoryCode = "60806040526040516100109061005c565b604051809103906"
+            + "000f08015801561002c573d6000803e3d6000fd5b50600180546001600160a"
+            + "01b03929092166001600160a01b03199283161790556000805490911633179"
+            + "055610069565b6101108061039c83390190565b61032480610078600039600"
+            + "0f3fe608060405234801561001057600080fd5b50d3801561001d57600080f"
+            + "d5b50d2801561002a57600080fd5b50600436106100ad5760003560e01c806"
+            + "3b3e835e111610080578063b3e835e114610156578063c290120a146101605"
+            + "78063cb2d51cf14610168578063d30a28ee14610170578063e49de2d014610"
+            + "178576100ad565b806310198157146100b257806325a26c30146100d657806"
+            + "38db848f114610116578063a223c65f14610130575b600080fd5b6100ba610"
+            + "1a4565b604080516001600160a01b039092168252519081900360200190f35"
+            + "b610102600480360360408110156100ec57600080fd5b506001600160a01b0"
+            + "381351690602001356101b3565b60408051911515825251908190036020019"
+            + "0f35b61011e61023f565b60408051918252519081900360200190f35b61011"
+            + "e6004803603602081101561014657600080fd5b50356001600160a01b03166"
+            + "102b6565b61015e6102c3565b005b61011e6102c7565b61011e6102cf565b6"
+            + "1011e6102d4565b6101026004803603604081101561018e57600080fd5b506"
+            + "001600160a01b0381351690602001356102e4565b6001546001600160a01b0"
+            + "31690565b60015460408051630e49de2d60e41b81526001600160a01b03858"
+            + "1166004830152602482018590529151600093929092169163e49de2d091604"
+            + "48082019260209290919082900301818787803b15801561020c57600080fd5"
+            + "b505af1158015610220573d6000803e3d6000fd5b505050506040513d60208"
+            + "1101561023657600080fd5b50519392505050565b600154604080516361480"
+            + "90560e11b815290516000926001600160a01b03169163c290120a916004808"
+            + "30192602092919082900301818787803b15801561028557600080fd5b505af"
+            + "1158015610299573d6000803e3d6000fd5b505050506040513d60208110156"
+            + "102af57600080fd5b5051905090565b6001600160a01b0316d890565bd6505"
+            + "65b6000d7905090565b30d890565b6001546001600160a01b0316d890565b6"
+            + "0008183d5939250505056fea26474726f6e582064d946716e1b0c5f00dcf70"
+            + "b3ff065ea0587cd3719b2ba94783edeb58413020464736f6c634300050d003"
+            + "16080604052600080546001600160a01b0319163317905560ec80610024600"
+            + "0396000f3fe6080604052348015600f57600080fd5b50d38015601b5760008"
+            + "0fd5b50d28015602757600080fd5b5060043610604a5760003560e01c8063c"
+            + "290120a14604f578063e49de2d0146067575b600080fd5b605560a4565b604"
+            + "08051918252519081900360200190f35b609060048036036040811015607b5"
+            + "7600080fd5b506001600160a01b03813516906020013560ac565b604080519"
+            + "115158252519081900360200190f35b6000d7905090565b60008183d593925"
+            + "0505056fea26474726f6e5820f52f0d803d46c1926596c7faa3b969812b567"
+            + "66163eb8ca0270d34e3cff1d3b164736f6c634300050d0031";
     long value = 1000000000;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
@@ -551,7 +561,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
             "0000000000000000000000000000000000000000000000000000000000000000");
 
     // Trigger contract method: contractBWithdrawRewardTest()
-    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(), System.currentTimeMillis(), privateKey);
+    Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(),
+            System.currentTimeMillis(), privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(newBlock);
     blockCapsule.generatedByMyself = true;
 
@@ -585,12 +596,13 @@ public class WithdrawRewardTest extends VMContractTestBase {
     BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
 
     // Current Reward: Total Reward * Vote Rate
-//    byte[] sr1 = decodeFromBase58Check(witness);
-//    long totalReward = (long) ((double) rootRepository.getDelegationStore().getReward(1, sr1));
-//    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
-//    double voteRate = (double) 200 / totalVote;
-//    long curReward = (long) (totalReward * voteRate);
-//    Assert.assertEquals(curReward, reward.longValue());
+    //    byte[] sr1 = decodeFromBase58Check(witness);
+    //    long totalReward = (long) ((double) rootRepository
+    //            .getDelegationStore().getReward(1, sr1));
+    //    long totalVote = rootRepository.getDelegationStore().getWitnessVote(1, sr1);
+    //    double voteRate = (double) 200 / totalVote;
+    //    long curReward = (long) (totalReward * voteRate);
+    //    Assert.assertEquals(curReward, reward.longValue());
 
     //total reward: block reward + vote reward
     long blockReward = 25600000;
@@ -685,7 +697,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
             .setParentHash(ByteString
                     .copyFrom(chainBaseManager.getDynamicPropertiesStore()
                             .getLatestBlockHeaderHash().getBytes()))
-            .setNumber(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1)
+            .setNumber(chainBaseManager.getDynamicPropertiesStore()
+                    .getLatestBlockHeaderNumber() + 1)
             .setTimestamp(blockTime)
             .setWitnessAddress(witness)
             .build();
@@ -723,7 +736,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
             .setParentHash(ByteString
                     .copyFrom(chainBaseManager.getDynamicPropertiesStore()
                             .getLatestBlockHeaderHash().getBytes()))
-            .setNumber(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1)
+            .setNumber(chainBaseManager.getDynamicPropertiesStore()
+                    .getLatestBlockHeaderNumber() + 1)
             .setTimestamp(blockTime)
             .setWitnessAddress(witness)
             .build();

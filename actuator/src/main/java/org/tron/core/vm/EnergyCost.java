@@ -284,19 +284,19 @@ public class EnergyCost {
     return EXT_CODE_HASH;
   }
 
-  public int getSTAKE_UNSTAKE() {
+  public int getStakeAndUnstake() {
     return STAKE_UNSTAKE;
   }
 
-  public int getWITHDRAW_REWARD() {
+  public int getWithdrawReward() {
     return WITHDRAW_REWARD;
   }
 
-  public int getTOKEN_ISSUE() {
+  public int getTokenIssue() {
     return TOKEN_ISSUE;
   }
 
-  public int getUPDATE_ASSET() {
+  public int getUpdateAsset() {
     return UPDATE_ASSET;
   }
 }
