@@ -18,25 +18,7 @@
 
 package org.tron.core.vm.program;
 
-import static java.lang.StrictMath.min;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
-import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-
 import com.google.protobuf.ByteString;
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Objects;
-import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,26 +28,19 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.BIUtil;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
+import org.tron.common.utils.*;
+import org.tron.core.capsule.*;
+import org.tron.core.config.Parameter;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.EnergyCost;
-import org.tron.core.vm.MessageCall;
-import org.tron.core.vm.OpCode;
-import org.tron.core.vm.PrecompiledContracts;
-import org.tron.core.vm.VM;
-import org.tron.core.vm.VMConstant;
-import org.tron.core.vm.VMUtils;
+import org.tron.core.vm.*;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.*;
+import org.tron.core.vm.nativecontract.param.*;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -80,6 +55,17 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
+
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.*;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 /**
  * @author Roman Mandeleil
@@ -521,6 +507,9 @@ public class Program {
 
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
+
+    withdrawRewardToBalance(owner, getContractState());
+
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -557,11 +546,132 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
+    suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
     getResult().addDeleteAccount(this.getContractAddress());
+    //delete delegationStore
+    getResult().addDeleteDelegation(this.getContractAddress());
   }
 
   public Repository getContractState() {
     return this.contractState;
+  }
+
+  private void withdrawRewardToBalance(byte[] owner, Repository repository){
+    ContractService contractService = ContractService.getInstance();
+    contractService.withdrawReward(owner, getContractState());
+    AccountCapsule accountCapsule = repository.getAccount(owner);
+    long oldBalance = accountCapsule.getBalance();
+    long allowance = accountCapsule.getAllowance();
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .setBalance(oldBalance + allowance)
+            .setAllowance(0L)
+            .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
+            .build());
+    // todo internal tx
+    repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Transfer withdraw allowance to balance {}", allowance);
+    }
+  }
+
+  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository) {
+    if (!VMConfig.allowTvmStake()) {
+      return;
+    }
+    AccountCapsule ownerCapsule = repository.getAccount(owner);
+    if (ownerCapsule.getFrozenCount() == 0) {
+      return;
+    }
+
+    //process owner frozen for self
+    if (FastByteComparisons.compareTo(obtainer, 0, 20,
+            TransactionTrace.convertToTronAddress(new byte[20]), 0, 20) == 0
+            || FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0
+            || FastByteComparisons.compareTo(obtainer, 0, 20,
+            repository.getBlackHoleAddress(), 0, 20) == 0) {
+      // if obtainer equal zero or black hole or owner
+      byte[] realObtain = obtainer;
+      if(FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
+        realObtain = repository.getBlackHoleAddress();
+      }
+      long unfreezeBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+      AccountCapsule realObtainCapsule = repository.getAccount(realObtain);
+      realObtainCapsule.setBalance(realObtainCapsule.getBalance() + unfreezeBalance);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+              .removeFrozen(0).build());
+      repository.updateAccount(realObtain, realObtainCapsule);
+      repository
+              .addTotalNetWeight(-unfreezeBalance / Parameter.ChainConstant.TRX_PRECISION);
+    } else {
+      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+      long now = getTimestamp().longValue() * 1000;
+      long ownerBandwidthBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+      long ownerBandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
+      long newBandwidthExpire = ownerBandwidthExpire;
+      long newFrozenBalanceForBandwidth = ownerBandwidthBalance;
+      if (obtainCapsule.getFrozenCount() > 0) {
+        long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
+        long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
+        long maxExpire = repository.getDynamicPropertiesStore().getMinFrozenTime() * Parameter.ChainConstant.FROZEN_PERIOD;
+        newBandwidthExpire = now
+                + BigInteger.valueOf(Long.max(0, Long.min(ownerBandwidthExpire - now, maxExpire)))
+                .multiply(BigInteger.valueOf(ownerBandwidthBalance))
+                .add(BigInteger.valueOf(Long.max(0, Long.min(obtainBandwidthExpire - now, maxExpire)))
+                        .multiply(BigInteger.valueOf(obtainBandwidthBalance)))
+                .divide(BigInteger.valueOf(
+                        Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance)))
+                .longValue();
+        newFrozenBalanceForBandwidth = Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance);
+      }
+      obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
+      repository.updateAccount(obtainer, obtainCapsule);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+              .removeFrozen(0).build());
+    }
+    //vote
+    {
+      VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
+
+      //get owner oldVotes
+      List<Protocol.Vote> oldVotes;
+      if (ownerVotesCapsule == null) {
+        oldVotes = ownerCapsule.getVotesList();
+      } else {
+        oldVotes = ownerVotesCapsule.getOldVotes();
+        //delete ownerVotesCapsule
+        getResult().addDeleteVotes(this.getContractAddress());
+      }
+      // merge oldVotes to address(zero)
+      if (!oldVotes.isEmpty()) {
+        ownerCapsule.clearVotes();
+        //merge oldVotes to zero
+        byte[] zeroAddress = TransactionTrace.convertToTronAddress(new byte[20]);
+        VotesCapsule zeroVotesCapsule = repository.getVotesCapsule(zeroAddress);
+        if (zeroVotesCapsule == null) {
+          zeroVotesCapsule = new VotesCapsule(ByteString.copyFrom(zeroAddress), oldVotes);
+        } else {
+          int zeroOldVoteSize = zeroVotesCapsule.getOldVotes().size();
+          Map<ByteString, Integer> zeroOldVotesIndex = new HashMap<>(zeroOldVoteSize);
+          for(int i = 0; i < zeroOldVoteSize; i++){
+            zeroOldVotesIndex.put(zeroVotesCapsule.getOldVotes().get(i).getVoteAddress(), i);
+          }
+          for (Protocol.Vote vote : oldVotes) {
+            if (zeroOldVotesIndex.containsKey(vote.getVoteAddress())) {
+              int index = zeroOldVotesIndex.get(vote.getVoteAddress());
+              long newOldVoteCount = vote.getVoteCount() + zeroVotesCapsule.getOldVotes().get(index).getVoteCount();
+              zeroVotesCapsule.setOldVote(index, Protocol.Vote.newBuilder()
+                      .setVoteAddress(vote.getVoteAddress())
+                      .setVoteCount(newOldVoteCount).build());
+            } else {
+              zeroVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount());
+            }
+          }
+        }
+        repository.updateVotesCapsule(zeroAddress, zeroVotesCapsule);
+      }
+    }
+
+    repository.updateAccount(owner, ownerCapsule);
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1083,10 +1193,23 @@ public class Program {
     return new DataWord(balance);
   }
 
+  public DataWord getRewardBalance(DataWord address) {
+    ContractService contractService = ContractService.getInstance();
+    long rewardBalance = contractService
+            .queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
+    return new DataWord(rewardBalance);
+  }
+
   public DataWord isContract(DataWord address) {
     ContractCapsule contract = getContractState()
         .getContract(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return contract != null ? new DataWord(1) : new DataWord(0);
+  }
+
+  public DataWord isSRCandidate(DataWord address) {
+    WitnessCapsule witnessCapsule = getContractState()
+            .getWitnessCapsule(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
+    return witnessCapsule != null ? new DataWord(1) : new DataWord(0);
   }
 
   public DataWord getOriginAddress() {
@@ -1097,6 +1220,10 @@ public class Program {
     return invoke.getCallerAddress().clone();
   }
 
+  public DataWord getChainId() {
+    return new DataWord(Hex.toHexString(getContractState()
+        .getBlockByNum(0).getBlockId().getBytes()));
+  }
   public DataWord getDropPrice() {
     return new DataWord(1);
   }
@@ -1325,8 +1452,14 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    byte[] senderAddress = TransactionTrace
-        .convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] senderAddress;
+    if(VMConfig.allowTvmIstanbul()) {
+      senderAddress = TransactionTrace
+          .convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    } else {
+      senderAddress = TransactionTrace
+          .convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    }
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
     byte[] contractAddress = WalletUtil
@@ -1609,6 +1742,112 @@ public class Program {
     }
   }
 
+  public boolean stake(DataWord srAddress, DataWord stakeAmount) {
+    Repository repository = getContractState().newRepositoryChild();
+    StakeProcessor stakeProcessor = new StakeProcessor();
+    StakeParam stakeParam = new StakeParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    stakeParam.setOwnerAddress(owner);
+    stakeParam.setSrAddress(TransactionTrace.convertToTronAddress(srAddress.getLast20Bytes()));
+    stakeParam.setNow(getTimestamp().longValue() * 1000);
+    try {
+      stakeParam.setStakeAmount(stakeAmount.sValue().longValueExact());
+      stakeProcessor.process(stakeParam, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForStake failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForStake failure:{}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("stakeAmount out of long range");
+    }
+    return false;
+  }
+
+  public boolean unstake() {
+    Repository repository = getContractState().newRepositoryChild();
+    UnstakeProcessor unstakeProcessor = new UnstakeProcessor();
+    UnstakeParam unstakeParam = new UnstakeParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    unstakeParam.setOwnerAddress(owner);
+    unstakeParam.setNow(getTimestamp().longValue() * 1000);
+    try {
+      unstakeProcessor.validate(unstakeParam, repository);
+      unstakeProcessor.execute(unstakeParam, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForUnstake failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForUnstake failure:{}", e.getMessage());
+    }
+    return false;
+  }
+
+  public void withdrawReward() {
+    Repository repository = getContractState().newRepositoryChild();
+    WithdrawRewardProcessor withdrawRewardContractProcessor = new WithdrawRewardProcessor();
+    WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    withdrawRewardParam.setTargetAddress(ownerAddress);
+    try{
+      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository, getTimestamp().longValue());
+      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository, getTimestamp().longValue());
+      stackPush(new DataWord(allowance));
+      repository.commit();
+    }catch (ContractValidateException e){
+      logger.error("validateForWithdrawReward failure:{}", e.getMessage());
+      stackPushZero();
+    }
+  }
+
+  public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    TokenIssueProcessor tokenIssueProcessor = new TokenIssueProcessor();
+    TokenIssueParam tokenIssueParam = new TokenIssueParam();
+    tokenIssueParam.setName(name.getNoEndZeroesData());
+    tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
+    tokenIssueParam.setTotalSupply(totalSupply.sValue().longValueExact());
+    tokenIssueParam.setPrecision(precision.sValue().intValueExact());
+    tokenIssueParam.setOwnerAddress(ownerAddress);
+    try {
+      tokenIssueProcessor.validate(tokenIssueParam, repository);
+      tokenIssueProcessor.execute(tokenIssueParam, repository);
+      stackPush(new DataWord(repository.getTokenIdNum()));
+      repository.commit();
+    } catch (ContractValidateException e) {
+      logger.error("validateForAssetIssue failure:{}", e.getMessage());
+      stackPushZero();
+    }
+  }
+
+  public void updateAsset(DataWord urlDataOffs, DataWord descriptionDataOffs) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    DataWord urlSize = memoryLoad(urlDataOffs);
+    DataWord descriptionSize = memoryLoad(descriptionDataOffs);
+    byte[] urlData = memoryChunk(urlDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+            urlSize.intValueSafe());
+    byte[] descriptionData = memoryChunk(descriptionDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+            descriptionSize.intValueSafe());
+    UpdateAssetParam updateAssetParam = new UpdateAssetParam();
+    updateAssetParam.setOwnerAddress(ownerAddress);
+    updateAssetParam.setNewUrl(urlData);
+    updateAssetParam.setNewDesc(descriptionData);
+    UpdateAssetProcessor updateAssetProcessor = new UpdateAssetProcessor();
+    try {
+      updateAssetProcessor.validate(updateAssetParam, repository);
+      updateAssetProcessor.execute(updateAssetParam, repository);
+      stackPushOne();
+      repository.commit();
+    } catch (ContractValidateException e) {
+      logger.error("validateForUpdateAsset failure:{}", e.getMessage());
+      stackPushZero();
+    }
+  }
+
   /**
    * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is
    * quite normal situation and doesn't mean exceptional situation in terms of the program
@@ -1622,6 +1861,13 @@ public class Program {
     }
 
     public BytecodeExecutionException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  public static class AssetIssueException extends BytecodeExecutionException {
+
+    public AssetIssueException(String message, Object... args) {
       super(format(message, args));
     }
   }

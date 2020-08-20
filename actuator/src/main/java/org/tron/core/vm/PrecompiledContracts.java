@@ -574,7 +574,14 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
+      if (VMConfig.allowTvmIstanbul()) {
+        return getEnergyForDataIstanbul(data);
+      }
       return 500;
+    }
+
+    private long getEnergyForDataIstanbul(byte[] data) {
+      return 150;
     }
 
     @Override
@@ -621,7 +628,14 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
+      if (VMConfig.allowTvmIstanbul()) {
+        return getEnergyForDataIstanbul(data);
+      }
       return 40000;
+    }
+
+    private long getEnergyForDataIstanbul(byte[] data) {
+      return 6000;
     }
 
     @Override
@@ -667,12 +681,20 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-
+      if (VMConfig.allowTvmIstanbul()) {
+        return getEnergyForDataIstanbul(data);
+      }
       if (data == null) {
         return 100000;
       }
-
       return 80000L * (data.length / PAIR_SIZE) + 100000;
+    }
+
+    private long getEnergyForDataIstanbul(byte[] data) {
+      if (data == null) {
+        return 45000;
+      }
+      return 34000L * (data.length / PAIR_SIZE) + 45000;
     }
 
     @Override

@@ -428,6 +428,18 @@ public class CommonParameter {
   @Setter
   public long allowShieldedTRC20Transaction;
 
+  @Getter/**/
+  @Setter
+  public long allowTvmIstanbul;
+
+  @Getter
+  @Setter
+  public long allowTvmStake;
+
+  @Getter
+  @Setter
+  public long allowTvmAssetIssue;
+
   @Getter
   @Setter
   public boolean openHistoryQueryWhenLiteFN = false;

@@ -32,6 +32,14 @@ public class VotesCapsule implements ProtoCapsule<Votes> {
         .build();
   }
 
+  public VotesCapsule(ByteString address, List<Vote> oldVotes, List<Vote> newVotes) {
+    this.votes = Votes.newBuilder()
+            .setAddress(address)
+            .addAllOldVotes(oldVotes)
+            .addAllNewVotes(newVotes)
+            .build();
+  }
+
   public ByteString getAddress() {
     return this.votes.getAddress();
   }
@@ -50,6 +58,10 @@ public class VotesCapsule implements ProtoCapsule<Votes> {
         .build();
   }
 
+  public void setOldVote(int index, Vote oldVote){
+    this.votes = this.votes.toBuilder().setOldVotes(index, oldVote).build();
+  }
+
   public List<Vote> getNewVotes() {
     return this.votes.getNewVotesList();
   }
@@ -60,10 +72,22 @@ public class VotesCapsule implements ProtoCapsule<Votes> {
         .build();
   }
 
+  public void clearOldVotes() {
+    this.votes = this.votes.toBuilder()
+            .clearOldVotes()
+            .build();
+  }
+
   public void addNewVotes(ByteString voteAddress, long voteCount) {
     this.votes = this.votes.toBuilder()
         .addNewVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteCount).build())
         .build();
+  }
+
+  public void addOldVotes(ByteString voteAddress, long voteCount) {
+    this.votes = this.votes.toBuilder()
+            .addOldVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteCount).build())
+            .build();
   }
 
   public byte[] createDbKey() {

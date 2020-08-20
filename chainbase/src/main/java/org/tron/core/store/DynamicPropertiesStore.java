@@ -4,6 +4,8 @@ import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.IntStream;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "DB")
 @Component
@@ -112,6 +115,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //Used only for multi sign, once，value is {0,1}
   private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
   //token id,Incremental，The initial value is 1000000
+  @Getter
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
   //Used only for token updates, once，value is {0,1}
   private static final byte[] TOKEN_UPDATE_DONE = "TOKEN_UPDATE_DONE".getBytes();
@@ -122,6 +126,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
       "ALLOW_SHIELDED_TRC20_TRANSACTION"
           .getBytes();
+  private static final byte[] ALLOW_TVM_ISTANBUL = "ALLOW_TVM_ISTANBUL".getBytes();
+  private static final byte[] ALLOW_TVM_STAKE = "ALLOW_TVM_STAKE".getBytes();
+  private static final byte[] ALLOW_TVM_ASSET_ISSUE = "ALLOW_TVM_ASSET_ISSUE".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
   private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
@@ -586,6 +593,27 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowShieldedTRC20Transaction(
           CommonParameter.getInstance().getAllowShieldedTRC20Transaction());
+    }
+
+    try {
+      this.getAllowTvmIstanbul();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmIstanbul(
+          CommonParameter.getInstance().getAllowTvmIstanbul());
+    }
+
+    try {
+      this.getAllowTvmStake();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmStake(
+              CommonParameter.getInstance().getAllowTvmStake());
+    }
+
+    try {
+      this.getAllowTvmAssetIssue();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmAssetIssue(
+              CommonParameter.getInstance().getAllowTvmAssetIssue());
     }
 
     try {
@@ -1641,6 +1669,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowCreationOfContracts() == 1L;
   }
 
+
   public void saveAllowShieldedTransaction(long allowShieldedTransaction) {
     this.put(DynamicPropertiesStore.ALLOW_SHIELDED_TRANSACTION,
         new BytesCapsule(ByteArray.fromLong(allowShieldedTransaction)));
@@ -1666,6 +1695,48 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmIstanbul(long allowTVMIstanbul) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_ISTANBUL,
+        new BytesCapsule(ByteArray.fromLong(allowTVMIstanbul)));
+  }
+
+  public long getAllowTvmIstanbul() {
+    String msg = "not found ALLOW_TVM_ISTANBUL";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_ISTANBUL))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmStake(long allowTvmStake) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_STAKE,
+            new BytesCapsule(ByteArray.fromLong(allowTvmStake)));
+  }
+
+  public void saveAllowTvmAssetIssue(long allowTvmAssetIssue) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_ASSET_ISSUE,
+            new BytesCapsule(ByteArray.fromLong(allowTvmAssetIssue)));
+  }
+
+  public long getAllowTvmStake() {
+    String msg = "not found ALLOW_TVM_STAKE";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_STAKE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException(msg));
+  }
+
+  public long getAllowTvmAssetIssue() {
+    String msg = "not found ALLOW_TVM_ASSETISSUE";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_ASSET_ISSUE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException(msg));
   }
 
   public boolean supportShieldedTransaction() {
