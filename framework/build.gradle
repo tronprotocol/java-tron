@@ -153,6 +153,7 @@ test {
         exclude 'org/tron/core/zksnark/**'
         exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
         exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
+        exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
 }
 

@@ -75,6 +75,7 @@ public class RewardBalanceTest extends VMTestBase {
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmStake(1);
+    manager.getDynamicPropertiesStore().saveChangeDelegation(1);
     String contractName = "TestRewardBalance";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","

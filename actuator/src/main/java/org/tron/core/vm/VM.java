@@ -319,16 +319,16 @@ public class VM {
           break;
         case STAKE:
         case UNSTAKE:
-          energyCost = energyCosts.getSTAKE_UNSTAKE();
+          energyCost = energyCosts.getStakeAndUnstake();
           break;
         case WITHDRAWREWARD:
-          energyCost = energyCosts.getWITHDRAW_REWARD();
+          energyCost = energyCosts.getWithdrawReward();
           break;
         case TOKENISSUE:
-          energyCost = energyCosts.getTOKEN_ISSUE();
+          energyCost = energyCosts.getTokenIssue();
           break;
         case UPDATEASSET:
-          energyCost = energyCosts.getUPDATE_ASSET();
+          energyCost = energyCosts.getUpdateAsset();
           break;
         default:
           break;
@@ -1479,34 +1479,15 @@ public class VM {
           DataWord totalSupply = program.stackPop();
           DataWord precision = program.stackPop();
 
-          if (logger.isDebugEnabled()) {
-            hint = "name: " + ByteArray.toStr(name.getNoEndZeroesData())
-                    + " abbr: " + ByteArray.toStr(abbr.getNoEndZeroesData())
-                    + " totalSupply: " + ByteArray.toLong(totalSupply.getData())
-                    + " precision: " + ByteArray.toLong(precision.getData());
-            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
-                    String.format("%-12s", op.name()),
-                    program.getEnergyLimitLeft().value(),
-                    program.getCallDeep(), hint);
-          }
           program.tokenIssue(name, abbr, totalSupply, precision);
           program.step();
           break;
         }
         case UPDATEASSET: {
-          DataWord trcTokenId = program.stackPop();
+          program.stackPop();
           DataWord urlDataOffs = program.stackPop();
           DataWord descriptionDataOffs = program.stackPop();
 
-          if (logger.isDebugEnabled()) {
-            hint = "descriptionDataOffs: " + ByteArray.toLong(descriptionDataOffs.getData())
-                    + " urlDataOffs: " + ByteArray.toLong(urlDataOffs.getData())
-                    + " trcTokenId: " + ByteArray.toLong(trcTokenId.getData());
-            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
-                    String.format("%-12s", op.name()),
-                    program.getEnergyLimitLeft().value(),
-                    program.getCallDeep(), hint);
-          }
           program.updateAsset(urlDataOffs, descriptionDataOffs);
           program.step();
           break;

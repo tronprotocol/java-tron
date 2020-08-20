@@ -20,16 +20,18 @@ public class GetContractInfoServlet extends RateLimiterServlet {
   @Autowired
   private Wallet wallet;
 
+  private static final String VALUE = "value";
+
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      String input = request.getParameter("value");
+      String input = request.getParameter(VALUE);
       if (visible) {
         input = Util.getHexAddress(input);
       }
 
       JSONObject jsonObject = new JSONObject();
-      jsonObject.put("value", input);
+      jsonObject.put(VALUE, input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
       SmartContractDataWrapper smartContract = wallet.getContractInfo(build.build());
@@ -49,8 +51,8 @@ public class GetContractInfoServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(input);
       if (visible) {
         JSONObject jsonObject = JSONObject.parseObject(input);
-        String value = jsonObject.getString("value");
-        jsonObject.put("value", Util.getHexAddress(value));
+        String value = jsonObject.getString(VALUE);
+        jsonObject.put(VALUE, Util.getHexAddress(value));
         input = jsonObject.toJSONString();
       }
 
