@@ -30,11 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -68,6 +64,10 @@ public class TransactionTrace {
 
   private ForkController forkController;
 
+  private VotesStore votesStore;
+
+  private DelegationStore delegationStore;
+
   @Getter
   private TransactionContext transactionContext;
   @Getter
@@ -100,6 +100,9 @@ public class TransactionTrace {
     this.runtime = runtime;
     this.forkController = new ForkController();
     forkController.init(storeFactory.getChainBaseManager());
+
+    this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
+    this.delegationStore = storeFactory.getChainBaseManager().getDelegationStore();
   }
 
   public TransactionCapsule getTrx() {
@@ -190,6 +193,12 @@ public class TransactionTrace {
     if (StringUtils.isEmpty(transactionContext.getProgramResult().getRuntimeError())) {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+      }
+      for (DataWord address : transactionContext.getProgramResult().getDeleteVotes()) {
+        votesStore.delete(convertToTronAddress((address.getLast20Bytes())));
+      }
+      for (DataWord address : transactionContext.getProgramResult().getDeleteDelegation()) {
+        deleteDelegationByAddress(convertToTronAddress((address.getLast20Bytes())));
       }
     }
   }
@@ -298,6 +307,12 @@ public class TransactionTrace {
       address = newAddress;
     }
     return address;
+  }
+
+  public void deleteDelegationByAddress(byte[] address){
+    delegationStore.delete(address); //begin Cycle
+    delegationStore.delete(("lastWithdraw-" + Hex.toHexString(address)).getBytes()); //last Withdraw cycle
+    delegationStore.delete(("end-" + Hex.toHexString(address)).getBytes()); //end cycle
   }
 
 

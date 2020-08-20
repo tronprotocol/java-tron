@@ -139,6 +139,9 @@ import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 
 
@@ -178,10 +181,6 @@ public class Manager {
   @Getter
   @Setter
   private MerkleContainer merkleContainer;
-  @Autowired
-  @Getter
-  @Setter
-  private TreeBlockIndexStore merkleTreeIndexStore;
   private ExecutorService validateSignService;
   private boolean isRunRePushThread = true;
   private boolean isRunTriggerCapsuleProcessThread = true;
@@ -350,7 +349,7 @@ public class Manager {
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
-            this.merkleTreeIndexStore));
+            chainBaseManager.getMerkleTreeIndexStore()));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.rePushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
@@ -504,6 +503,7 @@ public class Manager {
     }
     long start = System.currentTimeMillis();
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    logger.info("current headNum is: {}", headNum);
     long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
     ListeningExecutorService service = MoreExecutors
         .listeningDecorator(Executors.newFixedThreadPool(50));
@@ -516,15 +516,20 @@ public class Manager {
             blockCount.incrementAndGet();
             if (chainBaseManager.getBlockByNum(blockNum).getTransactions().isEmpty()) {
               emptyBlockCount.incrementAndGet();
+              // transactions is null, return
+              return;
             }
             chainBaseManager.getBlockByNum(blockNum).getTransactions().stream()
                 .map(tc -> tc.getTransactionId().getBytes())
                 .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
                 .forEach(e -> transactionCache
                     .put(e.getKey(), new BytesCapsule(e.getValue())));
-          } catch (ItemNotFoundException | BadItemException e) {
-            logger.info("init txs cache error.");
-            throw new IllegalStateException("init txs cache error.");
+          } catch (ItemNotFoundException e) {
+            if (!CommonParameter.getInstance().isLiteFullNode) {
+              logger.warn("block not found. num: {}", blockNum);
+            }
+          } catch (BadItemException e) {
+            throw new IllegalStateException("init txs cache error.", e);
           }
         })));
 
@@ -1574,8 +1579,7 @@ public class Manager {
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum());
-      boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
-      if (!result) {
+      if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
         logger.info("too many triggers, block trigger lost: {}", newBlock.getBlockId());
       }
     }
@@ -1591,8 +1595,7 @@ public class Manager {
       TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
       trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum());
-      boolean result = triggerCapsuleQueue.offer(trx);
-      if (!result) {
+      if (!triggerCapsuleQueue.offer(trx)) {
         logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
       }
     }

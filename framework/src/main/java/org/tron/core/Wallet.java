@@ -129,6 +129,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
@@ -221,6 +222,7 @@ import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
@@ -887,6 +889,11 @@ public class Wallet {
         .setKey("getAllowTvmSolidity059")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
+    
+    // ALLOW_TVM_ISTANBUL
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmIstanbul")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmIstanbul()).build());
 
     // ALLOW_ZKSNARK_TRANSACTION
     //    builder.addChainParameter(
@@ -965,6 +972,16 @@ public class Wallet {
         .setKey("getAllowPBFT")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
         .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmStake")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmStake())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowTvmAssetIssue")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
+            .build());
 
     return builder.build();
   }
@@ -1372,7 +1389,7 @@ public class Wallet {
     ByteString txId = outPoint.getHash();
 
     //Get the tree in blockNum-1 position
-    byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
+    byte[] treeRoot = chainBaseManager.getMerkleTreeIndexStore().get(blockNumber - 1);
     if (treeRoot == null) {
       throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
@@ -1623,9 +1640,9 @@ public class Wallet {
     }
 
     try {
-      if (dbManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
+      if (chainBaseManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
         return IncrementalMerkleTree
-            .parseFrom(dbManager.getMerkleTreeIndexStore().get(blockNum));
+            .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage());
@@ -2529,6 +2546,35 @@ public class Wallet {
         .get(bytesMessage.getValue().toByteArray());
     if (Objects.nonNull(contractCapsule)) {
       return contractCapsule.getInstance();
+    }
+    return null;
+  }
+
+  /**
+   * Add a wrapper for smart contract.
+   * Current additional information including runtime code for a smart contract.
+   * @param bytesMessage the contract address message
+   * @return contract info
+   *
+   */
+  public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    if (accountCapsule == null) {
+      logger.error(
+          "Get contract failed, the account does not exist or the account does not have a code "
+              + "hash!");
+      return null;
+    }
+
+    ContractCapsule contractCapsule = dbManager.getContractStore()
+        .get(bytesMessage.getValue().toByteArray());
+    if (Objects.nonNull(contractCapsule)) {
+      CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
+      if (Objects.nonNull(codeCapsule)) {
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+        return contractCapsule.generateWrapper();
+      }
     }
     return null;
   }

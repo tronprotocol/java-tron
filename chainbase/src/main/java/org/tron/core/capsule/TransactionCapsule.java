@@ -726,20 +726,44 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void setResultCode(contractResult code) {
-    Result ret = Result.newBuilder().setContractRet(code).build();
+    Result ret;
     if (this.transaction.getRetCount() > 0) {
       ret = this.transaction.getRet(0).toBuilder().setContractRet(code).build();
 
       this.transaction = transaction.toBuilder().setRet(0, ret).build();
       return;
     }
+    ret = Result.newBuilder().setContractRet(code).build();
     this.transaction = transaction.toBuilder().addRet(ret).build();
   }
+
+  public Transaction.Result.contractResult getContractResult() {
+    if (this.transaction.getRetCount() > 0) {
+      return this.transaction.getRet(0).getContractRet();
+    }
+    return null;
+  }
+
+
 
   public contractResult getContractRet() {
     if (this.transaction.getRetCount() <= 0) {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
+  }
+
+  /**
+   * Check if a transaction capsule contains a smart contract transaction or not.
+   * @return
+   */
+  public boolean isContractType() {
+    try {
+      ContractType type = this.getInstance().getRawData().getContract(0).getType();
+      return  (type == ContractType.TriggerSmartContract || type == ContractType.CreateSmartContract);
+    } catch (Exception ex) {
+      logger.warn("check contract type failed, reason {}", ex.getMessage());
+      return false;
+    }
   }
 }

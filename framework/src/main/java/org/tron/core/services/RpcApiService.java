@@ -110,6 +110,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
+import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
@@ -157,6 +158,7 @@ import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
@@ -194,6 +196,8 @@ public class RpcApiService implements Service {
   private NodeInfoService nodeInfoService;
   @Autowired
   private RateLimiterInterceptor rateLimiterInterceptor;
+  @Autowired
+  private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
 
   @Autowired
   private MetricsApiService metricsApiService;
@@ -250,6 +254,9 @@ public class RpcApiService implements Service {
 
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add lite fullnode query interceptor
+      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
@@ -1930,6 +1937,14 @@ public class RpcApiService implements Service {
     public void getContract(BytesMessage request,
         StreamObserver<SmartContract> responseObserver) {
       SmartContract contract = wallet.getContract(request);
+      responseObserver.onNext(contract);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getContractInfo(BytesMessage request,
+        StreamObserver<SmartContractDataWrapper> responseObserver) {
+      SmartContractDataWrapper contract = wallet.getContractInfo(request);
       responseObserver.onNext(contract);
       responseObserver.onCompleted();
     }

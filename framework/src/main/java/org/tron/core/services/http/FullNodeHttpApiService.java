@@ -23,6 +23,8 @@ import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.filter.HttpInterceptor;
+import org.tron.core.services.filter.LiteFnQueryHttpFilter;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -132,6 +134,8 @@ public class FullNodeHttpApiService implements Service {
   private TriggerConstantContractServlet triggerConstantContractServlet;
   @Autowired
   private GetContractServlet getContractServlet;
+  @Autowired
+  private GetContractInfoServlet getContractInfoServlet;
   @Autowired
   private ClearABIServlet clearABIServlet;
   @Autowired
@@ -276,6 +280,9 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetMarketPairListServlet getMarketPairListServlet;
 
+  @Autowired
+  private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
@@ -402,6 +409,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(triggerConstantContractServlet),
           "/wallet/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/wallet/getcontract");
+      context.addServlet(new ServletHolder(getContractInfoServlet), "/wallet/getcontractinfo");
       context.addServlet(new ServletHolder(clearABIServlet), "/wallet/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/wallet/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/wallet/proposalapprove");
@@ -511,7 +519,6 @@ public class FullNodeHttpApiService implements Service {
 
       context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
-
       context.addServlet(new ServletHolder(marketSellAssetServlet), "/wallet/marketsellasset");
       context.addServlet(new ServletHolder(marketCancelOrderServlet), "/wallet/marketcancelorder");
       context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
@@ -529,12 +536,19 @@ public class FullNodeHttpApiService implements Service {
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+              EnumSet.allOf(DispatcherType.class));
+
       // filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

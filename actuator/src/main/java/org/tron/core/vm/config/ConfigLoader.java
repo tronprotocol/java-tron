@@ -25,6 +25,9 @@ public class ConfigLoader {
         VMConfig.initAllowTvmConstantinople(ds.getAllowTvmConstantinople());
         VMConfig.initAllowTvmSolidity059(ds.getAllowTvmSolidity059());
         VMConfig.initAllowShieldedTRC20Transaction(ds.getAllowShieldedTRC20Transaction());
+        VMConfig.initAllowTvmIstanbul(ds.getAllowTvmIstanbul());
+        VMConfig.initAllowTvmStake(ds.getAllowTvmStake());
+        VMConfig.initAllowTvmAssetIssue(ds.getAllowTvmAssetIssue());
       }
     }
   }

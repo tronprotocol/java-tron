@@ -118,12 +118,13 @@ public class EventQuery002 {
 
       if (message != null) {
         transactionMessage = new String(message);
-        if (!transactionMessage.equals("transactionTrigger")) {
+        if (!transactionMessage.equals("transactionTrigger") && !transactionMessage.isEmpty()) {
           break;
         }
       }
     }
 
+    Assert.assertTrue(retryTimes > 0);
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));

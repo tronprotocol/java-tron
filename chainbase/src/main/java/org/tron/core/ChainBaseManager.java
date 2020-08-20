@@ -53,6 +53,7 @@ import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.TransactionHistoryStore;
 import org.tron.core.store.TransactionRetStore;
+import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -190,6 +191,11 @@ public class ChainBaseManager {
 
   @Getter
   private ForkController forkController = ForkController.instance();
+
+  @Autowired
+  @Getter
+  @Setter
+  private TreeBlockIndexStore merkleTreeIndexStore;
 
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");

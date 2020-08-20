@@ -44,6 +44,14 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     this.assetIssueContract = assetIssueContract;
   }
 
+  public AssetIssueCapsule(byte[] ownerAddress, String id, String name, String abbr,
+                           long totalSupply, int precision) {
+    this.assetIssueContract = AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ownerAddress)).setId(id)
+            .setName(ByteString.copyFrom(name.getBytes())).setAbbr(ByteString.copyFrom(abbr.getBytes()))
+            .setTotalSupply(totalSupply).setPrecision(precision).build();
+  }
+
   public static String createDbKeyString(String name, long order) {
     return name + "_" + order;
   }
@@ -196,8 +204,16 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
         .setUrl(newUrl).build();
   }
 
+  public ByteString getUrl() {
+    return this.assetIssueContract.getUrl();
+  }
+
   public void setDescription(ByteString description) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setDescription(description).build();
+  }
+
+  public ByteString getDesc() {
+    return this.assetIssueContract.getDescription();
   }
 }

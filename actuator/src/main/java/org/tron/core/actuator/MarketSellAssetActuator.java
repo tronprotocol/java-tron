@@ -15,6 +15,8 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -203,11 +205,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Account does not exist!");
     }
 
-    if (!Arrays.equals(sellTokenID, "_".getBytes()) && !TransactionUtil.isNumber(sellTokenID)) {
+    if (!Arrays.equals(sellTokenID, "_".getBytes()) && !isNumber(sellTokenID)) {
       throw new ContractValidateException("sellTokenId is not a valid number");
     }
-    if (!Arrays.equals(buyTokenID, "_".getBytes()) && !TransactionUtil
-        .isNumber(buyTokenID)) {
+    if (!Arrays.equals(buyTokenID, "_".getBytes()) && !isNumber(buyTokenID)) {
       throw new ContractValidateException("buyTokenId is not a valid number");
     }
 

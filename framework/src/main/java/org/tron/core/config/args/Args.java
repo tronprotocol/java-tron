@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -50,7 +51,9 @@ import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PropUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -168,11 +171,15 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
-    PARAMETER.nodeMetricsEnable = true;
+    PARAMETER.nodeMetricsEnable = false;
+    PARAMETER.metricsStorageEnable = false;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
+    PARAMETER.allowTvmIstanbul = 0;
+    PARAMETER.allowTvmStake = 0;
+    PARAMETER.allowTvmAssetIssue = 0;
   }
 
   /**
@@ -218,10 +225,6 @@ public class Args extends CommonParameter {
     } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
       localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
-      if (localwitness.size() > 1) {
-        logger.warn("localwitness size must be one, get the first one");
-        localwitness = localwitness.subList(0, 1);
-      }
       localWitnesses.setPrivateKeys(localwitness);
 
       if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
@@ -641,6 +644,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
 
+    PARAMETER.allowTvmIstanbul =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) : 0;
+
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
             ? getEventPluginConfig(config) : null;
@@ -701,9 +708,16 @@ public class Args extends CommonParameter {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
+    PARAMETER.allowTvmStake =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_STAKE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_STAKE) : 0;
+
+    PARAMETER.allowTvmAssetIssue =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
-        .getInstance().getStorage().getDbEngine().toUpperCase())) {
+            .getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
@@ -716,6 +730,24 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_METRICS_ENABLE)) {
       PARAMETER.nodeMetricsEnable = config.getBoolean(Constant.NODE_METRICS_ENABLE);
     }
+
+    PARAMETER.metricsStorageEnable = config.hasPath(Constant.METRICS_STORAGE_ENABLE) && config
+            .getBoolean(Constant.METRICS_STORAGE_ENABLE);
+    PARAMETER.influxDbIp = config.hasPath(Constant.METRICS_INFLUXDB_IP) ? config
+            .getString(Constant.METRICS_INFLUXDB_IP) : "127.0.0.1";
+    PARAMETER.influxDbPort = config.hasPath(Constant.METRICS_INFLUXDB_PORT) ? config
+            .getInt(Constant.METRICS_INFLUXDB_PORT) : 8086;
+    PARAMETER.influxDbDatabase = config.hasPath(Constant.METRICS_INFLUXDB_DATABASE) ? config
+            .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
+    PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
+            .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
+
+    // lite fullnode params
+    PARAMETER.setLiteFullNode(checkIsLiteFullNode());
+    PARAMETER.setOpenHistoryQueryWhenLiteFN(
+            config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
+                    && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
+
     logConfig();
   }
 
@@ -1050,6 +1082,19 @@ public class Args extends CommonParameter {
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
+  }
+
+  /**
+   * set isLiteFullNode=true when this node is a lite fullnode.
+   */
+  public static boolean checkIsLiteFullNode() {
+    String infoFile = Paths.get(PARAMETER.outputDirectory,
+            PARAMETER.storage.getDbDirectory(), Constant.INFO_FILE_NAME).toString();
+    if (FileUtil.isExists(infoFile)) {
+      String value = PropUtil.readProperty(infoFile, Constant.SPLIT_BLOCK_NUM);
+      return !"".equals(value) && Long.parseLong(value) > 0;
+    }
+    return false;
   }
 
   /**
