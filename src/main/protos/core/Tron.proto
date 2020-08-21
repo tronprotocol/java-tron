@@ -274,6 +274,8 @@ message Transaction {
       AccountPermissionUpdateContract = 46;
       ClearABIContract = 48;
       ShieldedTransferContract = 51;
+      MarketSellAssetContract = 52;
+      MarketCancelOrderContract = 53;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

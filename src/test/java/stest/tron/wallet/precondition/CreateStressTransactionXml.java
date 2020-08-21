@@ -44,7 +44,8 @@ public class CreateStressTransactionXml {
       "SendCoin(Delay)",
       "transferTRC20",
       "ExtCodeHash",
-      "ShieldSendToken(P2S)"
+      "ShieldSendToken(P2S)",
+      "marketSell"
   };
 
   @BeforeClass

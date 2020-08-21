@@ -335,3 +335,17 @@ message ShieldedTransferContract {
   int64 to_amount = 7; // the amount to transparent to_address
 }
 // end shielded transaction
+
+message MarketSellAssetContract {
+  bytes owner_address = 1;
+  bytes sell_token_id = 2;
+  int64 sell_token_quantity = 3;
+  bytes buy_token_id = 4;
+  int64 buy_token_quantity = 5; // min to receive
+  bytes pre_price_key = 6; // order price position
+}
+
+message MarketCancelOrderContract {
+  bytes owner_address = 1;
+  bytes order_id = 2;
+}

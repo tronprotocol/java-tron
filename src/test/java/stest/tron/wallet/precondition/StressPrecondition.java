@@ -1,6 +1,7 @@
 package stest.tron.wallet.precondition;
 
 import com.google.protobuf.ByteString;
+import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.BufferedReader;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -28,6 +30,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.ChainParameters;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
@@ -122,7 +125,8 @@ public class StressPrecondition {
   byte[] commonContractAddress4;
   byte[] commonContractAddress5;
   byte[] commonContractAddress6;
-
+  byte[] commonContractAddress7;
+  byte[] commonContractAddress8;
 
   @BeforeSuite
   public void beforeSuite() {
@@ -155,7 +159,7 @@ public class StressPrecondition {
     }
 
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-
+    logger.info("--------------------------------------------");
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowAdaptiveEnergy") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
@@ -181,6 +185,11 @@ public class StressPrecondition {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(40L, 1L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowMarketTransaction") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(44L, 1L);
       }
 
     }
@@ -210,63 +219,6 @@ public class StressPrecondition {
           true, blockingStubFull);
       waitProposalApprove(21, blockingStubFull);
     }
-  }
-
-  @Test(enabled = false)
-  public void test02CreateShieldProposal() {
-    ChainParameters chainParameters = blockingStubFull
-        .getChainParameters(EmptyMessage.newBuilder().build());
-    Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
-    logger.info(Long.toString(getChainParameters.get().getChainParameterCount()));
-    for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
-      logger.info(getChainParameters.get().getChainParameter(i).getKey());
-      logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-    }
-    HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-
-    for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
-      if (getChainParameters.get().getChainParameter(i).getKey().equals("getShieldedTransactionFee")
-          && getChainParameters.get().getChainParameter(i).getValue() == 10000000) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(28L, 1L);
-      }
-    }
-    if (proposalMap.size() >= 1) {
-
-
-      ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-      Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
-
-
-      PublicMethed.createProposal(witness001Address, witnessKey001,
-          proposalMap, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-      listProposals = Optional.ofNullable(proposalList);
-      Integer proposalId = listProposals.get().getProposalsCount();
-      PublicMethed.approveProposal(witness001Address, witnessKey001, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness002Address, witnessKey002, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness003Address, witnessKey003, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness004Address, witnessKey004, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness005Address, witnessKey005, proposalId,
-          true, blockingStubFull);
-      //waitZenTokenFeeProposalApprove(30, blockingStubFull);
-
-
-
-    }
-
-
   }
 
   @Test(enabled = true)
@@ -374,13 +326,13 @@ public class StressPrecondition {
   }
 
   @Test(enabled = true)
-  public void test07CreateToken() {
+  public void test07CreateTokenAndDispatchToken() {
     if (PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull).getAssetIssuedID()
         .isEmpty()) {
       Long start = System.currentTimeMillis() + 20000;
       Long end = System.currentTimeMillis() + 1000000000;
       PublicMethed.createAssetIssue(PublicMethed.getFinalAddress(assetIssueOwnerKey), "xxd",
-          50000000000000L,
+          50000000000000000L,
           1, 1, start, end, 1, "wwwwww", "wwwwwwww", 100000L,
           100000L, 1L, 1L, assetIssueOwnerKey, blockingStubFull);
       logger.info("createAssetIssue");
@@ -411,6 +363,16 @@ public class StressPrecondition {
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
     PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+
+    for(int i  = 1; i <= 10;i++) {
+      String dexKey = Configuration.getByPath("stress.conf")
+          .getString("dexAccount.dexAccount" + i + "Key");
+      PublicMethed.transferAsset(PublicMethed.getFinalAddress(dexKey), assetIssueId.toByteArray(), 30000000000L,
+          PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+      sendCoinToStressAccount(dexKey);
+    }
+
+
 
     String newTokenId = ByteArray.toStr(assetIssueId.toByteArray());
     String oldTokenIdString = readWantedText("stress.conf", "commontokenid");
@@ -563,8 +525,10 @@ public class StressPrecondition {
     logger.info("newAddress " + newAddress);
     replacAddressInConfig("stress.conf", oldAddress, newAddress);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
+
+
 
 
   /**
