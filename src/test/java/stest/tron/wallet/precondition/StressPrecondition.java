@@ -364,7 +364,7 @@ public class StressPrecondition {
     PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
 
-    for(int i  = 1; i <= 10;i++) {
+    for(int i  = 0; i <= 9;i++) {
       String dexKey = Configuration.getByPath("stress.conf")
           .getString("dexAccount.dexAccount" + i + "Key");
       PublicMethed.transferAsset(PublicMethed.getFinalAddress(dexKey), assetIssueId.toByteArray(), 30000000000L,
