@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
@@ -145,7 +146,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     if (!accountStore.has(ownerAddress)) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("account[" + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
@@ -160,8 +161,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
           get(ByteArray.fromLong(contract.getExchangeId()));
 
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + ActuatorConstant
-          .NOT_EXIST_STR);
+      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + NOT_EXIST_STR);
     }
 
     if (!accountCapsule.getAddress().equals(exchangeCapsule.getCreatorAddress())) {

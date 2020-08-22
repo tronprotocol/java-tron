@@ -1,6 +1,7 @@
 package org.tron.core.vm.nativecontract;
 
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
 
 import com.google.common.math.LongMath;
@@ -106,13 +107,13 @@ public class StakeProcessor {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR
-                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
+                  + readableWitnessAddress + NOT_EXIST_STR);
         }
         if (!witnessStore.has(witnessCandidate)) {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR
-                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
+                  + readableWitnessAddress + NOT_EXIST_STR);
         }
         sum = vote.getVoteCount();
       }

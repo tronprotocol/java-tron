@@ -15,6 +15,8 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
@@ -145,7 +147,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");

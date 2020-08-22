@@ -142,7 +142,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + ActuatorConstant
+              .NOT_EXIST_STR);
     }
 
     long frozenBalance = freezeBalanceContract.getFrozenBalance();
@@ -207,7 +208,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
         String readableOwnerAddress = StringUtil.createReadableString(receiverAddress);
         throw new ContractValidateException(
             ActuatorConstant.ACCOUNT_EXCEPTION_STR
-                + readableOwnerAddress + "] not exists");
+                + readableOwnerAddress + ActuatorConstant.NOT_EXIST_STR);
       }
 
       if (dynamicStore.getAllowTvmConstantinople() == 1

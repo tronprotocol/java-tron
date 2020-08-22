@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -90,7 +92,7 @@ public class ClearABIContractActuator extends AbstractActuator {
     if (accountCapsule == null) {
       throw new ContractValidateException(
           ActuatorConstant.ACCOUNT_EXCEPTION_STR
-              + readableOwnerAddress + "] not exists");
+              + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
