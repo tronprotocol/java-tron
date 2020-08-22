@@ -14,8 +14,8 @@ import org.tron.core.vm.repository.Repository;
 import java.util.Arrays;
 import java.util.Objects;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.vm.nativecontract.ContractProcessorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT_NULL;
 
 @Slf4j(topic = "Processor")
