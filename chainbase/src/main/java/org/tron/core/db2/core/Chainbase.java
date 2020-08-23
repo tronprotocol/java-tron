@@ -2,7 +2,9 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
@@ -21,6 +24,7 @@ import org.tron.core.db2.common.Value.Operator;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
 
+@Slf4j(topic = "DB")
 public class Chainbase implements IRevokingDB {
 
   // public static Map<String, byte[]> assetsAddress = new HashMap<>(); // key = name , value = address
@@ -231,10 +235,16 @@ public class Chainbase implements IRevokingDB {
     // snapshot and levelDB will have duplicated key, so need to check it before,
     // and remove the key which has been deleted
     snapshotList.forEach(ssKey -> {
+      logger.info(String.format("[Chainbase.getKeysNext] key is %s, op is %s",
+          Arrays.toString(ssKey.getBytes()), collectionList.get(ssKey).toString()));
+
       if (!keyList.contains(ssKey)) {
+        logger.info(String.format("[Chainbase.getKeysNext] add key: %s", Arrays.toString(ssKey.getBytes())));
         keyList.add(ssKey);
       }
+      // TODO: 会不会多删除了数据？
       if (collectionList.get(ssKey) == Operator.DELETE) {
+        logger.info(String.format("[Chainbase.getKeysNext] delete key: %s", Arrays.toString(ssKey.getBytes())));
         keyList.remove(ssKey);
       }
     });

@@ -304,12 +304,18 @@ public class MarketSellAssetActuator extends AbstractActuator {
       TransactionResultCapsule ret, AccountCapsule takerAccountCapsule)
       throws ItemNotFoundException, ContractValidateException {
 
+    String functionName = "matchOrder";
+    logger.info(String.format("[%s] takerCapsule is sell_id: %s, buy_id: %s",
+        functionName, new String(sellTokenID), new String(buyTokenID)));
+
     byte[] makerSellTokenID = buyTokenID;
     byte[] makerBuyTokenID = sellTokenID;
     byte[] makerPair = MarketUtils.createPairKey(makerSellTokenID, makerBuyTokenID);
 
     // makerPair not exists
     long makerPriceNumber = pairToPriceStore.getPriceNum(makerPair);
+    logger.info(String.format("[%s] makerPriceNumber is %d", functionName, makerPriceNumber));
+
     if (makerPriceNumber == 0) {
       return;
     }
