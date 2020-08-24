@@ -232,8 +232,13 @@ public class Chainbase implements IRevokingDB {
     // just get the same token pair
     List<WrappedByteArray> levelDBListFiltered = new ArrayList<>();
     levelDBListFiltered = levelDBList.stream()
-          .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
-          .collect(Collectors.toList());
+        .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
+        .collect(Collectors.toList());
+    if (levelDBListFiltered.size() != levelDBListFiltered.size()) {
+      logger.warn(
+          "levelDBListFiltered.size():" + levelDBListFiltered.size() +
+              ",levelDBListFiltered.size():" + levelDBListFiltered.size());
+    }
 
     List<WrappedByteArray> keyList = new ArrayList<>();
     keyList.addAll(levelDBListFiltered);
@@ -245,11 +250,13 @@ public class Chainbase implements IRevokingDB {
           Arrays.toString(ssKey.getBytes()), collectionList.get(ssKey).toString()));
 
       if (!keyList.contains(ssKey)) {
-        logger.info(String.format("[Chainbase.getKeysNext] add key: %s", Arrays.toString(ssKey.getBytes())));
+        logger.info(String
+            .format("[Chainbase.getKeysNext] add key: %s", Arrays.toString(ssKey.getBytes())));
         keyList.add(ssKey);
       }
       if (collectionList.get(ssKey) == Operator.DELETE) {
-        logger.info(String.format("[Chainbase.getKeysNext] delete key: %s", Arrays.toString(ssKey.getBytes())));
+        logger.info(String
+            .format("[Chainbase.getKeysNext] delete key: %s", Arrays.toString(ssKey.getBytes())));
         keyList.remove(ssKey);
       }
     });
