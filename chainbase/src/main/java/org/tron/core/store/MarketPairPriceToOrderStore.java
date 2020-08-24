@@ -1,10 +1,8 @@
 package org.tron.core.store;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.Options;
 import org.rocksdb.ComparatorOptions;
 import org.rocksdb.DirectComparator;
@@ -20,7 +18,6 @@ import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.ItemNotFoundException;
 
-@Slf4j(topic = "DB")
 @Component
 public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrderIdListCapsule> {
 
@@ -72,18 +69,11 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
   public List<byte[]> getPriceKeysList(byte[] headKey, long count, long totalCount, boolean skip) {
     List<byte[]> result = new ArrayList<>();
 
-    logger.info(String.format("[getPriceKeysList] headKey is %s, count: %d, totalCount: %d",
-        new String(headKey), count, totalCount));
-
     if (has(headKey)) {
       long limit = count > totalCount ? totalCount : count;
-      logger.info(String.format("[getPriceKeysList] limit: %d", limit));
       if (skip) {
         // need to get one more
-        result = getKeysNext(headKey, limit + 1);
-        logger.info(String.format("[getPriceKeysList] allResult num is %d, is %s,",
-            result.size(), Arrays.toString(result.toArray())));
-        result = result.subList(1, (int)(limit + 1));
+        result = getKeysNext(headKey, limit + 1).subList(1, (int)(limit + 1));
       } else {
         result = getKeysNext(headKey, limit);
       }
