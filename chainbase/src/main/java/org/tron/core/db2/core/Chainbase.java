@@ -248,7 +248,6 @@ public class Chainbase implements IRevokingDB {
         logger.info(String.format("[Chainbase.getKeysNext] add key: %s", Arrays.toString(ssKey.getBytes())));
         keyList.add(ssKey);
       }
-      // TODO: 会不会多删除了数据？
       if (collectionList.get(ssKey) == Operator.DELETE) {
         logger.info(String.format("[Chainbase.getKeysNext] delete key: %s", Arrays.toString(ssKey.getBytes())));
         keyList.remove(ssKey);
