@@ -76,7 +76,7 @@ public class HttpShieldTrc20Token005 extends ZenTrc20Base {
   }
 
   @Test(enabled = true, description = "Shield trc20 burn to one T and one S by http")
-  public void test04ShiledTrc20BurnToOnePublicAndOneShieldByHttp() {
+  public void test01ShiledTrc20BurnToOnePublicAndOneShieldByHttp() {
     response = getNewShieldedAddress(httpnode);
     shieldReceiverAccountInfo = HttpMethed.parseResponseContent(response);
 
@@ -129,7 +129,7 @@ public class HttpShieldTrc20Token005 extends ZenTrc20Base {
 
   @Test(enabled = true, description = "Shield trc20 burn without ask to one "
       + "public and one shield by http")
-  public void test05ShiledTrc20BurnWithoutAskToOnePublicAndOneShieldByHttp() {
+  public void test02ShiledTrc20BurnWithoutAskToOnePublicAndOneShieldByHttp() {
     noteTxs = scanShieldTrc20NoteByIvk(httpnode, shieldAccountInfo);
     JSONArray shieldSpends = new JSONArray();
     shieldSpends = createAndSetShieldedSpends(httpnode, shieldSpends, noteTxs.getJSONObject(1));
@@ -162,6 +162,7 @@ public class HttpShieldTrc20Token005 extends ZenTrc20Base {
             .getString("value"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
 
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getTransactionInfoById(httpnode, txid, true);

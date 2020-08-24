@@ -258,6 +258,15 @@ public class ByteUtil {
     return -1;
   }
 
+  public static int lastNonZeroByte(byte[] data) {
+    for (int i = data.length - 1; i >= 0; --i) {
+      if (data[i] != 0) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   public static byte[] stripLeadingZeroes(byte[] data) {
 
     if (data == null) {
@@ -275,6 +284,26 @@ public class ByteUtil {
       default:
         byte[] result = new byte[data.length - firstNonZero];
         System.arraycopy(data, firstNonZero, result, 0, data.length - firstNonZero);
+
+        return result;
+    }
+  }
+
+  public static byte[] stripEndingZeroes(byte[] data) {
+
+    if (data == null) {
+      return null;
+    }
+    if (data[data.length - 1] != 0) {
+      return data;
+    }
+    final int lastNonZeroByte = lastNonZeroByte(data);
+    switch (lastNonZeroByte) {
+      case -1:
+        return ZERO_BYTE_ARRAY;
+      default:
+        byte[] result = new byte[lastNonZeroByte + 1];
+        System.arraycopy(data, 0, result, 0, lastNonZeroByte + 1);
 
         return result;
     }

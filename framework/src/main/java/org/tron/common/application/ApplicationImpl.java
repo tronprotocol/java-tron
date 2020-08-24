@@ -9,6 +9,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
 
 @Slf4j(topic = "app")
@@ -56,6 +57,7 @@ public class ApplicationImpl implements Application {
   public void startup() {
     tronNetService.start();
     consensusService.start();
+    MetricsUtil.init();
   }
 
   @Override

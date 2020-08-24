@@ -434,6 +434,9 @@ service Wallet {
   rpc GetContract (BytesMessage) returns (SmartContract) {
   }
 
+  rpc GetContractInfo (BytesMessage) returns (SmartContractDataWrapper) {
+  }
+
   rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 

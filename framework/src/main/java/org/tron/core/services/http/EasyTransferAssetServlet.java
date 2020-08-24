@@ -27,6 +27,8 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContra
 @Slf4j
 public class EasyTransferAssetServlet extends RateLimiterServlet {
 
+  private static final String S_IOEXCEPTION = "IOException: {}";
+
   @Autowired
   private Wallet wallet;
 
@@ -70,18 +72,18 @@ public class EasyTransferAssetServlet extends RateLimiterServlet {
       try {
         response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible));
       } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
+        logger.debug(S_IOEXCEPTION, ioe.getMessage());
       }
       return;
     } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+      logger.debug(S_IOEXCEPTION, e.getMessage());
       returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
       responseBuild.setResult(returnBuilder.build());
       try {
         response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible));
       } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
+        logger.debug(S_IOEXCEPTION, ioe.getMessage());
       }
       return;
     } catch (ContractValidateException e) {
@@ -91,7 +93,7 @@ public class EasyTransferAssetServlet extends RateLimiterServlet {
       try {
         response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible));
       } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
+        logger.debug(S_IOEXCEPTION, ioe.getMessage());
       }
       return;
     }

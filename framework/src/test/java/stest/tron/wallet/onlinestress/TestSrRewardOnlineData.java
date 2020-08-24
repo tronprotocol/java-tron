@@ -29,7 +29,7 @@ public class TestSrRewardOnlineData {
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-  private String httpnode = "47.245.3.27:8090";
+  private String httpnode = "101.200.46.37:50191";
   private JSONObject responseContent;
   private HttpResponse response;
   Integer cycle = 0;

@@ -389,7 +389,27 @@ public class CommonParameter {
   public long pendingTransactionTimeout;
   @Getter
   @Setter
-  public boolean nodeMetricsEnable = true;
+  public boolean nodeMetricsEnable = false;
+
+  @Getter
+  @Setter
+  public boolean metricsStorageEnable = false;
+
+  @Getter
+  @Setter
+  public String influxDbIp;
+
+  @Getter
+  @Setter
+  public int influxDbPort;
+
+  @Getter
+  @Setter
+  public String influxDbDatabase;
+
+  @Getter
+  @Setter
+  public int metricsReportInterval = 10;
 
   @Getter
   @Setter
@@ -411,6 +431,18 @@ public class CommonParameter {
   @Getter/**/
   @Setter
   public long allowShieldedTRC20Transaction;
+
+  @Getter/**/
+  @Setter
+  public long allowTvmIstanbul;
+
+  @Getter
+  @Setter
+  public long allowTvmStake;
+
+  @Getter
+  @Setter
+  public long allowTvmAssetIssue;
 
   @Getter
   @Setter

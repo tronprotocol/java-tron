@@ -318,6 +318,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TVM_ISTANBUL: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_ISTANBUL]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_ISTANBUL] is only allowed to be 1");
+        }
+        break;
+      }
       case CROSS_CHAIN: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
           throw new ContractValidateException(BAD_PARAM_ID);
@@ -336,6 +347,28 @@ public class ProposalUtil {
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
               "This value[ALLOW_SHIELDED_TRC20_TRANSACTION] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+      case ALLOW_TVM_STAKE: {
+          if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_STAKE]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_STAKE] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+      case ALLOW_TVM_ASSET_ISSUE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_ASSET_ISSUE]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_ASSET_ISSUE] is only allowed to be 1 or 0");
         }
         break;
       }
@@ -440,10 +473,13 @@ public class ProposalUtil {
     // SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34), // 1 TRX, [0, 10000] TRX
     FORBID_TRANSFER_TO_CONTRACT(35), // 1, {0, 1}
     ALLOW_SHIELDED_TRC20_TRANSACTION(39), // 1, 39
+    ALLOW_PBFT(40),// 1,40
+    ALLOW_TVM_ISTANBUL(41),//1, {0,1}
+    ALLOW_TVM_ASSET_ISSUE(42), // 0, 1
+    ALLOW_TVM_STAKE(43), // 0, 1
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
-    ALLOW_PBFT(47),// 1,47
     CROSS_CHAIN(48),
     AUCTION_END_TIME(49); // timestamp
 

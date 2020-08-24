@@ -6,6 +6,8 @@ import lombok.Getter;
 
 public class PostParams {
 
+  public static final String S_VALUE = "value";
+
   @Getter
   private String params;
   @Getter

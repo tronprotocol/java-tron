@@ -54,6 +54,7 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     shieldedReceives.clear();
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives, publicFromAmount,
         shieldAccountInfo1.getString("payment_address"), getRcm(httpnode));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = createShieldContractParameters(httpnode, publicFromAmount, shieldAccountInfo1,
         shieldedReceives);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -64,7 +65,8 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     shieldedReceives.clear();
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives, publicFromAmount,
         shieldAccountInfo1.getString("payment_address"), getRcm(httpnode));
@@ -77,6 +79,7 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
         zenTrc20TokenOwnerAddressString, shieldAddress, mint, responseContent
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
+
     HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
   }
@@ -88,6 +91,7 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     shieldSpends.clear();
     shieldSpends = createAndSetShieldedSpends(httpnode, shieldSpends, account1IvkNoteTxs
         .getJSONObject(0));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     shieldedReceives.clear();
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives, publicFromAmount,
         shieldAccountInfo2.getString("payment_address"), getRcm(httpnode));
@@ -111,7 +115,7 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
         zenTrc20TokenOwnerAddressString, shieldAddress, transfer, responseContent
             .getString("value"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getTransactionInfoById(httpnode, txid, true);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -227,6 +231,7 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
         zenTrc20TokenOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getTransactionInfoById(httpnode, txid, true);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -292,7 +297,7 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
         zenTrc20TokenOwnerAddressString, shieldAddress, transfer, responseContent
             .getString("value"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getTransactionInfoById(httpnode, txid, true);
     responseContent = HttpMethed.parseResponseContent(response);

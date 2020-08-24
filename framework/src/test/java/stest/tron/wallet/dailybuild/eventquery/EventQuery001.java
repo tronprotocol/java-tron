@@ -75,17 +75,19 @@ public class EventQuery001 {
     req.setReceiveTimeOut(10000);
     String blockMessage = "";
 
-    while (true) {
+    Integer retryTimes = 20;
+    while (retryTimes-- > 0) {
       byte[] message = req.recv();
       if (message != null) {
         //System.out.println("receive : " + new String(message));
         blockMessage = new String(message);
-        if (!blockMessage.equals("blockTrigger")) {
+        if (!blockMessage.equals("blockTrigger") && !blockMessage.isEmpty()) {
           break;
         }
       }
     }
 
+    Assert.assertTrue(retryTimes > 0);
     logger.info("block message:" + blockMessage);
     JSONObject blockObject = JSONObject.parseObject(blockMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
@@ -117,17 +119,20 @@ public class EventQuery001 {
     req.setReceiveTimeOut(10000);
     String blockMessage = "";
 
-    while (true) {
+    Integer retryTimes = 20;
+
+    while (retryTimes-- > 0) {
       byte[] message = req.recv();
       if (message != null) {
         System.out.println("receive : " + new String(message));
         blockMessage = new String(message);
-        if (!blockMessage.equals("solidityTrigger")) {
+        if (!blockMessage.equals("solidityTrigger") && !blockMessage.isEmpty()) {
           break;
         }
       }
     }
 
+    Assert.assertTrue(retryTimes > 0);
     logger.info("block message:" + blockMessage);
     JSONObject blockObject = JSONObject.parseObject(blockMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
