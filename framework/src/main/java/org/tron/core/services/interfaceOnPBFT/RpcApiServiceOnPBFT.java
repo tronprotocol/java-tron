@@ -40,6 +40,11 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.MarketOrder;
+import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketOrderPair;
+import org.tron.protos.Protocol.MarketOrderPairList;
+import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -407,5 +412,49 @@ public class RpcApiServiceOnPBFT implements Service {
       );
     }
 
+    @Override
+    public void getMarketOrderByAccount(BytesMessage request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketOrderByAccount(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketOrderById(BytesMessage request,
+        StreamObserver<MarketOrder> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketOrderById(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketPriceByPair(MarketOrderPair request,
+        StreamObserver<MarketPriceList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketPriceByPair(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketOrderListByPair(MarketOrderPair request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketOrderListByPair(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketPairList(EmptyMessage request,
+        StreamObserver<MarketOrderPairList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketPairList(request, responseObserver)
+      );
+    }
   }
 }

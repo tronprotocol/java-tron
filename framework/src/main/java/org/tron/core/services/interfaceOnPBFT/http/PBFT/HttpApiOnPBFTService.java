@@ -27,6 +27,11 @@ import org.tron.core.services.interfaceOnPBFT.http.GetBrokerageOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceAccountIndexOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetExchangeByIdOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderByAccountOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderByIdOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderListByPairOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketPairListOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketPriceByPairOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetMerkleTreeVoucherInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNodeInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNowBlockOnPBFTServlet;
@@ -115,6 +120,17 @@ public class HttpApiOnPBFTService implements Service {
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
+  @Autowired
+  private GetMarketOrderByAccountOnPBFTServlet getMarketOrderByAccountOnPBFTServlet;
+  @Autowired
+  private GetMarketOrderByIdOnPBFTServlet getMarketOrderByIdOnPBFTServlet;
+  @Autowired
+  private GetMarketPriceByPairOnPBFTServlet getMarketPriceByPairOnPBFTServlet;
+  @Autowired
+  private GetMarketOrderListByPairOnPBFTServlet getMarketOrderListByPairOnPBFTServlet;
+  @Autowired
+  private GetMarketPairListOnPBFTServlet getMarketPairListOnPBFTServlet;
+
   @Override
   public void init() {
 
@@ -179,6 +195,18 @@ public class HttpApiOnPBFTService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
+
+      context.addServlet(new ServletHolder(getMarketOrderByAccountOnPBFTServlet),
+          "/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdOnPBFTServlet),
+          "/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairOnPBFTServlet),
+          "/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairOnPBFTServlet),
+          "/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListOnPBFTServlet),
+          "/getmarketpairlist");
+
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
