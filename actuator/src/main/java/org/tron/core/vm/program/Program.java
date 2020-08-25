@@ -1793,8 +1793,10 @@ public class Program {
     byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     withdrawRewardParam.setTargetAddress(ownerAddress);
     try{
-      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository, getTimestamp().longValue());
-      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository, getTimestamp().longValue());
+      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository,
+          getTimestamp().longValue() * 1000);
+      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository,
+          getTimestamp().longValue() * 1000);
       stackPush(new DataWord(allowance));
       repository.commit();
     }catch (ContractValidateException e){
