@@ -768,7 +768,7 @@ public class MarketPairPriceToOrderStoreTest {
   /**
    * From this test we know that, if we use getKeysNext to get the priceKey list of one token pair,
    * we should know the count of priceKey previously.
-   * */
+   */
   @Test
   public void testGetKeysNextNotExitsWithRandom() {
     int maxInt = 99999999;
