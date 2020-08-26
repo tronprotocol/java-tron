@@ -38,12 +38,15 @@ import org.tron.core.services.interfaceOnPBFT.http.GetNowBlockOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetPaginatedAssetIssueListOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetRewardOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetTransactionCountByBlockNumOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.IsShieldedTRC20ContractNoteSpentOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.IsSpendOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ListExchangesOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ListWitnessesOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ScanAndMarkNoteByIvkOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ScanNoteByIvkOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ScanNoteByOvkOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.ScanShieldedTRC20NotesByIvkOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.ScanShieldedTRC20NotesByOvkOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.TriggerConstantContractOnPBFTServlet;
 
 @Slf4j(topic = "API")
@@ -131,6 +134,14 @@ public class HttpApiOnPBFTService implements Service {
   @Autowired
   private GetMarketPairListOnPBFTServlet getMarketPairListOnPBFTServlet;
 
+  @Autowired
+  private ScanShieldedTRC20NotesByIvkOnPBFTServlet scanShieldedTRC20NotesByIvkOnPBFTServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByOvkOnPBFTServlet scanShieldedTRC20NotesByOvkOnPBFTServlet;
+  @Autowired
+  private IsShieldedTRC20ContractNoteSpentOnPBFTServlet
+      isShieldedTRC20ContractNoteSpentOnPBFTServlet;
+
   @Override
   public void init() {
 
@@ -206,6 +217,13 @@ public class HttpApiOnPBFTService implements Service {
           "/getmarketorderlistbypair");
       context.addServlet(new ServletHolder(getMarketPairListOnPBFTServlet),
           "/getmarketpairlist");
+
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkOnPBFTServlet),
+          "/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkOnPBFTServlet),
+          "/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentOnPBFTServlet),
+          "/isshieldedtrc20contractnotespent");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
