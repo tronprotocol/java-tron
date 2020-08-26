@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
@@ -387,7 +388,8 @@ public class ChainBaseManager {
   }
 
   public boolean chainIsSelected(ByteString chainId) {
-    if (!getCrossRevokingStore().getParaChainList().contains(chainId.toString())) {
+    if (CommonParameter.getInstance().isShouldRegister() && !getCrossRevokingStore()
+        .getParaChainList().contains(chainId.toString())) {
       logger.error("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
       return false;
     }

@@ -185,6 +185,7 @@ public class Args extends CommonParameter {
     PARAMETER.crossChainPort = 0;
     PARAMETER.crossChainConnect = Collections.emptyList();
     PARAMETER.crossChain = 0;
+    PARAMETER.shouldRegister = true;
   }
 
   /**
@@ -751,6 +752,9 @@ public class Args extends CommonParameter {
             .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
     PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
             .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
+
+    PARAMETER.shouldRegister = config.hasPath(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) ? config
+        .getBoolean(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) : true;
 
     // lite fullnode params
     PARAMETER.setLiteFullNode(checkIsLiteFullNode());

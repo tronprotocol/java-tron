@@ -276,5 +276,5 @@ public class Constant {
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
   public static final String NODE_CROSS_CHAIN_CONNECT = "node.crossChain.ip";
   public static final String NODE_CROSS_CHAIN_PORT = "node.crossChain.port";
-  public static final String INTER_CHAIN_NODE = "crossChain.inter.chain.node";
+  public static final String NODE_CROSS_CHAIN_SHOULD_REGISTER = "node.crossChain.shouldRegister";
 }
