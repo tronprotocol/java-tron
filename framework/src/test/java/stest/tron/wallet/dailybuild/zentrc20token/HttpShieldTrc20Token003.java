@@ -15,6 +15,9 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 @Slf4j
 public class HttpShieldTrc20Token003 extends ZenTrc20Base {
 
+  JSONArray shieldedReceives = new JSONArray();
+  String txid;
+  JSONArray shieldSpends = new JSONArray();
   private String httpnode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(0);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
@@ -33,9 +36,6 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
   private Long account1Receive2V2Amount = 13L;
   private Long account2Receive2V2Amount = publicFromAmount
       + account2Receive1V2Amount - account1Receive2V2Amount;
-  JSONArray shieldedReceives = new JSONArray();
-  String txid;
-  JSONArray shieldSpends = new JSONArray();
 
   /**
    * constructor.
