@@ -102,7 +102,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("11111111111111110000000000000000",
@@ -136,7 +136,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("01111111111111000000000000000000",
@@ -169,7 +169,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("01111111111110000000000000000000",
@@ -206,7 +206,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("11111111111111010000000000000000",
@@ -241,7 +241,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("11111111100000100000000000000000",
@@ -278,7 +278,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("10111111111111100000000000000000",
@@ -314,7 +314,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("11111011010101110000000000000000",
@@ -354,7 +354,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("00000000000000000000000000000000",

@@ -31,6 +31,11 @@ public class EventQuery004 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  byte[] contractAddress;
+  String txid;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] event001Address = ecKey1.getAddress();
+  String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -43,12 +48,6 @@ public class EventQuery004 {
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  byte[] contractAddress;
-  String txid;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] event001Address = ecKey1.getAddress();
-  String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
