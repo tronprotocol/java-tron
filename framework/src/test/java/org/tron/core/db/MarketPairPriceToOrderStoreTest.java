@@ -767,8 +767,9 @@ public class MarketPairPriceToOrderStoreTest {
 
   /**
    * From this test we know that, if we use getKeysNext to get the priceKey list of one token pair,
-   * we should know the count of priceKey previously.
-   * */
+   * we should know the count of priceKey previously. Update: getKeysNext will just return
+   * (sellToken, buyToken)'s price, so the result will be 0 now.
+   */
   @Test
   public void testGetKeysNextNotExitsWithRandom() {
     int maxInt = 99999999;
@@ -779,6 +780,7 @@ public class MarketPairPriceToOrderStoreTest {
     int sellToken = randomInt(100, 9999);
     int buyToken = randomInt(10000, 9999999);
 
+    // randomSellToken != sellToken, randomBuyToken != buyToken
     for (int i = 0; i < 1000; i++) {
       int randomSellToken =
           randomOp() ? sellToken + randomInt(1, maxInt) : sellToken - randomInt(1, sellToken - 1);
@@ -802,7 +804,7 @@ public class MarketPairPriceToOrderStoreTest {
     byte[] headKey = MarketUtils.getPairPriceHeadKey(sellTokenId, buyTokenId);
 
     List<byte[]> list = marketPairPriceToOrderStore.getKeysNext(headKey, 100);
-    Assert.assertNotEquals(0, list.size());
+    Assert.assertEquals(0, list.size());
   }
 
   @Test
