@@ -251,7 +251,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_SHIELDED_TRANSACTION: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
         }
