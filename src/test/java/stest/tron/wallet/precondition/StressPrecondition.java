@@ -206,6 +206,16 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(41L, 1L);
       }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getMarketSellFee") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(45L, 1234L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getMarketCancelFee") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(46L, 1873L);
+      }
 
     }
 
@@ -252,7 +262,7 @@ public class StressPrecondition {
         PublicMethed.waitProduceNextBlock(blockingStubFull);
       }
 
-      waitProposalApprove(44, blockingStubFull);
+      waitProposalApprove(40, blockingStubFull);
     }
   }
 
