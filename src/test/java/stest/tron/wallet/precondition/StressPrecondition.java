@@ -206,16 +206,6 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(41L, 1L);
       }
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getMarketSellFee") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(45L, 1234L);
-      }
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getMarketCancelFee") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(46L, 1873L);
-      }
 
     }
 
@@ -262,7 +252,7 @@ public class StressPrecondition {
         PublicMethed.waitProduceNextBlock(blockingStubFull);
       }
 
-      waitProposalApprove(40, blockingStubFull);
+      waitProposalApprove(37, blockingStubFull);
     }
   }
 
@@ -647,10 +637,10 @@ public class StressPrecondition {
       ChainParameters chainParameters = blockingStubFull
           .getChainParameters(EmptyMessage.newBuilder().build());
       Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
-/*      if (getChainParameters.get().getChainParameter(proposalIndex).getValue() == 1L) {
+      if (getChainParameters.get().getChainParameter(proposalIndex).getValue() == 1L) {
         logger.info("Proposal has been approval");
         return;
-      }*/
+      }
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
 
