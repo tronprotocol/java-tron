@@ -1,7 +1,7 @@
 package org.tron.core.vm.nativecontract;
 
 public class ContractProcessorConstant {
-
+  
   public static final String ACCOUNT_EXCEPTION_STR = "Account[";
 
   public static final String WITNESS_EXCEPTION_STR = "Witness[";

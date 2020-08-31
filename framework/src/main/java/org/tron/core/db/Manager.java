@@ -1406,6 +1406,10 @@ public class Manager {
   }
 
   public void updateFork(BlockCapsule block) {
+    int blockVersion = block.getInstance().getBlockHeader().getRawData().getVersion();
+    if (blockVersion > ChainConstant.BLOCK_VERSION) {
+      logger.warn("newer block version found: " + blockVersion + ", YOU MUST UPGRADE java-tron!");
+    }
     chainBaseManager
         .getForkController().update(block);
   }

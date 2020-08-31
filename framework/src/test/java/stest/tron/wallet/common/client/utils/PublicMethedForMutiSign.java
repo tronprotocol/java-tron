@@ -1073,7 +1073,7 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
     boolean result = broadcastTransaction(transaction, blockingStubFull);
-    if (result == false) {
+    if (!result) {
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()

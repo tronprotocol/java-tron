@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,9 +29,9 @@ public class GetNowSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
         throw new InvalidAddress("Invalid address!");
       }
       long rewardOfVoteEachBlock = wallet.checkStandbyWitness(address)
-          ? wallet.getRewardOfVoteEachBlock() / 1000000 : 0;
+          ? wallet.getRewardOfVoteEachBlock() / TRX_PRECISION : 0;
       long rewardOfBlockEachBlock = wallet.checkAddress(address)
-          ? wallet.getRewardOfBlockEachBlock() / 1000000 : 0;
+          ? wallet.getRewardOfBlockEachBlock() / TRX_PRECISION : 0;
       double srNumber = MAX_ACTIVE_WITNESS_NUM;
       double blockNumberEachDay = wallet.getBlockNumberEachDay();
       double totalVote;
@@ -59,9 +60,9 @@ public class GetNowSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       }
       double annualizedRateOfReturn = 0;
       long rewardOfVoteEachBlock = wallet.checkStandbyWitness(address)
-          ? wallet.getRewardOfVoteEachBlock() / 1000000 : 0;
+          ? wallet.getRewardOfVoteEachBlock() / TRX_PRECISION : 0;
       long rewardOfBlockEachBlock = wallet.checkAddress(address)
-          ? wallet.getRewardOfBlockEachBlock() / 1000000 : 0;
+          ? wallet.getRewardOfBlockEachBlock() / TRX_PRECISION : 0;
       double srNumber = MAX_ACTIVE_WITNESS_NUM;
       double blockNumberEachDay = wallet.getBlockNumberEachDay();
       double totalVote;

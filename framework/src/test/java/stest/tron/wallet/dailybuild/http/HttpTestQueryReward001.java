@@ -39,22 +39,22 @@ public class HttpTestQueryReward001 {
   private final byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey);
   private final String witnessAddressString = Base58.encode58Check(PublicMethed
       .getFinalAddress(witnessKey));
+  Integer cycle = 0;
   private JSONObject responseContent;
   private JSONObject accountReward;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list")
       .get(0);
-  Integer cycle = 0;
 
   /**
    * constructor.
    */
   @BeforeSuite(enabled = true)
   public void beforeSuite() {
-    HttpMethed.sendCoin(httpnode,foundationAddress,witnessAddress,50000000L,foundationKey);
+    HttpMethed.sendCoin(httpnode, foundationAddress, witnessAddress, 50000000L, foundationKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    HttpMethed.freezeBalance(httpnode,witnessAddress,30000000L,3,0,witnessKey);
+    HttpMethed.freezeBalance(httpnode, witnessAddress, 30000000L, 3, 0, witnessKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
     JsonArray voteKeys = new JsonArray();
     JsonObject voteElement = new JsonObject();
