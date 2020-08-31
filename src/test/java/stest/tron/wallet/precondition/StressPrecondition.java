@@ -74,6 +74,10 @@ public class StressPrecondition {
       .getString("address.assetIssueOwnerAddress");
   protected String assetIssueOwnerKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.assetIssueOwnerKey");
+  protected String dexAssetIssueOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("dexAccount.dexAssetIssueOwnerAddress");
+  protected String dexAssetIssueOwnerKey = Configuration.getByPath("stress.conf")
+      .getString("dexAccount.dexAssetIssueOwnerKey");
   protected String participateOwnerAddress = Configuration.getByPath("stress.conf")
       .getString("address.participateOwnerAddress");
   protected String participateOwnerPrivateKey = Configuration.getByPath("stress.conf")
@@ -265,6 +269,7 @@ public class StressPrecondition {
     sendCoinToStressAccount(participateOwnerPrivateKey);
     sendCoinToStressAccount(exchangeOwnerKey);
     sendCoinToStressAccount(mutiSignOwnerKey);
+    sendCoinToStressAccount(dexAssetIssueOwnerKey);
     logger.info(
         "commonOwnerAddress " + PublicMethed.queryAccount(commonOwnerPrivateKey, blockingStubFull)
             .getBalance());
@@ -379,6 +384,25 @@ public class StressPrecondition {
         .getAssetIssuedID();
     logger.info("AssetIssueId is " + ByteArray.toStr(assetIssueId.toByteArray()));
 
+
+    if (PublicMethed.queryAccount(dexAssetIssueOwnerKey, blockingStubFull).getAssetIssuedID()
+        .isEmpty()) {
+      Long start = System.currentTimeMillis() + 20000;
+      Long end = System.currentTimeMillis() + 1000000000;
+      PublicMethed.createAssetIssue(PublicMethed.getFinalAddress(dexAssetIssueOwnerKey), "xxxd",
+          50000000000000000L,
+          1, 1, start, end, 1, "wwwwww", "wwwwwwww", 100000L,
+          100000L, 1L, 1L, dexAssetIssueOwnerKey, blockingStubFull);
+      logger.info("createAssetIssue dex");
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
+
+    ByteString dexAssetIssueId = PublicMethed
+        .queryAccount(dexAssetIssueOwnerKey, blockingStubFull)
+        .getAssetIssuedID();
+    logger.info("dex AssetIssueId is " + ByteArray.toStr(dexAssetIssueId.toByteArray()));
+
     logger.info("commonContractAddress1 is " + Wallet.encode58Check(commonContractAddress1));
     PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
@@ -404,6 +428,10 @@ public class StressPrecondition {
           .getString("dexAccount.dexAccount" + i + "Key");
       PublicMethed.transferAsset(PublicMethed.getFinalAddress(dexKey), assetIssueId.toByteArray(), 30000000000L,
           PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+      PublicMethed.transferAsset(PublicMethed.getFinalAddress(dexKey),
+          dexAssetIssueId.toByteArray(), 30000000000L,
+          PublicMethed.getFinalAddress(dexAssetIssueOwnerKey), dexAssetIssueOwnerKey,
+          blockingStubFull);
       sendCoinToStressAccount(dexKey);
     }
 
@@ -415,6 +443,14 @@ public class StressPrecondition {
     String newTokenIdInConfig = "commontokenid = " + newTokenId;
     logger.info("newTokenIdInConfig " + newTokenIdInConfig);
     replacAddressInConfig("stress.conf", oldTokenIdString, newTokenIdInConfig);
+
+    newTokenId = ByteArray.toStr(dexAssetIssueId.toByteArray());
+    oldTokenIdString = readWantedText("stress.conf", "dextokenid");
+    logger.info("oldTokenIdString " + oldTokenIdString);
+    newTokenIdInConfig = "dextokenid = " + newTokenId;
+    logger.info("newTokenIdInConfig " + newTokenIdInConfig);
+    replacAddressInConfig("stress.conf", oldTokenIdString, newTokenIdInConfig);
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 

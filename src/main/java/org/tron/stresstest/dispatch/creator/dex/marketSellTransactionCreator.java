@@ -26,6 +26,7 @@ public class marketSellTransactionCreator extends AbstractTransferTransactionCre
   private long buyTokenQuantity = 10;
   private String privateKey = Configuration.getByPath("stress.conf").getString("privateKey.assetIssueOwnerKey");
   public static AtomicLong createMarketSellCount = new AtomicLong();
+  private String dexAssertName = Configuration.getByPath("stress.conf").getString("param.dextokenid");
 
   @Override
   protected Protocol.Transaction create() {
@@ -40,13 +41,13 @@ public class marketSellTransactionCreator extends AbstractTransferTransactionCre
         .getString("dexAccount.dexAccount" + createMarketSellCount.get()%10 + "Key");
 
 
-    if(createMarketSellCount.get() % 2 == 0L) {
+    if(createMarketSellCount.get() % 21 == 0L) {
       Contract.MarketSellAssetContract contract = Contract.MarketSellAssetContract.newBuilder()
           .setOwnerAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(ownerAddress)))
           .setSellTokenId(ByteString.copyFrom(assetName.getBytes()))
-          .setSellTokenQuantity(sellTokenQuantity)
-          .setBuyTokenId(ByteString.copyFrom("_".getBytes()))
-          .setBuyTokenQuantity(buyTokenQuantity)
+          .setSellTokenQuantity(sellTokenQuantity * 20)
+          .setBuyTokenId(ByteString.copyFrom(dexAssertName.getBytes()))
+          .setBuyTokenQuantity(buyTokenQuantity * 20)
           .build();
 
       Protocol.Transaction transaction = createTransaction(contract, ContractType.MarketSellAssetContract);
@@ -58,7 +59,7 @@ public class marketSellTransactionCreator extends AbstractTransferTransactionCre
           .setOwnerAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(ownerAddress)))
           .setBuyTokenId(ByteString.copyFrom(assetName.getBytes()))
           .setSellTokenQuantity(sellTokenQuantity)
-          .setSellTokenId(ByteString.copyFrom("_".getBytes()))
+          .setSellTokenId(ByteString.copyFrom(dexAssertName.getBytes()))
           .setBuyTokenQuantity(buyTokenQuantity)
           .build();
 
