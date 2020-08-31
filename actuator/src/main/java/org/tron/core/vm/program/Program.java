@@ -1792,14 +1792,14 @@ public class Program {
     WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
     byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     withdrawRewardParam.setTargetAddress(ownerAddress);
-    try{
+    try {
       withdrawRewardContractProcessor.validate(withdrawRewardParam, repository,
           getTimestamp().longValue() * 1000);
       long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository,
           getTimestamp().longValue() * 1000);
       stackPush(new DataWord(allowance));
       repository.commit();
-    }catch (ContractValidateException e){
+    } catch (ContractValidateException e) {
       logger.error("validateForWithdrawReward failure:{}", e.getMessage());
       stackPushZero();
     }
@@ -1812,14 +1812,17 @@ public class Program {
     TokenIssueParam tokenIssueParam = new TokenIssueParam();
     tokenIssueParam.setName(name.getNoEndZeroesData());
     tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
-    tokenIssueParam.setTotalSupply(totalSupply.sValue().longValueExact());
-    tokenIssueParam.setPrecision(precision.sValue().intValueExact());
     tokenIssueParam.setOwnerAddress(ownerAddress);
     try {
+      tokenIssueParam.setTotalSupply(totalSupply.sValue().longValueExact());
+      tokenIssueParam.setPrecision(precision.sValue().intValueExact());
       tokenIssueProcessor.validate(tokenIssueParam, repository);
       tokenIssueProcessor.execute(tokenIssueParam, repository);
       stackPush(new DataWord(repository.getTokenIdNum()));
       repository.commit();
+    } catch (ArithmeticException e) {
+      logger.error("totalSupply or precision out of long range");
+      stackPushZero();
     } catch (ContractValidateException e) {
       logger.error("validateForAssetIssue failure:{}", e.getMessage());
       stackPushZero();

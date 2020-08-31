@@ -30,9 +30,9 @@ public class Trc10Test extends VMContractTestBase {
        totalSupply, uint8 precision) public returns (uint) {
            return assetissue(name, abbr, totalSupply, precision);
        }
-       function UpdateAsset(trcToken tokenId, string memory desc, string
-       memory url) public {
-           updateasset(tokenId, bytes(desc), bytes(url));
+       function UpdateAsset(trcToken tokenId, string memory url, string
+       memory desc) public {
+           updateasset(tokenId, bytes(url), bytes(desc));
        }
    }*/
   @Test
@@ -242,9 +242,9 @@ public class Trc10Test extends VMContractTestBase {
            assetissue(name, abbr, totalSupply, precision);
            assetissue(name, abbr, totalSupply, precision);
        }
-       function UpdateAsset(trcToken tokenId, string memory desc, string memory url) public {
-           updateasset(tokenId, bytes(desc), bytes(url));
-           updateasset(tokenId, bytes(desc), bytes(url));
+       function UpdateAsset(trcToken tokenId, string memory url, string memory desc) public {
+           updateasset(tokenId, bytes(url), bytes(desc));
+           updateasset(tokenId, bytes(url), bytes(desc));
        }
    }*/
 
@@ -366,11 +366,11 @@ public class Trc10Test extends VMContractTestBase {
            assetissue(name, abbr, totalSupply, precision);
            newaddress.transfer(100000000);
        }
-       function UpdateAsset(trcToken tokenId, string memory desc, string memory url, address
+       function UpdateAsset(trcToken tokenId, string memory url, string memory desc, address
        addr) public {
            address payable newaddress = address(uint160(addr));
            newaddress.transfer(100000000);
-           updateasset(tokenId, bytes(desc), bytes(url));
+           updateasset(tokenId, bytes(url), bytes(desc));
            newaddress.transfer(100000000);
        }
    }*/
@@ -495,8 +495,8 @@ public class Trc10Test extends VMContractTestBase {
        public returns (uint) {
            return a.TokenIssueA(name, abbr, totalSupply, precision);
        }
-       function UpdateAsset(trcToken tokenId, string memory desc, string memory url) public {
-           a.UpdateAssetA(tokenId, desc, url);
+       function UpdateAsset(trcToken tokenId, string memory url, string memory desc) public {
+           a.UpdateAssetA(tokenId, url, desc);
        }
        function getContractAddress() public returns (address) {
            return address(a);
