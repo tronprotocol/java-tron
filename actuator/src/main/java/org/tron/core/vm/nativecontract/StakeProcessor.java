@@ -33,6 +33,8 @@ public class StakeProcessor {
       long frozenDuration = repository.getDynamicPropertiesStore().getMinFrozenTime();
       validateFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, repository);
       executeFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, stakeParam.getNow(), repository);
+    } else {
+      logger.info("no need to freeze for stake");
     }
     long voteCount = stakeParam.getStakeAmount() / ChainConstant.TRX_PRECISION;
     Protocol.Vote vote = Protocol.Vote.newBuilder()

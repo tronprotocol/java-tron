@@ -8,6 +8,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.utils.FileUtil;
+import org.tron.consensus.dpos.DposSlot;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -25,7 +26,6 @@ import org.tron.protos.Protocol;
 
 @Slf4j
 public class VMContractTestBase {
-
   protected String dbPath;
   protected Runtime runtime;
   protected Manager manager;
@@ -34,6 +34,7 @@ public class VMContractTestBase {
   protected ConsensusService consensusService;
   protected ChainBaseManager chainBaseManager;
   protected MaintenanceManager maintenanceManager;
+  protected DposSlot dposSlot;
 
   protected static String OWNER_ADDRESS;
   protected static String WITNESS_SR1_ADDRESS;
@@ -62,6 +63,7 @@ public class VMContractTestBase {
     rootRepository.commit();
 
     manager = context.getBean(Manager.class);
+    dposSlot = context.getBean(DposSlot.class);
     chainBaseManager = manager.getChainBaseManager();
     witnessStore = context.getBean(WitnessStore.class);
     consensusService = context.getBean(ConsensusService.class);
