@@ -107,6 +107,7 @@ import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.MarketContract;
 import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
@@ -6294,4 +6295,235 @@ public class PublicMethed {
 
     return response.getResult();
   }
+
+
+  /**
+   * constructor.
+   */
+  public static String marketSellAsset(byte[] owner, String priKey, byte[] sellTokenId,
+                                       long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
+                                       WalletGrpc.WalletBlockingStub blockingStubFull) {
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract.newBuilder();
+    builder
+            .setOwnerAddress(ByteString.copyFrom(owner))
+            .setSellTokenId(ByteString.copyFrom(sellTokenId))
+            .setSellTokenQuantity(sellTokenQuantity)
+            .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+            .setBuyTokenQuantity(buyTokenQuantity);
+
+    TransactionExtention transactionExtention = blockingStubFull.marketSellAsset(builder.build());
+    if (transactionExtention == null) {
+      return null;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return null;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return null;
+    }
+
+    if (transaction.getRawData().getContract(0).getType()
+            == ContractType.ShieldedTransferContract) {
+      return null;
+    }
+
+    transaction = signTransaction(ecKey, transaction);
+    broadcastTransaction(transaction, blockingStubFull);
+
+    String Txid = ByteArray.toHexString(Sha256Hash
+            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+                    transaction.getRawData().toByteArray()));
+
+    System.out.println("trigger txid = " + Txid);
+    return Txid;
+
+  }
+
+  /**
+   * constructor.
+   */
+  public static Return marketSellAssetGetResposne(byte[] owner, String priKey, byte[] sellTokenId,
+                                                  long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
+                                                  WalletGrpc.WalletBlockingStub blockingStubFull) {
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract.newBuilder();
+    builder
+            .setOwnerAddress(ByteString.copyFrom(owner))
+            .setSellTokenId(ByteString.copyFrom(sellTokenId))
+            .setSellTokenQuantity(sellTokenQuantity)
+            .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+            .setBuyTokenQuantity(buyTokenQuantity);
+
+    TransactionExtention transactionExtention = blockingStubFull.marketSellAsset(builder.build());
+
+    return transactionExtention.getResult();
+
+  }
+
+  /**
+   * constructor.
+   */
+  public static String marketCancelOrder(byte[] owner, String priKey, byte[] orderId,
+                                         WalletGrpc.WalletBlockingStub blockingStubFull){
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
+
+    TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());
+
+    if (transactionExtention == null) {
+      return null;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return ret.getMessage().toStringUtf8();
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return null;
+    }
+
+    if (transaction.getRawData().getContract(0).getType()
+            == ContractType.ShieldedTransferContract) {
+      return null;
+    }
+
+    transaction = signTransaction(ecKey, transaction);
+    broadcastTransaction(transaction, blockingStubFull);
+
+    String Txid = ByteArray.toHexString(Sha256Hash
+            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+                    transaction.getRawData().toByteArray()));
+
+    System.out.println("trigger txid = " + Txid);
+
+    return Txid;
+  }
+
+
+  /**
+   * constructor.
+   */
+
+  public static Return marketCancelOrderGetResposne(byte[] owner, String priKey, byte[] orderId,
+                                                    WalletGrpc.WalletBlockingStub blockingStubFull){
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
+
+    TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());
+
+    if (transactionExtention == null) {
+      return null;
+    }
+    return transactionExtention.getResult();
+  }
+
+  /**
+   * constructor.
+   */
+  public static Optional<Protocol.MarketOrderList> getMarketOrderByAccount(byte[] address,
+                                                                           WalletGrpc.WalletBlockingStub blockingStubFull) {
+    ByteString addressBS = ByteString.copyFrom(address);
+    BytesMessage request = BytesMessage.newBuilder().setValue(addressBS).build();
+
+    Protocol.MarketOrderList marketOrderList;
+    marketOrderList = blockingStubFull.getMarketOrderByAccount(request);
+    return Optional.ofNullable(marketOrderList);
+  }
+
+  /**
+   * constructor.
+   */
+  public static Optional<Protocol.MarketOrder> getMarketOrderById(byte[] order,
+                                                                  WalletGrpc.WalletBlockingStub blockingStubFull) {
+    ByteString orderBytes = ByteString.copyFrom(order);
+    BytesMessage request = BytesMessage.newBuilder().setValue(orderBytes).build();
+    Protocol.MarketOrder orderPair = blockingStubFull.getMarketOrderById(request);
+    return Optional.ofNullable(orderPair);
+  }
+
+  /**
+   * constructor.
+   */
+  public static Optional<Protocol.MarketPriceList> getMarketPriceByPair(byte[] sellTokenId,
+                                                                        byte[] buyTokenId, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Protocol.MarketOrderPair request =
+            Protocol.MarketOrderPair.newBuilder()
+                    .setSellTokenId(ByteString.copyFrom(sellTokenId))
+                    .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+                    .build();
+
+    Protocol.MarketPriceList marketPriceList = blockingStubFull.getMarketPriceByPair(request);
+    return Optional.ofNullable(marketPriceList);
+  }
+
+  /**
+   * constructor.
+   */
+  public static Optional<Protocol.MarketOrderList> getMarketOrderListByPair(byte[] sellTokenId,
+                                                                            byte[] buyTokenId, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Protocol.MarketOrderPair request =
+            Protocol.MarketOrderPair.newBuilder()
+                    .setSellTokenId(ByteString.copyFrom(sellTokenId))
+                    .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+                    .build();
+
+    Protocol.MarketOrderList marketOrderList = blockingStubFull.getMarketOrderListByPair(request);
+    return Optional.ofNullable(marketOrderList);
+  }
+
+  /**
+   * constructor.
+   */
+  public static Optional<Protocol.MarketOrderPairList> getMarketPairList(WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Protocol.MarketOrderPairList marketOrderList = blockingStubFull.getMarketPairList(EmptyMessage.newBuilder().build());
+    return Optional.ofNullable(marketOrderList);
+  }
+
 }
