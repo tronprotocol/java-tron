@@ -904,6 +904,48 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse triggerConstantContractFromSolidity(String httSoliditypNode, byte[] ownerAddress,
+                                                     String contractAddress, String functionSelector, String parameter) {
+    try {
+      final String requestUrl = "http://" + httSoliditypNode + "/walletsolidity/triggerconstantcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("contract_address", contractAddress);
+      userBaseObj2.addProperty("function_selector", functionSelector);
+      userBaseObj2.addProperty("parameter", parameter);
+      response = createConnect(requestUrl, userBaseObj2);
+      return response;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse triggerConstantContractFromPbft(String httpPbftNode, byte[] ownerAddress,
+                                                     String contractAddress, String functionSelector, String parameter) {
+    try {
+      final String requestUrl = "http://" + httpPbftNode + "/walletpbft/triggerconstantcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("contract_address", contractAddress);
+      userBaseObj2.addProperty("function_selector", functionSelector);
+      userBaseObj2.addProperty("parameter", parameter);
+      response = createConnect(requestUrl, userBaseObj2);
+      return response;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
   public static HttpResponse participateAssetIssue(String httpNode, byte[] toAddress,
       byte[] ownerAddress, String assetIssueById, Long amount, String fromKey) {
     try {
@@ -1597,6 +1639,24 @@ public class HttpMethed {
       String name) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getassetissuelistbyname";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", str2hex(name));
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getAssetIssueListByNameFromPbft(String httpPbftNode,
+                                                                 String name) {
+    try {
+      String requestUrl = "http://" + httpPbftNode + "/walletpbft/getassetissuelistbyname";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("value", str2hex(name));
       response = createConnect(requestUrl, userBaseObj2);
