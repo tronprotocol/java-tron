@@ -77,7 +77,7 @@ public class MarketSellAsset005 {
 
     Assert.assertTrue(PublicMethed.sendcoin(testAddress001,2024_000000L,foundationAddress001,
         foundationKey001,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(testAddress002,1000_000000L,foundationAddress001,
+    Assert.assertTrue(PublicMethed.sendcoin(testAddress002,2024_000000L,foundationAddress001,
         foundationKey001,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -99,7 +99,8 @@ public class MarketSellAsset005 {
   @Test(enabled = true,description = "Create an order to sell Trx and buy Trc10")
   void test01SellTrxBuyTrc10() {
     long balanceAfter = PublicMethed.queryAccount(testKey001, blockingStubFull).getBalance();
-
+    PublicMethed.transferAsset(testAddress002, assetAccountId001, 10000, testAddress001,
+        testKey001, blockingStubFull);
     Map<String, Long> beforeAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
             .getAssetV2Map();
 
@@ -159,14 +160,6 @@ public class MarketSellAsset005 {
     Assert.assertNotNull(txid);
 
 
-    Map<String, Long> afterAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
-            .getAssetV2Map();
-
-    logger.info("afterAsset001: " + afterAsset001);
-
-    String assetId001 = ByteArray.toStr(assetAccountId001);
-    Assert.assertEquals((beforeAsset001.get(assetId001) - sellTokenQuantity * 2),
-            afterAsset001.get(assetId001).longValue());
 
   }
 

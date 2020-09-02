@@ -6477,6 +6477,16 @@ public class PublicMethed {
     return Optional.ofNullable(marketOrderList);
   }
 
+  public static Optional<Protocol.MarketOrderList> getMarketOrderByAccountSolidity(byte[] address,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    ByteString addressBS = ByteString.copyFrom(address);
+    BytesMessage request = BytesMessage.newBuilder().setValue(addressBS).build();
+
+    Protocol.MarketOrderList marketOrderList;
+    marketOrderList = blockingStubSolidity.getMarketOrderByAccount(request);
+    return Optional.ofNullable(marketOrderList);
+  }
+
   /**
    * constructor.
    */
@@ -6485,6 +6495,14 @@ public class PublicMethed {
     ByteString orderBytes = ByteString.copyFrom(order);
     BytesMessage request = BytesMessage.newBuilder().setValue(orderBytes).build();
     Protocol.MarketOrder orderPair = blockingStubFull.getMarketOrderById(request);
+    return Optional.ofNullable(orderPair);
+  }
+
+  public static Optional<Protocol.MarketOrder> getMarketOrderByIdSolidity(byte[] order,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    ByteString orderBytes = ByteString.copyFrom(order);
+    BytesMessage request = BytesMessage.newBuilder().setValue(orderBytes).build();
+    Protocol.MarketOrder orderPair = blockingStubSolidity.getMarketOrderById(request);
     return Optional.ofNullable(orderPair);
   }
 
@@ -6518,11 +6536,28 @@ public class PublicMethed {
     return Optional.ofNullable(marketOrderList);
   }
 
+  public static Optional<Protocol.MarketOrderList> getMarketOrderListByPairSolidity(byte[] sellTokenId,
+      byte[] buyTokenId, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Protocol.MarketOrderPair request =
+        Protocol.MarketOrderPair.newBuilder()
+            .setSellTokenId(ByteString.copyFrom(sellTokenId))
+            .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+            .build();
+
+    Protocol.MarketOrderList marketOrderList = blockingStubSolidity.getMarketOrderListByPair(request);
+    return Optional.ofNullable(marketOrderList);
+  }
+
   /**
    * constructor.
    */
   public static Optional<Protocol.MarketOrderPairList> getMarketPairList(WalletGrpc.WalletBlockingStub blockingStubFull) {
     Protocol.MarketOrderPairList marketOrderList = blockingStubFull.getMarketPairList(EmptyMessage.newBuilder().build());
+    return Optional.ofNullable(marketOrderList);
+  }
+
+  public static Optional<Protocol.MarketOrderPairList> getMarketPairListSolidity(WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Protocol.MarketOrderPairList marketOrderList = blockingStubSolidity.getMarketPairList(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(marketOrderList);
   }
 
