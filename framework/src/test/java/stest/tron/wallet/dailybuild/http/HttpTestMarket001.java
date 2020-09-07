@@ -41,19 +41,26 @@ public class HttpTestMarket001 {
   private JSONObject responseContent;
   private JSONObject getMarketOrderByIdContent;
   private JSONObject getMarketOrderByIdContentFromSolidity;
+  private JSONObject getMarketOrderByIdContentFromPbft;
   private JSONObject getMarketOrderByAccountContent;
   private JSONObject getMarketOrderByAccountContentFromSolidity;
+  private JSONObject getMarketOrderByAccountContentFromPbft;
   private JSONObject getMarketPairListContent;
   private JSONObject getMarketPairListContentFromSolidity;
+  private JSONObject getMarketPairListContentFromPbft;
   private JSONObject getMarketOrderListByPairContent;
   private JSONObject getMarketOrderListByPairContentFromSolidity;
+  private JSONObject getMarketOrderListByPairContentFromPbft;
   private JSONObject getMarketPriceByPairContent;
   private JSONObject getMarketPriceByPairContentFromSolidity;
+  private JSONObject getMarketPriceByPairContentFromPbft;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(1);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
 
   /**
@@ -160,6 +167,28 @@ public class HttpTestMarket001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "GetMarketOrderById by http from pbft")
+  public void test03GetMarketOrderByIdFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromPbft(httpnode, httpPbftNode);
+    response = HttpMethed.getMarketOrderByIdFromPbft(httpPbftNode, orderId1, "true");
+    getMarketOrderByIdContentFromPbft = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getMarketOrderByIdContentFromPbft);
+    Assert.assertEquals(Base58.encode58Check(sellAddress),
+        getMarketOrderByIdContentFromPbft.getString("owner_address"));
+    Assert.assertEquals("_", getMarketOrderByIdContentFromPbft.getString("sell_token_id"));
+    Assert
+        .assertTrue(1000L == getMarketOrderByIdContentFromPbft.getLong("sell_token_quantity"));
+    Assert.assertEquals(assetIssueId,
+        getMarketOrderByIdContentFromPbft.getString("buy_token_id"));
+    Assert.assertTrue(20L == getMarketOrderByIdContentFromPbft.getLong("buy_token_quantity"));
+    Assert.assertTrue(
+        500L == getMarketOrderByIdContentFromPbft.getLong("sell_token_quantity_remain"));
+    Assert.assertEquals(getMarketOrderByIdContent, getMarketOrderByIdContentFromPbft);
+  }
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "GetMarketOrderByAccount by http")
   public void test04GetMarketOrderByAccount() {
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -195,6 +224,26 @@ public class HttpTestMarket001 {
     Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
     Assert.assertTrue(500L == orders.getLong("sell_token_quantity_remain"));
     Assert.assertEquals(getMarketOrderByAccountContent, getMarketOrderByAccountContentFromSolidity);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "GetMarketOrderByAccount by http from pbft")
+  public void test05GetMarketOrderByAccountFromPbft() {
+    response = HttpMethed.getMarketOrderByAccountFromPbft(httpPbftNode, sellAddress, "true");
+    getMarketOrderByAccountContentFromPbft = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getMarketOrderByAccountContentFromPbft);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    JSONObject orders = getMarketOrderByAccountContentFromPbft.getJSONArray("orders")
+        .getJSONObject(0);
+    Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
+    Assert.assertEquals("_", orders.getString("sell_token_id"));
+    Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
+    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
+    Assert.assertTrue(500L == orders.getLong("sell_token_quantity_remain"));
+    Assert.assertEquals(getMarketOrderByAccountContent, getMarketOrderByAccountContentFromPbft);
   }
 
   /**
@@ -236,6 +285,29 @@ public class HttpTestMarket001 {
             .getJSONObject(orderPairSize - 1)
             .getString("buy_token_id"));
     Assert.assertEquals(getMarketPairListContent, getMarketPairListContentFromSolidity);
+
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "GetMarketPairList by http from pbft")
+  public void test07GetMarketPairListFromPbft() {
+    response = HttpMethed.getMarketPairListFromPbft(httpPbftNode, "true");
+    getMarketPairListContentFromPbft = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getMarketPairListContentFromPbft);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    int orderPairSize = getMarketPairListContentFromPbft.getJSONArray("orderPair").size();
+    Assert.assertTrue(orderPairSize > 0);
+    Assert.assertEquals("_",
+        getMarketPairListContentFromPbft.getJSONArray("orderPair")
+            .getJSONObject(orderPairSize - 1)
+            .getString("sell_token_id"));
+    Assert.assertEquals(assetIssueId,
+        getMarketPairListContentFromPbft.getJSONArray("orderPair")
+            .getJSONObject(orderPairSize - 1)
+            .getString("buy_token_id"));
+    Assert.assertEquals(getMarketPairListContent, getMarketPairListContentFromPbft);
 
   }
 
@@ -292,6 +364,33 @@ public class HttpTestMarket001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "GetMarketOrderListByPair by http from pbft")
+  public void test09GetMarketOrderListByPairFromPbft() {
+    response = HttpMethed.getMarketOrderListByPairFromPbft(httpPbftNode, "_", assetIssueId, "true");
+    getMarketOrderListByPairContentFromPbft = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getMarketOrderListByPairContentFromPbft);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    JSONObject orders = getMarketOrderListByPairContentFromPbft.getJSONArray("orders")
+        .getJSONObject(
+            getMarketOrderListByPairContentFromPbft.getJSONArray("orders").size() - 1);
+    Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
+    Assert.assertEquals("_", orders.getString("sell_token_id"));
+    Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
+    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
+    Assert.assertEquals(getMarketOrderListByPairContentFromPbft.getLong("sell_token_quantity"),
+        getMarketOrderListByPairContentFromPbft.getLong("sell_token_quantity_remain"));
+
+    Assert
+        .assertTrue(getMarketOrderListByPairContentFromPbft.getJSONArray("orders").size() > 0);
+    Assert
+        .assertEquals(getMarketOrderListByPairContent, getMarketOrderListByPairContentFromPbft);
+
+  }
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "GetMarketPriceByPair from by http")
   public void test10GetMarketPriceByPair() {
     response = HttpMethed.getMarketPriceByPair(httpnode, "_", assetIssueId, "true");
@@ -326,6 +425,28 @@ public class HttpTestMarket001 {
     Assert.assertEquals("1", prices.getString("buy_token_quantity"));
     Assert.assertTrue(getMarketPriceByPairContentFromSolidity.getJSONArray("prices").size() > 0);
     Assert.assertEquals(getMarketPriceByPairContent, getMarketPriceByPairContentFromSolidity);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "GetMarketPriceByPair from by http from pbft")
+  public void test11GetMarketPriceByPairFromPbft() {
+    response = HttpMethed
+        .getMarketPriceByPairFromPbft(httpPbftNode, "_", assetIssueId, "true");
+    getMarketPriceByPairContentFromPbft = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getMarketPriceByPairContentFromPbft);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    Assert.assertEquals("_", getMarketPriceByPairContentFromPbft.getString("sell_token_id"));
+    Assert
+        .assertEquals(assetIssueId,
+            getMarketPriceByPairContentFromPbft.getString("buy_token_id"));
+    JSONObject prices = getMarketPriceByPairContentFromPbft.getJSONArray("prices")
+        .getJSONObject(0);
+    Assert.assertEquals("50", prices.getString("sell_token_quantity"));
+    Assert.assertEquals("1", prices.getString("buy_token_quantity"));
+    Assert.assertTrue(getMarketPriceByPairContentFromPbft.getJSONArray("prices").size() > 0);
+    Assert.assertEquals(getMarketPriceByPairContent, getMarketPriceByPairContentFromPbft);
   }
 
   /**

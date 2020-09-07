@@ -4883,6 +4883,22 @@ public class HttpMethed {
     return response;
   }
 
+  public static HttpResponse getMarketOrderByIdFromPbft(String httpPbftNode, String orderId,
+      String visible) {
+    try {
+      String requestUrl = "http://" + httpPbftNode + "/walletpbft/getmarketorderbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", orderId);
+      userBaseObj2.addProperty("visible", visible);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
   public static String marketCancelOrder(String httpNode, byte[] ownerAddress, String orderId,
       String fromKey, String visible) {
     try {
@@ -4931,10 +4947,29 @@ public class HttpMethed {
   }
 
   public static HttpResponse getMarketOrderByAccountFromSolidity(String httpSolidityNode,
-      byte[] ownerAddress,
-      String visible) {
+      byte[] ownerAddress, String visible) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getmarketorderbyaccount";
+      JsonObject userBaseObj2 = new JsonObject();
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("value", Base58.encode58Check(ownerAddress));
+      } else {
+        userBaseObj2.addProperty("value", ByteArray.toHexString(ownerAddress));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  public static HttpResponse getMarketOrderByAccountFromPbft(String httpPbftNode,
+      byte[] ownerAddress, String visible) {
+    try {
+      String requestUrl = "http://" + httpPbftNode + "/walletpbft/getmarketorderbyaccount";
       JsonObject userBaseObj2 = new JsonObject();
       if (visible.equals("true")) {
         userBaseObj2.addProperty("value", Base58.encode58Check(ownerAddress));
@@ -4969,6 +5004,20 @@ public class HttpMethed {
       String visible) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getmarketpairlist";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("visible", visible);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  public static HttpResponse getMarketPairListFromPbft(String httpPbftNode, String visible) {
+    try {
+      String requestUrl = "http://" + httpPbftNode + "/walletpbft/getmarketpairlist";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("visible", visible);
       response = createConnect(requestUrl, userBaseObj2);
@@ -5025,6 +5074,28 @@ public class HttpMethed {
     return response;
   }
 
+  public static HttpResponse getMarketOrderListByPairFromPbft(String httpPbftNode,
+      String sellTokenId, String buyTokenId, String visible) {
+    try {
+      String requestUrl = "http://" + httpPbftNode + "/walletpbft/getmarketorderlistbypair";
+      JsonObject userBaseObj2 = new JsonObject();
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("sell_token_id", sellTokenId);
+        userBaseObj2.addProperty("buy_token_id", buyTokenId);
+      } else {
+        userBaseObj2.addProperty("sell_token_id", str2hex(sellTokenId));
+        userBaseObj2.addProperty("buy_token_id", str2hex(buyTokenId));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
   public static HttpResponse getMarketPriceByPair(String httpNode, String sellTokenId,
       String buyTokenId, String visible) {
     try {
@@ -5052,6 +5123,28 @@ public class HttpMethed {
       String buyTokenId, String visible) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getmarketpricebypair";
+      JsonObject userBaseObj2 = new JsonObject();
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("sell_token_id", sellTokenId);
+        userBaseObj2.addProperty("buy_token_id", buyTokenId);
+      } else {
+        userBaseObj2.addProperty("sell_token_id", str2hex(sellTokenId));
+        userBaseObj2.addProperty("buy_token_id", str2hex(buyTokenId));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  public static HttpResponse getMarketPriceByPairFromPbft(String httpPbftNode,
+      String sellTokenId, String buyTokenId, String visible) {
+    try {
+      String requestUrl = "http://" + httpPbftNode + "/walletpbft/getmarketpricebypair";
       JsonObject userBaseObj2 = new JsonObject();
       if (visible.equals("true")) {
         userBaseObj2.addProperty("sell_token_id", sellTokenId);
