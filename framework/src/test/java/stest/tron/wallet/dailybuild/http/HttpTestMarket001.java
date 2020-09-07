@@ -168,7 +168,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketOrderById by http from pbft")
-  public void test03GetMarketOrderByIdFromPbft() {
+  public void test04GetMarketOrderByIdFromPbft() {
     HttpMethed.waitToProduceOneBlockFromPbft(httpnode, httpPbftNode);
     response = HttpMethed.getMarketOrderByIdFromPbft(httpPbftNode, orderId1, "true");
     getMarketOrderByIdContentFromPbft = HttpMethed.parseResponseContent(response);
@@ -190,7 +190,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketOrderByAccount by http")
-  public void test04GetMarketOrderByAccount() {
+  public void test05GetMarketOrderByAccount() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getMarketOrderByAccount(httpnode, sellAddress, "true");
     getMarketOrderByAccountContent = HttpMethed.parseResponseContent(response);
@@ -209,7 +209,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketOrderByAccount by http from solidity")
-  public void test05GetMarketOrderByAccountFromSolidity() {
+  public void test06GetMarketOrderByAccountFromSolidity() {
     response = HttpMethed
         .getMarketOrderByAccountFromSolidity(httpSolidityNode, sellAddress, "true");
     getMarketOrderByAccountContentFromSolidity = HttpMethed.parseResponseContent(response);
@@ -230,7 +230,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketOrderByAccount by http from pbft")
-  public void test05GetMarketOrderByAccountFromPbft() {
+  public void test07GetMarketOrderByAccountFromPbft() {
     response = HttpMethed.getMarketOrderByAccountFromPbft(httpPbftNode, sellAddress, "true");
     getMarketOrderByAccountContentFromPbft = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderByAccountContentFromPbft);
@@ -250,7 +250,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketPairList by http")
-  public void test06GetMarketPairList() {
+  public void test08GetMarketPairList() {
     response = HttpMethed.getMarketPairList(httpnode, "true");
     getMarketPairListContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketPairListContent);
@@ -269,7 +269,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketPairList by http from solidity")
-  public void test07GetMarketPairListFromSolidity() {
+  public void test09GetMarketPairListFromSolidity() {
     response = HttpMethed.getMarketPairListFromSolidity(httpSolidityNode, "true");
     getMarketPairListContentFromSolidity = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketPairListContentFromSolidity);
@@ -292,7 +292,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketPairList by http from pbft")
-  public void test07GetMarketPairListFromPbft() {
+  public void test10GetMarketPairListFromPbft() {
     response = HttpMethed.getMarketPairListFromPbft(httpPbftNode, "true");
     getMarketPairListContentFromPbft = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketPairListContentFromPbft);
@@ -315,7 +315,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketOrderListByPair by http")
-  public void test08GetMarketOrderListByPair() {
+  public void test11GetMarketOrderListByPair() {
     response = HttpMethed.getMarketOrderListByPair(httpnode, "_", assetIssueId, "true");
     getMarketOrderListByPairContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderListByPairContent);
@@ -337,7 +337,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketOrderListByPair by http from solidity")
-  public void test09GetMarketOrderListByPairFromSolidity() {
+  public void test12GetMarketOrderListByPairFromSolidity() {
     response = HttpMethed
         .getMarketOrderListByPairFromSolidity(httpSolidityNode, "_", assetIssueId, "true");
     getMarketOrderListByPairContentFromSolidity = HttpMethed.parseResponseContent(response);
@@ -365,7 +365,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketOrderListByPair by http from pbft")
-  public void test09GetMarketOrderListByPairFromPbft() {
+  public void test13GetMarketOrderListByPairFromPbft() {
     response = HttpMethed.getMarketOrderListByPairFromPbft(httpPbftNode, "_", assetIssueId, "true");
     getMarketOrderListByPairContentFromPbft = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderListByPairContentFromPbft);
@@ -392,7 +392,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketPriceByPair from by http")
-  public void test10GetMarketPriceByPair() {
+  public void test14GetMarketPriceByPair() {
     response = HttpMethed.getMarketPriceByPair(httpnode, "_", assetIssueId, "true");
     getMarketPriceByPairContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketPriceByPairContent);
@@ -409,7 +409,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketPriceByPair from by http from solidity")
-  public void test11GetMarketPriceByPairFromSolidity() {
+  public void test15GetMarketPriceByPairFromSolidity() {
     response = HttpMethed
         .getMarketPriceByPairFromSolidity(httpSolidityNode, "_", assetIssueId, "true");
     getMarketPriceByPairContentFromSolidity = HttpMethed.parseResponseContent(response);
@@ -431,7 +431,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetMarketPriceByPair from by http from pbft")
-  public void test11GetMarketPriceByPairFromPbft() {
+  public void test16GetMarketPriceByPairFromPbft() {
     response = HttpMethed
         .getMarketPriceByPairFromPbft(httpPbftNode, "_", assetIssueId, "true");
     getMarketPriceByPairContentFromPbft = HttpMethed.parseResponseContent(response);
@@ -453,7 +453,7 @@ public class HttpTestMarket001 {
    * constructor.
    */
   @Test(enabled = true, description = "MarketCancelOrder trx with trc10 by http")
-  public void test12MarketCancelOrder() {
+  public void test17MarketCancelOrder() {
     response = HttpMethed.getMarketOrderByAccount(httpnode, sellAddress, "true");
     getMarketOrderByAccountContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderByAccountContent);
