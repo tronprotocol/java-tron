@@ -8,6 +8,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
@@ -94,8 +96,16 @@ public class PbftMessageHandle {
     if (!checkIsCanSendMsg(message)) {
       return;
     }
-    PbftBaseMessage paMessage = message.buildPrePareMessage();
-    forwardMessage(paMessage);
+    for (Miner miner : Param.getInstance().getMiners()) {
+      PbftMessage paMessage = message.buildPrePareMessage(miner);
+      forwardMessage(paMessage);
+      try {
+        paMessage.analyzeSignature();
+      } catch (SignatureException e) {
+        logger.error("", e);
+      }
+      onPrepare(paMessage);
+    }
     if (message.getDataType() == DataType.SRL) {
       srPbftMessage = message;
     }
@@ -130,9 +140,17 @@ public class PbftMessageHandle {
       if (agCou >= Param.getInstance().getAgreeNodeCount()) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
-        PbftMessage cmMessage = message.buildCommitMessage();
-        doneMsg.put(message.getNo(), cmMessage);
-        forwardMessage(cmMessage);
+        for (Miner miner : Param.getInstance().getMiners()) {
+          PbftMessage cmMessage = message.buildCommitMessage(miner);
+          doneMsg.put(message.getNo(), cmMessage);
+          forwardMessage(cmMessage);
+          try {
+            cmMessage.analyzeSignature();
+          } catch (SignatureException e) {
+            logger.error("", e);
+          }
+          onCommit(cmMessage);
+        }
       }
     }
     //Subsequent votes will definitely not be satisfied, timeout will be automatically cleared.
