@@ -5132,6 +5132,11 @@ public class PublicMethed {
       logger.info("argsstr is #");
       argsStr = "";
     }
+    if (tokenId.equalsIgnoreCase("") || tokenId.equalsIgnoreCase("#")) {
+      logger.info("tokenid is 0");
+      tokenId = "0";
+
+    }
 
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
