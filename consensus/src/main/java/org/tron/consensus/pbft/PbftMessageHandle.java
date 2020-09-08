@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.ChainBaseManager;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Slf4j(topic = "pbft")
@@ -69,10 +71,18 @@ public class PbftMessageHandle {
   private PbftMessageAction pbftMessageAction;
   @Setter
   private MaintenanceManager maintenanceManager;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   @PostConstruct
   public void init() {
     start();
+  }
+
+  public List<Miner> getSrMinerList() {
+    return Param.getInstance().getMiners().stream()
+        .filter(miner -> chainBaseManager.getWitnesses().contains(miner.getWitnessAddress()))
+        .collect(Collectors.toList());
   }
 
   public void onPrePrepare(PbftMessage message) {
@@ -96,7 +106,7 @@ public class PbftMessageHandle {
     if (!checkIsCanSendMsg(message)) {
       return;
     }
-    for (Miner miner : Param.getInstance().getMiners()) {
+    for (Miner miner : getSrMinerList()) {
       PbftMessage paMessage = message.buildPrePareMessage(miner);
       forwardMessage(paMessage);
       try {
@@ -140,7 +150,7 @@ public class PbftMessageHandle {
       if (agCou >= Param.getInstance().getAgreeNodeCount()) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
-        for (Miner miner : Param.getInstance().getMiners()) {
+        for (Miner miner : getSrMinerList()) {
           PbftMessage cmMessage = message.buildCommitMessage(miner);
           doneMsg.put(message.getNo(), cmMessage);
           forwardMessage(cmMessage);

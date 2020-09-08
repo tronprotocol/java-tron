@@ -12,17 +12,17 @@ public class Parameter {
     VERSION_3_6_5(9, 0L, 0),
     VERSION_3_6_6(10, 0L, 0),
     VERSION_4_0(16, 0L, 0),
-    VERSION_4_0_1(17, 1596780000000L, 0.8),//GMT 2020-08-07 06:00:00,0.8 means 22 SR upgrade
-    VERSION_4_1(19, 1596780000000L, 0.8);//GMT 2020-08-07 06:00:00,0.8 means 22 SR upgrade
+    VERSION_4_0_1(17, 1596780000000L, 80),//GMT 2020-08-07 06:00:00,80 means 22 SR upgrade
+    VERSION_4_1(19, 1596780000000L, 80);//GMT 2020-08-07 06:00:00,80 means 22 SR upgrade
 
     @Getter
     private int value;
     @Getter
     private long hardForkTime;
     @Getter
-    private double hardForkRate;
+    private int hardForkRate;
 
-    ForkBlockVersionEnum(int value, long hardForkTime, double hardForkRate) {
+    ForkBlockVersionEnum(int value, long hardForkTime, int hardForkRate) {
       this.value = value;
       this.hardForkTime = hardForkTime;
       this.hardForkRate = hardForkRate;

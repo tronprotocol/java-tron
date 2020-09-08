@@ -83,7 +83,8 @@ public class ForkController {
         ++count;
       }
     }
-    return count >= versionEnum.getHardForkRate() * manager.getWitnesses().size() + 1;
+    return count >= Math
+        .ceil((double) versionEnum.getHardForkRate() * manager.getWitnesses().size() / 100);
   }
 
 

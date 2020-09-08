@@ -44,7 +44,7 @@ public class PbftManager {
     }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        for (Miner miner : Param.getInstance().getMiners()) {
+        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
           doAction(PbftMessage.prePrepareBlockMsg(block, epoch, miner));
         }
       } else {
