@@ -225,8 +225,14 @@ public class Chainbase implements IRevokingDB {
           .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
     }
 
+    // just get the same token pair
+    List<WrappedByteArray> levelDBListFiltered;
+    levelDBListFiltered = levelDBList.stream()
+        .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
+        .collect(Collectors.toList());
+
     List<WrappedByteArray> keyList = new ArrayList<>();
-    keyList.addAll(levelDBList);
+    keyList.addAll(levelDBListFiltered);
 
     // snapshot and levelDB will have duplicated key, so need to check it before,
     // and remove the key which has been deleted

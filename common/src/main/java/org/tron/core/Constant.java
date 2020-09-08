@@ -181,6 +181,9 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
       + ".allowShieldedTRC20Transaction";
 
+  public static final String COMMITTEE_ALLOW_TVM_ISTANBUL = "committee"
+      + ".allowTvmIstanbul";
+
   public static final String COMMITTEE_ALLOW_MARKET_TRANSACTION =
       "committee.allowMarketTransaction";
 
@@ -256,4 +259,14 @@ public class Constant {
   public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
   public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
   public static final String NODE_AGREE_NODE_COUNT = "node.agreeNodeCount";
+
+  public static final String COMMITTEE_ALLOW_TVM_STAKE = "committee.allowTvmStake";
+
+  public static final String COMMITTEE_ALLOW_TVM_ASSETISSUE = "committee.allowTvmAssetIssue";
+
+  public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
+  public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
+  public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
+  public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
+  public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
 }

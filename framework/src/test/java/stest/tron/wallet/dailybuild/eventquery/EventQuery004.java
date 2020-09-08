@@ -31,6 +31,11 @@ public class EventQuery004 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  byte[] contractAddress;
+  String txid;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] event001Address = ecKey1.getAddress();
+  String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -43,12 +48,6 @@ public class EventQuery004 {
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  byte[] contractAddress;
-  String txid;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] event001Address = ecKey1.getAddress();
-  String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -128,12 +127,12 @@ public class EventQuery004 {
 
       if (message != null) {
         transactionMessage = new String(message);
-        if (!transactionMessage.equals("contractLogTrigger")) {
+        if (!transactionMessage.equals("contractLogTrigger") && !transactionMessage.isEmpty()) {
           break;
         }
       }
     }
-
+    Assert.assertTrue(retryTimes > 0);
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
@@ -181,12 +180,12 @@ public class EventQuery004 {
 
         transactionMessage = new String(message);
         logger.info("transaction message:" + transactionMessage);
-        if (!transactionMessage.equals("solidityLogTrigger")) {
+        if (!transactionMessage.equals("solidityLogTrigger") && !transactionMessage.isEmpty()) {
           break;
         }
       }
     }
-
+    Assert.assertTrue(retryTimes > 0);
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));

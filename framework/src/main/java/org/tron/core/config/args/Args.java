@@ -171,11 +171,15 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
-    PARAMETER.nodeMetricsEnable = true;
+    PARAMETER.nodeMetricsEnable = false;
+    PARAMETER.metricsStorageEnable = false;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
+    PARAMETER.allowTvmIstanbul = 0;
+    PARAMETER.allowTvmStake = 0;
+    PARAMETER.allowTvmAssetIssue = 0;
   }
 
   /**
@@ -640,6 +644,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
 
+    PARAMETER.allowTvmIstanbul =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) : 0;
+
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
             ? getEventPluginConfig(config) : null;
@@ -700,9 +708,16 @@ public class Args extends CommonParameter {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
+    PARAMETER.allowTvmStake =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_STAKE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_STAKE) : 0;
+
+    PARAMETER.allowTvmAssetIssue =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
-        .getInstance().getStorage().getDbEngine().toUpperCase())) {
+            .getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
@@ -715,6 +730,17 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_METRICS_ENABLE)) {
       PARAMETER.nodeMetricsEnable = config.getBoolean(Constant.NODE_METRICS_ENABLE);
     }
+
+    PARAMETER.metricsStorageEnable = config.hasPath(Constant.METRICS_STORAGE_ENABLE) && config
+            .getBoolean(Constant.METRICS_STORAGE_ENABLE);
+    PARAMETER.influxDbIp = config.hasPath(Constant.METRICS_INFLUXDB_IP) ? config
+            .getString(Constant.METRICS_INFLUXDB_IP) : "127.0.0.1";
+    PARAMETER.influxDbPort = config.hasPath(Constant.METRICS_INFLUXDB_PORT) ? config
+            .getInt(Constant.METRICS_INFLUXDB_PORT) : 8086;
+    PARAMETER.influxDbDatabase = config.hasPath(Constant.METRICS_INFLUXDB_DATABASE) ? config
+            .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
+    PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
+            .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
 
     // lite fullnode params
     PARAMETER.setLiteFullNode(checkIsLiteFullNode());

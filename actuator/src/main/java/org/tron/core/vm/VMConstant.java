@@ -3,7 +3,7 @@ package org.tron.core.vm;
 public class VMConstant {
 
   public static final int CONTRACT_NAME_LENGTH = 32;
-  public static final int MIN_TOKEN_ID = 1000_000;
+  public static final int MIN_TOKEN_ID = 1_000_000;
   // Numbers
   public static final int ONE_HUNDRED = 100;
   public static final int ONE_THOUSAND = 1000;
