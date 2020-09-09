@@ -190,7 +190,7 @@ public class Args extends CommonParameter {
     if (PARAMETER.version) {
       JCommander.getConsole()
           .println(Version.getVersion()
-              + "\n" + Version.versionName + "\n" + Version.versionCode);
+              + "\n" + Version.VERSION_NAME + "\n" + Version.VERSION_CODE);
       exit(0);
     }
 
@@ -1072,7 +1072,7 @@ public class Args extends CommonParameter {
     logger.info("Backup member size: {}", parameter.getBackupMembers().size());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
-    logger.info("Version code: {}", Version.versionCode);
+    logger.info("Version code: {}", Version.VERSION_CODE);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", parameter.getStorage().getDbVersion());
     logger.info("DB engine : {}", parameter.getStorage().getDbEngine());
