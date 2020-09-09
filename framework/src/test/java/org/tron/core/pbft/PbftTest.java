@@ -28,7 +28,7 @@ public class PbftTest {
     srList.add(
         ByteString.copyFrom(ByteArray.fromHexString("41df309fef25b311e7895562bd9e11aab2a58816d2")));
     PbftMessage pbftSrMessage = PbftMessage
-        .prePrepareSRLMsg(blockCapsule, srList, 1);
+        .prePrepareSRLMsg(blockCapsule, srList, 1, miner);
     System.out.println(pbftSrMessage);
   }
 
