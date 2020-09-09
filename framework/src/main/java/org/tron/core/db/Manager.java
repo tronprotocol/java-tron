@@ -151,6 +151,8 @@ public class Manager {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
+  private static final int SLEEP_TIME_OUT = 50L;
+  private static final int TX_ID_CACHE_SIZE = 100_000;
   private final int shieldedTransInPendingMaxCounts =
       Args.getInstance().getShieldedTransInPendingMaxCounts();
   @Getter
@@ -187,7 +189,7 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
-      .newBuilder().maximumSize(100_000).recordStats().build();
+      .newBuilder().maximumSize(TX_ID_CACHE_SIZE).recordStats().build();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
@@ -224,7 +226,7 @@ public class Manager {
             if (tx != null) {
               this.rePush(tx);
             } else {
-              TimeUnit.MILLISECONDS.sleep(50L);
+              TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
             }
           } catch (Throwable ex) {
             logger.error("unknown exception happened in rePush loop", ex);
@@ -787,7 +789,7 @@ public class Manager {
       while (!getDynamicPropertiesStore()
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
-        reorgContractTrigger();
+        reOrgContractTrigger();
         eraseBlock();
       }
     }
@@ -1362,7 +1364,7 @@ public class Manager {
     }
   }
 
-  private void postSolitityLogContractTrigger(Long blockNum, Long lastSolidityNum) {
+  private void postSolidityLogContractTrigger(Long blockNum, Long lastSolidityNum) {
     if (blockNum > lastSolidityNum) {
       return;
     }
@@ -1377,7 +1379,7 @@ public class Manager {
     Args.getSolidityContractLogTriggerMap().remove(blockNum);
   }
 
-  private void postSolitityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
+  private void postSolidityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
     if (blockNum > lastSolidityNum) {
       return;
     }
@@ -1568,12 +1570,12 @@ public class Manager {
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
-        postSolitityLogContractTrigger(i, latestSolidifiedBlockNumber);
+        postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
       for (Long i : Args.getSolidityContractEventTriggerMap().keySet()) {
-        postSolitityEventContractTrigger(i, latestSolidifiedBlockNumber);
+        postSolidityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
   }
@@ -1605,11 +1607,11 @@ public class Manager {
     }
   }
 
-  private void reorgContractTrigger() {
+  private void reOrgContractTrigger() {
     if (eventPluginLoaded
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
-      logger.info("switchfork occurred, post reorgContractTrigger");
+      logger.info("switchfork occurred, post reOrgContractTrigger");
       try {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
