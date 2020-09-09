@@ -151,7 +151,7 @@ public class Manager {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
-  private static final int SLEEP_TIME_OUT = 50L;
+  private static final int SLEEP_TIME_OUT = 50;
   private static final int TX_ID_CACHE_SIZE = 100_000;
   private final int shieldedTransInPendingMaxCounts =
       Args.getInstance().getShieldedTransInPendingMaxCounts();
