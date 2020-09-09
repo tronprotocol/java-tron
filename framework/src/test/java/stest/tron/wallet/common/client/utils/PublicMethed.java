@@ -3962,7 +3962,7 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<DelegatedResourceAccountIndex>
-      getDelegatedResourceAccountIndexFromSolidity(
+  getDelegatedResourceAccountIndexFromSolidity(
       byte[] address, WalletSolidityGrpc
       .WalletSolidityBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -6320,8 +6320,8 @@ public class PublicMethed {
    * constructor.
    */
   public static String marketSellAsset(byte[] owner, String priKey, byte[] sellTokenId,
-                                       long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
-                                       WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
 
     ECKey temKey = null;
     try {
@@ -6332,13 +6332,14 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
 
-    MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract.newBuilder();
+    MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract
+        .newBuilder();
     builder
-            .setOwnerAddress(ByteString.copyFrom(owner))
-            .setSellTokenId(ByteString.copyFrom(sellTokenId))
-            .setSellTokenQuantity(sellTokenQuantity)
-            .setBuyTokenId(ByteString.copyFrom(buyTokenId))
-            .setBuyTokenQuantity(buyTokenQuantity);
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setSellTokenQuantity(sellTokenQuantity)
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+        .setBuyTokenQuantity(buyTokenQuantity);
 
     TransactionExtention transactionExtention = blockingStubFull.marketSellAsset(builder.build());
     if (transactionExtention == null) {
@@ -6357,7 +6358,7 @@ public class PublicMethed {
     }
 
     if (transaction.getRawData().getContract(0).getType()
-            == ContractType.ShieldedTransferContract) {
+        == ContractType.ShieldedTransferContract) {
       return null;
     }
 
@@ -6365,8 +6366,8 @@ public class PublicMethed {
     broadcastTransaction(transaction, blockingStubFull);
 
     String Txid = ByteArray.toHexString(Sha256Hash
-            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-                    transaction.getRawData().toByteArray()));
+        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transaction.getRawData().toByteArray()));
 
     System.out.println("trigger txid = " + Txid);
     return Txid;
@@ -6377,8 +6378,8 @@ public class PublicMethed {
    * constructor.
    */
   public static Return marketSellAssetGetResposne(byte[] owner, String priKey, byte[] sellTokenId,
-                                                  long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
-                                                  WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
 
     ECKey temKey = null;
     try {
@@ -6389,13 +6390,14 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
 
-    MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract.newBuilder();
+    MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract
+        .newBuilder();
     builder
-            .setOwnerAddress(ByteString.copyFrom(owner))
-            .setSellTokenId(ByteString.copyFrom(sellTokenId))
-            .setSellTokenQuantity(sellTokenQuantity)
-            .setBuyTokenId(ByteString.copyFrom(buyTokenId))
-            .setBuyTokenQuantity(buyTokenQuantity);
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setSellTokenQuantity(sellTokenQuantity)
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+        .setBuyTokenQuantity(buyTokenQuantity);
 
     TransactionExtention transactionExtention = blockingStubFull.marketSellAsset(builder.build());
 
@@ -6407,7 +6409,7 @@ public class PublicMethed {
    * constructor.
    */
   public static String marketCancelOrder(byte[] owner, String priKey, byte[] orderId,
-                                         WalletGrpc.WalletBlockingStub blockingStubFull){
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
 
     ECKey temKey = null;
     try {
@@ -6418,7 +6420,8 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
 
-    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract.newBuilder();
+    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
 
     TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());
@@ -6439,7 +6442,7 @@ public class PublicMethed {
     }
 
     if (transaction.getRawData().getContract(0).getType()
-            == ContractType.ShieldedTransferContract) {
+        == ContractType.ShieldedTransferContract) {
       return null;
     }
 
@@ -6447,8 +6450,8 @@ public class PublicMethed {
     broadcastTransaction(transaction, blockingStubFull);
 
     String Txid = ByteArray.toHexString(Sha256Hash
-            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-                    transaction.getRawData().toByteArray()));
+        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transaction.getRawData().toByteArray()));
 
     System.out.println("trigger txid = " + Txid);
 
@@ -6461,7 +6464,7 @@ public class PublicMethed {
    */
 
   public static Return marketCancelOrderGetResposne(byte[] owner, String priKey, byte[] orderId,
-                                                    WalletGrpc.WalletBlockingStub blockingStubFull){
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
 
     ECKey temKey = null;
     try {
@@ -6472,7 +6475,8 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
 
-    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract.newBuilder();
+    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
 
     TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());
@@ -6487,7 +6491,7 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<Protocol.MarketOrderList> getMarketOrderByAccount(byte[] address,
-                                                                           WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBS = ByteString.copyFrom(address);
     BytesMessage request = BytesMessage.newBuilder().setValue(addressBS).build();
 
@@ -6510,7 +6514,7 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<Protocol.MarketOrder> getMarketOrderById(byte[] order,
-                                                                  WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString orderBytes = ByteString.copyFrom(order);
     BytesMessage request = BytesMessage.newBuilder().setValue(orderBytes).build();
     Protocol.MarketOrder orderPair = blockingStubFull.getMarketOrderById(request);
@@ -6529,12 +6533,12 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<Protocol.MarketPriceList> getMarketPriceByPair(byte[] sellTokenId,
-                                                                        byte[] buyTokenId, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      byte[] buyTokenId, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Protocol.MarketOrderPair request =
-            Protocol.MarketOrderPair.newBuilder()
-                    .setSellTokenId(ByteString.copyFrom(sellTokenId))
-                    .setBuyTokenId(ByteString.copyFrom(buyTokenId))
-                    .build();
+        Protocol.MarketOrderPair.newBuilder()
+            .setSellTokenId(ByteString.copyFrom(sellTokenId))
+            .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+            .build();
 
     Protocol.MarketPriceList marketPriceList = blockingStubFull.getMarketPriceByPair(request);
     return Optional.ofNullable(marketPriceList);
@@ -6544,18 +6548,19 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<Protocol.MarketOrderList> getMarketOrderListByPair(byte[] sellTokenId,
-                                                                            byte[] buyTokenId, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      byte[] buyTokenId, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Protocol.MarketOrderPair request =
-            Protocol.MarketOrderPair.newBuilder()
-                    .setSellTokenId(ByteString.copyFrom(sellTokenId))
-                    .setBuyTokenId(ByteString.copyFrom(buyTokenId))
-                    .build();
+        Protocol.MarketOrderPair.newBuilder()
+            .setSellTokenId(ByteString.copyFrom(sellTokenId))
+            .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+            .build();
 
     Protocol.MarketOrderList marketOrderList = blockingStubFull.getMarketOrderListByPair(request);
     return Optional.ofNullable(marketOrderList);
   }
 
-  public static Optional<Protocol.MarketOrderList> getMarketOrderListByPairSolidity(byte[] sellTokenId,
+  public static Optional<Protocol.MarketOrderList> getMarketOrderListByPairSolidity(
+      byte[] sellTokenId,
       byte[] buyTokenId, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
     Protocol.MarketOrderPair request =
         Protocol.MarketOrderPair.newBuilder()
@@ -6563,21 +6568,36 @@ public class PublicMethed {
             .setBuyTokenId(ByteString.copyFrom(buyTokenId))
             .build();
 
-    Protocol.MarketOrderList marketOrderList = blockingStubSolidity.getMarketOrderListByPair(request);
+    Protocol.MarketOrderList marketOrderList = blockingStubSolidity
+        .getMarketOrderListByPair(request);
     return Optional.ofNullable(marketOrderList);
   }
 
   /**
    * constructor.
    */
-  public static Optional<Protocol.MarketOrderPairList> getMarketPairList(WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Protocol.MarketOrderPairList marketOrderList = blockingStubFull.getMarketPairList(EmptyMessage.newBuilder().build());
+  public static Optional<Protocol.MarketOrderPairList> getMarketPairList(
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Protocol.MarketOrderPairList marketOrderList = blockingStubFull
+        .getMarketPairList(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(marketOrderList);
   }
 
-  public static Optional<Protocol.MarketOrderPairList> getMarketPairListSolidity(WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
-    Protocol.MarketOrderPairList marketOrderList = blockingStubSolidity.getMarketPairList(EmptyMessage.newBuilder().build());
+  public static Optional<Protocol.MarketOrderPairList> getMarketPairListSolidity(
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Protocol.MarketOrderPairList marketOrderList = blockingStubSolidity
+        .getMarketPairList(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(marketOrderList);
+  }
+
+  public static String stringToHexString(String s) {
+    String str = "";
+    for (int i = 0; i < s.length(); i++) {
+      int ch = s.charAt(i);
+      String s4 = Integer.toHexString(ch);
+      str = str + s4;
+    }
+    return str;
   }
 
 }
