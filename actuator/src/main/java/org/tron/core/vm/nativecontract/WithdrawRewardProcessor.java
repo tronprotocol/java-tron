@@ -83,7 +83,9 @@ public class WithdrawRewardProcessor {
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
     long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * FROZEN_PERIOD;
 
-    if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
+    boolean needCheckFrozenTime = CommonParameter.getInstance()
+            .getCheckFrozenTime() == 1;//for test
+    if (needCheckFrozenTime && (now - latestWithdrawTime < witnessAllowanceFrozenTime)) {
       throw new ContractValidateException("The last withdraw time is "
           + latestWithdrawTime + ", less than 24 hours");
     }
