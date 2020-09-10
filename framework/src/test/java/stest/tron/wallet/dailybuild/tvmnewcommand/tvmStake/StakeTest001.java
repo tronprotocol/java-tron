@@ -61,7 +61,7 @@ public class StakeTest001 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     PublicMethed
-        .sendcoin(testAddress001, 1000_000_000L, testFoundationAddress, testFoundationKey,
+        .sendcoin(testAddress001, 1000_000_00000L, testFoundationAddress, testFoundationKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/testStakeSuicide.sol";
@@ -70,13 +70,13 @@ public class StakeTest001 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, testKey001,
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000_0000L, 100, null, testKey001,
             testAddress001, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "")
+  @Test(enabled = true, description = "Vote for witness")
   void tvmStakeTest001() {
     String methodStr = "Stake(address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1000000 ;
@@ -92,7 +92,7 @@ public class StakeTest001 {
 
   }
 
-  @Test(enabled = true, description = "no witness ")
+  @Test(enabled = true, description = "Non-witness account")
   void tvmStakeTest002(){
     //account address
     String methodStr = "Stake(address,uint256)";
@@ -122,7 +122,7 @@ public class StakeTest001 {
   }
 
 
-  @Test(enabled = true, description = ">balance")
+  @Test(enabled = true, description = "Number of votes over balance")
   void tvmStakeTest003() {
     String methodStr = "Stake(address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + Long.MAX_VALUE ;
@@ -138,13 +138,45 @@ public class StakeTest001 {
 
   }
 
-  @Test(enabled = true, description = "other address frozenBalance")
+
+  @Test(enabled = true, description = "Enough votes for a second ballot")
   void tvmStakeTest004() {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String methodStr = "Stake(address,uint256)";
-    String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1000000 ;
+    String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 21000000 ;
+    String txid  = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
+
+    Assert.assertEquals(contractResult,1);
+
+    argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1111001 ;
+    txid  = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
+
+    Assert.assertEquals(contractResult,1);
+
+  }
+
+
+  @Test(enabled = true, description = "Revert test")
+  void tvmStakeTest005() {
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String methodStr = "revertTest1(address,uint256,address)";
+    String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1000000 + ",\"" + Base58.encode58Check(testAddress001) + "\"";
     String txid  = PublicMethed
         .triggerContract(contractAddress, methodStr, argsStr,
             false, 0, maxFeeLimit,
@@ -158,5 +190,33 @@ public class StakeTest001 {
   }
 
 
+  @Test(enabled = true, description = "Contract Call Contract stake")
+  void tvmStakeTest006() {
+    String methodStr = "deployB()";
+    String argsStr = "";
+    String txid  = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    methodStr = "BStake(address,uint256)";
+    argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1000000 ;
+    txid  = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
+
+    Assert.assertEquals(contractResult,1);
+
+  }
+
+
+
+
 
 }
+
