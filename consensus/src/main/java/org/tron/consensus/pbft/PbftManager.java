@@ -59,7 +59,7 @@ public class PbftManager {
     }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        for (Miner miner : Param.getInstance().getMiners()) {
+        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
           doAction(PbftMessage.prePrepareSRLMsg(block, currentWitness, epoch, miner));
         }
       } else {
