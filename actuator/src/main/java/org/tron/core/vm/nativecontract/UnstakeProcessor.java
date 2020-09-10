@@ -2,6 +2,7 @@ package org.tron.core.vm.nativecontract;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.actuator.ActuatorConstant;
@@ -75,7 +76,9 @@ public class UnstakeProcessor {
       throw new ContractValidateException("no frozenBalance(BANDWIDTH)");
     }
 
-    if (accountCapsule.getFrozenList().get(0).getExpireTime() > now) {
+    boolean needCheckFrozeTime = CommonParameter.getInstance()
+            .getCheckFrozenTime() == 1;//for test
+    if (needCheckFrozeTime && accountCapsule.getFrozenList().get(0).getExpireTime() > now) {
       throw new ContractValidateException("It's not time to unfreeze(BANDWIDTH).");
     }
   }
