@@ -149,7 +149,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   * */
   @Ignore
   @Test
-  public void createShieldedContractParametersForTransfer1v1()
+  public void createShieldedContractParametersForTransfer1to1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -186,6 +186,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -247,6 +248,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
@@ -278,7 +280,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    * */
   @Ignore
   @Test
-  public void createShieldedContractParametersForTransfer1v2()
+  public void createShieldedContractParametersForTransfer1to2()
       throws ZksnarkException, ContractValidateException, ContractExeException {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -317,6 +319,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -390,6 +393,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
@@ -426,7 +430,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    * */
   @Ignore
   @Test
-  public void createShieldedContractParametersForTransfer2v1()
+  public void createShieldedContractParametersForTransfer2to1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -469,6 +473,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -501,6 +506,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -580,6 +586,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
@@ -612,7 +619,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    * */
   @Ignore
   @Test
-  public void createShieldedContractParametersForTransfer2v2()
+  public void createShieldedContractParametersForTransfer2to2()
       throws ZksnarkException, ContractValidateException, ContractExeException {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -655,6 +662,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -687,6 +695,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -778,6 +787,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
@@ -814,7 +824,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
  */
   @Ignore
   @Test
-  public void createShieldedContractParametersForBurn1v1()
+  public void createShieldedContractParametersForBurn1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -854,6 +864,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -909,7 +920,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersForBurn1v2()
+  public void createShieldedContractParametersForBurn1to1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -949,6 +960,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -1012,6 +1024,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = result[63];
         if (slot == 0) {
@@ -1030,7 +1043,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithouAskForTransfer1v1()
+  public void createShieldedContractParametersWithoutAskForTransfer1to1()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -1069,6 +1082,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
 
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -1168,6 +1182,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
@@ -1201,7 +1216,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithouAskForTransfer1v2()
+  public void createShieldedContractParametersWithoutAskForTransfer1to2()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -1240,6 +1255,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -1352,6 +1368,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
@@ -1388,7 +1405,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithouAskForTransfer2v1()
+  public void createShieldedContractParametersWithoutAskForTransfer2to1()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -1431,6 +1448,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -1463,6 +1481,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -1597,6 +1616,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 63;
         int slot = result[idx];
         if (slot == 0) {
@@ -1629,7 +1649,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithouAskForTransfer2v2()
+  public void createShieldedContractParametersWithoutAskForTransfer2to2()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -1672,6 +1692,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -1704,6 +1725,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -1851,6 +1873,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         int idx = 32;
         for (int i = 0; i < 2; i++) {
           idx += 31;
@@ -1887,7 +1910,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForBurn1v1()
+  public void createShieldedContractParametersWithoutAskForBurn1()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -1927,6 +1950,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -2021,7 +2045,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForBurn1v2()
+  public void createShieldedContractParametersWithoutAskForBurn1to1()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -2061,6 +2085,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, mintResult1[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = mintResult1[63];
         if (slot == 0) {
@@ -2163,6 +2188,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
         
         int slot = result[63];
         if (slot == 0) {
