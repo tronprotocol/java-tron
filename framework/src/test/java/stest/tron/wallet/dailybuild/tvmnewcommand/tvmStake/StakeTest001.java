@@ -15,6 +15,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -87,8 +88,14 @@ public class StakeTest001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
-
     Assert.assertEquals(contractResult,1);
+
+    Account request = Account.newBuilder().setAddress(ByteString.copyFrom(contractAddress)).build();
+    byte[] voteAddress = (blockingStubFull.getAccount(request).getVotesList().get(0).getVoteAddress().toByteArray());
+    Assert.assertEquals(testWitnessAddress,voteAddress);
+    Assert.assertEquals(1,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
+
+
 
   }
 
@@ -153,10 +160,14 @@ public class StakeTest001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
-
     Assert.assertEquals(contractResult,1);
+    Account request = Account.newBuilder().setAddress(ByteString.copyFrom(contractAddress)).build();
+    byte[] voteAddress = (blockingStubFull.getAccount(request).getVotesList().get(0).getVoteAddress().toByteArray());
+    Assert.assertEquals(testWitnessAddress,voteAddress);
+    System.out.println(blockingStubFull.getAccount(request).getVotesCount());
+    Assert.assertEquals(21,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
 
-    argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1111001 ;
+    argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 11000000 ;
     txid  = PublicMethed
         .triggerContract(contractAddress, methodStr, argsStr,
             false, 0, maxFeeLimit,
@@ -164,8 +175,11 @@ public class StakeTest001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
-
     Assert.assertEquals(contractResult,1);
+    request = Account.newBuilder().setAddress(ByteString.copyFrom(contractAddress)).build();
+    voteAddress = (blockingStubFull.getAccount(request).getVotesList().get(0).getVoteAddress().toByteArray());
+    Assert.assertEquals(testWitnessAddress,voteAddress);
+    Assert.assertEquals(11,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
 
   }
 
@@ -185,7 +199,7 @@ public class StakeTest001 {
     Optional<TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
 
-    Assert.assertEquals(contractResult,1);
+    Assert.assertEquals(contractResult,0);
 
   }
 
