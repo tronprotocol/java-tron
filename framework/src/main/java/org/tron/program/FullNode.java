@@ -23,7 +23,7 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 @Slf4j(topic = "app")
 public class FullNode {
   
-  public static int dbVersion = 2;
+  public static final int dbVersion = 2;
 
   public static void load(String path) {
     try {
