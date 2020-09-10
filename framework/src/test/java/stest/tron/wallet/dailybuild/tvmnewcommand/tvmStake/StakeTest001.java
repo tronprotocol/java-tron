@@ -30,7 +30,11 @@ public class StakeTest001 {
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
   private String testWitnessKey = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
+  private String testWitnessKey2 = Configuration.getByPath("testng.conf")
+      .getString("witness.key3");
   private byte[] testWitnessAddress = PublicMethed.getFinalAddress(testWitnessKey);
+  private byte[] testWitnessAddress2 = PublicMethed.getFinalAddress(testWitnessKey2);
+
 
 
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
@@ -227,6 +231,44 @@ public class StakeTest001 {
     Assert.assertEquals(contractResult,1);
 
   }
+
+  @Test(enabled = true, description = "Vote for the first witness and then vote for the second witness.")
+  void tvmStakeTest007() {
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String methodStr = "Stake(address,uint256)";
+    String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 21000000 ;
+    String txid  = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
+    Assert.assertEquals(contractResult,1);
+    Account request = Account.newBuilder().setAddress(ByteString.copyFrom(contractAddress)).build();
+    byte[] voteAddress = (blockingStubFull.getAccount(request).getVotesList().get(0).getVoteAddress().toByteArray());
+    Assert.assertEquals(testWitnessAddress,voteAddress);
+    System.out.println(blockingStubFull.getAccount(request).getVotesCount());
+    Assert.assertEquals(21,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
+
+    argsStr = "\"" + Base58.encode58Check(testWitnessAddress2) + "\","  + 11000000 ;
+    txid  = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
+    Assert.assertEquals(contractResult,1);
+    request = Account.newBuilder().setAddress(ByteString.copyFrom(contractAddress)).build();
+    voteAddress = (blockingStubFull.getAccount(request).getVotesList().get(0).getVoteAddress().toByteArray());
+    Assert.assertEquals(testWitnessAddress2,voteAddress);
+    Assert.assertEquals(11,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
+
+  }
+
 
 
 
