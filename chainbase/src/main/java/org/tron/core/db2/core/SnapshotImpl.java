@@ -7,19 +7,15 @@ import com.google.common.collect.Streams;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.Value.Operator;
 import org.tron.core.db2.common.WrappedByteArray;
 
-@Slf4j(topic = "db")
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   @Getter
@@ -112,19 +108,11 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
 
   synchronized void collect(Map<WrappedByteArray, WrappedByteArray> all) {
     Snapshot next = getRoot().getNext();
-    int n = 0;
     while (next != null) {
-      SnapshotImpl snapshotImpl = (SnapshotImpl) next;
-      DB<Key, Value> db = snapshotImpl.db;
-      if (db == null) {
-        logger.error("achecknull n:{}, type:{}, db:{}", n, next.getClass().getSimpleName(), db);
-      }
-
-      Streams.stream(db)
+      Streams.stream(((SnapshotImpl) next).db)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())));
       next = next.getNext();
-      n++;
     }
   }
 
