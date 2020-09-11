@@ -114,11 +114,12 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     int n = 0;
     while (next != null) {
       SnapshotImpl snapshotImpl = (SnapshotImpl) next;
-      if (snapshotImpl.db == null) {
-        logger.error("n:{}, type:{}", n, next.getClass().getSimpleName());
+      DB<Key, Value> db = snapshotImpl.db;
+      if (db == null) {
+        logger.error("achecknull n:{}, type:{}, db:{}", n, next.getClass().getSimpleName(), db);
       }
 
-      Streams.stream(((SnapshotImpl) next).db)
+      Streams.stream(db)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())));
       next = next.getNext();
