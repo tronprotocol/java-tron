@@ -7,7 +7,6 @@ import com.google.common.collect.Streams;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
@@ -23,12 +22,13 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   protected Snapshot root;
 
   SnapshotImpl(Snapshot snapshot) {
-    root = snapshot.getRoot();
-    previous = snapshot;
-    snapshot.setNext(this);
     synchronized (this) {
       db = new HashDB(SnapshotImpl.class.getSimpleName());
     }
+
+    root = snapshot.getRoot();
+    previous = snapshot;
+    snapshot.setNext(this);
   }
 
   @Override
