@@ -144,6 +144,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       leafCount++;
     }
   }
+
   /*
   * With 1 mint, 1 spendNote, 1 receiveNote
   * */
@@ -187,7 +188,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -275,6 +275,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 1 mint, 1 spendNote, 2 receiveNote
    * */
@@ -320,7 +321,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -425,6 +425,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 2 mint, 2 spendNote, 1 receiveNote
    * */
@@ -474,7 +475,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -507,7 +507,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -614,6 +613,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 2 mint, 2 spendNote, 2 receiveNote
    * */
@@ -663,7 +663,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -696,7 +695,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -819,6 +817,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
 /*
  * With 1 spendNote
  */
@@ -865,7 +864,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -915,6 +913,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 1 spendNote, 1 receiveNote
    */
@@ -961,7 +960,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1025,7 +1023,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = result[63];
         if (slot == 0) {
           System.arraycopy(result, 0, frontier, 0, 32);
@@ -1038,6 +1035,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 1 mint, 1 spendNote, 1 receiveNote
    */
@@ -1083,7 +1081,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1211,6 +1208,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 1 mint, 1 spendNote, 2 receiveNote
    */
@@ -1256,7 +1254,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1400,6 +1397,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 2 mint, 2 spendNote, 1 receiveNote
    */
@@ -1449,7 +1447,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1482,7 +1479,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1644,6 +1640,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 2 mint, 2 spendNote, 2 receiveNote
    */
@@ -1693,7 +1690,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1726,7 +1722,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -1905,6 +1900,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 1 mint, 1 spendNote
    */
@@ -1951,7 +1947,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -2040,6 +2035,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       }
     }
   }
+
   /*
    * With 1 mint, 1 spendNote, 1 receiveNote
    */
@@ -2086,7 +2082,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = mintResult1[63];
         if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
@@ -2189,7 +2184,6 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        
         int slot = result[63];
         if (slot == 0) {
           System.arraycopy(result, 0, frontier, 0, 32);
