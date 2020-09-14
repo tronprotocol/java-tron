@@ -1903,10 +1903,11 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
   /*
    * With 1 mint, 1 spendNote
+   * Burn to Transparent address
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForBurn1()
+  public void createShieldedContractParametersWithoutAskForBurn1to1()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
@@ -2038,10 +2039,11 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
   /*
    * With 1 mint, 1 spendNote, 1 receiveNote
+   * Burn to Transparent address and A change z-address
    */
   @Ignore
   @Test
-  public void createShieldedContractParametersWithoutAskForBurn1to1()
+  public void createShieldedContractParametersWithoutAskForBurn1to2()
       throws Exception {
     int totalCountNum = 2;
     long leafCount = 0;
