@@ -818,9 +818,9 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
     }
   }
 
-/*
- * With 1 spendNote
- */
+  /*
+   * With 1 spendNote
+   */
   @Ignore
   @Test
   public void createShieldedContractParametersForBurn1()
