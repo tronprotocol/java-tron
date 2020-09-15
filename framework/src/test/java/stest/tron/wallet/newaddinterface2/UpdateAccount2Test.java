@@ -290,7 +290,7 @@ public class UpdateAccount2Test {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    return  response.getResult();
+    return response.getResult();
   }
 
   /**

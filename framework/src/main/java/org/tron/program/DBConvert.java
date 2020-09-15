@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
@@ -218,7 +217,7 @@ public class DBConvert {
     try {
       level = newLevelDb(srcDbPath);
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error("{}", e);
     }
 
     FileUtil.createDirIfNotExists(dstDir);

@@ -47,6 +47,11 @@ public class ConcurrentHashDB implements DB<byte[], BytesCapsule> {
   }
 
   @Override
+  public void close() {
+    db.clear();
+  }
+
+  @Override
   public DB<byte[], BytesCapsule> newInstance() {
     return null;
   }

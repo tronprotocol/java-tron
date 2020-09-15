@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
@@ -86,7 +88,8 @@ public class WitnessCreateActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
     if (accountCapsule == null) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("account[" + readableOwnerAddress
+          + ActuatorConstant.NOT_EXIST_STR);
     }
     /* todo later
     if (ArrayUtils.isEmpty(accountCapsule.getAccountName().toByteArray())) {
@@ -94,7 +97,7 @@ public class WitnessCreateActuator extends AbstractActuator {
     } */
 
     if (witnessStore.has(ownerAddress)) {
-      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
+      throw new ContractValidateException(WITNESS_EXCEPTION_STR + readableOwnerAddress + "] has existed");
     }
 
     if (accountCapsule.getBalance() < dynamicStore

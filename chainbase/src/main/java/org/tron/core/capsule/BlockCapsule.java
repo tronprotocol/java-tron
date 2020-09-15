@@ -28,15 +28,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.spongycastle.util.encoders.Base64;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
@@ -156,12 +151,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   // TODO add unit test for sig2.getbytes
   public void sign(byte[] privateKey) {
-    SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface ecKeyEngine = SignUtils
+        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
 
     ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
-            .getBytes())));
+        .getBytes())));
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
-            .build();
+        .build();
 
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
 
@@ -177,7 +173,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     try {
       byte[] sigAddress = SignUtils.signatureToAddress(getRawHash().getBytes(),
           TransactionCapsule.getBase64FromByteString(
-                  block.getBlockHeader().getWitnessSignature()),
+              block.getBlockHeader().getWitnessSignature()),
           CommonParameter.getInstance().isECKeyCryptoEngine());
       byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
           .toByteArray();
@@ -199,7 +195,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId =
           new BlockId(Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
-              this.block.getBlockHeader().getRawData().toByteArray()),  getNum());
+              this.block.getBlockHeader().getRawData().toByteArray()), getNum());
     }
     return blockId;
   }
@@ -237,7 +233,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
-  /* only for genisis */
+  /* only for genesis */
   public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(

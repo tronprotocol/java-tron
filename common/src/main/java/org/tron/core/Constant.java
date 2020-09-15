@@ -1,8 +1,7 @@
 package org.tron.core;
 
-import org.tron.common.utils.ByteArray;
-
 public class Constant {
+
   //config for testnet, mainnet, beta
   public static final String TESTNET_CONF = "config.conf";
 
@@ -10,6 +9,12 @@ public class Constant {
   public static final String TEST_CONF = "config-test.conf";
 
   public static final String DATABASE_DIR = "storage.directory";
+
+  // locate in storageDbDirectory, store the db infos,
+  // now only has the split block number
+  public static final String INFO_FILE_NAME = "info.properties";
+  // the block number that split between the snapshot and history
+  public static final String SPLIT_BLOCK_NUM = "split_block_num";
 
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
   public static final String ADD_PRE_FIX_STRING_MAINNET = "41";
@@ -106,6 +111,8 @@ public class Constant {
 
   public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
 
+  public static final String NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN = "node.openHistoryQueryWhenLiteFN";
+
   public static final String BLOCK_MAINTENANCE_TIME_INTERVAL = "block.maintenanceTimeInterval";
   public static final String BLOCK_PROPOSAL_EXPIRE_TIME = "block.proposalExpireTime";
 
@@ -169,13 +176,23 @@ public class Constant {
 
   public static final String VM_SAVE_INTERNAL_TX = "vm.saveInternalTx";
 
-  public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
+  // public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
+
+  public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
+      + ".allowShieldedTRC20Transaction";
+
+  public static final String COMMITTEE_ALLOW_TVM_ISTANBUL = "committee"
+      + ".allowTvmIstanbul";
+
+  public static final String COMMITTEE_ALLOW_MARKET_TRANSACTION =
+      "committee.allowMarketTransaction";
 
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
 
   public static final String EVENT_SUBSCRIBE_FILTER = "event.subscribe.filter";
 
-  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node.fullNodeAllowShieldedTransaction";
+  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node"
+      + ".fullNodeAllowShieldedTransaction";
 
   public static final String NODE_ZEN_TOKENID = "node.zenTokenId";
 
@@ -242,4 +259,14 @@ public class Constant {
   public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
   public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
   public static final String NODE_AGREE_NODE_COUNT = "node.agreeNodeCount";
+
+  public static final String COMMITTEE_ALLOW_TVM_STAKE = "committee.allowTvmStake";
+
+  public static final String COMMITTEE_ALLOW_TVM_ASSETISSUE = "committee.allowTvmAssetIssue";
+
+  public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
+  public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
+  public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
+  public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
+  public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
 }

@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
-import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 
 import java.util.Objects;
 import lombok.Getter;
@@ -15,11 +14,11 @@ import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
-import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -31,11 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -69,6 +64,10 @@ public class TransactionTrace {
 
   private ForkController forkController;
 
+  private VotesStore votesStore;
+
+  private DelegationStore delegationStore;
+
   @Getter
   private TransactionContext transactionContext;
   @Getter
@@ -101,6 +100,9 @@ public class TransactionTrace {
     this.runtime = runtime;
     this.forkController = new ForkController();
     forkController.init(storeFactory.getChainBaseManager());
+
+    this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
+    this.delegationStore = storeFactory.getChainBaseManager().getDelegationStore();
   }
 
   public TransactionCapsule getTrx() {
@@ -191,6 +193,12 @@ public class TransactionTrace {
     if (StringUtils.isEmpty(transactionContext.getProgramResult().getRuntimeError())) {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+      }
+      for (DataWord address : transactionContext.getProgramResult().getDeleteVotes()) {
+        votesStore.delete(convertToTronAddress((address.getLast20Bytes())));
+      }
+      for (DataWord address : transactionContext.getProgramResult().getDeleteDelegation()) {
+        deleteDelegationByAddress(convertToTronAddress((address.getLast20Bytes())));
       }
     }
   }
@@ -299,6 +307,12 @@ public class TransactionTrace {
       address = newAddress;
     }
     return address;
+  }
+
+  public void deleteDelegationByAddress(byte[] address){
+    delegationStore.delete(address); //begin Cycle
+    delegationStore.delete(("lastWithdraw-" + Hex.toHexString(address)).getBytes()); //last Withdraw cycle
+    delegationStore.delete(("end-" + Hex.toHexString(address)).getBytes()); //end cycle
   }
 
 

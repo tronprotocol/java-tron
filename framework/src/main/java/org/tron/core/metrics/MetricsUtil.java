@@ -3,9 +3,16 @@ package org.tron.core.metrics;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+
 import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
+
 import lombok.extern.slf4j.Slf4j;
+import metrics_influxdb.InfluxdbReporter;
+import metrics_influxdb.api.protocols.InfluxdbProtocols;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.metrics.net.RateInfo;
 
@@ -13,6 +20,25 @@ import org.tron.core.metrics.net.RateInfo;
 public class MetricsUtil {
 
   private static MetricRegistry metricRegistry = new MetricRegistry();
+
+  public static void init() {
+    if (CommonParameter.getInstance().isNodeMetricsEnable()
+            && CommonParameter.getInstance().isMetricsStorageEnable()) {
+      String ip = CommonParameter.getInstance().getInfluxDbIp();
+      int port = CommonParameter.getInstance().getInfluxDbPort();
+      String dataBase = CommonParameter.getInstance().getInfluxDbDatabase();
+      ScheduledReporter influxReport = InfluxdbReporter
+              .forRegistry(metricRegistry)
+              .protocol(InfluxdbProtocols.http(ip, port, dataBase))
+              .convertRatesTo(TimeUnit.SECONDS)
+              .convertDurationsTo(TimeUnit.MILLISECONDS)
+              .filter(MetricFilter.ALL)
+              .skipIdleMetrics(false)
+              .build();
+      int interval = CommonParameter.getInstance().getMetricsReportInterval() * 1000;
+      influxReport.start(interval, TimeUnit.MILLISECONDS);
+    }
+  }
 
   public static Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);
@@ -24,6 +50,7 @@ public class MetricsUtil {
 
   /**
    * Histogram update.
+   *
    * @param key String
    * @param value long
    */
@@ -43,6 +70,7 @@ public class MetricsUtil {
 
   /**
    * get all Meters with same prefix
+   *
    * @param key prefix String
    */
   public static SortedMap<String, Meter> getMeters(String key) {
@@ -51,6 +79,7 @@ public class MetricsUtil {
 
   /**
    * Meter mark.
+   *
    * @param key String
    */
   public static void meterMark(String key) {
@@ -65,6 +94,7 @@ public class MetricsUtil {
 
   /**
    * Meter mark.
+   *
    * @param key String
    * @param value long
    */
@@ -88,6 +118,7 @@ public class MetricsUtil {
 
   /**
    * Counter inc.
+   *
    * @param key String
    */
   public static void counterInc(String key) {
@@ -102,6 +133,7 @@ public class MetricsUtil {
 
   /**
    * get rate info.
+   *
    * @param key String
    * @return RateInfo
    */

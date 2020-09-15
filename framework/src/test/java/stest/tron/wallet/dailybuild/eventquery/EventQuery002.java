@@ -5,13 +5,11 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.abego.treelayout.internal.util.Contract;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -73,7 +71,6 @@ public class EventQuery002 {
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
     String contractName = "addressDemo";
     String code = Configuration.getByPath("testng.conf")
         .getString("code.code_ContractEventAndLog1");
@@ -82,9 +79,6 @@ public class EventQuery002 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 50, null, event001Key, event001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-
-
 
 
   }
@@ -124,18 +118,19 @@ public class EventQuery002 {
 
       if (message != null) {
         transactionMessage = new String(message);
-        if (!transactionMessage.equals("transactionTrigger")) {
+        if (!transactionMessage.equals("transactionTrigger") && !transactionMessage.isEmpty()) {
           break;
         }
       }
     }
 
+    Assert.assertTrue(retryTimes > 0);
     logger.info("transaction message:" + transactionMessage);
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
-    Assert.assertEquals(blockObject.getString("triggerName"),"transactionTrigger");
+    Assert.assertEquals(blockObject.getString("triggerName"), "transactionTrigger");
 
-    Assert.assertEquals(blockObject.getString("transactionId"),txid);
+    Assert.assertEquals(blockObject.getString("transactionId"), txid);
   }
 
   /**

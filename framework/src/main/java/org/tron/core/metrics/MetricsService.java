@@ -23,12 +23,13 @@ public class MetricsService {
       blockChainMetricManager.applyBlock(block);
     } catch (Exception e) {
       logger.warn("record block failed, {}, reason: {}.",
-              block.getBlockId().toString(), e.getMessage());
+          block.getBlockId().toString(), e.getMessage());
     }
   }
 
   /**
    * fail process block.
+   *
    * @param blockNum long
    * @param errorInfo String
    */
@@ -38,12 +39,13 @@ public class MetricsService {
       blockChainMetricManager.setFailProcessBlockReason(errorInfo);
     } catch (Exception e) {
       logger.warn("record fail process block failed, {}, reason: {}.",
-              blockNum, errorInfo);
+          blockNum, errorInfo);
     }
   }
 
   /**
    * get metrics info.
+   *
    * @return MetricsInfo
    */
   public MetricsInfo getMetricsInfo() {

@@ -8,6 +8,7 @@ import org.tron.core.services.WalletOnCursor;
 @Slf4j(topic = "API")
 @Component
 public class WalletOnPBFT extends WalletOnCursor {
+
   public WalletOnPBFT() {
     super.cursor = Chainbase.Cursor.PBFT;
   }

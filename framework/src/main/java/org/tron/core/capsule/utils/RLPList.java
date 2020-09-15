@@ -2,7 +2,6 @@ package org.tron.core.capsule.utils;
 
 import java.util.ArrayList;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 
 /**
  */

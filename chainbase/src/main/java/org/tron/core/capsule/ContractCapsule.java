@@ -27,12 +27,15 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapperOrBuilder;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "capsule")
 public class ContractCapsule implements ProtoCapsule<SmartContract> {
 
   private SmartContract smartContract;
+  private byte[] runtimecode;
 
   /**
    * constructor TransactionCapsule.
@@ -76,6 +79,15 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   public void setCodeHash(byte[] codeHash) {
     this.smartContract = this.smartContract.toBuilder().setCodeHash(ByteString.copyFrom(codeHash))
         .build();
+  }
+
+  public void setRuntimecode(byte[] bytecode) {
+    this.runtimecode = bytecode;
+  }
+
+  public SmartContractDataWrapper generateWrapper() {
+    return SmartContractDataWrapper.newBuilder().setSmartContract(this.smartContract)
+        .setRuntimecode(ByteString.copyFrom(this.runtimecode)).build();
   }
 
   @Override

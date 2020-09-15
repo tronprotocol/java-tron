@@ -7,10 +7,12 @@ import static org.tron.core.utils.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
 import static org.tron.core.utils.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 import static org.tron.core.zen.note.NoteEncryption.Encryption.NOTEENCRYPTION_CIPHER_KEYSIZE;
 
+import java.math.BigInteger;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.JLibsodium;
 import org.tron.common.zksnark.JLibsodiumParam.Black2bSaltPersonalParams;
@@ -241,6 +243,48 @@ public class NoteEncryption {
         return Optional.empty();
       }
       return Optional.of(plaintext);
+    }
+
+    /**
+     * encrypt the message by ovk used for scanning
+     */
+    public static Optional<byte[]> encryptBurnMessageByOvk(byte[] ovk, BigInteger toAmount,
+        byte[] transparentToAddress)
+        throws ZksnarkException {
+      byte[] plaintext = new byte[64];
+      byte[] amountArray = ByteUtil.bigIntegerToBytes(toAmount, 32);
+      byte[] cipherNonce = new byte[12];
+      byte[] cipher = new byte[80];
+      System.arraycopy(amountArray, 0, plaintext, 0, 32);
+      System.arraycopy(transparentToAddress, 0, plaintext, 32,
+          21);
+
+      if (JLibsodium.cryptoAeadChacha20Poly1305IetfEncrypt(new Chacha20Poly1305IetfEncryptParams(
+          cipher, null, plaintext,
+          64, null, 0, null, cipherNonce, ovk)) != 0) {
+        return Optional.empty();
+      }
+
+      return Optional.of(cipher);
+    }
+
+    /**
+     * decrypt the message by ovk used for scanning
+     */
+    public static Optional<byte[]> decryptBurnMessageByOvk(byte[] ovk, byte[] ciphertext)
+        throws ZksnarkException {
+      byte[] outPlaintext = new byte[64];
+      byte[] cipherNonce = new byte[12];
+      if (JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(new Chacha20poly1305IetfDecryptParams(
+          outPlaintext, null,
+          null,
+          ciphertext, 80,
+          null,
+          0,
+          cipherNonce, ovk)) != 0) {
+        return Optional.empty();
+      }
+      return Optional.of(outPlaintext);
     }
 
     public static class EncCiphertext {

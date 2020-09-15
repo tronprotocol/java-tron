@@ -3,13 +3,6 @@ package stest.tron.wallet.dailybuild.eventquery;
 import com.alibaba.fastjson.JSONObject;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -17,13 +10,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.zeromq.ZMQ;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -87,21 +75,23 @@ public class EventQuery001 {
     req.setReceiveTimeOut(10000);
     String blockMessage = "";
 
-    while (true) {
+    Integer retryTimes = 20;
+    while (retryTimes-- > 0) {
       byte[] message = req.recv();
       if (message != null) {
         //System.out.println("receive : " + new String(message));
         blockMessage = new String(message);
-        if (!blockMessage.equals("blockTrigger")) {
+        if (!blockMessage.equals("blockTrigger") && !blockMessage.isEmpty()) {
           break;
         }
       }
     }
 
+    Assert.assertTrue(retryTimes > 0);
     logger.info("block message:" + blockMessage);
     JSONObject blockObject = JSONObject.parseObject(blockMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
-    Assert.assertEquals(blockObject.getString("triggerName"),"blockTrigger");
+    Assert.assertEquals(blockObject.getString("triggerName"), "blockTrigger");
     Assert.assertTrue(blockObject.getLong("blockNumber") > 0);
     Assert.assertTrue(blockObject.containsKey("blockHash"));
     Assert.assertTrue(blockObject.getInteger("transactionSize") >= 0);
@@ -129,25 +119,26 @@ public class EventQuery001 {
     req.setReceiveTimeOut(10000);
     String blockMessage = "";
 
-    while (true) {
+    Integer retryTimes = 20;
+
+    while (retryTimes-- > 0) {
       byte[] message = req.recv();
       if (message != null) {
         System.out.println("receive : " + new String(message));
         blockMessage = new String(message);
-        if (!blockMessage.equals("solidityTrigger")) {
+        if (!blockMessage.equals("solidityTrigger") && !blockMessage.isEmpty()) {
           break;
         }
       }
     }
 
-
+    Assert.assertTrue(retryTimes > 0);
     logger.info("block message:" + blockMessage);
     JSONObject blockObject = JSONObject.parseObject(blockMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
-    Assert.assertEquals(blockObject.getString("triggerName"),"solidityTrigger");
+    Assert.assertEquals(blockObject.getString("triggerName"), "solidityTrigger");
     Assert.assertTrue(blockObject.getLong("latestSolidifiedBlockNumber") > 0);
   }
-
 
 
   /**

@@ -112,19 +112,6 @@ public class TransactionUtil {
     return true;
   }
 
-  public static boolean isNumber(byte[] id) {
-    if (ArrayUtils.isEmpty(id)) {
-      return false;
-    }
-    for (byte b : id) {
-      if (b < '0' || b > '9') {
-        return false;
-      }
-    }
-
-    return !(id.length > 1 && id[0] == '0');
-  }
-
   public static Sha256Hash getTransactionId(Transaction transaction) {
     return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
         transaction.getRawData().toByteArray());

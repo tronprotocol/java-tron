@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,11 +40,14 @@ import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
 
@@ -56,6 +60,7 @@ public class Util {
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
+  public static final String PARAMETER = "parameter";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -235,7 +240,7 @@ public class Util {
         parameter.put(VALUE, contractJson);
         parameter.put("type_url", contract.getParameterOrBuilder().getTypeUrl());
         JSONObject jsonContract = new JSONObject();
-        jsonContract.put("parameter", parameter);
+        jsonContract.put(PARAMETER, parameter);
         jsonContract.put("type", contract.getType());
         if (contract.getPermissionId() > 0) {
           jsonContract.put(PERMISSION_ID, contract.getPermissionId());
@@ -267,7 +272,7 @@ public class Util {
     for (int i = 0; i < rawContractArray.size(); i++) {
       try {
         JSONObject contract = rawContractArray.getJSONObject(i);
-        JSONObject parameter = contract.getJSONObject("parameter");
+        JSONObject parameter = contract.getJSONObject(PARAMETER);
         String contractType = contract.getString("type");
         Any any = null;
         Class clazz = TransactionFactory.getContract(ContractType.valueOf(contractType));
@@ -282,7 +287,7 @@ public class Util {
         if (any != null) {
           String value = ByteArray.toHexString(any.getValue().toByteArray());
           parameter.put(VALUE, value);
-          contract.put("parameter", parameter);
+          contract.put(PARAMETER, parameter);
           contracts.add(contract);
         }
       } catch (ParseException e) {
@@ -320,9 +325,11 @@ public class Util {
 
   public static boolean getVisiblePost(final String input) {
     boolean visible = false;
-    JSONObject jsonObject = JSON.parseObject(input);
-    if (jsonObject.containsKey(VISIBLE)) {
-      visible = jsonObject.getBoolean(VISIBLE);
+    if (StringUtil.isNotBlank(input)) {
+      JSONObject jsonObject = JSON.parseObject(input);
+      if (jsonObject.containsKey(VISIBLE)) {
+        visible = jsonObject.getBoolean(VISIBLE);
+      }
     }
 
     return visible;
@@ -482,6 +489,31 @@ public class Util {
       }
     }
     return address;
+  }
+
+  public static List<Log> convertLogAddressToTronAddress(TransactionInfo transactionInfo) {
+    List<Log> newLogList = new ArrayList<>();
+
+    for (Log log : transactionInfo.getLogList()) {
+      Log.Builder logBuilder = Log.newBuilder();
+      logBuilder.setData(log.getData());
+      logBuilder.addAllTopics(log.getTopicsList());
+
+      byte[] oldAddress = log.getAddress().toByteArray();
+      if (oldAddress.length == 0 || oldAddress.length > 20) {
+        logBuilder.setAddress(log.getAddress());
+      } else {
+        byte[] newAddress = new byte[20];
+        int start = 20 - oldAddress.length;
+        System.arraycopy(oldAddress, 0, newAddress, start, oldAddress.length);
+        logBuilder
+            .setAddress(ByteString.copyFrom(TransactionTrace.convertToTronAddress(newAddress)));
+      }
+
+      newLogList.add(logBuilder.build());
+    }
+
+    return newLogList;
   }
 
 }

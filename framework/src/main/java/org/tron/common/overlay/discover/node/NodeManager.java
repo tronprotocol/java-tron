@@ -234,7 +234,7 @@ public class NodeManager implements EventHandler {
     NodeHandler nodeHandler = getNodeHandler(n);
     nodeHandler.getNodeStatistics().messageStatistics.addUdpInMessage(m.getType());
     MetricsUtil.meterMark(MetricsKey.NET_UDP_IN_TRAFFIC,
-            udpEvent.getMessage().getData().length + 1);
+        udpEvent.getMessage().getData().length + 1);
 
     switch (m.getType()) {
       case DISCOVER_PING:
@@ -258,7 +258,7 @@ public class NodeManager implements EventHandler {
     if (discoveryEnabled && messageSender != null) {
       messageSender.accept(udpEvent);
       MetricsUtil.meterMark(MetricsKey.NET_UDP_OUT_TRAFFIC,
-              udpEvent.getMessage().getSendData().length);
+          udpEvent.getMessage().getSendData().length);
     }
   }
 

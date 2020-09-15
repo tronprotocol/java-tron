@@ -162,7 +162,7 @@ public class PeerConnection extends Channel {
 
         getNodeStatistics().pingMessageLatency.getCount(),
         getNodeStatistics().pingMessageLatency.getMax(),
-        getNodeStatistics().pingMessageLatency.getAvrg(),
+        getNodeStatistics().pingMessageLatency.getAvg(),
         getNodeStatistics().pingMessageLatency.getMin(),
         getNodeStatistics().pingMessageLatency.getLast(),
 
@@ -177,6 +177,10 @@ public class PeerConnection extends Channel {
         syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / 1000,
         syncBlockInProcess.size())
         + nodeStatistics.toString() + "\n";
+  }
+
+  public boolean isSyncFinish() {
+    return !(needSyncFromPeer || needSyncFromUs);
   }
 
 }

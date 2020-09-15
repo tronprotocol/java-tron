@@ -14,23 +14,18 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLStreamHandlerFactory;
-
 import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.testng.annotations.Test;
-
 import org.tron.common.utils.FileUtil;
 import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 
@@ -61,6 +56,7 @@ public class BroadcastServletTest {
 
   /**
    * set up.
+   *
    * @throws InterruptedException .
    */
   @Before

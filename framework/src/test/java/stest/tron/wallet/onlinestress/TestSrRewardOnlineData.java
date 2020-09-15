@@ -7,12 +7,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import io.grpc.ManagedChannel;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -22,9 +19,6 @@ import org.testng.annotations.Test;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.TransactionInfo;
-import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 
@@ -35,7 +29,7 @@ public class TestSrRewardOnlineData {
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-  private String httpnode = "47.245.3.27:8090";
+  private String httpnode = "101.200.46.37:50191";
   private JSONObject responseContent;
   private HttpResponse response;
   Integer cycle = 0;
@@ -53,8 +47,6 @@ public class TestSrRewardOnlineData {
     response = HttpMethed.getCurrentCycle(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     cycle = responseContent.getInteger("cycle");
-
-
 
     response = HttpMethed
         .getAccountRewardByCycle(httpnode, "TWjvFoH2HgkNCsf897tG5BSzx7ZpfkqHPs",
@@ -94,7 +86,7 @@ public class TestSrRewardOnlineData {
   @Test(enabled = true, description = "Get SR profit by cycle")
   public void test03GetSrProfitByCycle() throws Exception {
     response = HttpMethed
-        .getSrProfitByCycle(httpnode, srAddress,0, cycle + 2);
+        .getSrProfitByCycle(httpnode, srAddress, 0, cycle + 2);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Long total = responseContent.getLong("total");
@@ -111,7 +103,7 @@ public class TestSrRewardOnlineData {
   @Test(enabled = true, description = "Get SR dividends by cycle")
   public void test04GetSrDividendsByCycle() throws Exception {
     response = HttpMethed
-        .getSrDividendsByCycle(httpnode, srAddress,0, cycle + 2);
+        .getSrDividendsByCycle(httpnode, srAddress, 0, cycle + 2);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Long total = responseContent.getLong("total");
@@ -135,7 +127,7 @@ public class TestSrRewardOnlineData {
    */
   @Test(enabled = true, description = "Get now SR annualized rate")
   public void test05GetNowSrAnnualizedRate() throws Exception {
-    response = HttpMethed.getNowSrAnnualizedRate(httpnode,srAddress);
+    response = HttpMethed.getNowSrAnnualizedRate(httpnode, srAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.getDouble("annualizedRateOfReturn") > 0);
@@ -152,9 +144,9 @@ public class TestSrRewardOnlineData {
     HttpMethed.printJsonContent(responseContent);
     JSONArray wintessArray = responseContent.getJSONArray("witnesses");
     List<Long> voteList = new ArrayList<>();
-    HashMap<String,Long> witness127 = new HashMap<>();
+    HashMap<String, Long> witness127 = new HashMap<>();
 
-    for (int i = 0; i < wintessArray.size();i++) {
+    for (int i = 0; i < wintessArray.size(); i++) {
       if (wintessArray.getJSONObject(i).containsKey("voteCount")) {
         voteList.add(wintessArray.getJSONObject(i).getLong("voteCount"));
         witness127.put(wintessArray.getJSONObject(i).getString("address"),
@@ -165,7 +157,7 @@ public class TestSrRewardOnlineData {
     Long totalVote = 0L;
     Long voteFor127 = 0L;
 
-    for (int j = 0; j < voteList.size();j++) {
+    for (int j = 0; j < voteList.size(); j++) {
       totalVote = totalVote + voteList.get(j);
       if (j < 127) {
         voteFor127 = voteFor127 + voteList.get(j);
@@ -178,16 +170,12 @@ public class TestSrRewardOnlineData {
     double blockNumberEachDay = FROZEN_PERIOD / BLOCK_PRODUCED_INTERVAL
         - 2 * (FROZEN_PERIOD / 21600000L);
 
-
-
-
-
     List<String> result = new ArrayList<>();
 
     for (String key : witness127.keySet()) {
       Long srVote = witness127.get(key);
       String witnessAddress = key;
-      response = HttpMethed.getNowSrAnnualizedRate(httpnode,witnessAddress);
+      response = HttpMethed.getNowSrAnnualizedRate(httpnode, witnessAddress);
       responseContent = HttpMethed.parseResponseContent(response);
       double annualizedRateOfReturn = Double.valueOf(responseContent
           .getString("annualizedRateOfReturn"));
@@ -198,7 +186,7 @@ public class TestSrRewardOnlineData {
       }
     }
 
-    for (int i = 0; i < result.size();i++) {
+    for (int i = 0; i < result.size(); i++) {
       logger.info(result.get(i));
     }
 
@@ -213,13 +201,6 @@ public class TestSrRewardOnlineData {
   }
 
 
-
-
-
-
-
-
-
   /**
    * constructor.
    */
@@ -227,7 +208,6 @@ public class TestSrRewardOnlineData {
   public void shutdown() throws InterruptedException {
     HttpMethed.disConnect();
   }
-
 
 
 }

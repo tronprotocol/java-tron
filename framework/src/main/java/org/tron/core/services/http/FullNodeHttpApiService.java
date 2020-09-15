@@ -23,6 +23,8 @@ import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.filter.HttpInterceptor;
+import org.tron.core.services.filter.LiteFnQueryHttpFilter;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -133,6 +135,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetContractServlet getContractServlet;
   @Autowired
+  private GetContractInfoServlet getContractInfoServlet;
+  @Autowired
   private ClearABIServlet clearABIServlet;
   @Autowired
   private ProposalCreateServlet proposalCreateServlet;
@@ -234,6 +238,20 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
   @Autowired
+  private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
+  @Autowired
+  private CreateShieldedContractParametersServlet createShieldedContractParametersServlet;
+  @Autowired
+  private CreateShieldedContractParametersWithoutAskServlet
+      createShieldedContractParametersWithoutAskServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByIvkServlet scanShieldedTRC20NotesByIvkServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByOvkServlet scanShieldedTRC20NotesByOvkServlet;
+  @Autowired
+  private GetTriggerInputForShieldedTRC20ContractServlet
+      getTriggerInputForShieldedTRC20ContractServlet;
+  @Autowired
   private MetricsServlet metricsServlet;
   @Autowired
   private GetAccountRewardByCycleServlet getAccountRewardByCycleServlet;
@@ -247,6 +265,23 @@ public class FullNodeHttpApiService implements Service {
   private GetCurrentCycleService getCurrentCycleServlet;
   @Autowired
   private GetNowSRAnnualizedRateOfReturnServlet getNowSRAnnualizedRateOfReturnServlet;
+  @Autowired
+  private MarketSellAssetServlet marketSellAssetServlet;
+  @Autowired
+  private MarketCancelOrderServlet marketCancelOrderServlet;
+  @Autowired
+  private GetMarketOrderByAccountServlet getMarketOrderByAccountServlet;
+  @Autowired
+  private GetMarketOrderByIdServlet getMarketOrderByIdServlet;
+  @Autowired
+  private GetMarketPriceByPairServlet getMarketPriceByPairServlet;
+  @Autowired
+  private GetMarketOrderListByPairServlet getMarketOrderListByPairServlet;
+  @Autowired
+  private GetMarketPairListServlet getMarketPairListServlet;
+
+  @Autowired
+  private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -270,14 +305,12 @@ public class FullNodeHttpApiService implements Service {
     }
 
     String spendPath = getParamsFile("sapling-spend.params");
-    String spendHash =
-        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63"
-            + "991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
+    String spendHash = "25fd9a0d1c1be0526c14662947ae95b758fe9f3d7fb7f55e9b4437830dcc6215a7ce3ea465"
+        + "914b157715b7a4d681389ea4aa84438190e185d5e4c93574d3a19a";
 
     String outputPath = getParamsFile("sapling-output.params");
-    String outputHash =
-        "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf"
-            + "593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
+    String outputHash = "a1cb23b93256adce5bce2cb09cefbc96a1d16572675ceb691e9a3626ec15b5b546926ff1c"
+        + "536cfe3a9df07d796b32fdfc3e5d99d65567257bf286cd2858d71a6";
 
     try {
       JLibrustzcash.librustzcashInitZksnarkParams(
@@ -376,6 +409,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(triggerConstantContractServlet),
           "/wallet/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/wallet/getcontract");
+      context.addServlet(new ServletHolder(getContractInfoServlet), "/wallet/getcontractinfo");
       context.addServlet(new ServletHolder(clearABIServlet), "/wallet/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/wallet/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/wallet/proposalapprove");
@@ -425,24 +459,39 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getincomingviewingkey");
       context.addServlet(new ServletHolder(getZenPaymentAddressServlet),
           "/wallet/getzenpaymentaddress");
-      context.addServlet(new ServletHolder(createShieldedTransactionServlet),
-          "/wallet/createshieldedtransaction");
-      context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
-          "/wallet/createshieldedtransactionwithoutspendauthsig");
-      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/wallet/scannotebyivk");
-      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
-          "/wallet/scanandmarknotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/wallet/scannotebyovk");
+      //      context.addServlet(new ServletHolder(createShieldedTransactionServlet),
+      //          "/wallet/createshieldedtransaction");
+      //  context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
+      //          "/wallet/createshieldedtransactionwithoutspendauthsig");
+      //      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/wallet/scannotebyivk");
+      //      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
+      //          "/wallet/scanandmarknotebyivk");
+      //      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/wallet/scannotebyovk");
       context.addServlet(new ServletHolder(getRcmServlet), "/wallet/getrcm");
-      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
-          "/wallet/getmerkletreevoucherinfo");
-      context.addServlet(new ServletHolder(isSpendServlet), "/wallet/isspend");
+      //      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+      //          "/wallet/getmerkletreevoucherinfo");
+      //      context.addServlet(new ServletHolder(isSpendServlet), "/wallet/isspend");
       context.addServlet(new ServletHolder(createSpendAuthSigServlet),
           "/wallet/createspendauthsig");
-      context.addServlet(new ServletHolder(createShieldNullifierServlet),
-          "/wallet/createshieldnullifier");
-      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
-          "/wallet/getshieldtransactionhash");
+      //      context.addServlet(new ServletHolder(createShieldNullifierServlet),
+      //          "/wallet/createshieldnullifier");
+      //      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
+      //      "/wallet/getshieldtransactionhash");
+
+      context
+          .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
+              "/wallet/isshieldedtrc20contractnotespent");
+      context.addServlet(new ServletHolder(createShieldedContractParametersServlet),
+          "/wallet/createshieldedcontractparameters");
+      context.addServlet(new ServletHolder(createShieldedContractParametersWithoutAskServlet),
+          "/wallet/createshieldedcontractparameterswithoutask");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkServlet),
+          "/wallet/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkServlet),
+          "/wallet/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(getTriggerInputForShieldedTRC20ContractServlet),
+          "/wallet/gettriggerinputforshieldedtrc20contract");
+
       context.addServlet(new ServletHolder(broadcastHexServlet), "/wallet/broadcasthex");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/wallet/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/wallet/getReward");
@@ -470,17 +519,36 @@ public class FullNodeHttpApiService implements Service {
 
       context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
+      context.addServlet(new ServletHolder(marketSellAssetServlet), "/wallet/marketsellasset");
+      context.addServlet(new ServletHolder(marketCancelOrderServlet), "/wallet/marketcancelorder");
+      context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
+          "/wallet/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdServlet),
+          "/wallet/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
+          "/wallet/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairServlet),
+          "/wallet/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListServlet),
+          "/wallet/getmarketpairlist");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+              EnumSet.allOf(DispatcherType.class));
+
       // filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

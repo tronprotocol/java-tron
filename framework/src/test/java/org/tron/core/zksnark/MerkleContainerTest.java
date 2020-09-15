@@ -54,7 +54,8 @@ public class MerkleContainerTest {
   public static void init() {
     dbManager = context.getBean(Manager.class);
     merkleContainer = MerkleContainer
-        .createInstance(dbManager.getMerkleTreeStore(), dbManager.getMerkleTreeIndexStore());
+        .createInstance(dbManager.getMerkleTreeStore(), dbManager.getChainBaseManager()
+            .getMerkleTreeIndexStore());
   }
 
   @AfterClass
@@ -198,7 +199,7 @@ public class MerkleContainerTest {
         PedersenHash a = compressCapsule1.getInstance();
         tree.toMerkleTreeContainer().append(a);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
-        dbManager.getMerkleTreeIndexStore()
+        dbManager.getChainBaseManager().getMerkleTreeIndexStore()
             .put(blockNum, tree.toMerkleTreeContainer().getMerkleTreeKey());
       }
 
@@ -269,7 +270,7 @@ public class MerkleContainerTest {
         tree.toMerkleTreeContainer().append(b);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
 
-        dbManager.getMerkleTreeIndexStore()
+        dbManager.getChainBaseManager().getMerkleTreeIndexStore()
             .put(blockNum, tree.toMerkleTreeContainer().getMerkleTreeKey());
       }
       //two transaction,the second transaction is the currentTransaction

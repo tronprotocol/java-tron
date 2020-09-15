@@ -210,7 +210,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = SignUtils.signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine());
+      byte[] address = SignUtils
+          .signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine());
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -526,11 +527,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void sign(byte[] privateKey) {
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils
+        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     //    ByteString sig = ByteString.copyFrom(signature.getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-            .signHash(getRawHash().getBytes())));
+        .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
@@ -557,7 +559,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
     }
     List<ByteString> approveList = new ArrayList<>();
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils
+        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
@@ -575,7 +578,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-            .signHash(getRawHash().getBytes())));
+        .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
@@ -723,20 +726,44 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void setResultCode(contractResult code) {
-    Result ret = Result.newBuilder().setContractRet(code).build();
+    Result ret;
     if (this.transaction.getRetCount() > 0) {
       ret = this.transaction.getRet(0).toBuilder().setContractRet(code).build();
 
       this.transaction = transaction.toBuilder().setRet(0, ret).build();
       return;
     }
+    ret = Result.newBuilder().setContractRet(code).build();
     this.transaction = transaction.toBuilder().addRet(ret).build();
   }
+
+  public Transaction.Result.contractResult getContractResult() {
+    if (this.transaction.getRetCount() > 0) {
+      return this.transaction.getRet(0).getContractRet();
+    }
+    return null;
+  }
+
+
 
   public contractResult getContractRet() {
     if (this.transaction.getRetCount() <= 0) {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
+  }
+
+  /**
+   * Check if a transaction capsule contains a smart contract transaction or not.
+   * @return
+   */
+  public boolean isContractType() {
+    try {
+      ContractType type = this.getInstance().getRawData().getContract(0).getType();
+      return  (type == ContractType.TriggerSmartContract || type == ContractType.CreateSmartContract);
+    } catch (Exception ex) {
+      logger.warn("check contract type failed, reason {}", ex.getMessage());
+      return false;
+    }
   }
 }

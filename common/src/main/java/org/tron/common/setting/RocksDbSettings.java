@@ -52,7 +52,7 @@ public class RocksDbSettings {
   }
 
   public static RocksDbSettings initCustomSettings(int levelNumber, int compactThreads,
-      int blocksize, long maxBytesForLevelBase,
+      int blockSize, long maxBytesForLevelBase,
       double maxBytesForLevelMultiplier, int level0FileNumCompactionTrigger,
       long targetFileSizeBase,
       int targetFileSizeMultiplier) {
@@ -61,7 +61,7 @@ public class RocksDbSettings {
         .withEnableStatistics(false)
         .withLevelNumber(levelNumber)
         .withCompactThreads(compactThreads)
-        .withBlockSize(blocksize)
+        .withBlockSize(blockSize)
         .withMaxBytesForLevelBase(maxBytesForLevelBase)
         .withMaxBytesForLevelMultiplier(maxBytesForLevelMultiplier)
         .withLevel0FileNumCompactionTrigger(level0FileNumCompactionTrigger)

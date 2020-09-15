@@ -29,7 +29,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -339,19 +338,19 @@ public class WalletTest {
   public void getBlockById() {
     Block blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block1).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById1", block1, blockById);
+    assertEquals("getBlockById1", block1, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block2).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById2", block2, blockById);
+    assertEquals("getBlockById2", block2, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block3).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById3", block3, blockById);
+    assertEquals("getBlockById3", block3, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block4).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById4", block4, blockById);
+    assertEquals("getBlockById4", block4, blockById);
     blockById = wallet
         .getBlockById(ByteString.copyFrom(new BlockCapsule(block5).getBlockId().getBytes()));
-    Assert.assertEquals("getBlockById5", block5, blockById);
+    assertEquals("getBlockById5", block5, blockById);
   }
 
   @Test
@@ -374,35 +373,35 @@ public class WalletTest {
     TransactionInfo transactionById1 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction1.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById1.getId().toByteArray()),
         ByteString.copyFrom(transaction1.getRawData().toByteArray()));
 
     TransactionInfo transactionById2 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction2.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById2.getId().toByteArray()),
         ByteString.copyFrom(transaction2.getRawData().toByteArray()));
 
     TransactionInfo transactionById3 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction3.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById3.getId().toByteArray()),
         ByteString.copyFrom(transaction3.getRawData().toByteArray()));
 
     TransactionInfo transactionById4 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction4.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById4.getId().toByteArray()),
         ByteString.copyFrom(transaction4.getRawData().toByteArray()));
 
     TransactionInfo transactionById5 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction5.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",
+    assertEquals("gettransactioninfobyid",
         ByteString.copyFrom(transactionById5.getId().toByteArray()),
         ByteString.copyFrom(transaction5.getRawData().toByteArray()));
   }
@@ -413,23 +412,23 @@ public class WalletTest {
     Transaction transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction1).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById1", transaction1, transactionById);
+    assertEquals("getTransactionById1", transaction1, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction2).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById2", transaction2, transactionById);
+    assertEquals("getTransactionById2", transaction2, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction3).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById3", transaction3, transactionById);
+    assertEquals("getTransactionById3", transaction3, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction4).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById4", transaction4, transactionById);
+    assertEquals("getTransactionById4", transaction4, transactionById);
     transactionById = wallet.getTransactionById(
         ByteString
             .copyFrom(new TransactionCapsule(transaction5).getTransactionId().getBytes()));
-    Assert.assertEquals("getTransactionById5", transaction5, transactionById);
+    assertEquals("getTransactionById5", transaction5, transactionById);
   }
 
   @Test
@@ -467,17 +466,17 @@ public class WalletTest {
     //
     ProposalList proposalList = wallet.getPaginatedProposalList(0, 100);
 
-    Assert.assertEquals(2, proposalList.getProposalsCount());
-    Assert.assertEquals("Address1",
+    assertEquals(2, proposalList.getProposalsCount());
+    assertEquals("Address1",
         proposalList.getProposalsList().get(0).getProposerAddress().toStringUtf8());
-    Assert.assertEquals("Address2",
+    assertEquals("Address2",
         proposalList.getProposalsList().get(1).getProposerAddress().toStringUtf8());
 
     //
     proposalList = wallet.getPaginatedProposalList(1, 100);
 
-    Assert.assertEquals(1, proposalList.getProposalsCount());
-    Assert.assertEquals("Address2",
+    assertEquals(1, proposalList.getProposalsCount());
+    assertEquals("Address2",
         proposalList.getProposalsList().get(0).getProposerAddress().toStringUtf8());
 
     //
@@ -490,7 +489,7 @@ public class WalletTest {
 
     //
     proposalList = wallet.getPaginatedProposalList(0, 1000000000L);
-    Assert.assertEquals(2, proposalList.getProposalsCount());
+    assertEquals(2, proposalList.getProposalsCount());
 
   }
 
@@ -498,9 +497,9 @@ public class WalletTest {
   public void getPaginatedExchangeList() {
     buildExchange();
     ExchangeList exchangeList = wallet.getPaginatedExchangeList(0, 100);
-    Assert.assertEquals("Address1",
+    assertEquals("Address1",
         exchangeList.getExchangesList().get(0).getCreatorAddress().toStringUtf8());
-    Assert.assertEquals("Address2",
+    assertEquals("Address2",
         exchangeList.getExchangesList().get(1).getCreatorAddress().toStringUtf8());
   }
 
@@ -530,43 +529,43 @@ public class WalletTest {
   public void getRewardOfVoteEachBlock() {
     long l = wallet.getRewardOfVoteEachBlock();
     System.out.println(l);
-    Assert.assertEquals(16000000L,l);
+    assertEquals(16000000L, l);
   }
 
   @Test
   public void getRewardOfBlockEachBlock() {
     long l = wallet.getRewardOfBlockEachBlock();
-    Assert.assertEquals(32000000L,l);
+    assertEquals(32000000L, l);
   }
 
   @Test
   public void queryVoteNumberZero() {
     double v = wallet.queryVoteNumber(ACCOUNT_ADDRESS_ONE.getBytes(),
         CYCLE_NUM_ONE, CYCLE_NUM_TWO);
-    Assert.assertEquals(0.0,v,0);
+    assertEquals(0.0, v, 0);
   }
 
   @Test
   public void queryTotalVoteNumber() {
     double v = wallet.queryTotalVoteNumber(CYCLE_NUM_ONE, CYCLE_NUM_ONE);
     int srNumber = wallet.getSrNumber();
-    Assert.assertEquals(-srNumber,v,0);
+    assertEquals(-srNumber, v, 0);
   }
 
   @Test
   public void getBlockNumberEachDay() {
     double v = wallet.getBlockNumberEachDay();
-    Assert.assertEquals(28792,v,0);
+    assertEquals(28792, v, 0);
   }
 
   @Test
   public void getAnnualizedRateOfReturn() throws Exception {
-    double v = wallet.getAnnualizedRateOfReturn(1,1,
-        1,1,1,1,1);
-    Assert.assertEquals(730,v,0);
-    double v1 = wallet.getAnnualizedRateOfReturn(1,1,
-        1,0,1,1,1);
-    Assert.assertEquals(0,v1,0);
+    double v = wallet.getAnnualizedRateOfReturn(1, 1,
+        1, 1, 1, 1, 1);
+    assertEquals(730, v, 0);
+    double v1 = wallet.getAnnualizedRateOfReturn(1, 1,
+        1, 0, 1, 1, 1);
+    assertEquals(0, v1, 0);
   }
 
   @Test
@@ -599,12 +598,12 @@ public class WalletTest {
     long end = start + 60;
     {
       chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(0);
-      Assert.assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+      assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
           .getBytes(), start, end).size(), 0);
     }
     {
       chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(1);
-      Assert.assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+      assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
           .getBytes(), start, end).size(), 0);
     }
     {
@@ -625,7 +624,7 @@ public class WalletTest {
     long beginCycle = 60;
     long endCycle = 10;
     double result = 0;
-    Assert.assertEquals(wallet.percentageOfBlockReward(beginCycle, endCycle, OWNER_ADDRESS
+    assertEquals(wallet.percentageOfBlockReward(beginCycle, endCycle, OWNER_ADDRESS
         .getBytes()), result, 10);
   }
 
