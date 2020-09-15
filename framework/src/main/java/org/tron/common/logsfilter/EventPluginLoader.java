@@ -13,6 +13,7 @@ import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.ManifestPluginDescriptorFinder;
 import org.pf4j.PluginManager;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
@@ -111,7 +112,6 @@ public class EventPluginLoader {
     if (!matched) {
       return false;
     }
-
     return filterContractAddress(trigger, filterQuery.getContractAddressList())
         && filterContractTopicList(trigger, filterQuery.getContractTopicList());
   }
@@ -147,8 +147,11 @@ public class EventPluginLoader {
     Set<String> hset = null;
     if (trigger instanceof ContractLogTrigger) {
       hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
-    } else {
+    } else if (trigger instanceof ContractEventTrigger) {
       hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
+    } else if (trigger instanceof ContractTrigger) {
+      hset = trigger.getLogInfo().getClonedTopics()
+              .stream().map(Hex::toHexString).collect(Collectors.toSet());
     }
 
     for (String top : topList) {
