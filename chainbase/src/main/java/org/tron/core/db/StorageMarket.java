@@ -22,7 +22,7 @@ public class StorageMarket {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
-  private long exchange_to_supply(boolean isTRX, long quant) {
+  private long exchangeToSupply(boolean isTRX, long quant) {
     logger.info("isTRX: " + isTRX);
     long balance = isTRX ? dynamicPropertiesStore.getTotalStoragePool() :
         dynamicPropertiesStore.getTotalStorageReserved();
@@ -44,7 +44,7 @@ public class StorageMarket {
     return out;
   }
 
-  private long exchange_to_supply2(boolean isTRX, long quant) {
+  private long exchangeToSupply2(boolean isTRX, long quant) {
     logger.info("isTRX: " + isTRX);
     long balance = isTRX ? dynamicPropertiesStore.getTotalStoragePool() :
         dynamicPropertiesStore.getTotalStorageReserved();
@@ -85,7 +85,7 @@ public class StorageMarket {
   }
 
   public long exchange(long from, boolean isTRX) {
-    long relay = exchange_to_supply(isTRX, from);
+    long relay = exchangeToSupply(isTRX, from);
     return exchange_from_supply(!isTRX, relay);
   }
 
@@ -142,7 +142,7 @@ public class StorageMarket {
   }
 
   public long tryBuyStorageBytes(long storageBought) {
-    long relay = exchange_to_supply2(false, storageBought);
+    long relay = exchangeToSupply2(false, storageBought);
     return exchange_from_supply(true, relay);
   }
 
@@ -158,7 +158,7 @@ public class StorageMarket {
     long now = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     long currentStorageLimit = accountCapsule.getStorageLimit();
 
-    long relay = exchange_to_supply2(false, storageBought);
+    long relay = exchangeToSupply2(false, storageBought);
     long quant = exchange_from_supply(true, relay);
 
     long newBalance = accountCapsule.getBalance() - quant;
