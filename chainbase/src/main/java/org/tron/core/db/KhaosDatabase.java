@@ -145,8 +145,8 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   public void setMaxSize(int maxSize) {
-    miniUnlinkedStore.setMaxCapcity(maxSize);
-    miniStore.setMaxCapcity(maxSize);
+    miniUnlinkedStore.setMaxCapacity(maxSize);
+    miniStore.setMaxCapacity(maxSize);
   }
 
   /**
@@ -163,17 +163,11 @@ public class KhaosDatabase extends TronDatabase {
     checkNull(kblk2);
 
     while (kblk1.num > kblk2.num) {
-      list1.add(kblk1);
-      kblk1 = kblk1.getParent();
-      checkNull(kblk1);
-      checkNull(miniStore.getByHash(kblk1.id));
+     listCheck(list1, kblk1);
     }
 
     while (kblk2.num > kblk1.num) {
-      list2.add(kblk2);
-      kblk2 = kblk2.getParent();
-      checkNull(kblk2);
-      checkNull(miniStore.getByHash(kblk2.id));
+      listCheck(list2, kblk2);
     }
 
     while (!Objects.equals(kblk1, kblk2)) {
@@ -188,6 +182,13 @@ public class KhaosDatabase extends TronDatabase {
     }
 
     return new Pair<>(list1, list2);
+  }
+  
+  private void listCheck(LinkedList<KhaosBlock> list, KhaosBlock kblk) throws NonCommonBlockException{
+    list.add(kblk);
+    kblk = kblk.getParent();
+    checkNull(kblk);
+    checkNull(miniStore.getByHash(kblk.id));
   }
 
   private void checkNull(Object o) throws NonCommonBlockException {
@@ -227,7 +228,7 @@ public class KhaosDatabase extends TronDatabase {
     return new Pair<>(list1, list2);
   }
 
-  // only for unittest
+  // only for unit test
   public BlockCapsule getParentBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
         .filter(Objects::nonNull)
@@ -314,7 +315,7 @@ public class KhaosDatabase extends TronDatabase {
           }
         };
 
-    public void setMaxCapcity(int maxCapacity) {
+    public void setMaxCapacity(int maxCapacity) {
       this.maxCapacity = maxCapacity;
     }
 
