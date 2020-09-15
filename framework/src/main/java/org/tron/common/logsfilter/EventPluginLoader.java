@@ -150,7 +150,8 @@ public class EventPluginLoader {
     } else if (trigger instanceof ContractEventTrigger) {
       hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
     } else if (trigger instanceof ContractTrigger) {
-      hset = trigger.getLogInfo().getClonedTopics().stream().map(Hex::toHexString).collect(Collectors.toSet());
+      hset = trigger.getLogInfo().getClonedTopics()
+              .stream().map(Hex::toHexString).collect(Collectors.toSet());
     }
 
     for (String top : topList) {
