@@ -616,28 +616,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public boolean validateSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
-    if (isVerified) {
-      return true;
-    }
-    //Do not support multi contracts in one transaction
-    Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
-    if (contract.getType() != ContractType.ShieldedTransferContract) {
-      validatePubSignature(accountStore, dynamicPropertiesStore);
-    } else {  //ShieldedTransfer
-      byte[] owner = getOwner(contract);
-      if (!ArrayUtils.isEmpty(owner)) { 
-        //transfer from transparent address
+    if (!isVerified) {
+      //Do not support multi contracts in one transaction
+      Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
+      if (contract.getType() != ContractType.ShieldedTransferContract) {
         validatePubSignature(accountStore, dynamicPropertiesStore);
-      } else { 
-        //transfer from shielded address
-        if (this.transaction.getSignatureCount() > 0) {
-          throw new ValidateSignatureException("there should be no signatures signed by "
-              + "transparent address when transfer from shielded address");
+      } else {  //ShieldedTransfer
+        byte[] owner = getOwner(contract);
+        if (!ArrayUtils.isEmpty(owner)) { //transfer from transparent address
+          validatePubSignature(accountStore, dynamicPropertiesStore);
+        } else { //transfer from shielded address
+          if (this.transaction.getSignatureCount() > 0) {
+            throw new ValidateSignatureException("there should be no signatures signed by "
+                    + "transparent address when transfer from shielded address");
+          }
         }
       }
-    }
-
-    isVerified = true;
+      isVerified = true;
+    }  
     return true;
   }
 
