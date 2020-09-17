@@ -584,30 +584,29 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public boolean validatePubSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore)
       throws ValidateSignatureException {
-    if (isVerified) {
-      return true;
-    }
-    if (this.transaction.getSignatureCount() <= 0
-        || this.transaction.getRawData().getContractCount() <= 0) {
-      throw new ValidateSignatureException("miss sig or contract");
-    }
-    if (this.transaction.getSignatureCount() > dynamicPropertiesStore
-        .getTotalSignNum()) {
-      throw new ValidateSignatureException("too many signatures");
-    }
-
-    byte[] hash = this.getRawHash().getBytes();
-
-    try {
-      if (!validateSignature(this.transaction, hash, accountStore, dynamicPropertiesStore)) {
-        isVerified = false;
-        throw new ValidateSignatureException("sig error");
+    if (!isVerified) {
+      if (this.transaction.getSignatureCount() <= 0
+              || this.transaction.getRawData().getContractCount() <= 0) {
+        throw new ValidateSignatureException("miss sig or contract");
       }
-    } catch (SignatureException | PermissionException | SignatureFormatException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
+      if (this.transaction.getSignatureCount() > dynamicPropertiesStore
+              .getTotalSignNum()) {
+        throw new ValidateSignatureException("too many signatures");
+      }
+
+      byte[] hash = this.getRawHash().getBytes();
+
+      try {
+        if (!validateSignature(this.transaction, hash, accountStore, dynamicPropertiesStore)) {
+          isVerified = false;
+          throw new ValidateSignatureException("sig error");
+        }
+      } catch (SignatureException | PermissionException | SignatureFormatException e) {
+        isVerified = false;
+        throw new ValidateSignatureException(e.getMessage());
+      }
+      isVerified = true;
     }
-    isVerified = true;
     return true;
   }
 

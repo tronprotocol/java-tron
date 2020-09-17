@@ -29,12 +29,9 @@ public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       NumberMessage.Builder build = NumberMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
       fillResponse(build.getNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);

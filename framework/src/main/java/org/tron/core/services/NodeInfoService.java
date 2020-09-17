@@ -169,7 +169,7 @@ public class NodeInfoService {
   private void setConfigNodeInfo(NodeInfo nodeInfo) {
     ConfigNodeInfo configNodeInfo = new ConfigNodeInfo();
     configNodeInfo.setCodeVersion(Version.getVersion());
-    configNodeInfo.setVersionNum(Version.versionCode);
+    configNodeInfo.setVersionNum(Version.VERSION_CODE);
     configNodeInfo.setP2pVersion(String.valueOf(parameter.getNodeP2pVersion()));
     configNodeInfo.setListenPort(parameter.getNodeListenPort());
     configNodeInfo.setDiscoverEnable(parameter.isNodeDiscoveryEnable());

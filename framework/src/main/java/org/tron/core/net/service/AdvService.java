@@ -39,6 +39,11 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class AdvService {
+  
+  private final int MAX_INV_TO_FETCH_CACHE_SIZE = 100_000;
+  private final int MAX_TRX_CACHE_SIZE = 50_000;
+  private final int MAX_BLOCK_CACHE_SIZE = 10;
+  private final int MAX_SPREAD_SIZE = 1_000;
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -48,13 +53,16 @@ public class AdvService {
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
 
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
-      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE).expireAfterWrite(1, TimeUnit.HOURS)
+      .recordStats().build();
 
   private Cache<Item, Message> trxCache = CacheBuilder.newBuilder()
-      .maximumSize(50_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+      .maximumSize(MAX_TRX_CACHE_SIZE).expireAfterWrite(1, TimeUnit.HOURS)
+      .recordStats().build();
 
   private Cache<Item, Message> blockCache = CacheBuilder.newBuilder()
-      .maximumSize(10).expireAfterWrite(1, TimeUnit.MINUTES).recordStats().build();
+      .maximumSize(MAX_BLOCK_CACHE_SIZE).expireAfterWrite(1, TimeUnit.MINUTES)
+      .recordStats().build();
 
   private ScheduledExecutorService spreadExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -62,8 +70,6 @@ public class AdvService {
 
   @Getter
   private MessageCount trxCount = new MessageCount();
-
-  private int maxSpreadSize = 1_000;
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
@@ -144,7 +150,7 @@ public class AdvService {
       return;
     }
 
-    if (invToSpread.size() > maxSpreadSize) {
+    if (invToSpread.size() > MAX_SPREAD_SIZE) {
       logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
       return;
     }
