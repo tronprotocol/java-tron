@@ -163,11 +163,17 @@ public class KhaosDatabase extends TronDatabase {
     checkNull(kblk2);
 
     while (kblk1.num > kblk2.num) {
-     listCheck(list1, kblk1);
+      list1.add(kblk1);
+      kblk1 = kblk1.getParent();
+      checkNull(kblk1);
+      checkNull(miniStore.getByHash(kblk1.id));
     }
 
     while (kblk2.num > kblk1.num) {
-      listCheck(list2, kblk2);
+      list2.add(kblk2);
+      kblk2 = kblk2.getParent();
+      checkNull(kblk2);
+      checkNull(miniStore.getByHash(kblk2.id));
     }
 
     while (!Objects.equals(kblk1, kblk2)) {
@@ -184,13 +190,6 @@ public class KhaosDatabase extends TronDatabase {
     return new Pair<>(list1, list2);
   }
   
-  private void listCheck(LinkedList<KhaosBlock> list, KhaosBlock kblk) throws NonCommonBlockException{
-    list.add(kblk);
-    kblk = kblk.getParent();
-    checkNull(kblk);
-    checkNull(miniStore.getByHash(kblk.id));
-  }
-
   private void checkNull(Object o) throws NonCommonBlockException {
     if (o == null) {
       throw new NonCommonBlockException();
