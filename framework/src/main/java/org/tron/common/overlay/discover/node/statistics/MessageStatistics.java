@@ -185,7 +185,7 @@ public class MessageStatistics {
         int fetchSize = fetchInvDataMessage.getInventory().getIdsCount();
         messageProcess(fetchInvDataMessage.getInvMessageType(),
                 tronInTrxFetchInvData,tronInTrxFetchInvDataElement,tronInBlockFetchInvData,
-                tronInBlockFetchInvDataElement,tronOutTrxFetchInvData,tronOutTrxFetchInvDataElement
+                tronInBlockFetchInvDataElement,tronOutTrxFetchInvData,tronOutTrxFetchInvDataElement,
                 tronOutBlockFetchInvData,tronOutBlockFetchInvDataElement,
                 flag, fetchSize);
         break;
