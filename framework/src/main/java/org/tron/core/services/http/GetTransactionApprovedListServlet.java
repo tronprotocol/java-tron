@@ -24,14 +24,11 @@ public class GetTransactionApprovedListServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      Transaction transaction = Util.packTransaction(input, visible);
+      PostParams params = PostParams.getPostParams(request);
+      Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
       TransactionApprovedList reply = wallet.getTransactionApprovedList(transaction);
       if (reply != null) {
-        response.getWriter().println(Util.printTransactionApprovedList(reply, visible));
+        response.getWriter().println(Util.printTransactionApprovedList(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }
