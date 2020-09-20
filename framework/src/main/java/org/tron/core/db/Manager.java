@@ -1253,8 +1253,8 @@ public class Manager {
         return true;
       }
       default:
+        return false;
     }
-    return false;
   }
 
   public TransactionStore getTransactionStore() {

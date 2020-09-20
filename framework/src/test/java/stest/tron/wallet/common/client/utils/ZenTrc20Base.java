@@ -681,7 +681,7 @@ public class ZenTrc20Base {
         .newBuilder()
         .setStartBlockIndex(startNum)
         .setEndBlockIndex(endNum)
-        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Base58.decode58Check(shieldAddress)))
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Commons.decode58Check(shieldAddress)))
         .setIvk(ByteString.copyFrom(ByteArray.fromHexString(ivkString)))
         .setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)))
         .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
@@ -743,7 +743,7 @@ public class ZenTrc20Base {
         .newBuilder()
         .setStartBlockIndex(startNum)
         .setEndBlockIndex(endNum)
-        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Base58.decode58Check(shieldAddress)))
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Commons.decode58Check(shieldAddress)))
         .setIvk(ByteString.copyFrom(ByteArray.fromHexString(ivkString)))
         .setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)))
         .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
@@ -802,7 +802,7 @@ public class ZenTrc20Base {
           .newBuilder()
           .setStartBlockIndex(startNum)
           .setEndBlockIndex(startNum + 99)
-          .setShieldedTRC20ContractAddress(ByteString.copyFrom(Base58.decode58Check(shieldAddress)))
+          .setShieldedTRC20ContractAddress(ByteString.copyFrom(Commons.decode58Check(shieldAddress)))
           .setIvk(ByteString.copyFrom(ByteArray.fromHexString(ivkString)))
           .setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)))
           .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
@@ -844,7 +844,7 @@ public class ZenTrc20Base {
         .setStartBlockIndex(startNum)
         .setEndBlockIndex(endNum)
         .setOvk(ByteString.copyFrom(ByteArray.fromHexString(ovkString)))
-        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Base58.decode58Check(shieldAddress)))
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Commons.decode58Check(shieldAddress)))
         .build();
 
     try {
@@ -878,7 +878,7 @@ public class ZenTrc20Base {
         .setStartBlockIndex(startNum)
         .setEndBlockIndex(endNum)
         .setOvk(ByteString.copyFrom(ByteArray.fromHexString(ovkString)))
-        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Base58.decode58Check(shieldAddress)))
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Commons.decode58Check(shieldAddress)))
         .build();
 
     try {
