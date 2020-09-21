@@ -802,7 +802,8 @@ public class ZenTrc20Base {
           .newBuilder()
           .setStartBlockIndex(startNum)
           .setEndBlockIndex(startNum + 99)
-          .setShieldedTRC20ContractAddress(ByteString.copyFrom(Commons.decode58Check(shieldAddress)))
+          .setShieldedTRC20ContractAddress(ByteString
+                  .copyFrom(Commons.decode58Check(shieldAddress)))
           .setIvk(ByteString.copyFrom(ByteArray.fromHexString(ivkString)))
           .setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)))
           .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
