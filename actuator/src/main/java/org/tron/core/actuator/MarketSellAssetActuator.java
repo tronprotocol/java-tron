@@ -15,6 +15,7 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 
 import com.google.protobuf.ByteString;
@@ -101,7 +102,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(TX_RESULT_NULL);
     }
 
     long fee = calcFee();

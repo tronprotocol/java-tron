@@ -110,13 +110,17 @@ public class BackupDbUtil {
 
   private void backup(int i) throws RocksDBException {
     String path = "";
-    if (i == DB_BACKUP_INDEX1) {
-      path = parameter.getDbBackupConfig().getBak1path();
-    } else if (i == DB_BACKUP_INDEX2) {
-      path = parameter.getDbBackupConfig().getBak2path();
-    } else {
-      throw new RuntimeException("Error backup with undefined index");
+    switch(i) {
+      case DB_BACKUP_INDEX1:
+        path = parameter.getDbBackupConfig().getBak1path();
+        break;
+      case DB_BACKUP_INDEX2:
+        path = parameter.getDbBackupConfig().getBak2path();
+        break;
+      default:
+        throw new RuntimeException("Error backup with undefined index");
     }
+
     List<Chainbase> stores = ((SnapshotManager) db).getDbs();
     for (Chainbase store : stores) {
       if (((SnapshotRoot) (store.getHead().getRoot())).getDb().getClass()
@@ -129,13 +133,17 @@ public class BackupDbUtil {
 
   private void deleteBackup(int i) {
     String path = "";
-    if (i == DB_BACKUP_INDEX1) {
-      path = parameter.getDbBackupConfig().getBak1path();
-    } else if (i == DB_BACKUP_INDEX2) {
-      path = parameter.getDbBackupConfig().getBak2path();
-    } else {
-      throw new RuntimeException("Error deleteBackup with undefined index");
+    switch (i) {
+      case DB_BACKUP_INDEX1:
+        path = parameter.getDbBackupConfig().getBak1path();
+        break;
+      case  DB_BACKUP_INDEX2:
+        path = parameter.getDbBackupConfig().getBak2path();
+        break;
+      default:
+        throw new RuntimeException("Error deleteBackup with undefined index");
     }
+
     List<Chainbase> stores = ((SnapshotManager) db).getDbs();
     for (Chainbase store : stores) {
       if (((SnapshotRoot) (store.getHead().getRoot())).getDb().getClass()
