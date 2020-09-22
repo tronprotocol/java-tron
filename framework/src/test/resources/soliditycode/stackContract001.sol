@@ -1,73 +1,61 @@
 pragma solidity ^0.5.0;
 
-contract B{
-    constructor() payable public{}
-    function Stake(address sr, uint256 amount) public returns (bool result){
-        return stake(sr, amount);
+contract A{
+    event log(uint256);
+    constructor() payable public{
+        emit log(withdrawreward());
+        emit log(address(this).rewardbalance);
     }
-    function UnStake() public returns (bool result){
-        return unstake();
+    function withdrawRewardTest() public returns (uint256){
+        return withdrawreward();
     }
-    function SelfdestructTest(address payable target) public{
-        selfdestruct(target);
+
+    function test() private{
+        emit log(123);
     }
 }
 
-contract testStakeSuicide{
-    B b;
-    constructor() payable public{}
-    function deployB() payable public returns (B addrB){
-        b = new B().value(1000000000);
-        return b;
-    }
-    function SelfdestructTest(address payable target) public{
-        selfdestruct(target);
-    }
-    function SelfdestructTest2(address sr, uint256 amount, address payable target) public{
-        stake(sr, amount);
-        selfdestruct(target);
+contract B{
+    event log(uint256);
+    constructor() payable public{
+        emit log(withdrawreward());
+        emit log(address(this).rewardbalance);
     }
     function Stake(address sr, uint256 amount) public returns (bool result){
-        return stake(sr, amount);
-    }
-    function Stake2(address sr, uint256 amount) public returns (bool result){
-        stake(sr, amount);
         return stake(sr, amount);
     }
     function UnStake() public returns (bool result){
         return unstake();
     }
-    function UnStake2() public returns (bool result){
-        unstake();
-        return unstake();
+    function SelfdestructTest(address payable target) public{
+        selfdestruct(target);
     }
-    function WithdrawReward() public {
-        withdrawreward();
-    }
-    function RewardBalance(address addr) view public returns (uint256 balance) {
+    function rewardBalance(address addr) public view returns (uint256){
         return addr.rewardbalance;
     }
-    function revertTest1(address sr, uint256 amount, address payable transferAddr) public{
-        transferAddr.transfer(1000000);
-        stake(sr, amount);
-        transferAddr.transfer(2000000);
-        stake(sr, 1000000000000000);//stake more than balance to fail
-        transferAddr.transfer(4000000);
+
+    function nullAddressTest() public view returns (uint256) {
+        return address(0x0).rewardbalance;
     }
-    function revertTest2(address payable transferAddr) public{
-        transferAddr.transfer(1000000);
-        unstake();
-        transferAddr.transfer(2000000);
-        unstake();//unstake twice to fail
-        transferAddr.transfer(4000000);
+
+    function localContractAddrTest() public view returns (uint256) {
+        address payable localContract = address(uint160(address(this)));
+        return localContract.rewardbalance;
     }
-    function BStake()(address sr, uint256 amount) public returns (bool result){
-        return b.Stake(sr, amount);
+
+    function withdrawRewardTest() public returns (uint256){
+        return withdrawreward();
     }
-    function BUnStake() public returns (bool result){
-        return b.UnStake();
+
+    function contractBWithdrawRewardTest(address contractB) public returns (uint) {
+        return B(contractB).withdrawRewardTest();
     }
-    function BSelfdestructTest(address payable target) public{
-        b.selfdestructTest(target);
+
+    function createA() public returns (address){
+        return address(new A());
+    }
+
+    function callA(address Addr) public{
+        A(Addr).test();
     }
 }
