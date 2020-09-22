@@ -110,7 +110,7 @@ public class BackupDbUtil {
 
   private void backup(int i) throws RocksDBException {
     String path = "";
-    switch(i) {
+    switch (i) {
       case DB_BACKUP_INDEX1:
         path = parameter.getDbBackupConfig().getBak1path();
         break;
