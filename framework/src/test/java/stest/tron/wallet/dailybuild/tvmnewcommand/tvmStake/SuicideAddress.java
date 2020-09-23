@@ -13,6 +13,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -24,21 +27,21 @@ import java.util.Optional;
 public class SuicideAddress {
 
     private String testFoundationKey = Configuration.getByPath("testng.conf")
-            .getString("foundationAccount.key2");
+        .getString("foundationAccount.key1");
     private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
     private String testWitnessKey = Configuration.getByPath("testng.conf")
-            .getString("witness.key1");
+        .getString("witness.key1");
     private String testWitnessKey2 = Configuration.getByPath("testng.conf")
-            .getString("witness.key3");
+        .getString("witness.key3");
     private byte[] testWitnessAddress = PublicMethed.getFinalAddress(testWitnessKey);
     private byte[] testWitnessAddress2 = PublicMethed.getFinalAddress(testWitnessKey2);
 
 
 
     private Long maxFeeLimit = Configuration.getByPath("testng.conf")
-            .getLong("defaultParameter.maxFeeLimit");
+        .getLong("defaultParameter.maxFeeLimit");
     private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-            .get(0);
+        .get(0);
     private ManagedChannel channelFull = null;
     private WalletGrpc.WalletBlockingStub blockingStubFull = null;
 
@@ -50,6 +53,10 @@ public class SuicideAddress {
     byte[] testAddress002 = ecKey2.getAddress();
     String testKey002 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
     private byte[] contractAddress;
+    String filePath = "src/test/resources/soliditycode/testStakeSuicide.sol";
+    String contractName = "testStakeSuicide";
+    String code = "";
+    String abi = "";
 
     @BeforeSuite
     public void beforeSuite() {
@@ -63,56 +70,172 @@ public class SuicideAddress {
 
     @BeforeClass(enabled = true)
     public void beforeClass() {
+        System.out.println(testKey001);
         PublicMethed.printAddress(testKey001);
         channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
         blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
         PublicMethed
-                .sendcoin(testAddress002, 100000L, testFoundationAddress, testFoundationKey,
-                        blockingStubFull);
-        PublicMethed
-                .sendcoin(testAddress001, 1000_000_00000L, testFoundationAddress, testFoundationKey,
-                        blockingStubFull);
+            .sendcoin(testAddress001, 1000_000_00000L, testFoundationAddress, testFoundationKey,
+                blockingStubFull);
         PublicMethed.waitProduceNextBlock(blockingStubFull);
-        String filePath = "src/test/resources/soliditycode/testStakeSuicide.sol";
-        String contractName = "testStakeSuicide";
+
         HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-        String code = retMap.get("byteCode").toString();
-        String abi = retMap.get("abI").toString();
+        code = retMap.get("byteCode").toString();
+        abi = retMap.get("abI").toString();
         contractAddress = PublicMethed
-                .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000_0000L, 100, null, testKey001,
-                        testAddress001, blockingStubFull);
+            .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000000L, 100, null, testKey001,
+                testAddress001, blockingStubFull);
 
         PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
 
-    @Test(enabled = true, description = "Vote for witness")
+    @Test(enabled = true, description = "targetAddress is account no TRX, and no frozen")
     void tvmStakeTest001() {
-        System.out.println("dddddd "+Base58.encode58Check(testAddress002));
-        System.out.println("dddddd "+Base58.encode58Check(testAddress001));
+        ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
+        byte[] targetAddress = ecKey_targetAddress.getAddress();
+        String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
+
+        contractAddress = PublicMethed
+            .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000000L, 100, null, testKey001,
+                testAddress001, blockingStubFull);
+
+        Account ownerAccount = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+        Long ownerBalance = ownerAccount.getBalance();
+
+        String methodStr_Suicide = "SelfdestructTest(address)";
+        String argsStr_Suicide = "\"" + Base58.encode58Check(targetAddress) + "\""  ;
+        String txid_Suicide  = PublicMethed
+            .triggerContract(contractAddress, methodStr_Suicide, argsStr_Suicide,
+                false, 0, maxFeeLimit,
+                testAddress001, testKey001, blockingStubFull);
+
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+        Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(txid_Suicide, blockingStubFull);
+        ex = PublicMethed.getTransactionInfoById(txid_Suicide,blockingStubFull);
+        Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+
+        Account targetAccount = PublicMethed.queryAccount(targetAddress,blockingStubFull);
+        Long targetBalance = targetAccount.getBalance();
+
+        System.out.println(targetBalance);
+        Assert.assertEquals(ownerBalance,targetBalance);
+
+    }
+
+    @Test(enabled = true, description = "targetAddress is account 1 TRX, and no frozen")
+    void tvmStakeTest002() {
+        ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
+        byte[] targetAddress = ecKey_targetAddress.getAddress();
+        String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
+
+        PublicMethed
+            .sendcoin(targetAddress, 1_000000L, testFoundationAddress, testFoundationKey,
+                blockingStubFull);
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+        contractAddress = PublicMethed
+            .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000000L, 100, null, testKey001,
+                testAddress001, blockingStubFull);
+
+        Account ownerAccount = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+        Long ownerBalance = ownerAccount.getBalance();
+
+        String methodStr_Suicide = "SelfdestructTest(address)";
+        String argsStr_Suicide = "\"" + Base58.encode58Check(targetAddress) + "\""  ;
+        String txid_Suicide  = PublicMethed
+            .triggerContract(contractAddress, methodStr_Suicide, argsStr_Suicide,
+                false, 0, maxFeeLimit,
+                testAddress001, testKey001, blockingStubFull);
+
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+        Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(txid_Suicide, blockingStubFull);
+        ex = PublicMethed.getTransactionInfoById(txid_Suicide,blockingStubFull);
+        Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+
+        Account targetAccount = PublicMethed.queryAccount(targetAddress,blockingStubFull);
+        Long targetBalance = targetAccount.getBalance() - 1_000000L;
+
+        Assert.assertEquals(ownerBalance,targetBalance);
+
+        Assert.assertTrue(PublicMethed
+            .freezeBalance(targetAddress,1_000000L,3,testKey_targetAddress,blockingStubFull));
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    }
+
+    @Test(enabled = true, description = "targetAddress is account 1 TRX, and 1 frozen")
+    void tvmStakeTest003() {
+        ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
+        byte[] targetAddress = ecKey_targetAddress.getAddress();
+        String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
+        Assert.assertTrue(PublicMethed
+            .sendcoin(targetAddress, 10_000000L, testFoundationAddress, testFoundationKey,
+                blockingStubFull));
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+        Assert.assertTrue(PublicMethed
+            .freezeBalance(targetAddress,1_000000L,3,testKey_targetAddress,blockingStubFull));
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+        Account targetAccount = PublicMethed.queryAccount(targetAddress,blockingStubFull);
+        Frozen targetFrozenBefore = targetAccount.getFrozen(0);
+        contractAddress = PublicMethed
+            .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000000L, 100, null, testKey001,
+                testAddress001, blockingStubFull);
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+        Account ownerAccount = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+        Long ownerBalance = ownerAccount.getBalance();
+        String methodStr_Suicide = "SelfdestructTest(address)";
+        String argsStr_Suicide = "\"" + Base58.encode58Check(targetAddress) + "\""  ;
+        String txid_Suicide  = PublicMethed
+            .triggerContract(contractAddress, methodStr_Suicide, argsStr_Suicide,
+                false, 0, maxFeeLimit,
+                testAddress001, testKey001, blockingStubFull);
+
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+        Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(txid_Suicide, blockingStubFull);
+        Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+        Account targetAccountAfter = PublicMethed.queryAccount(targetAddress,blockingStubFull);
+        Frozen targetFrozenAfter = targetAccountAfter.getFrozen(0);
+        Long targetBalance = targetAccountAfter.getBalance() - 9_000000L;
+        Assert.assertEquals(targetFrozenBefore,targetFrozenAfter);
+        Assert.assertEquals(ownerBalance,targetBalance);
+
+    }
+
+    @Test(enabled = true, description = "")
+    void tvmStakeTest004() {
+        contractAddress = PublicMethed
+            .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000000L, 100, null, testKey001,
+                testAddress001, blockingStubFull);
         String methodStr = "Stake(address,uint256)";
-        String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1000000 ;
+        String argsStr = "\"" + "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE" + "\","  + 1000000 ;
         String txid  = PublicMethed
-                .triggerContract(contractAddress, methodStr, argsStr,
-                        false, 0, maxFeeLimit,
-                        testAddress001, testKey001, blockingStubFull);
+            .triggerContract(contractAddress, methodStr, argsStr,
+                false, 0, maxFeeLimit,
+                testAddress001, testKey001, blockingStubFull);
         PublicMethed.waitProduceNextBlock(blockingStubFull);
         Optional<Protocol.TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
         int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
         Assert.assertEquals(contractResult,1);
 
-        Protocol.Account request = Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(contractAddress)).build();
-        byte[] voteAddress = (blockingStubFull.getAccount(request).getVotesList().get(0).getVoteAddress().toByteArray());
-        Assert.assertEquals(testWitnessAddress,voteAddress);
-        Assert.assertEquals(1,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
+
 
         String methodStr_Suicide = "SelfdestructTest(address)";
-        String argsStr_Suicide = "\"" + Base58.encode58Check(testAddress002) + "\""  ;
+        String argsStr_Suicide = "\"" + "TCQV2RMNE2FGsJohEwoJYFgyxDgWPZiCjq" + "\""  ;
         String txid_Suicide  = PublicMethed
-                .triggerContract(contractAddress, methodStr_Suicide, argsStr_Suicide,
-                        false, 0, maxFeeLimit,
-                        testAddress001, testKey001, blockingStubFull);
+            .triggerContract(contractAddress, methodStr_Suicide, argsStr_Suicide,
+                false, 0, maxFeeLimit,
+                testAddress001, testKey001, blockingStubFull);
         System.out.println("aaaa"+txid_Suicide);
 
 
     }
+
+
 }
+
+
