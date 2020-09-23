@@ -91,7 +91,7 @@ public class stakeSuicideTest005 {
     }
 
     @Test(enabled = true, description = "targetAddress is account no TRX, and no frozen")
-    void tvmStakeTest001() {
+    void tvmStakeSuicideTest001() {
         ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
         byte[] targetAddress = ecKey_targetAddress.getAddress();
         String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
@@ -124,7 +124,7 @@ public class stakeSuicideTest005 {
     }
 
     @Test(enabled = true, description = "targetAddress is account 1 TRX, and no frozen")
-    void tvmStakeTest002() {
+    void tvmStakeSuicideTest002() {
         ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
         byte[] targetAddress = ecKey_targetAddress.getAddress();
         String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
@@ -165,7 +165,7 @@ public class stakeSuicideTest005 {
     }
 
     @Test(enabled = true, description = "targetAddress is account 1 TRX, and 1 frozen")
-    void tvmStakeTest003() {
+    void tvmStakeSuicideTest003() {
         ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
         byte[] targetAddress = ecKey_targetAddress.getAddress();
         String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
@@ -207,7 +207,7 @@ public class stakeSuicideTest005 {
     }
 
     @Test(enabled = true, description = "")
-    void tvmStakeTest004() {
+    void tvmStakeSuicideTest004() {
         contractAddress = PublicMethed
             .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000000L, 100, null, testKey001,
                 testAddress001, blockingStubFull);
