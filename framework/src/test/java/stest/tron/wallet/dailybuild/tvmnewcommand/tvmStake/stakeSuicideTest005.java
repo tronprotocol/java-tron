@@ -206,36 +206,6 @@ public class stakeSuicideTest005 {
 
     }
 
-    @Test(enabled = true, description = "")
-    void tvmStakeSuicideTest004() {
-        contractAddress = PublicMethed
-            .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000000L, 100, null, testKey001,
-                testAddress001, blockingStubFull);
-        String methodStr = "Stake(address,uint256)";
-        String argsStr = "\"" + "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE" + "\","  + 1000000 ;
-        String txid  = PublicMethed
-            .triggerContract(contractAddress, methodStr, argsStr,
-                false, 0, maxFeeLimit,
-                testAddress001, testKey001, blockingStubFull);
-        PublicMethed.waitProduceNextBlock(blockingStubFull);
-        Optional<Protocol.TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-        int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
-        Assert.assertEquals(contractResult,1);
-
-
-
-        String methodStr_Suicide = "SelfdestructTest(address)";
-        String argsStr_Suicide = "\"" + "TCQV2RMNE2FGsJohEwoJYFgyxDgWPZiCjq" + "\""  ;
-        String txid_Suicide  = PublicMethed
-            .triggerContract(contractAddress, methodStr_Suicide, argsStr_Suicide,
-                false, 0, maxFeeLimit,
-                testAddress001, testKey001, blockingStubFull);
-        System.out.println("aaaa"+txid_Suicide);
-
-
-    }
-
-
 }
 
 
