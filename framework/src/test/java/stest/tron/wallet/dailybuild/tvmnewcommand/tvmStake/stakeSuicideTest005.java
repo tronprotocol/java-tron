@@ -24,7 +24,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 import java.util.HashMap;
 import java.util.Optional;
 
-public class SuicideAddress {
+public class stakeSuicideTest005 {
 
     private String testFoundationKey = Configuration.getByPath("testng.conf")
         .getString("foundationAccount.key1");
