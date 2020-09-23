@@ -457,7 +457,7 @@ public class UpdateAsset2Test {
     Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {
