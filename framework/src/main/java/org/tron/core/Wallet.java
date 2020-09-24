@@ -1379,7 +1379,7 @@ public class Wallet {
     return blockNum;
   }
 
-  //in:outPoint,out:blockNumber
+  //in:outPoint, out:blockNumber
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
