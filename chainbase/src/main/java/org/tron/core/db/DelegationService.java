@@ -215,6 +215,9 @@ public class DelegationService {
   public void adjustAllowance(AccountStore accountStore, byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    if (account == null) {
+      return;
+    }
     long allowance = account.getAllowance();
     if (amount == 0) {
       return;
