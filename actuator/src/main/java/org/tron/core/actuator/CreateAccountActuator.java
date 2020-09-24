@@ -18,6 +18,8 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+
 @Slf4j(topic = "actuator")
 public class CreateAccountActuator extends AbstractActuator {
 
@@ -95,7 +97,7 @@ public class CreateAccountActuator extends AbstractActuator {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           ActuatorConstant.ACCOUNT_EXCEPTION_STR
-              + readableOwnerAddress + "] not exists");
+              + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     final long fee = calcFee();

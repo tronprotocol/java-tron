@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -1920,7 +1921,7 @@ public class AssetIssueActuatorTest {
     actuatorTest.setContract(getContract());
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.setNullDBManagerMsg(STORE_NOT_EXIST);
     actuatorTest.nullDBManger();
 
   }
