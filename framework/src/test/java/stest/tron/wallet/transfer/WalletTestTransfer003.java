@@ -125,10 +125,9 @@ public class WalletTestTransfer003 {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
     }
-
     return transaction;
   }
 
@@ -386,13 +385,10 @@ public class WalletTestTransfer003 {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
     }
-
     return transaction;
-
-
   }
 }
 

@@ -106,13 +106,13 @@ public class StakeProcessor {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR
-                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
+                  + readableWitnessAddress + ActuatorConstant.NOT_EXIST_STR);
         }
         if (!witnessStore.has(witnessCandidate)) {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR
-                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
+                  + readableWitnessAddress + ActuatorConstant.NOT_EXIST_STR);
         }
         sum = vote.getVoteCount();
       }

@@ -14,6 +14,8 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnstakeParam;
 import org.tron.core.vm.repository.Repository;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+
 @Slf4j(topic = "Processor")
 public class UnstakeProcessor {
 
@@ -67,7 +69,7 @@ public class UnstakeProcessor {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] does not exist");
+              ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
     long now = unstakeParam.getNow();
 
