@@ -42,7 +42,7 @@ public class FullNode {
   }
 
   /**
-   * Start the FullNode.
+   * start the fullnode
    */
   public static void main(String[] args) {
     logger.info("Full node running.");
