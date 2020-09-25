@@ -79,7 +79,7 @@ public class KeyIo {
       bits += fromBits;
       while (bits >= toBits) {
         bits -= toBits;
-        out.write((int) ((acc >>> bits) & maxv));
+        out.write((acc >>> bits) & maxv);
       }
     }
     if (pad) {
