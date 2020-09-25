@@ -223,8 +223,12 @@ public class stakeSuicideTest004 {
     byte[] targetAddress = ecKey_targetAddress.getAddress();
     String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed
-        .sendcoin(targetAddress, 10_000000L, testFoundationAddress, testFoundationKey,
+        .sendcoin(targetAddress, 20_000000L, testFoundationAddress, testFoundationKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(targetAddress,5_000000L,3,1, ByteString.copyFrom(testAddress001),testKey_targetAddress,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed
