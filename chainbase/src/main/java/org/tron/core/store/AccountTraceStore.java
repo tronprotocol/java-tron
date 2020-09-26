@@ -56,7 +56,7 @@ public class AccountTraceStore extends TronStoreWithRevoking<AccountTraceCapsule
 //    Pair<Long, Long> pair = getPrevBalance(address, number);
     logger.info("recordBalanceWithBlock===== address:{} number:{} balance:{}", StringUtil.encode58Check(address), number, balance);
     byte[] key = Bytes.concat(address, Longs.toByteArray(xor(number)));
-    put(key, new AccountTraceCapsule(balance));
+    put(key, new AccountTraceCapsule(balance, number));
   }
 
   public Pair<Long, Long> getPrevBalance(byte[] address, long number) {

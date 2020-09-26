@@ -21,9 +21,16 @@ public class AccountTraceCapsule implements ProtoCapsule<AccountTrace> {
     accountTrace = accountTrace.toBuilder().setBalance(balance).build();
   }
 
+  public AccountTraceCapsule(long balance, long placeholder) {
+    this();
+    accountTrace = accountTrace.toBuilder()
+        .setBalance(balance)
+        .setPlaceholder(placeholder)
+        .build();
+  }
+
 
   public AccountTraceCapsule(AccountTrace accountTrace) {
-    this();
     this.accountTrace = accountTrace;
   }
 

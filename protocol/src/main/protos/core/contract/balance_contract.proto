@@ -63,4 +63,5 @@ message BlockBalanceTrace {
 
 message AccountTrace {
   int64 balance = 1;
+  int64 placeholder = 99;
 }
