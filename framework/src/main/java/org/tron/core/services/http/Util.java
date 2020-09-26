@@ -26,6 +26,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.StringUtil;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.BlockInfoList;
+import org.tron.api.GrpcAPI.BlockInfo;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -85,6 +87,19 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
+  public static String printBlockInfoList(BlockInfoList blockInfoList, boolean selfType) {
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(blockInfoList, selfType));
+
+    /*
+    List<BlockInfo> blockInfos = blockInfoList.getBlockList();
+    JSONArray jsonArray = new JSONArray();
+    blockInfos.stream().forEach(block -> jsonArray.add(printBlockInfoToJSON(block, selfType)));
+    jsonObject.put("block", jsonArray);
+    */
+
+    return jsonObject.toJSONString();
+  }
+
   public static String printBlock(Block block, boolean selfType) {
     return printBlockToJSON(block, selfType).toJSONString();
   }
@@ -119,6 +134,23 @@ public class Util {
     }
     return jsonObject;
   }
+
+  /*
+  public static JSONObject printBlockInfoToJSON(BlockInfo blockInfo, boolean selfType) {
+    // BlockCapsule blockCapsule = new BlockCapsule(block);
+    // String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
+    String blockID = ByteArray.toHexString(blockInfo.getBlockid().toByteArray());
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(blockInfo, selfType));
+    // jsonObject.put("blockID", blockID);
+
+    // jsonObject.put(
+    //   "transactions",
+    //   JSONObject.parseObject(JsonFormat.printToString(blockInfo.getTransactionInfoList(), selfType))
+    // );
+    // jsonObject.put("transactions", printTransactionListToJSON(blockInfo.getTransactionInfoList(), selfType));
+    return jsonObject;
+  }
+  */
 
   public static String printTransactionList(TransactionList list, boolean selfType) {
     List<Transaction> transactions = list.getTransactionList();
