@@ -69,16 +69,16 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     if (old == null) {
       if (item.getBalance() != 0) {
         recordBalance(item, item.getBalance());
-        BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
-        if (blockId != null) {
-          accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
+        BlockBalanceTraceCapsule current = balanceTraceStore.getCurrentBlockBalanceTraceCapsule();
+        if (current != null) {
+          accountTraceStore.recordBalanceWithBlock(key, current.getBlockIdentifier().getNumber(), item.getBalance());
         }
       }
     } else if (old.getBalance() != item.getBalance()){
       recordBalance(item, item.getBalance() - old.getBalance());
-      BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
-      if (blockId != null) {
-        accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
+      BlockBalanceTraceCapsule current = balanceTraceStore.getCurrentBlockBalanceTraceCapsule();
+      if (current != null) {
+        accountTraceStore.recordBalanceWithBlock(key, current.getBlockIdentifier().getNumber(), item.getBalance());
       }
     }
 
@@ -93,9 +93,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       recordBalance(old, -old.getBalance());
     }
 
-    BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
-    if (blockId != null) {
-      accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
+    BlockBalanceTraceCapsule current = balanceTraceStore.getCurrentBlockBalanceTraceCapsule();
+    if (current != null) {
+      accountTraceStore.recordBalanceWithBlock(key, current.getBlockIdentifier().getNumber(), 0);
     }
 
     super.delete(key);
