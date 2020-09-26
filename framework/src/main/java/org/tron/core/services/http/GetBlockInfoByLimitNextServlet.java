@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 @Slf4j(topic = "API")
 public class GetBlockInfoByLimitNextServlet extends RateLimiterServlet {
 
-  private static final long BLOCK_LIMIT_NUM = 100;
+  private static final long BLOCK_LIMIT_NUM = 1000;
   @Autowired
   private Wallet wallet;
 
