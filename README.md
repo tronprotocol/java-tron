@@ -77,7 +77,7 @@ This guide walks the user through the TRON Quickstart (v2.0.0) image setup.
 
 [Core Devs Community](https://t.me/troncoredevscommunity) is the Telegram channel for java-tron community developers. If you want to contribute to java-tron, please join this channel.
 
-[tronprotocol/allcoredev](https://gitter.im/tronprotocol/allcoredev) is the official Gitter channel for developers.
+[tronprotocol/allcoredev](https://gitter.im/tronprotocol/allcoredev) is the official Gitter channel for developers. 
 
 # Contribution
 If you'd like to contribute to java-tron, please read the following instructions.
