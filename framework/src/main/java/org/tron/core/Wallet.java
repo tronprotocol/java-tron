@@ -889,7 +889,7 @@ public class Wallet {
         .setKey("getAllowTvmSolidity059")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
-    
+
     // ALLOW_TVM_ISTANBUL
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmIstanbul")
@@ -1246,6 +1246,16 @@ public class Wallet {
       logger.error(e.getMessage());
     }
     return block;
+  }
+
+  public BlockList getLogs(long number, long limit) {
+    if (limit <= 0) {
+      return null;
+    }
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    chainBaseManager.getBlockStore().getLimitNumber(number, limit).forEach(
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
+    return blockListBuilder.build();
   }
 
   public BlockList getBlocksByLimitNext(long number, long limit) {
