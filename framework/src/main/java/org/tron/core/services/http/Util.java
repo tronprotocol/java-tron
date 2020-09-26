@@ -25,10 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.StringUtil;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.api.GrpcAPI.BlockInfo;
+import org.tron.api.GrpcAPI.BlockInfoList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
@@ -85,6 +88,13 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
+  public static String printBlockInfoList(BlockInfoList blockInfoList, boolean selfType) {
+    JSONArray jsonArray = new JSONArray();
+    List<BlockInfo> blockInfos = blockInfoList.getBlockList();
+    blockInfos.stream().forEach(block -> jsonArray.add(printBlockInfoToJSON(block, selfType)));
+    return jsonArray.toJSONString();
+  }
+
   public static String printBlock(Block block, boolean selfType) {
     return printBlockToJSON(block, selfType).toJSONString();
   }
@@ -118,6 +128,25 @@ public class Util {
           printTransactionListToJSON(blockCapsule.getTransactions(), selfType));
     }
     return jsonObject;
+  }
+
+  public static JSONObject printBlockInfoToJSON(BlockInfo blockInfo, boolean selfType) {
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(blockInfo, selfType));
+    jsonObject.put(
+        "transactionInfoList",
+        printTransactionInfoListToJSON(blockInfo.getTransactionInfoList(), selfType));
+    return jsonObject;
+  }
+
+  private static JSONArray printTransactionInfoListToJSON(
+      TransactionInfoList list, boolean selfType
+  ) {
+    JSONArray jsonArray = new JSONArray();
+    for (TransactionInfo transactionInfo : list.getTransactionInfoList()) {
+      jsonArray.add(
+          JSONObject.parseObject(JsonFormat.printToString(transactionInfo, selfType)));
+    }
+    return jsonArray;
   }
 
   public static String printTransactionList(TransactionList list, boolean selfType) {

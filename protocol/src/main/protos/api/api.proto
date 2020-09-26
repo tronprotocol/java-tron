@@ -404,6 +404,15 @@ service Wallet {
   //Use this function instead of GetBlockByLimitNext.
   rpc GetBlockByLimitNext2 (BlockLimit) returns (BlockListExtention) {
   }
+  rpc GetBlockInfoByLimitNext (BlockLimit) returns (BlockInfoList) {
+    option (google.api.http) = {
+      post: "/wallet/getblockinfobylimitnext"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getblockinfobylimitnext"
+      }
+    };
+  }
   //Please use GetBlockByLatestNum2 instead of this function.
   rpc GetBlockByLatestNum (NumberMessage) returns (BlockList) {
     option (google.api.http) = {
@@ -1189,8 +1198,18 @@ message BlockExtention {
   bytes blockid = 3;
 }
 
+message BlockInfo {
+  TransactionInfoList transactionInfoList = 1;
+  BlockHeader block_header = 2;
+  bytes blockid = 3;
+}
+
 message BlockListExtention {
   repeated BlockExtention block = 1;
+}
+
+message BlockInfoList {
+  repeated BlockInfo block = 1;
 }
 
 message TransactionListExtention {
