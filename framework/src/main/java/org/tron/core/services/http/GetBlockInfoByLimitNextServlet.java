@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetLogsServlet extends RateLimiterServlet {
+public class GetBlockInfoByLimitNextServlet extends RateLimiterServlet {
 
   private static final long BLOCK_LIMIT_NUM = 100;
   @Autowired
@@ -43,7 +43,7 @@ public class GetLogsServlet extends RateLimiterServlet {
       HttpServletResponse response)
       throws IOException {
     if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-      BlockInfoList reply = wallet.getLogs(startNum, endNum - startNum);
+      BlockInfoList reply = wallet.getBlockInfoByLimitNext(startNum, endNum - startNum);
       if (reply != null) {
         response.getWriter().println(Util.printBlockInfoList(reply, visible));
         return;

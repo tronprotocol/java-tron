@@ -404,12 +404,12 @@ service Wallet {
   //Use this function instead of GetBlockByLimitNext.
   rpc GetBlockByLimitNext2 (BlockLimit) returns (BlockListExtention) {
   }
-  rpc GetLogs (BlockLimit) returns (BlockInfoList) {
+  rpc GetBlockInfoByLimitNext (BlockLimit) returns (BlockInfoList) {
     option (google.api.http) = {
-      post: "/wallet/getlogs"
+      post: "/wallet/getblockinfobylimitnext"
       body: "*"
       additional_bindings {
-        get: "/wallet/getlogs"
+        get: "/wallet/getblockinfobylimitnext"
       }
     };
   }

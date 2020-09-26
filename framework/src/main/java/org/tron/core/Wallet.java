@@ -1263,7 +1263,7 @@ public class Wallet {
     return builder.build();
   }
 
-  public BlockInfoList getLogs(long number, long limit) {
+  public BlockInfoList getBlockInfoByLimitNext(long number, long limit) {
     if (limit <= 0) {
       return null;
     }
