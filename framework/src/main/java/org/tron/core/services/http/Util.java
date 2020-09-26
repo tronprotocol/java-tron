@@ -32,6 +32,7 @@ import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
@@ -88,16 +89,10 @@ public class Util {
   }
 
   public static String printBlockInfoList(BlockInfoList blockInfoList, boolean selfType) {
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(blockInfoList, selfType));
-
-    /*
-    List<BlockInfo> blockInfos = blockInfoList.getBlockList();
     JSONArray jsonArray = new JSONArray();
+    List<BlockInfo> blockInfos = blockInfoList.getBlockList();
     blockInfos.stream().forEach(block -> jsonArray.add(printBlockInfoToJSON(block, selfType)));
-    jsonObject.put("block", jsonArray);
-    */
-
-    return jsonObject.toJSONString();
+    return jsonArray.toJSONString();
   }
 
   public static String printBlock(Block block, boolean selfType) {
@@ -135,22 +130,21 @@ public class Util {
     return jsonObject;
   }
 
-  /*
   public static JSONObject printBlockInfoToJSON(BlockInfo blockInfo, boolean selfType) {
-    // BlockCapsule blockCapsule = new BlockCapsule(block);
-    // String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
-    String blockID = ByteArray.toHexString(blockInfo.getBlockid().toByteArray());
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(blockInfo, selfType));
-    // jsonObject.put("blockID", blockID);
-
-    // jsonObject.put(
-    //   "transactions",
-    //   JSONObject.parseObject(JsonFormat.printToString(blockInfo.getTransactionInfoList(), selfType))
-    // );
-    // jsonObject.put("transactions", printTransactionListToJSON(blockInfo.getTransactionInfoList(), selfType));
+    jsonObject.put("transactionInfoList", printTransactionInfoListToJSON(blockInfo.getTransactionInfoList(), selfType));
     return jsonObject;
   }
-  */
+
+  private static JSONArray printTransactionInfoListToJSON(TransactionInfoList list, boolean selfType) {
+    JSONArray jsonArray = new JSONArray();
+    for (TransactionInfo transactionInfo : list.getTransactionInfoList()) {
+      jsonArray.add(
+        JSONObject.parseObject(JsonFormat.printToString(transactionInfo, selfType))
+      );
+    }
+    return jsonArray;
+  }
 
   public static String printTransactionList(TransactionList list, boolean selfType) {
     List<Transaction> transactions = list.getTransactionList();
