@@ -43,10 +43,9 @@ public class CreateAddressServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+      boolean visible = params.isVisible();
+      String input = params.getParams();
       if (visible) {
         input = covertStringToHex(input);
       }
