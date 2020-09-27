@@ -21,7 +21,6 @@ import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.CommonStore;
-import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
@@ -30,6 +29,7 @@ import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -150,7 +150,7 @@ public class ChainBaseManager {
 
   @Getter
   @Setter
-  private DelegationService delegationService;
+  private MortgageService mortgageService;
 
   @Autowired
   @Getter

@@ -1547,7 +1547,7 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       getTransactionCountByBlockNumCommon(request, responseObserver);
     }
-    
+
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
       List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
@@ -1963,7 +1963,7 @@ public class RpcApiService implements Service {
       responseObserver.onNext(wallet.getChainParameters());
       responseObserver.onCompleted();
     }
-    
+
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
@@ -2462,13 +2462,13 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
-    
+
     @Override
     public void getRewardInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       getRewardInfoCommon(request, responseObserver);
     }
-    
+
     @Override
     public void getBrokerageInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
@@ -2595,11 +2595,11 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
   }
-  
+
   public void generateAddressCommon(EmptyMessage request,
       StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
     SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-            Args.getInstance().isECKeyCryptoEngine());
+        Args.getInstance().isECKeyCryptoEngine());
     byte[] priKey = cryptoEngine.getPrivateKey();
     byte[] address = cryptoEngine.getAddress();
     String addressStr = StringUtil.encode58Check(address);
@@ -2610,11 +2610,11 @@ public class RpcApiService implements Service {
     responseObserver.onNext(builder.build());
     responseObserver.onCompleted();
   }
-  
+
   public void getRewardInfoCommon(BytesMessage request,
       StreamObserver<NumberMessage> responseObserver) {
     try {
-      long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
+      long value = dbManager.getMortgageService().queryReward(request.getValue().toByteArray());
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(value);
       responseObserver.onNext(builder.build());
@@ -2623,13 +2623,13 @@ public class RpcApiService implements Service {
     }
     responseObserver.onCompleted();
   }
-  
+
   public void getBrokerageInfoCommon(BytesMessage request,
       StreamObserver<NumberMessage> responseObserver) {
     try {
       long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
       long value = dbManager.getDelegationStore()
-            .getBrokerage(cycle, request.getValue().toByteArray());
+          .getBrokerage(cycle, request.getValue().toByteArray());
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(value);
       responseObserver.onNext(builder.build());
@@ -2638,7 +2638,7 @@ public class RpcApiService implements Service {
     }
     responseObserver.onCompleted();
   }
-  
+
   public void getTransactionCountByBlockNumCommon(NumberMessage request,
       StreamObserver<NumberMessage> responseObserver) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -2652,5 +2652,5 @@ public class RpcApiService implements Service {
     responseObserver.onNext(builder.build());
     responseObserver.onCompleted();
   }
-  
+
 }
