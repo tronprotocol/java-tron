@@ -2,8 +2,14 @@ package org.tron.program;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Longs;
+import com.google.protobuf.Option;
 import java.io.File;
+import java.util.Arrays;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
@@ -11,6 +17,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
+import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -19,6 +26,11 @@ import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.core.store.AccountTraceStore;
+import org.tron.core.store.BalanceTraceStore;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
+import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -67,6 +79,11 @@ public class FullNode {
     context.register(DefaultConfig.class);
 
     context.refresh();
+
+    if (Args.getInstance().isFixDb()) {
+      fixDb(context);
+    }
+
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
@@ -113,5 +130,27 @@ public class FullNode {
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+  }
+
+  public static void fixDb(TronApplicationContext context) {
+    System.out.println("begin to fix db account-trace");
+    AccountTraceStore accountTraceStore = context.getBean(AccountTraceStore.class);
+    BalanceTraceStore balanceTraceStore = context.getBean(BalanceTraceStore.class);
+    for (Map.Entry<byte[], BlockBalanceTraceCapsule> e : balanceTraceStore) {
+      BlockBalanceTraceCapsule blockBalanceTraceCapsule = e.getValue();
+      long number = blockBalanceTraceCapsule.getBlockIdentifier().getNumber();
+      for (TransactionBalanceTrace transactionBalanceTrace : blockBalanceTraceCapsule.getTransactions()) {
+        for (Operation operation : transactionBalanceTrace.getOperationList()) {
+          byte[] address = operation.getAddress().toByteArray();
+          byte[] key = Bytes.concat(address, Longs.toByteArray(number ^ Long.MAX_VALUE));
+          if (!accountTraceStore.has(key)) {
+            accountTraceStore.getRevokingDB().put(key, ArrayUtils.EMPTY_BYTE_ARRAY);
+          }
+        }
+      }
+    }
+
+    System.out.println("end to fix db account-trace");
+    System.exit(0);
   }
 }

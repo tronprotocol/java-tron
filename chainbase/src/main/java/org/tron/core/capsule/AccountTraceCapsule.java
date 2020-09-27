@@ -21,15 +21,6 @@ public class AccountTraceCapsule implements ProtoCapsule<AccountTrace> {
     accountTrace = accountTrace.toBuilder().setBalance(balance).build();
   }
 
-  public AccountTraceCapsule(long balance, long placeholder) {
-    this();
-    accountTrace = accountTrace.toBuilder()
-        .setBalance(balance)
-        .setPlaceholder(placeholder)
-        .build();
-  }
-
-
   public AccountTraceCapsule(AccountTrace accountTrace) {
     this.accountTrace = accountTrace;
   }
@@ -51,6 +42,11 @@ public class AccountTraceCapsule implements ProtoCapsule<AccountTrace> {
     if (Objects.isNull(accountTrace)) {
       return null;
     }
+
+    if (accountTrace.getBalance() == 0) {
+      accountTrace = accountTrace.toBuilder().setPlaceholder(1).build();
+    }
+
     return accountTrace.toByteArray();
   }
 
