@@ -8,8 +8,6 @@ public class Constant {
   //config for junit test
   public static final String TEST_CONF = "config-test.conf";
 
-  public static final String DATABASE_DIR = "storage.directory";
-
   // locate in storageDbDirectory, store the db infos,
   // now only has the split block number
   public static final String INFO_FILE_NAME = "info.properties";
