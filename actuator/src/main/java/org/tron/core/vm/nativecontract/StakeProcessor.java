@@ -63,7 +63,7 @@ public class StakeProcessor {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+              ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
     }
   }
 
