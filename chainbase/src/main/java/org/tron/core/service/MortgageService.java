@@ -1,4 +1,4 @@
-package org.tron.core.db;
+package org.tron.core.service;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Vote;
 
-@Slf4j(topic = "delegation")
+@Slf4j(topic = "mortgage")
 @Component
-public class DelegationService {
+public class MortgageService {
 
   @Setter
   private WitnessStore witnessStore;
