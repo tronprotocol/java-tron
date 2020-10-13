@@ -61,7 +61,7 @@ public class stakeSuicideTest003 {
         testFoundationKey,blockingStubFull);
   }
 
-  @Test(enabled = true, description = "")
+  @Test(enabled = true, description = "suicide target Address is owner Address")
   public void stakeSuicideTest001() {
     String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
     String contractName = "testStakeSuicide";
@@ -94,6 +94,105 @@ public class stakeSuicideTest003 {
     ex = PublicMethed.getTransactionInfoById(Txid,blockingStubFull);
     Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
 
+    Account account = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+    Assert.assertEquals(account.getFrozenCount(),0);
 
   }
+
+  @Test(enabled = false, description = "suicide target Address is BlackHoleAddress Address")
+  public void stakeSuicideTest002() {
+    String blackHoleAddress = "TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy";
+
+    String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
+    String contractName = "testStakeSuicide";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 10000000L,
+            100, null, testFoundationKey,
+            testFoundationAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String Txid = PublicMethed.triggerContract(contractAddress,"Stake(address,uint256)",
+        "\"" + testWitnessAddress + "\",10000000",false,0,maxFeeLimit,
+        testFoundationAddress, testFoundationKey,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(Txid, blockingStubFull);
+    Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+    Assert.assertEquals(ByteArray.toInt(ex.get().getContractResult(0).toByteArray()),1);
+
+    Account ownerAccount = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+    Frozen ownerFrozen = ownerAccount.getFrozen(0);
+
+    Account accountBefore = PublicMethed
+        .queryAccount(PublicMethed.decode58Check(blackHoleAddress),
+            blockingStubFull);
+
+    String methedStr = "SelfdestructTest(address)";
+    String argStr = "\"" + blackHoleAddress + "\"";
+    Txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
+        0,maxFeeLimit,testAddress001,testKey001,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    ex = PublicMethed.getTransactionInfoById(Txid,blockingStubFull);
+    Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+
+    Account account = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+    Assert.assertEquals(account.getFrozenCount(),0);
+
+    Account accountAfter = PublicMethed
+        .queryAccount(PublicMethed.decode58Check(blackHoleAddress),
+            blockingStubFull);
+    Assert.assertEquals(accountBefore.getBalance() + ex.get().getReceipt().getEnergyFee()
+        + 10000000, accountAfter.getBalance());
+  }
+
+  @Test(enabled = true, description = "suicide target Address is BlackHoleAddress Address")
+  public void stakeSuicideTest003() {
+    String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
+    String contractName = "testStakeSuicide";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 10000000L,
+            100, null, testFoundationKey,
+            testFoundationAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String Txid = PublicMethed.triggerContract(contractAddress,"Stake(address,uint256)",
+        "\"" + testWitnessAddress + "\",10000000",false,0,maxFeeLimit,
+        testFoundationAddress, testFoundationKey,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(Txid, blockingStubFull);
+    Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+    Assert.assertEquals(ByteArray.toInt(ex.get().getContractResult(0).toByteArray()),1);
+
+    Account ownerAccount = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+    Frozen ownerFrozen = ownerAccount.getFrozen(0);
+
+    Account accountBefore = PublicMethed
+        .queryAccount(PublicMethed.decode58Check("T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"),
+            blockingStubFull);
+
+    String methedStr = "SelfdestructTest(address)";
+    String argStr = "\"" + "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb" + "\"";
+    Txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
+        0,maxFeeLimit,testAddress001,testKey001,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    ex = PublicMethed.getTransactionInfoById(Txid,blockingStubFull);
+    Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+
+    Account account = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+    Assert.assertEquals(account.getFrozenCount(),0);
+
+    Account accountAfter = PublicMethed
+        .queryAccount(PublicMethed.decode58Check("T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"),
+            blockingStubFull);
+    Assert.assertEquals(accountBefore.getBalance() + 10000000, accountAfter.getBalance());
+  }
+
+
 }
