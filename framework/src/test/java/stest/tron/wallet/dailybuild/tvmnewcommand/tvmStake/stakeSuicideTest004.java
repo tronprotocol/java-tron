@@ -1,5 +1,6 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.tvmStake;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
@@ -222,8 +223,12 @@ public class stakeSuicideTest004 {
     byte[] targetAddress = ecKey_targetAddress.getAddress();
     String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed
-        .sendcoin(targetAddress, 10_000000L, testFoundationAddress, testFoundationKey,
+        .sendcoin(targetAddress, 20_000000L, testFoundationAddress, testFoundationKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(targetAddress,5_000000L,3,1, ByteString.copyFrom(testAddress001),testKey_targetAddress,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed
@@ -327,6 +332,69 @@ public class stakeSuicideTest004 {
         ownerFrozen.getFrozenBalance());
 
   }
+
+  @Test(enabled = true, description = "targetAddress frozen to other address ,suicide contract stake all")
+  void tvmStakeSuicideTest005() {
+    ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
+    byte[] targetAddress = ecKey_targetAddress.getAddress();
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    byte[] address = ecKey.getAddress();
+    String testKey_targetAddress = ByteArray.toHexString(ecKey_targetAddress.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed
+        .sendcoin(targetAddress, 10_000000L, testFoundationAddress, testFoundationKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(targetAddress,5_000000L,3,1, ByteString.copyFrom(testAddress001),testKey_targetAddress,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    System.out.println("aaaa"+ Base58.encode58Check(targetAddress));
+
+    contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 100_000000L, 100, null, testKey001,
+            testAddress001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String methodStr = "Stake(address,uint256)";
+    String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 100_000000L ;
+    String txid  = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    System.out.println("aaaaa" + Base58.encode58Check(contractAddress));
+    Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+    Assert.assertEquals(ByteArray.toInt(ex.get().getContractResult(0).toByteArray()),1);
+
+
+    Account ownerAccount = PublicMethed.queryAccount(contractAddress,blockingStubFull);
+    Frozen ownerFrozen = ownerAccount.getFrozen(0);
+    Long ownerBalance = ownerAccount.getBalance();
+    String methodStr_Suicide = "SelfdestructTest(address)";
+    String argsStr_Suicide = "\"" + Base58.encode58Check(targetAddress) + "\""  ;
+    String txid_Suicide  = PublicMethed
+        .triggerContract(contractAddress, methodStr_Suicide, argsStr_Suicide,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Account targetAccount = PublicMethed.queryAccount(targetAddress,blockingStubFull);
+    Frozen targetFrozenAfter = targetAccount.getFrozen(0);
+    ex = PublicMethed.getTransactionInfoById(txid_Suicide, blockingStubFull);
+    Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
+    Assert.assertEquals(ownerFrozen.getExpireTime(), targetFrozenAfter.getExpireTime());
+    Assert.assertEquals(targetFrozenAfter.getFrozenBalance(),
+        ownerFrozen.getFrozenBalance());
+
+  }
+
 
 
 
