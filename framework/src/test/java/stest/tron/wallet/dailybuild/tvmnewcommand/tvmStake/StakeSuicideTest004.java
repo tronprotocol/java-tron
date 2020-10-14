@@ -24,7 +24,7 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
-public class stakeSuicideTest004 {
+public class StakeSuicideTest004 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
