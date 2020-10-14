@@ -225,10 +225,41 @@ public class StakeTest001 {
             false, 0, maxFeeLimit,
             testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> info =  PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-    int contractResult = ByteArray.toInt(info.get().getContractResult(0).toByteArray());
 
-    Assert.assertEquals(contractResult,1);
+    long callvalue = 1000000000L;
+    txid = PublicMethed.triggerContract(contractAddress, "deployB()", "#", false,
+        callvalue, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    String addressHex =
+        "41" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())
+            .substring(24);
+    byte[] contractAddressB = ByteArray.fromHexString(addressHex);
+    long contractAddressBBalance = PublicMethed.queryAccount(contractAddressB, blockingStubFull)
+        .getBalance();
+    Assert.assertEquals(callvalue, contractAddressBBalance);
+
+    methodStr = "BStake(address,uint256)";
+    argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\"," + 10000000;
+    txid = PublicMethed
+        .triggerContract(contractAddress, methodStr, argsStr,
+            false, 0, maxFeeLimit,
+            testAddress001, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    int contractResult = ByteArray.toInt(infoById.get().getContractResult(0).toByteArray());
+    Assert.assertEquals(contractResult, 1);
+    Account account = PublicMethed.queryAccount(contractAddressB, blockingStubFull);
+    long frozenBalance = account.getFrozen(0).getFrozenBalance();
+    byte[] voteAddress = account.getVotes(0).getVoteAddress().toByteArray();
+    long voteCount = account.getVotes(0).getVoteCount();
+    long balanceAfter = account.getBalance();
+    Assert.assertEquals(voteCount, 10);
+    Assert.assertEquals(voteAddress, testWitnessAddress);
+    Assert.assertEquals(frozenBalance, 10000000);
+    Assert.assertEquals(balanceAfter, contractAddressBBalance - 10000000);
 
   }
 
