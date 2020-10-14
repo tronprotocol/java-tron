@@ -62,11 +62,6 @@ public class TestApproveProposal {
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
-  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(0);
-  JsonArray voteKeys = new JsonArray();
-  JsonObject voteElement = new JsonObject();
-
 
   @BeforeSuite
   public void beforeSuite() {
@@ -133,35 +128,6 @@ public class TestApproveProposal {
       }
     }
   }
-
-  @Test(enabled = true)
-  public void testCreateWitness() {
-    int index = 2;
-
-    while (index <= 27) {
-      String witnessKey = Configuration.getByPath("testng.conf")
-          .getString("mainWitness.key" + index);
-      byte[] witnessAddressByte = PublicMethed.getFinalAddress(witnessKey);
-      String witnessAddress = PublicMethed.getAddressString(witnessKey);
-      HttpMethed.sendCoin(httpnode, fromAddress, witnessAddressByte, 10100000000L, testKey002);
-      HttpMethed.waitToProduceOneBlock(httpnode);
-      HttpMethed
-          .createWitness(httpnode, witnessAddressByte, "Sr reward witness " + index, witnessKey);
-      HttpMethed.waitToProduceOneBlock(httpnode);
-      HttpMethed.freezeBalance(httpnode, witnessAddressByte, 50000000L, 0, 0, witnessKey);
-      HttpMethed.waitToProduceOneBlock(httpnode);
-
-      JsonArray voteKeys = new JsonArray();
-      JsonObject voteElement = new JsonObject();
-      voteElement.addProperty("vote_address", witnessAddress);
-      voteElement.addProperty("vote_count", index);
-      voteKeys.add(voteElement);
-      HttpMethed.voteWitnessAccount(httpnode, witnessAddress, voteKeys, witnessKey);
-      index++;
-    }
-
-  }
-
 
   @Test(enabled = true)
   public void testGetChainParameters() {

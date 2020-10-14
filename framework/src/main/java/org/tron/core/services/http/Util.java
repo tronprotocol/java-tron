@@ -89,25 +89,6 @@ public class Util {
     return printBlockToJSON(block, selfType).toJSONString();
   }
 
-  public static JSONObject printMapToJSON(HashMap<String, Long> map) {
-    JSONObject jsonObject = new JSONObject();
-    for (HashMap.Entry<String, Long> entry : map.entrySet()) {
-      jsonObject.put(entry.getKey(), entry.getValue());
-    }
-    return jsonObject;
-  }
-
-  public static JSONObject printRewardMapToJSON(HashMap<String, Long> rewardMap) {
-    JSONObject jsonObject = new JSONObject();
-    long totalReward = 0;
-    for (HashMap.Entry<String, Long> entry : rewardMap.entrySet()) {
-      jsonObject.put(entry.getKey(), entry.getValue());
-      totalReward += entry.getValue();
-    }
-    jsonObject.put("totalReward", totalReward);
-    return jsonObject;
-  }
-
   public static JSONObject printBlockToJSON(Block block, boolean selfType) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
