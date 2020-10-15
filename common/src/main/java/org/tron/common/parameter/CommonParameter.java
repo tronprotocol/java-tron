@@ -297,10 +297,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowMarketTransaction; //committee parameter
-
-  // @Getter
-  // @Setter
-  // public long allowShieldedTransaction; //committee parameter
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
@@ -374,9 +370,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean solidityNodeHttpEnable = true;
-  @Getter
-  @Setter
-  public boolean nodeHttpStatisticsSRRewardEnable = false;
   @Getter
   @Setter
   public int maxTransactionPendingSize;

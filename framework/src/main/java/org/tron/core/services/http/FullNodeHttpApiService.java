@@ -254,18 +254,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private MetricsServlet metricsServlet;
   @Autowired
-  private GetAccountRewardByCycleServlet getAccountRewardByCycleServlet;
-  @Autowired
-  private GetSRProfitByCycleServlet getSRProfitByCycleServlet;
-  @Autowired
-  private GetSRDividendsByCycleServlet getSRDividendsByCycleServlet;
-  @Autowired
-  private GetAccountLastUnwithdrawRewardServlet getAccountLastUnwithdrawRewardServlet;
-  @Autowired
-  private GetCurrentCycleService getCurrentCycleServlet;
-  @Autowired
-  private GetNowSRAnnualizedRateOfReturnServlet getNowSRAnnualizedRateOfReturnServlet;
-  @Autowired
   private MarketSellAssetServlet marketSellAssetServlet;
   @Autowired
   private MarketCancelOrderServlet marketCancelOrderServlet;
@@ -498,21 +486,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
-      if (Args.getInstance().isNodeHttpStatisticsSRRewardEnable()) {
-        context.addServlet(new ServletHolder(getAccountRewardByCycleServlet),
-            "/wallet/getAccountRewardByCycleServlet");
-        context.addServlet(new ServletHolder(getSRProfitByCycleServlet),
-            "/wallet/getSRProfitByCycleServlet");
-        context.addServlet(new ServletHolder(getSRDividendsByCycleServlet),
-            "/wallet/getSRDividendsByCycleServlet");
-        context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet),
-            "/wallet/getNowSRAnnualizedRateOfReturnServlet");
-        context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet),
-            "/wallet/getAccountLastUnwithdrawRewardServlet");
-        context.addServlet(new ServletHolder(getCurrentCycleServlet),
-            "/wallet/getCurrentCycleServlet");
-      }
-
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/wallet/gettransactioninfobyblocknum");
       context.addServlet(new ServletHolder(listNodesServlet), "/net/listnodes");

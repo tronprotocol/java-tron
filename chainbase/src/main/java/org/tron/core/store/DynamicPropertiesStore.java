@@ -143,7 +143,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
   private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
-  private static final byte[] CURRENT_CYCLE_TIMESTAMP = "CURRENT_CYCLE_TIMESTAMP".getBytes();
+//  private static final byte[] CURRENT_CYCLE_TIMESTAMP = "CURRENT_CYCLE_TIMESTAMP".getBytes();  to be delete v4.1
 
   private static final byte[] ALLOW_MARKET_TRANSACTION = "ALLOW_MARKET_TRANSACTION".getBytes();
   private static final byte[] MARKET_SELL_FEE = "MARKET_SELL_FEE".getBytes();
@@ -1997,18 +1997,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_STATE_ROOT"));
-  }
-
-  public void saveCurrentCycleTiimeStamp(long timeStamp) {
-    this.put(CURRENT_CYCLE_TIMESTAMP, new BytesCapsule(ByteArray.fromLong(timeStamp)));
-
-  }
-
-  public long getCurrentCycleTimeStamp() {
-    return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_TIMESTAMP))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElse(0L);
   }
 
   public boolean allowAccountStateRoot() {
