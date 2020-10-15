@@ -3,6 +3,7 @@ package org.tron.stresstest.dispatch.creator.transfer;
 import com.google.protobuf.ByteString;
 import lombok.Setter;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
@@ -25,9 +26,13 @@ public class NiceTransferTransactionCreator extends AbstractTransferTransactionC
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    byte[] toAddress = ecKey.getAddress();
+
+
     Contract.TransferContract contract = Contract.TransferContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(ownerAddress)))
-        .setToAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(toAddress)))
+        .setToAddress(ByteString.copyFrom(toAddress))
         .setAmount(amount)
         .build();
     Protocol.Transaction transaction = createTransaction(contract, ContractType.TransferContract);
