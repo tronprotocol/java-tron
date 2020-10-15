@@ -4791,9 +4791,9 @@ public class PublicMethed {
     logger.debug("solFile: " + solFile);
     logger.debug("outputPath: " + outputPath);
     String cmd =
-        compile + " --optimize --bin --abi --overwrite " + absolutePath + "/" + solFile + " -o "
+        compile + " --optimize --bin --abi --evm-version istanbul --overwrite " + absolutePath + "/" + solFile + " -o "
             + absolutePath + "/" + outputPath;
-    logger.debug("cmd: " + cmd);
+    logger.info("cmd: " + cmd);
 
     String byteCode = null;
     String abI = null;
