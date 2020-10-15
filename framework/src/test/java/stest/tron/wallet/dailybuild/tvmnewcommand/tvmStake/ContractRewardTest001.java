@@ -212,4 +212,21 @@ public class ContractRewardTest001 {
     Assert.assertEquals(ext.getResult(), TransactionInfo.code.SUCESS);
   }
 
+  @Test(enabled = true,description = "new withdrawBalance constructor")
+  void withdrawBalanceTest009() {
+    String methedStr = "createA()";
+    String argStr = "";
+    String txid = PublicMethed.triggerContract(contractAddress,
+        methedStr,argStr,false,0,maxFeeLimit,"0",0,testAddress001,testKey001,blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    TransactionInfo ext = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get();
+
+    int result = ByteArray.toInt(ext.getLog(0).getData().toByteArray());
+    Assert.assertEquals(result,0);
+    int result2 = ByteArray.toInt(ext.getLog(1).getData().toByteArray());
+    Assert.assertEquals(result2,0);
+    Assert.assertEquals(ext.getResult(), code.SUCESS);
+  }
+
 }
