@@ -77,12 +77,12 @@ public class StakeTest001 {
     contractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit, 1000_000_0000L, 100, null, testKey001,
             testAddress001, blockingStubFull);
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true, description = "Vote for witness")
   void tvmStakeTest001() {
+    long balanceBefore = PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance();
     String methodStr = "Stake(address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + 1000000 ;
     String txid  = PublicMethed
@@ -95,6 +95,8 @@ public class StakeTest001 {
     Assert.assertEquals(contractResult,1);
 
     Account request = Account.newBuilder().setAddress(ByteString.copyFrom(contractAddress)).build();
+    long balanceAfter = PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance();
+    Assert.assertEquals(balanceAfter,balanceBefore - 1000000);
     byte[] voteAddress = (blockingStubFull.getAccount(request).getVotesList().get(0).getVoteAddress().toByteArray());
     Assert.assertEquals(testWitnessAddress,voteAddress);
     Assert.assertEquals(1,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
@@ -299,11 +301,6 @@ public class StakeTest001 {
     Assert.assertEquals(11,blockingStubFull.getAccount(request).getVotes(0).getVoteCount());
 
   }
-
-
-
-
-
 
 }
 
