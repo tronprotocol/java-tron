@@ -83,7 +83,7 @@ public class ContractRewardTest001 {
     String argStr = "\"" + witnessAddress + "\"";
     TransactionExtention txen = PublicMethed.triggerConstantContractForExtention(contractAddress,
         methedStr,argStr,false,0,maxFeeLimit,"0",0,testAddress001,testKey001,blockingStubFull);
-
+    System.out.println(txen);
     long rewardBalance = ByteArray.toLong(txen.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(txen.getResult().getCode(), response_code.SUCCESS);
@@ -210,20 +210,6 @@ public class ContractRewardTest001 {
     int result = ByteArray.toInt(ext.getContractResult(0).toByteArray());
     Assert.assertEquals(result,0);
     Assert.assertEquals(ext.getResult(), TransactionInfo.code.SUCESS);
-  }
-
-  @Test(enabled = true,description = "new withdrawBalance constructor")
-  void withdrawBalanceTest009() {
-    String methedStr = "createA()";
-    String argStr = "";
-    String txid = PublicMethed.triggerContract(contractAddress,
-        methedStr,argStr,false,0,maxFeeLimit,"0",0,testAddress001,testKey001,blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    TransactionInfo ext = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get();
-    int result = ByteArray.toInt(ext.getContractResult(0).toByteArray());
-    Assert.assertEquals(result,0);
-    Assert.assertEquals(ext.getResult(), code.SUCESS);
   }
 
 }
