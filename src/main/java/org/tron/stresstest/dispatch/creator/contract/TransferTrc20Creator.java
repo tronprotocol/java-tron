@@ -1,11 +1,13 @@
 package org.tron.stresstest.dispatch.creator.contract;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Setter;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.program.FullNode;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -28,6 +30,10 @@ public class TransferTrc20Creator extends AbstractTransactionCreator implements 
   private String param = "\"" + commonToAddress + "\",1";
   private long feeLimit = 1000000000L;
   private String privateKey = triggerOwnerKey;
+  private static AtomicInteger contractIndex = new AtomicInteger(0);
+  private static String line;
+
+
 
   @Override
   protected Protocol.Transaction create() {
@@ -36,6 +42,9 @@ public class TransferTrc20Creator extends AbstractTransactionCreator implements 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
     TriggerSmartContract contract = null;
+
+    contractAddress= FullNode.contractAddressList.get(contractIndex.getAndAdd(1) % 99);
+    param = "\"" + FullNode.accountQueue.poll() + "\",1";
     try {
 
       contract = triggerCallContract(

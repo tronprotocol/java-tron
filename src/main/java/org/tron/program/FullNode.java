@@ -10,6 +10,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,8 +54,10 @@ public class FullNode {
   private static volatile boolean isFinishSend = false;
 
   public static ConcurrentLinkedQueue<String> accountQueue = new ConcurrentLinkedQueue<>();
+  public static List<String> contractAddressList = new ArrayList<>();
   public BufferedReader br = null;
   private static  File filePath = new File(Configuration.getByPath("stress.conf").getString("param.mainnetAccountFile"));
+  private static  File trc20ContractAddressPath = new File(Configuration.getByPath("stress.conf").getString("param.trc20ContractAddressFile"));
 
   /**
    * Start the FullNode.
@@ -66,6 +70,7 @@ public class FullNode {
     System.out.println("QA " + cfgArgs.isGenerate() + "---" + cfgArgs.getStressCount() + "---" + cfgArgs.getStressTps());
 
     getAccountList();
+    getContractList();
 
     ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
         .getLogger(Logger.ROOT_LOGGER_NAME);
@@ -257,6 +262,23 @@ public class FullNode {
       //int i=0;
       while((line=bufferedReader.readLine())!=null){
         accountQueue.offer(line);
+      }
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static void getContractList() {
+    String line=null;
+    try {
+      //BufferedReader bufferedReader=new BufferedReader(new FileReader(filePath));
+      BufferedReader bufferedReader=new BufferedReader(new InputStreamReader(new FileInputStream(trc20ContractAddressPath),"utf-8"));
+
+      //int i=0;
+      while((line=bufferedReader.readLine())!=null){
+        contractAddressList.add(line);
       }
     } catch (FileNotFoundException e) {
       e.printStackTrace();

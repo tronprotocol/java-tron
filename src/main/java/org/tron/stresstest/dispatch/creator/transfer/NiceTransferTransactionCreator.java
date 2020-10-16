@@ -26,8 +26,7 @@ public class NiceTransferTransactionCreator extends AbstractTransferTransactionC
   private String toAddress = commonToAddress;
   private long amount = 1L;
   private String privateKey = commonOwnerPrivateKey;
-  private static AtomicInteger mainnetAccountLine = new AtomicInteger(0);
-  private static String line;
+
 
   @Override
   protected Protocol.Transaction create() {
