@@ -2,12 +2,14 @@ package org.tron.program;
 
 import static org.tron.stresstest.dispatch.AbstractTransactionCreator.getID;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,6 +22,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.utils.Configuration;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -38,6 +41,7 @@ import org.tron.stresstest.generator.TransactionGenerator;
 @Slf4j
 public class FullNode {
   private static ExecutorService saveTransactionIDPool = Executors.newFixedThreadPool(1, new ThreadFactory() {
+
     @Override
     public Thread newThread(Runnable r) {
       return new Thread(r, "save-transaction-id");
@@ -46,6 +50,10 @@ public class FullNode {
 
   private static ConcurrentLinkedQueue<Transaction> transactionIDs = new ConcurrentLinkedQueue<>();
   private static volatile boolean isFinishSend = false;
+
+  public static ConcurrentLinkedQueue<String> accountQueue = new ConcurrentLinkedQueue<>();
+  public BufferedReader br = null;
+  private static  File filePath = new File(Configuration.getByPath("stress.conf").getString("param.mainnetAccountFile"));
 
   /**
    * Start the FullNode.
@@ -56,6 +64,8 @@ public class FullNode {
     Args cfgArgs = Args.getInstance();
 
     System.out.println("QA " + cfgArgs.isGenerate() + "---" + cfgArgs.getStressCount() + "---" + cfgArgs.getStressTps());
+
+    getAccountList();
 
     ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
         .getLogger(Logger.ROOT_LOGGER_NAME);
@@ -122,6 +132,7 @@ public class FullNode {
     appT.startup();
 
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
+
 
     File f = new File("transaction.csv");
     FileInputStream fis = null;
@@ -235,5 +246,22 @@ public class FullNode {
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+  }
+
+  private static void getAccountList() {
+    String line=null;
+    try {
+      //BufferedReader bufferedReader=new BufferedReader(new FileReader(filePath));
+      BufferedReader bufferedReader=new BufferedReader(new InputStreamReader(new FileInputStream(filePath),"utf-8"));
+
+      //int i=0;
+      while((line=bufferedReader.readLine())!=null){
+        accountQueue.offer(line);
+      }
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 }
