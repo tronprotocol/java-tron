@@ -18,6 +18,7 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.CipherException;
 
 /**
  * Utility functions for working with Wallet files.

@@ -167,12 +167,13 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
+import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
+
 @Component
 @Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
-  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
   private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;

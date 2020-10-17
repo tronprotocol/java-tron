@@ -1,4 +1,4 @@
-package org.tron.keystore;
+package org.tron.core.exception;
 
 /**
  * Cipher exception wrapper.

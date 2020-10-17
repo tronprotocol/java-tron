@@ -60,7 +60,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.store.AccountStore;
-import org.tron.keystore.CipherException;
+import org.tron.core.exception.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
