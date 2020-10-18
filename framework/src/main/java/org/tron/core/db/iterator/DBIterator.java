@@ -1,4 +1,4 @@
-package org.tron.core.db.common.iterator;
+package org.tron.core.db.iterator;
 
 import java.io.Closeable;
 import java.util.Iterator;

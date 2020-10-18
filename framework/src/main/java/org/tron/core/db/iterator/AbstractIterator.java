@@ -1,4 +1,4 @@
-package org.tron.core.db.common.iterator;
+package org.tron.core.db.iterator;
 
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;

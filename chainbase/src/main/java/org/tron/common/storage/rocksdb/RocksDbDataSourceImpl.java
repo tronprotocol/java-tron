@@ -34,7 +34,7 @@ import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
-import org.tron.core.db.common.iterator.RockStoreIterator;
+import org.tron.core.db.iterator.RockStoreIterator;
 import org.tron.core.db2.common.Instance;
 
 
@@ -313,7 +313,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   @Override
-  public org.tron.core.db.common.iterator.DBIterator iterator() {
+  public org.tron.core.db.iterator.DBIterator iterator() {
     return new RockStoreIterator(database.newIterator());
   }
 

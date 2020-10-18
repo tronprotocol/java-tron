@@ -18,7 +18,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.StorageUtils;
-import org.tron.core.db.common.iterator.DBIterator;
+import org.tron.core.db.iterator.DBIterator;
 
 @Slf4j(topic = "DB")
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {

@@ -1,4 +1,4 @@
-package org.tron.core.db.common.iterator;
+package org.tron.core.db.iterator;
 
 import java.util.Iterator;
 import java.util.Map.Entry;

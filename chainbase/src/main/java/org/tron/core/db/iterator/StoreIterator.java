@@ -1,4 +1,4 @@
-package org.tron.core.db.common.iterator;
+package org.tron.core.db.iterator;
 
 import java.io.IOException;
 import java.util.Map.Entry;
@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DBIterator;
 
 @Slf4j(topic = "DB")
-public final class StoreIterator implements org.tron.core.db.common.iterator.DBIterator {
+public final class StoreIterator implements org.tron.core.db.iterator.DBIterator {
 
   private DBIterator dbIterator;
   private boolean first = true;

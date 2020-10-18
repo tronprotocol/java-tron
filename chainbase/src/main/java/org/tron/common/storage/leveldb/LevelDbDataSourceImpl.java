@@ -49,7 +49,7 @@ import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
-import org.tron.core.db.common.iterator.StoreIterator;
+import org.tron.core.db.iterator.StoreIterator;
 import org.tron.core.db2.common.Instance;
 
 @Slf4j(topic = "DB")
@@ -463,7 +463,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   @Override
-  public org.tron.core.db.common.iterator.DBIterator iterator() {
+  public org.tron.core.db.iterator.DBIterator iterator() {
     return new StoreIterator(database.iterator());
   }
 
