@@ -43,8 +43,8 @@ public class TransferTrc20Creator extends AbstractTransactionCreator implements 
 
     TriggerSmartContract contract = null;
 
-    //contractAddress= FullNode.contractAddressList.get(contractIndex.getAndAdd(1) % 200);
-    //param = "\"" + FullNode.accountQueue.poll() + "\",1";
+    contractAddress= FullNode.contractAddressList.get(contractIndex.getAndAdd(1) % 200);
+    param = "\"" + FullNode.accountQueue.poll() + "\",1";
     try {
 
       contract = triggerCallContract(
