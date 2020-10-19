@@ -24,7 +24,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class contractRewardTest001 {
+public class ContractRewardTest001 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
@@ -83,7 +83,7 @@ public class contractRewardTest001 {
     String argStr = "\"" + witnessAddress + "\"";
     TransactionExtention txen = PublicMethed.triggerConstantContractForExtention(contractAddress,
         methedStr,argStr,false,0,maxFeeLimit,"0",0,testAddress001,testKey001,blockingStubFull);
-
+    System.out.println(txen);
     long rewardBalance = ByteArray.toLong(txen.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(txen.getResult().getCode(), response_code.SUCCESS);
@@ -221,8 +221,11 @@ public class contractRewardTest001 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     TransactionInfo ext = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get();
-    int result = ByteArray.toInt(ext.getContractResult(0).toByteArray());
+
+    int result = ByteArray.toInt(ext.getLog(0).getData().toByteArray());
     Assert.assertEquals(result,0);
+    int result2 = ByteArray.toInt(ext.getLog(1).getData().toByteArray());
+    Assert.assertEquals(result2,0);
     Assert.assertEquals(ext.getResult(), code.SUCESS);
   }
 

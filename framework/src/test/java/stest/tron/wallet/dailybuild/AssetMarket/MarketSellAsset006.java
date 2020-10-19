@@ -156,7 +156,7 @@ public class MarketSellAsset006 {
 
   }
 
-  @Test(enabled = true, description = "getMarketPairList from solidity and pbft")
+  @Test(enabled = false, description = "getMarketPairList from solidity and pbft")
   void marketSellAssetTest002() {
     Optional<MarketOrderPairList> PairList = PublicMethed
         .getMarketPairList(blockingStubFull);

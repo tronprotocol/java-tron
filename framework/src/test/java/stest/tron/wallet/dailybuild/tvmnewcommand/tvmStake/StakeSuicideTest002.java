@@ -24,7 +24,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class stakeSuicideTest002 {
+public class StakeSuicideTest002 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
@@ -69,7 +69,7 @@ public class stakeSuicideTest002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "suicide ")
+  @Test(enabled = true, description = "create2 -> stake -> suicide -> create2 the same Address")
   public void stackSuicideAndCreate2Test001() {
 
     String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
@@ -126,7 +126,7 @@ public class stakeSuicideTest002 {
 
   }
 
-  @Test(enabled = true, description = "")
+  @Test(enabled = true, description = "create2 -> stake -> suicide -> sendcoin to create2 Address")
   public void stackSuicideAndCreate2Test002() {
     String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
     String contractName = "testStakeSuicide";

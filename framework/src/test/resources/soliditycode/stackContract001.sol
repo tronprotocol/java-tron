@@ -10,7 +10,7 @@ contract A{
         return withdrawreward();
     }
 
-    function test() private{
+    function test() public{
         emit log(123);
     }
 }

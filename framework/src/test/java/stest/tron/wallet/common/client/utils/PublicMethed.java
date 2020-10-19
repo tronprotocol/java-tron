@@ -123,6 +123,7 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
@@ -2839,17 +2840,23 @@ public class PublicMethed {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ByteString byteString = ByteString.copyFrom(address);
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(byteString).build();
-    Integer i = 0;
-    while (blockingStubFull.getContract(bytesMessage).getName().isEmpty() && i++ < 4) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
     logger.info("contract name is " + blockingStubFull.getContract(bytesMessage).getName());
     logger.info("contract address is " + WalletClient.encode58Check(address));
     return blockingStubFull.getContract(bytesMessage);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static SmartContractDataWrapper getContractInfo(byte[] address,
+      WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString byteString = ByteString.copyFrom(address);
+    BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(byteString).build();
+    logger.info("contract name is " + blockingStubFull.getContractInfo(bytesMessage).getSmartContract().getName());
+    logger.info("contract address is " + WalletClient.encode58Check(address));
+    return blockingStubFull.getContractInfo(bytesMessage);
   }
 
   private static byte[] replaceLibraryAddress(String code, String libraryAddressPair) {
@@ -4784,9 +4791,9 @@ public class PublicMethed {
     logger.debug("solFile: " + solFile);
     logger.debug("outputPath: " + outputPath);
     String cmd =
-        compile + " --optimize --bin --abi --overwrite " + absolutePath + "/" + solFile + " -o "
+        compile + " --optimize --bin --abi --evm-version istanbul --overwrite " + absolutePath + "/" + solFile + " -o "
             + absolutePath + "/" + outputPath;
-    logger.debug("cmd: " + cmd);
+    logger.info("cmd: " + cmd);
 
     String byteCode = null;
     String abI = null;

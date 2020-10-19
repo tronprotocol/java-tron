@@ -6,6 +6,7 @@ import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -24,7 +25,8 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
-public class stackSuicideTest001 {
+@Slf4j
+public class StackSuicideTest001 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
@@ -180,8 +182,6 @@ public class stackSuicideTest001 {
     contractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit, targetBalance, 100,
             null, testKey001, testAddress001, blockingStubFull);
-
-
 
     byte[] targetAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         12_345_678L, 100, null, testKey001, testAddress001, blockingStubFull);
