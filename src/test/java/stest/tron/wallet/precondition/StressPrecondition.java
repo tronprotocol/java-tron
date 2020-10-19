@@ -613,6 +613,7 @@ public class StressPrecondition {
               blockingStubFull);
       newContractAddress = WalletClient.encode58Check(commonContractAddress4);
       writeTrc20ContractToFile(newContractAddress);
+      logger.info("Trc 20 contract index :" + contractCount);
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
@@ -734,7 +735,7 @@ public class StressPrecondition {
       FileWriter fileWritter = new FileWriter(file.getName(),true);
       fileWritter.write(contractAddress + "\n");
       fileWritter.close();
-      System.out.println("finish");
+      //System.out.println("finish");
     }catch(IOException e){
       e.printStackTrace();
     }
