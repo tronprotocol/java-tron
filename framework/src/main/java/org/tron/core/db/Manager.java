@@ -898,7 +898,16 @@ public class Manager {
             "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
       }
 
-      BlockCapsule newBlock = this.khaosDb.push(block);
+      BlockCapsule newBlock;
+      try {
+        newBlock = this.khaosDb.push(block);
+      } catch (UnLinkedBlockException e) {
+        logger.error("latestBlockHeaderHash:{}, latestBlockHeaderNumber:{}, latestSolidifiedBlockNum:{}",
+            getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+            getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+            getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        throw e;
+      }
 
       // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
