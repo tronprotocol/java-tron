@@ -360,7 +360,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
       type = InventoryType.BLOCK;
     } else if (msg instanceof TransactionMessage) {
-      logger.info("Enter this");
+      //logger.info("Enter this");
       TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
       type = InventoryType.TRX;
       long currentTime = System.currentTimeMillis();
@@ -380,7 +380,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     synchronized (advObjToSpread) {
       advObjToSpread.put(msg.getMessageId(), type);
-      logger.info("advObjToSpread size " + advObjToSpread.size());
+      if(advObjToSpread.size() % 100 == 0) {
+        logger.info("advObjToSpread size " + advObjToSpread.size());
+      }
     }
   }
 
