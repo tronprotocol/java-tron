@@ -25,10 +25,9 @@ public class SetAccountIdServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(contract);
-      boolean visible = Util.getVisiblePost(contract);
+      PostParams params = PostParams.getPostParams(request);
+      boolean visible = params.isVisible();
+      String contract = params.getParams();
       SetAccountIdContract.Builder build = SetAccountIdContract.newBuilder();
       JsonFormat.merge(contract, build, visible);
       Protocol.Transaction tx = wallet.createTransactionCapsule(build.build(),
