@@ -185,11 +185,11 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(29L, 20L);
       }
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowPBFT") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+/*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowPBFT") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(40L, 1L);
-      }
+      }*/
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowMarketTransaction") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
@@ -619,6 +619,77 @@ public class StressPrecondition {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
+    }
+  }
+
+
+
+  @Test(enabled = true)
+  public void test14ChangeMaintainTime() {
+    ChainParameters chainParameters = blockingStubFull
+        .getChainParameters(EmptyMessage.newBuilder().build());
+    Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
+    logger.info(Long.toString(getChainParameters.get().getChainParameterCount()));
+    for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
+      logger.info("index:" + i);
+      logger.info(getChainParameters.get().getChainParameter(i).getKey());
+      logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+    }
+
+    HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
+    logger.info("--------------------------------------------");
+    for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getMaintenanceTimeInterval") && getChainParameters.get().getChainParameter(i).getValue() == 300000) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(0L, 300000 * 12 * 6L);
+      }
+
+    }
+
+    if (proposalMap.size() >= 1) {
+
+      PublicMethed.createProposal(witness001Address, witnessKey001,
+          proposalMap, blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
+      Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
+      final Integer proposalId = listProposals.get().getProposalsCount();
+
+      String[] witnessList = {
+          "541a2d585fcea7e9b1803df4eb49af0eb09f1fa2ce06aa5b8ed60ac95655d66d",
+          "7d5a7396d6430edb7f66aa5736ef388f2bea862c9259de8ad8c2cfe080f6f5a0",
+          "7c4977817417495f4ca0c35ab3d5a25e247355d68f89f593f3fea2ab62c8644f",
+          "4521c13f65cc9f5c1daa56923b8598d4015801ad28379675c64106f5f6afec30",
+          "f33101ea976d90491dcb9669be568db8bbc1ad23d90be4dede094976b67d550e",
+          "1bb32958909299db452d3c9bbfd15fd745160d63e4985357874ee57708435a00",
+          "29c91bd8b27c807d8dc2d2991aa0fbeafe7f54f4de9fac1e1684aa57242e3922",
+          "97317d4d68a0c5ce14e74ad04dfc7521f142f5c0f247b632c8f94c755bdbe669",
+          "1fe1d91bbe3ac4ac5dc9866c157ef7615ec248e3fd4f7d2b49b0428da5e046b2",
+          "7c37ef485e186e07952bcc8e30cd911a6cd9f2a847736c89132762fb67a42329",
+          "bcc142d57d872cd2cc1235bca454f2efd5a87f612856c979cc5b45a7399272a8",
+          "6054824dc03546f903a06da1f405e72409379b83395d0bbb3d4563f56e828d52",
+          "87cc8832b1b4860c3c69994bbfcdae9b520e6ce40cbe2a90566e707a7e04fc70",
+          "c96c92c8a5f68ffba2ced3f7cd4baa6b784838a366f62914efdc79c6c18cd7d0",
+          "d29e34899a21dc801c2be88184bed29a66246b5d85f26e8c77922ee2403a1934",
+          "dc51f31e4de187c1c2530d65fb8f2958dff4c37f8cea430ce98d254baae37564",
+          "ff43b371d67439bb8b6fa6c4ff615c954682008343d4cb2583b19f50adbac90f",
+          "dbc78781ad27f3751358333412d5edc85b13e5eee129a1a77f7232baadafae0e",
+          "a79a37a3d868e66456d76b233cb894d664b75fd91861340f3843db05ab3a8c66",
+          "a8107ea1c97c90cd4d84e79cd79d327def6362cc6fd498fc3d3766a6a71924f6",
+          "b5076206430b2ca069ae2f4dc6f20dd0d74551559878990d1df12a723c228039",
+          "442513e2e801bc42d14d33b8148851dae756d08eeb48881a44e1b2002b3fb700"
+      };
+
+
+      for(String witnessKey : witnessList) {
+        byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey);
+        PublicMethed.approveProposal(witnessAddress, witnessKey, proposalId,
+            true, blockingStubFull);
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+      }
+
     }
   }
 
