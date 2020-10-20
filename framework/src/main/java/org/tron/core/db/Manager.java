@@ -77,6 +77,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
+import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ProposalController;
@@ -747,7 +748,7 @@ public class Manager {
     }
 
     updateFork(block);
-    if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
+    if (System.currentTimeMillis() - block.getTimeStamp() >= AdaptiveResourceLimitConstants.PERIODS_MS) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
