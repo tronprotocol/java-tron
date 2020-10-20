@@ -117,7 +117,7 @@ public class RateLimiterInterceptor implements ServerInterceptor {
         listener = new SimpleForwardingServerCallListener<ReqT>(delegate) {
           @Override
           public void onComplete() {
-            // must release the permit to avoid the leak of permit
+            // must release the permit to avoid the leak of permit.
             if (rateLimiter instanceof IPreemptibleRateLimiter) {
               ((IPreemptibleRateLimiter) rateLimiter).release();
             }
@@ -125,7 +125,7 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
           @Override
           public void onCancel() {
-            // must release the permit to avoid the leak of permit
+            // must release the permit to avoid the leak of permit.
             if (rateLimiter instanceof IPreemptibleRateLimiter) {
               ((IPreemptibleRateLimiter) rateLimiter).release();
             }
