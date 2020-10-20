@@ -10,13 +10,13 @@ import static org.tron.common.utils.ByteUtil.isSingleZero;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Value;
 import org.tron.core.db.ByteArrayWrapper;
@@ -43,6 +43,8 @@ import org.tron.core.db.ByteArrayWrapper;
 public class RLP {
 
   private static final Logger logger = LoggerFactory.getLogger("rlp");
+  private static final String NOT_NUM = "not a number";
+  private static final String WRONG_DECODE_ATTEMPT = "wrong decode attempt";
   private static final int MAX_DEPTH = 16;
   /**
    * Allow for content up to size of 2^64 bytes *
@@ -76,7 +78,7 @@ public class RLP {
    * \xb9\x04\x00 followed by the string. The range of the first byte is thus [0xb8, 0xbf].
    */
   private static final int OFFSET_LONG_ITEM = 0xb7;
-  public static final byte[] EMPTY_ELEMENT_RLP = encodeElement(new byte[0]);
+  public static final byte[] EMPTY_ELEMENT_RLP = Hash.encodeElement(new byte[0]);
   /**
    * [0xc0] If the total payload of a list (i.e. the combined length of all its items) is 0-55 bytes
    * long, the RLP encoding consists of a single byte with value 0xc0 plus the length of the list
@@ -123,7 +125,7 @@ public class RLP {
     // equivalent to the empty byte array)
 
     if (data[index] == 0x00) {
-      throw new RuntimeException("not a number");
+      throw new RuntimeException(NOT_NUM);
     } else if ((data[index] & 0xFF) < OFFSET_SHORT_ITEM) {
 
       return data[index];
@@ -141,7 +143,7 @@ public class RLP {
 
       // If there are more than 4 bytes, it is not going
       // to decode properly into an int.
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
     return value;
   }
@@ -151,7 +153,7 @@ public class RLP {
     short value = 0;
 
     if (data[index] == 0x00) {
-      throw new RuntimeException("not a number");
+      throw new RuntimeException(NOT_NUM);
     } else if ((data[index] & 0xFF) < OFFSET_SHORT_ITEM) {
 
       return data[index];
@@ -169,7 +171,7 @@ public class RLP {
 
       // If there are more than 2 bytes, it is not going
       // to decode properly into a short.
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
     return value;
   }
@@ -179,7 +181,7 @@ public class RLP {
     long value = 0;
 
     if (data[index] == 0x00) {
-      throw new RuntimeException("not a number");
+      throw new RuntimeException(NOT_NUM);
     } else if ((data[index] & 0xFF) < OFFSET_SHORT_ITEM) {
 
       return data[index];
@@ -197,7 +199,7 @@ public class RLP {
 
       // If there are more than 8 bytes, it is not going
       // to decode properly into a long.
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
     return value;
   }
@@ -608,8 +610,8 @@ public class RLP {
    */
   private static void verifyLength(int suppliedLength, int availableLength) {
     if (suppliedLength > availableLength) {
-      throw new RuntimeException(String.format("Length parsed from RLP (%s bytes) is greater " +
-          "than possible size of data (%s bytes)", suppliedLength, availableLength));
+      throw new RuntimeException(String.format("Length parsed from RLP (%s bytes) is greater "
+          + "than possible size of data (%s bytes)", suppliedLength, availableLength));
     }
   }
 
@@ -827,7 +829,7 @@ public class RLP {
   }
 
   public static byte[] encodeString(String srcString) {
-    return encodeElement(srcString.getBytes());
+    return Hash.encodeElement(srcString.getBytes());
   }
 
   public static byte[] encodeBigInteger(BigInteger srcBigInteger) {
@@ -838,59 +840,7 @@ public class RLP {
     if (srcBigInteger.equals(BigInteger.ZERO)) {
       return encodeByte((byte) 0);
     } else {
-      return encodeElement(asUnsignedByteArray(srcBigInteger));
-    }
-  }
-
-  public static byte[] encodeElement(byte[] srcData) {
-
-    // [0x80]
-    if (isNullOrZeroArray(srcData)) {
-      return new byte[]{(byte) OFFSET_SHORT_ITEM};
-
-      // [0x00]
-    } else if (isSingleZero(srcData)) {
-      return srcData;
-
-      // [0x01, 0x7f] - single byte, that byte is its own RLP encoding
-    } else if (srcData.length == 1 && (srcData[0] & 0xFF) < 0x80) {
-      return srcData;
-
-      // [0x80, 0xb7], 0 - 55 bytes
-    } else if (srcData.length < SIZE_THRESHOLD) {
-      // length = 8X
-      byte length = (byte) (OFFSET_SHORT_ITEM + srcData.length);
-      byte[] data = Arrays.copyOf(srcData, srcData.length + 1);
-      System.arraycopy(data, 0, data, 1, srcData.length);
-      data[0] = length;
-
-      return data;
-      // [0xb8, 0xbf], 56+ bytes
-    } else {
-      // length of length = BX
-      // prefix = [BX, [length]]
-      int tmpLength = srcData.length;
-      byte lengthOfLength = 0;
-      while (tmpLength != 0) {
-        ++lengthOfLength;
-        tmpLength = tmpLength >> 8;
-      }
-
-      // set length Of length at first byte
-      byte[] data = new byte[1 + lengthOfLength + srcData.length];
-      data[0] = (byte) (OFFSET_LONG_ITEM + lengthOfLength);
-
-      // copy length after first byte
-      tmpLength = srcData.length;
-      for (int i = lengthOfLength; i > 0; --i) {
-        data[i] = (byte) (tmpLength & 0xFF);
-        tmpLength = tmpLength >> 8;
-      }
-
-      // at last copy the number bytes after its length
-      System.arraycopy(srcData, 0, data, 1 + lengthOfLength, srcData.length);
-
-      return data;
+      return Hash.encodeElement(asUnsignedByteArray(srcBigInteger));
     }
   }
 
@@ -997,7 +947,7 @@ public class RLP {
     Set<byte[]> encodedElements = new HashSet<>();
     for (ByteArrayWrapper element : data) {
 
-      byte[] encodedElement = RLP.encodeElement(element.getData());
+      byte[] encodedElement = Hash.encodeElement(element.getData());
       dataLength += encodedElement.length;
       encodedElements.add(encodedElement);
     }
@@ -1024,7 +974,7 @@ public class RLP {
   public static byte[] wrapList(byte[]... data) {
     byte[][] elements = new byte[data.length][];
     for (int i = 0; i < data.length; i++) {
-      elements[i] = encodeElement(data[i]);
+      elements[i] = Hash.encodeElement(data[i]);
     }
     return encodeList(elements);
   }
@@ -1183,7 +1133,7 @@ public class RLP {
       System.arraycopy(data, index + 1 + lengthOfLength, valueBytes, 0, length);
       return valueBytes;
     } else {
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
   }
 
@@ -1213,7 +1163,7 @@ public class RLP {
       return (byte) 1;
 
     } else {
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
   }
 
@@ -1229,9 +1179,9 @@ public class RLP {
     }
 
     public byte[] getEncoded() {
-      byte encoded[][] = new byte[cnt][];
+      byte[][] encoded = new byte[cnt][];
       for (int i = 0; i < cnt; i++) {
-        encoded[i] = encodeElement(getBytes(i));
+        encoded[i] = Hash.encodeElement(getBytes(i));
       }
       return encodeList(encoded);
     }

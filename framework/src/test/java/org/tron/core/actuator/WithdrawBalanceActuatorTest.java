@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.args.Witness;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -22,13 +23,13 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.Witness;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
 
 @Slf4j
@@ -182,11 +183,6 @@ public class WithdrawBalanceActuatorTest {
 
   @Test
   public void notWitness() {
-//    long now = System.currentTimeMillis();
-//    AccountCapsule accountCapsule = dbManager.getAccountStore()
-//        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-//    accountCapsule.setFrozen(1_000_000_000L, now);
-//    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS));
@@ -329,6 +325,44 @@ public class WithdrawBalanceActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+  @Test
+  public void commonErrorCheck() {
+
+    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [WithdrawBalanceContract], real type[");
+    actuatorTest.invalidContractType();
+
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
+    try {
+      dbManager.getDelegationService()
+          .adjustAllowance(dbManager.getAccountStore(), address, allowance);
+    } catch (BalanceInsufficientException e) {
+      fail("BalanceInsufficientException");
+    }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    Assert.assertEquals(accountCapsule.getAllowance(), allowance);
+    Assert.assertEquals(accountCapsule.getLatestWithdrawTime(), 0);
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://google.com");
+    dbManager.getWitnessStore().put(address, witnessCapsule);
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
   }
 
 }

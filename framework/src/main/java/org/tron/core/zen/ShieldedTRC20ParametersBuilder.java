@@ -60,7 +60,7 @@ public class ShieldedTRC20ParametersBuilder {
   @Setter
   private BigInteger transparentToAmount;
   @Setter
-  byte[] burnCiphertext = new byte[80];
+  private byte[] burnCiphertext = new byte[80];
 
   public ShieldedTRC20ParametersBuilder() {
 
@@ -347,9 +347,9 @@ public class ShieldedTRC20ParametersBuilder {
   }
 
   public String getTriggerContractInput(ShieldedTRC20Parameters shieldedTRC20Parameters,
-                                        List<BytesMessage> spendAuthoritySignature,
-                                        BigInteger value, boolean withAsk,
-                                        byte[] transparentToAddress) {
+      List<BytesMessage> spendAuthoritySignature,
+      BigInteger value, boolean withAsk,
+      byte[] transparentToAddress) {
     switch (shieldedTRC20ParametersType) {
       case MINT:
         return mintParamsToHexString(shieldedTRC20Parameters, value);
@@ -364,7 +364,7 @@ public class ShieldedTRC20ParametersBuilder {
   }
 
   private String mintParamsToHexString(GrpcAPI.ShieldedTRC20Parameters mintParams,
-                                       BigInteger value) {
+      BigInteger value) {
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("require the value be positive");
     }
@@ -467,9 +467,9 @@ public class ShieldedTRC20ParametersBuilder {
   }
 
   private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams,
-                                       List<BytesMessage> spendAuthoritySignature,
-                                       BigInteger value, byte[] transparentToAddress,
-                                       boolean withAsk) {
+      List<BytesMessage> spendAuthoritySignature,
+      BigInteger value, byte[] transparentToAddress,
+      boolean withAsk) {
     byte[] payTo = new byte[32];
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("the value must be positive");
@@ -565,13 +565,12 @@ public class ShieldedTRC20ParametersBuilder {
   public void addSpend(
       byte[] ak,
       byte[] nsk,
-      byte[] ovk,
       Note note,
       byte[] alpha,
       byte[] anchor,
       byte[] path,
       long position) {
-    spends.add(new SpendDescriptionInfo(ak, nsk, ovk, note, alpha, anchor, path, position));
+    spends.add(new SpendDescriptionInfo(ak, nsk, note, alpha, anchor, path, position));
     valueBalance += note.getValue();
   }
 
@@ -600,7 +599,6 @@ public class ShieldedTRC20ParametersBuilder {
     private long position;
     private byte[] ak;
     private byte[] nsk;
-    private byte[] ovk;
 
     private SpendDescriptionInfo(
         ExpandedSpendingKey expsk,
@@ -635,7 +633,6 @@ public class ShieldedTRC20ParametersBuilder {
     private SpendDescriptionInfo(
         byte[] ak,
         byte[] nsk,
-        byte[] ovk,
         Note note,
         byte[] alpha,
         byte[] anchor,
@@ -648,7 +645,6 @@ public class ShieldedTRC20ParametersBuilder {
       this.path = path;
       this.position = position;
       this.alpha = alpha;
-      this.ovk = ovk;
     }
   }
 

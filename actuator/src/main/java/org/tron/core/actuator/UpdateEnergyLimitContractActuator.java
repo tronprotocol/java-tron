@@ -5,8 +5,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -28,9 +28,9 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)object;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) object;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -56,23 +56,22 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!DBConfig.getEnergyLimitHardFork()) {
+    if (!StorageUtils.getEnergyLimitHardFork()) {
       throw new ContractValidateException(
           "contract type error, unexpected type [UpdateEnergyLimitContract]");
     }
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     ContractStore contractStore = chainBaseManager.getContractStore();
     if (!this.any.is(UpdateEnergyLimitContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [UpdateEnergyLimitContract],real type["
-              + contract
-              .getClass() + "]");
+              + any.getClass() + "]");
     }
     final UpdateEnergyLimitContract contract;
     try {
@@ -81,7 +80,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!DecodeUtil.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
@@ -90,7 +89,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] does not exist");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
     long newOriginEnergyLimit = contract.getOriginEnergyLimit();
@@ -112,7 +111,8 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
     if (!Arrays.equals(ownerAddress, deployedContractOwnerAddress)) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] is not the owner of the contract");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR
+              + readableOwnerAddress + "] is not the owner of the contract");
     }
 
     return true;

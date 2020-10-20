@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
+import org.rocksdb.DirectComparator;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -26,6 +29,7 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
+import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
@@ -40,11 +44,24 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
   ReadOptions readOpts;
+  private static final String FAIL_TO_INIT_DATABASE = "Failed to initialize database";
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
   private String parentPath;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
+  private static final String KEY_ENGINE = "ENGINE";
+  private static final String ROCKSDB = "ROCKSDB";
+  private DirectComparator comparator;
+
+  public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
+      DirectComparator comparator) {
+    this.dataBaseName = name;
+    this.parentPath = parentPath;
+    this.comparator = comparator;
+    RocksDbSettings.setRocksDbSettings(settings);
+    initDB();
+  }
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
     this.dataBaseName = name;
@@ -148,24 +165,19 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
 
     // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
-        return false;
-      }
-    }
-    engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("ROCKSDB")) {
-      return true;
-    } else {
+    String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+    if (engine.isEmpty() && !PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
       return false;
     }
+    engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+
+    return ROCKSDB.equals(engine);
   }
 
   public void initDB() {
     if (!checkOrInitEngine()) {
       logger.error("database engine do not match");
-      throw new RuntimeException("Failed to initialize database");
+      throw new RuntimeException(FAIL_TO_INIT_DATABASE);
     }
     initDB(RocksDbSettings.getSettings());
   }
@@ -202,6 +214,9 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
         options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
         options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
+        if (comparator != null) {
+          options.setComparator(comparator);
+        }
 
         // table options
         final BlockBasedTableConfig tableCfg;
@@ -229,14 +244,14 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
             database = RocksDB.open(options, dbPath.toString());
           } catch (RocksDBException e) {
             logger.error(e.getMessage(), e);
-            throw new RuntimeException("Failed to initialize database", e);
+            throw new RuntimeException(FAIL_TO_INIT_DATABASE, e);
           }
 
           alive = true;
 
         } catch (IOException ioe) {
           logger.error(ioe.getMessage(), ioe);
-          throw new RuntimeException("Failed to initialize database", ioe);
+          throw new RuntimeException(FAIL_TO_INIT_DATABASE, ioe);
         }
 
         logger.debug("<~ RocksDbDataSource.initDB(): " + dataBaseName);
@@ -331,7 +346,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
           batch.put(entry.getKey(), entry.getValue());
         }
       }
-      database.write(new WriteOptions(), batch);
+      database.write(options, batch);
     }
   }
 
@@ -368,6 +383,26 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       } catch (Exception e1) {
         throw new RuntimeException(e);
       }
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    if (quitIfNotAlive()) {
+      return new ArrayList<>();
+    }
+    if (limit <= 0) {
+      return new ArrayList<>();
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iter = database.newIterator()) {
+      List<byte[]> result = new ArrayList<>();
+      long i = 0;
+      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+        result.add(iter.key());
+      }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }

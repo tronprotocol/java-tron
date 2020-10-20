@@ -1,5 +1,7 @@
 package stest.tron.wallet.dailybuild.internaltransaction;
 
+import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -498,39 +501,47 @@ public class ContractInternalTransaction003 {
         "test1(address,address)", initParmes, false,
         100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("InfoById:" + infoById);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    int transactionsCount = infoById.get().getInternalTransactionsCount();
-    Assert.assertEquals(184, transactionsCount);
-    for (int i = 0; i < transactionsCount; i++) {
-      Assert.assertFalse(infoById.get().getInternalTransactions(i).getRejected());
+    if (infoById.get().getResultValue() == 0) {
+      int transactionsCount = infoById.get().getInternalTransactionsCount();
+      Assert.assertEquals(184, transactionsCount);
+      for (int i = 0; i < transactionsCount; i++) {
+        Assert.assertFalse(infoById.get().getInternalTransactions(i).getRejected());
+      }
+      dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
+      String note = ByteArray
+          .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
+      String note1 = ByteArray
+          .toStr(infoById.get().getInternalTransactions(1).getNote().toByteArray());
+      String note2 = ByteArray
+          .toStr(infoById.get().getInternalTransactions(2).getNote().toByteArray());
+      String note3 = ByteArray
+          .toStr(infoById.get().getInternalTransactions(3).getNote().toByteArray());
+      Long vaule1 = infoById.get().getInternalTransactions(0).getCallValueInfo(0).getCallValue();
+      Long vaule2 = infoById.get().getInternalTransactions(1).getCallValueInfo(0).getCallValue();
+      Long vaule3 = infoById.get().getInternalTransactions(2).getCallValueInfo(0).getCallValue();
+      Long vaule4 = infoById.get().getInternalTransactions(3).getCallValueInfo(0).getCallValue();
+
+      Assert.assertEquals("call", note);
+      Assert.assertEquals("create", note1);
+      Assert.assertEquals("call", note2);
+      Assert.assertEquals("call", note3);
+      Assert.assertTrue(1 == vaule1);
+      Assert.assertTrue(100 == vaule2);
+      Assert.assertTrue(0 == vaule3);
+      Assert.assertTrue(1 == vaule4);
+    } else if (infoById.get().getResultValue() == 1) {
+      Assert.assertEquals(FAILED, infoById.get().getResult());
+      Assert
+          .assertEquals(infoById.get().getContractResult(0).toStringUtf8(),
+              "");
+      Assert.assertEquals(contractResult.OUT_OF_TIME, infoById.get().getReceipt().getResult());
+      Assert.assertEquals("CPU timeout for 'PUSH1' operation executing",
+          infoById.get().getResMessage().toStringUtf8());
     }
-    dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
-    String note = ByteArray
-        .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
-    String note1 = ByteArray
-        .toStr(infoById.get().getInternalTransactions(1).getNote().toByteArray());
-    String note2 = ByteArray
-        .toStr(infoById.get().getInternalTransactions(2).getNote().toByteArray());
-    String note3 = ByteArray
-        .toStr(infoById.get().getInternalTransactions(3).getNote().toByteArray());
-    Long vaule1 = infoById.get().getInternalTransactions(0).getCallValueInfo(0).getCallValue();
-    Long vaule2 = infoById.get().getInternalTransactions(1).getCallValueInfo(0).getCallValue();
-    Long vaule3 = infoById.get().getInternalTransactions(2).getCallValueInfo(0).getCallValue();
-    Long vaule4 = infoById.get().getInternalTransactions(3).getCallValueInfo(0).getCallValue();
-
-    Assert.assertEquals("call", note);
-    Assert.assertEquals("create", note1);
-    Assert.assertEquals("call", note2);
-    Assert.assertEquals("call", note3);
-    Assert.assertTrue(1 == vaule1);
-    Assert.assertTrue(100 == vaule2);
-    Assert.assertTrue(0 == vaule3);
-    Assert.assertTrue(1 == vaule4);
-
-
   }
 
   /**

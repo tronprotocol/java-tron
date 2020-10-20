@@ -66,7 +66,7 @@ public class WalletTestZenToken005 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -79,10 +79,11 @@ public class WalletTestZenToken005 {
     Assert.assertTrue(PublicMethed.sendcoin(receiverPublicAddress, 1000000L,
         fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = false, description = "The receiver shield address can't more then 2")
+  @Test(enabled = false,
+      description = "The receiver shield address can't more then 2")
   public void test1ReceiverShieldAddressCanNotMoreThenTwo() {
     Optional<ShieldAddressInfo> shieldAddressInfo1 = PublicMethed.generateShieldAddress();
     String shieldAddress1 = shieldAddressInfo1.get().getAddress();
@@ -116,7 +117,8 @@ public class WalletTestZenToken005 {
         zenTokenOwnerKey, blockingStubFull));
   }
 
-  @Test(enabled = false, description = "The receiver can't only one public address")
+  @Test(enabled = false,
+      description = "The receiver can't only one public address")
   public void test2ReceiverPublicCanNotOnlyOnePublic() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -131,7 +133,8 @@ public class WalletTestZenToken005 {
         zenTokenOwnerKey, blockingStubFull));
   }
 
-  @Test(enabled = false, description = "Public send amount must equal receiver amount + shieldFee")
+  @Test(enabled = false,
+      description = "Public send amount must equal receiver amount + shieldFee")
   public void test3SendAmountMustEqualReceiverAmountPlusShieldFee() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -203,7 +206,7 @@ public class WalletTestZenToken005 {
    * constructor.
    */
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

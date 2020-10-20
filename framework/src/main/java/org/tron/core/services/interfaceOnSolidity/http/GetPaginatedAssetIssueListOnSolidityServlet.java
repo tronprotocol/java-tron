@@ -11,14 +11,13 @@ import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
 @Slf4j(topic = "API")
-public class GetPaginatedAssetIssueListOnSolidityServlet
-    extends GetPaginatedAssetIssueListServlet {
+public class GetPaginatedAssetIssueListOnSolidityServlet extends GetPaginatedAssetIssueListServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-
+    walletOnSolidity.futureGet(() -> super.doGet(request, response));
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {

@@ -26,6 +26,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
 @Slf4j
@@ -171,7 +172,8 @@ public class WitnessCreateActuatorTest {
       Assert.assertFalse(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Witness[" + OWNER_ADDRESS_SECOND + "] has existed", e.getMessage());
+      Assert.assertEquals("Witness[" + OWNER_ADDRESS_SECOND + "] has existed",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -220,7 +222,10 @@ public class WitnessCreateActuatorTest {
     }
 
     //256 bytes
-    String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
+        + "9abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
+        + "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567"
+        + "89abcdef";
     //Url length can not greater than 256
     try {
       WitnessCreateActuator actuator = new WitnessCreateActuator();
@@ -292,7 +297,8 @@ public class WitnessCreateActuatorTest {
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
+      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -328,5 +334,27 @@ public class WitnessCreateActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+  @Test
+  public void commonErrorCheck() {
+
+    WitnessCreateActuator actuator = new WitnessCreateActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [WitnessCreateContract],real type["
+    );
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS_FIRST, URL));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
   }
 }

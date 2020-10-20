@@ -11,8 +11,7 @@ import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
 @Slf4j(topic = "API")
-public class ListExchangesOnSolidityServlet
-    extends ListExchangesServlet {
+public class ListExchangesOnSolidityServlet extends ListExchangesServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;

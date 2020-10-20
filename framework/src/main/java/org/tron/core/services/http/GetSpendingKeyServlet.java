@@ -20,7 +20,6 @@ public class GetSpendingKeyServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       BytesMessage reply = wallet.getSpendingKey();
-
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } catch (Exception e) {
       Util.processError(e, response);

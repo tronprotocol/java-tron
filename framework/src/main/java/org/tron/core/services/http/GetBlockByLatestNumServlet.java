@@ -1,6 +1,6 @@
 package org.tron.core.services.http;
 
-import java.util.stream.Collectors;
+import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -21,16 +21,7 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = Util.getVisible(request);
-      long getNum = Long.parseLong(request.getParameter("num"));
-      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-        BlockList reply = wallet.getBlockByLatestNum(getNum);
-        if (reply != null) {
-          response.getWriter().println(Util.printBlockList(reply, visible));
-          return;
-        }
-      }
-      response.getWriter().println("{}");
+      fillResponse(Util.getVisible(request), Long.parseLong(request.getParameter("num")), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -38,23 +29,24 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       NumberMessage.Builder build = NumberMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
-      long getNum = build.getNum();
-      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-        BlockList reply = wallet.getBlockByLatestNum(getNum);
-        if (reply != null) {
-          response.getWriter().println(Util.printBlockList(reply, visible));
-          return;
-        }
-      }
-      response.getWriter().println("{}");
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(params.isVisible(), build.getNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private void fillResponse(boolean visible, long num, HttpServletResponse response)
+      throws IOException {
+    if (num > 0 && num < BLOCK_LIMIT_NUM) {
+      BlockList reply = wallet.getBlockByLatestNum(num);
+      if (reply != null) {
+        response.getWriter().println(Util.printBlockList(reply, visible));
+        return;
+      }
+    }
+    response.getWriter().println("{}");
   }
 }

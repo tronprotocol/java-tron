@@ -9,9 +9,8 @@ import org.spongycastle.crypto.OutputLengthException;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.WalletUtil;
-import org.tron.core.Wallet;
-import org.tron.core.vm.utils.MUtil;
+import org.tron.common.utils.StringUtil;
+import org.tron.core.db.TransactionTrace;
 
 @Slf4j(topic = "Parser")
 public class ContractEventParser {
@@ -31,7 +30,7 @@ public class ContractEventParser {
         return Hex.toHexString(startBytes);
       } else if (type == Type.ADDRESS) {
         byte[] last20Bytes = Arrays.copyOfRange(startBytes, 12, startBytes.length);
-        return WalletUtil.encode58Check(MUtil.convertToTronAddress(last20Bytes));
+        return StringUtil.encode58Check(TransactionTrace.convertToTronAddress(last20Bytes));
       } else if (type == Type.STRING || type == Type.BYTES) {
         int start = intValueExact(startBytes);
         byte[] lengthBytes = subBytes(data, start, DATAWORD_UNIT_SIZE);
@@ -50,7 +49,7 @@ public class ContractEventParser {
   // don't support these type yet : bytes32[10][10]  OR  bytes32[][10]
   protected static Type basicType(String type) {
     if (!Pattern.matches("^.*\\[\\d*\\]$", type)) {
-      // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
+      // ignore not valid type such as "int92", "bytes33", these types will be compiled failed.
       if (type.startsWith("int") || type.startsWith("uint") || type.startsWith("trcToken")) {
         return Type.INT_NUMBER;
       } else if ("bool".equals(type)) {
@@ -82,7 +81,7 @@ public class ContractEventParser {
   }
 
   /**
-   * support: uint<m> (m ∈ [8, 256], m % 8 == 0), int<m> (m ∈ [8, 256], m % 8 == 0) uint (solidity
+   * support: uint m, (m ∈ [8, 256], m % 8 == 0), int m, (m ∈ [8, 256], m % 8 == 0) uint (solidity
    * abi will auto convert to uint256) int (solidity abi will auto convert to int256) bool
    *
    * otherwise, returns hexString
@@ -101,7 +100,7 @@ public class ContractEventParser {
       return String.valueOf(!DataWord.isZero(bytes));
     } else if (type == Type.ADDRESS) {
       byte[] last20Bytes = Arrays.copyOfRange(bytes, 12, bytes.length);
-      return WalletUtil.encode58Check(MUtil.convertToTronAddress(last20Bytes));
+      return StringUtil.encode58Check(TransactionTrace.convertToTronAddress(last20Bytes));
     }
     return Hex.toHexString(bytes);
   }

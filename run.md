@@ -190,4 +190,4 @@ Then, run `FullNode::main()` again.
 
 ## Advanced Configurations
 
-Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
+Read the [Advanced Configurations](common/src/main/java/org/tron/core/config/README.md).

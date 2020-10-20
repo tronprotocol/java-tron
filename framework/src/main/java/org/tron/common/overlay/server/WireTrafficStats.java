@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.server;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -58,26 +59,12 @@ public class WireTrafficStats implements Runnable {
   @ChannelHandler.Sharable
   static class TrafficStatHandler extends ChannelDuplexHandler {
 
-    //    private long outSizeTot;
-//    private long inSizeTot;
     private AtomicLong outSize = new AtomicLong();
     private AtomicLong inSize = new AtomicLong();
     private AtomicLong outPackets = new AtomicLong();
     private AtomicLong inPackets = new AtomicLong();
-//    private long lastTime = System.currentTimeMillis();
 
     public String stats() {
-//      long out = outSize.getAndSet(0);
-//      long outPac = outPackets.getAndSet(0);
-//      long in = inSize.getAndSet(0);
-//      long inPac = inPackets.getAndSet(0);
-//      outSizeTot += out;
-//      inSizeTot += in;
-//      long curTime = System.currentTimeMillis();
-//      long d = (curTime - lastTime);
-//      long outSpeed = out * 1000 / d;
-//      long inSpeed = in * 1000 / d;
-//      lastTime = curTime;
       return "";
     }
 

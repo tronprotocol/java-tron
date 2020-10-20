@@ -29,6 +29,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 
@@ -74,8 +75,6 @@ public class UpdateAssetActuatorTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -311,7 +310,8 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -336,7 +336,8 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -361,7 +362,8 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL, 500L, 8000L));
+        .setAny(getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -390,7 +392,8 @@ public class UpdateAssetActuatorTest {
     String localUrl = "";
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS, DESCRIPTION, localUrl, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS, DESCRIPTION, localUrl,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -418,12 +421,14 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     String localDescription =
         "abchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuv"
-            + "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghij"
-            + "klmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyz";
+            + "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijkl"
+            + "mnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzab"
+            + "chefghijklmnopqrstuvwxyz";
 
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS, localDescription, URL, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS, localDescription, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -496,4 +501,27 @@ public class UpdateAssetActuatorTest {
       dbManager.getAssetIssueStore().delete(ByteString.copyFromUtf8(NAME).toByteArray());
     }
   }
+
+  @Test
+  public void commonErrorCheck() {
+
+    UpdateAssetActuator actuator = new UpdateAssetActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [UpdateAssetContract],real type["
+    );
+    actuatorTest.invalidContractType();
+    createAssertBeforSameTokenNameActive();
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+  }
+
 }

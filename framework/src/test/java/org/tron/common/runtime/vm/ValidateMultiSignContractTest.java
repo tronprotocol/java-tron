@@ -13,9 +13,13 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.*;
+import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -61,11 +65,8 @@ public class ValidateMultiSignContractTest {
 
     //Address non exist
     Assert.assertEquals(
-        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), 1, hash, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
-
-
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), 1, hash, signs)
+            .getValue(), DataWord.ZERO().getData());
   }
 
   @Test
@@ -105,12 +106,14 @@ public class ValidateMultiSignContractTest {
 
     byte[] address = key.getAddress();
     int permissionId = 2;
-    byte[] data = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),longData);
+    byte[] data = Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), longData);
 
     //combine data
     byte[] merged = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
     //sha256 of it
-    byte[] toSign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    byte[] toSign = Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), merged);
 
     //sign data
 
@@ -121,35 +124,30 @@ public class ValidateMultiSignContractTest {
     signs.add(Hex.toHexString(key2.sign(toSign).toByteArray()));
 
     Assert.assertEquals(
-        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ONE().getData());
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
+            .getValue(), DataWord.ONE().getData());
 
     //weight not enough
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
-        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
+            .getValue(), DataWord.ZERO().getData());
 
     //put wrong sign
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
-        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
+            .getValue(), DataWord.ZERO().getData());
+
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(new ECKey().sign(toSign).toByteArray()));
 
     Assert.assertEquals(
-        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
-
-
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
+            .getValue(), DataWord.ZERO().getData());
   }
 
 

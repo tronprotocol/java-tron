@@ -22,7 +22,6 @@ import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
@@ -44,8 +43,6 @@ public class RevokingDbWithCacheOldValueTest {
   @After
   public void removeDb() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
   }
@@ -60,9 +57,9 @@ public class RevokingDbWithCacheOldValueTest {
       tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
       tmpSession.commit();
     }
-    Assert.assertEquals(true, tronDatabase.has(testProtoCapsule.getData()));
+    Assert.assertTrue(tronDatabase.has(testProtoCapsule.getData()));
     tronDatabase.reset();
-    Assert.assertEquals(false, tronDatabase.has(testProtoCapsule.getData()));
+    Assert.assertFalse(tronDatabase.has(testProtoCapsule.getData()));
     tronDatabase.reset();
   }
 
@@ -144,8 +141,9 @@ public class RevokingDbWithCacheOldValueTest {
 
     dialog.destroy();
 
-    logger.info("**********testProtoCapsule:" + String
-        .valueOf(tronDatabase.getUnchecked(testProtoCapsule.getData())));
+    logger.info(
+        "**********testProtoCapsule:" + tronDatabase.getUnchecked(testProtoCapsule.getData())
+            .toString());
     Assert.assertArrayEquals("del".getBytes(),
         tronDatabase.getUnchecked(testProtoCapsule.getData()).getData());
     Assert.assertEquals(testProtoCapsule, tronDatabase.getUnchecked(testProtoCapsule.getData()));
@@ -171,8 +169,7 @@ public class RevokingDbWithCacheOldValueTest {
         .collect(Collectors.toSet());
 
     for (int i = 9; i >= 5; i--) {
-      Assert.assertEquals(true,
-          result.contains(new ProtoCapsuleTest(("getLastestValues" + i).getBytes())));
+      Assert.assertTrue(result.contains(new ProtoCapsuleTest(("getLastestValues" + i).getBytes())));
     }
     tronDatabase.close();
   }
@@ -198,8 +195,34 @@ public class RevokingDbWithCacheOldValueTest {
             .collect(Collectors.toSet());
 
     for (int i = 2; i < 5; i++) {
-      Assert.assertEquals(true,
-          result.contains(new ProtoCapsuleTest(("getValuesNext" + i).getBytes())));
+      Assert.assertTrue(result.contains(new ProtoCapsuleTest(("getValuesNext" + i).getBytes())));
+    }
+    tronDatabase.close();
+  }
+
+  @Test
+  public synchronized void testGetKeysNext() {
+    revokingDatabase.getStack().clear();
+    TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
+        "testrevokingtronstore-testGetKeysNext", revokingDatabase);
+
+    String protoCapsuleStr = "getKeysNext";
+    for (int i = 0; i < 10; i++) {
+      ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest((protoCapsuleStr + i).getBytes());
+      try (ISession tmpSession = revokingDatabase.buildSession()) {
+        tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
+        tmpSession.commit();
+      }
+    }
+
+    int start = 2;
+    List<byte[]> result =
+        tronDatabase.getRevokingDB().getKeysNext(
+            new ProtoCapsuleTest((protoCapsuleStr + start).getBytes()).getData(), 3);
+
+    for (int i = start; i < 5; i++) {
+      Assert.assertArrayEquals(new ProtoCapsuleTest((protoCapsuleStr + i).getBytes()).getData(),
+          result.get(i - 2));
     }
     tronDatabase.close();
   }

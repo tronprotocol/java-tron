@@ -3,7 +3,8 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
-import static org.tron.core.config.args.Parameter.ChainConstant.MAX_VOTE_NUMBER;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
@@ -12,7 +13,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -38,9 +39,9 @@ public class VoteWitnessActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)object;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) object;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -59,10 +60,10 @@ public class VoteWitnessActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     WitnessStore witnessStore = chainBaseManager.getWitnessStore();
@@ -78,7 +79,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!DecodeUtil.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
@@ -99,7 +100,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
-        if (!Commons.addressValid(witnessCandidate)) {
+        if (!DecodeUtil.addressValid(witnessCandidate)) {
           throw new ContractValidateException("Invalid vote address!");
         }
         long voteCount = vote.getVoteCount();
@@ -126,7 +127,8 @@ public class VoteWitnessActuator extends AbstractActuator {
 
       long tronPower = accountCapsule.getTronPower();
 
-      sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
+      sum = LongMath
+          .checkedMultiply(sum, TRX_PRECISION); //trx -> drop. The vote count is based on TRX
       if (sum > tronPower) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower

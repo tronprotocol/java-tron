@@ -31,6 +31,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.ProposalContract;
 
 @Slf4j
@@ -124,7 +125,7 @@ public class ProposalDeleteActuatorTest {
     paras.put(0L, 3 * 27 * 1000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
@@ -210,22 +211,13 @@ public class ProposalDeleteActuatorTest {
   public void invalidAddress() {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
     long id = 1;
-
     ProposalDeleteActuator actuator = new ProposalDeleteActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS_INVALID, id));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("Invalid address");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalid address", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.setContract(getContract(OWNER_ADDRESS_INVALID, id));
+    actuatorTest.setMessage("Invalid address", "Invalid address");
+    actuatorTest.invalidOwnerAddress();
+
   }
 
   /**
@@ -369,5 +361,29 @@ public class ProposalDeleteActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ProposalDeleteContract],real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS_FIRST, 1));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+
+  }
+
 
 }

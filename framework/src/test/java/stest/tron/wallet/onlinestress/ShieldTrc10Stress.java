@@ -73,7 +73,7 @@ public class ShieldTrc10Stress {
    */
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
     ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -100,8 +100,6 @@ public class ShieldTrc10Stress {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
 
-
-
   }
 
   @Test(enabled = true, threadPoolSize = 100, invocationCount = 100)
@@ -111,7 +109,6 @@ public class ShieldTrc10Stress {
         .build();
     WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-
     DecryptNotes notes;
     List<Note> shieldOutList = new ArrayList<>();
 
@@ -120,23 +117,22 @@ public class ShieldTrc10Stress {
       notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
       //logger.info("note size:" + notes.getNoteTxsCount());
 
-
       String memo1 = "Shield to  shield address1 transaction" + System.currentTimeMillis();
       shieldOutList.clear();
-      Long sendToShiledAddress1Amount = notes.getNoteTxs(notes.getNoteTxsCount() -1).getNote().getValue() - zenTokenFee;
+      Long sendToShiledAddress1Amount =
+          notes.getNoteTxs(notes.getNoteTxsCount() - 1).getNote().getValue() - zenTokenFee;
       shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendshieldAddress,
           "" + sendToShiledAddress1Amount, memo1);
-
 
       try {
         PublicMethed.sendShieldCoin(
             null, 0,
-            sendShieldAddressInfo.get(), notes.getNoteTxs(notes.getNoteTxsCount()-1),
+            sendShieldAddressInfo.get(), notes.getNoteTxs(notes.getNoteTxsCount() - 1),
             shieldOutList,
             null, 0,
             zenTokenOwnerKey, blockingStubFull);
       } catch (Exception e) {
-
+        throw e;
       }
     }
 

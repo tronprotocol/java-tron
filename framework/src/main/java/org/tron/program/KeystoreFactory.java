@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
@@ -36,44 +36,50 @@ public class KeystoreFactory {
 
   private boolean priKeyValid(String priKey) {
     if (StringUtils.isEmpty(priKey)) {
-      logger.warn("Warning: PrivateKey is empty !!");
+      logger.warn("Warning: PrivateKey is empty!");
       return false;
     }
     if (priKey.length() != 64) {
-      logger.warn("Warning: PrivateKey length need 64 but " + priKey.length() + " !!");
+      logger.warn("Warning: PrivateKey length needs to be 64, but " + priKey.length() + "!");
       return false;
     }
     //Other rule;
     return true;
   }
 
-  private void genKeystore() throws CipherException, IOException {
-    String password = WalletUtils.inputPassword2Twice();
-
-    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random,
-        Args.getInstance().isECKeyCryptoEngine());    File file = new File(FilePath);
+  private void fileCheck(File file) throws IOException {
     if (!file.exists()) {
       if (!file.mkdir()) {
-        throw new IOException("Make directory faild!");
+        throw new IOException("Creating directory failed!");
       }
     } else {
       if (!file.isDirectory()) {
         if (file.delete()) {
           if (!file.mkdir()) {
-            throw new IOException("Make directory faild!");
+            throw new IOException("Creating directory failed!");
           }
         } else {
-          throw new IOException("File is exists and can not delete!");
+          throw new IOException("File is already existed and can not be deleted!");
         }
       }
     }
+  }
+
+
+  private void genKeystore() throws CipherException, IOException {
+    String password = WalletUtils.inputPassword2Twice();
+
+    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random,
+        CommonParameter.getInstance().isECKeyCryptoEngine());
+    File file = new File(FilePath);
+    fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
     Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
     System.out.println("Your address is " + credentials.getAddress());
   }
 
-  private void importPrivatekey() throws CipherException, IOException {
+  private void importPrivateKey() throws CipherException, IOException {
     Scanner in = new Scanner(System.in);
     String privateKey;
     System.out.println("Please input private key.");
@@ -89,23 +95,9 @@ public class KeystoreFactory {
     String password = WalletUtils.inputPassword2Twice();
 
     SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey),
-        Args.getInstance().isECKeyCryptoEngine());
+        CommonParameter.getInstance().isECKeyCryptoEngine());
     File file = new File(FilePath);
-    if (!file.exists()) {
-      if (!file.mkdir()) {
-        throw new IOException("Make directory faild!");
-      }
-    } else {
-      if (!file.isDirectory()) {
-        if (file.delete()) {
-          if (!file.mkdir()) {
-            throw new IOException("Make directory faild!");
-          }
-        } else {
-          throw new IOException("File is exists and can not delete!");
-        }
-      }
-    }
+    fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
     Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
@@ -115,9 +107,9 @@ public class KeystoreFactory {
   private void help() {
     System.out.println("You can enter the following command: ");
     System.out.println("GenKeystore");
-    System.out.println("ImportPrivatekey");
+    System.out.println("ImportPrivateKey");
     System.out.println("Exit or Quit");
-    System.out.println("Input any one of then, you will get more tips.");
+    System.out.println("Input any one of them, you will get more tips.");
   }
 
   private void run() {
@@ -144,7 +136,7 @@ public class KeystoreFactory {
             break;
           }
           case "importprivatekey": {
-            importPrivatekey();
+            importPrivateKey();
             break;
           }
           case "exit":

@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -21,21 +20,12 @@ public class GetIncomingViewingKeyServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
-
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       String ak = jsonObject.getString("ak");
       String nk = jsonObject.getString("nk");
 
-      GrpcAPI.IncomingViewingKeyMessage ivk = wallet
-          .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
-
-      response.getWriter()
-          .println(JsonFormat.printToString(ivk, visible));
-
+      fillResponse(params.isVisible(), ak, nk, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -47,13 +37,19 @@ public class GetIncomingViewingKeyServlet extends RateLimiterServlet {
       String ak = request.getParameter("ak");
       String nk = request.getParameter("nk");
 
-      GrpcAPI.IncomingViewingKeyMessage ivk = wallet
-          .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
-
-      response.getWriter()
-          .println(JsonFormat.printToString(ivk, visible));
+      fillResponse(visible, ak, nk, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private void fillResponse(boolean visible, String ak, String nk, HttpServletResponse response)
+      throws Exception {
+
+    GrpcAPI.IncomingViewingKeyMessage ivk = wallet
+        .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
+
+    response.getWriter()
+        .println(JsonFormat.printToString(ivk, visible));
   }
 }

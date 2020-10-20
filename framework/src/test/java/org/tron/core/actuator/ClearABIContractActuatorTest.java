@@ -28,6 +28,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
@@ -46,7 +47,8 @@ public class ClearABIContractActuatorTest {
   private static final String CONTRACT_ADDRESS = "111111";
   private static final String NO_EXIST_CONTRACT_ADDRESS = "2222222";
   private static final ABI SOURCE_ABI = jsonStr2Abi(
-      "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]");
+      "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\""
+          + ":\"constructor\"}]");
   private static final ABI TARGET_ABI = ABI.getDefaultInstance();
   private static TronApplicationContext context;
   private static Manager dbManager;
@@ -141,8 +143,8 @@ public class ClearABIContractActuatorTest {
       // assert result state and consume_user_resource_percent
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getInstance().getAbi(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getInstance().getAbi(),
           TARGET_ABI);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -185,7 +187,8 @@ public class ClearABIContractActuatorTest {
       fail("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists", e.getMessage());
+      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -251,8 +254,8 @@ public class ClearABIContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getInstance().getAbi(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getInstance().getAbi(),
           TARGET_ABI);
 
       // second
@@ -261,9 +264,8 @@ public class ClearABIContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getInstance().getAbi(),
-          TARGET_ABI);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getInstance().getAbi(), TARGET_ABI);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -271,4 +273,28 @@ public class ClearABIContractActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ClearABIContract],real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or contract store!");
+    actuatorTest.nullDBManger();
+
+  }
+
 }

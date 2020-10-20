@@ -127,7 +127,7 @@ public class WalletTestZenTokenStress {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
 
 
   }

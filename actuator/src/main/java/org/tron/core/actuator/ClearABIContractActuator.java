@@ -5,7 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -28,9 +28,9 @@ public class ClearABIContractActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -61,7 +61,7 @@ public class ClearABIContractActuator extends AbstractActuator {
     }
 
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or contract store!");
@@ -80,7 +80,7 @@ public class ClearABIContractActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!DecodeUtil.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
@@ -89,7 +89,8 @@ public class ClearABIContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR
+              + readableOwnerAddress + "] not exists");
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
@@ -105,7 +106,8 @@ public class ClearABIContractActuator extends AbstractActuator {
 
     if (!Arrays.equals(ownerAddress, deployedContractOwnerAddress)) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] is not the owner of the contract");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR
+              + readableOwnerAddress + "] is not the owner of the contract");
     }
 
     return true;

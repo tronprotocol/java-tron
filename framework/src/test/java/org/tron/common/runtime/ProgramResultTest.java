@@ -1,5 +1,8 @@
 package org.tron.common.runtime;
 
+import static org.tron.core.capsule.utils.TransactionUtil.buildTransactionInfoInstance;
+import static org.tron.core.utils.TransactionUtil.generateContractAddress;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +19,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -76,8 +78,6 @@ public class ProgramResultTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -338,8 +338,9 @@ public class ProgramResultTest {
     TransactionTrace traceFailed = TvmTestUtils
         .processTransactionAndReturnTrace(trx2, deposit, null);
     runtime = traceFailed.getRuntime();
-    byte[] bContract2 = WalletUtil
-        .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
+
+    byte[] bContract2 =
+        generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
         .getInternalTransactions();
     Assert.assertEquals(internalTransactionsListFail.get(0).getValue(), 10);
@@ -512,8 +513,8 @@ public class ProgramResultTest {
 
   public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block,
       List<InternalTransaction> internalTransactionsList) {
-    TransactionInfoCapsule trxInfoCapsule = TransactionInfoCapsule
-        .buildInstance(new TransactionCapsule(trx), null, trace);
+    TransactionInfoCapsule trxInfoCapsule =
+        buildTransactionInfoInstance(new TransactionCapsule(trx), null, trace);
     List<Protocol.InternalTransaction> internalTransactionListFromProtocol = trxInfoCapsule
         .getInstance().getInternalTransactionsList();
     for (int i = 0; i < internalTransactionListFromProtocol.size(); i++) {

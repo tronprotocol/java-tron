@@ -15,8 +15,9 @@
 
 package org.tron.common.application;
 
+import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 
 public class CliApplication implements Application {
@@ -27,12 +28,12 @@ public class CliApplication implements Application {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter parameter) {
 
   }
 
   @Override
-  public void initServices(Args args) {
+  public void initServices(CommonParameter parameter) {
 
   }
 
@@ -57,17 +58,17 @@ public class CliApplication implements Application {
   }
 
   @Override
-  public BlockStore getBlockStoreS() {
-    return null;
-  }
-
-  @Override
   public void addService(Service service) {
 
   }
 
   @Override
   public Manager getDbManager() {
+    return null;
+  }
+
+  @Override
+  public ChainBaseManager getChainBaseManager() {
     return null;
   }
 

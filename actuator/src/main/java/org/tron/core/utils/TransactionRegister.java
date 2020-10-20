@@ -12,11 +12,11 @@ public class TransactionRegister {
     Reflections reflections = new Reflections("org.tron");
     Set<Class<? extends AbstractActuator>> subTypes = reflections
         .getSubTypesOf(AbstractActuator.class);
-    for (Class clazz : subTypes) {
+    for (Class _class : subTypes) {
       try {
-        clazz.newInstance();
+        _class.newInstance();
       } catch (Exception e) {
-        logger.error("{} contract actuator register fail!", clazz, e);
+        logger.error("{} contract actuator register fail!", _class, e);
       }
     }
   }

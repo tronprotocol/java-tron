@@ -26,6 +26,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 
@@ -138,8 +139,8 @@ public class UpdateSettingContractActuatorTest {
       // assert result state and consume_user_resource_percent
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(),
           TARGET_PERCENT);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -275,8 +276,8 @@ public class UpdateSettingContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(),
           TARGET_PERCENT);
 
       // second
@@ -285,8 +286,8 @@ public class UpdateSettingContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(),
           90L);
 
     } catch (ContractValidateException e) {
@@ -295,5 +296,28 @@ public class UpdateSettingContractActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+  @Test
+  public void commonErrorCheck() {
+
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [UpdateSettingContract], real type["
+    );
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or contract store!");
+    actuatorTest.nullDBManger();
+  }
+
 
 }

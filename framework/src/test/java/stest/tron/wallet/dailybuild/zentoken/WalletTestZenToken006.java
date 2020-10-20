@@ -68,7 +68,7 @@ public class WalletTestZenToken006 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -79,7 +79,7 @@ public class WalletTestZenToken006 {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
   }
 
   @Test(enabled = false, description = "Shield note memo is one char")
@@ -257,7 +257,7 @@ public class WalletTestZenToken006 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
