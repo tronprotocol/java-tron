@@ -14,6 +14,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessStore;
@@ -27,6 +28,9 @@ public class ConsensusService {
 
   @Autowired
   private WitnessStore witnessStore;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   @Autowired
   private BlockHandleImpl blockHandle;
@@ -43,7 +47,7 @@ public class ConsensusService {
     param.setMinParticipationRate(parameter.getMinParticipationRate());
     param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
     param.setNeedSyncCheck(parameter.isNeedSyncCheck());
-    param.setAgreeNodeCount(parameter.getAgreeNodeCount());
+    param.setAgreeNodeCount(chainBaseManager.getWitnesses().size() * 2 / 3 + 1);
     List<Miner> miners = new ArrayList<>();
     List<String> privateKeys = Args.getLocalWitnesses().getPrivateKeys();
     if (privateKeys.size() > 1) {
