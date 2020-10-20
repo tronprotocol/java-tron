@@ -122,6 +122,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryBindIp = "";
     PARAMETER.nodeExternalIp = "";
     PARAMETER.nodeDiscoveryPublicHomeNode = false;
+    PARAMETER.nodeDiscoveryPingTimeout = 15000;
     PARAMETER.nodeP2pPingInterval = 0L;
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.rpcPort = 0;
@@ -410,6 +411,10 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryPublicHomeNode =
         config.hasPath(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE) && config
             .getBoolean(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE);
+
+    PARAMETER.nodeDiscoveryPingTimeout =
+        config.hasPath(Constant.NODE_DISCOVERY_PING_TIMEOUT)
+            ? config.getLong(Constant.NODE_DISCOVERY_PING_TIMEOUT) : 15000;
 
     PARAMETER.nodeP2pPingInterval =
         config.hasPath(Constant.NODE_P2P_PING_INTERVAL)
