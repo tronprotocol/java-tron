@@ -45,10 +45,9 @@ public class GetContractInfoServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+      String input = params.getParams();
+      boolean visible = params.isVisible();
       if (visible) {
         JSONObject jsonObject = JSONObject.parseObject(input);
         String value = jsonObject.getString(VALUE);
