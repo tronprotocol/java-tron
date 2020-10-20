@@ -172,7 +172,6 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
-  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
   private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
@@ -295,7 +294,7 @@ public class RpcApiService implements Service {
       trxExtBuilder.setResult(retBuilder);
     } catch (ContractValidateException | VMIllegalException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+          .setMessage(ByteString.copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
       logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
     } catch (RuntimeException e) {
@@ -985,7 +984,8 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString
+                    .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -1862,7 +1862,8 @@ public class RpcApiService implements Service {
         trxExtBuilder.setResult(retBuilder);
       } catch (ContractValidateException | VMIllegalException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString.copyFromUtf8(Wallet
+                    .CONTRACT_VALIDATE_ERROR + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
         logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (RuntimeException e) {
@@ -2035,7 +2036,8 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString
+                    .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -2065,7 +2067,8 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString
+                    .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)

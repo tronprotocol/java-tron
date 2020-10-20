@@ -15,6 +15,7 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
 import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 
@@ -161,7 +162,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
