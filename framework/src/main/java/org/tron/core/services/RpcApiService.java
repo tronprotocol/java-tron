@@ -171,7 +171,6 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 @Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
-  public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
@@ -296,7 +295,7 @@ public class RpcApiService implements Service {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+      logger.warn(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
     } catch (RuntimeException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -962,7 +961,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -986,7 +985,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString
                     .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -1193,7 +1192,7 @@ public class RpcApiService implements Service {
             createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1212,7 +1211,7 @@ public class RpcApiService implements Service {
             createTransactionCapsule(request, ContractType.UnfreezeAssetContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1260,7 +1259,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1301,7 +1300,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1321,7 +1320,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1341,7 +1340,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1361,7 +1360,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1375,7 +1374,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1416,7 +1415,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1437,7 +1436,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1458,7 +1457,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1582,7 +1581,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1603,7 +1602,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1865,7 +1864,7 @@ public class RpcApiService implements Service {
             .setMessage(ByteString.copyFromUtf8(Wallet
                     .CONTRACT_VALIDATE_ERROR + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.warn(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (RuntimeException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -2038,7 +2037,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString
                     .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -2069,7 +2068,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString
                     .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+        logger.debug(Wallet.CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));

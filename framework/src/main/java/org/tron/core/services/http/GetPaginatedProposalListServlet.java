@@ -31,13 +31,10 @@ public class GetPaginatedProposalListServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
-      fillResponse(build.getOffset(), build.getLimit(), visible, response);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(build.getOffset(), build.getLimit(), params.isVisible(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
