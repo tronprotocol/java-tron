@@ -27,9 +27,9 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.Constant;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
 
