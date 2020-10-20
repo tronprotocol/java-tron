@@ -459,7 +459,7 @@ public class Wallet {
       CreateSmartContract contract = ContractCapsule
           .getSmartContractFromTransaction(trx.getInstance());
       long percent = contract.getNewContract().getConsumeUserResourcePercent();
-      if (percent < 0 || percent > 100) {
+      if (percent < 0 || percent > Constant.ONE_HUNDRED) {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
     }
