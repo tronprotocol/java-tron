@@ -1,4 +1,4 @@
-package org.tron.core.db;
+package org.tron.core.service;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Vote;
 
-@Slf4j(topic = "delegation")
+@Slf4j(topic = "mortgage")
 @Component
-public class DelegationService {
+public class MortgageService {
 
   @Setter
   private WitnessStore witnessStore;
@@ -157,7 +157,6 @@ public class DelegationService {
     if (beginCycle > currentCycle) {
       return accountCapsule.getAllowance();
     }
-    //\u000d adjustAllowance(Hex.decode("41D14DC60654445BC548F36E09828C9682520871A6"),90000000000L);
     //withdraw the latest cycle reward
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
@@ -216,9 +215,6 @@ public class DelegationService {
   public void adjustAllowance(AccountStore accountStore, byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
-    if (account == null) {
-      return;
-    }
     long allowance = account.getAllowance();
     if (amount == 0) {
       return;

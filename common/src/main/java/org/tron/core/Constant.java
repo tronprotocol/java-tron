@@ -8,8 +8,6 @@ public class Constant {
   //config for junit test
   public static final String TEST_CONF = "config-test.conf";
 
-  public static final String DATABASE_DIR = "storage.directory";
-
   // locate in storageDbDirectory, store the db infos,
   // now only has the split block number
   public static final String INFO_FILE_NAME = "info.properties";
@@ -269,4 +267,6 @@ public class Constant {
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
   public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
+  
+  public static final String LOCAL_HOST = "127.0.0.1";
 }

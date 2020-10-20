@@ -15,8 +15,8 @@ import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.DelegationService;
 import org.tron.core.db.Manager;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.vm.repository.Repository;
@@ -39,12 +39,12 @@ public class VMContractTestBase {
   protected static String WITNESS_SR1_ADDRESS;
 
   WitnessStore witnessStore;
-  DelegationService delegationService;
+  MortgageService mortgageService;
 
   static {
     // 27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1 (test.config)
     WITNESS_SR1_ADDRESS =
-            Constant.ADD_PRE_FIX_STRING_TESTNET + "299F3DB80A24B20A254B89CE639D59132F157F13";
+        Constant.ADD_PRE_FIX_STRING_TESTNET + "299F3DB80A24B20A254B89CE639D59132F157F13";
   }
 
   @Before
@@ -66,7 +66,7 @@ public class VMContractTestBase {
     witnessStore = context.getBean(WitnessStore.class);
     consensusService = context.getBean(ConsensusService.class);
     maintenanceManager = context.getBean(MaintenanceManager.class);
-    delegationService = context.getBean(DelegationService.class);
+    mortgageService = context.getBean(MortgageService.class);
     consensusService.start();
   }
 

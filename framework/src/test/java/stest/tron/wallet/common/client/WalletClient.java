@@ -29,7 +29,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.CancelException;
-import org.tron.keystore.CipherException;
+import org.tron.core.exception.CipherException;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;

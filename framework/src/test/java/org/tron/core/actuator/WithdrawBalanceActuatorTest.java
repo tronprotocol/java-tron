@@ -100,7 +100,7 @@ public class WithdrawBalanceActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     try {
-      dbManager.getDelegationService()
+      dbManager.getMortgageService()
           .adjustAllowance(dbManager.getAccountStore(), address, allowance);
     } catch (BalanceInsufficientException e) {
       fail("BalanceInsufficientException");
@@ -247,7 +247,7 @@ public class WithdrawBalanceActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
     try {
-      dbManager.getDelegationService()
+      dbManager.getMortgageService()
           .adjustAllowance(dbManager.getAccountStore(), address, allowance);
     } catch (BalanceInsufficientException e) {
       fail("BalanceInsufficientException");
@@ -290,7 +290,7 @@ public class WithdrawBalanceActuatorTest {
 
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     try {
-      dbManager.getDelegationService()
+      dbManager.getMortgageService()
           .adjustAllowance(dbManager.getAccountStore(), address, allowance);
     } catch (BalanceInsufficientException e) {
       fail("BalanceInsufficientException");
@@ -345,7 +345,7 @@ public class WithdrawBalanceActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     try {
-      dbManager.getDelegationService()
+      dbManager.getMortgageService()
           .adjustAllowance(dbManager.getAccountStore(), address, allowance);
     } catch (BalanceInsufficientException e) {
       fail("BalanceInsufficientException");

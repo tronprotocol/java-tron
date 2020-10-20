@@ -21,7 +21,7 @@ public class GetRewardServlet extends RateLimiterServlet {
       long value = 0;
       byte[] address = Util.getAddress(request);
       if (address != null) {
-        value = manager.getDelegationService().queryReward(address);
+        value = manager.getMortgageService().queryReward(address);
       }
       response.getWriter().println("{\"reward\": " + value + "}");
     } catch (Exception e) {

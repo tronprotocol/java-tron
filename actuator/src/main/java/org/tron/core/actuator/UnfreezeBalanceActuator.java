@@ -20,9 +20,9 @@ import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -57,7 +57,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
-    DelegationService delegationService = chainBaseManager.getDelegationService();
+    MortgageService mortgageService = chainBaseManager.getMortgageService();
     try {
       unfreezeBalanceContract = any.unpack(UnfreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
@@ -68,7 +68,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
 
     //
-    delegationService.withdrawReward(ownerAddress);
+    mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();

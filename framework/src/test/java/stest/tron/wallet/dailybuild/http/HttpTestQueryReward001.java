@@ -50,7 +50,7 @@ public class HttpTestQueryReward001 {
   /**
    * constructor.
    */
-  @BeforeSuite(enabled = true)
+  @BeforeSuite(enabled = false)
   public void beforeSuite() {
     HttpMethed.sendCoin(httpnode, foundationAddress, witnessAddress, 50000000L, foundationKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -70,7 +70,7 @@ public class HttpTestQueryReward001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get account reward")
+  @Test(enabled = false, description = "Get account reward")
   public void test01GetAccountReward() {
     response = HttpMethed.getCurrentCycle(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -97,7 +97,7 @@ public class HttpTestQueryReward001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get llast unwithdraw account reward")
+  @Test(enabled = false, description = "Get llast unwithdraw account reward")
   public void test02GetLastUnwithdrawAccountReward() {
     response = HttpMethed
         .getAccountLastUnwithdrawReward(httpnode, witnessAddressString);
@@ -111,7 +111,7 @@ public class HttpTestQueryReward001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get SR profit by cycle")
+  @Test(enabled = false, description = "Get SR profit by cycle")
   public void test03GetSrProfitByCycle() throws Exception {
     response = HttpMethed
         .getSrProfitByCycle(httpnode, witnessAddressString, 0, cycle + 2);
@@ -127,7 +127,7 @@ public class HttpTestQueryReward001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get SR dividends by cycle")
+  @Test(enabled = false, description = "Get SR dividends by cycle")
   public void test04GetSrDividendsByCycle() throws Exception {
     response = HttpMethed
         .getSrDividendsByCycle(httpnode, witnessAddressString, 0, cycle + 2);
@@ -143,7 +143,7 @@ public class HttpTestQueryReward001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get now SR annualized rate")
+  @Test(enabled = false, description = "Get now SR annualized rate")
   public void test05GetNowSrAnnualizedRate() throws Exception {
     response = HttpMethed.getNowSrAnnualizedRate(httpnode, witnessAddressString);
     responseContent = HttpMethed.parseResponseContent(response);
