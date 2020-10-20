@@ -615,7 +615,7 @@ public class StressPrecondition {
       writeTrc20ContractToFile(newContractAddress);
       logger.info("Trc 20 contract index :" + contractCount);
       try {
-        Thread.sleep(700);
+        Thread.sleep(500);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
