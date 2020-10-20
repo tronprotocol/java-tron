@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
@@ -38,7 +39,7 @@ public class BlockMsgHandler implements TronMsgHandler {
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
 
-  private int maxBlockSize = BLOCK_SIZE + 1000;
+  private int maxBlockSize = BLOCK_SIZE + Constant.ONE_THOUSAND;
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
