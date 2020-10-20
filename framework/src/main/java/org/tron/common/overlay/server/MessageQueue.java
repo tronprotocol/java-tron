@@ -17,6 +17,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.PongMessage;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
+import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.message.InventoryMessage;
@@ -97,7 +98,7 @@ public class MessageQueue {
   public boolean sendMessage(Message msg) {
     long now = System.currentTimeMillis();
     if (msg instanceof PingMessage) {
-      if (now - sendTime < 10_000 && now - sendPing < 60_000) {
+      if (now - sendTime < 10_000 && now - sendPing < AdaptiveResourceLimitConstants.PERIODS_MS) {
         return false;
       }
       sendPing = now;
