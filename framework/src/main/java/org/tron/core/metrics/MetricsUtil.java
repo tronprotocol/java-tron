@@ -36,7 +36,8 @@ public class MetricsUtil {
               .filter(MetricFilter.ALL)
               .skipIdleMetrics(false)
               .build();
-      int interval = CommonParameter.getInstance().getMetricsReportInterval() * Constant.ONE_THOUSAND;
+      int interval = CommonParameter.getInstance().getMetricsReportInterval() * 
+              Constant.ONE_THOUSAND;
       influxReport.start(interval, TimeUnit.MILLISECONDS);
     }
   }
