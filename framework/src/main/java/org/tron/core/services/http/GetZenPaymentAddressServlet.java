@@ -23,11 +23,8 @@ public class GetZenPaymentAddressServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
 
       String ivk = jsonObject.getString("ivk");
       String d = jsonObject.getString("d");
@@ -37,7 +34,7 @@ public class GetZenPaymentAddressServlet extends RateLimiterServlet {
               new DiversifierT(ByteArray.fromHexString(d)));
 
       response.getWriter()
-          .println(JsonFormat.printToString(s, visible));
+          .println(JsonFormat.printToString(s, params.isVisible()));
 
     } catch (Exception e) {
       Util.processError(e, response);
