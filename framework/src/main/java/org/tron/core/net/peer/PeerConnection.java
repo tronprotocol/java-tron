@@ -175,7 +175,8 @@ public class PeerConnection extends Channel {
         !syncBlockToFetch.isEmpty() ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
-        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / Constant.ONE_THOUSAND,
+        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / 
+                 Constant.ONE_THOUSAND,
         syncBlockInProcess.size())
         + nodeStatistics.toString() + "\n";
   }
