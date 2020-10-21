@@ -33,6 +33,7 @@ public class Constant {
 
   // Numbers
   public static final int ONE_HUNDRED = 100;
+  public static final int ONE_THOUSAND = 1000;
 
   public static final byte[] ZTRON_EXPANDSEED_PERSONALIZATION = {'Z', 't', 'r', 'o', 'n', '_', 'E',
       'x',
