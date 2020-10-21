@@ -447,15 +447,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (permission == null) {
       throw new PermissionException("permission isn't exit");
     }
-    if (permissionId != 0) {
-      if (permission.getType() != PermissionType.Active) {
-        throw new PermissionException("Permission type is error");
-      }
-      //check oprations
-      if (!checkPermissionOperations(permission, contract)) {
-        throw new PermissionException("Permission denied");
-      }
-    }
+    checkPermission(permissionId, permission, contract);
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
     if (weight >= permission.getThreshold()) {
       return true;
@@ -549,15 +541,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (permission == null) {
       throw new PermissionException("permission isn't exit");
     }
-    if (permissionId != 0) {
-      if (permission.getType() != PermissionType.Active) {
-        throw new PermissionException("Permission type is error");
-      }
-      //check oprations
-      if (!checkPermissionOperations(permission, contract)) {
-        throw new PermissionException("Permission denied");
-      }
-    }
+    checkPermission(permissionId, permission, contract);
     List<ByteString> approveList = new ArrayList<>();
     SignInterface cryptoEngine = SignUtils
         .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
@@ -580,6 +564,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
         .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
+  }
+  
+  private static void checkPermission(int permissionId, Permission permission, Transaction.Contract contract) throws PermissionException {
+    if (permissionId != 0) {
+      if (permission.getType() != PermissionType.Active) {
+        throw new PermissionException("Permission type is error");
+      }
+      //check operations
+      if (!checkPermissionOperations(permission, contract)) {
+        throw new PermissionException("Permission denied");
+      }
+    }
   }
 
   /**

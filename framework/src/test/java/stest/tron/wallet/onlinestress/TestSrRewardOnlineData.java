@@ -42,7 +42,7 @@ public class TestSrRewardOnlineData {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test01GetAccountReward() {
     response = HttpMethed.getCurrentCycle(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -69,7 +69,7 @@ public class TestSrRewardOnlineData {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test02GetLastUnwithdrawAccountReward() {
     response = HttpMethed
         .getAccountLastUnwithdrawReward(httpnode, "TWjvFoH2HgkNCsf897tG5BSzx7ZpfkqHPs");
@@ -83,7 +83,7 @@ public class TestSrRewardOnlineData {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get SR profit by cycle")
+  @Test(enabled = false, description = "Get SR profit by cycle")
   public void test03GetSrProfitByCycle() throws Exception {
     response = HttpMethed
         .getSrProfitByCycle(httpnode, srAddress, 0, cycle + 2);
@@ -100,7 +100,7 @@ public class TestSrRewardOnlineData {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get SR dividends by cycle")
+  @Test(enabled = false, description = "Get SR dividends by cycle")
   public void test04GetSrDividendsByCycle() throws Exception {
     response = HttpMethed
         .getSrDividendsByCycle(httpnode, srAddress, 0, cycle + 2);
@@ -125,7 +125,7 @@ public class TestSrRewardOnlineData {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get now SR annualized rate")
+  @Test(enabled = false, description = "Get now SR annualized rate")
   public void test05GetNowSrAnnualizedRate() throws Exception {
     response = HttpMethed.getNowSrAnnualizedRate(httpnode, srAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -137,7 +137,7 @@ public class TestSrRewardOnlineData {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get now SR annualized rate")
+  @Test(enabled = false, description = "Get now SR annualized rate")
   public void test06GetNowSrAnnualizedRate() throws Exception {
     response = HttpMethed.listwitnesses(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);

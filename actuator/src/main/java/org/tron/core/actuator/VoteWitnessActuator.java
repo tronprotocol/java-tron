@@ -18,9 +18,9 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
@@ -145,13 +145,13 @@ public class VoteWitnessActuator extends AbstractActuator {
   private void countVoteAccount(VoteWitnessContract voteContract) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
-    DelegationService delegationService = chainBaseManager.getDelegationService();
+    MortgageService mortgageService = chainBaseManager.getMortgageService();
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
 
     //
-    delegationService.withdrawReward(ownerAddress);
+    mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 

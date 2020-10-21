@@ -145,8 +145,8 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   public void setMaxSize(int maxSize) {
-    miniUnlinkedStore.setMaxCapcity(maxSize);
-    miniStore.setMaxCapcity(maxSize);
+    miniUnlinkedStore.setMaxCapacity(maxSize);
+    miniStore.setMaxCapacity(maxSize);
   }
 
   /**
@@ -189,7 +189,7 @@ public class KhaosDatabase extends TronDatabase {
 
     return new Pair<>(list1, list2);
   }
-
+  
   private void checkNull(Object o) throws NonCommonBlockException {
     if (o == null) {
       throw new NonCommonBlockException();
@@ -227,7 +227,7 @@ public class KhaosDatabase extends TronDatabase {
     return new Pair<>(list1, list2);
   }
 
-  // only for unittest
+  // only for unit test
   public BlockCapsule getParentBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
         .filter(Objects::nonNull)
@@ -314,7 +314,7 @@ public class KhaosDatabase extends TronDatabase {
           }
         };
 
-    public void setMaxCapcity(int maxCapacity) {
+    public void setMaxCapacity(int maxCapacity) {
       this.maxCapacity = maxCapacity;
     }
 

@@ -15,6 +15,9 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 
 import com.google.protobuf.ByteString;
@@ -101,7 +104,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -160,10 +163,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
     initStores();

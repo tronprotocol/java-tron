@@ -138,6 +138,9 @@ public class CommonParameter {
   public boolean nodeDiscoveryPublicHomeNode;
   @Getter
   @Setter
+  public long nodeDiscoveryPingTimeout;
+  @Getter
+  @Setter
   public long nodeP2pPingInterval;
   @Getter
   @Setter

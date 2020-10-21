@@ -1,8 +1,5 @@
 package org.tron.core.vm.nativecontract;
 
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
-
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +17,8 @@ import org.tron.core.store.WitnessStore;
 import org.tron.core.vm.nativecontract.param.StakeParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
+
+import static org.tron.core.actuator.ActuatorConstant.*;
 
 
 @Slf4j(topic = "Processor")
@@ -63,7 +62,7 @@ public class StakeProcessor {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+              ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
   }
 
@@ -106,13 +105,13 @@ public class StakeProcessor {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR
-                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
+                  + readableWitnessAddress + ActuatorConstant.NOT_EXIST_STR);
         }
         if (!witnessStore.has(witnessCandidate)) {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR
-                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
+                  + readableWitnessAddress + ActuatorConstant.NOT_EXIST_STR);
         }
         sum = vote.getVoteCount();
       }

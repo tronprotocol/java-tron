@@ -45,10 +45,7 @@ public class RocksDbSettings {
   }
 
   public static RocksDbSettings getSettings() {
-    if (rocksDbSettings == null) {
-      return getDefaultSettings();
-    }
-    return rocksDbSettings;
+    return rocksDbSettings == null ? getDefaultSettings() : rocksDbSettings;
   }
 
   public static RocksDbSettings initCustomSettings(int levelNumber, int compactThreads,

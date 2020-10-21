@@ -11,6 +11,7 @@ import org.tron.core.vm.repository.Repository;
 
 import java.util.Objects;
 
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.*;
 
 public class TokenIssueProcessor {

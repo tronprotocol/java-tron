@@ -14,7 +14,7 @@ import org.tron.core.vm.repository.Repository;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.*;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT_NULL;
 
@@ -50,7 +50,7 @@ public class WithdrawRewardProcessor {
             throw new ContractValidateException(CONTRACT_NULL);
         }
         if (repository == null) {
-            throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
+            throw new ContractValidateException(STORE_NOT_EXIST);
         }
         if (!(contract instanceof WithdrawRewardParam)) {
             throw new ContractValidateException(
@@ -68,7 +68,7 @@ public class WithdrawRewardProcessor {
         String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
         if (accountCapsule == null) {
             throw new ContractValidateException(
-                    ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+                    ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
         }
 
         boolean isGp = CommonParameter.getInstance()
