@@ -902,7 +902,8 @@ public class Manager {
       try {
         newBlock = this.khaosDb.push(block);
       } catch (UnLinkedBlockException e) {
-        logger.error("latestBlockHeaderHash:{}, latestBlockHeaderNumber:{}, latestSolidifiedBlockNum:{}",
+        logger.error(
+            "latestBlockHeaderHash:{}, latestBlockHeaderNumber:{}, latestSolidifiedBlockNum:{}",
             getDynamicPropertiesStore().getLatestBlockHeaderHash(),
             getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
             getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
