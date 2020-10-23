@@ -57,6 +57,9 @@ public class TvmAssetIssue005 {
   private ECKey ecKey3 = new ECKey(Utils.getRandom());
   private byte[] dev003Address = ecKey3.getAddress();
   private String dev003Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+  private ECKey ecKey4 = new ECKey(Utils.getRandom());
+  private byte[] dev004Address = ecKey4.getAddress();
+  private String dev004Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -75,6 +78,7 @@ public class TvmAssetIssue005 {
     PublicMethed.printAddress(dev001Key);
     PublicMethed.printAddress(dev002Key);
     PublicMethed.printAddress(dev003Key);
+    PublicMethed.printAddress(dev004Key);
     Assert.assertTrue(PublicMethed
         .sendcoin(dev001Address, 7000_000_000L, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -223,6 +227,10 @@ public class TvmAssetIssue005 {
             .getAssetIssueCount());
     Assert.assertEquals(0,
         PublicMethed.queryAccount(dev003Address, blockingStubFull).getAssetIssuedID().size());
+    long contractAssetCountDev003 = PublicMethed
+        .getAssetIssueValue(dev003Address, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    Assert.assertEquals(assetIssueValueAfter, contractAssetCountDev003);
     assetIssueValue = PublicMethed.queryAccount(dev003Address, blockingStubFull)
         .getAssetV2Map().get(assetIssueId);
     Assert.assertEquals(assetIssueValueAfter, assetIssueValue);
@@ -248,14 +256,34 @@ public class TvmAssetIssue005 {
             blockingStubFull);
     Assert.assertEquals(100L, dev002AssetValue);
 
+    Assert.assertTrue(PublicMethed
+        .sendcoin(dev002Address, 100_000_000L, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     // transferAsset,success
     Assert.assertTrue(PublicMethed.transferAsset(dev002Address, assetIssueId.getBytes(), 100L,
         dev003Address, dev003Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    long contractAssetCount = PublicMethed
+    long assetIssueValueDev002 = PublicMethed
         .getAssetIssueValue(dev002Address, ByteString.copyFrom(assetIssueId.getBytes()),
             blockingStubFull);
-    Assert.assertEquals(200L, contractAssetCount);
+    long assetIssueValueDev003 = PublicMethed
+        .getAssetIssueValue(dev003Address, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    Assert.assertEquals(200L, assetIssueValueDev002);
+    Assert.assertEquals(assetIssueValue - 100l, assetIssueValueDev003);
+
+    Assert.assertTrue(PublicMethed.transferAsset(dev004Address, assetIssueId.getBytes(), 102L,
+        dev002Address, dev002Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    long assetIssueValueDev002After = PublicMethed
+        .getAssetIssueValue(dev002Address, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    long assetIssueValueDev004 = PublicMethed
+        .getAssetIssueValue(dev004Address, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    Assert.assertEquals(102L, assetIssueValueDev004);
+    Assert.assertEquals(assetIssueValueDev002 - 102L, assetIssueValueDev002After);
 
     // updateAsset,will fail
     Assert.assertFalse(PublicMethed
@@ -304,6 +332,7 @@ public class TvmAssetIssue005 {
     long contractAddressBalance2 = PublicMethed.queryAccount(contractAddress2, blockingStubFull)
         .getBalance();
     Assert.assertEquals(callvalue, contractAddressBalance2);
+
     deployTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             callvalue, 0, 10000, "0", 0L, null, dev001Key, dev001Address,
@@ -374,6 +403,39 @@ public class TvmAssetIssue005 {
         .getBalance();
     Assert.assertEquals(contractAddressBalance2 - 1024000000L, contractAddressBalanceAfter2);
 
+    // transferToken
+    String methodTransferToken = "transferToken(address,uint256,trcToken)";
+    param = "\"" + Base58.encode58Check(dev002Address) + "\"," + 100 + ",\"" + assetIssueId + "\"";
+    txid = PublicMethed.triggerContract(contractAddress2, methodTransferToken, param, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info(infoById.toString());
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    long assetIssueValueAfter = PublicMethed.queryAccount(contractAddress2, blockingStubFull)
+        .getAssetV2Map().get(assetIssueId);
+    long dev002AssetValue = PublicMethed
+        .getAssetIssueValue(dev002Address, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    Assert.assertEquals(assetIssueValue - 100L, assetIssueValueAfter);
+    Assert.assertEquals(100L, dev002AssetValue);
+
+    param =
+        "\"" + Base58.encode58Check(contractAddress) + "\"," + 50 + ",\"" + assetIssueId + "\"";
+    txid = PublicMethed.triggerContract(contractAddress2, methodTransferToken, param, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info(infoById.toString());
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    long assetIssueValueAfter2 = PublicMethed.queryAccount(contractAddress2, blockingStubFull)
+        .getAssetV2Map().get(assetIssueId);
+    long contractAssetValue = PublicMethed
+        .getAssetIssueValue(contractAddress, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    Assert.assertEquals(assetIssueValueAfter - 50L, assetIssueValueAfter2);
+    Assert.assertEquals(50L, contractAssetValue);
+
     // selfdestruct
     String methodSuicide = "SelfdestructTest(address)";
     param = "\"" + Base58.encode58Check(contractAddress) + "\"";
@@ -395,7 +457,7 @@ public class TvmAssetIssue005 {
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getAssetIssuedID().size());
     assetIssueValue = PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getAssetV2Map().get(assetIssueId);
-    Assert.assertEquals(totalSupply, assetIssueValue);
+    Assert.assertEquals(assetIssueValueAfter2 + 50l, assetIssueValue);
     assetIssueById = PublicMethed
         .getAssetIssueById(assetIssueId, blockingStubFull);
     Assert.assertEquals(name, ByteArray.toStr(assetIssueById.getName().toByteArray()));
@@ -415,7 +477,7 @@ public class TvmAssetIssue005 {
     Assert.assertEquals(assetIssueId, assetIssueListByName.getId());
 
     // transferToken,success
-    String methodTransferToken = "transferToken(address,uint256,trcToken)";
+    methodTransferToken = "transferToken(address,uint256,trcToken)";
     param = "\"" + Base58.encode58Check(dev002Address) + "\"," + 100 + ",\"" + assetIssueId + "\"";
     txid = PublicMethed.triggerContract(contractAddress, methodTransferToken, param, false,
         0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
@@ -423,14 +485,25 @@ public class TvmAssetIssue005 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info(infoById.toString());
     Assert.assertEquals(0, infoById.get().getResultValue());
-
-    long assetIssueValueAfter = PublicMethed.queryAccount(contractAddress, blockingStubFull)
+    assetIssueValueAfter = PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getAssetV2Map().get(assetIssueId);
-    long dev002AssetValue = PublicMethed
+    dev002AssetValue = PublicMethed
         .getAssetIssueValue(dev002Address, ByteString.copyFrom(assetIssueId.getBytes()),
             blockingStubFull);
     Assert.assertEquals(assetIssueValue - 100L, assetIssueValueAfter);
-    Assert.assertEquals(100L, dev002AssetValue);
+    Assert.assertEquals(200L, dev002AssetValue);
+
+    Assert.assertTrue(PublicMethed.transferAsset(dev004Address, assetIssueId.getBytes(), 12L,
+        dev002Address, dev002Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    long assetIssueValueDev002After = PublicMethed
+        .getAssetIssueValue(dev002Address, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    long assetIssueValueDev004 = PublicMethed
+        .getAssetIssueValue(dev004Address, ByteString.copyFrom(assetIssueId.getBytes()),
+            blockingStubFull);
+    Assert.assertEquals(12L, assetIssueValueDev004);
+    Assert.assertEquals(dev002AssetValue - 12L, assetIssueValueDev002After);
 
     // updateAsset,will fail
     String methodUpdateAsset = "updateAsset(trcToken,string,string)";
@@ -577,6 +650,48 @@ public class TvmAssetIssue005 {
     Assert.assertEquals(2,
         PublicMethed.getAssetIssueByAccount(callContractAddress, blockingStubFull).get()
             .getAssetIssueCount());
+
+    // updateAsset
+    String methodUpdateAsset = "updateAsset(trcToken,string,string)";
+    param = "\"123\",\"updateURLURL\",\"updateDESCDESC\"";
+    logger.info("param: " + param);
+    txid = PublicMethed.triggerContract(callContractAddress, methodUpdateAsset, param, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info(infoById.toString());
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    long returnId = ByteArray.toLong((infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1, returnId);
+    String newAssetIssueId = PublicMethed.queryAccount(callContractAddress, blockingStubFull)
+        .getAssetIssuedID()
+        .toStringUtf8();
+    logger.info("newAssetIssueId: " + newAssetIssueId);
+    AssetIssueContract newAssetIssueById = PublicMethed
+        .getAssetIssueById(newAssetIssueId, blockingStubFull);
+    Assert.assertEquals("testAssetIssue_11111",
+        ByteArray.toStr(newAssetIssueById.getName().toByteArray()));
+    Assert.assertEquals("testAssetIssue_22222",
+        ByteArray.toStr(newAssetIssueById.getAbbr().toByteArray()));
+    Assert
+        .assertEquals("updateDESCDESC",
+            ByteArray.toStr(newAssetIssueById.getDescription().toByteArray()));
+    Assert.assertEquals("updateURLURL", ByteArray.toStr(newAssetIssueById.getUrl().toByteArray()));
+    Assert.assertEquals(6, newAssetIssueById.getPrecision());
+    Assert.assertEquals(Base58.encode58Check(callContractAddress),
+        Base58.encode58Check(newAssetIssueById.getOwnerAddress().toByteArray()));
+
+    AssetIssueContract oldAssetIssueById = PublicMethed
+        .getAssetIssueById(assetIssueId, blockingStubFull);
+    Assert.assertEquals(name, ByteArray.toStr(oldAssetIssueById.getName().toByteArray()));
+    Assert.assertEquals(abbr, ByteArray.toStr(oldAssetIssueById.getAbbr().toByteArray()));
+    Assert.assertEquals(0, oldAssetIssueById.getDescription().size());
+    Assert.assertEquals(0, oldAssetIssueById.getUrl().size());
+    Assert.assertEquals(6, oldAssetIssueById.getPrecision());
+    Assert.assertEquals(Base58.encode58Check(callContractAddress),
+        Base58.encode58Check(oldAssetIssueById.getOwnerAddress().toByteArray()));
   }
 
   /**

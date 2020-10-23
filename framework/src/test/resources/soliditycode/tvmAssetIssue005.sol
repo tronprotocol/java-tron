@@ -3,6 +3,9 @@ pragma solidity ^0.5.12;
 contract tvmAssetIssue005 {
     constructor() payable public{}
 
+    function() external payable {
+    }
+
     function tokenIssue(bytes32 name, bytes32 abbr, uint64 totalSupply, uint8 precision) public returns (uint) {
         return assetissue(name, abbr, totalSupply, precision);
     }
