@@ -187,7 +187,6 @@ public class TvmAssetIssue001 {
         .getBalance();
     Assert.assertEquals(contractAddressBalance - 1024000000L, contractAddressBalance2);
 
-//    contractAddress = PublicMethed.decode58Check("TSPmMjLiVv4vyPxvmHvMVd3enakEDb4zMk");
     param = "\"" + Base58.encode58Check(dev002Address) + "\"," + 100 + ",\"" + assetIssueId + "\"";
     String methodTransferToken = "transferToken(address,uint256,trcToken)";
     txid = PublicMethed.triggerContract(contractAddress, methodTransferToken, param, false,

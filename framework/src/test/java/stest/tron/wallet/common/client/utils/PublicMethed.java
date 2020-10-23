@@ -4101,6 +4101,14 @@ public class PublicMethed {
     return blockingStubFull.getAssetIssueById(request);
   }
 
+  public static Optional<AssetIssueList> getAssetIssueByAccount(byte[] address,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString addressBS = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBS).build();
+    AssetIssueList assetIssueList = blockingStubFull.getAssetIssueByAccount(request);
+    return Optional.ofNullable(assetIssueList);
+  }
 
   private static Permission json2Permission(JSONObject json) {
     Permission.Builder permissionBuilder = Permission.newBuilder();
