@@ -20,8 +20,8 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -125,10 +125,9 @@ public class WalletTestTransfer003 {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
     }
-
     return transaction;
   }
 
@@ -193,7 +192,8 @@ public class WalletTestTransfer003 {
       if (times++ < 1) {
         PublicMethed.waitProduceNextBlock(blockingStubFull);
         //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-        String txId = ByteArray.toHexString(Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),sendCoinTransaction
+        String txId = ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
+            .isECKeyCryptoEngine(), sendCoinTransaction
             .getRawData().toByteArray()));
         logger.info(txId);
         ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -219,7 +219,8 @@ public class WalletTestTransfer003 {
         testKeyForSendCoin, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-    String txId = ByteArray.toHexString(Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),sendCoinTransaction
+    String txId = ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), sendCoinTransaction
         .getRawData().toByteArray()));
     logger.info(txId);
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -243,7 +244,8 @@ public class WalletTestTransfer003 {
         testKeyForSendCoin, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-    String txId = ByteArray.toHexString(Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),sendCoinTransaction
+    String txId = ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), sendCoinTransaction
         .getRawData().toByteArray()));
     logger.info(txId);
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -383,13 +385,10 @@ public class WalletTestTransfer003 {
     }
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
     }
-
     return transaction;
-
-
   }
 }
 

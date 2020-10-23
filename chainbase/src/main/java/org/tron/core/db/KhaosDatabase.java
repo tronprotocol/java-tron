@@ -145,8 +145,8 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   public void setMaxSize(int maxSize) {
-    miniUnlinkedStore.setMaxCapcity(maxSize);
-    miniStore.setMaxCapcity(maxSize);
+    miniUnlinkedStore.setMaxCapacity(maxSize);
+    miniStore.setMaxCapacity(maxSize);
   }
 
   /**
@@ -189,7 +189,7 @@ public class KhaosDatabase extends TronDatabase {
 
     return new Pair<>(list1, list2);
   }
-
+  
   private void checkNull(Object o) throws NonCommonBlockException {
     if (o == null) {
       throw new NonCommonBlockException();
@@ -227,7 +227,7 @@ public class KhaosDatabase extends TronDatabase {
     return new Pair<>(list1, list2);
   }
 
-  // only for unittest
+  // only for unit test
   public BlockCapsule getParentBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
         .filter(Objects::nonNull)
@@ -249,7 +249,6 @@ public class KhaosDatabase extends TronDatabase {
     private BlockCapsule blk;
     private Reference<KhaosBlock> parent = new WeakReference<>(null);
     private BlockId id;
-    private Boolean invalid;
     private long num;
 
     public KhaosBlock(BlockCapsule blk) {
@@ -293,7 +292,7 @@ public class KhaosDatabase extends TronDatabase {
 
     private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
     // private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
-    private int maxCapcity = 1024;
+    private int maxCapacity = 1024;
 
     @Getter
     private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
@@ -301,7 +300,7 @@ public class KhaosDatabase extends TronDatabase {
 
           @Override
           protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
-            long minNum = Long.max(0L, head.num - maxCapcity);
+            long minNum = Long.max(0L, head.num - maxCapacity);
             Map<Long, ArrayList<KhaosBlock>> minNumMap = numKblkMap.entrySet().stream()
                 .filter(e -> e.getKey() < minNum)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -315,8 +314,8 @@ public class KhaosDatabase extends TronDatabase {
           }
         };
 
-    public void setMaxCapcity(int maxCapcity) {
-      this.maxCapcity = maxCapcity;
+    public void setMaxCapacity(int maxCapacity) {
+      this.maxCapacity = maxCapacity;
     }
 
     public void insert(KhaosBlock block) {

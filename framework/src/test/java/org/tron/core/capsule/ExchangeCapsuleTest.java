@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
@@ -28,6 +29,7 @@ public class ExchangeCapsuleTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000_000_000L;
   private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
   private static StorageMarket storageMarket;
   private static TronApplicationContext context;
 
@@ -45,12 +47,9 @@ public class ExchangeCapsuleTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    storageMarket = new StorageMarket(dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore());
-    //    Args.setParam(new String[]{"--output-directory", dbPath},
-    //        "config-junit.conf");
-    //    dbManager = new Manager();
-    //    dbManager.init();
+    chainBaseManager = context.getBean(ChainBaseManager.class);
+    storageMarket = new StorageMarket(chainBaseManager.getAccountStore(),
+        chainBaseManager.getDynamicPropertiesStore());
   }
 
   /**
@@ -72,9 +71,9 @@ public class ExchangeCapsuleTest {
    */
   @Before
   public void createExchangeCapsule() {
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
 
-    long now = dbManager.getHeadBlockTimeStamp();
+    long now = chainBaseManager.getHeadBlockTimeStamp();
     ExchangeCapsule exchangeCapsulee =
         new ExchangeCapsule(
             ByteString.copyFromUtf8("owner"),
@@ -83,7 +82,7 @@ public class ExchangeCapsuleTest {
             "abc".getBytes(),
             "def".getBytes());
 
-    dbManager.getExchangeStore().put(exchangeCapsulee.createDbKey(), exchangeCapsulee);
+    chainBaseManager.getExchangeStore().put(exchangeCapsulee.createDbKey(), exchangeCapsulee);
 
   }
 
@@ -96,7 +95,7 @@ public class ExchangeCapsuleTest {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStore().get(key);
+      exchangeCapsule = chainBaseManager.getExchangeStore().get(key);
       exchangeCapsule.setBalance(sellBalance, buyBalance);
 
       long sellQuant = 1_000_000L;

@@ -1,7 +1,6 @@
 package org.tron.common.utils;
 
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 
 public class Base58 {
 
@@ -104,10 +103,6 @@ public class Base58 {
     }
 
     return copyOfRange(temp, j - zeroCount, temp.length);
-  }
-
-  public static BigInteger decodeToBigInteger(String input) throws IllegalArgumentException {
-    return new BigInteger(1, decode(input));
   }
 
   //

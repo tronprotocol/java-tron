@@ -24,8 +24,10 @@ import org.junit.Before;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
@@ -68,7 +70,7 @@ public abstract class BaseNet {
         }).option(ChannelOption.SO_KEEPALIVE, true)
         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
         .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-    return b.connect("127.0.0.1", port).sync().channel();
+    return b.connect(Constant.LOCAL_HOST, port).sync().channel();
   }
 
   @Before
@@ -85,15 +87,15 @@ public abstract class BaseNet {
             },
             "config.conf"
         );
-        Args cfgArgs = Args.getInstance();
-        cfgArgs.setNodeListenPort(port);
-        cfgArgs.getSeedNode().getIpList().clear();
-        cfgArgs.setNodeExternalIp("127.0.0.1");
+        CommonParameter parameter = Args.getInstance();
+        parameter.setNodeListenPort(port);
+        parameter.getSeedNode().getIpList().clear();
+        parameter.setNodeExternalIp(Constant.LOCAL_HOST);
         context = new TronApplicationContext(DefaultConfig.class);
         appT = ApplicationFactory.create(context);
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
-        appT.initServices(cfgArgs);
+        appT.initServices(parameter);
         appT.startServices();
         appT.startup();
         tronNetDelegate = context.getBean(TronNetDelegate.class);

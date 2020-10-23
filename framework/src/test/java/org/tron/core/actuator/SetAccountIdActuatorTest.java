@@ -24,6 +24,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 
 @Slf4j
 public class SetAccountIdActuatorTest {
@@ -394,4 +395,29 @@ public class SetAccountIdActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [SetAccountIdContract],real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or account id index store!");
+    actuatorTest.nullDBManger();
+
+  }
+
+
 }

@@ -13,19 +13,19 @@ service TronZksnark {
 };
 
 message ZksnarkRequest {
-    Transaction transaction = 1;
-    bytes sighash = 2;
-    int64 valueBalance = 3;
-    string txId = 4;
+  Transaction transaction = 1;
+  bytes sighash = 2;
+  int64 valueBalance = 3;
+  string txId = 4;
 }
 
 message ZksnarkResponse {
-    enum Code {
-        SUCCESS = 0;
-        FAILED = 1;
-    }
+  enum Code {
+    SUCCESS = 0;
+    FAILED = 1;
+  }
 
-    Code code = 1;
+  Code code = 1;
 }
 
 

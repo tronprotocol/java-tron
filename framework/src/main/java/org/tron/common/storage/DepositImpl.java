@@ -1,6 +1,6 @@
 package org.tron.common.storage;
 
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -8,11 +8,12 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.Hash;
+import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -232,7 +233,7 @@ public class DepositImpl implements Deposit {
       try {
         proposalCapsule = getProposalStore().get(id);
       } catch (ItemNotFoundException e) {
-        logger.warn("Not found proposal, id:" + Hex.toHexString(id));
+        logger.warn("proposal not found, id:" + Hex.toHexString(id));
         proposalCapsule = null;
       }
     }
@@ -338,7 +339,7 @@ public class DepositImpl implements Deposit {
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
-      if (VMConfig.getEnergyLimitHardFork()) {
+      if (StorageUtils.getEnergyLimitHardFork()) {
         // deep copy
         storage = new Storage(parentStorage);
       } else {
@@ -441,12 +442,11 @@ public class DepositImpl implements Deposit {
       accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
           this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
     }
-//    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
+
     Key key = Key.create(address);
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
-//    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
     return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 
@@ -630,7 +630,7 @@ public class DepositImpl implements Deposit {
       try {
         bytesCapsule = getDynamicPropertiesStore().get(word);
       } catch (BadItemException | ItemNotFoundException e) {
-        logger.warn("Not found dynamic property:" + Strings.fromUTF8ByteArray(word));
+        logger.warn("Dynamic property not found:" + Strings.fromUTF8ByteArray(word));
         bytesCapsule = null;
       }
     }

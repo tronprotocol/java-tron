@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
 import static org.tron.core.utils.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
 import static org.tron.core.utils.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
 
@@ -11,8 +12,9 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -33,7 +35,6 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ZKProofStore;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -45,12 +46,10 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
-  public static String zenTokenId;
   private ShieldedTransferContract shieldedTransferContract;
 
   public ShieldedTransferActuator() {
     super(ContractType.ShieldedTransferContract, ShieldedTransferContract.class);
-    zenTokenId = DBConfig.getZenTokenId();
   }
 
   @Override
@@ -58,7 +57,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -78,7 +77,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
             shieldedTransferContract.getFromAmount(), ret, fee);
       }
       Commons.adjustAssetBalanceV2(accountStore.getBlackhole().createDbKey(),
-          zenTokenId, fee, accountStore, assetIssueStore, dynamicStore);
+          CommonParameter.getInstance().getZenTokenId(), fee,
+          accountStore, assetIssueStore, dynamicStore);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(0, code.FAILED);
@@ -118,7 +118,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
-      Commons.adjustAssetBalanceV2(ownerAddress, zenTokenId, -amount, accountStore, assetIssueStore,
+      Commons.adjustAssetBalanceV2(ownerAddress, CommonParameter.getInstance()
+              .getZenTokenId(), -amount, accountStore, assetIssueStore,
           dynamicStore);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
@@ -142,7 +143,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
       }
-      Commons.adjustAssetBalanceV2(toAddress, zenTokenId, amount, accountStore, assetIssueStore,
+      Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
+          amount, accountStore, assetIssueStore,
           dynamicStore);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
@@ -168,7 +170,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       nullifierStore.put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (DBConfig.isFullNodeAllowShieldedTransaction()) {
+    if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
       IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
         currentMerkle.wfcheck();
@@ -195,10 +197,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     NullifierStore nullifierStore = chainBaseManager.getNullifierStore();
@@ -219,7 +221,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("Not support Shielded Transaction, need to be opened by"
           + " the committee");
     }
-
     long fee = calcFee(shieldedTransferContract);
     //transparent verification
     checkSender(shieldedTransferContract);
@@ -235,7 +236,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (DBConfig.isFullNodeAllowShieldedTransaction()
+        if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()
             && !merkleContainer.merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }
@@ -285,8 +286,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
     }
 
-    byte[] signHash = TransactionUtil
-        .getShieldTransactionHashIgnoreTypeException(tx.getInstance());
+    byte[] signHash = getShieldTransactionHashIgnoreTypeException(tx.getInstance());
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
@@ -409,13 +409,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("to_amount should not be less than 0");
     }
 
-    if (hasTransparentFrom && !Commons.addressValid(ownerAddress)) {
+    if (hasTransparentFrom && !DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid transparent_from_address");
     }
     if (!hasTransparentFrom && fromAmount != 0) {
       throw new ContractValidateException("no transparent_from_address, from_amount should be 0");
     }
-    if (hasTransparentTo && !Commons.addressValid(toAddress)) {
+    if (hasTransparentTo && !DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid transparent_to_address");
     }
     if (!hasTransparentTo && toAmount != 0) {
@@ -462,17 +462,19 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private long getZenBalance(AccountCapsule account) {
-    if (account.getAssetMapV2().get(zenTokenId) == null) {
+    if (account.getAssetMapV2().get(CommonParameter
+        .getInstance().getZenTokenId()) == null) {
       return 0L;
     } else {
-      return account.getAssetMapV2().get(zenTokenId);
+      return account.getAssetMapV2().get(CommonParameter
+          .getInstance().getZenTokenId());
     }
   }
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     ByteString owner = any.unpack(ShieldedTransferContract.class).getTransparentFromAddress();
-    if (Commons.addressValid(owner.toByteArray())) {
+    if (DecodeUtil.addressValid(owner.toByteArray())) {
       return owner;
     } else {
       return null;

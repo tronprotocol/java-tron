@@ -15,17 +15,18 @@
 
 package org.tron.common.application;
 
+import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 
 public interface Application {
 
   void setOptions(Args args);
 
-  void init(Args args);
+  void init(CommonParameter parameter);
 
-  void initServices(Args args);
+  void initServices(CommonParameter parameter);
 
   void startup();
 
@@ -35,10 +36,10 @@ public interface Application {
 
   void shutdownServices();
 
-  BlockStore getBlockStoreS();
-
   void addService(Service service);
 
   Manager getDbManager();
+
+  ChainBaseManager getChainBaseManager();
 
 }

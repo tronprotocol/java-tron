@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.server;
 
 import io.netty.buffer.ByteBuf;
@@ -34,8 +35,11 @@ import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -44,14 +48,25 @@ import org.tron.protos.Protocol.ReasonCode;
 @Scope("prototype")
 public class HandshakeHandler extends ByteToMessageDecoder {
 
-  protected Channel channel;
+  private Channel channel;
+
   @Autowired
-  protected NodeManager nodeManager;
+  private NodeManager nodeManager;
+
   @Autowired
-  protected ChannelManager channelManager;
+  private ChannelManager channelManager;
+
   @Autowired
-  protected Manager manager;
+  private Manager manager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
+  @Autowired
+  private FastForward fastForward;
+
   private byte[] remoteId;
+
   private P2pMessageFactory messageFactory = new P2pMessageFactory();
 
   @Autowired
@@ -74,7 +89,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
 
-    logger.info("Handshake Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.info("Handshake receive from {}, {}", ctx.channel().remoteAddress(), msg);
 
     switch (msg.getType()) {
       case P2P_HELLO:
@@ -104,17 +119,25 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
-
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
+        chainBaseManager.getHeadBlockId());
+    fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
-    logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
+    MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC,
+        message.getSendData().readableBytes());
+    logger.info("Handshake send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
 
     channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
+
+    if (!fastForward.checkHelloMessage(msg, channel)) {
+      channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
+      return;
+    }
 
     if (remoteId.length != 64) {
       InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
@@ -133,18 +156,20 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     }
 
     if (!Arrays
-        .equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())) {
+        .equals(chainBaseManager.getGenesisBlockId().getBytes(),
+            msg.getGenesisBlockId().getBytes())) {
       logger
           .info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-              msg.getGenesisBlockId().getString(), manager.getGenesisBlockId().getString());
+              msg.getGenesisBlockId().getString(),
+              chainBaseManager.getGenesisBlockId().getString());
       channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     }
 
-    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager
-        .containBlockInMainChain(msg.getSolidBlockId())) {
+    if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
+        && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
       logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-          msg.getSolidBlockId().getString(), manager.getSolidBlockId().getString());
+          msg.getSolidBlockId().getString(), chainBaseManager.getSolidBlockId().getString());
       channel.disconnect(ReasonCode.FORKED);
       return;
     }

@@ -1,16 +1,17 @@
 package org.tron.common.logsfilter.capsule;
 
+import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 
 public class ContractLogTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  ContractLogTrigger contractLogTrigger;
+  private ContractLogTrigger contractLogTrigger;
 
   public ContractLogTriggerCapsule(ContractLogTrigger contractLogTrigger) {
     this.contractLogTrigger = contractLogTrigger;
@@ -22,7 +23,7 @@ public class ContractLogTriggerCapsule extends TriggerCapsule {
 
   @Override
   public void processTrigger() {
-    if (FilterQuery.matchFilter(contractLogTrigger)) {
+    if (matchFilter(contractLogTrigger)) {
       EventPluginLoader.getInstance().postContractLogTrigger(contractLogTrigger);
     }
   }

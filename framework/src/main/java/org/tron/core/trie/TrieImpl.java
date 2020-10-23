@@ -1,11 +1,10 @@
 package org.tron.core.trie;
 
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
+import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
+import static org.tron.common.utils.ByteArray.toHexString;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.ByteUtil.toHexString;
-import static org.tron.common.utils.Hash.EMPTY_TRIE_HASH;
 import static org.tron.core.capsule.utils.RLP.EMPTY_ELEMENT_RLP;
-import static org.tron.core.capsule.utils.RLP.encodeElement;
 import static org.tron.core.capsule.utils.RLP.encodeList;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -22,7 +21,7 @@ import org.apache.commons.lang3.text.StrBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;
@@ -34,8 +33,8 @@ import org.tron.core.db2.common.DB;
  */
 public class TrieImpl implements Trie<byte[]> {
 
-  private final static Object NULL_NODE = new Object();
-  private final static int MIN_BRANCHES_CONCURRENTLY = 3;
+  private static final Object NULL_NODE = new Object();
+  private static final int MIN_BRANCHES_CONCURRENTLY = 3;
   private static final Logger logger = LoggerFactory.getLogger(TrieImpl.class);
   private static ExecutorService executor;
   private DB<byte[], BytesCapsule> cache;
@@ -174,8 +173,8 @@ public class TrieImpl implements Trie<byte[]> {
         if (!childKey.isEmpty()) {
           newChildNode = new Node(childKey, nodeOrValue);
         } else {
-          newChildNode = nodeOrValue instanceof Node ?
-              (Node) nodeOrValue : new Node(childKey, nodeOrValue);
+          newChildNode = nodeOrValue instanceof Node
+              ? (Node) nodeOrValue : new Node(childKey, nodeOrValue);
         }
         return n.branchNodeSetChild(k.getHex(0), newChildNode);
       }
@@ -442,28 +441,30 @@ public class TrieImpl implements Trie<byte[]> {
           if (cNode.hash == null) {
             byte[] childrenHash = childrenHash(cNode, cpList, level + 1, false);
             cp.children[i] =
-                childrenHash.length < 32 && !forceHash ? childrenHash : encodeElement(childrenHash);
+                childrenHash.length < 32 && !forceHash ? childrenHash
+                    : Hash.encodeElement(childrenHash);
           } else {
-            cp.children[i] = encodeElement(cNode.hash);
+            cp.children[i] = Hash.encodeElement(cNode.hash);
           }
-        } else {//todo
+        } else {
           cp.children[i] = EMPTY_ELEMENT_RLP;
         }
       }
       byte[] value = n.branchNodeGetValue();
-      cp.children[16] = value == null ? EMPTY_ELEMENT_RLP : encodeElement(value);
+      cp.children[16] = value == null ? EMPTY_ELEMENT_RLP : Hash.encodeElement(value);
       hashArray = cp.children.clone();
     } else if (n.getType() == NodeType.KVNodeNode) {
       cp.setNodeType(NodeType.KVNodeNode);
       TrieKey trieKey = n.kvNodeGetKey();
       Node cNode = n.kvNodeGetChildNode();
-      cp.children[0] = encodeElement(trieKey.toPacked());
+      cp.children[0] = Hash.encodeElement(trieKey.toPacked());
       if (cNode.hash == null) {
         byte[] childrenHash = childrenHash(cNode, cpList, level + 1, false);
         cp.children[1] =
-            childrenHash.length < 32 && !forceHash ? childrenHash : encodeElement(childrenHash);
+            childrenHash.length < 32 && !forceHash ? childrenHash
+                : Hash.encodeElement(childrenHash);
       } else {
-        cp.children[1] = encodeElement(cNode.hash);
+        cp.children[1] = Hash.encodeElement(cNode.hash);
       }
       hashArray = cp.children.clone();
       cp.children[0] = trieKey;
@@ -471,8 +472,8 @@ public class TrieImpl implements Trie<byte[]> {
       cp.setNodeType(NodeType.KVNodeValue);
       byte[] value = n.kvNodeGetValue();
       TrieKey trieKey = n.kvNodeGetKey();
-      cp.children[0] = encodeElement(trieKey.toPacked());
-      cp.children[1] = encodeElement(value == null ? EMPTY_BYTE_ARRAY : value);
+      cp.children[0] = Hash.encodeElement(trieKey.toPacked());
+      cp.children[1] = Hash.encodeElement(value == null ? EMPTY_BYTE_ARRAY : value);
       hashArray = cp.children.clone();
       cp.children[0] = trieKey;
     }
@@ -494,7 +495,8 @@ public class TrieImpl implements Trie<byte[]> {
     byte[] beforeNode = new byte[0];
     for (Entry<byte[], Node> entry : nodeMap.entrySet()) {
       if (i > 0) {
-        byte[] hash = (beforeNode.length < 32) ? entry.getKey() : encodeElement(entry.getKey());
+        byte[] hash =
+            (beforeNode.length < 32) ? entry.getKey() : Hash.encodeElement(entry.getKey());
         if (!Arrays.equals(beforeNode, hash)) {
           return false;
         }
@@ -511,7 +513,7 @@ public class TrieImpl implements Trie<byte[]> {
         break;
         case KVNodeNode: {
           TrieKey currentNodeKey = (TrieKey) entry.getValue().children[0];
-          entry.getValue().children[0] = encodeElement(currentNodeKey.toPacked());
+          entry.getValue().children[0] = Hash.encodeElement(currentNodeKey.toPacked());
           TrieKey commonPrefix = trieKey.getCommonPrefix(currentNodeKey);
           if (commonPrefix.getLength() != currentNodeKey.getLength()) {
             return false;
@@ -522,7 +524,7 @@ public class TrieImpl implements Trie<byte[]> {
         break;
         case KVNodeValue: {
           TrieKey currentNodeKey = (TrieKey) entry.getValue().children[0];
-          entry.getValue().children[0] = encodeElement(currentNodeKey.toPacked());
+          entry.getValue().children[0] = Hash.encodeElement(currentNodeKey.toPacked());
           if (!currentNodeKey.equals(trieKey)) {
             return false;
           }
@@ -643,7 +645,7 @@ public class TrieImpl implements Trie<byte[]> {
 
     private byte[] encode(final int depth, boolean forceHash) {
       if (!dirty) {
-        return hash != null ? encodeElement(hash) : rlp;
+        return hash != null ? Hash.encodeElement(hash) : rlp;
       } else {
         NodeType type = getType();
         byte[] ret;
@@ -677,7 +679,7 @@ public class TrieImpl implements Trie<byte[]> {
               }
             }
             byte[] value = branchNodeGetValue();
-            encoded[16] = constantFuture(encodeElement(value));
+            encoded[16] = constantFuture(Hash.encodeElement(value));
             try {
               ret = encodeRlpListFutures(encoded);
             } catch (Exception e) {
@@ -690,16 +692,16 @@ public class TrieImpl implements Trie<byte[]> {
               encoded[i] = child == null ? EMPTY_ELEMENT_RLP : child.encode(depth + 1, false);
             }
             byte[] value = branchNodeGetValue();
-            encoded[16] = encodeElement(value);
+            encoded[16] = Hash.encodeElement(value);
             ret = encodeList(encoded);
           }
         } else if (type == NodeType.KVNodeNode) {
-          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
+          ret = encodeList(Hash.encodeElement(kvNodeGetKey().toPacked()),
               kvNodeGetChildNode().encode(depth + 1, false));
         } else {
           byte[] value = kvNodeGetValue();
-          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
-              encodeElement(value == null ? EMPTY_BYTE_ARRAY : value));
+          ret = encodeList(Hash.encodeElement(kvNodeGetKey().toPacked()),
+              Hash.encodeElement(value == null ? EMPTY_BYTE_ARRAY : value));
         }
         if (hash != null) {
           deleteHash(hash);
@@ -711,7 +713,7 @@ public class TrieImpl implements Trie<byte[]> {
         } else {
           hash = Hash.sha3(ret);
           addHash(hash, ret);
-          return encodeElement(hash);
+          return Hash.encodeElement(hash);
         }
       }
     }
@@ -896,8 +898,8 @@ public class TrieImpl implements Trie<byte[]> {
     /***********  Dump methods  ************/
 
     public String dumpStruct(String indent, String prefix) {
-      String ret = indent + prefix + getType() + (dirty ? " *" : "") +
-          (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
+      String ret = indent + prefix + getType() + (dirty ? " *" : "")
+          + (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
       if (getType() == NodeType.BranchNode) {
         byte[] value = branchNodeGetValue();
         ret += (value == null ? "" : " [T] = " + Hex.toHexString(value)) + "\n";

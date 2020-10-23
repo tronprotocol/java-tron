@@ -28,6 +28,8 @@ public class HttpRateLimite001 {
       .getStringList("httpnode.ip.list").get(3);
   private String realHttpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -83,6 +85,7 @@ public class HttpRateLimite001 {
     Integer repeatTimes = 0;
     while (repeatTimes++ < 15) {
       HttpMethed.getBlockByLastNumFromSolidity(httpSoliditynode, 5);
+      HttpMethed.getBlockByLastNumFromPbft(httpPbftNode, 5);
     }
     Long endTimesStap = System.currentTimeMillis();
     logger.info("startTimeStamp - endTimesStap:" + (endTimesStap - startTimeStamp));
@@ -98,7 +101,8 @@ public class HttpRateLimite001 {
     Long startTimeStamp = System.currentTimeMillis();
     Integer repeatTimes = 0;
     while (repeatTimes++ < 15) {
-      HttpMethed.getBlockByNumFromSolidity(httpSoliditynode, 5);
+      HttpMethed.getBlockByLastNumFromSolidity(httpSoliditynode, 5);
+      HttpMethed.getBlockByLastNumFromPbft(httpPbftNode, 5);
     }
     Long endTimesStap = System.currentTimeMillis();
     logger.info("startTimeStamp - endTimesStap:" + (endTimesStap - startTimeStamp));

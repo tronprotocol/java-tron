@@ -22,6 +22,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StorageUtils;
 
 public class StorageTest {
 
@@ -46,14 +47,14 @@ public class StorageTest {
 
   @Test
   public void getPath() {
-    Assert.assertEquals("storage_directory_test", storage.getPathByDbName("account"));
-    Assert.assertEquals("test_path", storage.getPathByDbName("test_name"));
-    Assert.assertNull(storage.getPathByDbName("some_name_not_exists"));
+    Assert.assertEquals("storage_directory_test", StorageUtils.getPathByDbName("account"));
+    Assert.assertEquals("test_path", StorageUtils.getPathByDbName("test_name"));
+    Assert.assertNull(StorageUtils.getPathByDbName("some_name_not_exists"));
   }
 
   @Test
   public void getOptions() {
-    Options options = storage.getOptionsByDbName("account");
+    Options options = StorageUtils.getOptionsByDbName("account");
     Assert.assertTrue(options.createIfMissing());
     Assert.assertTrue(options.paranoidChecks());
     Assert.assertTrue(options.verifyChecksums());
@@ -63,7 +64,7 @@ public class StorageTest {
     Assert.assertEquals(10485760L, options.cacheSize());
     Assert.assertEquals(100, options.maxOpenFiles());
 
-    options = storage.getOptionsByDbName("test_name");
+    options = StorageUtils.getOptionsByDbName("test_name");
     Assert.assertFalse(options.createIfMissing());
     Assert.assertFalse(options.paranoidChecks());
     Assert.assertFalse(options.verifyChecksums());
@@ -73,7 +74,7 @@ public class StorageTest {
     Assert.assertEquals(4L, options.cacheSize());
     Assert.assertEquals(5, options.maxOpenFiles());
 
-    options = storage.getOptionsByDbName("some_name_not_exists");
+    options = StorageUtils.getOptionsByDbName("some_name_not_exists");
     Assert.assertTrue(options.createIfMissing());
     Assert.assertTrue(options.paranoidChecks());
     Assert.assertTrue(options.verifyChecksums());

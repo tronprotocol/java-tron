@@ -20,20 +20,23 @@ public class AdaptorTest {
   public void testStrategy() {
     String paramString1 = "qps=5 notExist=6";
     IPQPSRateLimiterAdapter adapter1 = new IPQPSRateLimiterAdapter(paramString1);
-    IPQpsStrategy strategy1 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter1, "strategy");
+    IPQpsStrategy strategy1 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter1,
+        "strategy");
 
     Assert.assertTrue(Double.valueOf(
-        ReflectUtils.getFieldValue(strategy1.getMapParams().get("qps"), "value").toString())
+        ReflectUtils.getFieldValue(strategy1.getMapParams().get("qps"),
+            "value").toString())
         == 5.0d);
     Assert.assertTrue(strategy1.getMapParams().get("notExist") == null);
 
     String paramString2 = "qps=5xyz";
     IPQPSRateLimiterAdapter adapter2 = new IPQPSRateLimiterAdapter(paramString2);
-    IPQpsStrategy strategy2 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter2, "strategy");
+    IPQpsStrategy strategy2 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter2,
+        "strategy");
 
     Assert.assertTrue(Double.valueOf(
-        ReflectUtils.getFieldValue(strategy2.getMapParams().get("qps"), "value").toString())
-        .equals(IPQpsStrategy.DEFAULT_IPQPS));
+        ReflectUtils.getFieldValue(strategy2.getMapParams().get("qps"),
+            "value").toString()).equals(IPQpsStrategy.DEFAULT_IPQPS));
   }
 
   @Test
@@ -41,10 +44,11 @@ public class AdaptorTest {
     String paramString = "qps=5";
     IPQPSRateLimiterAdapter adapter = new IPQPSRateLimiterAdapter(paramString);
 
-    IPQpsStrategy strategy = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter, "strategy");
+    IPQpsStrategy strategy = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter,
+        "strategy");
     Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"), "value").toString())
-        == 5.0d);
+        .valueOf(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"),
+            "value").toString()) == 5.0d);
 
     long t0 = System.currentTimeMillis();
     for (int i = 0; i < 20; i++) {
@@ -75,8 +79,8 @@ public class AdaptorTest {
     GlobalPreemptibleStrategy strategy1 = (GlobalPreemptibleStrategy) ReflectUtils
         .getFieldObject(adapter1, "strategy");
     Assert.assertTrue(Integer.valueOf(
-        ReflectUtils.getFieldValue(strategy1.getMapParams().get("permit"), "value").toString())
-        == 1);
+        ReflectUtils.getFieldValue(strategy1.getMapParams().get("permit"),
+            "value").toString()) == 1);
     boolean first = strategy1.acquire();
     Assert.assertTrue(first);
 
@@ -92,8 +96,8 @@ public class AdaptorTest {
     GlobalPreemptibleStrategy strategy2 = (GlobalPreemptibleStrategy) ReflectUtils
         .getFieldObject(adapter2, "strategy");
     Assert.assertTrue(Integer.valueOf(
-        ReflectUtils.getFieldValue(strategy2.getMapParams().get("permit"), "value").toString())
-        == 3);
+        ReflectUtils.getFieldValue(strategy2.getMapParams().get("permit"),
+            "value").toString()) == 3);
 
     first = strategy2.acquire();
     Assert.assertTrue(first);
@@ -125,46 +129,25 @@ public class AdaptorTest {
 
     QpsStrategy strategy = (QpsStrategy) ReflectUtils.getFieldObject(adapter, "strategy");
     Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"), "value").toString())
-        == 5);
+        .valueOf(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"),
+            "value").toString()) == 5);
     strategy.acquire();
 
     long t0 = System.currentTimeMillis();
     CountDownLatch latch = new CountDownLatch(20);
     for (int i = 0; i < 20; i++) {
-      Thread thread = new Thread(new MyThread(latch, strategy));
+      Thread thread = new Thread(new AdaptorThread(latch, strategy));
       thread.start();
     }
 
     try {
       latch.await();
     } catch (InterruptedException e) {
-
+      System.out.println(e.getMessage());
     }
     long t1 = System.currentTimeMillis();
     Assert.assertTrue(t1 - t0 > 4000);
   }
 }
 
-class MyThread implements Runnable {
-
-  private CountDownLatch latch;
-  private QpsStrategy strategy;
-
-  public MyThread(CountDownLatch latch, QpsStrategy strategy) {
-    this.latch = latch;
-    this.strategy = strategy;
-  }
-
-  @Override
-  public void run() {
-    strategy.acquire();
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-
-    }
-    latch.countDown();
-  }
-}
 

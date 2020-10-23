@@ -1,12 +1,13 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
@@ -38,7 +39,7 @@ public class BlockMsgHandler implements TronMsgHandler {
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
 
-  private int maxBlockSize = BLOCK_SIZE + 1000;
+  private int maxBlockSize = BLOCK_SIZE + Constant.ONE_THOUSAND;
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
@@ -61,7 +62,8 @@ public class BlockMsgHandler implements TronMsgHandler {
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
       processBlock(peer, blockMessage.getBlockCapsule());
       logger.info(
-          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, txs/process {}/{}ms, witness: {}",
+          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, "
+              + "txs/process {}/{}ms, witness: {}",
           blockId.getNum(),
           interval,
           peer.getInetAddress(),
@@ -116,7 +118,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       }
     }
 
-    tronNetDelegate.processBlock(block);
+    tronNetDelegate.processBlock(block, false);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
     tronNetDelegate.getActivePeer().forEach(p -> {
       if (p.getAdvInvReceive().getIfPresent(blockId) != null) {

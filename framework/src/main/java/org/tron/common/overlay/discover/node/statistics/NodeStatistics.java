@@ -56,7 +56,7 @@ public class NodeStatistics {
   public int getReputation() {
     int score = 0;
     if (!isReputationPenalized()) {
-      score += persistedReputation / 5 + reputation.calculate();
+      score += persistedReputation / 5 + reputation.getScore();
     }
     if (isPredefined) {
       score += REPUTATION_PREDEFINED;
@@ -166,7 +166,7 @@ public class NodeStatistics {
         + " "
         + messageStatistics.discoverOutNeighbours + "/" + messageStatistics.discoverInFindNode
         + " "
-        + ((int) discoverMessageLatency.getAvrg()) + "ms"
+        + ((int) discoverMessageLatency.getAvg()) + "ms"
         + ", p2p: " + p2pHandShake + "/" + messageStatistics.p2pInHello + "/"
         + messageStatistics.p2pOutHello + " "
         + ", tron: " + messageStatistics.tronInMessage + "/" + messageStatistics.tronOutMessage
@@ -205,7 +205,7 @@ public class NodeStatistics {
       count++;
     }
 
-    public long getAvrg() {
+    public long getAvg() {
       return count == 0 ? 0 : sum / count;
     }
 

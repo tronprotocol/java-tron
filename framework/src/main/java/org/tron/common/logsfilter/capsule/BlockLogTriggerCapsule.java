@@ -10,7 +10,7 @@ public class BlockLogTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  BlockLogTrigger blockLogTrigger;
+  private BlockLogTrigger blockLogTrigger;
 
   public BlockLogTriggerCapsule(BlockCapsule block) {
     blockLogTrigger = new BlockLogTrigger();

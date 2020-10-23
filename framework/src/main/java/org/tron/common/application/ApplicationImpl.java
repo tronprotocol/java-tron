@@ -4,17 +4,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
 
 @Slf4j(topic = "app")
 @Component
 public class ApplicationImpl implements Application {
 
-  private BlockStore blockStoreDb;
   private ServiceContainer services;
 
   @Autowired
@@ -24,9 +25,10 @@ public class ApplicationImpl implements Application {
   private Manager dbManager;
 
   @Autowired
-  private ConsensusService consensusService;
+  private ChainBaseManager chainBaseManager;
 
-  private boolean isProducer;
+  @Autowired
+  private ConsensusService consensusService;
 
   @Override
   public void setOptions(Args args) {
@@ -35,8 +37,7 @@ public class ApplicationImpl implements Application {
 
   @Override
   @Autowired
-  public void init(Args args) {
-    blockStoreDb = dbManager.getBlockStore();
+  public void init(CommonParameter parameter) {
     services = new ServiceContainer();
   }
 
@@ -46,8 +47,8 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public void initServices(Args args) {
-    services.init(args);
+  public void initServices(CommonParameter parameter) {
+    services.init(parameter);
   }
 
   /**
@@ -56,19 +57,20 @@ public class ApplicationImpl implements Application {
   public void startup() {
     tronNetService.start();
     consensusService.start();
+    MetricsUtil.init();
   }
 
   @Override
   public void shutdown() {
-    logger.info("******** begin to shutdown ********");
+    logger.info("******** start to shutdown ********");
     tronNetService.stop();
     consensusService.stop();
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
     }
-    dbManager.stopRepushThread();
-    dbManager.stopRepushTriggerThread();
+    dbManager.stopRePushThread();
+    dbManager.stopRePushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
     logger.info("******** end to shutdown ********");
   }
@@ -84,25 +86,17 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public BlockStore getBlockStoreS() {
-    return blockStoreDb;
-  }
-
-  @Override
   public Manager getDbManager() {
     return dbManager;
   }
 
-  public boolean isProducer() {
-    return isProducer;
-  }
-
-  public void setIsProducer(boolean producer) {
-    isProducer = producer;
+  @Override
+  public ChainBaseManager getChainBaseManager() {
+    return chainBaseManager;
   }
 
   private void closeRevokingStore() {
-    logger.info("******** begin to closeRevokingStore ********");
+    logger.info("******** start to closeRevokingStore ********");
     dbManager.getRevokingStore().shutdown();
   }
 

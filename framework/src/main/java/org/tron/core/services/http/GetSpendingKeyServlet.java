@@ -20,7 +20,6 @@ public class GetSpendingKeyServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       BytesMessage reply = wallet.getSpendingKey();
-
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } catch (Exception e) {
       Util.processError(e, response);
@@ -29,14 +28,10 @@ public class GetSpendingKeyServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-
+      PostParams params = PostParams.getPostParams(request);
       BytesMessage reply = wallet.getSpendingKey();
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
+        response.getWriter().println(JsonFormat.printToString(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }

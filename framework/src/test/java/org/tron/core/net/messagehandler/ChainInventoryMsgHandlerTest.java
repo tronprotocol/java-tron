@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
@@ -35,7 +35,7 @@ public class ChainInventoryMsgHandlerTest {
       Assert.assertTrue(e.getMessage().equals("blockIds is empty"));
     }
 
-    long size = NodeConstant.SYNC_FETCH_BATCH_NUM + 2;
+    long size = NetConstants.SYNC_FETCH_BATCH_NUM + 2;
     for (int i = 0; i < size; i++) {
       blockIds.add(new BlockId());
     }
@@ -48,7 +48,7 @@ public class ChainInventoryMsgHandlerTest {
     }
 
     blockIds.clear();
-    size = NodeConstant.SYNC_FETCH_BATCH_NUM / 100;
+    size = NetConstants.SYNC_FETCH_BATCH_NUM / 100;
     for (int i = 0; i < size; i++) {
       blockIds.add(new BlockId());
     }

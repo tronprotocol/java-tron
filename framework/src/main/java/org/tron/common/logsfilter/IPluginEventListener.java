@@ -22,4 +22,8 @@ public interface IPluginEventListener extends ExtensionPoint {
   void handleContractEventTrigger(Object trigger);
 
   void handleSolidityTrigger(Object trigger);
+
+  void handleSolidityLogTrigger(Object trigger);
+
+  void handleSolidityEventTrigger(Object trigger);
 }

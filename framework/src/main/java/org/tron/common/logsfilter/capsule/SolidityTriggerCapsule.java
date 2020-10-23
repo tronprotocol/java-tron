@@ -21,3 +21,4 @@ public class SolidityTriggerCapsule extends TriggerCapsule {
     EventPluginLoader.getInstance().postSolidityTrigger(solidityTrigger);
   }
 }
+

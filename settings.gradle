@@ -1,4 +1,4 @@
-rootProject.name = 'javatron'
+rootProject.name = 'java-tron'
 include 'framework'
 include 'chainbase'
 include 'protocol'

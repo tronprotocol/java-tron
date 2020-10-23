@@ -78,13 +78,13 @@ public class WalletTestZenToken004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     Assert.assertTrue(PublicMethed.sendcoin(receiverPublicAddress, 1000000L,
         fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Shield to two shield transaction")
+  @Test(enabled = false, description = "Shield to two shield transaction")
   public void test1Shield2TwoShieldTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -145,7 +145,8 @@ public class WalletTestZenToken004 {
 
   }
 
-  @Test(enabled = true, description = "Shield to one public and one shield transaction")
+  @Test(enabled = false,
+      description = "Shield to one public and one shield transaction")
   public void test2Shield2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -199,7 +200,8 @@ public class WalletTestZenToken004 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-  @Test(enabled = true, description = "Shield to one public and two shield transaction")
+  @Test(enabled = false,
+      description = "Shield to one public and two shield transaction")
   public void test3Public2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -268,7 +270,7 @@ public class WalletTestZenToken004 {
             blockingStubFull);
     logger.info("afterNotActivePublicAssetBalance:" + afterNotActivePublicAssetBalance);
     logger.info("sendToPublicAddressAmount:" + sendToPublicAddressAmount);
-    Assert.assertEquals(afterNotActivePublicAssetBalance,sendToPublicAddressAmount);
+    Assert.assertEquals(afterNotActivePublicAssetBalance, sendToPublicAddressAmount);
   }
 
   /**

@@ -23,8 +23,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import org.spongycastle.crypto.digests.SM3Digest;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -33,6 +31,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import org.spongycastle.crypto.digests.SM3Digest;
 
 
 /**
@@ -89,7 +88,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    */
   @Deprecated
   public static Sha256Hash create(boolean isSha256, byte[] contents) {
-    return of(isSha256,contents);
+    return of(isSha256, contents);
   }
 
   /**
@@ -99,7 +98,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @return a new instance containing the calculated (one-time) hash
    */
   public static Sha256Hash of(boolean isSha256, byte[] contents) {
-    return wrap(hash(isSha256,contents));
+    return wrap(hash(isSha256, contents));
   }
 
   /**
@@ -114,7 +113,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   public static Sha256Hash of(boolean isSha256, File file) throws IOException {
 
     try (FileInputStream in = new FileInputStream(file)) {
-      return of(isSha256,ByteStreams.toByteArray(in));
+      return of(isSha256, ByteStreams.toByteArray(in));
     }
   }
 
@@ -151,8 +150,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   /**
-   * Returns a new SM3 MessageDigest instance. This is a convenience method which wraps the
-   * checked exception that can never occur with a RuntimeException.
+   * Returns a new SM3 MessageDigest instance. This is a convenience method which wraps the checked
+   * exception that can never occur with a RuntimeException.
    *
    * @return a new SM3 MessageDigest instance
    */
@@ -222,8 +221,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
       byte[] eHash = new byte[digest.getDigestSize()];
       digest.doFinal(eHash, 0);
       digest.reset();
-      digest.update(eHash,0,eHash.length);
-      digest.doFinal(eHash,0);
+      digest.update(eHash, 0, eHash.length);
+      digest.doFinal(eHash, 0);
       return eHash;
     }
 
@@ -234,7 +233,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * two ranges and then passing the result to {@link #hashTwice(byte[])}.
    */
   public static byte[] hashTwice(boolean isSha256, byte[] input1, int offset1, int length1,
-                                 byte[] input2, int offset2, int length2) {
+      byte[] input2, int offset2, int length2) {
     if (isSha256) {
       MessageDigest digest = newDigest();
       digest.update(input1, offset1, length1);
@@ -245,7 +244,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
       digest.update(input1, offset1, length1);
       digest.update(input2, offset2, length2);
       byte[] eHash = new byte[digest.getDigestSize()];
-      digest.doFinal(eHash,0);
+      digest.doFinal(eHash, 0);
       return eHash;
     }
   }
@@ -291,7 +290,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   public int hashCode() {
     // Use the last 4 bytes, not the first 4 which are often zeros in Bitcoin.
     return Ints
-            .fromBytes(bytes[LENGTH - 4], bytes[LENGTH - 3], bytes[LENGTH - 2], bytes[LENGTH - 1]);
+        .fromBytes(bytes[LENGTH - 4], bytes[LENGTH - 3], bytes[LENGTH - 2], bytes[LENGTH - 1]);
   }
 
   /**

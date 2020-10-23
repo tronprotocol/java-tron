@@ -1,7 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
-import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -29,6 +29,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.Common.ResourceCode;
 
@@ -520,8 +521,7 @@ public class FreezeBalanceActuatorTest {
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
-              + "and more than " + minFrozenTime + " days"
-          , e.getMessage());
+          + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -545,8 +545,7 @@ public class FreezeBalanceActuatorTest {
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
-              + "and more than " + minFrozenTime + " days"
-          , e.getMessage());
+          + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -630,4 +629,29 @@ public class FreezeBalanceActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [FreezeBalanceContract],real type[");
+    actuatorTest.invalidContractType();
+
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    actuatorTest.setContract(getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+  }
+
+
 }

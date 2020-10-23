@@ -29,7 +29,7 @@ public class P2pMessageFactory extends MessageFactory {
   public P2pMessage create(byte[] data) throws Exception {
     if (data.length <= 1) {
       throw new P2pException(TypeEnum.MESSAGE_WITH_WRONG_LENGTH,
-          "messageType=" + (data.length == 1 ? data[0] : "unknow"));
+          "messageType=" + (data.length == 1 ? data[0] : "unknown"));
     }
     try {
       byte type = data[0];
