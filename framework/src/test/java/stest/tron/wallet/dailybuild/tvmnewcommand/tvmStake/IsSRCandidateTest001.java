@@ -48,7 +48,7 @@ public class IsSRCandidateTest001 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(testKey001);
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
@@ -68,7 +68,7 @@ public class IsSRCandidateTest001 {
             testAddress001, blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Witness Address should be true")
+  @Test(enabled = false, description = "Witness Address should be true")
   void tvmStakeTest001() {
     String methodStr = "isSRCandidateTest(address)";
     String argsStr = "\"" + PublicMethed.getAddressString(testWitnessKey) + "\"";
@@ -80,7 +80,7 @@ public class IsSRCandidateTest001 {
     Assert.assertEquals(isSR,1);
   }
 
-  @Test(enabled = true, description = "Account Address should be false")
+  @Test(enabled = false, description = "Account Address should be false")
   void tvmStakeTest002() {
     String methodStr = "isSRCandidateTest(address)";
     String argsStr = "\"" + Base58.encode58Check(testAddress001) + "\"";
@@ -92,7 +92,7 @@ public class IsSRCandidateTest001 {
     Assert.assertEquals(isSR,0);
   }
 
-  @Test(enabled = true, description = "zero Address(0x00) should be false")
+  @Test(enabled = false, description = "zero Address(0x00) should be false")
   void tvmStakeTest003() {
     String methodStr = "zeroAddressTest()";
     String argsStr = "";
@@ -104,7 +104,7 @@ public class IsSRCandidateTest001 {
     Assert.assertEquals(isSR,0);
   }
 
-  @Test(enabled = true, description = "Contract Address should be false")
+  @Test(enabled = false, description = "Contract Address should be false")
   void tvmStakeTest004() {
     String methodStr = "localContractAddrTest()";
     String argsStr = "";

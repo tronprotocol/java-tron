@@ -72,7 +72,7 @@ public class ContractRewardTest001 {
         testFoundationAddress, testFoundationKey,blockingStubFull);
   }
 
-  @Test(enabled = true,description = "querry SR account, reward should equal to gerRewardInfo")
+  @Test(enabled = false,description = "querry SR account, reward should equal to gerRewardInfo")
   void rewardbalanceTest001() {
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(ByteString
         .copyFrom(PublicMethed.getFinalAddress(witnessKey)))
@@ -90,7 +90,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(reward,rewardBalance);
   }
 
-  @Test(enabled = true,description = "querry 0x00, reward should be 0")
+  @Test(enabled = false,description = "querry 0x00, reward should be 0")
   void rewardbalanceTest002() {
     String methedStr = "nullAddressTest()";
     String argStr = "";
@@ -103,7 +103,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(rewardBalance,0);
   }
 
-  @Test(enabled = true,description = "querry UnActive account , reward should be 0")
+  @Test(enabled = false,description = "querry UnActive account , reward should be 0")
   void rewardbalanceTest003() {
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     String Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
@@ -119,7 +119,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(rewardBalance,0);
   }
 
-  @Test(enabled = true,description = "querry contract account,reward should equal to gerRewardInfo")
+  @Test(enabled = false,description = "querry contract account,reward should equal to gerRewardInfo")
   void rewardbalanceTest004() {
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(ByteString
         .copyFrom(contractAddress))
@@ -139,7 +139,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(rewardBalance,reward);
   }
 
-  @Test(enabled = true,description = "querry ZeroReward account, reward should be 0")
+  @Test(enabled = false,description = "querry ZeroReward account, reward should be 0")
   void rewardbalanceTest005() {
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(ByteString
         .copyFrom(PublicMethed.getFinalAddress(testFoundationKey)))
@@ -157,7 +157,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(reward,rewardBalance,0);
   }
 
-  @Test(enabled = true,description = "withdrawBalance")
+  @Test(enabled = false,description = "withdrawBalance")
   void withdrawBalanceTest006() {
     //contractAddress = Base58.decode58Check("TBsf2FCSht83CEA8CSZ1ReQTRDByNB7FCe");
 
@@ -173,7 +173,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(ext.getResult(), code.SUCESS);
   }
 
-  @Test(enabled = true,description = "withdrawBalance twice")
+  @Test(enabled = false,description = "withdrawBalance twice")
   void withdrawBalanceTest007() {
     String methedStr = "withdrawRewardTest()";
     String argStr = "";
@@ -187,7 +187,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(ext.getResult(), code.SUCESS);
   }
 
-  @Test(enabled = true,description = "withdrawBalance other contract")
+  @Test(enabled = false,description = "withdrawBalance other contract")
   void withdrawBalanceTest008() {
     String filePath = "src/test/resources/soliditycode/stackContract001.sol";
     String contractName = "B";
@@ -212,7 +212,7 @@ public class ContractRewardTest001 {
     Assert.assertEquals(ext.getResult(), TransactionInfo.code.SUCESS);
   }
 
-  @Test(enabled = true,description = "new withdrawBalance constructor")
+  @Test(enabled = false,description = "new withdrawBalance constructor")
   void withdrawBalanceTest009() {
     String methedStr = "createA()";
     String argStr = "";

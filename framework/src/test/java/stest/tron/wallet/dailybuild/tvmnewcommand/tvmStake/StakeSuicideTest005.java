@@ -68,7 +68,7 @@ public class StakeSuicideTest005 {
      * constructor.
      */
 
-    @BeforeClass(enabled = true)
+    @BeforeClass(enabled = false)
     public void beforeClass() {
         System.out.println(testKey001);
         PublicMethed.printAddress(testKey001);
@@ -90,7 +90,7 @@ public class StakeSuicideTest005 {
         PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
 
-    @Test(enabled = true, description = "targetAddress is account no TRX, and no frozen")
+    @Test(enabled = false, description = "targetAddress is account no TRX, and no frozen")
     void tvmStakeSuicideTest001() {
         ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
         byte[] targetAddress = ecKey_targetAddress.getAddress();
@@ -123,7 +123,7 @@ public class StakeSuicideTest005 {
 
     }
 
-    @Test(enabled = true, description = "targetAddress is account 1 TRX, and no frozen")
+    @Test(enabled = false, description = "targetAddress is account 1 TRX, and no frozen")
     void tvmStakeSuicideTest002() {
         ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
         byte[] targetAddress = ecKey_targetAddress.getAddress();
@@ -164,7 +164,7 @@ public class StakeSuicideTest005 {
 
     }
 
-    @Test(enabled = true, description = "targetAddress is account 1 TRX, and 1 frozen")
+    @Test(enabled = false, description = "targetAddress is account 1 TRX, and 1 frozen")
     void tvmStakeSuicideTest003() {
         ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
         byte[] targetAddress = ecKey_targetAddress.getAddress();
