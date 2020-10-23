@@ -222,8 +222,8 @@ public class ECKey implements Serializable, SignInterface {
    * a fallback that covers this case is to check the key algorithm
    */
   private static boolean isECPrivateKey(PrivateKey privKey) {
-    return privKey instanceof ECPrivateKey || privKey.getAlgorithm()
-        .equals("EC");
+    return privKey instanceof ECPrivateKey || "EC"
+            .equals(privKey.getAlgorithm());
   }
 
   /* Convert a BigInteger into a PrivateKey object

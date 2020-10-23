@@ -105,7 +105,6 @@ public class Parameter {
   @Deprecated
   public class ForkBlockVersionConsts {
 
-    public static final int START_NEW_TRANSACTION = 4;
     public static final int ENERGY_LIMIT = 5;
   }
 
