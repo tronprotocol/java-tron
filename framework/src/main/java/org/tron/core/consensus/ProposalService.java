@@ -210,10 +210,10 @@ public class ProposalService extends ProposalUtil {
         //  manager.getDynamicPropertiesStore().saveAllowTvmStake(entry.getValue());
         //  break;
         //}
-        case ALLOW_TVM_ASSET_ISSUE: {
-          manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
-          break;
-        }
+        //case ALLOW_TVM_ASSET_ISSUE: {
+        //  manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
+        //  break;
+        //}
         case ALLOW_MARKET_TRANSACTION: {
           if (manager.getDynamicPropertiesStore().getAllowMarketTransaction() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMarketTransaction(entry.getValue());
