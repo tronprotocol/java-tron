@@ -228,7 +228,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Slf4j
 @Component
 public class Wallet {
-
+  private static final String TREE_ROOT = "fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e";
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
   private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
@@ -1397,8 +1397,7 @@ public class Wallet {
     IncrementalMerkleTreeCapsule treeCapsule = chainBaseManager.getMerkleTreeStore()
         .get(treeRoot);
     if (treeCapsule == null) {
-      if ("fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e"
-          .equals(ByteArray.toHexString(treeRoot))) {
+      if (TREE_ROOT.equals(ByteArray.toHexString(treeRoot))) {
         treeCapsule = new IncrementalMerkleTreeCapsule();
       } else {
         throw new RuntimeException("tree is null, treeRoot:" + ByteArray.toHexString(treeRoot));
