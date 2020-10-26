@@ -195,16 +195,6 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(44L, 1L);
       }
-/*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmStake") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(43L, 1L);
-      }*/
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmAssetIssue") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(42L, 1L);
-      }
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmIstanbul") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
