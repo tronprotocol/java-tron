@@ -760,6 +760,10 @@ public class JsonFormat {
     if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
       String result = new String(input.toByteArray());
       result = result.replaceAll("\"", "\\\\\"");
+      if (result.equals("_")) {
+        return result;
+      }
+
       try {
         DefaultJSONParser parser = new DefaultJSONParser(result, ParserConfig.getGlobalInstance(),
             0);
