@@ -66,7 +66,7 @@ public class TvmAssetIssue001 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
@@ -75,7 +75,7 @@ public class TvmAssetIssue001 {
     PublicMethed.printAddress(dev002Key);
   }
 
-  @Test(enabled = true, description = "tokenIssue normal")
+  @Test(enabled = false, description = "tokenIssue normal")
   public void tokenIssueNormal() {
     Assert.assertTrue(PublicMethed
         .sendcoin(dev001Address, 3100_000_000L, fromAddress, testKey002, blockingStubFull));
@@ -205,7 +205,7 @@ public class TvmAssetIssue001 {
     Assert.assertEquals(100L, dev002AssetValue);
   }
 
-  @Test(enabled = true, description = "updateAsset normal")
+  @Test(enabled = false, description = "updateAsset normal")
   public void updateAssetNormal() {
     AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(dev001Address, blockingStubFull);

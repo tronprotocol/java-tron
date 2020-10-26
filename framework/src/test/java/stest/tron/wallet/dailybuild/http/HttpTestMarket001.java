@@ -20,16 +20,21 @@ public class HttpTestMarket001 {
   private static final long now = System.currentTimeMillis();
   private static final long totalSupply = now;
   private static String name = "testAssetIssue002_" + now;
-  private static String assetIssueId;
+  private static String assetIssueId1;
+  private static String assetIssueId2;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] sellAddress = ecKey1.getAddress();
   String sellKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private ECKey ecKey2 = new ECKey(Utils.getRandom());
+  private byte[] dev002Address = ecKey2.getAddress();
+  private String dev002Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   String txId1;
   String txId2;
+  String orderId;
   String orderId1;
   String orderId2;
 
@@ -68,7 +73,11 @@ public class HttpTestMarket001 {
    */
   @Test(enabled = true, description = "MarketSellAsset trx with trc10 by http")
   public void test01MarketSellAsset() {
+    PublicMethed.printAddress(sellKey);
+    PublicMethed.printAddress(dev002Key);
+
     response = HttpMethed.sendCoin(httpnode, fromAddress, sellAddress, amount, testKey002);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, dev002Address, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
 
@@ -81,14 +90,48 @@ public class HttpTestMarket001 {
     response = HttpMethed.getAccount(httpnode, sellAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    assetIssueId = responseContent.getString("asset_issued_ID");
-    logger.info(assetIssueId);
-    Assert.assertTrue(Integer.parseInt(assetIssueId) > 1000000);
+    assetIssueId1 = responseContent.getString("asset_issued_ID");
+    logger.info(assetIssueId1);
+    Assert.assertTrue(Integer.parseInt(assetIssueId1) > 1000000);
+
+    response = HttpMethed.assetIssue(httpnode, dev002Address, name, name, totalSupply, 1, 1,
+        System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000, 2, 3, description,
+        url, 1000L, 1000L, dev002Key);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.getAccount(httpnode, dev002Address);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    assetIssueId2 = responseContent.getString("asset_issued_ID");
+    logger.info(assetIssueId2);
+    Assert.assertTrue(Integer.parseInt(assetIssueId2) > 1000000);
+
+    // transferAsset
+    response = HttpMethed
+        .transferAsset(httpnode, dev002Address, sellAddress, assetIssueId2, 10000l, dev002Key);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.getAccount(httpnode, sellAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+
+    // marketsellasset trc10-trc10
+    txId2 = HttpMethed
+        .marketSellAssetGetTxId(httpnode, sellAddress, assetIssueId1, 10L, assetIssueId2, 500L,
+            sellKey, "true");
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    logger.info(txId2);
+    response = HttpMethed.getTransactionInfoById(httpnode, txId2);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(!responseContent.getString("orderId").isEmpty());
+    orderId = responseContent.getString("orderId");
+    logger.info("orderId:" + orderId);
 
     // marketsellasset trx-trc10
     txId1 = HttpMethed
-        .marketSellAssetGetTxId(httpnode, sellAddress, "_", 1000L, assetIssueId, 20L, sellKey,
-            "true");
+        .marketSellAssetGetTxId(httpnode, sellAddress, "_", 1000L, assetIssueId1, 20L, sellKey,
+            "false");
     HttpMethed.waitToProduceOneBlock(httpnode);
     logger.info(txId1);
     response = HttpMethed.getTransactionInfoById(httpnode, txId1);
@@ -100,7 +143,7 @@ public class HttpTestMarket001 {
 
     // marketsellasset trc10-trx
     txId2 = HttpMethed
-        .marketSellAssetGetTxId(httpnode, sellAddress, assetIssueId, 10L, "_", 500L, sellKey,
+        .marketSellAssetGetTxId(httpnode, sellAddress, assetIssueId1, 10L, "_", 500L, sellKey,
             "true");
     HttpMethed.waitToProduceOneBlock(httpnode);
     logger.info(txId2);
@@ -116,6 +159,8 @@ public class HttpTestMarket001 {
     Assert.assertEquals(orderId1, orderDetails.getString("makerOrderId"));
     orderId2 = responseContent.getString("orderId");
     logger.info("orderId2:" + orderId2);
+
+
   }
 
   /**
@@ -132,12 +177,12 @@ public class HttpTestMarket001 {
         getMarketOrderByIdContent.getString("owner_address"));
     Assert.assertEquals("_", getMarketOrderByIdContent.getString("sell_token_id"));
     Assert.assertTrue(1000L == getMarketOrderByIdContent.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId, getMarketOrderByIdContent.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, getMarketOrderByIdContent.getString("buy_token_id"));
     Assert.assertTrue(20L == getMarketOrderByIdContent.getLong("buy_token_quantity"));
     Assert.assertTrue(500L == getMarketOrderByIdContent.getLong("sell_token_quantity_remain"));
 
     // getMarketOrderById orderId2
-    HttpResponse response2 = HttpMethed.getMarketOrderById(httpnode, orderId2, "true");
+    HttpResponse response2 = HttpMethed.getMarketOrderById(httpnode, orderId2, "false");
     JSONObject getMarketOrderByIdContent2 = HttpMethed.parseResponseContent(response2);
     HttpMethed.printJsonContent(getMarketOrderByIdContent2);
   }
@@ -156,7 +201,7 @@ public class HttpTestMarket001 {
     Assert.assertEquals("_", getMarketOrderByIdContentFromSolidity.getString("sell_token_id"));
     Assert
         .assertTrue(1000L == getMarketOrderByIdContentFromSolidity.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId,
+    Assert.assertEquals(assetIssueId1,
         getMarketOrderByIdContentFromSolidity.getString("buy_token_id"));
     Assert.assertTrue(20L == getMarketOrderByIdContentFromSolidity.getLong("buy_token_quantity"));
     Assert.assertTrue(
@@ -178,7 +223,7 @@ public class HttpTestMarket001 {
     Assert.assertEquals("_", getMarketOrderByIdContentFromPbft.getString("sell_token_id"));
     Assert
         .assertTrue(1000L == getMarketOrderByIdContentFromPbft.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId,
+    Assert.assertEquals(assetIssueId1,
         getMarketOrderByIdContentFromPbft.getString("buy_token_id"));
     Assert.assertTrue(20L == getMarketOrderByIdContentFromPbft.getLong("buy_token_quantity"));
     Assert.assertTrue(
@@ -196,11 +241,11 @@ public class HttpTestMarket001 {
     getMarketOrderByAccountContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderByAccountContent);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
-    JSONObject orders = getMarketOrderByAccountContent.getJSONArray("orders").getJSONObject(0);
+    JSONObject orders = getMarketOrderByAccountContent.getJSONArray("orders").getJSONObject(1);
     Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
     Assert.assertEquals("_", orders.getString("sell_token_id"));
     Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, orders.getString("buy_token_id"));
     Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
     Assert.assertTrue(500L == orders.getLong("sell_token_quantity_remain"));
   }
@@ -216,11 +261,11 @@ public class HttpTestMarket001 {
     HttpMethed.printJsonContent(getMarketOrderByAccountContentFromSolidity);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     JSONObject orders = getMarketOrderByAccountContentFromSolidity.getJSONArray("orders")
-        .getJSONObject(0);
+        .getJSONObject(1);
     Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
     Assert.assertEquals("_", orders.getString("sell_token_id"));
     Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, orders.getString("buy_token_id"));
     Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
     Assert.assertTrue(500L == orders.getLong("sell_token_quantity_remain"));
     Assert.assertEquals(getMarketOrderByAccountContent, getMarketOrderByAccountContentFromSolidity);
@@ -236,11 +281,11 @@ public class HttpTestMarket001 {
     HttpMethed.printJsonContent(getMarketOrderByAccountContentFromPbft);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     JSONObject orders = getMarketOrderByAccountContentFromPbft.getJSONArray("orders")
-        .getJSONObject(0);
+        .getJSONObject(1);
     Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
     Assert.assertEquals("_", orders.getString("sell_token_id"));
     Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, orders.getString("buy_token_id"));
     Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
     Assert.assertTrue(500L == orders.getLong("sell_token_quantity_remain"));
     Assert.assertEquals(getMarketOrderByAccountContent, getMarketOrderByAccountContentFromPbft);
@@ -260,7 +305,7 @@ public class HttpTestMarket001 {
     Assert.assertEquals("_",
         getMarketPairListContent.getJSONArray("orderPair").getJSONObject(orderPairSize - 1)
             .getString("sell_token_id"));
-    Assert.assertEquals(assetIssueId,
+    Assert.assertEquals(assetIssueId1,
         getMarketPairListContent.getJSONArray("orderPair").getJSONObject(orderPairSize - 1)
             .getString("buy_token_id"));
   }
@@ -280,7 +325,7 @@ public class HttpTestMarket001 {
         getMarketPairListContentFromSolidity.getJSONArray("orderPair")
             .getJSONObject(orderPairSize - 1)
             .getString("sell_token_id"));
-    Assert.assertEquals(assetIssueId,
+    Assert.assertEquals(assetIssueId1,
         getMarketPairListContentFromSolidity.getJSONArray("orderPair")
             .getJSONObject(orderPairSize - 1)
             .getString("buy_token_id"));
@@ -303,7 +348,7 @@ public class HttpTestMarket001 {
         getMarketPairListContentFromPbft.getJSONArray("orderPair")
             .getJSONObject(orderPairSize - 1)
             .getString("sell_token_id"));
-    Assert.assertEquals(assetIssueId,
+    Assert.assertEquals(assetIssueId1,
         getMarketPairListContentFromPbft.getJSONArray("orderPair")
             .getJSONObject(orderPairSize - 1)
             .getString("buy_token_id"));
@@ -316,7 +361,7 @@ public class HttpTestMarket001 {
    */
   @Test(enabled = true, description = "GetMarketOrderListByPair by http")
   public void test11GetMarketOrderListByPair() {
-    response = HttpMethed.getMarketOrderListByPair(httpnode, "_", assetIssueId, "true");
+    response = HttpMethed.getMarketOrderListByPair(httpnode, "_", assetIssueId1, "true");
     getMarketOrderListByPairContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderListByPairContent);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -325,7 +370,7 @@ public class HttpTestMarket001 {
     Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
     Assert.assertEquals("_", orders.getString("sell_token_id"));
     Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, orders.getString("buy_token_id"));
     Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
     Assert.assertEquals(getMarketOrderListByPairContent.getLong("sell_token_quantity"),
         getMarketOrderListByPairContent.getLong("sell_token_quantity_remain"));
@@ -339,7 +384,7 @@ public class HttpTestMarket001 {
   @Test(enabled = true, description = "GetMarketOrderListByPair by http from solidity")
   public void test12GetMarketOrderListByPairFromSolidity() {
     response = HttpMethed
-        .getMarketOrderListByPairFromSolidity(httpSolidityNode, "_", assetIssueId, "true");
+        .getMarketOrderListByPairFromSolidity(httpSolidityNode, "_", assetIssueId1, "true");
     getMarketOrderListByPairContentFromSolidity = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderListByPairContentFromSolidity);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -349,7 +394,7 @@ public class HttpTestMarket001 {
     Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
     Assert.assertEquals("_", orders.getString("sell_token_id"));
     Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, orders.getString("buy_token_id"));
     Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
     Assert.assertEquals(getMarketOrderListByPairContentFromSolidity.getLong("sell_token_quantity"),
         getMarketOrderListByPairContentFromSolidity.getLong("sell_token_quantity_remain"));
@@ -366,7 +411,8 @@ public class HttpTestMarket001 {
    */
   @Test(enabled = true, description = "GetMarketOrderListByPair by http from pbft")
   public void test13GetMarketOrderListByPairFromPbft() {
-    response = HttpMethed.getMarketOrderListByPairFromPbft(httpPbftNode, "_", assetIssueId, "true");
+    response = HttpMethed
+        .getMarketOrderListByPairFromPbft(httpPbftNode, "_", assetIssueId1, "true");
     getMarketOrderListByPairContentFromPbft = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderListByPairContentFromPbft);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -376,7 +422,7 @@ public class HttpTestMarket001 {
     Assert.assertEquals(Base58.encode58Check(sellAddress), orders.getString("owner_address"));
     Assert.assertEquals("_", orders.getString("sell_token_id"));
     Assert.assertTrue(1000L == orders.getLong("sell_token_quantity"));
-    Assert.assertEquals(assetIssueId, orders.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, orders.getString("buy_token_id"));
     Assert.assertTrue(20L == orders.getLong("buy_token_quantity"));
     Assert.assertEquals(getMarketOrderListByPairContentFromPbft.getLong("sell_token_quantity"),
         getMarketOrderListByPairContentFromPbft.getLong("sell_token_quantity_remain"));
@@ -393,12 +439,12 @@ public class HttpTestMarket001 {
    */
   @Test(enabled = true, description = "GetMarketPriceByPair from by http")
   public void test14GetMarketPriceByPair() {
-    response = HttpMethed.getMarketPriceByPair(httpnode, "_", assetIssueId, "true");
+    response = HttpMethed.getMarketPriceByPair(httpnode, "_", assetIssueId1, "true");
     getMarketPriceByPairContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketPriceByPairContent);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     Assert.assertEquals("_", getMarketPriceByPairContent.getString("sell_token_id"));
-    Assert.assertEquals(assetIssueId, getMarketPriceByPairContent.getString("buy_token_id"));
+    Assert.assertEquals(assetIssueId1, getMarketPriceByPairContent.getString("buy_token_id"));
     JSONObject prices = getMarketPriceByPairContent.getJSONArray("prices").getJSONObject(0);
     Assert.assertEquals("50", prices.getString("sell_token_quantity"));
     Assert.assertEquals("1", prices.getString("buy_token_quantity"));
@@ -411,13 +457,13 @@ public class HttpTestMarket001 {
   @Test(enabled = true, description = "GetMarketPriceByPair from by http from solidity")
   public void test15GetMarketPriceByPairFromSolidity() {
     response = HttpMethed
-        .getMarketPriceByPairFromSolidity(httpSolidityNode, "_", assetIssueId, "true");
+        .getMarketPriceByPairFromSolidity(httpSolidityNode, "_", assetIssueId1, "true");
     getMarketPriceByPairContentFromSolidity = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketPriceByPairContentFromSolidity);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     Assert.assertEquals("_", getMarketPriceByPairContentFromSolidity.getString("sell_token_id"));
     Assert
-        .assertEquals(assetIssueId,
+        .assertEquals(assetIssueId1,
             getMarketPriceByPairContentFromSolidity.getString("buy_token_id"));
     JSONObject prices = getMarketPriceByPairContentFromSolidity.getJSONArray("prices")
         .getJSONObject(0);
@@ -433,13 +479,13 @@ public class HttpTestMarket001 {
   @Test(enabled = true, description = "GetMarketPriceByPair from by http from pbft")
   public void test16GetMarketPriceByPairFromPbft() {
     response = HttpMethed
-        .getMarketPriceByPairFromPbft(httpPbftNode, "_", assetIssueId, "true");
+        .getMarketPriceByPairFromPbft(httpPbftNode, "_", assetIssueId1, "true");
     getMarketPriceByPairContentFromPbft = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketPriceByPairContentFromPbft);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     Assert.assertEquals("_", getMarketPriceByPairContentFromPbft.getString("sell_token_id"));
     Assert
-        .assertEquals(assetIssueId,
+        .assertEquals(assetIssueId1,
             getMarketPriceByPairContentFromPbft.getString("buy_token_id"));
     JSONObject prices = getMarketPriceByPairContentFromPbft.getJSONArray("prices")
         .getJSONObject(0);
@@ -458,7 +504,7 @@ public class HttpTestMarket001 {
     getMarketOrderByAccountContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderByAccountContent);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
-    Assert.assertEquals(1, getMarketOrderByAccountContent.getJSONArray("orders").size());
+    Assert.assertEquals(2, getMarketOrderByAccountContent.getJSONArray("orders").size());
 
     // MarketCancelOrder
     String txId = HttpMethed.marketCancelOrder(httpnode, sellAddress, orderId1, sellKey, "true");
@@ -473,7 +519,7 @@ public class HttpTestMarket001 {
     getMarketOrderByAccountContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getMarketOrderByAccountContent);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
-    Assert.assertTrue(getMarketOrderByAccountContent.isEmpty());
+    Assert.assertEquals(1, getMarketOrderByAccountContent.getJSONArray("orders").size());
   }
 
   /**

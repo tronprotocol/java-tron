@@ -66,7 +66,7 @@ public class TvmAssetIssue002 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
@@ -74,7 +74,7 @@ public class TvmAssetIssue002 {
     PublicMethed.printAddress(dev002Key);
   }
 
-  @Test(enabled = true, description = "tokenIssue illegal parameter verification")
+  @Test(enabled = false, description = "tokenIssue illegal parameter verification")
   public void tokenIssue001IllegalParameterVerification() {
     Assert.assertTrue(PublicMethed
         .sendcoin(dev001Address, 3100_000_000L, fromAddress, testKey002, blockingStubFull));
@@ -376,7 +376,7 @@ public class TvmAssetIssue002 {
     Assert.assertEquals(assetIssueId, assetIssueId1);
   }
 
-  @Test(enabled = true, description = "tokenIssue trx balance insufficient")
+  @Test(enabled = false, description = "tokenIssue trx balance insufficient")
   public void tokenIssue002TrxBalanceInsufficient() {
     Assert.assertTrue(PublicMethed
         .sendcoin(dev001Address, 3100_000_000L, fromAddress, testKey002, blockingStubFull));
@@ -429,7 +429,7 @@ public class TvmAssetIssue002 {
     Assert.assertEquals(0, assetV2Map.size());
   }
 
-  @Test(enabled = true, description = "tokenIssue called multiple times in one contract")
+  @Test(enabled = false, description = "tokenIssue called multiple times in one contract")
   public void tokenIssue003CalledMultipleTimesInOneContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(dev001Address, 3100_000_000L, fromAddress, testKey002, blockingStubFull));
@@ -495,7 +495,7 @@ public class TvmAssetIssue002 {
         Base58.encode58Check(assetIssueById.getOwnerAddress().toByteArray()));
   }
 
-  @Test(enabled = true, description = "tokenIssue revert")
+  @Test(enabled = false, description = "tokenIssue revert")
   public void tokenIssue004Revert() {
     Assert.assertTrue(PublicMethed
         .sendcoin(dev001Address, 3100_000_000L, fromAddress, testKey002, blockingStubFull));
@@ -598,7 +598,7 @@ public class TvmAssetIssue002 {
     Assert.assertEquals(200000000l, balance);
   }
 
-  @Test(enabled = true, description = "tokenIssue call another contract in one contract")
+  @Test(enabled = false, description = "tokenIssue call another contract in one contract")
   public void tokenIssue005CallAnotherInOneContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(dev001Address, 3100_000_000L, fromAddress, testKey002, blockingStubFull));

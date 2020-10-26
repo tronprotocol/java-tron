@@ -70,7 +70,7 @@ public class TvmAssetIssue005 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
@@ -84,7 +84,7 @@ public class TvmAssetIssue005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "tokenIssue and updateAsset with suicide to account")
+  @Test(enabled = false, description = "tokenIssue and updateAsset with suicide to account")
   public void tokenIssue001AndSuicideToAccount() {
     String filePath = "./src/test/resources/soliditycode/tvmAssetIssue005.sol";
     String contractName = "tvmAssetIssue005";
@@ -303,7 +303,7 @@ public class TvmAssetIssue005 {
         Base58.encode58Check(assetIssueById.getOwnerAddress().toByteArray()));
   }
 
-  @Test(enabled = true, description = "tokenIssue and updateAsset with suicide to contract")
+  @Test(enabled = false, description = "tokenIssue and updateAsset with suicide to contract")
   public void tokenIssue002AndSuicideToContract() {
     String filePath = "./src/test/resources/soliditycode/tvmAssetIssue005.sol";
     String contractName = "tvmAssetIssue005";
@@ -526,7 +526,7 @@ public class TvmAssetIssue005 {
         Base58.encode58Check(assetIssueById.getOwnerAddress().toByteArray()));
   }
 
-  @Test(enabled = true, description = "tokenIssue and updateAsset suicide with create2")
+  @Test(enabled = false, description = "tokenIssue and updateAsset suicide with create2")
   public void tokenIssue003AndSuicideWithCreate2() {
     String filePath = "./src/test/resources/soliditycode/tvmAssetIssue005.sol";
     String contractName = "B";

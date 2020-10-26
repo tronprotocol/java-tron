@@ -2091,9 +2091,18 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getNowBlock(String httpNode) {
+    return getNowBlock(httpNode, false);
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getNowBlock(String httpNode, Boolean visible) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getnowblock";
-      response = createConnect(requestUrl);
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("visible", visible);
+      response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -2249,10 +2258,18 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getBlockByNum(String httpNode, Integer blockNUm) {
+    return getBlockByNum(httpNode, blockNUm, false);
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getBlockByNum(String httpNode, Integer blockNUm, Boolean visible) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getblockbynum";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("num", blockNUm);
+      userBaseObj2.addProperty("visible", visible);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2817,6 +2834,7 @@ public class HttpMethed {
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("offset", offset);
       userBaseObj2.addProperty("limit", limit);
+      userBaseObj2.addProperty("visible", "true");
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
