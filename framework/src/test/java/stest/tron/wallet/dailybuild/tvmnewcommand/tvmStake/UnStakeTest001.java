@@ -62,14 +62,14 @@ public class UnStakeTest001 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(testKey001);
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "unstake normal")
+  @Test(enabled = false, description = "unstake normal")
   public void tvmStakeTest001Normal() {
     PublicMethed
         .sendcoin(testAddress001, 1120_000_000L, testFoundationAddress, testFoundationKey,
@@ -125,7 +125,7 @@ public class UnStakeTest001 {
     Assert.assertEquals(account.getBalance(), balanceBefore);
   }
 
-  @Test(enabled = true, description = "unstake when no stake")
+  @Test(enabled = false, description = "unstake when no stake")
   public void tvmUnstakeTest002NoStake() {
     PublicMethed
         .sendcoin(testAddress001, 1120_000_000L, testFoundationAddress, testFoundationKey,
@@ -160,7 +160,7 @@ public class UnStakeTest001 {
     Assert.assertEquals(0, votesCount);
   }
 
-  @Test(enabled = true, description = "unstake twice")
+  @Test(enabled = false, description = "unstake twice")
   public void tvmUnstakeTest003UnstakeTwice() {
     PublicMethed
         .sendcoin(testAddress001, 1120_000_000L, testFoundationAddress, testFoundationKey,
@@ -216,7 +216,7 @@ public class UnStakeTest001 {
     Assert.assertEquals(account.getBalance(), balanceBefore);
   }
 
-  @Test(enabled = true, description = "unstake revert")
+  @Test(enabled = false, description = "unstake revert")
   public void tvmUnstakeTest004Revert() {
     PublicMethed
         .sendcoin(testAddress001, 1120_000_000L, testFoundationAddress, testFoundationKey,
@@ -275,7 +275,7 @@ public class UnStakeTest001 {
     Assert.assertEquals(7000000L, balance);
   }
 
-  @Test(enabled = true, description = "unstake call another contract in one contract")
+  @Test(enabled = false, description = "unstake call another contract in one contract")
   public void tvmUnstakeTest005CallAnotherInOneContract() {
     PublicMethed
         .sendcoin(testAddress001, 2120_000_000L, testFoundationAddress, testFoundationKey,
@@ -354,7 +354,7 @@ public class UnStakeTest001 {
     Assert.assertEquals(contractAddressBalance, 1000000000);
   }
 
-  @Test(enabled = true, description = "unstake with reward balance")
+  @Test(enabled = false, description = "unstake with reward balance")
   public void tvmUnstakeTest006WithRewardBalance() {
     PublicMethed
         .sendcoin(testAddress001, 1120_000_000L, testFoundationAddress, testFoundationKey,

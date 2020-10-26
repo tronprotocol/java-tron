@@ -59,7 +59,7 @@ public class StakeTest001 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(testKey001);
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
@@ -80,7 +80,7 @@ public class StakeTest001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Vote for witness")
+  @Test(enabled = false, description = "Vote for witness")
   void tvmStakeTest001() {
     long balanceBefore = PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance();
     String methodStr = "Stake(address,uint256)";
@@ -105,7 +105,7 @@ public class StakeTest001 {
 
   }
 
-  @Test(enabled = true, description = "Non-witness account")
+  @Test(enabled = false, description = "Non-witness account")
   void tvmStakeTest002(){
     //account address
     String methodStr = "Stake(address,uint256)";
@@ -135,7 +135,7 @@ public class StakeTest001 {
   }
 
 
-  @Test(enabled = true, description = "Number of votes over balance")
+  @Test(enabled = false, description = "Number of votes over balance")
   void tvmStakeTest003() {
     String methodStr = "Stake(address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testWitnessAddress) + "\","  + Long.MAX_VALUE ;
@@ -152,7 +152,7 @@ public class StakeTest001 {
   }
 
 
-  @Test(enabled = true, description = "Enough votes for a second ballot")
+  @Test(enabled = false, description = "Enough votes for a second ballot")
   void tvmStakeTest004() {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -190,7 +190,7 @@ public class StakeTest001 {
   }
 
 
-  @Test(enabled = true, description = "Revert test")
+  @Test(enabled = false, description = "Revert test")
   void tvmStakeTest005() {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -210,7 +210,7 @@ public class StakeTest001 {
   }
 
 
-  @Test(enabled = true, description = "Contract Call Contract stake")
+  @Test(enabled = false, description = "Contract Call Contract stake")
   void tvmStakeTest006() {
     String methodStr = "deployB()";
     String argsStr = "";
@@ -265,7 +265,7 @@ public class StakeTest001 {
 
   }
 
-  @Test(enabled = true, description = "Vote for the first witness and then vote for the second witness.")
+  @Test(enabled = false, description = "Vote for the first witness and then vote for the second witness.")
   void tvmStakeTest007() {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);

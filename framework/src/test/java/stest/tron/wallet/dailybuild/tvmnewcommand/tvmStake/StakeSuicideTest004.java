@@ -67,7 +67,7 @@ public class StakeSuicideTest004 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     System.out.println(testKey001);
     PublicMethed.printAddress(testKey001);
@@ -89,7 +89,7 @@ public class StakeSuicideTest004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "targetAddress has frozen 1,suicide contract stake 1")
+  @Test(enabled = false, description = "targetAddress has frozen 1,suicide contract stake 1")
   void tvmStakeSuicideTest001() {
     ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
     byte[] targetAddress = ecKey_targetAddress.getAddress();
@@ -153,7 +153,7 @@ public class StakeSuicideTest004 {
 
   }
 
-  @Test(enabled = true, description = "targetAddress has frozen 1,suicide contract stake all")
+  @Test(enabled = false, description = "targetAddress has frozen 1,suicide contract stake all")
   void tvmStakeSuicideTest002() {
     ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
     byte[] targetAddress = ecKey_targetAddress.getAddress();
@@ -217,7 +217,7 @@ public class StakeSuicideTest004 {
 
   }
 
-  @Test(enabled = true, description = "targetAddress has frozen all,suicide contract stake all")
+  @Test(enabled = false, description = "targetAddress has frozen all,suicide contract stake all")
   void tvmStakeSuicideTest003() {
     ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
     byte[] targetAddress = ecKey_targetAddress.getAddress();
@@ -285,7 +285,7 @@ public class StakeSuicideTest004 {
 
   }
 
-  @Test(enabled = true, description = "targetAddress is new account ,suicide contract stake all")
+  @Test(enabled = false, description = "targetAddress is new account ,suicide contract stake all")
   void tvmStakeSuicideTest004() {
     ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
     byte[] targetAddress = ecKey_targetAddress.getAddress();
@@ -333,7 +333,7 @@ public class StakeSuicideTest004 {
 
   }
 
-  @Test(enabled = true, description = "targetAddress frozen to other address ,suicide contract stake all")
+  @Test(enabled = false, description = "targetAddress frozen to other address ,suicide contract stake all")
   void tvmStakeSuicideTest005() {
     ECKey ecKey_targetAddress = new ECKey(Utils.getRandom());
     byte[] targetAddress = ecKey_targetAddress.getAddress();

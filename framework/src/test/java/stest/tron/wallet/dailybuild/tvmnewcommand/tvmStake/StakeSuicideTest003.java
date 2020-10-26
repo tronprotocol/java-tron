@@ -53,7 +53,7 @@ public class StakeSuicideTest003 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
@@ -61,7 +61,7 @@ public class StakeSuicideTest003 {
         testFoundationKey,blockingStubFull);
   }
 
-  @Test(enabled = true, description = "suicide target Address is owner Address")
+  @Test(enabled = false, description = "suicide target Address is owner Address")
   public void stakeSuicideTest001() {
     String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
     String contractName = "testStakeSuicide";
@@ -148,7 +148,7 @@ public class StakeSuicideTest003 {
         + 10000000, accountAfter.getBalance());
   }
 
-  @Test(enabled = true, description = "suicide target Address is BlackHoleAddress Address")
+  @Test(enabled = false, description = "suicide target Address is BlackHoleAddress Address")
   public void stakeSuicideTest003() {
     String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
     String contractName = "testStakeSuicide";

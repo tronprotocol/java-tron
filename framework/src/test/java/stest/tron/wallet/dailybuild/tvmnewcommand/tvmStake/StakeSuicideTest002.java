@@ -51,7 +51,7 @@ public class StakeSuicideTest002 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
@@ -69,7 +69,7 @@ public class StakeSuicideTest002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "create2 -> stake -> suicide -> create2 the same Address")
+  @Test(enabled = false, description = "create2 -> stake -> suicide -> create2 the same Address")
   public void stackSuicideAndCreate2Test001() {
 
     String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
@@ -126,7 +126,7 @@ public class StakeSuicideTest002 {
 
   }
 
-  @Test(enabled = true, description = "create2 -> stake -> suicide -> sendcoin to create2 Address")
+  @Test(enabled = false, description = "create2 -> stake -> suicide -> sendcoin to create2 Address")
   public void stackSuicideAndCreate2Test002() {
     String filePath = "src/test/resources/soliditycode/stackSuicide001.sol";
     String contractName = "testStakeSuicide";
