@@ -29,8 +29,7 @@ package org.tron.core.services.http;
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import com.alibaba.fastjson.parser.DefaultJSONParser;
-import com.alibaba.fastjson.parser.ParserConfig;
+import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumDescriptor;
@@ -761,11 +760,7 @@ public class JsonFormat {
       String result = new String(input.toByteArray());
       result = result.replaceAll("\"", "\\\\\"");
       try {
-        DefaultJSONParser parser = new DefaultJSONParser(result, ParserConfig.getGlobalInstance(),
-            0);
-        Object value = parser.parse();
-        parser.handleResovleTask(value);
-        parser.close();
+        JSON.parseObject("{\"key\":\"" + result + "\"}");
         return result;
       } catch (Exception e) {
         return ByteArray.toHexString(input.toByteArray());
