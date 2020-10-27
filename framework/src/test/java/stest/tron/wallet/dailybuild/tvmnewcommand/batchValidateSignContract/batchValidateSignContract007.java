@@ -146,9 +146,8 @@ public class batchValidateSignContract007 {
       Assert.assertEquals("11111111111111110000000000000000",
           PublicMethed.bytes32ToString(infoById2.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById2.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById2.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById2.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById2.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee2 = infoById2.get().getFee();
