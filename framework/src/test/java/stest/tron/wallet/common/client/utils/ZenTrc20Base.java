@@ -1386,9 +1386,9 @@ public class ZenTrc20Base {
                                                              JSONObject shieldAddressInfo) {
     try {
 
-      response= HttpMethed.getNowBlockFromPbft(httpPbftNode);
-      Long endScanNumber = HttpMethed.parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data")
-              .getLong("number");
+      response = HttpMethed.getNowBlockFromPbft(httpPbftNode);
+      Long endScanNumber = HttpMethed.parseResponseContent(response).getJSONObject("block_header")
+          .getJSONObject("raw_data").getLong("number");
       Long startScanNumer = endScanNumber > 99 ? endScanNumber - 90 : 1;
 
       final String requestUrl =
@@ -1487,9 +1487,9 @@ public class ZenTrc20Base {
   public static JSONArray scanShieldTrc20NoteByOvkOnPbft(String httpPbftNode,
                                                              JSONObject shieldAddressInfo) {
     try {
-      response= HttpMethed.getNowBlockFromPbft(httpPbftNode);
-      Long endScanNumber = HttpMethed.parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data")
-              .getLong("number");
+      response = HttpMethed.getNowBlockFromPbft(httpPbftNode);
+      Long endScanNumber = HttpMethed.parseResponseContent(response).getJSONObject("block_header")
+          .getJSONObject("raw_data").getLong("number");
       Long startScanNumer = endScanNumber > 99 ? endScanNumber - 90 : 1;
 
       final String requestUrl =
@@ -1639,7 +1639,7 @@ public class ZenTrc20Base {
    * constructor.
    */
   public static Boolean isShieldedTrc20ContractNoteSpentOnPbft(String httpPbftNode,
-                                                                   JSONObject accountInfo, JSONObject noteTxs) {
+      JSONObject accountInfo, JSONObject noteTxs) {
     try {
       final String requestUrl
               = "http://" + httpPbftNode + "/walletpbft/isshieldedtrc20contractnotespent";

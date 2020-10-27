@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.AssetMarket;
+package stest.tron.wallet.dailybuild.assetmarket;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -7,14 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI.Return;
-import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPairList;
@@ -158,20 +155,20 @@ public class MarketSellAsset006 {
 
   @Test(enabled = false, description = "getMarketPairList from solidity and pbft")
   void marketSellAssetTest002() {
-    Optional<MarketOrderPairList> PairList = PublicMethed
+    Optional<MarketOrderPairList> pairList = PublicMethed
         .getMarketPairList(blockingStubFull);
 
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
 
-    Optional<MarketOrderPairList> PairList2 = PublicMethed
+    Optional<MarketOrderPairList> pairList2 = PublicMethed
         .getMarketPairListSolidity(blockingStubSolidity);
 
 
-    Optional<MarketOrderPairList> PairList3 = PublicMethed
+    Optional<MarketOrderPairList> pairList3 = PublicMethed
         .getMarketPairListSolidity(blockingStubPbft);
 
-    Assert.assertEquals(PairList,PairList2);
-    Assert.assertEquals(PairList,PairList3);
+    Assert.assertEquals(pairList,pairList2);
+    Assert.assertEquals(pairList,pairList3);
 
 
 
@@ -179,44 +176,44 @@ public class MarketSellAsset006 {
 
   @Test(enabled = true, description = "getMarketOrderListByPair from solidity and pbft")
   void marketSellAssetTest003() {
-    Optional<MarketOrderList> OrderList = PublicMethed
+    Optional<MarketOrderList> orderList = PublicMethed
         .getMarketOrderListByPair(assetAccountId001,assetAccountId002,blockingStubFull);
 
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
 
-    Optional<MarketOrderList> OrderList2 = PublicMethed
+    Optional<MarketOrderList> orderList2 = PublicMethed
         .getMarketOrderListByPairSolidity(assetAccountId001,assetAccountId002,blockingStubSolidity);
 
 
-    Optional<MarketOrderList> OrderList3 = PublicMethed
+    Optional<MarketOrderList> orderList3 = PublicMethed
         .getMarketOrderListByPairSolidity(assetAccountId001,assetAccountId002,blockingStubPbft);
 
-    System.out.println(OrderList3);
+    System.out.println(orderList3);
 
-    Assert.assertEquals(OrderList,OrderList2);
-    Assert.assertEquals(OrderList,OrderList3);
+    Assert.assertEquals(orderList,orderList2);
+    Assert.assertEquals(orderList,orderList3);
 
   }
 
 
   @Test(enabled = true, description = "GetMarketOrderById from solidity and pbft")
   void marketSellAssetTest004() {
-    Optional<MarketOrderList> OrderList = PublicMethed
+    Optional<MarketOrderList> orderList = PublicMethed
         .getMarketOrderListByPair(assetAccountId001,assetAccountId002,blockingStubFull);
 
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
 
-    Optional<MarketOrderList> OrderList2 = PublicMethed
+    Optional<MarketOrderList> orderList2 = PublicMethed
         .getMarketOrderListByPairSolidity(assetAccountId001,assetAccountId002,blockingStubSolidity);
 
 
-    Optional<MarketOrderList> OrderList3 = PublicMethed
+    Optional<MarketOrderList> orderList3 = PublicMethed
         .getMarketOrderListByPairSolidity(assetAccountId001,assetAccountId002,blockingStubPbft);
 
-    System.out.println(OrderList3);
+    System.out.println(orderList3);
 
-    Assert.assertEquals(OrderList,OrderList2);
-    Assert.assertEquals(OrderList,OrderList3);
+    Assert.assertEquals(orderList,orderList2);
+    Assert.assertEquals(orderList,orderList3);
 
   }
 

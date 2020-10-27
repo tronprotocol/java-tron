@@ -40,10 +40,10 @@ public class HttpTestClearAbiContract001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
-  private String httpSoliditynode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(2);
-  private String httpPbftnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(4);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
   /**
    * constructor.
@@ -123,8 +123,8 @@ public class HttpTestClearAbiContract001 {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
-    httpResponse = HttpMethed
-            .triggerConstantContractFromSolidity(httpSoliditynode, assetOwnerAddress, contractAddress, "testView()", "");
+    httpResponse = HttpMethed.triggerConstantContractFromSolidity(httpSoliditynode,
+        assetOwnerAddress, contractAddress, "testView()", "");
 
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
@@ -132,8 +132,8 @@ public class HttpTestClearAbiContract001 {
     Assert.assertEquals(responseContent.getString("constant_result"),
             "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
 
-    httpResponse = HttpMethed
-            .triggerConstantContractFromPbft(httpPbftnode, assetOwnerAddress, contractAddress, "testView()", "");
+    httpResponse = HttpMethed.triggerConstantContractFromPbft(httpPbftnode, assetOwnerAddress,
+        contractAddress, "testView()", "");
 
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);

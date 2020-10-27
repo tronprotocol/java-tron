@@ -1,8 +1,9 @@
-package stest.tron.wallet.dailybuild.AssetMarket;
+package stest.tron.wallet.dailybuild.assetmarket;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -12,19 +13,13 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.MarketOrderList;
-import org.tron.protos.Protocol.TransactionInfo.code;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import zmq.socket.pubsub.Pub;
 
 @Slf4j
 
-public class MarketSellAsset003 {
+public class MarketSellAsset005 {
 
   private static final long now = System.currentTimeMillis();
   private static final String name = "testAssetIssue003_" + Long.toString(now);
@@ -39,7 +34,8 @@ public class MarketSellAsset003 {
       .getString("defaultParameter.assetDescription");
   String url = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetUrl");
-
+  long sellTokenQuantity = 100;
+  long buyTokenQuantity = 50;
   byte [] trx = ByteArray.fromString("_");
 
 
@@ -47,6 +43,7 @@ public class MarketSellAsset003 {
   byte[] testAddress001 = ecKey001.getAddress();
   String testKey001 = ByteArray.toHexString(ecKey001.getPrivKeyBytes());
   byte[] assetAccountId001;
+  ByteString assetAccountId;
 
   ECKey ecKey002 = new ECKey(Utils.getRandom());
   byte[] testAddress002 = ecKey002.getAddress();
@@ -69,9 +66,9 @@ public class MarketSellAsset003 {
     PublicMethed.printAddress(testKey001);
     PublicMethed.printAddress(testKey002);
 
-    Assert.assertTrue(PublicMethed.sendcoin(testAddress001,20000_000000L,foundationAddress001,
+    Assert.assertTrue(PublicMethed.sendcoin(testAddress001,2024_000000L,foundationAddress001,
         foundationKey001,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(testAddress002,20000_000000L,foundationAddress001,
+    Assert.assertTrue(PublicMethed.sendcoin(testAddress002,2024_000000L,foundationAddress001,
         foundationKey001,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -80,78 +77,84 @@ public class MarketSellAsset003 {
     Assert.assertTrue(PublicMethed.createAssetIssue(testAddress001,name,10000_000000L,1,1,start,
         end,1,description,url,10000L,10000L,1L, 1L,testKey001,blockingStubFull));
 
-    start = System.currentTimeMillis() + 5000;
-    end = System.currentTimeMillis() + 1000000000;
-    Assert.assertTrue(PublicMethed.createAssetIssue(testAddress002,name,10000_000000L,1,1,start,
-        end,1,description,url,10000L,10000L,1L, 1L,testKey002,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    assetAccountId001 =
-        PublicMethed.queryAccount(testAddress001, blockingStubFull).getAssetIssuedID().toByteArray();
+    assetAccountId001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
+        .getAssetIssuedID().toByteArray();
 
-    assetAccountId002 =
-        PublicMethed.queryAccount(testAddress002, blockingStubFull).getAssetIssuedID().toByteArray();
+    assetAccountId = PublicMethed.queryAccount(testAddress001, blockingStubFull).getAssetIssuedID();
+
+
   }
 
 
-  @Test(enabled = true,description = "CancelOrder")
-  void MarketCancelAssetTest001() {
+  @Test(enabled = true,description = "Create an order to sell Trx and buy Trc10")
+  void test01SellTrxBuyTrc10() {
+    long balanceAfter = PublicMethed.queryAccount(testKey001, blockingStubFull).getBalance();
+    PublicMethed.transferAsset(testAddress002, assetAccountId001, 10000, testAddress001,
+        testKey001, blockingStubFull);
+    final Map<String, Long> beforeAsset001 = PublicMethed.queryAccount(testAddress001,
+        blockingStubFull).getAssetV2Map();
 
-    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,trx
-        ,50,blockingStubFull);
+    String txid = PublicMethed.marketSellAsset(testAddress002,testKey002,trx,
+            sellTokenQuantity,assetAccountId001,
+            buyTokenQuantity,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Transaction> transaction = PublicMethed
         .getTransactionById(txid, blockingStubFull);
     logger.info("transaction: " + transaction);
     Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
 
-    Optional<MarketOrderList> orderList = PublicMethed
-        .getMarketOrderByAccount(testAddress001, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(orderList.get().getOrdersCount() > 0);
-    byte[] orderId = orderList.get().getOrders(0).getOrderId().toByteArray();
-    txid = PublicMethed.marketCancelOrder(testAddress001,testKey001,orderId,blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    logger.info("beforeAsset001: " + beforeAsset001);
 
-    transaction = PublicMethed
-        .getTransactionById(txid, blockingStubFull);
-    Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
+    txid = PublicMethed.marketSellAsset(testAddress001, testKey001, assetAccountId001,
+            sellTokenQuantity * 2,
+            trx, buyTokenQuantity * 2, blockingStubFull);
 
-    orderList = PublicMethed
-        .getMarketOrderByAccount(testAddress001, blockingStubFull);
-    Assert.assertTrue(orderList.get().getOrdersCount() == 0);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertNotNull(txid);
+
+
+    Map<String, Long> afterAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
+            .getAssetV2Map();
+
+    logger.info("afterAsset001: " + afterAsset001);
+
+    String assetId001 = ByteArray.toStr(assetAccountId001);
+    Assert.assertEquals((beforeAsset001.get(assetId001) - sellTokenQuantity * 2),
+            afterAsset001.get(assetId001).longValue());
 
   }
 
-  @Test(enabled = true,description = "Cancel a cancelled order ")
-  void MarketCancelAssetTest002() {
+  @Test(enabled = true,description = "Create an order to sell Trc10 and buy Trx")
+  void test02SellTrc10BuyTrx() {
+    long balanceAfter = PublicMethed.queryAccount(testKey001, blockingStubFull).getBalance();
 
-    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,trx
-        ,50,blockingStubFull);
+    final Map<String, Long> beforeAsset001 = PublicMethed.queryAccount(testAddress001,
+        blockingStubFull).getAssetV2Map();
+
+    String txid = PublicMethed.marketSellAsset(testAddress002,testKey002,assetAccountId001,
+            sellTokenQuantity,trx,
+            buyTokenQuantity,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Transaction> transaction = PublicMethed
-        .getTransactionById(txid, blockingStubFull);
+            .getTransactionById(txid, blockingStubFull);
     logger.info("transaction: " + transaction);
     Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
 
-    Optional<MarketOrderList> orderList = PublicMethed
-        .getMarketOrderByAccount(testAddress001, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(orderList.get().getOrdersCount() > 0);
-    byte[] orderId = orderList.get().getOrders(0).getOrderId().toByteArray();
-    txid = PublicMethed.marketCancelOrder(testAddress001,testKey001,orderId,blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    logger.info("beforeAsset001: " + beforeAsset001);
 
-    transaction = PublicMethed
-        .getTransactionById(txid, blockingStubFull);
-    Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
-    orderList = PublicMethed
-        .getMarketOrderByAccount(testAddress001, blockingStubFull);
-    Assert.assertTrue(orderList.get().getOrdersCount() == 0);
+    txid = PublicMethed.marketSellAsset(testAddress001, testKey001, trx,
+            sellTokenQuantity * 2,
+            assetAccountId001, buyTokenQuantity * 2, blockingStubFull);
 
-    Assert.assertEquals(PublicMethed.marketCancelOrder(testAddress001,testKey001,orderId,blockingStubFull),"contract validate error : Order is not active!");
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertNotNull(txid);
+
 
 
   }
+
+
+
 
 }

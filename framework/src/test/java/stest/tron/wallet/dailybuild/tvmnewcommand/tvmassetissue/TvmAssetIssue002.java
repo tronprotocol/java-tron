@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmAssetIssue;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmassetissue;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -106,7 +106,6 @@ public class TvmAssetIssue002 {
     long contractAddressBalance = PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getBalance();
     Assert.assertEquals(callvalue, contractAddressBalance);
-//    contractAddress = PublicMethed.decode58Check("TXfQCGq2kpKEBF8GywV5Gv7yaQKxGQRkkB");
 
     /*String param = "0000000000000000000000000000000000007465737441737365744973737565"
         + "0000000000000000000074657374417373657431353938333439363637393631"
@@ -595,7 +594,7 @@ public class TvmAssetIssue002 {
         Base58.encode58Check(assetIssueById.getOwnerAddress().toByteArray()));
 
     long balance = PublicMethed.queryAccount(dev002Address, blockingStubFull).getBalance();
-    Assert.assertEquals(200000000l, balance);
+    Assert.assertEquals(200000000L, balance);
   }
 
   @Test(enabled = false, description = "tokenIssue call another contract in one contract")
@@ -626,7 +625,7 @@ public class TvmAssetIssue002 {
         .getContract(contractAddress, blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    callvalue = 1024000000l;
+    callvalue = 1024000000L;
     String txid = PublicMethed.triggerContract(contractAddress, "getContractAddress()", "#", false,
         callvalue, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -718,7 +717,6 @@ public class TvmAssetIssue002 {
         .getBalance();
     Assert.assertEquals(contractAddressBalance - 1024000000L, contractAddressBalance2);
 
-//    contractAddress = PublicMethed.decode58Check("TSPmMjLiVv4vyPxvmHvMVd3enakEDb4zMk");
     param = "\"" + Base58.encode58Check(dev002Address) + "\"," + 100 + ",\"" + assetIssueId + "\"";
     String methodTransferToken = "transferToken(address,uint256,trcToken)";
     txid = PublicMethed.triggerContract(contractAddressA, methodTransferToken, param, false,

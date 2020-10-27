@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmStake;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmstake;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

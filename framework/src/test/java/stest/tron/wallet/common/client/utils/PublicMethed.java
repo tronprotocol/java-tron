@@ -2854,7 +2854,9 @@ public class PublicMethed {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ByteString byteString = ByteString.copyFrom(address);
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(byteString).build();
-    logger.info("contract name is " + blockingStubFull.getContractInfo(bytesMessage).getSmartContract().getName());
+    logger.info(
+        "contract name is " + blockingStubFull.getContractInfo(bytesMessage).getSmartContract()
+            .getName());
     logger.info("contract address is " + WalletClient.encode58Check(address));
     return blockingStubFull.getContractInfo(bytesMessage);
   }
@@ -3969,9 +3971,8 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<DelegatedResourceAccountIndex>
-  getDelegatedResourceAccountIndexFromSolidity(
-      byte[] address, WalletSolidityGrpc
-      .WalletSolidityBlockingStub blockingStubFull) {
+      getDelegatedResourceAccountIndexFromSolidity(byte[] address,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
     ByteString addressBs = ByteString.copyFrom(address);
@@ -4799,7 +4800,8 @@ public class PublicMethed {
     logger.debug("solFile: " + solFile);
     logger.debug("outputPath: " + outputPath);
     String cmd =
-        compile + " --optimize --bin --abi --evm-version istanbul --overwrite " + absolutePath + "/" + solFile + " -o "
+        compile + " --optimize --bin --abi --evm-version istanbul --overwrite " + absolutePath + "/"
+            + solFile + " -o "
             + absolutePath + "/" + outputPath;
     logger.info("cmd: " + cmd);
 
@@ -6182,15 +6184,15 @@ public class PublicMethed {
     if (bytes == null) {
       return "null";
     }
-    int iMax = bytes.length - 1;
-    if (iMax == -1) {
+    int imax = bytes.length - 1;
+    if (imax == -1) {
       return "";
     }
 
     StringBuilder b = new StringBuilder();
     for (int i = 0; ; i++) {
       b.append(bytes[i]);
-      if (i == iMax) {
+      if (i == imax) {
         return b.toString();
       }
     }
@@ -6345,7 +6347,7 @@ public class PublicMethed {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    ECKey ecKey = temKey;
+    final ECKey ecKey = temKey;
 
     MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract
         .newBuilder();
@@ -6380,12 +6382,12 @@ public class PublicMethed {
     transaction = signTransaction(ecKey, transaction);
     broadcastTransaction(transaction, blockingStubFull);
 
-    String Txid = ByteArray.toHexString(Sha256Hash
+    String txid = ByteArray.toHexString(Sha256Hash
         .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
             transaction.getRawData().toByteArray()));
 
-    System.out.println("trigger txid = " + Txid);
-    return Txid;
+    System.out.println("trigger txid = " + txid);
+    return txid;
 
   }
 
@@ -6433,10 +6435,10 @@ public class PublicMethed {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    ECKey ecKey = temKey;
+    final ECKey ecKey = temKey;
 
-    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract
-        .newBuilder();
+    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract
+        .MarketCancelOrderContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
 
     TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());
@@ -6464,13 +6466,13 @@ public class PublicMethed {
     transaction = signTransaction(ecKey, transaction);
     broadcastTransaction(transaction, blockingStubFull);
 
-    String Txid = ByteArray.toHexString(Sha256Hash
+    String txid = ByteArray.toHexString(Sha256Hash
         .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
             transaction.getRawData().toByteArray()));
 
-    System.out.println("trigger txid = " + Txid);
+    System.out.println("trigger txid = " + txid);
 
-    return Txid;
+    return txid;
   }
 
 
@@ -6490,8 +6492,8 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
 
-    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract.MarketCancelOrderContract
-        .newBuilder();
+    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract
+        .MarketCancelOrderContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
 
     TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());

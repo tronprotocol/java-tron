@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmStake;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmstake;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -17,7 +17,6 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionInfo.code;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -79,11 +78,11 @@ public class StakeSuicideTest002 {
 
     String methedStr = "deploy(bytes,uint256)";
     String argStr = "\"" + code + "\"," + 1;
-    String Txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
+    String txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
         0,maxFeeLimit,testFoundationAddress,testFoundationKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(Txid, blockingStubFull);
+    Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     String hex = "41" + ByteArray.toHexString(ex.get().getContractResult(0).toByteArray())
         .substring(24);
     logger.info("Deploy Address : " + Base58.encode58Check(ByteArray.fromHexString(hex)));
@@ -91,25 +90,25 @@ public class StakeSuicideTest002 {
 
     methedStr = "Stake(address,uint256)";
     argStr = "\"" + testWitnessAddress + "\"," + 10_000_000;
-    Txid = PublicMethed.triggerContract(ownerAddress,methedStr,
+    txid = PublicMethed.triggerContract(ownerAddress,methedStr,
         argStr,false,10_000_000,maxFeeLimit,
         testFoundationAddress, testFoundationKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    ex = PublicMethed.getTransactionInfoById(Txid,blockingStubFull);
+    ex = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
 
     Account ownerAccount = PublicMethed.queryAccount(ownerAddress,blockingStubFull);
-    Frozen ownerFrozen = ownerAccount.getFrozen(0);
+    final Frozen ownerFrozen = ownerAccount.getFrozen(0);
 
     methedStr = "SelfdestructTest(address)";
     argStr = "\"" + Base58.encode58Check(contractAddress) + "\"";
-    Txid = PublicMethed.triggerContract(ownerAddress,methedStr,argStr,false,
+    txid = PublicMethed.triggerContract(ownerAddress,methedStr,argStr,false,
         0,maxFeeLimit,testFoundationAddress,testFoundationKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     methedStr = "deploy(bytes,uint256)";
     argStr = "\"" + code + "\"," + 1;
-    Txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
+    txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
         0,maxFeeLimit,testFoundationAddress,testFoundationKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -135,11 +134,11 @@ public class StakeSuicideTest002 {
 
     String methedStr = "deploy(bytes,uint256)";
     String argStr = "\"" + code + "\"," + 2;
-    String Txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
+    String txid = PublicMethed.triggerContract(contractAddress,methedStr,argStr,false,
         0,maxFeeLimit,testFoundationAddress,testFoundationKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(Txid, blockingStubFull);
+    Optional<TransactionInfo> ex = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     String hex = "41" + ByteArray.toHexString(ex.get().getContractResult(0).toByteArray())
         .substring(24);
     logger.info("Deploy Address : " + Base58.encode58Check(ByteArray.fromHexString(hex)));
@@ -147,22 +146,22 @@ public class StakeSuicideTest002 {
 
     methedStr = "Stake(address,uint256)";
     argStr = "\"" + testWitnessAddress + "\"," + 10_000_000;
-    Txid = PublicMethed.triggerContract(ownerAddress,methedStr,
+    txid = PublicMethed.triggerContract(ownerAddress,methedStr,
         argStr,false,10_000_000,maxFeeLimit,
         testFoundationAddress, testFoundationKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    ex = PublicMethed.getTransactionInfoById(Txid,blockingStubFull);
+    ex = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
     Assert.assertEquals(ex.get().getResult(), TransactionInfo.code.SUCESS);
 
     Account ownerAccount = PublicMethed.queryAccount(ownerAddress,blockingStubFull);
-    Frozen ownerFrozen = ownerAccount.getFrozen(0);
+    final Frozen ownerFrozen = ownerAccount.getFrozen(0);
 
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] testAddress001 = ecKey1.getAddress();
 
     methedStr = "SelfdestructTest(address)";
     argStr = "\"" + Base58.encode58Check(testAddress001) + "\"";
-    Txid = PublicMethed.triggerContract(ownerAddress,methedStr,argStr,false,
+    txid = PublicMethed.triggerContract(ownerAddress,methedStr,argStr,false,
         0,maxFeeLimit,testFoundationAddress,testFoundationKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

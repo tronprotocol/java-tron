@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.Istanbul;
+package stest.tron.wallet.dailybuild.tvmnewcommand.istanbul;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -19,7 +19,7 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
-public class chainidAndSelfBalance001 {
+public class ChainidAndSelfBalance001 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
@@ -68,11 +68,11 @@ public class chainidAndSelfBalance001 {
   @Test(enabled = true, description = "chainId should be block zero`s Hash")
   public void chainidTest001() {
     String methodStr = "getId()";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, "#",
         false, 0, maxFeeLimit,"0",0,  testAddress001, testKey001, blockingStubFull);
 
-    String chainIdHex = ByteArray.toHexString(Return.getConstantResult(0).toByteArray());
+    String chainIdHex = ByteArray.toHexString(returns.getConstantResult(0).toByteArray());
 
     BlockExtention blockZero = PublicMethed.getBlock2(0, blockingStubFull);
     String blockZeroId = ByteArray.toHexString(blockZero.getBlockid().toByteArray());
@@ -90,10 +90,10 @@ public class chainidAndSelfBalance001 {
 
     String methodStr = "getBalance()";
     String argsStr = "";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
         false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    Long getBalance = ByteArray.toLong(Return.getConstantResult(0).toByteArray());
+    Long getBalance = ByteArray.toLong(returns.getConstantResult(0).toByteArray());
 
     Long contractBalance = PublicMethed
         .queryAccount(contractAddress, blockingStubFull).getBalance();
@@ -108,10 +108,10 @@ public class chainidAndSelfBalance001 {
 
     String methodStr = "getBalance(address)";
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
         false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    Long getBalance = ByteArray.toLong(Return.getConstantResult(0).toByteArray());
+    Long getBalance = ByteArray.toLong(returns.getConstantResult(0).toByteArray());
 
     Long contractBalance = PublicMethed
         .queryAccount(contractAddress, blockingStubFull).getBalance();
@@ -124,10 +124,10 @@ public class chainidAndSelfBalance001 {
   public void getBalanceTest003() {
     String methodStr = "getBalance(address)";
     String argsStr = "\"" + Base58.encode58Check(testFoundationAddress) + "\"";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
         false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    Long getBalance = ByteArray.toLong(Return.getConstantResult(0).toByteArray());
+    Long getBalance = ByteArray.toLong(returns.getConstantResult(0).toByteArray());
 
     Long accountBalance = PublicMethed
         .queryAccount(testFoundationAddress, blockingStubFull).getBalance();
@@ -143,10 +143,10 @@ public class chainidAndSelfBalance001 {
     byte[] unActiveAddress = new ECKey(Utils.getRandom()).getAddress();
 
     String argsStr = "\"" + Base58.encode58Check(unActiveAddress) + "\"";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
         false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    Long getBalance = ByteArray.toLong(Return.getConstantResult(0).toByteArray());
+    Long getBalance = ByteArray.toLong(returns.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(0,getBalance.longValue());
 

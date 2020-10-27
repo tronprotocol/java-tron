@@ -1,6 +1,5 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmStake;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmstake;
 
-import com.codahale.metrics.MetricRegistryListener.Base;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -19,7 +18,7 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
-public class IsSRCandidateTest001 {
+public class IsSrCandidateTest001 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
@@ -72,10 +71,10 @@ public class IsSRCandidateTest001 {
   void tvmStakeTest001() {
     String methodStr = "isSRCandidateTest(address)";
     String argsStr = "\"" + PublicMethed.getAddressString(testWitnessKey) + "\"";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
             false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    int isSR = ByteArray.toInt(Return.getConstantResult(0).toByteArray());
+    int isSR = ByteArray.toInt(returns.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(isSR,1);
   }
@@ -84,10 +83,10 @@ public class IsSRCandidateTest001 {
   void tvmStakeTest002() {
     String methodStr = "isSRCandidateTest(address)";
     String argsStr = "\"" + Base58.encode58Check(testAddress001) + "\"";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
             false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    int isSR = ByteArray.toInt(Return.getConstantResult(0).toByteArray());
+    int isSR = ByteArray.toInt(returns.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(isSR,0);
   }
@@ -96,10 +95,10 @@ public class IsSRCandidateTest001 {
   void tvmStakeTest003() {
     String methodStr = "zeroAddressTest()";
     String argsStr = "";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
             false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    int isSR = ByteArray.toInt(Return.getConstantResult(0).toByteArray());
+    int isSR = ByteArray.toInt(returns.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(isSR,0);
   }
@@ -108,10 +107,10 @@ public class IsSRCandidateTest001 {
   void tvmStakeTest004() {
     String methodStr = "localContractAddrTest()";
     String argsStr = "";
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr, argsStr,
             false, 0, maxFeeLimit, "", 0, testAddress001, testKey001, blockingStubFull);
-    int isSR = ByteArray.toInt(Return.getConstantResult(0).toByteArray());
+    int isSR = ByteArray.toInt(returns.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(isSR,0);
   }

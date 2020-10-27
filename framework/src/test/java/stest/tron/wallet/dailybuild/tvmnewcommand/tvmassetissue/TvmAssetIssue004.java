@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmAssetIssue;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmassetissue;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;

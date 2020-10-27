@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.AssetMarket;
+package stest.tron.wallet.dailybuild.assetmarket;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -365,7 +365,8 @@ public class MarketSellAsset002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ByteArray.toStr(response.getMessage().toByteArray()), "contract validate error : Order is not active!");
+    Assert.assertEquals(ByteArray.toStr(response.getMessage().toByteArray()),
+        "contract validate error : Order is not active!");
 
 
   }

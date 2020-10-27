@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmAssetIssue;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmassetissue;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -271,7 +271,7 @@ public class TvmAssetIssue005 {
         .getAssetIssueValue(dev003Address, ByteString.copyFrom(assetIssueId.getBytes()),
             blockingStubFull);
     Assert.assertEquals(200L, assetIssueValueDev002);
-    Assert.assertEquals(assetIssueValue - 100l, assetIssueValueDev003);
+    Assert.assertEquals(assetIssueValue - 100L, assetIssueValueDev003);
 
     Assert.assertTrue(PublicMethed.transferAsset(dev004Address, assetIssueId.getBytes(), 102L,
         dev002Address, dev002Key, blockingStubFull));
@@ -287,11 +287,11 @@ public class TvmAssetIssue005 {
 
     // updateAsset,will fail
     Assert.assertFalse(PublicMethed
-        .updateAsset(dev003Address, "updateDesc1".getBytes(), "updateURL1".getBytes(), 1l, 2l,
+        .updateAsset(dev003Address, "updateDesc1".getBytes(), "updateURL1".getBytes(), 1L, 2L,
             dev003Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertFalse(PublicMethed
-        .updateAsset(contractAddress, "updateDesc2".getBytes(), "updateURL2".getBytes(), 3l, 4l,
+        .updateAsset(contractAddress, "updateDesc2".getBytes(), "updateURL2".getBytes(), 3L, 4L,
             dev003Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     assetIssueById = PublicMethed
@@ -457,7 +457,7 @@ public class TvmAssetIssue005 {
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getAssetIssuedID().size());
     assetIssueValue = PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getAssetV2Map().get(assetIssueId);
-    Assert.assertEquals(assetIssueValueAfter2 + 50l, assetIssueValue);
+    Assert.assertEquals(assetIssueValueAfter2 + 50L, assetIssueValue);
     assetIssueById = PublicMethed
         .getAssetIssueById(assetIssueId, blockingStubFull);
     Assert.assertEquals(name, ByteArray.toStr(assetIssueById.getName().toByteArray()));

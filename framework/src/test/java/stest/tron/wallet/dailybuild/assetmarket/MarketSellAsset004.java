@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.AssetMarket;
+package stest.tron.wallet.dailybuild.assetmarket;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -79,19 +79,19 @@ public class MarketSellAsset004 {
         end,1,description,url,10000L,10000L,1L, 1L,testKey002,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    assetAccountId001 =
-        PublicMethed.queryAccount(testAddress001, blockingStubFull).getAssetIssuedID().toByteArray();
+    assetAccountId001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
+        .getAssetIssuedID().toByteArray();
 
-    assetAccountId002 =
-        PublicMethed.queryAccount(testAddress002, blockingStubFull).getAssetIssuedID().toByteArray();
+    assetAccountId002 = PublicMethed.queryAccount(testAddress002, blockingStubFull)
+        .getAssetIssuedID().toByteArray();
   }
 
 
   @Test(enabled = true,description = "The order amount exceeds the balance")
-  void MarketCancelAssetTest002() {
+  void marketCancelAssetTest002() {
 
-    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,trx
-        ,50,blockingStubFull);
+    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,
+        trx,50,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Transaction> transaction = PublicMethed
         .getTransactionById(txid, blockingStubFull);

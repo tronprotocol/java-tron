@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.AssetMarket;
+package stest.tron.wallet.dailybuild.assetmarket;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

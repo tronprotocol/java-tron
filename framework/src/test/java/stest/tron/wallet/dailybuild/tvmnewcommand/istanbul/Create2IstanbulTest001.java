@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.Istanbul;
+package stest.tron.wallet.dailybuild.tvmnewcommand.istanbul;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -18,7 +18,7 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
-public class create2IstanbulTest001 {
+public class Create2IstanbulTest001 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);
@@ -93,11 +93,11 @@ public class create2IstanbulTest001 {
 
     String methodStr2 = "get(bytes1,bytes,uint256)";
     String argStr2 = "\"41\",\"" + code + "\"," + 1;
-    TransactionExtention Return = PublicMethed
+    TransactionExtention returns = PublicMethed
         .triggerConstantContractForExtention(contractAddress, methodStr2, argStr2,
         false, 0,
         maxFeeLimit, "0", 0, testAddress001, testKey001, blockingStubFull);
-    String getHex = ByteArray.toHexString(Return.getConstantResult(0).toByteArray());
+    String getHex = ByteArray.toHexString(returns.getConstantResult(0).toByteArray());
 
     Assert.assertEquals(returnHex,getHex);
 

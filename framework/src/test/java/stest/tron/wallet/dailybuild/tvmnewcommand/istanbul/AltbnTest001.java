@@ -1,7 +1,6 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.Istanbul;
+package stest.tron.wallet.dailybuild.tvmnewcommand.istanbul;
 
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_TIME;
-
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -22,7 +21,7 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class altbnTest001 {
+public class AltbnTest001 {
   private String testFoundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private byte[] testFoundationAddress = PublicMethed.getFinalAddress(testFoundationKey);

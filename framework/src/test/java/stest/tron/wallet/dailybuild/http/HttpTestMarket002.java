@@ -107,7 +107,7 @@ public class HttpTestMarket002 {
 
     // transferAsset
     response = HttpMethed
-        .transferAsset(httpnode, dev002Address, sellAddress, assetIssueId2, 10000l, dev002Key);
+        .transferAsset(httpnode, dev002Address, sellAddress, assetIssueId2, 10000L, dev002Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAccount(httpnode, sellAddress);

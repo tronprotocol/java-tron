@@ -2830,7 +2830,7 @@ public class HttpMethed {
   public static HttpResponse getPaginatedAssetissueList(String httpNode, Integer offset,
       Integer limit) {
     try {
-      String requestUrl = "http://" + httpNode + "/wallet/getpaginatedassetissuelist";
+      final String requestUrl = "http://" + httpNode + "/wallet/getpaginatedassetissuelist";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("offset", offset);
       userBaseObj2.addProperty("limit", limit);
@@ -4920,7 +4920,7 @@ public class HttpMethed {
   public static String marketCancelOrder(String httpNode, byte[] ownerAddress, String orderId,
       String fromKey, String visible) {
     try {
-      String requestUrl = "http://" + httpNode + "/wallet/marketcancelorder";
+      final String requestUrl = "http://" + httpNode + "/wallet/marketcancelorder";
       JsonObject userBaseObj2 = new JsonObject();
       if (visible.equals("true")) {
         userBaseObj2.addProperty("owner_address", Base58.encode58Check(ownerAddress));

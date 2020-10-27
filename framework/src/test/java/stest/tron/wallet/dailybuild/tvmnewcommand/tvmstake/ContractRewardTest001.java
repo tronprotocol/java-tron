@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmStake;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmstake;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -106,10 +106,10 @@ public class ContractRewardTest001 {
   @Test(enabled = false,description = "querry UnActive account , reward should be 0")
   void rewardbalanceTest003() {
     ECKey ecKey2 = new ECKey(Utils.getRandom());
-    String Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    String key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     String methedStr = "rewardBalance(address)";
-    String argStr = "\"" + PublicMethed.getAddressString(Key) + "\"";
+    String argStr = "\"" + PublicMethed.getAddressString(key) + "\"";
     TransactionExtention txen = PublicMethed.triggerConstantContractForExtention(contractAddress,
         methedStr,argStr,false,0,maxFeeLimit,"0",0,testAddress001,testKey001,blockingStubFull);
 
@@ -119,7 +119,8 @@ public class ContractRewardTest001 {
     Assert.assertEquals(rewardBalance,0);
   }
 
-  @Test(enabled = false,description = "querry contract account,reward should equal to gerRewardInfo")
+  @Test(enabled = false,description = "querry contract account,reward should equal to "
+      + "gerRewardInfo")
   void rewardbalanceTest004() {
     BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(ByteString
         .copyFrom(contractAddress))

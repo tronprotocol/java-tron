@@ -480,7 +480,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertTrue(getTrc20SpendResult(shieldAddressInfo1.get(),
             shield1Note.getNoteTxs(0), blockingStubFull, blockingStubPbft));
 
-    boolean spend = getTrc20SpendResult(shieldAddressInfo1.get(),shield1Note.getNoteTxs(1), blockingStubFull);
+    boolean spend = getTrc20SpendResult(shieldAddressInfo1.get(),shield1Note.getNoteTxs(1),
+        blockingStubFull);
 
     Assert.assertEquals(spend,
         getTrc20SpendResult(shieldAddressInfo1.get(), shield1Note.getNoteTxs(1),
@@ -489,7 +490,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         getTrc20SpendResult(shieldAddressInfo1.get(), shield1Note.getNoteTxs(1),
             blockingStubFull, blockingStubPbft));
 
-    spend = getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(0), blockingStubFull);
+    spend = getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(0),
+        blockingStubFull);
     Assert.assertEquals(spend,
         getTrc20SpendResult(shieldAddressInfo2.get(), shield2Note.getNoteTxs(0),
             blockingStubFull, blockingStubSolidity));
@@ -497,7 +499,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         getTrc20SpendResult(shieldAddressInfo2.get(), shield2Note.getNoteTxs(0),
             blockingStubFull, blockingStubPbft));
 
-    spend=getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(1), blockingStubFull);
+    spend = getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(1),
+        blockingStubFull);
     Assert.assertEquals(spend,
         getTrc20SpendResult(shieldAddressInfo2.get(), shield2Note.getNoteTxs(1),
             blockingStubFull, blockingStubSolidity));

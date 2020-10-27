@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.tvmAssetIssue;
+package stest.tron.wallet.dailybuild.tvmnewcommand.tvmassetissue;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -175,7 +175,8 @@ public class TvmAssetIssue003 {
     // desc.length is 201, will fail
     String descriptions =
         "desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890"
-            + "desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890"
+            + "desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc"
+            + "_1234567890"
             + "desc_1234567890desc_1234567890desc_1";
     param = "\"" + assetIssueId + "\",\"" + url + "\",\"" + descriptions + "\"";
     logger.info("param: " + param);
@@ -260,7 +261,8 @@ public class TvmAssetIssue003 {
     // url.length is 257, will fail
     String urls =
         "url_12345678901url_12345678901url_12345678901url_12345678901url_12345678901url_12345678901"
-            + "url_12345678901url_12345678901url_12345678901url_12345678901url_12345678901url_12345678901"
+            + "url_12345678901url_12345678901url_12345678901url_12345678901url_12345678901url"
+            + "_12345678901"
             + "url_12345678901url_12345678901url_12345678901url_12345678901url_12345678901ur";
     param = "\"" + assetIssueId + "\",\"" + urls + "\",\"" + description + "\"";
     logger.info("param: " + param);
@@ -515,7 +517,8 @@ public class TvmAssetIssue003 {
     // updateAsset
     String description1 =
         "desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890"
-            + "desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890"
+            + "desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc_1234567890desc"
+            + "_1234567890"
             + "desc_1234567890desc_1234567890desc_1";
     String url1 = "url1_" + Long.toString(now);
     param = "\"" + assetIssueId + "\",\"" + url1 + "\",\"" + description1 + "\",\"" + Base58
@@ -547,7 +550,7 @@ public class TvmAssetIssue003 {
         Base58.encode58Check(assetIssueById.getOwnerAddress().toByteArray()));
 
     long balance = PublicMethed.queryAccount(dev002Address, blockingStubFull).getBalance();
-    Assert.assertEquals(200000000l, balance);
+    Assert.assertEquals(200000000L, balance);
   }
 
   @Test(enabled = false, description = "updateAsset call another contract in one contract")
@@ -578,7 +581,7 @@ public class TvmAssetIssue003 {
         .getContract(contractAddress, blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    callvalue = 1024000000l;
+    callvalue = 1024000000L;
     String txid = PublicMethed.triggerContract(contractAddress, "getContractAddress()", "#", false,
         callvalue, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -802,13 +805,13 @@ public class TvmAssetIssue003 {
     // not owner's asset, will update myself
     AssetIssueContract assetIssueByIdBefore = PublicMethed
         .getAssetIssueById("1000004", blockingStubFull);
-    String nameBefore = ByteArray.toStr(assetIssueByIdBefore.getName().toByteArray());
-    String abbrBefore = ByteArray.toStr(assetIssueByIdBefore.getAbbr().toByteArray());
-    String descBefore = assetIssueByIdBefore.getDescription().size() == 0 ? ""
+    final String nameBefore = ByteArray.toStr(assetIssueByIdBefore.getName().toByteArray());
+    final String abbrBefore = ByteArray.toStr(assetIssueByIdBefore.getAbbr().toByteArray());
+    final String descBefore = assetIssueByIdBefore.getDescription().size() == 0 ? ""
         : ByteArray.toStr(assetIssueByIdBefore.getDescription().toByteArray());
-    String urlBefore = assetIssueByIdBefore.getUrl().size() == 0 ? ""
+    final String urlBefore = assetIssueByIdBefore.getUrl().size() == 0 ? ""
         : ByteArray.toStr(assetIssueByIdBefore.getUrl().toByteArray());
-    long precisionBefore = assetIssueByIdBefore.getPrecision();
+    final long precisionBefore = assetIssueByIdBefore.getPrecision();
     url = url + "123456";
     description = description + "123";
     param = "\"" + url + "\",\"" + description + "\"";

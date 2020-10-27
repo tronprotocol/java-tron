@@ -239,7 +239,8 @@ public class WalletTestBlock002 {
     Assert.assertTrue(nowPbftBlockNum >= nowBlockNum);
 
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubPbft);
-    GrpcAPI.BlockExtention pbftNowBlock2 = blockingStubPbft.getNowBlock2(GrpcAPI.EmptyMessage.newBuilder().build());
+    GrpcAPI.BlockExtention pbftNowBlock2 = blockingStubPbft.getNowBlock2(GrpcAPI.EmptyMessage
+        .newBuilder().build());
     Long nowPbftBlockNum2 = pbftNowBlock2.getBlockHeader().getRawData().getNumber();
     logger.info("nowBlockNum:" + nowBlockNum + " , nowPbftBlockNum2:" + nowPbftBlockNum2);
     Assert.assertTrue(nowPbftBlockNum2 >= nowBlockNum);
@@ -298,7 +299,8 @@ public class WalletTestBlock002 {
     Assert.assertTrue(lastSecondBlock1.hasBlockHeader());
     Assert.assertFalse(lastSecondBlock1.getBlockHeader().getWitnessSignature().isEmpty());
     Assert.assertTrue(lastSecondBlock1.getBlockHeader().getRawData().getTimestamp() > 0);
-    Assert.assertFalse(lastSecondBlock1.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+    Assert.assertFalse(lastSecondBlock1.getBlockHeader().getRawData().getWitnessAddress()
+        .isEmpty());
     Assert.assertTrue(
             lastSecondBlock1.getBlockHeader().getRawData().getNumber() + 1 == currentBlockNum);
     Assert.assertFalse(lastSecondBlock1.getBlockHeader().getRawData().getParentHash().isEmpty());
