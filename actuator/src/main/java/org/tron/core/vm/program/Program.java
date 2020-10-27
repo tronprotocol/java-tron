@@ -1178,7 +1178,7 @@ public class Program {
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
       if (Objects.nonNull(blockCapsule)) {
-        return new DataWord(blockCapsule.getBlockId().getBytes());
+        return new DataWord(blockCapsule.getBlockId().getBytes()).clone();
       } else {
         return DataWord.ZERO.clone();
       }
