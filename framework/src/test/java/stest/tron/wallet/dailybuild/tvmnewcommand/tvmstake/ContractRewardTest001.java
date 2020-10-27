@@ -44,7 +44,7 @@ public class ContractRewardTest001 {
   private byte[] contractAddress;
   //= Base58.decode58Check("TQYK8QPAFtxjmse1dShHWYXEMsF836jxxe");
 
-  @BeforeSuite
+  @BeforeSuite(enabled = false, description = "stake beforeSuite delete")
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
