@@ -539,8 +539,6 @@ public class ContractInternalTransaction003 {
           .assertEquals(infoById.get().getContractResult(0).toStringUtf8(),
               "");
       Assert.assertEquals(contractResult.OUT_OF_TIME, infoById.get().getReceipt().getResult());
-      Assert.assertEquals("CPU timeout for 'PUSH1' operation executing",
-          infoById.get().getResMessage().toStringUtf8());
     }
   }
 
