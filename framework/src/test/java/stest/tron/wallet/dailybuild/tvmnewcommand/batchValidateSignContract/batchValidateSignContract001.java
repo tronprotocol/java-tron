@@ -243,7 +243,7 @@ public class batchValidateSignContract001 {
     }
   }
 
-  @Test(enabled = true, description = "16 signatures with 2nd、16th incorrect signatures"
+  @Test(enabled = true, description = "16 signatures with 2nd/16th incorrect signatures"
       + " test pure multivalidatesign")
   public void test06Incorrect2ndAnd32ndIncorrectSignatures() {
     List<Object> signatures = new ArrayList<>();
@@ -278,7 +278,7 @@ public class batchValidateSignContract001 {
     }
   }
 
-  @Test(enabled = true, description = "16 signatures with 6th、9th、11th、13nd incorrect address"
+  @Test(enabled = true, description = "16 signatures with 6th/9th/11th/13nd incorrect address"
       + " test pure multivalidatesign")
   public void test07IncorrectAddress() {
     List<Object> signatures = new ArrayList<>();

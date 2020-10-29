@@ -521,7 +521,7 @@ public class batchValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "44 signatures with 9th、11th、28th、32nd incorrect address"
+  @Test(enabled = true, description = "44 signatures with 9th/11th/28th/32nd incorrect address"
       + " test multivalidatesign")
   public void test07IncorrectAddress() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
