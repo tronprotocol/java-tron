@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
@@ -33,9 +33,9 @@ public class WitnessUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -55,7 +55,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or witness store!");
@@ -76,7 +76,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     }
 
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 

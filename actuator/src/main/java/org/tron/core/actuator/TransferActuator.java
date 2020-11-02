@@ -1,6 +1,6 @@
 package org.tron.core.actuator;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -29,9 +30,9 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)object;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) object;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -59,15 +60,7 @@ public class TransferActuator extends AbstractActuator {
       ret.setStatus(fee, code.SUCESS);
       Commons.adjustBalance(accountStore, ownerAddress, -amount);
       Commons.adjustBalance(accountStore, toAddress, amount);
-    } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (ArithmeticException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
+    } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -78,16 +71,16 @@ public class TransferActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(TransferContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [TransferContract], real type [" + contract
+          "contract type error, expected type [TransferContract], real type [" + this.any
               .getClass() + "]");
     }
     long fee = calcFee();
@@ -103,10 +96,10 @@ public class TransferActuator extends AbstractActuator {
     byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
     long amount = transferContract.getAmount();
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress!");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress!");
     }
 

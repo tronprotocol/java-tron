@@ -1,6 +1,5 @@
 package stest.tron.wallet.dailybuild.zentrc20token;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -27,6 +26,7 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 
 @Slf4j
 public class ShieldTrc20Token004 extends ZenTrc20Base {
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -72,12 +72,12 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     String sendShieldAddress = senderShieldAddressInfo.get().getAddress();
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
-        "" + publicFromAmount, memo,blockingStubFull);
+        "" + publicFromAmount, memo, blockingStubFull);
     //Create mint parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,
-        blockingStubFull,blockingStubSolidity);
+        null, null, shieldOutList, "", 0L,
+        blockingStubFull, blockingStubSolidity);
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
     String txid = PublicMethed.triggerContract(shieldAddressByte,
@@ -92,12 +92,11 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     //Scan sender note
     senderNote = scanShieldedTrc20NoteByIvk(senderShieldAddressInfo.get(),
         blockingStubFull);
-    Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(),false);
+    Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(), false);
     logger.info("" + senderNote);
-    senderPosition =  senderNote.getNoteTxs(0).getPosition();
+    senderPosition = senderNote.getNoteTxs(0).getPosition();
     Assert.assertEquals(senderNote.getNoteTxs(0).getNote().getValue(),
         publicFromAmount.longValue());
-
 
     //Generate new shiled account for burn to one public and one shield
     secondSenderShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
@@ -107,12 +106,12 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     sendShieldAddress = secondSenderShieldAddressInfo.get().getAddress();
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
-        "" + publicFromAmount, memo,blockingStubFull);
+        "" + publicFromAmount, memo, blockingStubFull);
     //Create mint parameters
     shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,
-        blockingStubFull,blockingStubSolidity);
+        null, null, shieldOutList, "", 0L,
+        blockingStubFull, blockingStubSolidity);
     data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
     txid = PublicMethed.triggerContract(shieldAddressByte,
@@ -127,9 +126,9 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     //Scan sender note
     secondSenderNote = scanShieldedTrc20NoteByIvk(secondSenderShieldAddressInfo.get(),
         blockingStubFull);
-    Assert.assertEquals(secondSenderNote.getNoteTxs(0).getIsSpent(),false);
+    Assert.assertEquals(secondSenderNote.getNoteTxs(0).getIsSpent(), false);
     logger.info("" + secondSenderNote);
-    senderPosition =  secondSenderNote.getNoteTxs(0).getPosition();
+    senderPosition = secondSenderNote.getNoteTxs(0).getPosition();
     Assert.assertEquals(secondSenderNote.getNoteTxs(0).getNote().getValue(),
         publicFromAmount.longValue());
   }
@@ -139,13 +138,13 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
    */
   @Test(enabled = true, description = "Shield TRC20 transaction with type burn")
   public void test01ShieldTrc20TransactionWithTypeBurn() throws Exception {
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     //Query account before mint balance
     final Long beforeBurnAccountBalance = getBalanceOfShieldTrc20(receiverAddressString,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
     //Query contract before mint balance
     final Long beforeBurnShieldAccountBalance = getBalanceOfShieldTrc20(shieldAddress,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
 
     //String burnMemo = "Burn type test " + System.currentTimeMillis();
     inputShieldAddressList.add(senderShieldAddressInfo.get());
@@ -153,8 +152,8 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        senderNote,inputShieldAddressList,null,receiverAddressString,
-        receiveAmount.longValue(),blockingStubFull,blockingStubSolidity);
+        senderNote, inputShieldAddressList, null, receiverAddressString,
+        receiveAmount.longValue(), blockingStubFull, blockingStubSolidity);
 
     String data = shieldedTrc20Parameters.getTriggerContractInput();
     String txid = PublicMethed.triggerContract(shieldAddressByte,
@@ -167,20 +166,16 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 180000);
 
-
-
-
     logger.info("scanShieldedTrc20NoteByIvk + senderNote:" + senderNote);
     senderNote = scanShieldedTrc20NoteByIvk(senderShieldAddressInfo.get(),
         blockingStubFull);
-    Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(),true);
-
+    Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(), true);
 
     final Long afterBurnAccountBalance = getBalanceOfShieldTrc20(receiverAddressString,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
     //Query contract before mint balance
     final Long afterBurnShieldAccountBalance = getBalanceOfShieldTrc20(shieldAddress,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
 
     logger.info("afterBurnAccountBalance       :" + afterBurnAccountBalance);
     logger.info("beforeBurnAccountBalance      :" + beforeBurnAccountBalance);
@@ -189,23 +184,21 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     Assert.assertEquals(BigInteger.valueOf(afterBurnAccountBalance - beforeBurnAccountBalance),
         receiveAmount);
     Assert.assertEquals(BigInteger.valueOf(beforeBurnShieldAccountBalance
-            - afterBurnShieldAccountBalance), receiveAmount);
-
+        - afterBurnShieldAccountBalance), receiveAmount);
 
     senderNote = scanShieldedTrc20NoteByOvk(senderShieldAddressInfo.get(),
         blockingStubFull);
     Assert.assertEquals(ByteArray.toHexString(senderNote.getNoteTxs(0)
-        .getTxid().toByteArray()),txid);
-    Assert.assertEquals(senderNote.getNoteTxs(0).getToAmount(),publicFromAmount.toString());
+        .getTxid().toByteArray()), txid);
+    Assert.assertEquals(senderNote.getNoteTxs(0).getToAmount(), publicFromAmount.toString());
 
     String toAddress = ByteArray.toHexString(senderNote.getNoteTxs(0)
         .getTransparentToAddress().toByteArray());
     String receiverHexString = ByteArray.toHexString(PublicMethed.getFinalAddress(receiverKey));
-    Assert.assertEquals(toAddress,receiverHexString);
+    Assert.assertEquals(toAddress, receiverHexString);
 
 
   }
-
 
 
   /**
@@ -216,13 +209,12 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     secondSenderNote = scanShieldedTrc20NoteByIvk(secondSenderShieldAddressInfo.get(),
         blockingStubFull);
 
-
     //Query account before mint balance
     final Long beforeBurnAccountBalance = getBalanceOfShieldTrc20(receiverAddressString,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
     //Query contract before mint balance
     final Long beforeBurnShieldAccountBalance = getBalanceOfShieldTrc20(shieldAddress,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
 
     inputShieldAddressList.clear();
     inputShieldAddressList.add(secondSenderShieldAddressInfo.get());
@@ -234,15 +226,13 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     String memo = "Burn to one shield and one public test " + System.currentTimeMillis();
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, receiverShieldAddress,
-        "" + shieldReceiveAmount, memo,blockingStubFull);
-
-
+        "" + shieldReceiveAmount, memo, blockingStubFull);
 
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        secondSenderNote,inputShieldAddressList,shieldOutList,receiverAddressString,
-        receiveAmount.longValue(),blockingStubFull,blockingStubSolidity);
+        secondSenderNote, inputShieldAddressList, shieldOutList, receiverAddressString,
+        receiveAmount.longValue(), blockingStubFull, blockingStubSolidity);
 
     String data = shieldedTrc20Parameters.getTriggerContractInput();
     String txid = PublicMethed.triggerContract(shieldAddressByte,
@@ -255,20 +245,16 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 180000);
 
-
-
-
     logger.info("scanShieldedTrc20NoteByIvk + senderNote:" + senderNote);
     senderNote = scanShieldedTrc20NoteByIvk(senderShieldAddressInfo.get(),
         blockingStubFull);
-    Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(),true);
-
+    Assert.assertEquals(senderNote.getNoteTxs(0).getIsSpent(), true);
 
     final Long afterBurnAccountBalance = getBalanceOfShieldTrc20(receiverAddressString,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
     //Query contract before mint balance
     final Long afterBurnShieldAccountBalance = getBalanceOfShieldTrc20(shieldAddress,
-        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
+        zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey, blockingStubFull);
 
     logger.info("afterBurnAccountBalance       :" + afterBurnAccountBalance);
     logger.info("beforeBurnAccountBalance      :" + beforeBurnAccountBalance);
@@ -279,36 +265,30 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
     Assert.assertEquals(BigInteger.valueOf(beforeBurnShieldAccountBalance
         - afterBurnShieldAccountBalance), receiveAmount);
 
-
     secondSenderNote = scanShieldedTrc20NoteByOvk(secondSenderShieldAddressInfo.get(),
         blockingStubFull);
     logger.info(secondSenderNote.toString());
     Assert.assertEquals(secondSenderNote.getNoteTxs(0).getNote().getValue(),
         shieldReceiveAmount.longValue());
 
-
     Assert.assertEquals(ByteArray.toHexString(secondSenderNote.getNoteTxs(1)
-        .getTxid().toByteArray()),txid);
-    Assert.assertEquals(secondSenderNote.getNoteTxs(1).getToAmount(),receiveAmount.toString());
+        .getTxid().toByteArray()), txid);
+    Assert.assertEquals(secondSenderNote.getNoteTxs(1).getToAmount(), receiveAmount.toString());
 
     String toAddress = ByteArray.toHexString(secondSenderNote.getNoteTxs(1)
         .getTransparentToAddress().toByteArray());
     String receiverHexString = ByteArray.toHexString(PublicMethed.getFinalAddress(receiverKey));
-    Assert.assertEquals(toAddress,receiverHexString);
-
+    Assert.assertEquals(toAddress, receiverHexString);
 
     GrpcAPI.DecryptNotesTRC20 receiverSenderNote
         = scanShieldedTrc20NoteByIvk(receiverShieldAddressInfo,
         blockingStubFull);
     Assert.assertEquals(receiverSenderNote.getNoteTxs(0)
-        .getIsSpent(),false);
+        .getIsSpent(), false);
     Assert.assertEquals(receiverSenderNote.getNoteTxs(0)
-        .getNote().getValue(),shieldReceiveAmount.longValue());
+        .getNote().getValue(), shieldReceiveAmount.longValue());
     Assert.assertEquals(ByteArray.toHexString(receiverSenderNote
-        .getNoteTxs(0).getTxid().toByteArray()),txid);
-
-
-
+        .getNoteTxs(0).getTxid().toByteArray()), txid);
 
 
   }

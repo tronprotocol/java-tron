@@ -18,20 +18,20 @@ import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.config.args.Args;
-import org.tron.common.utils.WalletUtil;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">
  * Web3 Secret Storage Definition</a> or the <a href="https://github.com/ethereum/go-ethereum/blob/master/accounts/key_store_passphrase.go">
  * Go Ethereum client implementation</a>.</p>
  *
- * <p><strong>Note:</strong> the Bouncy Castle Scrypt implementation {@link SCrypt}, fails to comply
+ * <p><strong>Note:</strong> the Bouncy Castle Scrypt implementation {@link SCrypt}, fails to
+ * comply
  * with the following Ethereum reference <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition#scrypt">
  * Scrypt test vector</a>:</p>
  *
@@ -93,7 +93,7 @@ public class Wallet {
       int n, int p) {
 
     WalletFile walletFile = new WalletFile();
-    walletFile.setAddress(WalletUtil.encode58Check(ecKeyPair.getAddress()));
+    walletFile.setAddress(StringUtil.encode58Check(ecKeyPair.getAddress()));
 
     WalletFile.Crypto crypto = new WalletFile.Crypto();
     crypto.setCipher(CIPHER);
@@ -212,7 +212,6 @@ public class Wallet {
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
     return SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
-
   }
 
   static void validate(WalletFile walletFile) throws CipherException {

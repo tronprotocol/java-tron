@@ -15,8 +15,8 @@
 
 package org.tron.core.capsule;
 
-import static org.tron.common.utils.WalletUtil.checkPermissionOprations;
-import static org.tron.common.utils.WalletUtil.encode58Check;
+import static org.tron.common.utils.StringUtil.encode58Check;
+import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
 import com.google.common.primitives.Bytes;
@@ -39,13 +39,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.TransactionFactory;
@@ -84,7 +83,8 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final ExecutorService executorService = Executors
-      .newFixedThreadPool(DBConfig.getValidContractProtoThreadNum());
+      .newFixedThreadPool(CommonParameter.getInstance()
+          .getValidContractProtoThreadNum());
   private static final String OWNER_ADDRESS = "ownerAddress_";
 
   private Transaction transaction;
@@ -96,7 +96,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private TransactionTrace trxTrace;
-  private StringBuffer toStringBuff = new StringBuffer();
+
+  private StringBuilder toStringBuff = new StringBuilder();
   @Getter
   @Setter
   private long time;
@@ -119,23 +120,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  /*lll
-  public TransactionCapsule(byte[] key, long value) throws IllegalArgumentException {
-    if (!Wallet.addressValid(key)) {
-      throw new IllegalArgumentException("Invalid address");
-    }
-    TransferContract transferContract = TransferContract.newBuilder()
-        .setAmount(value)
-        .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
-        .setToAddress(ByteString.copyFrom(key))
-        .build();
-    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
-        Transaction.Contract.newBuilder().setType(ContractType.TransferContract).setParameter(
-            Any.pack(transferContract)).build());
-    logger.info("Transaction create succeeded！");
-    transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
-  }*/
-
   public TransactionCapsule(CodedInputStream codedInputStream) throws BadItemException {
     try {
       this.transaction = Transaction.parseFrom(codedInputStream);
@@ -154,7 +138,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
-    Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
 
     AccountCapsule owner = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (owner == null || owner.getBalance() < contract.getAmount()) {
@@ -215,9 +198,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       List<ByteString> approveList)
       throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
-    //    if (signature.size() % 65 != 0) {
-    //      throw new SignatureFormatException("Signature size is " + signature.size());
-    //    }
     if (sigs.size() > permission.getKeysCount()) {
       throw new PermissionException(
           "Signature count is " + (sigs.size()) + " more than key counts of permission : "
@@ -230,7 +210,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = SignUtils.signatureToAddress(hash, base64, DBConfig.isECKeyCryptoEngine());
+      byte[] address = SignUtils
+          .signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine());
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -247,6 +228,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       currentWeight += weight;
     }
     return currentWeight;
+  }
+
+  //make sure that contractType is validated before
+  //No exception will be thrown here
+  public static byte[] getShieldTransactionHashIgnoreTypeException(Transaction tx) {
+    try {
+      return hashShieldTransaction(tx, CommonParameter.getInstance()
+          .getZenTokenId());
+    } catch (ContractValidateException | InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+    }
+    return null;
   }
 
   public static byte[] hashShieldTransaction(Transaction tx, String tokenId)
@@ -283,11 +276,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction transaction = tx.toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
 
-    byte[] mergedByte = Bytes.concat(Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
-        tokenId.getBytes()).getBytes(),
+    byte[] mergedByte = Bytes.concat(Sha256Hash
+            .of(CommonParameter.getInstance().isECKeyCryptoEngine(), tokenId.getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
-    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
-          mergedByte).getBytes();
+    return Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), mergedByte).getBytes();
   }
 
   // todo mv this static function to capsule util
@@ -302,7 +295,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           if (!shieldedTransferContract.getTransparentFromAddress().isEmpty()) {
             owner = shieldedTransferContract.getTransparentFromAddress();
           } else {
-            return null;
+            return new byte[0];
           }
           break;
         }
@@ -312,13 +305,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
               .getContract(contract.getType());
           if (clazz == null) {
             logger.error("not exist {}", contract.getType());
-            return null;
+            return new byte[0];
           }
           GeneratedMessageV3 generatedMessageV3 = contractParameter.unpack(clazz);
           owner = ReflectUtils.getFieldValue(generatedMessageV3, OWNER_ADDRESS);
           if (owner == null) {
             logger.error("not exist [{}] field,{}", OWNER_ADDRESS, clazz);
-            return null;
+            return new byte[0];
           }
           break;
         }
@@ -326,7 +319,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return owner.toByteArray();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
-      return null;
+      return new byte[0];
     }
   }
 
@@ -390,24 +383,21 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case ParticipateAssetIssueContract:
           to = contractParameter.unpack(ParticipateAssetIssueContract.class).getToAddress();
           break;
-        // todo add other contract
 
         default:
-          return null;
+          return new byte[0];
       }
       return to.toByteArray();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
-      return null;
+      return new byte[0];
     }
   }
 
   // todo mv this static function to capsule util
   public static long getCallValue(Transaction.Contract contract) {
-    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
@@ -415,27 +405,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case CreateSmartContract:
           return contractParameter.unpack(CreateSmartContract.class).getNewContract()
               .getCallValue();
-        default:
-          return 0L;
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
-      return 0L;
-    }
-  }
-
-  // todo mv this static function to capsule util
-  public static long getCallTokenValue(Transaction.Contract contract) {
-    int energyForTrx;
-    try {
-      Any contractParameter = contract.getParameter();
-      long callValue;
-      switch (contract.getType()) {
-        case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
-
-        case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getCallTokenValue();
         default:
           return 0L;
       }
@@ -483,7 +452,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOperations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -548,16 +517,20 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public Sha256Hash getMerkleHash() {
     byte[] transBytes = this.transaction.toByteArray();
-    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(), transBytes);
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        transBytes);
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
         this.transaction.getRawData().toByteArray());
   }
 
   public void sign(byte[] privateKey) {
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils
+        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
+    //    ByteString sig = ByteString.copyFrom(signature.getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
         .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
@@ -581,12 +554,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOperations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
     List<ByteString> approveList = new ArrayList<>();
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils
+        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
@@ -602,6 +576,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           ByteArray.toHexString(privateKey) + "'s address is " + encode58Check(address)
               + " but it is not contained of permission.");
     }
+    //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
         .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
@@ -632,13 +607,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }
-    } catch (SignatureException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
-    } catch (PermissionException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
-    } catch (SignatureFormatException e) {
+    } catch (SignatureException | PermissionException | SignatureFormatException e) {
       isVerified = false;
       throw new ValidateSignatureException(e.getMessage());
     }
@@ -651,7 +620,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public boolean validateSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
-    if (isVerified == true) {
+    if (isVerified) {
       return true;
     }
     //Do not support multi contracts in one transaction
@@ -757,20 +726,44 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void setResultCode(contractResult code) {
-    Result ret = Result.newBuilder().setContractRet(code).build();
+    Result ret;
     if (this.transaction.getRetCount() > 0) {
       ret = this.transaction.getRet(0).toBuilder().setContractRet(code).build();
 
       this.transaction = transaction.toBuilder().setRet(0, ret).build();
       return;
     }
+    ret = Result.newBuilder().setContractRet(code).build();
     this.transaction = transaction.toBuilder().addRet(ret).build();
   }
+
+  public Transaction.Result.contractResult getContractResult() {
+    if (this.transaction.getRetCount() > 0) {
+      return this.transaction.getRet(0).getContractRet();
+    }
+    return null;
+  }
+
+
 
   public contractResult getContractRet() {
     if (this.transaction.getRetCount() <= 0) {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
+  }
+
+  /**
+   * Check if a transaction capsule contains a smart contract transaction or not.
+   * @return
+   */
+  public boolean isContractType() {
+    try {
+      ContractType type = this.getInstance().getRawData().getContract(0).getType();
+      return  (type == ContractType.TriggerSmartContract || type == ContractType.CreateSmartContract);
+    } catch (Exception ex) {
+      logger.warn("check contract type failed, reason {}", ex.getMessage());
+      return false;
+    }
   }
 }

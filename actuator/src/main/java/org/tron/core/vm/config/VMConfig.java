@@ -17,7 +17,8 @@
  */
 package org.tron.core.vm.config;
 
-import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
+
+import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
 
 import lombok.Setter;
 
@@ -26,9 +27,7 @@ import lombok.Setter;
  */
 public class VMConfig {
 
-  public static final int MAX_CODE_LENGTH = 1024 * 1024;
-
-  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
+  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 TRX
 
   private static boolean vmTraceCompressed = false;
 
@@ -44,6 +43,12 @@ public class VMConfig {
   private static boolean ALLOW_TVM_SOLIDITY_059 = false;
 
   private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
+
+  private static boolean ALLOW_TVM_ISTANBUL = false;
+
+  private static boolean ALLOW_TVM_STAKE = false;
+
+  private static boolean ALLOW_TVM_ASSET_ISSUE = false;
 
   private VMConfig() {
   }
@@ -84,6 +89,18 @@ public class VMConfig {
     ALLOW_SHIELDED_TRC20_TRANSACTION = allow == 1;
   }
 
+  public static void initAllowTvmIstanbul(long allow) {
+    ALLOW_TVM_ISTANBUL = allow == 1;
+  }
+
+  public static void initAllowTvmStake(long allow) {
+    ALLOW_TVM_STAKE = allow == 1;
+  }
+
+  public static void initAllowTvmAssetIssue(long allow) {
+    ALLOW_TVM_ASSET_ISSUE = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -108,9 +125,18 @@ public class VMConfig {
     return ALLOW_SHIELDED_TRC20_TRANSACTION;
   }
 
+  public static boolean allowTvmIstanbul() {return ALLOW_TVM_ISTANBUL; }
+
+  public static boolean allowTvmStake() {
+    return ALLOW_TVM_STAKE;
+  }
+
+  public static boolean allowTvmAssetIssue() {
+    return ALLOW_TVM_ASSET_ISSUE;
+  }
+
   private static class SystemPropertiesInstance {
 
     private static final VMConfig INSTANCE = new VMConfig();
   }
-
 }

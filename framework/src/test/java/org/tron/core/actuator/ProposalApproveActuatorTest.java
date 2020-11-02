@@ -31,6 +31,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.ProposalContract;
 
 @Slf4j
@@ -124,7 +125,7 @@ public class ProposalApproveActuatorTest {
     paras.put(0L, 6 * 27 * 1000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -513,5 +514,29 @@ public class ProposalApproveActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ProposalApproveContract],real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS_FIRST, 1, true));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+
+  }
+
 
 }

@@ -42,8 +42,8 @@ public class ShiftCommand002 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -62,18 +62,12 @@ public class ShiftCommand002 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
-        .build();
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1).usePlaintext(true).build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode).usePlaintext(true).build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
@@ -83,6 +77,7 @@ public class ShiftCommand002 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "TestBitwiseShift";
     String code = "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a5"
         + "7600080fd5b506101478061003a6000396000f3006080604052600436106100565763ffffffff7c0100"
@@ -106,14 +101,14 @@ public class ShiftCommand002 {
         + "type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\""
         + "type\":\"function\"}]";
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
+    contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
+            contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -126,9 +121,9 @@ public class ShiftCommand002 {
     String txid = "";
     String num = "1" + "," + "5";
 
-    txid = PublicMethed.triggerContract(contractAddress,
-        "sarTest(uint256,uint256)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(contractAddress, "sarTest(uint256,uint256)", num, false, 0, maxFeeLimit,
+            contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -145,8 +140,8 @@ public class ShiftCommand002 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -161,14 +156,14 @@ public class ShiftCommand002 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "shlTest(uint256,uint256)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(contractAddress, "shlTest(uint256,uint256)", num, false, 0, maxFeeLimit,
+            contractExcAddress, contractExcKey, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "shrTest(uint256,uint256)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(contractAddress, "shrTest(uint256,uint256)", num, false, 0, maxFeeLimit,
+            contractExcAddress, contractExcKey, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
@@ -184,14 +179,14 @@ public class ShiftCommand002 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
+    contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
+            contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -204,9 +199,9 @@ public class ShiftCommand002 {
     String txid = "";
     String num = "1" + "," + "5";
 
-    txid = PublicMethed.triggerContract(contractAddress,
-        "sarTest(uint256,uint256)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(contractAddress, "sarTest(uint256,uint256)", num, false, 0, maxFeeLimit,
+            contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -223,8 +218,8 @@ public class ShiftCommand002 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -239,14 +234,14 @@ public class ShiftCommand002 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "shlTest(uint256,uint256)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(contractAddress, "shlTest(uint256,uint256)", num, false, 0, maxFeeLimit,
+            contractExcAddress, contractExcKey, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "shrTest(uint256,uint256)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(contractAddress, "shrTest(uint256,uint256)", num, false, 0, maxFeeLimit,
+            contractExcAddress, contractExcKey, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 

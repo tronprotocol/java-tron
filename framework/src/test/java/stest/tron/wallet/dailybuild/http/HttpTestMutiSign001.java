@@ -80,9 +80,7 @@ public class HttpTestMutiSign001 {
 
   @BeforeClass
   public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
@@ -131,8 +129,9 @@ public class HttpTestMutiSign001 {
         "7fff1fc0037e0000000000000000000000000000000000000000000000000000");
     activeObject.add("keys", activeKeys);
 
-    response = HttpMethed.accountPermissionUpdate(httpnode, ownerAddress, ownerObject,
-        witnessObject, activeObject, ownerKey);
+    response = HttpMethed
+        .accountPermissionUpdate(httpnode, ownerAddress, ownerObject, witnessObject, activeObject,
+            ownerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
   }
 
@@ -187,14 +186,15 @@ public class HttpTestMutiSign001 {
     String transactionHex = PublicMethed
         .sendcoinGetTransactionHex(hexTestAddress, 1000L, fromAddress, testKey002,
             blockingStubFull);
-    String wrongTransactionHex = transactionHex + "wrong";
-    response = HttpMethed.broadcasthex(httpnode, wrongTransactionHex);
-    logger.info("transaction wrong:");
-    Assert.assertFalse(HttpMethed.verificationResult(response));
 
     //Wrong type of hex
     response = HttpMethed.broadcasthex(httpnode, transactionHex);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+
+    String wrongTransactionHex = transactionHex + "wrong";
+    response = HttpMethed.broadcasthex(httpnode, wrongTransactionHex);
+    logger.info("transaction wrong:");
+    Assert.assertFalse(HttpMethed.verificationResult(response));
 
     //SingleSign for broadcastHex
     response = HttpMethed.broadcasthex(httpnode, transactionHex);

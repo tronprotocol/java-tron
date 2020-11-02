@@ -18,8 +18,8 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -88,8 +88,6 @@ public class BatchSendTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -113,11 +111,13 @@ public class BatchSendTest {
    */
   @Test
   public void TransferTokenTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     //  1. Deploy*/
     byte[] contractAddress = deployTransferContract();
     deposit.commit();
-    Assert.assertEquals(1000, dbManager.getAccountStore().get(contractAddress).getBalance());
+    Assert.assertEquals(1000,
+        dbManager.getAccountStore().get(contractAddress).getBalance());
 
     String selectorStr = "batchSendTo(address,address,address,uint256,uint256,uint256)";
     ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -125,16 +125,17 @@ public class BatchSendTest {
     ECKey ecKey3 = new ECKey(Utils.getRandom());
 
     List<Object> params = new ArrayList<>();
-    params.add(WalletUtil.encode58Check(ecKey1.getAddress()));
-    params.add(WalletUtil.encode58Check(ecKey2.getAddress()));
-    params.add(WalletUtil.encode58Check(ecKey3.getAddress()));
+    params.add(StringUtil.encode58Check(ecKey1.getAddress()));
+    params.add(StringUtil.encode58Check(ecKey2.getAddress()));
+    params.add(StringUtil.encode58Check(ecKey3.getAddress()));
     params.add(100);
     params.add(1100);
     params.add(200);
     byte[] input = Hex.decode(AbiUtil
         .parseMethod(selectorStr, params));
 
-    //  2. Test trigger with tokenValue and tokenId, also test internal transaction transferToken function */
+    //  2. Test trigger with tokenValue and tokenId, also test internal transaction
+    // transferToken function */
     long triggerCallValue = 0;
     long feeLimit = 100000000;
     long tokenValue = 0;
@@ -145,16 +146,19 @@ public class BatchSendTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertNull(runtime.getRuntimeError());
     //send success, create account
-    Assert.assertEquals(100, dbManager.getAccountStore().get(ecKey1.getAddress()).getBalance());
+    Assert.assertEquals(100,
+        dbManager.getAccountStore().get(ecKey1.getAddress()).getBalance());
     //send failed, do not create account
     Assert.assertNull(dbManager.getAccountStore().get(ecKey2.getAddress()));
     //send success, create account
-    Assert.assertEquals(200, dbManager.getAccountStore().get(ecKey3.getAddress()).getBalance());
+    Assert.assertEquals(200,
+        dbManager.getAccountStore().get(ecKey3.getAddress()).getBalance());
 
   }
 
   private byte[] deployTransferContract()
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
+      VMIllegalException {
     String contractName = "TestTransferTo";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -167,8 +171,8 @@ public class BatchSendTest {
         + "d0565b005b6100c661016e565b60405173ffffffffffffffffffffffffffffffffffffffff87169084156108"
         + "fc029085906000818181858888f1505060405173ffffffffffffffffffffffffffffffffffffffff89169350"
         + "85156108fc0292508591506000818181858888f1505060405173ffffffffffffffffffffffffffffffffffff"
-        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea165627"
-        + "a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
+        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea16562"
+        + "7a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
 
     long value = 1000;
     long feeLimit = 100000000;

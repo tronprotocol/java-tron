@@ -12,7 +12,6 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.core.Wallet;

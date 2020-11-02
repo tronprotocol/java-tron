@@ -15,7 +15,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -43,8 +42,6 @@ public class SnapshotManagerTest {
   @After
   public void removeDb() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     tronDatabase.close();
     FileUtil.deleteDir(new File("output_SnapshotManager_test"));
@@ -88,7 +85,7 @@ public class SnapshotManagerTest {
     ProtoCapsuleTest protoCapsule = new ProtoCapsuleTest("close".getBytes());
     for (int i = 1; i < 11; i++) {
       ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("close" + i).getBytes());
-      try (ISession _  = revokingDatabase.buildSession()) {
+      try (ISession tmpSession = revokingDatabase.buildSession()) {
         tronDatabase.put(protoCapsule.getData(), testProtoCapsule);
       }
     }

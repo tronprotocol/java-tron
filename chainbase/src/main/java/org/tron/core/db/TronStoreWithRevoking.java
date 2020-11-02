@@ -13,11 +13,14 @@ import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteOptions;
+import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
@@ -43,34 +46,46 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private RevokingDatabase revokingDatabase;
 
   protected TronStoreWithRevoking(String dbName) {
-    int dbVersion = DBConfig.getDbVersion();
-    String dbEngine = DBConfig.getDbEngine();
+    int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
+    String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
     if (dbVersion == 1) {
-      this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
+      this.revokingDB = new RevokingDBWithCachingOldValue(dbName,
+          getOptionsByDbNameForLevelDB(dbName));
     } else if (dbVersion == 2) {
       if ("LEVELDB".equals(dbEngine.toUpperCase())) {
         this.revokingDB = new Chainbase(new SnapshotRoot(
             new LevelDB(
-                new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName(dbName),
+                new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
                     dbName,
-                    DBConfig.getOptionsByDbName(dbName),
-                    new WriteOptions().sync(DBConfig.isDbSync())))));
+                    getOptionsByDbNameForLevelDB(dbName),
+                    new WriteOptions().sync(CommonParameter.getInstance()
+                        .getStorage().isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
         String parentPath = Paths
-            .get(DBConfig.getOutputDirectoryByDbName(dbName), DBConfig.getDbDirectory()).toString();
+            .get(StorageUtils.getOutputDirectoryByDbName(dbName), CommonParameter
+                .getInstance().getStorage().getDbDirectory()).toString();
 
         this.revokingDB = new Chainbase(new SnapshotRoot(
             new RocksDB(
                 new RocksDbDataSourceImpl(parentPath,
-                    dbName, DBConfig.getRocksDbSettings()))));
+                    dbName, CommonParameter.getInstance()
+                    .getRocksDBCustomSettings(), getDirectComparator()))));
       }
     } else {
       throw new RuntimeException("db version is error.");
     }
   }
 
+  protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
+    return StorageUtils.getOptionsByDbName(dbName);
+  }
+
+  protected DirectComparator getDirectComparator() {
+    return null;
+  }
+
   protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
-    int dbVersion = DBConfig.getDbVersion();
+    int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
     if (dbVersion == 2) {
       this.revokingDB = new Chainbase(new SnapshotRoot(db));
     } else {
@@ -81,6 +96,13 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   // only for test
   protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
     this.revokingDB = new RevokingDBWithCachingOldValue(dbName,
+        (AbstractRevokingStore) revokingDatabase);
+  }
+
+  // only for test
+  protected TronStoreWithRevoking(String dbName, Options options,
+      RevokingDatabase revokingDatabase) {
+    this.revokingDB = new RevokingDBWithCachingOldValue(dbName, options,
         (AbstractRevokingStore) revokingDatabase);
   }
 
@@ -170,7 +192,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     return Streams.stream(revokingDB.iterator()).count();
   }
 
-  public void setMode(boolean mode) {
-    revokingDB.setMode(mode);
+  public void setCursor(Chainbase.Cursor cursor) {
+    revokingDB.setCursor(cursor);
   }
 }

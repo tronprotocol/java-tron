@@ -1,8 +1,7 @@
 package org.tron.core.db.accountstate;
 
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.WalletUtil;
-import org.tron.core.Wallet;
+import org.tron.common.utils.StringUtil;
 import org.tron.protos.Protocol.Account;
 
 @Slf4j(topic = "AccountState")
@@ -45,7 +44,8 @@ public class AccountStateEntity {
 
   @Override
   public String toString() {
-    return "address:" + WalletUtil.encode58Check(account.getAddress().toByteArray()) + "; " + account
+    return "address:" + StringUtil.encode58Check(account
+        .getAddress().toByteArray()) + "; " + account
         .toString();
   }
 }

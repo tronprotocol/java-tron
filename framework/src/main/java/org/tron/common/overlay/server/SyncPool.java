@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 
@@ -30,7 +31,7 @@ import org.tron.core.net.peer.PeerConnection;
 public class SyncPool {
 
   private final List<PeerConnection> activePeers = Collections
-      .synchronizedList(new ArrayList<PeerConnection>());
+      .synchronizedList(new ArrayList<>());
   private final AtomicInteger passivePeersCount = new AtomicInteger(0);
   private final AtomicInteger activePeersCount = new AtomicInteger(0);
   private double factor = Args.getInstance().getConnectFactor();
@@ -46,11 +47,11 @@ public class SyncPool {
 
   private ChannelManager channelManager;
 
-  private Args args = Args.getInstance();
+  private CommonParameter commonParameter = CommonParameter.getInstance();
 
-  private int maxActiveNodes = args.getNodeMaxActiveNodes();
+  private int maxActiveNodes = commonParameter.getNodeMaxActiveNodes();
 
-  private int maxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
+  private int maxActivePeersWithSameIp = commonParameter.getNodeMaxActiveNodesWithSameIp();
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -76,6 +77,7 @@ public class SyncPool {
       try {
         logActivePeers();
       } catch (Throwable t) {
+        logger.error("Exception in sync worker", t);
       }
     }, 30, 10, TimeUnit.SECONDS);
   }
@@ -140,8 +142,9 @@ public class SyncPool {
         activePeersCount.incrementAndGet();
       }
       activePeers.add(peerConnection);
-      activePeers.
-          sort(Comparator.comparingDouble(c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
+      activePeers
+          .sort(Comparator.comparingDouble(
+              c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
       peerConnection.onConnect();
     }
   }
@@ -193,8 +196,8 @@ public class SyncPool {
 
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
 
-      return !((handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
-          handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
+      return !((handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost())
+          && handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
           || (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null)
           || (channelManager.getBadPeers().getIfPresent(inetAddress) != null)
           || (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp)

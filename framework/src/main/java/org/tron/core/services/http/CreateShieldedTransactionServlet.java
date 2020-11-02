@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,18 +23,14 @@ public class CreateShieldedTransactionServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(contract);
-      boolean visible = Util.getVisiblePost(contract);
-
+      PostParams params = PostParams.getPostParams(request);
       PrivateParameters.Builder build = PrivateParameters.newBuilder();
-      JsonFormat.merge(contract, build, visible);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
 
       Transaction tx = wallet
           .createShieldedTransaction(build.build())
           .getInstance();
-      response.getWriter().println(Util.printCreateTransaction(tx, visible));
+      response.getWriter().println(Util.printCreateTransaction(tx, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }

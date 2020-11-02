@@ -66,9 +66,7 @@ public class MultiSign33 {
 
   @BeforeClass
   public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
 
@@ -80,9 +78,8 @@ public class MultiSign33 {
     test001Address = ecKey.getAddress();
     long amount = 2 * updateAccountPermissionFee + multiSignFee;
 
-    Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, amount, fromAddress, testKey002,
-            blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.sendcoin(test001Address, amount, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
@@ -107,15 +104,12 @@ public class MultiSign33 {
     String accountPermissionJson1 =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":5,\""
             + "keys\":[{\"address\":\"" + PublicMethed.getAddressString(dev001Key)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey2)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
-            + "\",\"weight\":1},"
+            + "\",\"weight\":1}," + "{\"address\":\"" + PublicMethed
+            .getAddressString(sendAccountKey2) + "\",\"weight\":1}," + "{\"address\":\""
+            + PublicMethed.getAddressString(sendAccountKey3) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey4)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey5)
-            + "\",\"weight\":1}]},"
+            + "\",\"weight\":1}," + "{\"address\":\"" + PublicMethed
+            .getAddressString(sendAccountKey5) + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\","
             + "\"threshold\":1,\"operations\":\""
             + "0200000000000000000000000000000000000000000000000000000000000000\","
@@ -124,8 +118,7 @@ public class MultiSign33 {
 
     Assert.assertTrue(PublicMethedForMutiSign
         .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
+            blockingStubFull, 0, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
@@ -139,21 +132,18 @@ public class MultiSign33 {
     Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     logger.info("balance1:" + balance1);
 
-    String accountPermissionJson2 =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\""
-            + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\""
-            + ":\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
-            + "\"active0\",\"threshold\":1,\"operations\""
-            + ":\"0200000000000000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey4)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
-            + "\",\"weight\":1}]}]} ";
+    String accountPermissionJson2 = "{\"owner_permission\":{\"type\":0,\"permission_name\""
+        + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\"" + ":\"" + PublicMethed
+        .getAddressString(dev001Key) + "\",\"weight\":1}]},"
+        + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
+        + "\"active0\",\"threshold\":1,\"operations\""
+        + ":\"0200000000000000000000000000000000000000000000000000000000000000\","
+        + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey4)
+        + "\",\"weight\":1}," + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
+        + "\",\"weight\":1}]}]} ";
     Assert.assertTrue(PublicMethedForMutiSign
         .accountPermissionUpdateWithPermissionId(accountPermissionJson2, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
+            blockingStubFull, 0, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
@@ -177,9 +167,8 @@ public class MultiSign33 {
     test001Address = ecKey.getAddress();
     long amount = 2 * updateAccountPermissionFee;
 
-    Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, amount, fromAddress, testKey002,
-            blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.sendcoin(test001Address, amount, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
@@ -196,8 +185,8 @@ public class MultiSign33 {
     permissionKeyString[0] = dev001Key;
 
     String accountPermissionJson1 = "{\"owner_permission\":{\"type\":0,\"permission_name\":"
-        + "\"owner\",\"threshold\":1,\"keys\":[{\"address\""
-        + ":\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
+        + "\"owner\",\"threshold\":1,\"keys\":[{\"address\"" + ":\"" + PublicMethed
+        .getAddressString(dev001Key) + "\",\"weight\":1}]},"
         + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
         + "\"active0\",\"threshold\":1,\"operations"
         + "\":\"0100000000000000000000000000000000000000000000000000000000000000\","
@@ -210,8 +199,7 @@ public class MultiSign33 {
 
     Assert.assertTrue(PublicMethedForMutiSign
         .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
+            blockingStubFull, 0, permissionKeyString));
 
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
@@ -222,20 +210,18 @@ public class MultiSign33 {
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
     Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
-    String accountPermissionJson2 =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\""
-            + "owner\",\"threshold\":1,\"keys\":[{\"address\":\""
-            + "" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name"
-            + "\":\"active0\",\"threshold\":1,\"operations\":\""
-            + "0200000000000000000000000000000000000000000000000000000000000000\""
-            + ",\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(dev001Key) + "\","
-            + "\"weight\":1}]}]} ";
+    String accountPermissionJson2 = "{\"owner_permission\":{\"type\":0,\"permission_name\":\""
+        + "owner\",\"threshold\":1,\"keys\":[{\"address\":\"" + "" + PublicMethed
+        .getAddressString(dev001Key) + "\",\"weight\":1}]},"
+        + "\"active_permissions\":[{\"type\":2,\"permission_name"
+        + "\":\"active0\",\"threshold\":1,\"operations\":\""
+        + "0200000000000000000000000000000000000000000000000000000000000000\""
+        + ",\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(dev001Key) + "\","
+        + "\"weight\":1}]}]} ";
     Assert.assertTrue(PublicMethedForMutiSign
         .accountPermissionUpdateWithPermissionId(accountPermissionJson2, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
-
+            blockingStubFull, 0, permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
     Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();

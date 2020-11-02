@@ -107,9 +107,9 @@ public class MainNetVoteOrFreezeOrCreate {
     final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+    builder.setOwnerAddress(byteAddress).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
     BalanceContract.FreezeBalanceContract contract = builder.build();

@@ -2,7 +2,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.GeneratedMessageV3;
-import org.tron.common.utils.ForkUtils;
+import org.tron.common.utils.ForkController;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -15,7 +15,7 @@ public abstract class AbstractActuator implements Actuator {
   protected ChainBaseManager chainBaseManager;
   protected Contract contract;
   protected TransactionCapsule tx;
-  protected ForkUtils forkUtils;
+  protected ForkController forkController;
 
   public AbstractActuator(ContractType type, Class<? extends GeneratedMessageV3> clazz) {
     TransactionFactory.register(type, getClass(), clazz);
@@ -58,12 +58,9 @@ public abstract class AbstractActuator implements Actuator {
     return this;
   }
 
-  public ForkUtils getForkUtils() {
-    return forkUtils;
-  }
-
-  public AbstractActuator setForkUtils(ForkUtils forkUtils) {
-    this.forkUtils = forkUtils;
+  public AbstractActuator setForkUtils(ForkController forkController) {
+    this.forkController = forkController;
     return this;
   }
+
 }

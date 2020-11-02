@@ -1,7 +1,7 @@
 package org.tron.core.zen.address;
 
+import java.security.SecureRandom;
 import java.util.Optional;
-import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +21,7 @@ public class SpendingKey {
   @Setter
   @Getter
   public byte[] value;
+  private static SecureRandom random = new SecureRandom();
 
   public static SpendingKey random() throws ZksnarkException {
     while (true) {
@@ -36,16 +37,9 @@ public class SpendingKey {
   }
 
   private static byte[] randomUint256() {
-    return generatePrivateKey(0L);
-  }
-
-  public static byte[] generatePrivateKey(long seed) {
     byte[] result = new byte[32];
-    if (seed != 0L) {
-      new Random(seed).nextBytes(result);
-    } else {
-      new Random().nextBytes(result);
-    }
+    random.nextBytes(result);
+
     Integer i = result[0] & 0x0F;
     result[0] = i.byteValue();
     return result;
@@ -93,7 +87,7 @@ public class SpendingKey {
           break;
         } else if (blob[33] == (byte) 255) {
           throw new BadItemException(
-              "librustzcash_check_diversifier did not return valid diversifier");
+              "librustzcash_check_diversifier does not return valid diversifier");
         }
         blob[33] += 1;
       } finally {

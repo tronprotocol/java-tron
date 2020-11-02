@@ -29,6 +29,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 
 @Slf4j
@@ -135,7 +136,7 @@ public class ProposalCreateActuatorTest {
     paras.put(0L, 1000000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
@@ -169,7 +170,7 @@ public class ProposalCreateActuatorTest {
     paras.put(0L, 10000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_INVALID, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -194,7 +195,7 @@ public class ProposalCreateActuatorTest {
     paras.put(0L, 10000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_NOACCOUNT, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -220,7 +221,7 @@ public class ProposalCreateActuatorTest {
     paras.put(0L, 10000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_SECOND, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -246,7 +247,7 @@ public class ProposalCreateActuatorTest {
     paras.put(31L, 10000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -266,7 +267,7 @@ public class ProposalCreateActuatorTest {
     paras.put(3L, 1 + 100_000_000_000_000_000L);
     actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
     try {
       actuator.validate();
@@ -284,7 +285,7 @@ public class ProposalCreateActuatorTest {
     paras.put(10L, -1L);
     actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
@@ -302,7 +303,7 @@ public class ProposalCreateActuatorTest {
     dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
     actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
@@ -324,7 +325,7 @@ public class ProposalCreateActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -348,7 +349,7 @@ public class ProposalCreateActuatorTest {
     paras.put(10L, 1000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -391,12 +392,12 @@ public class ProposalCreateActuatorTest {
 
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     ProposalCreateActuator actuatorSecond = new ProposalCreateActuator();
     actuatorSecond.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     dbManager.getDynamicPropertiesStore().saveLatestProposalNum(0L);
@@ -423,5 +424,30 @@ public class ProposalCreateActuatorTest {
       Assert.assertFalse(e instanceof ItemNotFoundException);
     }
   }
+
+  @Test
+  public void commonErrorCheck() {
+
+    ProposalCreateActuator actuator = new ProposalCreateActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ProposalCreateContract],real type[");
+    actuatorTest.invalidContractType();
+
+    HashMap<Long, Long> paras = new HashMap<>();
+    paras.put(0L, 1000000L);
+    actuatorTest.setContract(getContract(OWNER_ADDRESS_FIRST, paras));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No dbManager!");
+    actuatorTest.nullDBManger();
+
+  }
+
 
 }

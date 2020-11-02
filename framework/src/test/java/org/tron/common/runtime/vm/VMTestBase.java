@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.storage.Deposit;
@@ -45,8 +44,6 @@ public class VMTestBase {
   @After
   public void destroy() {
     Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    ApplicationFactory.create(context).shutdownServices();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

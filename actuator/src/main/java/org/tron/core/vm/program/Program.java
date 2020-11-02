@@ -18,51 +18,29 @@
 
 package org.tron.core.vm.program;
 
-import static java.lang.StrictMath.min;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
-import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-
 import com.google.protobuf.ByteString;
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Objects;
-import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.BIUtil;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Hash;
-import org.tron.common.utils.WalletUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
+import org.tron.common.utils.*;
+import org.tron.core.capsule.*;
+import org.tron.core.config.Parameter;
+import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
-import org.tron.core.vm.EnergyCost;
-import org.tron.core.vm.MessageCall;
-import org.tron.core.vm.OpCode;
-import org.tron.core.vm.PrecompiledContracts;
-import org.tron.core.vm.VM;
-import org.tron.core.vm.VMConstant;
-import org.tron.core.vm.VMUtils;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.*;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.*;
+import org.tron.core.vm.nativecontract.param.*;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -78,6 +56,17 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.*;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+
 /**
  * @author Roman Mandeleil
  * @since 01.06.2014
@@ -92,6 +81,8 @@ public class Program {
   private static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
       "validateForSmartContract failure:%s";
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
+  private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
+  private static final String CALL_PRE_COMPILED = "call pre-compiled";
   private final VMConfig config;
   private long nonce;
   private byte[] rootTransactionId;
@@ -141,7 +132,7 @@ public class Program {
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
     for (int i = 0; i < binData.length; i += 16) {
-      ret.append(VMUtils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
+      ret.append(Utils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
       ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
     }
     return ret.toString();
@@ -178,7 +169,7 @@ public class Program {
         }
       }
 
-      sb.append(VMUtils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
+      sb.append(Utils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
 
       if (op == null) {
         sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");
@@ -304,8 +295,8 @@ public class Program {
   }
 
   /**
-   * @param transferAddress the address send trx to.
-   * @param value  the trx value transferred in the internaltransaction
+   * @param transferAddress the address send TRX to.
+   * @param value the TRX value transferred in the internal transaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
@@ -391,16 +382,16 @@ public class Program {
     return pc;
   }
 
+  public void setPC(DataWord pc) {
+    this.setPC(pc.intValue());
+  }
+
   public void setPC(int pc) {
     this.pc = pc;
 
     if (this.pc >= ops.length) {
       stop();
     }
-  }
-
-  public void setPC(DataWord pc) {
-    this.setPC(pc.intValue());
   }
 
   public boolean isStopped() {
@@ -472,9 +463,9 @@ public class Program {
   /**
    * . Allocates a piece of memory and stores value at given offset address
    *
-   * @param addr      is the offset address
+   * @param addr is the offset address
    * @param allocSize size of memory needed to write
-   * @param value     the data to write to memory
+   * @param value the data to write to memory
    */
   public void memorySave(int addr, int allocSize, byte[] value) {
     memory.extendAndWrite(addr, allocSize, value);
@@ -506,7 +497,7 @@ public class Program {
    * . Allocates extra memory in the program for a specified size, calculated from a given offset
    *
    * @param offset the memory address offset
-   * @param size   the number of bytes to allocate
+   * @param size the number of bytes to allocate
    */
   public void allocateMemory(int offset, int size) {
     memory.extend(offset, size);
@@ -514,8 +505,13 @@ public class Program {
 
   public void suicide(DataWord obtainerAddress) {
 
-    byte[] owner = MUtil.convertToTronAddress(getContractAddress().getLast20Bytes());
-    byte[] obtainer = MUtil.convertToTronAddress(obtainerAddress.getLast20Bytes());
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
+
+    if (VMConfig.allowTvmStake()) {
+      withdrawRewardToBalance(owner, getContractState());
+    }
+
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -552,11 +548,131 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
+    if (VMConfig.allowTvmStake()) {
+      suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
+      //delete delegationStore
+      getResult().addDeleteDelegation(this.getContractAddress());
+    }
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
   public Repository getContractState() {
     return this.contractState;
+  }
+
+  private void withdrawRewardToBalance(byte[] owner, Repository repository) {
+    ContractService contractService = ContractService.getInstance();
+    contractService.withdrawReward(owner, getContractState());
+    AccountCapsule accountCapsule = repository.getAccount(owner);
+    long oldBalance = accountCapsule.getBalance();
+    long allowance = accountCapsule.getAllowance();
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+            .setBalance(oldBalance + allowance)
+            .setAllowance(0L)
+            .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
+            .build());
+    // todo internal tx
+    repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Transfer withdraw allowance to balance {}", allowance);
+    }
+  }
+
+  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository) {
+    AccountCapsule ownerCapsule = repository.getAccount(owner);
+    if (ownerCapsule.getFrozenCount() == 0) {
+      return;
+    }
+
+    //process owner frozen for self
+    if (FastByteComparisons.compareTo(obtainer, 0, 20,
+            TransactionTrace.convertToTronAddress(new byte[20]), 0, 20) == 0
+            || FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0
+            || FastByteComparisons.compareTo(obtainer, 0, 20,
+            repository.getBlackHoleAddress(), 0, 20) == 0) {
+      // if obtainer equal zero or black hole or owner
+      byte[] realObtain = obtainer;
+      if(FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
+        realObtain = repository.getBlackHoleAddress();
+      }
+      long unfreezeBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+      AccountCapsule realObtainCapsule = repository.getAccount(realObtain);
+      realObtainCapsule.setBalance(realObtainCapsule.getBalance() + unfreezeBalance);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+              .removeFrozen(0).build());
+      repository.updateAccount(realObtain, realObtainCapsule);
+      repository
+              .addTotalNetWeight(-unfreezeBalance / Parameter.ChainConstant.TRX_PRECISION);
+    } else {
+      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+      long now = getTimestamp().longValue() * 1000;
+      long ownerBandwidthBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+      long ownerBandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
+      long newBandwidthExpire = ownerBandwidthExpire;
+      long newFrozenBalanceForBandwidth = ownerBandwidthBalance;
+      if (obtainCapsule.getFrozenCount() > 0) {
+        long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
+        long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
+        long maxExpire = repository.getDynamicPropertiesStore().getMinFrozenTime() * Parameter.ChainConstant.FROZEN_PERIOD;
+        newBandwidthExpire = now
+                + BigInteger.valueOf(Long.max(0, Long.min(ownerBandwidthExpire - now, maxExpire)))
+                .multiply(BigInteger.valueOf(ownerBandwidthBalance))
+                .add(BigInteger.valueOf(Long.max(0, Long.min(obtainBandwidthExpire - now, maxExpire)))
+                        .multiply(BigInteger.valueOf(obtainBandwidthBalance)))
+                .divide(BigInteger.valueOf(
+                        Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance)))
+                .longValue();
+        newFrozenBalanceForBandwidth = Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance);
+      }
+      obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
+      repository.updateAccount(obtainer, obtainCapsule);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+              .removeFrozen(0).build());
+    }
+    //vote
+    {
+      VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
+
+      //get owner oldVotes
+      List<Protocol.Vote> oldVotes;
+      if (ownerVotesCapsule == null) {
+        oldVotes = ownerCapsule.getVotesList();
+      } else {
+        oldVotes = ownerVotesCapsule.getOldVotes();
+        //delete ownerVotesCapsule
+        getResult().addDeleteVotes(this.getContractAddress());
+      }
+      // merge oldVotes to address(zero)
+      if (!oldVotes.isEmpty()) {
+        ownerCapsule.clearVotes();
+        //merge oldVotes to zero
+        byte[] zeroAddress = TransactionTrace.convertToTronAddress(new byte[20]);
+        VotesCapsule zeroVotesCapsule = repository.getVotesCapsule(zeroAddress);
+        if (zeroVotesCapsule == null) {
+          zeroVotesCapsule = new VotesCapsule(ByteString.copyFrom(zeroAddress), oldVotes);
+        } else {
+          int zeroOldVoteSize = zeroVotesCapsule.getOldVotes().size();
+          Map<ByteString, Integer> zeroOldVotesIndex = new HashMap<>(zeroOldVoteSize);
+          for(int i = 0; i < zeroOldVoteSize; i++){
+            zeroOldVotesIndex.put(zeroVotesCapsule.getOldVotes().get(i).getVoteAddress(), i);
+          }
+          for (Protocol.Vote vote : oldVotes) {
+            if (zeroOldVotesIndex.containsKey(vote.getVoteAddress())) {
+              int index = zeroOldVotesIndex.get(vote.getVoteAddress());
+              long newOldVoteCount = vote.getVoteCount() + zeroVotesCapsule.getOldVotes().get(index).getVoteCount();
+              zeroVotesCapsule.setOldVote(index, Protocol.Vote.newBuilder()
+                      .setVoteAddress(vote.getVoteAddress())
+                      .setVoteCount(newOldVoteCount).build());
+            } else {
+              zeroVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount());
+            }
+          }
+        }
+        repository.updateVotesCapsule(zeroAddress, zeroVotesCapsule);
+      }
+    }
+
+    repository.updateAccount(owner, ownerCapsule);
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -570,7 +686,7 @@ public class Program {
     // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    byte[] newAddress = WalletUtil
+    byte[] newAddress = TransactionUtil
         .generateContractAddress(rootTransactionId, nonce);
 
     createContractImpl(value, programCode, newAddress, false);
@@ -578,7 +694,8 @@ public class Program {
 
   private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
       boolean isCreate2) {
-    byte[] senderAddress = MUtil.convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     if (logger.isDebugEnabled()) {
       logger.debug("creating a new contract inside contract run: [{}]",
@@ -735,7 +852,8 @@ public class Program {
       refundEnergy(refundEnergy, "remain energy from the internal call");
       if (logger.isDebugEnabled()) {
         logger.debug("The remaining energy is refunded, account: [{}], energy: [{}] ",
-            Hex.toHexString(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes())),
+            Hex.toHexString(
+                TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes())),
             refundEnergy);
       }
     }
@@ -761,8 +879,10 @@ public class Program {
     byte[] data = memoryChunk(msg.getInDataOffs().intValue(), msg.getInDataSize().intValue());
 
     // FETCH THE SAVED STORAGE
-    byte[] codeAddress = MUtil.convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] senderAddress = MUtil.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] codeAddress = TransactionTrace
+        .convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     if (logger.isDebugEnabled()) {
@@ -786,7 +906,7 @@ public class Program {
         throw e;
       }
     }
-    // transfer trx validation
+    // transfer TRX validation
     byte[] tokenId = null;
 
     checkTokenId(msg);
@@ -797,7 +917,7 @@ public class Program {
       long senderBalance = deposit.getBalance(senderAddress);
       if (senderBalance < endowment) {
         stackPushZero();
-        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
         return;
       }
     } else {
@@ -806,7 +926,7 @@ public class Program {
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();
-        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
         return;
       }
     }
@@ -817,7 +937,7 @@ public class Program {
     byte[] programCode =
         accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
-    // only for trx, not for token
+    // only for TRX, not for token
     long contextBalance = 0L;
     if (byTestingSuite()) {
       // This keeps track of the calls created for a test
@@ -833,7 +953,7 @@ public class Program {
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
-            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
             throw new TransferException("transfer trx failed: %s", e.getMessage());
           }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
@@ -846,7 +966,7 @@ public class Program {
               tokenId, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
-            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
             throw new TransferException("transfer trc10 failed: %s", e.getMessage());
           }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
@@ -943,7 +1063,7 @@ public class Program {
         }
       }
     } else {
-      refundEnergy(msg.getEnergy().longValue(), "remaining esnergy from the internal call");
+      refundEnergy(msg.getEnergy().longValue(), "remaining energy from the internal call");
     }
   }
 
@@ -967,10 +1087,10 @@ public class Program {
 
   public void checkCPUTimeLimit(String opName) {
 
-    if (DBConfig.isDebug()) {
+    if (CommonParameter.getInstance().isDebug()) {
       return;
     }
-    if (DBConfig.isSolidityNode()) {
+    if (CommonParameter.getInstance().isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
@@ -978,7 +1098,8 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          DBConfig.getMinTimeRatio(), DBConfig.getMaxTimeRatio(),
+          CommonParameter.getInstance().getMinTimeRatio(),
+          CommonParameter.getInstance().getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
@@ -1008,7 +1129,8 @@ public class Program {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
     getContractState()
-        .putStorageValue(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
+        .putStorageValue(
+            TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
             valWord);
   }
 
@@ -1017,12 +1139,13 @@ public class Program {
   }
 
   public byte[] getCodeAt(DataWord address) {
-    byte[] code = invoke.getDeposit().getCode(MUtil.convertToTronAddress(address.getLast20Bytes()));
+    byte[] code = invoke.getDeposit()
+        .getCode(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return nullToEmpty(code);
   }
 
   public byte[] getCodeHashAt(DataWord address) {
-    byte[] tronAddr = MUtil.convertToTronAddress(address.getLast20Bytes());
+    byte[] tronAddr = TransactionTrace.convertToTronAddress(address.getLast20Bytes());
     AccountCapsule account = getContractState().getAccount(tronAddr);
     if (account != null) {
       ContractCapsule contract = getContractState().getContract(tronAddr);
@@ -1055,7 +1178,7 @@ public class Program {
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
       if (Objects.nonNull(blockCapsule)) {
-        return new DataWord(blockCapsule.getBlockId().getBytes());
+        return new DataWord(blockCapsule.getBlockId().getBytes()).clone();
       } else {
         return DataWord.ZERO.clone();
       }
@@ -1067,14 +1190,27 @@ public class Program {
 
   public DataWord getBalance(DataWord address) {
     long balance = getContractState()
-        .getBalance(MUtil.convertToTronAddress(address.getLast20Bytes()));
+        .getBalance(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return new DataWord(balance);
+  }
+
+  public DataWord getRewardBalance(DataWord address) {
+    ContractService contractService = ContractService.getInstance();
+    long rewardBalance = contractService
+            .queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
+    return new DataWord(rewardBalance);
   }
 
   public DataWord isContract(DataWord address) {
     ContractCapsule contract = getContractState()
-        .getContract(MUtil.convertToTronAddress(address.getLast20Bytes()));
+        .getContract(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return contract != null ? new DataWord(1) : new DataWord(0);
+  }
+
+  public DataWord isSRCandidate(DataWord address) {
+    WitnessCapsule witnessCapsule = getContractState()
+            .getWitnessCapsule(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
+    return witnessCapsule != null ? new DataWord(1) : new DataWord(0);
   }
 
   public DataWord getOriginAddress() {
@@ -1085,6 +1221,10 @@ public class Program {
     return invoke.getCallerAddress().clone();
   }
 
+  public DataWord getChainId() {
+    return new DataWord(Hex.toHexString(getContractState()
+        .getBlockByNum(0).getBlockId().getBytes()));
+  }
   public DataWord getDropPrice() {
     return new DataWord(1);
   }
@@ -1136,7 +1276,8 @@ public class Program {
 
   public DataWord storageLoad(DataWord key) {
     DataWord ret = getContractState()
-        .getStorageValue(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes()),
+        .getStorageValue(
+            TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes()),
             key.clone());
     return ret == null ? null : ret.clone();
   }
@@ -1144,7 +1285,7 @@ public class Program {
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
     checkTokenIdInTokenBalance(tokenId);
     long ret = getContractState()
-        .getTokenBalance(MUtil.convertToTronAddress(address.getLast20Bytes()),
+        .getTokenBalance(TransactionTrace.convertToTronAddress(address.getLast20Bytes()),
             String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
@@ -1177,7 +1318,9 @@ public class Program {
     return invoke.getDifficulty().clone();
   }
 
-  public boolean isStaticCall() { return invoke.isStaticCall(); }
+  public boolean isStaticCall() {
+    return invoke.isStaticCall();
+  }
 
   public boolean isConstantCall() {
     return invoke.isConstantCall();
@@ -1310,7 +1453,14 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    byte[] senderAddress = MUtil.convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] senderAddress;
+    if(VMConfig.allowTvmIstanbul()) {
+      senderAddress = TransactionTrace
+          .convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    } else {
+      senderAddress = TransactionTrace
+          .convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    }
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
     byte[] contractAddress = WalletUtil
@@ -1345,8 +1495,10 @@ public class Program {
 
     Repository deposit = getContractState().newRepositoryChild();
 
-    byte[] senderAddress = MUtil.convertToTronAddress(this.getContractAddress().getLast20Bytes());
-    byte[] codeAddress = MUtil.convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] codeAddress = TransactionTrace
+        .convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     long endowment = msg.getEndowment().value().longValueExact();
@@ -1355,7 +1507,7 @@ public class Program {
 
     checkTokenId(msg);
     boolean isTokenTransfer = isTokenTransfer(msg);
-    // transfer trx validation
+    // transfer TRX validation
     if (!isTokenTransfer) {
       senderBalance = deposit.getBalance(senderAddress);
     } else {
@@ -1365,7 +1517,7 @@ public class Program {
     }
     if (senderBalance < endowment) {
       stackPushZero();
-      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+      refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
       return;
     }
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
@@ -1397,11 +1549,11 @@ public class Program {
     if (requiredEnergy > msg.getEnergy().longValue()) {
       // Not need to throw an exception, method caller needn't know that
       // regard as consumed the energy
-      this.refundEnergy(0, "call pre-compiled"); //matches cpp logic
+      this.refundEnergy(0, CALL_PRE_COMPILED); //matches cpp logic
       this.stackPushZero();
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
-      contract.setCallerAddress(MUtil.convertToTronAddress(msg.getType().callIsDelegate()
+      contract.setCallerAddress(TransactionTrace.convertToTronAddress(msg.getType().callIsDelegate()
           ? getCallerAddress().getLast20Bytes() : getContractAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
       contract.setRepository(deposit);
@@ -1411,13 +1563,13 @@ public class Program {
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
-        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, "call pre-compiled");
+        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, CALL_PRE_COMPILED);
         this.stackPushOne();
         returnDataBuffer = out.getRight();
         deposit.commit();
       } else {
         // spend all energy on failure, push zero and revert state changes
-        this.refundEnergy(0, "call pre-compiled");
+        this.refundEnergy(0, CALL_PRE_COMPILED);
         this.stackPushZero();
         if (Objects.nonNull(this.result.getException())) {
           throw result.getException();
@@ -1440,7 +1592,7 @@ public class Program {
    * [Long.Min, 0)        Not possible                               error
    * --------------------------------------------------------------------------------------------- 0
    * allowed and only allowed                    error (guaranteed in CALLTOKEN) transfertoken id=0
-   * should not transfer trx） ---------------------------------------------------------------------
+   * should not transfer TRX） ---------------------------------------------------------------------
    * (0-100_0000]          Not possible                              error
    * ---------------------------------------------------------------------------------------------
    * (100_0000, Long.Max]  Not possible                             allowed
@@ -1456,18 +1608,18 @@ public class Program {
         tokenId = msg.getTokenId().sValue().longValueExact();
       } catch (ArithmeticException e) {
         if (VMConfig.allowTvmConstantinople()) {
-          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
           throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw e;
       }
-      // tokenId can only be 0 when isTokenTransferMsg == false
+      // tokenId can only be 0 when isTokenTransferMsg is false
       // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0)
           || (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
         if (VMConfig.allowTvmConstantinople()) {
-          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
           throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw new BytecodeExecutionException(
@@ -1537,7 +1689,7 @@ public class Program {
 
   private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
     if (VMConfig.allowTvmSolidity059()) {
-      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
+      //after solidity059 proposal , allow contract transfer trc10 or TRX to non-exist address(would create one)
       AccountCapsule sender = deposit.getAccount(contextAddress);
       if (sender == null) {
         deposit.createNormalAccount(contextAddress);
@@ -1591,6 +1743,117 @@ public class Program {
     }
   }
 
+  public boolean stake(DataWord srAddress, DataWord stakeAmount) {
+    Repository repository = getContractState().newRepositoryChild();
+    StakeProcessor stakeProcessor = new StakeProcessor();
+    StakeParam stakeParam = new StakeParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    stakeParam.setOwnerAddress(owner);
+    stakeParam.setSrAddress(TransactionTrace.convertToTronAddress(srAddress.getLast20Bytes()));
+    stakeParam.setNow(getTimestamp().longValue() * 1000);
+    try {
+      stakeParam.setStakeAmount(stakeAmount.sValue().longValueExact());
+      stakeProcessor.process(stakeParam, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForStake failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForStake failure:{}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("stakeAmount out of long range");
+    }
+    return false;
+  }
+
+  public boolean unstake() {
+    Repository repository = getContractState().newRepositoryChild();
+    UnstakeProcessor unstakeProcessor = new UnstakeProcessor();
+    UnstakeParam unstakeParam = new UnstakeParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    unstakeParam.setOwnerAddress(owner);
+    unstakeParam.setNow(getTimestamp().longValue() * 1000);
+    try {
+      unstakeProcessor.validate(unstakeParam, repository);
+      unstakeProcessor.execute(unstakeParam, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForUnstake failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForUnstake failure:{}", e.getMessage());
+    }
+    return false;
+  }
+
+  public void withdrawReward() {
+    Repository repository = getContractState().newRepositoryChild();
+    WithdrawRewardProcessor withdrawRewardContractProcessor = new WithdrawRewardProcessor();
+    WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    withdrawRewardParam.setTargetAddress(ownerAddress);
+    try {
+      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository,
+          getTimestamp().longValue() * 1000);
+      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository,
+          getTimestamp().longValue() * 1000);
+      stackPush(new DataWord(allowance));
+      repository.commit();
+    } catch (ContractValidateException e) {
+      logger.error("validateForWithdrawReward failure:{}", e.getMessage());
+      stackPushZero();
+    }
+  }
+
+  public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    TokenIssueProcessor tokenIssueProcessor = new TokenIssueProcessor();
+    TokenIssueParam tokenIssueParam = new TokenIssueParam();
+    tokenIssueParam.setName(name.getNoEndZeroesData());
+    tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
+    tokenIssueParam.setOwnerAddress(ownerAddress);
+    try {
+      tokenIssueParam.setTotalSupply(totalSupply.sValue().longValueExact());
+      tokenIssueParam.setPrecision(precision.sValue().intValueExact());
+      tokenIssueProcessor.validate(tokenIssueParam, repository);
+      tokenIssueProcessor.execute(tokenIssueParam, repository);
+      stackPush(new DataWord(repository.getTokenIdNum()));
+      repository.commit();
+    } catch (ArithmeticException e) {
+      logger.error("totalSupply or precision out of long range");
+      stackPushZero();
+    } catch (ContractValidateException e) {
+      logger.error("validateForAssetIssue failure:{}", e.getMessage());
+      stackPushZero();
+    }
+  }
+
+  public void updateAsset(DataWord urlDataOffs, DataWord descriptionDataOffs) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    DataWord urlSize = memoryLoad(urlDataOffs);
+    DataWord descriptionSize = memoryLoad(descriptionDataOffs);
+    byte[] urlData = memoryChunk(urlDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+            urlSize.intValueSafe());
+    byte[] descriptionData = memoryChunk(descriptionDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+            descriptionSize.intValueSafe());
+    UpdateAssetParam updateAssetParam = new UpdateAssetParam();
+    updateAssetParam.setOwnerAddress(ownerAddress);
+    updateAssetParam.setNewUrl(urlData);
+    updateAssetParam.setNewDesc(descriptionData);
+    UpdateAssetProcessor updateAssetProcessor = new UpdateAssetProcessor();
+    try {
+      updateAssetProcessor.validate(updateAssetParam, repository);
+      updateAssetProcessor.execute(updateAssetParam, repository);
+      stackPushOne();
+      repository.commit();
+    } catch (ContractValidateException e) {
+      logger.error("validateForUpdateAsset failure:{}", e.getMessage());
+      stackPushZero();
+    }
+  }
+
   /**
    * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is
    * quite normal situation and doesn't mean exceptional situation in terms of the program
@@ -1604,6 +1867,13 @@ public class Program {
     }
 
     public BytecodeExecutionException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  public static class AssetIssueException extends BytecodeExecutionException {
+
+    public AssetIssueException(String message, Object... args) {
       super(format(message, args));
     }
   }

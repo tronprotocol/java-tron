@@ -91,7 +91,12 @@ case "`uname`" in
     ;;
 esac
 
-CLASSPATH=$classpath
+for file in `ls \$APP_HOME/lib`
+do
+    CLASSPATH='\$APP_HOME'/lib/\$file:\$CLASSPATH
+done
+
+#CLASSPATH=$classpath
 
 # Determine the Java command to use to start the JVM.
 if [ -n "\$JAVA_HOME" ] ; then
@@ -181,12 +186,36 @@ if [ "\$cygwin" = "true" -o "\$msys" = "true" ] ; then
     esac
 fi
 
+# Parse the jvm paramter from console
+array=("\$@")
+jvm_index=-1
+for ((i=0;i<\${#array[@]};i++))
+do
+    if [[ "-jvm" == \${array[\$i]} ]]; then
+        if [[ \${array[\$i+1]} =~ ^\\{.*\\}\$ ]]; then
+            jvm_args=\${array[\$i+1]}
+            len=\${#jvm_args}
+            jvm_args=\${jvm_args:1:\$len-2}
+            JAVA_OPTS="\$JAVA_OPTS \$jvm_args"
+            jvm_index=\$i
+        else
+            echo "jvm param format is not right"
+            exit -1
+        fi
+    fi
+done
+
+if [[ \$jvm_index -ge 0 ]]; then
+    unset array[jvm_index]
+    unset array[jvm_index+1]
+fi
+
 # Escape application args
 save () {
     for i do printf %s\\\\n "\$i" | sed "s/'/'\\\\\\\\''/g;1s/^/'/;\\\$s/\\\$/' \\\\\\\\/" ; done
     echo " "
 }
-APP_ARGS=`save "\$@"`
+APP_ARGS=`save \${array[*]}`
 
 # Collect all arguments for the java command, following the shell quoting and substitution rules
 eval set -- \$DEFAULT_JVM_OPTS \$JAVA_OPTS \$${optsEnvironmentVar} <% if ( appNameSystemProperty ) { %>"\"-D${appNameSystemProperty}=\$APP_BASE_NAME\"" <% } %>-classpath "\"\$CLASSPATH\"" ${mainClassName} "\$APP_ARGS"

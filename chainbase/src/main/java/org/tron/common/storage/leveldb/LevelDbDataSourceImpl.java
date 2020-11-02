@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -42,9 +44,10 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
 import org.tron.core.db2.common.Instance;
@@ -69,7 +72,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       WriteOptions writeOptions) {
     this.parentPath = Paths.get(
         parentPath,
-        DBConfig.getDbDirectory()
+        CommonParameter.getInstance().getStorage().getDbDirectory()
     ).toString();
     this.dataBaseName = dataBaseName;
     this.options = options;
@@ -80,7 +83,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public LevelDbDataSourceImpl(String parentPath, String dataBaseName) {
     this.parentPath = Paths.get(
         parentPath,
-        DBConfig.getDbDirectory()
+        CommonParameter.getInstance().getStorage().getDbDirectory()
     ).toString();
 
     this.dataBaseName = dataBaseName;
@@ -303,6 +306,25 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return new ArrayList<>();
+    }
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      List<byte[]> result = new ArrayList<>();
+      long i = 0;
+      for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
+        result.add(iterator.peekNext().getKey());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
   public Map<byte[], byte[]> getNext(byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptyMap();
@@ -457,6 +479,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public LevelDbDataSourceImpl newInstance() {
-    return new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName(dataBaseName), dataBaseName, options, writeOptions);
+    return new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dataBaseName),
+        dataBaseName, options, writeOptions);
   }
 }

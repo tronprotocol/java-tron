@@ -1,5 +1,7 @@
 package org.tron.core.zksnark;
 
+import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
+
 import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -18,7 +20,11 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.*;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
@@ -32,12 +38,10 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.MerklePath;
 import org.tron.common.zksnark.ZksnarkClient;
-import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorCreator;
-import org.tron.core.actuator.ShieldedTransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
@@ -63,7 +67,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.address.DiversifierT;
@@ -183,7 +186,7 @@ public class SendCoinShieldTest {
   private PedersenHash String2PedersenHash(String str) {
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     byte[] bytes1 = ByteArray.fromHexString(str);
-    ZksnarkUtils.sort(bytes1);
+    ByteUtil.reverse(bytes1);
     compressCapsule1.setContent(ByteString.copyFrom(bytes1));
     return compressCapsule1.getInstance();
   }
@@ -233,7 +236,7 @@ public class SendCoinShieldTest {
   public void testStringRevert() throws Exception {
     byte[] bytes = ByteArray
         .fromHexString("6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c");
-    ZksnarkUtils.sort(bytes);
+    ByteUtil.reverse(bytes);
     System.out.println("testStringRevert------" + ByteArray.toHexString(bytes));
   }
 
@@ -396,7 +399,7 @@ public class SendCoinShieldTest {
     ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     byte[] pkd = paymentAddress2.getPkD();
-    Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
+    Note note = new Note(paymentAddress2, 4000);//construct function:this.pkD = address.getPkD();
     note.setRcm(ByteArray
         .fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06"));
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
@@ -623,7 +626,8 @@ public class SendCoinShieldTest {
   }
 
   private byte[] getHash() {
-    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),"this is a test".getBytes()).getBytes();
+    return Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), "this is a test".getBytes()).getBytes();
   }
 
   public void checkZksnark() throws BadItemException, ZksnarkException {
@@ -653,7 +657,7 @@ public class SendCoinShieldTest {
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
-        TransactionUtil.getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
+        getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
         10 * 1000000);
     Assert.assertTrue(ret);
   }
@@ -826,7 +830,7 @@ public class SendCoinShieldTest {
   @Test
   public void testEmptyRoot() {
     byte[] bytes = IncrementalMerkleTreeContainer.emptyRoot().getContent().toByteArray();
-    ZksnarkUtils.sort(bytes);
+    ByteUtil.reverse(bytes);
     Assert.assertEquals("3e49b5f954aa9d3545bc6c37744661eea48d7c34e3000d82b7f0010c30f4c2fb",
         ByteArray.toHexString(bytes));
   }
@@ -872,16 +876,16 @@ public class SendCoinShieldTest {
         .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
     System.out.println(sk.encode());
     System.out.println(
-        "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
-    System.out.println("sk.fullViewKey()" + ByteUtil.toHexString(sk.fullViewingKey().encode()));
+        "sk.expandedSpendingKey()" + ByteArray.toHexString(sk.expandedSpendingKey().encode()));
+    System.out.println("sk.fullViewKey()" + ByteArray.toHexString(sk.fullViewingKey().encode()));
     System.out
-        .println("sk.ivk()" + ByteUtil.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
+        .println("sk.ivk()" + ByteArray.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
     System.out.println(
-        "sk.defaultDiversifier:" + ByteUtil.toHexString(sk.defaultDiversifier().getData()));
+        "sk.defaultDiversifier:" + ByteArray.toHexString(sk.defaultDiversifier().getData()));
 
-    System.out.println("sk.defaultAddress:" + ByteUtil.toHexString(sk.defaultAddress().encode()));
+    System.out.println("sk.defaultAddress:" + ByteArray.toHexString(sk.defaultAddress().encode()));
 
-    System.out.println("rcm:" + ByteUtil.toHexString(Note.generateR()));
+    System.out.println("rcm:" + ByteArray.toHexString(Note.generateR()));
 
     int count = 10;
     for (int i = 0; i < count; i++) {
@@ -889,7 +893,7 @@ public class SendCoinShieldTest {
       System.out.println("---- random " + i + " ----");
 
       sk = SpendingKey.random();
-      System.out.println("sk is: " + ByteUtil.toHexString(sk.getValue()));
+      System.out.println("sk is: " + ByteArray.toHexString(sk.getValue()));
 
       DiversifierT diversifierT = new DiversifierT();
       byte[] d;
@@ -900,39 +904,39 @@ public class SendCoinShieldTest {
         }
       }
       diversifierT.setData(d);
-      System.out.println("d is: " + ByteUtil.toHexString(d));
+      System.out.println("d is: " + ByteArray.toHexString(d));
 
       ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-      System.out.println("expsk-ask is: " + ByteUtil.toHexString(expsk.getAsk()));
-      System.out.println("expsk-nsk is: " + ByteUtil.toHexString(expsk.getNsk()));
-      System.out.println("expsk-ovk is: " + ByteUtil.toHexString(expsk.getOvk()));
+      System.out.println("expsk-ask is: " + ByteArray.toHexString(expsk.getAsk()));
+      System.out.println("expsk-nsk is: " + ByteArray.toHexString(expsk.getNsk()));
+      System.out.println("expsk-ovk is: " + ByteArray.toHexString(expsk.getOvk()));
 
       FullViewingKey fullViewingKey = expsk.fullViewingKey();
-      System.out.println("fullviewkey-ak is: " + ByteUtil.toHexString(fullViewingKey.getAk()));
-      System.out.println("fullviewkey-nk is: " + ByteUtil.toHexString(fullViewingKey.getNk()));
-      System.out.println("fullviewkey-ovk is: " + ByteUtil.toHexString(fullViewingKey.getOvk()));
+      System.out.println("fullviewkey-ak is: " + ByteArray.toHexString(fullViewingKey.getAk()));
+      System.out.println("fullviewkey-nk is: " + ByteArray.toHexString(fullViewingKey.getNk()));
+      System.out.println("fullviewkey-ovk is: " + ByteArray.toHexString(fullViewingKey.getOvk()));
 
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      System.out.println("ivk is: " + ByteUtil.toHexString(incomingViewingKey.getValue()));
+      System.out.println("ivk is: " + ByteArray.toHexString(incomingViewingKey.getValue()));
 
       Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
-      System.out.println("pkD is: " + ByteUtil.toHexString(op.get().getPkD()));
+      System.out.println("pkD is: " + ByteArray.toHexString(op.get().getPkD()));
 
       byte[] rcm = Note.generateR();
-      System.out.println("rcm is " + ByteUtil.toHexString(rcm));
+      System.out.println("rcm is " + ByteArray.toHexString(rcm));
 
       byte[] alpha = Note.generateR();
-      System.out.println("alpha is " + ByteUtil.toHexString(alpha));
+      System.out.println("alpha is " + ByteArray.toHexString(alpha));
 
       String address = KeyIo.encodePaymentAddress(op.get());
       System.out.println("saplingaddress is: " + address);
 
       // check
       PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(address);
-      Assert.assertEquals(ByteUtil.toHexString(paymentAddress.getD().getData()),
-          ByteUtil.toHexString(d));
-      Assert.assertEquals(ByteUtil.toHexString(paymentAddress.getPkD()),
-          ByteUtil.toHexString(op.get().getPkD()));
+      Assert.assertEquals(ByteArray.toHexString(paymentAddress.getD().getData()),
+          ByteArray.toHexString(d));
+      Assert.assertEquals(ByteArray.toHexString(paymentAddress.getPkD()),
+          ByteArray.toHexString(op.get().getPkD()));
 
     }
   }
@@ -1011,7 +1015,7 @@ public class SendCoinShieldTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
           110_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 110_000_000L).build());
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
@@ -1047,7 +1051,7 @@ public class SendCoinShieldTest {
           110_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 110_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
 
@@ -1234,7 +1238,7 @@ public class SendCoinShieldTest {
           220_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 220_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 220_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 210_000_000L);
 
@@ -1262,7 +1266,7 @@ public class SendCoinShieldTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
           230_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 230_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 230_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 220_000_000L);
 

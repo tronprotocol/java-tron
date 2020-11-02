@@ -11,6 +11,7 @@ import "core/contract/balance_contract.proto";
 import "core/contract/proposal_contract.proto";
 import "core/contract/storage_contract.proto";
 import "core/contract/exchange_contract.proto";
+import "core/contract/market_contract.proto";
 import "core/contract/smart_contract.proto";
 import "core/contract/shield_contract.proto";
 
@@ -286,6 +287,28 @@ service Wallet {
   rpc ExchangeTransaction (ExchangeTransactionContract) returns (TransactionExtention) {
   }
 
+  rpc MarketSellAsset (MarketSellAssetContract) returns (TransactionExtention) {
+  }
+
+  rpc MarketCancelOrder (MarketCancelOrderContract) returns (TransactionExtention) {
+  }
+
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
+
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
+  }
+
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
+  }
+
+
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
       post: "/wallet/listnodes"
@@ -408,6 +431,9 @@ service Wallet {
   }
 
   rpc GetContract (BytesMessage) returns (SmartContract) {
+  }
+
+  rpc GetContractInfo (BytesMessage) returns (SmartContractDataWrapper) {
   }
 
   rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
@@ -899,6 +925,21 @@ service WalletSolidity {
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
 
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
+
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
+  }
+
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
+  }
+
 };
 
 service WalletExtension {
@@ -946,6 +987,18 @@ service Database {
 
   }
 };
+
+service Monitor {
+  rpc GetStatsInfo (EmptyMessage) returns (MetricsInfo) {
+    option (google.api.http) = {
+      post: "/monitor/getstatsinfo"
+      body: "*"
+      additional_bindings {
+        get: "/monitor/getstatsinfo"
+      }
+    };
+  }
+}
 
 message Return {
   enum response_code {
@@ -1254,7 +1307,7 @@ message PrivateParameters {
   repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
-  int64 timeout = 10;  // timeout in seconds, it works only when it bigger than 0
+  int64 timeout = 10; // timeout in seconds, it works only when it bigger than 0
 }
 
 message PrivateParametersWithoutAsk {
@@ -1267,7 +1320,7 @@ message PrivateParametersWithoutAsk {
   repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
-  int64 timeout = 10;  // timeout in seconds, it works only when it bigger than 0
+  int64 timeout = 10; // timeout in seconds, it works only when it bigger than 0
 }
 
 message SpendAuthSigParameters {

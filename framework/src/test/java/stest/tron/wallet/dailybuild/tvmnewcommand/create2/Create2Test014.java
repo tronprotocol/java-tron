@@ -482,6 +482,7 @@ public class Create2Test014 {
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     long devEnergyLimitAfter = accountResource.getEnergyLimit();

@@ -3,13 +3,13 @@ package org.tron.core.consensus;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
 import org.tron.core.utils.ProposalUtil;
 
 /**
  * Notice:
- *
+ * <p>
  * if you want to add a proposal,you just should add a enum ProposalType and add the valid in the
  * validator method, add the process in the process method
  */
@@ -118,7 +118,8 @@ public class ProposalService extends ProposalUtil {
         case ALLOW_ADAPTIVE_ENERGY: {
           if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
             manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
-            if (manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+            if (manager.getChainBaseManager()
+                .getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
               //24 * 60 * 2 . one minute,1/2 total limit.
               manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
               manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
@@ -173,28 +174,60 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(entry.getValue());
           break;
         }
-//        case ALLOW_SHIELDED_TRANSACTION: {
-//          if (manager.getDynamicPropertiesStore().getAllowShieldedTransaction() == 0) {
-//            manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(entry.getValue());
-//            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(51);
-//          }
-//          break;
-//        }
-//        case SHIELDED_TRANSACTION_FEE: {
-//          manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
-//          break;
-//        }
-//        case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
-//          manager.getDynamicPropertiesStore()
-//              .saveShieldedTransactionCreateAccountFee(entry.getValue());
-//          break;
-//        }
+        //case ALLOW_SHIELDED_TRANSACTION: {
+        //  if (manager.getDynamicPropertiesStore().getAllowShieldedTransaction() == 0) {
+        //    manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(entry.getValue());
+        //    manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(51);
+        //  }
+        //  break;
+        //}
+        //case SHIELDED_TRANSACTION_FEE: {
+        //  manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
+        //  break;
+        //}
+        //        case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+        //          manager.getDynamicPropertiesStore()
+        //              .saveShieldedTransactionCreateAccountFee(entry.getValue());
+        //          break;
+        //        }
         case FORBID_TRANSFER_TO_CONTRACT: {
           manager.getDynamicPropertiesStore().saveForbidTransferToContract(entry.getValue());
           break;
         }
+        case ALLOW_PBFT: {
+          manager.getDynamicPropertiesStore().saveAllowPBFT(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_ISTANBUL: {
+          manager.getDynamicPropertiesStore().saveAllowTvmIstanbul(entry.getValue());
+          break;
+        }
         case ALLOW_SHIELDED_TRC20_TRANSACTION: {
           manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(entry.getValue());
+          break;
+        }
+        //case ALLOW_TVM_STAKE: {
+        //  manager.getDynamicPropertiesStore().saveAllowTvmStake(entry.getValue());
+        //  break;
+        //}
+        //case ALLOW_TVM_ASSET_ISSUE: {
+        //  manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
+        //  break;
+        //}
+        case ALLOW_MARKET_TRANSACTION: {
+          if (manager.getDynamicPropertiesStore().getAllowMarketTransaction() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowMarketTransaction(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(52);
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(53);
+          }
+          break;
+        }
+        case MARKET_SELL_FEE: {
+          manager.getDynamicPropertiesStore().saveMarketSellFee(entry.getValue());
+          break;
+        }
+        case MARKET_CANCEL_FEE: {
+          manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
           break;
         }
         default:

@@ -1,21 +1,9 @@
 package org.tron.core.vm;
 
+import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.Hash.sha3;
-import static org.tron.core.vm.OpCode.CALL;
-import static org.tron.core.vm.OpCode.CALLTOKEN;
-import static org.tron.core.vm.OpCode.CALLTOKENID;
-import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
-import static org.tron.core.vm.OpCode.CREATE2;
-import static org.tron.core.vm.OpCode.EXTCODEHASH;
-import static org.tron.core.vm.OpCode.ISCONTRACT;
-import static org.tron.core.vm.OpCode.PUSH1;
-import static org.tron.core.vm.OpCode.REVERT;
-import static org.tron.core.vm.OpCode.SAR;
-import static org.tron.core.vm.OpCode.SHL;
-import static org.tron.core.vm.OpCode.SHR;
-import static org.tron.core.vm.OpCode.TOKENBALANCE;
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
+import static org.tron.core.vm.OpCode.*;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -25,6 +13,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -37,6 +26,9 @@ import org.tron.core.vm.program.Stack;
 public class VM {
 
   public static final String ADDRESS_LOG = "address: ";
+  private static final String DATA_LOG = "data: ";
+  private static final String SIZE_LOG = "size: ";
+  private static final String VALUE_LOG = " value: ";
   private static final BigInteger _32_ = BigInteger.valueOf(32);
   private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
   // 3MB
@@ -56,7 +48,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size  number of bytes needed
+   * @param size number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -75,7 +67,7 @@ public class VM {
 
     checkMemorySize(op, newMemSize);
 
-    // memory drop consume calc
+    // memory SUN consume calc
     long memoryUsage = (newMemSize.longValueExact() + 31) / 32 * 32;
     if (memoryUsage > oldMemSize) {
       long memWords = (memoryUsage / 32);
@@ -105,21 +97,34 @@ public class VM {
       }
 
       // hard fork for 3.2
-      if (!VMConfig.allowTvmTransferTrc10()) {
-        if (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID) {
-          throw Program.Exception.invalidOpCode(program.getCurrentOp());
-        }
+      if (!VMConfig.allowTvmTransferTrc10()
+          && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      if (!VMConfig.allowTvmConstantinople()) {
-        if (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH) {
-          throw Program.Exception.invalidOpCode(program.getCurrentOp());
-        }
+      if (!VMConfig.allowTvmConstantinople()
+          && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
       if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
+
+      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+
+      if (!VMConfig.allowTvmStake()
+              && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+                || op == WITHDRAWREWARD)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+
+      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
       program.verifyStackOverflow(op.require(), op.ret()); //Check not exceeding stack limits
@@ -168,7 +173,9 @@ public class VM {
           break;
         case TOKENBALANCE:
         case BALANCE:
+        case REWARDBALANCE:
         case ISCONTRACT:
+        case ISSRCANDIDATE:
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -234,10 +241,10 @@ public class VM {
           DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
 
           //check to see if account does not exist and is not a precompiled contract
-          if (op == CALL || op == CALLTOKEN) {
-            if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
-              energyCost += energyCosts.getNEW_ACCT_CALL();
-            }
+          if ((op == CALL || op == CALLTOKEN)
+              && isDeadAccount(program, callAddressWord)
+              && !value.isZero()) {
+            energyCost += energyCosts.getNEW_ACCT_CALL();
           }
 
           // TODO #POC9 Make sure this is converted to BigInteger (256num support)
@@ -309,6 +316,19 @@ public class VM {
           int bytesOccupied = exp.bytesOccupied();
           energyCost =
               (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
+          break;
+        case STAKE:
+        case UNSTAKE:
+          energyCost = energyCosts.getStakeAndUnstake();
+          break;
+        case WITHDRAWREWARD:
+          energyCost = energyCosts.getWithdrawReward();
+          break;
+        case TOKENISSUE:
+          energyCost = energyCosts.getTokenIssue();
+          break;
+        case UPDATEASSET:
+          energyCost = energyCosts.getUpdateAsset();
           break;
         default:
           break;
@@ -743,11 +763,33 @@ public class VM {
           program.step();
         }
         break;
+        case REWARDBALANCE: {
+          DataWord address = program.stackPop();
+          DataWord rewardBalance = program.getRewardBalance(address);
+
+          if (logger.isDebugEnabled()) {
+            hint = ADDRESS_LOG
+                    + Hex.toHexString(address.getLast20Bytes())
+                    + " reward balance: " + rewardBalance.toString();
+          }
+
+          program.stackPush(rewardBalance);
+          program.step();
+        }
+        break;
         case ISCONTRACT: {
           DataWord address = program.stackPop();
           DataWord isContract = program.isContract(address);
 
           program.stackPush(isContract);
+          program.step();
+        }
+        break;
+        case ISSRCANDIDATE: {
+          DataWord address = program.stackPop();
+          DataWord isSRCandidate = program.isSRCandidate(address);
+
+          program.stackPush(isSRCandidate);
           program.step();
         }
         break;
@@ -817,7 +859,7 @@ public class VM {
           DataWord value = program.getDataValue(dataOffs);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + value;
+            hint = DATA_LOG + value;
           }
 
           program.stackPush(value);
@@ -828,7 +870,7 @@ public class VM {
           DataWord dataSize = program.getDataSize();
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + dataSize.value();
+            hint = SIZE_LOG + dataSize.value();
           }
 
           program.stackPush(dataSize);
@@ -843,7 +885,7 @@ public class VM {
           byte[] msgData = program.getDataCopy(dataOffsetData, lengthData);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(msgData);
+            hint = DATA_LOG + Hex.toHexString(msgData);
           }
 
           program.memorySave(memOffsetData.intValueSafe(), msgData);
@@ -854,7 +896,7 @@ public class VM {
           DataWord dataSize = program.getReturnDataBufferSize();
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + dataSize.value();
+            hint = SIZE_LOG + dataSize.value();
           }
 
           program.stackPush(dataSize);
@@ -874,7 +916,7 @@ public class VM {
           }
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(msgData);
+            hint = DATA_LOG + Hex.toHexString(msgData);
           }
 
           program.memorySave(memOffsetData.intValueSafe(), msgData);
@@ -894,7 +936,7 @@ public class VM {
           DataWord codeLength = new DataWord(length);
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + length;
+            hint = SIZE_LOG + length;
           }
 
           program.stackPush(codeLength);
@@ -1029,6 +1071,18 @@ public class VM {
           program.step();
         }
         break;
+        case CHAINID: {
+          DataWord chainId = program.getChainId();
+          program.stackPush(chainId);
+          program.step();
+          break;
+        }
+        case SELFBALANCE: {
+          DataWord selfBalance = program.getBalance(program.getContractAddress());
+          program.stackPush(selfBalance);
+          program.step();
+          break;
+        }
         case POP: {
           program.stackPop();
           program.step();
@@ -1120,7 +1174,7 @@ public class VM {
           DataWord data = program.memoryLoad(addr);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + data;
+            hint = DATA_LOG + data;
           }
 
           program.stackPush(data);
@@ -1132,7 +1186,7 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isDebugEnabled()) {
-            hint = "addr: " + addr + " value: " + value;
+            hint = "addr: " + addr + VALUE_LOG + value;
           }
 
           program.memorySave(addr, value);
@@ -1152,7 +1206,7 @@ public class VM {
           DataWord val = program.storageLoad(key);
 
           if (logger.isDebugEnabled()) {
-            hint = "key: " + key + " value: " + val;
+            hint = "key: " + key + VALUE_LOG + val;
           }
 
           if (val == null) {
@@ -1173,7 +1227,7 @@ public class VM {
 
           if (logger.isDebugEnabled()) {
             hint =
-                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
+                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + VALUE_LOG
                     + value;
           }
 
@@ -1398,6 +1452,46 @@ public class VM {
           program.step();
           break;
         }
+        case STAKE: {
+          DataWord srAddress = program.stackPop();
+          DataWord stakeAmount = program.stackPop();
+          boolean result = program.stake(srAddress, stakeAmount);
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
+        case UNSTAKE: {
+          boolean result = program.unstake();
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
+        case WITHDRAWREWARD: {
+          program.withdrawReward();
+          program.step();
+        }
+        break;
+        case TOKENISSUE: {
+          DataWord name = program.stackPop();
+          DataWord abbr = program.stackPop();
+          DataWord totalSupply = program.stackPop();
+          DataWord precision = program.stackPop();
+
+          program.tokenIssue(name, abbr, totalSupply, precision);
+          program.step();
+          break;
+        }
+        case UPDATEASSET: {
+          program.stackPop();
+          DataWord urlDataOffs = program.stackPop();
+          DataWord descriptionDataOffs = program.stackPop();
+
+          program.updateAsset(urlDataOffs, descriptionDataOffs);
+          program.step();
+          break;
+        }
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
@@ -1407,7 +1501,7 @@ public class VM {
           program.setHReturn(hReturn);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(hReturn)
+            hint = DATA_LOG + Hex.toHexString(hReturn)
                 + " offset: " + offset.value()
                 + " size: " + size.value();
           }

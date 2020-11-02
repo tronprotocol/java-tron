@@ -1,12 +1,14 @@
 package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
+import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -30,6 +32,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 
@@ -153,7 +156,7 @@ public class ExchangeWithdrawActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             2,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "def".getBytes());
     exchangeCapsule2.setBalance(1_000_000_000000L, 10_000_000L);
     ExchangeCapsule exchangeCapsule3 =
@@ -185,7 +188,7 @@ public class ExchangeWithdrawActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             2,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "2".getBytes());
     exchangeCapsule5.setBalance(1_000_000_000000L, 10_000_000L);
     ExchangeCapsule exchangeCapsule6 =
@@ -234,7 +237,7 @@ public class ExchangeWithdrawActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             2,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "456".getBytes());
     exchangeCapsule2.setBalance(1_000_000_000000L, 10_000_000L);
     ExchangeCapsule exchangeCapsule3 =
@@ -517,10 +520,7 @@ public class ExchangeWithdrawActuatorTest {
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsule2.getCreatorAddress());
       Assert.assertEquals(exchangeId, exchangeCapsule2.getID());
       Assert.assertEquals(1000000, exchangeCapsule2.getCreateTime());
-//      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsule2.getFirstTokenId()));
-//      Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsule2.getFirstTokenId()));
       Assert.assertEquals(0L, exchangeCapsule2.getFirstTokenBalance());
-//      Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule2.getSecondTokenId()));
       Assert.assertEquals(0L, exchangeCapsule2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -1765,4 +1765,74 @@ public class ExchangeWithdrawActuatorTest {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
     }
   }
+
+
+  @Test
+  public void noContract() {
+
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error,expected type [ExchangeWithdrawContract],real type["
+            + invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void nullTransationResult() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    InitExchangeBeforeSameTokenNameActive();
+    long exchangeId = 1;
+    String firstTokenId = "abc";
+    long firstTokenQuant = 100000000L;
+    String secondTokenId = "def";
+    long secondTokenQuant = 200000000L;
+
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(
+            OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
+    TransactionResultCapsule ret = null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+
+  }
+
+  private void processAndCheckInvalid(ExchangeWithdrawActuator actuator,
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      TestCase.fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
 }

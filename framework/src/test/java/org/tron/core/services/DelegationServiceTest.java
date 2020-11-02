@@ -1,7 +1,7 @@
 package org.tron.core.services;
 
+import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static stest.tron.wallet.common.client.Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
-import static stest.tron.wallet.common.client.utils.Base58.decodeFromBase58Check;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
@@ -42,7 +42,7 @@ public class DelegationServiceTest {
     System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
     UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
     updateBrokerageContract.setOwnerAddress(
-        ByteString.copyFrom(Wallet.decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
+        ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
         .setBrokerage(10);
     TransactionExtention transactionExtention = walletStub
         .updateBrokerage(updateBrokerageContract.build());
@@ -58,7 +58,7 @@ public class DelegationServiceTest {
     }
     delegationService.payStandbyWitness();
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
-    byte[] sr1 = Wallet.decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
+    byte[] sr1 = decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     long value = manager.getDelegationStore().getReward(cycle, sr1);
     long tmp = 0;
     for (int i = 0; i < 27; i++) {
@@ -83,9 +83,9 @@ public class DelegationServiceTest {
     testPay(1);
     manager.getDynamicPropertiesStore().saveCurrentCycleNumber(2);
     testPay(2);
-    byte[] sr1 = Wallet.decodeFromBase58Check("THKJYuUmMKKARNf7s2VT51g5uPY6KEqnat");
+    byte[] sr1 = decodeFromBase58Check("THKJYuUmMKKARNf7s2VT51g5uPY6KEqnat");
     AccountCapsule accountCapsule = manager.getAccountStore().get(sr1);
-    byte[] sr27 = Wallet.decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
+    byte[] sr27 = decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     accountCapsule.addVotes(ByteString.copyFrom(sr27), 10000000);
     manager.getAccountStore().put(sr1, accountCapsule);
     //
@@ -107,7 +107,7 @@ public class DelegationServiceTest {
 
   public void test() {
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-    byte[] sr27 = Wallet.decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
+    byte[] sr27 = decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     manager.getDelegationStore().setBrokerage(0, sr27, 10);
     manager.getDelegationStore().setBrokerage(1, sr27, 20);
     manager.getDelegationStore().setWitnessVote(0, sr27, 100000000);
@@ -116,5 +116,4 @@ public class DelegationServiceTest {
     testPay(0);
     testWithdraw();
   }
-
 }
