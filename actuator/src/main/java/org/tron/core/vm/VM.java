@@ -34,16 +34,13 @@ public class VM {
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
   private final VMConfig config;
-//  private boolean passIstanbul;
 
   public VM() {
     config = VMConfig.getInstance();
-//    passIstanbul = VMConfig.allowTvmIstanbul();
   }
 
   public VM(VMConfig config) {
     this.config = config;
-//    passIstanbul = VMConfig.allowTvmIstanbul();
   }
 
   /**
