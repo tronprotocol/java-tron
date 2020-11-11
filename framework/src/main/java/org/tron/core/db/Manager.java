@@ -1357,9 +1357,8 @@ public class Manager {
         long transactionFeeReward = Math
             .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
                 Constant.TRANSACTION_FEE_POOL_PERIOD);
-
-        mortgageService.payBlockReward(witnessCapsule.getAddress().toByteArray(),transactionFeeReward);
-
+        mortgageService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
+            transactionFeeReward);
       }
     } else {
       byte[] witness = block.getWitnessAddress().toByteArray();
