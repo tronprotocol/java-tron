@@ -1352,6 +1352,15 @@ public class Manager {
       mortgageService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
           getDynamicPropertiesStore().getWitnessPayPerBlock());
       mortgageService.payStandbyWitness();
+
+      if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
+        long transactionFeeReward = Math
+            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD);
+
+        mortgageService.payBlockReward(witnessCapsule.getAddress().toByteArray(),transactionFeeReward);
+
+      }
     } else {
       byte[] witness = block.getWitnessAddress().toByteArray();
       AccountCapsule account = getAccountStore().get(witness);
@@ -1359,6 +1368,8 @@ public class Manager {
           + chainBaseManager.getDynamicPropertiesStore().getWitnessPayPerBlock());
       getAccountStore().put(account.createDbKey(), account);
     }
+
+
   }
 
   private void postSolidityLogContractTrigger(Long blockNum, Long lastSolidityNum) {
