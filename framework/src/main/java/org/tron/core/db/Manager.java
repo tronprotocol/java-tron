@@ -1365,6 +1365,14 @@ public class Manager {
       AccountCapsule account = getAccountStore().get(witness);
       account.setAllowance(account.getAllowance()
           + chainBaseManager.getDynamicPropertiesStore().getWitnessPayPerBlock());
+
+      if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
+        long transactionFeeReward = Math
+            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD);
+        account.setAllowance(account.getAllowance() + transactionFeeReward);
+      }
+
       getAccountStore().put(account.createDbKey(), account);
     }
 

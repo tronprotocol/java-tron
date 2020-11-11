@@ -467,6 +467,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveMarketQuantityLimit(1_000_000_000_000_000L);
     }
 
+
+    try {
+      this.getAllowTransactionFeePool();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTransactionFeePool(0L);
+    }
+
     try {
       this.getTotalTransactionCost();
     } catch (IllegalArgumentException e) {
