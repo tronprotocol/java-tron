@@ -4800,7 +4800,7 @@ public class PublicMethed {
     logger.debug("solFile: " + solFile);
     logger.debug("outputPath: " + outputPath);
     String cmd =
-        compile + " --optimize --bin --abi --evm-version istanbul --overwrite " + absolutePath + "/"
+        compile + " --optimize --bin --abi --overwrite " + absolutePath + "/"
             + solFile + " -o "
             + absolutePath + "/" + outputPath;
     logger.info("cmd: " + cmd);
