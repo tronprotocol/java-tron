@@ -979,9 +979,14 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmAssetIssue")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
-            .build());
+        .setKey("getAllowTvmAssetIssue")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTransactionFeePool")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTransactionFeePool())
+        .build());
 
     return builder.build();
   }
