@@ -35,6 +35,8 @@ public class StakeProcessor {
       long frozenDuration = repository.getDynamicPropertiesStore().getMinFrozenTime();
       validateFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, repository);
       executeFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, stakeParam.getNow(), repository);
+    } else {
+      logger.info("no need to freeze for stake");
     }
     long voteCount = stakeParam.getStakeAmount() / ChainConstant.TRX_PRECISION;
     Protocol.Vote vote = Protocol.Vote.newBuilder()
@@ -104,14 +106,14 @@ public class StakeProcessor {
         if (repository.getAccount(witnessCandidate) == null) {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
-              ACCOUNT_EXCEPTION_STR
-                  + readableWitnessAddress + ActuatorConstant.NOT_EXIST_STR);
+              ContractProcessorConstant.ACCOUNT_EXCEPTION_STR
+                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
         }
         if (!witnessStore.has(witnessCandidate)) {
           String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
           throw new ContractValidateException(
-              WITNESS_EXCEPTION_STR
-                  + readableWitnessAddress + ActuatorConstant.NOT_EXIST_STR);
+              ContractProcessorConstant.WITNESS_EXCEPTION_STR
+                  + readableWitnessAddress + ContractProcessorConstant.NOT_EXIST_STR);
         }
         sum = vote.getVoteCount();
       }

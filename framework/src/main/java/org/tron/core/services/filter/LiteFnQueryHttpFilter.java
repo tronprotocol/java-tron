@@ -42,6 +42,14 @@ public class LiteFnQueryHttpFilter implements Filter {
     filterPaths.add("/wallet/scannotebyovk");
     filterPaths.add("/wallet/totaltransaction");
     filterPaths.add("/wallet/gettransactioninfobyblocknum");
+    filterPaths.add("/wallet/getmarketorderbyaccount");
+    filterPaths.add("/wallet/getmarketorderbyid");
+    filterPaths.add("/wallet/getmarketpricebypair");
+    filterPaths.add("/wallet/getmarketorderlistbypair");
+    filterPaths.add("/wallet/getmarketpairlist");
+    filterPaths.add("/wallet/scanshieldedtrc20notesbyivk");
+    filterPaths.add("/wallet/scanshieldedtrc20notesbyovk");
+    filterPaths.add("/wallet/isshieldedtrc20contractnotespent");
 
     // base path: /walletsolidity
     filterPaths.add("/walletsolidity/getblockbyid");
@@ -57,6 +65,14 @@ public class LiteFnQueryHttpFilter implements Filter {
     filterPaths.add("/walletsolidity/scannotebyivk");
     filterPaths.add("/walletsolidity/scannotebyovk");
     filterPaths.add("/walletsolidity/gettransactioninfobyblocknum");
+    filterPaths.add("/walletsolidity/getmarketorderbyaccount");
+    filterPaths.add("/walletsolidity/getmarketorderbyid");
+    filterPaths.add("/walletsolidity/getmarketpricebypair");
+    filterPaths.add("/walletsolidity/getmarketorderlistbypair");
+    filterPaths.add("/walletsolidity/getmarketpairlist");
+    filterPaths.add("/walletsolidity/scanshieldedtrc20notesbyivk");
+    filterPaths.add("/walletsolidity/scanshieldedtrc20notesbyovk");
+    filterPaths.add("/walletsolidity/isshieldedtrc20contractnotespent");
 
     // base path: /walletpbft
     filterPaths.add("/walletpbft/getblockbyid");
@@ -71,6 +87,14 @@ public class LiteFnQueryHttpFilter implements Filter {
     filterPaths.add("/walletpbft/scanandmarknotebyivk");
     filterPaths.add("/walletpbft/scannotebyivk");
     filterPaths.add("/walletpbft/scannotebyovk");
+    filterPaths.add("/walletpbft/getmarketorderbyaccount");
+    filterPaths.add("/walletpbft/getmarketorderbyid");
+    filterPaths.add("/walletpbft/getmarketpricebypair");
+    filterPaths.add("/walletpbft/getmarketorderlistbypair");
+    filterPaths.add("/walletpbft/getmarketpairlist");
+    filterPaths.add("/walletpbft/scanshieldedtrc20notesbyivk");
+    filterPaths.add("/walletpbft/scanshieldedtrc20notesbyovk");
+    filterPaths.add("/walletpbft/isshieldedtrc20contractnotespent");
   }
 
   @Override

@@ -8,6 +8,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +25,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.ChainBaseManager;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Slf4j(topic = "pbft")
@@ -67,10 +71,18 @@ public class PbftMessageHandle {
   private PbftMessageAction pbftMessageAction;
   @Setter
   private MaintenanceManager maintenanceManager;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   @PostConstruct
   public void init() {
     start();
+  }
+
+  public List<Miner> getSrMinerList() {
+    return Param.getInstance().getMiners().stream()
+        .filter(miner -> chainBaseManager.getWitnesses().contains(miner.getWitnessAddress()))
+        .collect(Collectors.toList());
   }
 
   public void onPrePrepare(PbftMessage message) {
@@ -94,8 +106,16 @@ public class PbftMessageHandle {
     if (!checkIsCanSendMsg(message)) {
       return;
     }
-    PbftBaseMessage paMessage = message.buildPrePareMessage();
-    forwardMessage(paMessage);
+    for (Miner miner : getSrMinerList()) {
+      PbftMessage paMessage = message.buildPrePareMessage(miner);
+      forwardMessage(paMessage);
+      try {
+        paMessage.analyzeSignature();
+      } catch (SignatureException e) {
+        logger.error("", e);
+      }
+      onPrepare(paMessage);
+    }
     if (message.getDataType() == DataType.SRL) {
       srPbftMessage = message;
     }
@@ -130,9 +150,17 @@ public class PbftMessageHandle {
       if (agCou >= Param.getInstance().getAgreeNodeCount()) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
-        PbftMessage cmMessage = message.buildCommitMessage();
-        doneMsg.put(message.getNo(), cmMessage);
-        forwardMessage(cmMessage);
+        for (Miner miner : getSrMinerList()) {
+          PbftMessage cmMessage = message.buildCommitMessage(miner);
+          doneMsg.put(message.getNo(), cmMessage);
+          forwardMessage(cmMessage);
+          try {
+            cmMessage.analyzeSignature();
+          } catch (SignatureException e) {
+            logger.error("", e);
+          }
+          onCommit(cmMessage);
+        }
       }
     }
     //Subsequent votes will definitely not be satisfied, timeout will be automatically cleared.

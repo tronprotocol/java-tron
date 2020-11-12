@@ -129,7 +129,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     while (next != null) {
       Streams.stream(((SnapshotImpl) next).db)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
-          e.getValue().getOperator()));
+              e.getValue().getOperator()));
       next = next.getNext();
     }
   }
