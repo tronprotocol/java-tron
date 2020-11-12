@@ -382,6 +382,46 @@ public class AbiUtil {
 
     return pack(coders, items);
   }
+
+  public static String parseMethod2(String methodSign, String input, boolean isHex) {
+    if (isHex) {
+      return parseSelector(methodSign) + input;
+    } else {
+      return parseSelector(methodSign) + parseParameters(methodSign, input);
+    }
+  }
+
+  public static String parseParameters(String methodSign, String input) {
+    byte[] encodedParms = encodeInput2(methodSign, input);
+    return Hex.toHexString(encodedParms);
+  }
+
+  public static String parseSelector(String methodSign) {
+    byte[] selector = new byte[4];
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
+    return Hex.toHexString(selector);
+  }
+
+  public static byte[] encodeInput2(String methodSign, String input) {
+    ObjectMapper mapper = new ObjectMapper();
+    input = "[" + input + "]";
+    List items;
+    try {
+      items = mapper.readValue(input, List.class);
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
+
+    List<Coder> coders = new ArrayList<>();
+    for (String s : getTypes(methodSign)) {
+      Coder c = getParamCoder(s);
+      coders.add(c);
+    }
+
+    return pack(coders, items);
+  }
+
   /**
    * constructor.
    */
