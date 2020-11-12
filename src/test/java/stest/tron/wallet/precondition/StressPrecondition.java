@@ -160,7 +160,7 @@ public class StressPrecondition {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test01CreateProposal() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -260,7 +260,7 @@ public class StressPrecondition {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test03SendCoinToStressAccount() {
     sendCoinToStressAccount(commonOwnerPrivateKey);
     sendCoinToStressAccount(triggerOwnerKey);
@@ -624,7 +624,7 @@ public class StressPrecondition {
 
 
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test14ChangeMaintainTime() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -727,6 +727,7 @@ public class StressPrecondition {
 
     // deployOracles
     contractName = "Oracle";
+    constructorStr = "constructor(address,address)";
     data = "\"" + Base58.encode58Check(jstContractAddress) + "\",\"" + Base58
         .encode58Check(jstMidContractAddress) + "\"";
     abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"_sender\",\"type\":\"address\"},{\"name\":\"_payment\",\"type\":\"uint256\"},{\"name\":\"_specId\",\"type\":\"bytes32\"},{\"name\":\"_callbackAddress\",\"type\":\"address\"},{\"name\":\"_callbackFunctionId\",\"type\":\"bytes4\"},{\"name\":\"_nonce\",\"type\":\"uint256\"},{\"name\":\"_dataVersion\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"oracleRequest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_requestId\",\"type\":\"bytes32\"},{\"name\":\"_payment\",\"type\":\"uint256\"},{\"name\":\"_callbackAddress\",\"type\":\"address\"},{\"name\":\"_callbackFunctionId\",\"type\":\"bytes4\"},{\"name\":\"_expiration\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes32\"}],\"name\":\"fulfillOracleRequest\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"EXPIRY_TIME\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"withdrawable\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"justMidAddress\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_requestId\",\"type\":\"bytes32\"},{\"name\":\"_payment\",\"type\":\"uint256\"},{\"name\":\"_callbackFunc\",\"type\":\"bytes4\"},{\"name\":\"_expiration\",\"type\":\"uint256\"}],\"name\":\"cancelOracleRequest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_node\",\"type\":\"address\"},{\"name\":\"_allowed\",\"type\":\"bool\"}],\"name\":\"setFulfillmentPermission\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_sender\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"onTokenTransfer\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_node\",\"type\":\"address\"}],\"name\":\"getAuthorizationStatus\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_recipient\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_link\",\"type\":\"address\"},{\"name\":\"_justMid\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"specId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"requester\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"requestId\",\"type\":\"bytes32\"},{\"indexed\":false,\"name\":\"payment\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"callbackAddr\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"callbackFunctionId\",\"type\":\"bytes4\"},{\"indexed\":false,\"name\":\"cancelExpiration\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"dataVersion\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"OracleRequest\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"requestId\",\"type\":\"bytes32\"}],\"name\":\"CancelOracleRequest\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"}],\"name\":\"OwnershipRenounced\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]";
@@ -798,7 +799,7 @@ public class StressPrecondition {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test16DeployJustSwapSmartContract() {
     // deployJustswapFactory
     String contractName = "JustswapFactory";
