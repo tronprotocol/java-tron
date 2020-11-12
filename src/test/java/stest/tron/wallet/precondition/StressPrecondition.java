@@ -778,11 +778,11 @@ public class StressPrecondition {
       }
     }
     oracleAddressParam += "],";
-    data = ""
-        + "\"1\","
+    data = "\"1\","
         + "\"7\","
         + oracleAddressParam
         + "[\"bb347a9a63324fd995a7159cb0c8348a\",\"40691f5fd4b64ab4a5442477ed484d80\",\"f7ccb652cc254a19b0b954c49af25926\",\"38cd68072a6c4a0ca05e9b91976cf4f1\",\"328697ef599043e1a301ae985d06aabf\",\"239ff4228974435ea33f7c32cb46d297\",\"10ee483bad154f41ac58fdb4010c2c63\"]";
+    logger.info("data:"+data);
     txid = PublicMethed
         .triggerContract(aggContractAddress, methodStr, data, false, 0, 1000000000L,
             PublicMethed.getFinalAddress(triggerOwnerKey), triggerOwnerKey, blockingStubFull);
@@ -798,7 +798,7 @@ public class StressPrecondition {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test16DeployJustSwapSmartContract() {
     // deployJustswapFactory
     String contractName = "JustswapFactory";
