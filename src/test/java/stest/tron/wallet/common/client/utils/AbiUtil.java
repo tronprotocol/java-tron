@@ -419,7 +419,65 @@ public class AbiUtil {
       coders.add(c);
     }
 
-    return pack(coders, items);
+    return pack2(coders, items);
+  }
+
+  public static byte[] pack2(List<Coder> codes, List<Object> values) {
+
+    int staticSize = 0;
+    int dynamicSize = 0;
+
+    List<byte[]> encodedList = new ArrayList<>();
+
+    for (int idx = 0; idx < codes.size(); idx++) {
+      Coder coder = codes.get(idx);
+      Object parameter = values.get(idx);
+      String value;
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        value = "[" + sb.toString() + "]";
+      } else {
+        value = parameter.toString();
+      }
+      byte[] encoded = coder.encode(value);
+      encodedList.add(encoded);
+
+      if (coder.dynamic) {
+        staticSize += 32;
+        dynamicSize += encoded.length;
+      } else {
+        staticSize += encoded.length;
+      }
+    }
+
+    int offset = 0;
+    int dynamicOffset = staticSize;
+
+    byte[] data = new byte[staticSize + dynamicSize];
+
+    for (int idx = 0; idx < codes.size(); idx++) {
+      Coder coder = codes.get(idx);
+
+      if (coder.dynamic) {
+        System.arraycopy(new DataWord(dynamicOffset).getData(), 0, data, offset, 32);
+        offset += 32;
+
+        System.arraycopy(encodedList.get(idx), 0, data, dynamicOffset,
+            encodedList.get(idx).length);
+        dynamicOffset += encodedList.get(idx).length;
+      } else {
+        System.arraycopy(encodedList.get(idx), 0, data, offset, encodedList.get(idx).length);
+        offset += encodedList.get(idx).length;
+      }
+    }
+
+    return data;
   }
 
   /**
