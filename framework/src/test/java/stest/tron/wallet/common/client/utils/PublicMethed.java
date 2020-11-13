@@ -4800,7 +4800,7 @@ public class PublicMethed {
     logger.debug("solFile: " + solFile);
     logger.debug("outputPath: " + outputPath);
     String cmd =
-        compile + " --optimize --bin --abi --evm-version istanbul --overwrite " + absolutePath + "/"
+        compile + " --optimize --bin --abi --overwrite " + absolutePath + "/"
             + solFile + " -o "
             + absolutePath + "/" + outputPath;
     logger.info("cmd: " + cmd);
@@ -6617,4 +6617,43 @@ public class PublicMethed {
     return str;
   }
 
+  public static String hexStringToString(String s) {
+    if (s == null || s.equals("")) {
+      return null;
+    }
+    s = s.replace(" ", "");
+    byte[] baKeyword = new byte[s.length() / 2];
+    for (int i = 0; i < baKeyword.length; i++) {
+      try {
+        baKeyword[i] = (byte) (0xff & Integer.parseInt(
+            s.substring(i * 2, i * 2 + 2), 16));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    try {
+      s = new String(baKeyword, "gbk");
+      new String();
+    } catch (Exception e1) {
+      e1.printStackTrace();
+    }
+    return s;
+  }
+
+  public static String removeAll0sAtTheEndOfHexStr(String s) {
+    return s.replaceAll("(00)+$", "");
+  }
+
+  public static String replaceCode__$(String code, String address) {
+    if (code.indexOf("__$") == -1) {
+      return code;
+    } else {
+      int index = code.indexOf("_");
+      String oldStr = code.substring(index - 1, index + 39);
+      Pattern p = Pattern.compile(oldStr);
+      Matcher m = p.matcher(code);
+      String result = m.replaceAll(address);
+      return result;
+    }
+  }
 }
