@@ -35,6 +35,7 @@ import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
@@ -188,6 +189,10 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private PbftSignDataStore pbftSignDataStore;
+
+  @Autowired
+  @Getter
+  private BalanceTraceStore balanceTraceStore;
 
   @Getter
   private ForkController forkController = ForkController.instance();
