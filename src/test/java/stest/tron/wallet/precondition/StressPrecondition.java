@@ -160,7 +160,7 @@ public class StressPrecondition {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test01CreateProposal() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -260,7 +260,7 @@ public class StressPrecondition {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test03SendCoinToStressAccount() {
     sendCoinToStressAccount(commonOwnerPrivateKey);
     sendCoinToStressAccount(triggerOwnerKey);
@@ -694,7 +694,7 @@ public class StressPrecondition {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test15DeployJustlinkSmartContract() {
     // deployJst
     String contractName = "Jst";
