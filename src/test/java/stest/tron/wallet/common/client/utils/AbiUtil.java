@@ -382,6 +382,104 @@ public class AbiUtil {
 
     return pack(coders, items);
   }
+
+  public static String parseMethod2(String methodSign, String input, boolean isHex) {
+    if (isHex) {
+      return parseSelector(methodSign) + input;
+    } else {
+      return parseSelector(methodSign) + parseParameters(methodSign, input);
+    }
+  }
+
+  public static String parseParameters(String methodSign, String input) {
+    byte[] encodedParms = encodeInput2(methodSign, input);
+    return Hex.toHexString(encodedParms);
+  }
+
+  public static String parseSelector(String methodSign) {
+    byte[] selector = new byte[4];
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
+    return Hex.toHexString(selector);
+  }
+
+  public static byte[] encodeInput2(String methodSign, String input) {
+    ObjectMapper mapper = new ObjectMapper();
+    input = "[" + input + "]";
+    List items;
+    try {
+      items = mapper.readValue(input, List.class);
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
+
+    List<Coder> coders = new ArrayList<>();
+    for (String s : getTypes(methodSign)) {
+      Coder c = getParamCoder(s);
+      coders.add(c);
+    }
+
+    return pack2(coders, items);
+  }
+
+  public static byte[] pack2(List<Coder> codes, List<Object> values) {
+
+    int staticSize = 0;
+    int dynamicSize = 0;
+
+    List<byte[]> encodedList = new ArrayList<>();
+
+    for (int idx = 0; idx < codes.size(); idx++) {
+      Coder coder = codes.get(idx);
+      Object parameter = values.get(idx);
+      String value;
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        value = "[" + sb.toString() + "]";
+      } else {
+        value = parameter.toString();
+      }
+      byte[] encoded = coder.encode(value);
+      encodedList.add(encoded);
+
+      if (coder.dynamic) {
+        staticSize += 32;
+        dynamicSize += encoded.length;
+      } else {
+        staticSize += encoded.length;
+      }
+    }
+
+    int offset = 0;
+    int dynamicOffset = staticSize;
+
+    byte[] data = new byte[staticSize + dynamicSize];
+
+    for (int idx = 0; idx < codes.size(); idx++) {
+      Coder coder = codes.get(idx);
+
+      if (coder.dynamic) {
+        System.arraycopy(new DataWord(dynamicOffset).getData(), 0, data, offset, 32);
+        offset += 32;
+
+        System.arraycopy(encodedList.get(idx), 0, data, dynamicOffset,
+            encodedList.get(idx).length);
+        dynamicOffset += encodedList.get(idx).length;
+      } else {
+        System.arraycopy(encodedList.get(idx), 0, data, offset, encodedList.get(idx).length);
+        offset += encodedList.get(idx).length;
+      }
+    }
+
+    return data;
+  }
+
   /**
    * constructor.
    */

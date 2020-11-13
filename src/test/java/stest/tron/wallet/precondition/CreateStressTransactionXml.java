@@ -45,7 +45,9 @@ public class CreateStressTransactionXml {
       "transferTRC20",
       "ExtCodeHash",
       "ShieldSendToken(P2S)",
-      "marketSell"
+      "marketSell",
+      "TriggerJustlink",
+      "TriggerJustswap"
   };
 
   @BeforeClass

@@ -2302,7 +2302,7 @@ public class PublicMethed {
     }
 
     byte[] owner = ownerAddress;
-    byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+    byte[] input = Hex.decode(AbiUtil.parseMethod2(method, argsStr, isHex));
 
     Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
