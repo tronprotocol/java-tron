@@ -694,7 +694,7 @@ public class StressPrecondition {
   }
 
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test15DeployJustlinkSmartContract() {
     // deployJst
     String contractName = "Jst";
