@@ -141,13 +141,6 @@ public class MortgageService {
         beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
-
-  public void payTransactionFeeReward(byte[] witnessAddress, long value) {
-    logger.debug("pay {} transaction fee reward {}", Hex.toHexString(witnessAddress), value);
-    payReward(witnessAddress, value);
-  }
-
-
   public long queryReward(byte[] address) {
     if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return 0;
