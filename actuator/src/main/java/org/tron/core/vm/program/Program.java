@@ -1178,7 +1178,7 @@ public class Program {
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
       if (Objects.nonNull(blockCapsule)) {
-        return new DataWord(blockCapsule.getBlockId().getBytes());
+        return new DataWord(blockCapsule.getBlockId().getBytes()).clone();
       } else {
         return DataWord.ZERO.clone();
       }
@@ -1792,14 +1792,14 @@ public class Program {
     WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
     byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     withdrawRewardParam.setTargetAddress(ownerAddress);
-    try{
+    try {
       withdrawRewardContractProcessor.validate(withdrawRewardParam, repository,
           getTimestamp().longValue() * 1000);
       long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository,
           getTimestamp().longValue() * 1000);
       stackPush(new DataWord(allowance));
       repository.commit();
-    }catch (ContractValidateException e){
+    } catch (ContractValidateException e) {
       logger.error("validateForWithdrawReward failure:{}", e.getMessage());
       stackPushZero();
     }

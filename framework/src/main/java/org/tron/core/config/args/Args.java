@@ -1103,6 +1103,6 @@ public class Args extends CommonParameter {
         logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
       }
     }
-  } 
+  }
 }
 

@@ -28,9 +28,9 @@ public class PbftMessage extends PbftBaseMessage {
     return pbftMessage.getRawData().getViewN() + "_" + pbftMessage.getRawData().getDataType();
   }
 
-  public static PbftMessage prePrepareBlockMsg(BlockCapsule block, long epoch) {
+  public static PbftMessage prePrepareBlockMsg(BlockCapsule block, long epoch, Miner miner) {
     return buildCommon(DataType.BLOCK, block.getBlockId().getByteString(), block, epoch,
-        block.getNum());
+        block.getNum(), miner);
   }
 
   public static PbftMessage fullNodePrePrepareBlockMsg(BlockCapsule block,
@@ -40,10 +40,10 @@ public class PbftMessage extends PbftBaseMessage {
   }
 
   public static PbftMessage prePrepareSRLMsg(BlockCapsule block,
-      List<ByteString> currentWitness, long epoch) {
+      List<ByteString> currentWitness, long epoch, Miner miner) {
     SRL.Builder srListBuilder = SRL.newBuilder();
     ByteString data = srListBuilder.addAllSrAddress(currentWitness).build().toByteString();
-    return buildCommon(DataType.SRL, data, block, epoch, epoch);
+    return buildCommon(DataType.SRL, data, block, epoch, epoch, miner);
   }
 
   public static PbftMessage fullNodePrePrepareSRLMsg(BlockCapsule block,
@@ -54,9 +54,8 @@ public class PbftMessage extends PbftBaseMessage {
   }
 
   private static PbftMessage buildCommon(DataType dataType, ByteString data, BlockCapsule block,
-      long epoch, long viewN) {
+      long epoch, long viewN, Miner miner) {
     PbftMessage pbftMessage = new PbftMessage();
-    Miner miner = Param.getInstance().getMiner();
     ECKey ecKey = ECKey.fromPrivate(miner.getPrivateKey());
     Raw.Builder rawBuilder = Raw.newBuilder();
     PBFTMessage.Builder builder = PBFTMessage.newBuilder();
@@ -87,17 +86,16 @@ public class PbftMessage extends PbftBaseMessage {
     return pbftMessage;
   }
 
-  public PbftMessage buildPrePareMessage() {
-    return buildMessageCapsule(MsgType.PREPARE);
+  public PbftMessage buildPrePareMessage(Miner miner) {
+    return buildMessageCapsule(MsgType.PREPARE, miner);
   }
 
-  public PbftMessage buildCommitMessage() {
-    return buildMessageCapsule(MsgType.COMMIT);
+  public PbftMessage buildCommitMessage(Miner miner) {
+    return buildMessageCapsule(MsgType.COMMIT, miner);
   }
 
-  private PbftMessage buildMessageCapsule(MsgType type) {
+  private PbftMessage buildMessageCapsule(MsgType type, Miner miner) {
     PbftMessage pbftMessage = new PbftMessage();
-    Miner miner = Param.getInstance().getMiners().get(0);
     ECKey ecKey = ECKey.fromPrivate(miner.getPrivateKey());
     PBFTMessage.Builder builder = PBFTMessage.newBuilder();
     Raw.Builder rawBuilder = Raw.newBuilder();

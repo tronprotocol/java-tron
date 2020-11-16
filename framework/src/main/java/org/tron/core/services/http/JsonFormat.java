@@ -29,6 +29,7 @@ package org.tron.core.services.http;
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumDescriptor;
@@ -754,13 +755,17 @@ public class JsonFormat {
     if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
       return StringUtil.encode58Check(input.toByteArray());
     }
-
     //Normal String
     if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
       String result = new String(input.toByteArray());
-      return result.replaceAll("\"", "\\\\\"");
+      result = result.replaceAll("\"", "\\\\\"");
+      try {
+        JSON.parseObject("{\"key\":\"" + result + "\"}");
+        return result;
+      } catch (Exception e) {
+        return ByteArray.toHexString(input.toByteArray());
+      }
     }
-
     //HEX
     return ByteArray.toHexString(input.toByteArray());
   }

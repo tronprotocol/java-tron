@@ -4550,6 +4550,7 @@ public class HttpMethed {
       String requestUrl = "http://" + httpSolidityNode + "/walletpbft/getReward";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      logger.info("userBaseObj2:" + userBaseObj2);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();

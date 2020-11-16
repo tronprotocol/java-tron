@@ -10,7 +10,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPair;
-import org.tron.protos.Protocol.MarketPriceList;
 
 
 @Component
