@@ -2,6 +2,8 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,12 +27,7 @@ public class GetProposalByIdServlet extends RateLimiterServlet {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("id");
       long id = new Long(input);
-      Proposal reply = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(id)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(ByteString.copyFrom(ByteArray.fromLong(id)), visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -41,14 +38,19 @@ public class GetProposalByIdServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       long id = Util.getJsonLongValue(jsonObject, "id", true);
-      Proposal reply = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(id)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, params.isVisible()));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(ByteString.copyFrom(ByteArray.fromLong(id)), params.isVisible(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(ByteString proposalId, boolean visible, HttpServletResponse response)
+      throws IOException {
+    Proposal reply = wallet.getProposalById(proposalId);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

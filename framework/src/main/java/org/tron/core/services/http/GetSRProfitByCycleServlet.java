@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import java.io.IOException;
 import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,13 +23,7 @@ public class GetSRProfitByCycleServlet extends RateLimiterServlet {
       byte[] address = Util.getAddress(request);
       long startCycle = Long.parseLong(request.getParameter("startCycle"));
       long endCycle = Long.parseLong(request.getParameter("endCycle"));
-      if (startCycle <= endCycle && address != null) {
-        HashMap<String, Long> value = wallet
-            .queryPayByCycle(address, startCycle, endCycle);
-        response.getWriter().println(Util.printMapToJSON(value));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(address, startCycle, endCycle, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -43,15 +38,19 @@ public class GetSRProfitByCycleServlet extends RateLimiterServlet {
       long startCycle = jsonObject.getLong("startCycle");
       long endCycle = jsonObject.getLong("endCycle");
       byte[] address = build.getAddress().toByteArray();
-      if (startCycle <= endCycle && address != null) {
-        HashMap<String, Long> value = wallet
-            .queryPayByCycle(address, startCycle, endCycle);
-        response.getWriter().println(Util.printMapToJSON(value));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(address, startCycle, endCycle, response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(byte[] address, long start, long end, HttpServletResponse response)
+      throws IOException {
+    if (start <= end && address != null) {
+      HashMap<String, Long> value = wallet.queryPayByCycle(address, start, end);
+      response.getWriter().println(Util.printMapToJSON(value));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }
