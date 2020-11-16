@@ -889,7 +889,7 @@ public class Wallet {
         .setKey("getAllowTvmSolidity059")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
-
+    
     // ALLOW_TVM_ISTANBUL
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmIstanbul")
@@ -2735,33 +2735,22 @@ public class Wallet {
     }
 
     long blockPayReward = 0;
-    long voteReward = 0;
-    long transactionFeeReward = 0;
     if (beginCycle <= endCycle) {
       for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
         int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
         blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
         if (brokerage == 100) {
-          if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
-            reward += dbManager.getDelegationStore().getBlockReward(cycle, address) + dbManager
-                .getDelegationStore().getVoteReward(cycle, address) + dbManager
-                .getDelegationStore().getTransactionFeeReward(cycle, address);
-            transactionFeeReward += dbManager.getDelegationStore().getTransactionFeeReward(cycle, address);
-          } else {
-            reward += dbManager.getDelegationStore().getBlockReward(cycle, address) + dbManager
-                .getDelegationStore().getVoteReward(cycle, address);
-          }
+          reward += dbManager.getDelegationStore().getBlockReward(cycle, address) + dbManager
+              .getDelegationStore().getVoteReward(cycle, address);
         } else {
           double brokerageRate = (double) brokerage / 100;
           reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
         }
-        voteReward += dbManager.getDelegationStore().getVoteReward(cycle, address);
       }
     }
     rewardMap.put("total", reward);
     rewardMap.put("produceBlock", blockPayReward);
-    rewardMap.put("vote", voteReward);
-    rewardMap.put("transactionFee", transactionFeeReward);
+    rewardMap.put("vote", reward - blockPayReward);
 
     return rewardMap;
   }
@@ -2788,51 +2777,6 @@ public class Wallet {
     return (double) blockPayReward / (double) reward;
   }
 
-
-  public double percentageOfVoteReward(long beginCycle, long endCycle, byte[] address) {
-    long reward = 0;
-    long voteReward = 0;
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
-        if (brokerage == 100) {
-          continue;
-        }
-
-        double brokerageRate = (double) brokerage / 100;
-        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
-        voteReward += dbManager.getDelegationStore().getVoteReward(cycle, address);
-      }
-    }
-
-    if (reward == 0 || voteReward == 0) {
-      return 0;
-    }
-    return (double) voteReward / (double) reward;
-  }
-
-  public double percentageOfTransactionFee(long beginCycle, long endCycle, byte[] address) {
-    long reward = 0;
-    long transactionFeeReward = 0;
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
-        if (brokerage == 100) {
-          continue;
-        }
-
-        double brokerageRate = (double) brokerage / 100;
-        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
-        transactionFeeReward += dbManager.getDelegationStore().getTransactionFeeReward(cycle, address);
-      }
-    }
-
-    if (reward == 0 || transactionFeeReward == 0) {
-      return 0;
-    }
-    return (double) transactionFeeReward / (double) reward;
-  }
-
   public HashMap<String, Long> queryRewardByCycle(byte[] address,
       long beginCycle, long endCycle) {
     HashMap<String, Long> rewardMap = new HashMap<>();
@@ -2850,17 +2794,12 @@ public class Wallet {
         bonus += dbManager.getDelegationStore().getReward(cycle, address);
       }
     }
-    double percentageOfBlock = percentageOfBlockReward(beginCycle, endCycle, address);
-    double percentageOfVote = percentageOfVoteReward(beginCycle, endCycle, address);
-    double percentageOfTransactionFee = percentageOfTransactionFee(beginCycle, endCycle, address);
-    Double blockBonus = new Double(bonus * percentageOfBlock);
-    Double voteBonus = new Double(bonus * percentageOfVote);
-    Double transactionFeeBonus = new Double(bonus * percentageOfTransactionFee);
+    double percentage = percentageOfBlockReward(beginCycle, endCycle, address);
+    Double blockBonus = new Double(bonus * percentage);
 
     rewardMap.put("total", bonus);
     rewardMap.put("produceBlock", blockBonus.longValue());
-    rewardMap.put("vote", voteBonus.longValue());
-    rewardMap.put("transactionFee", transactionFeeBonus.longValue());
+    rewardMap.put("vote", bonus - blockBonus.longValue());
     return rewardMap;
   }
 

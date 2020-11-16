@@ -50,27 +50,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public void addTransactionFeeReward(long cycle, byte[] address, long value) {
-    byte[] key = buildTransactionFeeKey(cycle, address);
-    BytesCapsule bytesCapsule = get(key);
-
-    if (bytesCapsule == null) {
-      put(key, new BytesCapsule(ByteArray.fromLong(value)));
-    } else {
-      put(key, new BytesCapsule(ByteArray
-          .fromLong(ByteArray.toLong(bytesCapsule.getData()) + value)));
-    }
-  }
-
-  public long getTransactionFeeReward(long cycle, byte[] address) {
-    BytesCapsule bytesCapsule = get(buildTransactionFeeKey(cycle, address));
-    if (bytesCapsule == null) {
-      return 0L;
-    } else {
-      return ByteArray.toLong(bytesCapsule.getData());
-    }
-  }
-
   public void addVoteReward(long cycle, byte[] address, long value) {
     byte[] key = buildRewardVoteKey(cycle, address);
     BytesCapsule bytesCapsule = get(key);
@@ -204,10 +183,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildRewardBlockKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-block").getBytes();
-  }
-
-  private byte[] buildTransactionFeeKey(long cycle, byte[] address) {
-    return (cycle + "-" + Hex.toHexString(address) + "-transaction-fee").getBytes();
   }
 
   private byte[] buildRewardVoteKey(long cycle, byte[] address) {
