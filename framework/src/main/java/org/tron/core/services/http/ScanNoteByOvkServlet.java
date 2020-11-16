@@ -20,19 +20,16 @@ public class ScanNoteByOvkServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
 
       OvkDecryptParameters.Builder ovkDecryptParameters = OvkDecryptParameters.newBuilder();
-      JsonFormat.merge(input, ovkDecryptParameters);
+      JsonFormat.merge(params.getParams(), ovkDecryptParameters);
 
       GrpcAPI.DecryptNotes notes = wallet
           .scanNoteByOvk(ovkDecryptParameters.getStartBlockIndex(),
               ovkDecryptParameters.getEndBlockIndex(),
               ovkDecryptParameters.getOvk().toByteArray());
-      response.getWriter().println(ScanNoteByIvkServlet.convertOutput(notes, visible));
+      response.getWriter().println(ScanNoteByIvkServlet.convertOutput(notes, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }
