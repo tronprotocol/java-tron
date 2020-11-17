@@ -74,9 +74,9 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
 
       boolean isFunctionSelectorSet = jsonObject.containsKey(functionSelector)
           && !StringUtil.isNullOrEmpty(jsonObject.getString(functionSelector));
-
+      boolean isDataSet = jsonObject.containsKey("data")
+          && !StringUtil.isNullOrEmpty(jsonObject.getString("data"));
       String data;
-
       if (isFunctionSelectorSet) {
         String selector = jsonObject.getString(functionSelector);
         String parameter = jsonObject.getString("parameter");
@@ -84,8 +84,10 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
       } else {
         data = jsonObject.getString("data");
       }
-
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+      if (!isFunctionSelectorSet && !isDataSet) {
+        build.setData(ByteString.copyFrom(new byte[0]));
+      }
       long feeLimit = Util.getJsonLongValue(jsonObject, "fee_limit");
 
       TransactionCapsule trxCap = wallet
