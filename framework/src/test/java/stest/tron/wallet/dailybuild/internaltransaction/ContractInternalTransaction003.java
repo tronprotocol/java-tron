@@ -503,18 +503,14 @@ public class ContractInternalTransaction003 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("InfoById:" + infoById);
 
-    // if fail,retry 3 times
-    int num = 0;
-    while (num < 3 && infoById.get().getResultValue() == 1) {
-      txid = PublicMethed.triggerContract(contractAddress,
-          "test1(address,address)", initParmes, false,
-          100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-      logger.info("InfoById-" + num + ": " + infoById);
-      num++;
-    }
+    // retry 1 times
+    txid = PublicMethed.triggerContract(contractAddress,
+        "test1(address,address)", initParmes, false,
+        100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("InfoById-1"+ ": " + infoById);
 
     Assert.assertEquals(0, infoById.get().getResultValue());
     int transactionsCount = infoById.get().getInternalTransactionsCount();
