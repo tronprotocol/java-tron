@@ -379,9 +379,6 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
-  public boolean nodeHttpStatisticsSRRewardEnable = false;
-  @Getter
-  @Setter
   public int maxTransactionPendingSize;
   @Getter
   @Setter
