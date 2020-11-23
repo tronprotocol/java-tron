@@ -1359,6 +1359,9 @@ public class Manager {
                 Constant.TRANSACTION_FEE_POOL_PERIOD);
         mortgageService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
             transactionFeeReward);
+        chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
+                - transactionFeeReward);
       }
     } else {
       byte[] witness = block.getWitnessAddress().toByteArray();
@@ -1371,6 +1374,9 @@ public class Manager {
             .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
                 Constant.TRANSACTION_FEE_POOL_PERIOD);
         account.setAllowance(account.getAllowance() + transactionFeeReward);
+        chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
+                - transactionFeeReward);
       }
 
       getAccountStore().put(account.createDbKey(), account);
