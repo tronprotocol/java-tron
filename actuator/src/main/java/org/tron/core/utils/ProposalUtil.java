@@ -401,6 +401,19 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TRANSACTION_FEE_POOL: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {//todo, set later
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TRANSACTION_FEE_POOL]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TRANSACTION_FEE_POOL] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+
+
       default:
         break;
     }
@@ -450,7 +463,8 @@ public class ProposalUtil {
     // ALLOW_TVM_STAKE(43), // 0, 1
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
-    MARKET_CANCEL_FEE(46); // 0 [0,10_000_000_000]
+    MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
+    ALLOW_TRANSACTION_FEE_POOL(50); // 0, 1
 
     private long code;
 

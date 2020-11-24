@@ -1363,11 +1363,32 @@ public class Manager {
       delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
           getDynamicPropertiesStore().getWitnessPayPerBlock());
       delegationService.payStandbyWitness();
+      if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
+        long transactionFeeReward = Math
+            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD);
+        delegationService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
+            transactionFeeReward);
+        chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
+                - transactionFeeReward);
+      }
     } else {
       byte[] witness = block.getWitnessAddress().toByteArray();
       AccountCapsule account = getAccountStore().get(witness);
       account.setAllowance(account.getAllowance()
           + chainBaseManager.getDynamicPropertiesStore().getWitnessPayPerBlock());
+
+      if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
+        long transactionFeeReward = Math
+            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD);
+        account.setAllowance(account.getAllowance() + transactionFeeReward);
+        chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
+                - transactionFeeReward);
+      }
+
       getAccountStore().put(account.createDbKey(), account);
     }
   }
