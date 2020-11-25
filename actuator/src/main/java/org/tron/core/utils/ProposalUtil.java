@@ -402,7 +402,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TRANSACTION_FEE_POOL: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {//todo, set later
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1_2)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TRANSACTION_FEE_POOL]");
         }
