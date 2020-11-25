@@ -53,7 +53,6 @@ public class StakeTest extends VMTestBase {
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
     
     storeFactory = StoreFactory.getInstance();
-    repository = RepositoryImpl.createRoot(storeFactory);
     programInvokeFactory = new ProgramInvokeFactoryImpl();
     vmConfig = VMConfig.getInstance();
   }
@@ -137,6 +136,7 @@ function UnStake() public returns (bool result){
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
       factoryAddress, Hex.decode(hexInput), 0, feeLimit);
     InternalTransaction rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
@@ -162,6 +162,7 @@ function UnStake() public returns (bool result){
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
     rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
@@ -182,6 +183,7 @@ function UnStake() public returns (bool result){
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
     rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
@@ -202,6 +204,7 @@ function UnStake() public returns (bool result){
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
     rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
@@ -217,6 +220,7 @@ function UnStake() public returns (bool result){
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
     rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
