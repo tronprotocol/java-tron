@@ -52,9 +52,6 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
     if (isFunctionSelectorSet && isDataSet) {
       throw new InvalidParameterException("set either function_selector or data but not both");
     }
-    if (!isFunctionSelectorSet && !isDataSet) {
-      throw new InvalidParameterException("function_selector or data isn't set.");
-    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
