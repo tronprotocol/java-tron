@@ -51,23 +51,23 @@ public class UnstakeTest {
     // construct ProgramInvoke instance
     Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
     byte[] ownerAddr = TransactionTrace.convertToTronAddress(
-            Hex.decode("abd4b9367799eaa3197fecb144eb71de1e049abc"));
+        Hex.decode("abd4b9367799eaa3197fecb144eb71de1e049abc"));
     byte[] contractAddr = TransactionTrace.convertToTronAddress(
-            Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+        Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
     Protocol.Transaction trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
-            ownerAddr, contractAddr, new byte[0], 0, 0);
+        ownerAddr, contractAddr, new byte[0], 0, 0);
     ProgramInvoke invoke;
     invoke = context.getBean(ProgramInvokeFactory.class).createProgramInvoke(
-            InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
-            InternalTransaction.ExecutorType.ET_NORMAL_TYPE,
-            trx,
-            0,
-            0,
-            new BlockCapsule(Protocol.Block.newBuilder().build()).getInstance(),
-            deposit,
-            System.currentTimeMillis(),
-            System.currentTimeMillis() + 50000,
-            3_000_000L);
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+        InternalTransaction.ExecutorType.ET_NORMAL_TYPE,
+        trx,
+        0,
+        0,
+        new BlockCapsule(Protocol.Block.newBuilder().build()).getInstance(),
+        deposit,
+        System.currentTimeMillis(),
+        System.currentTimeMillis() + 50000,
+        3_000_000L);
 
     // add contract account
     deposit.createAccount(contractAddr, Protocol.AccountType.Contract);
@@ -95,8 +95,8 @@ public class UnstakeTest {
 
     // construct Program instance
     InternalTransaction interTrx = new InternalTransaction(
-            Protocol.Transaction.getDefaultInstance(),
-            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+        Protocol.Transaction.getDefaultInstance(),
+        InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
     Program program = new Program(new byte[0], invoke, interTrx);
 
     // call stake by Program instance and assert its return is true

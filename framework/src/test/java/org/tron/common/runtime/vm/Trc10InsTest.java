@@ -3,12 +3,9 @@ package org.tron.common.runtime.vm;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
-
 import java.io.File;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -58,23 +55,23 @@ public class Trc10InsTest {
     // construct ProgramInvoke instance
     Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
     byte[] ownerAddr = TransactionTrace.convertToTronAddress(
-            Hex.decode("abd4b9367799eaa3197fecb144eb71de1e049abc"));
+        Hex.decode("abd4b9367799eaa3197fecb144eb71de1e049abc"));
     byte[] contractAddr = TransactionTrace.convertToTronAddress(
-            Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+        Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
     Protocol.Transaction trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
-            ownerAddr, contractAddr, new byte[0], 0, 0);
+        ownerAddr, contractAddr, new byte[0], 0, 0);
     ProgramInvoke invoke;
     invoke = context.getBean(ProgramInvokeFactory.class).createProgramInvoke(
-            InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
-            InternalTransaction.ExecutorType.ET_NORMAL_TYPE,
-            trx,
-            0,
-            0,
-            new BlockCapsule(Protocol.Block.newBuilder().build()).getInstance(),
-            deposit,
-            System.currentTimeMillis(),
-            System.currentTimeMillis() + 50000,
-            3_000_000L);
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+        InternalTransaction.ExecutorType.ET_NORMAL_TYPE,
+        trx,
+        0,
+        0,
+        new BlockCapsule(Protocol.Block.newBuilder().build()).getInstance(),
+        deposit,
+        System.currentTimeMillis(),
+        System.currentTimeMillis() + 50000,
+        3_000_000L);
 
     // add contract account
     deposit.createAccount(contractAddr, Protocol.AccountType.Contract);
@@ -96,15 +93,15 @@ public class Trc10InsTest {
 
     // construct Program instance
     InternalTransaction interTrx = new InternalTransaction(
-            Protocol.Transaction.getDefaultInstance(),
-            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+        Protocol.Transaction.getDefaultInstance(),
+        InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
     Program program = new Program(new byte[0], invoke, interTrx);
 
     // call tokenIssue by Program instance and assert stack top is not zero if call successful
     program.tokenIssue(new DataWord(covertTo32BytesByEndingZero(ByteArray.fromString("Yang"))),
-            new DataWord(covertTo32BytesByEndingZero(ByteArray.fromString("YNX"))),
-            new DataWord(1000_000L * TRX_PRECISION),
-            new DataWord(5));
+        new DataWord(covertTo32BytesByEndingZero(ByteArray.fromString("YNX"))),
+        new DataWord(1000_000L * TRX_PRECISION),
+        new DataWord(5));
     Assert.assertNotEquals(0, program.stackPop().intValue());
 
     // check global token id increased
@@ -119,15 +116,15 @@ public class Trc10InsTest {
     // check contract account updated
     AccountCapsule ownerAccountCap = deposit.getAccount(contractAddr);
     Assert.assertEquals(ByteString.copyFrom(
-              Objects.requireNonNull(ByteArray.fromString(assetIssueCap.getId()))),
-            ownerAccountCap.getAssetIssuedID());
+        Objects.requireNonNull(ByteArray.fromString(assetIssueCap.getId()))),
+        ownerAccountCap.getAssetIssuedID());
     Assert.assertEquals(assetIssueCap.getName(), ownerAccountCap.getAssetIssuedName());
     Assert.assertTrue(ownerAccountCap.getAssetMapV2().entrySet().stream().anyMatch(
-            e -> e.getKey().equals(createdAssetId)));
+        e -> e.getKey().equals(createdAssetId)));
 
     // check balance of contract account and black hole account
     Assert.assertEquals(initialBalanceOfBlackHole + balanceToAdd,
-            deposit.getBalance(deposit.getBlackHoleAddress()));
+        deposit.getBalance(deposit.getBlackHoleAddress()));
     Assert.assertEquals(0, ownerAccountCap.getBalance());
 
     // 2. test update asset
@@ -139,7 +136,7 @@ public class Trc10InsTest {
     program.memorySave(new DataWord(0), new DataWord(Objects.requireNonNull(urlData).length));
     program.memorySave(DataWord.WORD_SIZE, urlData);
     program.memorySave(new DataWord(2 * DataWord.WORD_SIZE),
-            new DataWord(Objects.requireNonNull(descData).length));
+        new DataWord(Objects.requireNonNull(descData).length));
     program.memorySave(3 * DataWord.WORD_SIZE, descData);
 
     // call updateAsset by Program instance and assert stack top is not zero if call successful

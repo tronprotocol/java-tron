@@ -4,10 +4,7 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
-
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
@@ -16,7 +13,10 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.*;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.consensus.base.Param;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -120,7 +120,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
       }
     }
   */
-  
+
   public String getABI() {
     String abi = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\","
         + "\"type\":\"constructor\"},{\"constant\":false,"
@@ -160,10 +160,10 @@ public class WithdrawRewardTest extends VMContractTestBase {
         + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
         + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
         + "\"type\":\"function\"}]";
-    
+
     return abi;
   }
-  
+
   public String getFactoryCode() {
     String factoryCode = "60806040526040516100109061005c565b604051809103906"
         + "000f08015801561002c573d6000803e3d6000fd5b50600180546001600160a"
@@ -204,10 +204,10 @@ public class WithdrawRewardTest extends VMContractTestBase {
         + "115158252519081900360200190f35b6000d7905090565b60008183d593925"
         + "0505056fea26474726f6e5820f52f0d803d46c1926596c7faa3b969812b567"
         + "66163eb8ca0270d34e3cff1d3b164736f6c634300050d0031";
-    
+
     return factoryCode;
   }
-  
+
   @Test
   public void testWithdrawRewardInLocalContract()
       throws ContractExeException, ReceiptCheckErrException, ValidateSignatureException,
@@ -222,26 +222,26 @@ public class WithdrawRewardTest extends VMContractTestBase {
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmStake(1);
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-    
+
     Repository repository;
     StoreFactory storeFactory = StoreFactory.getInstance();
     ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
     VMConfig vmConfig = VMConfig.getInstance();
-    
+
     String contractName = "TestWithdrawReward";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = getABI();
     String factoryCode = getFactoryCode();
-    
+
     long value = 1000000000;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
-  
+
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] witnessAddress = ecKey.getAddress();
-    
+
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
@@ -250,118 +250,127 @@ public class WithdrawRewardTest extends VMContractTestBase {
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
     Assert.assertNull(runtime.getRuntimeError());
-    
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     Protocol.Block firstBlock = getBlock(witnessCapsule.getAddress(),
         System.currentTimeMillis(), privateKey);
-    
+
     // Trigger contract method: stakeTest(address,uint256)
     String methodByAddr = "stakeTest(address,uint256)";
     String witness = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
     byte[] witnessAddr = Hex.decode("a0299f3db80a24b20a254b89ce639d59132f157f13");
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witness, 100000000));
     //BlockCapsule blockCap = new BlockCapsule(Protocol.Block.newBuilder().build());
-    
+
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    InternalTransaction rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    InternalTransaction rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, firstBlock, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, firstBlock, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     boolean programResult = program.stake(new DataWord(witnessAddr), new DataWord(100000000));
     Assert.assertTrue(programResult);
     repository.commit();
-    
+
     // Do Maintenance & Generate New Block
     maintenanceManager.doMaintenance();
-    
+
     witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
     Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     manager.pushBlock(new BlockCapsule(block));//cycle: 1 addReward
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     byte[] rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
     Assert.assertEquals(Hex.toHexString(rewardBalance),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-  
+
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
     Assert.assertEquals(Hex.toHexString(rewardBalance),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-    
+
     Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(),
         System.currentTimeMillis(), privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(newBlock);
     blockCapsule.generatedByMyself = true;
-    
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals(Hex.toHexString(program.stackPop().getData()),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-    
-    
+
     // Execute Next Cycle
     maintenanceManager.doMaintenance();
     WitnessCapsule localWitnessCapsule = manager.getWitnessStore()
         .get(witnessAddr);
     Assert.assertEquals(localWitnessCapsule.getVoteCount(), 205);
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
     BigInteger reward = new BigInteger(Hex.toHexString(rewardBalance), 16);
     repository.commit();
-    
+
     // Current Reward: Total Reward * Vote Rate
     //    BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
     //    byte[] sr1 = decodeFromBase58Check(witness);
@@ -371,7 +380,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     //    double voteRate = (double) 100 / totalVote;
     //    long curReward = (long) (totalReward * voteRate);
     //    Assert.assertEquals(reward.longValue(), curReward);
-    
+
     //total reward: block reward + vote reward
     long blockReward = 25600000;
     long voteReward = 2186667;
@@ -379,95 +388,105 @@ public class WithdrawRewardTest extends VMContractTestBase {
     double voteRate = (double) 100 / 205;
     long curReward = (long) (totalReward * voteRate);
     Assert.assertEquals(reward.longValue(), curReward);
-    
-    
+
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
-    Assert.assertEquals((new BigInteger(Hex.toHexString(rewardBalance), 16)).longValue(), curReward);
+    Assert
+        .assertEquals((new BigInteger(Hex.toHexString(rewardBalance), 16)).longValue(), curReward);
     repository.commit();
-    
-    
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()),
         16)).longValue(), curReward);
     repository.commit();
-    
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
-    Assert.assertEquals(Hex.toHexString(rewardBalance), "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals(Hex.toHexString(rewardBalance),
+        "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-    
+
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
-    Assert.assertEquals(Hex.toHexString(rewardBalance), "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals(Hex.toHexString(rewardBalance),
+        "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-    
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()),
         16)).longValue(), 0);
     repository.commit();
-    
+
     ConfigLoader.disable = false;
   }
-  
+
   @Test
   public void testWithdrawRewardInAnotherContract()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
@@ -482,12 +501,12 @@ public class WithdrawRewardTest extends VMContractTestBase {
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmStake(1);
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-  
+
     Repository repository;
     StoreFactory storeFactory = StoreFactory.getInstance();
     ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
     VMConfig vmConfig = VMConfig.getInstance();
-    
+
     String contractName = "TestWithdrawRewardWithContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = getABI();
@@ -495,7 +514,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     long value = 1000000000;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
-    
+
     // deploy contract - 27kR8yXGYQykQ2fgH3h9sqfNBSeEh23ggja
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
@@ -503,7 +522,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
     Assert.assertNull(runtime.getRuntimeError());
-    
+
     // Trigger contract method: getContractBAddressTest()
     String methodByAddr = "getContractBAddressTest()";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
@@ -512,34 +531,35 @@ public class WithdrawRewardTest extends VMContractTestBase {
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
-    
+
     // Contract B Address: 27Wvtyhk4hHqRzogLPSJ21TjDdpuTJZWvQD"
     String tmpAddress = "a0" + Hex.toHexString(returnValue).substring(24);
     byte[] contractBAddrByte = ByteArray.fromHexString(tmpAddress);
     String contractBAddress = StringUtil.encode58Check(contractBAddrByte);
     rootRepository.addBalance(Hex.decode(tmpAddress), 30000000000000L);
     rootRepository.commit();
-    
+
     // Trigger contract method: contractBStakeTest(address,uint256)
     methodByAddr = "contractBStakeTest(address,uint256)";
     String witness = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
     byte[] witnessAddr = Hex.decode("a0299f3db80a24b20a254b89ce639d59132f157f13");
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witness, 200000000));
-    
+
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         contractBAddrByte, Hex.decode(hexInput), 0, fee);
-    InternalTransaction rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    InternalTransaction rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     boolean programResult = program.stake(new DataWord(witnessAddr), new DataWord(200000000));
     Assert.assertTrue(programResult);
     repository.commit();
-    
-    
+
     // Do Maintenance & Generate New Block
     maintenanceManager.doMaintenance();
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -550,85 +570,92 @@ public class WithdrawRewardTest extends VMContractTestBase {
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
     Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     manager.pushBlock(new BlockCapsule(block));//cycle: 1 addReward
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(contractBAddress));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     byte[] rewardBalance = program.getRewardBalance(new DataWord(contractBAddrByte)).getData();
     Assert.assertEquals(Hex.toHexString(rewardBalance),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-    
+
     // Trigger contract method: otherContractAddrTest()
     methodByAddr = "otherContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(contractBAddrByte)).getData();
     Assert.assertEquals(Hex.toHexString(rewardBalance),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-  
-  
+
     // Trigger contract method: contractBWithdrawRewardTest()
     Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(),
         System.currentTimeMillis(), privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(newBlock);
     blockCapsule.generatedByMyself = true;
-    
+
     methodByAddr = "contractBWithdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         contractBAddrByte, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()),
         16)).longValue(), 0);
     repository.commit();
-    
+
     // Execute Next Cycle
     maintenanceManager.doMaintenance();
     WitnessCapsule localWitnessCapsule = manager.getWitnessStore().get(witnessAddr);
     Assert.assertEquals(localWitnessCapsule.getVoteCount(), 305);
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(contractBAddress));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(contractBAddrByte)).getData();
     BigInteger reward = new BigInteger(Hex.toHexString(rewardBalance), 16);
     repository.commit();
-    
+
     // Current Reward: Total Reward * Vote Rate
     //    byte[] sr1 = decodeFromBase58Check(witness);
     //    long totalReward = (long) ((double) rootRepository
@@ -637,7 +664,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     //    double voteRate = (double) 200 / totalVote;
     //    long curReward = (long) (totalReward * voteRate);
     //    Assert.assertEquals(curReward, reward.longValue());
-    
+
     //total reward: block reward + vote reward
     long blockReward = 25600000;
     long voteReward = 3003077;
@@ -645,97 +672,105 @@ public class WithdrawRewardTest extends VMContractTestBase {
     double voteRate = (double) 200 / 305;
     long curReward = (long) (totalReward * voteRate);
     Assert.assertEquals(reward.longValue(), curReward);
-    
+
     // Trigger contract method: otherContractAddrTest()
     methodByAddr = "otherContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         contractBAddrByte, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(contractBAddrByte)).getData();
     reward = new BigInteger(Hex.toHexString(rewardBalance), 16);
     Assert.assertEquals(reward.longValue(), curReward);
     repository.commit();
-  
-    
+
     // Trigger contract method: contractBWithdrawRewardTest()
     methodByAddr = "contractBWithdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         contractBAddrByte, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()),
         16)).longValue(), curReward);
     repository.commit();
-    
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(contractBAddress));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(contractBAddrByte)).getData();
     reward = new BigInteger(Hex.toHexString(rewardBalance), 16);
     Assert.assertEquals(reward.longValue(), 0);
     repository.commit();
-    
+
     // Trigger contract method: otherContractAddrTest()
     methodByAddr = "otherContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         contractBAddrByte, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(contractBAddrByte)).getData();
     reward = new BigInteger(Hex.toHexString(rewardBalance), 16);
     Assert.assertEquals(reward.longValue(), 0);
     repository.commit();
-    
+
     // Trigger contract method: contractBWithdrawRewardTest()
     methodByAddr = "contractBWithdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         contractBAddrByte, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()),
         16)).longValue(), 0);
     repository.commit();
-    
+
     ConfigLoader.disable = false;
   }
-  
+
   public Protocol.Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {
     long blockTime = System.currentTimeMillis() / 3000 * 3000;
     if (time != 0) {
@@ -750,7 +785,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     BlockCapsule blockCapsule = manager
         .generateBlock(miner, time, System.currentTimeMillis() + 1000);
     Protocol.Block block = blockCapsule.getInstance();
-    
+
     Protocol.BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()
         .setParentHash(ByteString
             .copyFrom(chainBaseManager.getDynamicPropertiesStore()
@@ -760,22 +795,22 @@ public class WithdrawRewardTest extends VMContractTestBase {
         .setTimestamp(blockTime)
         .setWitnessAddress(witness)
         .build();
-    
+
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECKey.ECDSASignature signature = ecKey.sign(Sha256Hash.of(CommonParameter
         .getInstance().isECKeyCryptoEngine(), raw.toByteArray()).getBytes());
     ByteString sign = ByteString.copyFrom(signature.toByteArray());
-    
+
     Protocol.BlockHeader blockHeader = block.getBlockHeader().toBuilder()
         .setRawData(raw)
         .setWitnessSignature(sign)
         .build();
-    
+
     Protocol.Block signedBlock = block.toBuilder().setBlockHeader(blockHeader).build();
-    
+
     return signedBlock;
   }
-  
+
   public Protocol.Block getBlock(ByteString witness, long time, byte[] privateKey) {
     long blockTime = System.currentTimeMillis() / 3000 * 3000;
     if (time != 0) {
@@ -810,7 +845,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     Protocol.Block signedBlock = block.toBuilder().setBlockHeader(blockHeader).build();
     return signedBlock;
   }
-  
+
   @Test
   public void testWithdrawRewardInLocalContractAfter24Hour()
       throws ContractExeException, ReceiptCheckErrException, ValidateSignatureException,
@@ -825,12 +860,12 @@ public class WithdrawRewardTest extends VMContractTestBase {
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmStake(1);
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-  
+
     Repository repository;
     StoreFactory storeFactory = StoreFactory.getInstance();
     ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
     VMConfig vmConfig = VMConfig.getInstance();
-    
+
     String contractName = "TestWithdrawReward";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = getABI();
@@ -842,7 +877,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] witnessAddress = ecKey.getAddress();
-    
+
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
@@ -851,11 +886,11 @@ public class WithdrawRewardTest extends VMContractTestBase {
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, manager, null);
     Assert.assertNull(runtime.getRuntimeError());
-  
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     Protocol.Block firstBlock = getBlock(witnessCapsule.getAddress(),
         System.currentTimeMillis(), privateKey);
-    
+
     // Trigger contract method: stakeTest(address,uint256)
     String methodByAddr = "stakeTest(address,uint256)";
     String witness = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
@@ -863,88 +898,95 @@ public class WithdrawRewardTest extends VMContractTestBase {
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witness, 100000000));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    InternalTransaction rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    InternalTransaction rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, firstBlock, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, firstBlock, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     boolean programResult = program.stake(new DataWord(witnessAddr), new DataWord(100000000));
     Assert.assertTrue(programResult);
     repository.commit();
-    
+
     // Do Maintenance & Generate New Block
     maintenanceManager.doMaintenance();
-    
+
     witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
     Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(),
         System.currentTimeMillis(), privateKey);
     manager.pushBlock(new BlockCapsule(block));//cycle: 1 addReward
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     byte[] rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
     Assert.assertEquals(Hex.toHexString(rewardBalance),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-    
-    
+
     Protocol.Block newBlock = getBlock(witnessCapsule.getAddress(),
         System.currentTimeMillis(), privateKey);
     BlockCapsule blockCapsule = new BlockCapsule(newBlock);
     blockCapsule.generatedByMyself = true;
-    
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals(Hex.toHexString(program.stackPop().getData()),
         "0000000000000000000000000000000000000000000000000000000000000000");
     repository.commit();
-    
+
     // Execute Next Cycle
     maintenanceManager.doMaintenance();
     WitnessCapsule localWitnessCapsule = manager.getWitnessStore()
         .get(witnessAddr);
     Assert.assertEquals(205, localWitnessCapsule.getVoteCount());
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
     repository.commit();
     BigInteger reward = new BigInteger(Hex.toHexString(rewardBalance), 16);
-    
+
     // Current Reward: Total Reward * Vote Rate
     //    BigInteger reward = new BigInteger(Hex.toHexString(returnValue), 16);
     //    byte[] sr1 = decodeFromBase58Check(witness);
@@ -954,7 +996,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     //    double voteRate = (double) 100 / totalVote;
     //    long curReward = (long) (totalReward * voteRate);
     //    Assert.assertEquals(reward.longValue(), curReward);
-    
+
     //total reward: block reward + vote reward
     long blockReward = 25600000;
     long voteReward = 2186667;
@@ -962,26 +1004,29 @@ public class WithdrawRewardTest extends VMContractTestBase {
     double voteRate = (double) 100 / 205;
     long curReward = (long) (totalReward * voteRate);
     Assert.assertEquals(reward.longValue(), curReward);
-    
+
     // Trigger contract method: localContractAddrTest()
     methodByAddr = "localContractAddrTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
     repository.commit();
-    Assert.assertEquals((new BigInteger(Hex.toHexString(rewardBalance), 16)).longValue(), curReward);
-    
+    Assert
+        .assertEquals((new BigInteger(Hex.toHexString(rewardBalance), 16)).longValue(), curReward);
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
-    
+
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
@@ -991,32 +1036,32 @@ public class WithdrawRewardTest extends VMContractTestBase {
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()), 16))
         .longValue(), curReward);
     repository.commit();
-    
-    
+
     // Trigger contract method: rewardBalanceTest(address)
     methodByAddr = "rewardBalanceTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, fee);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, null, repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, null, repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     rewardBalance = program.getRewardBalance(new DataWord(factoryAddress)).getData();
     repository.commit();
     Assert.assertEquals((new BigInteger(Hex.toHexString(rewardBalance), 16)).longValue(), 0);
-  
-  
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
@@ -1028,14 +1073,14 @@ public class WithdrawRewardTest extends VMContractTestBase {
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()), 16))
         .longValue(), 0);
     repository.commit();
-    
+
     // Within 24 Hours
     long num = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     ByteString latestHeadHash =
@@ -1046,7 +1091,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
             num + 1,
             latestHeadHash);
     manager.pushBlock(blockCapsule);
-    
+
     //    long currentTime = System.currentTimeMillis();
     //    for (int i = 0; i < (86400 / 3 - 3); i++) {
     //      currentTime += 3000;
@@ -1060,7 +1105,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     //                      privateKey);
     //      manager.pushBlock(blockCapsule);
     //    }
-    
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
@@ -1072,16 +1117,14 @@ public class WithdrawRewardTest extends VMContractTestBase {
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()), 16))
         .longValue(), 0);
     repository.commit();
-    
-    
-    
+
     // After 24 Hours
     num = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     latestHeadHash =
@@ -1104,7 +1147,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
     //                      privateKey);
     //      manager.pushBlock(blockCapsule);
     //    }
-    
+
     // Trigger contract method: withdrawRewardTest()
     methodByAddr = "withdrawRewardTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
@@ -1116,21 +1159,21 @@ public class WithdrawRewardTest extends VMContractTestBase {
     programInvoke = programInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCapsule.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+            0, 0, blockCapsule.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     program.withdrawReward();
     repository.commit();
-    
+
     curReward = repository.getDelegationStore().getReward(2, witnessAddr) * 100 / 205;
     Assert.assertEquals((new BigInteger(Hex.toHexString(program.stackPop().getData()), 16))
         .longValue(), curReward);
-    
+
     ConfigLoader.disable = false;
   }
-  
+
   private BlockCapsule createTestBlockCapsule(long time,
-                                              long number, ByteString hash) {
+      long number, ByteString hash) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
         witnessAddress);

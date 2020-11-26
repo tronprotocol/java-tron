@@ -32,6 +32,7 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class StakeTest extends VMTestBase {
+
   private MaintenanceManager maintenanceManager;
   private StoreFactory storeFactory;
   private Repository repository;
@@ -50,11 +51,12 @@ public class StakeTest extends VMTestBase {
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmStake(1);
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-    
+
     storeFactory = StoreFactory.getInstance();
     programInvokeFactory = new ProgramInvokeFactoryImpl();
     vmConfig = VMConfig.getInstance();
   }
+
   /*
 pragma solidity ^0.5.0;
 contract TestStake{
@@ -117,37 +119,38 @@ function UnStake() public returns (bool result){
 
     // deploy contract
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-                contractName, address, abi, factoryCode, 100000000, feeLimit, 0,
-                null);
+        contractName, address, abi, factoryCode, 100000000, feeLimit, 0,
+        null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-
     String methodByAddr = "Stake(address,uint256)";
     final String witnessAddrStr = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
     final byte[] witnessAddr = Hex.decode("a0299f3db80a24b20a254b89ce639d59132f157f13");
     BlockCapsule blockCap = new BlockCapsule(Protocol.Block.newBuilder().build());
-  
+
     // build program and trigger program.stake(witnessAddrStr, 10000000)
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witnessAddrStr, 10000000));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
-      factoryAddress, Hex.decode(hexInput), 0, feeLimit);
-    InternalTransaction rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+        factoryAddress, Hex.decode(hexInput), 0, feeLimit);
+    InternalTransaction rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     boolean result = program.stake(new DataWord(witnessAddr), new DataWord(10000000));
     Assert.assertTrue(result);
-    
+
     repository.commit();
-    
+
     maintenanceManager.doMaintenance();
-    
+
     AccountCapsule contract = manager.getAccountStore().get(factoryAddress);
     WitnessCapsule witness = manager.getWitnessStore().get(witnessAddr);
     Assert.assertEquals(contract.getFrozenCount(), 1);
@@ -160,38 +163,43 @@ function UnStake() public returns (bool result){
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(witnessAddrStr, 5000000));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
     result = program.stake(new DataWord(witnessAddr), new DataWord(5000000));
     Assert.assertTrue(result);
     repository.commit();
-    
+
     contract = manager.getAccountStore().get(factoryAddress);
     Assert.assertEquals(contract.getFrozenCount(), 1);
     Assert.assertEquals(contract.getFrozenBalance(), 10000000);
     Assert.assertEquals(contract.getVotesList().get(0).getVoteCount(), 5);
-  
+
     // vote not exist witness
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(
         "27k66nycZATHzBasFT9782nTsYWqVtxdtAc", 20000000));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    result = program.stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(20000000));
+    result = program
+        .stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(20000000));
     Assert.assertFalse(result);
     repository.commit();
-    
+
     contract = manager.getAccountStore().get(factoryAddress);
     Assert.assertEquals(contract.getBalance(), 90000000);
     Assert.assertEquals(contract.getFrozenCount(), 1);
@@ -202,14 +210,17 @@ function UnStake() public returns (bool result){
         "27k66nycZATHzBasFT9782nTsYWqVtxdtAc", -20000000));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    result = program.stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(-20000000));
+    result = program
+        .stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(-20000000));
     Assert.assertFalse(result);
     repository.commit();
 
@@ -218,14 +229,17 @@ function UnStake() public returns (bool result){
         "27k66nycZATHzBasFT9782nTsYWqVtxdtAc", 2000000000));
     trx = TvmTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS),
         factoryAddress, Hex.decode(hexInput), 0, feeLimit);
-    rootInternalTransaction = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    rootInternalTransaction = new InternalTransaction(trx,
+        InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = programInvokeFactory
-        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE, InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
-            0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
-            System.nanoTime()/1000 + 50000, 3_000_000L);
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
+            0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    result = program.stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(2000000000));
+    result = program.stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"),
+        new DataWord(2000000000));
     Assert.assertFalse(result);
     repository.commit();
   }
