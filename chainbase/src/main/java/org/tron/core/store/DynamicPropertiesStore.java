@@ -153,6 +153,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TRANSACTION_FEE_POOL = "ALLOW_TRANSACTION_FEE_POOL".getBytes();
   private static final byte[] TRANSACTION_FEE_POOL = "TRANSACTION_FEE_POOL".getBytes();
 
+  private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -709,6 +711,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowPBFT();
     } catch (IllegalArgumentException e) {
       this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
+    }
+
+    try {
+      this.getMaxFeeLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveMaxFeeLimit(1_000_000_000L);
     }
 
   }
@@ -2091,6 +2099,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowPBFT() {
     return getAllowPBFT() == 1;
+  }
+
+  public long getMaxFeeLimit() {
+    return Optional.ofNullable(getUnchecked(MAX_FEE_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAX_FEE_LIMIT"));
+  }
+
+  public void saveMaxFeeLimit(long maxFeeLimit) {
+    this.put(MAX_FEE_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(maxFeeLimit)));
   }
 
   private static class DynamicResourceProperties {
