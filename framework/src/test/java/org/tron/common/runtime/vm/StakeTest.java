@@ -9,7 +9,6 @@ import org.testng.Assert;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.consensus.dpos.MaintenanceManager;
@@ -189,7 +188,7 @@ function UnStake() public returns (bool result){
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
             System.nanoTime()/1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    result = program.stake(new DataWord(Base58.decode("27k66nycZATHzBasFT9782nTsYWqVtxdtAc")), new DataWord(20000000));
+    result = program.stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(20000000));
     Assert.assertFalse(result);
     repository.commit();
     
@@ -210,7 +209,7 @@ function UnStake() public returns (bool result){
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
             System.nanoTime()/1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    result = program.stake(new DataWord(Base58.decode("27k66nycZATHzBasFT9782nTsYWqVtxdtAc")), new DataWord(-20000000));
+    result = program.stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(-20000000));
     Assert.assertFalse(result);
     repository.commit();
 
@@ -226,7 +225,7 @@ function UnStake() public returns (bool result){
             0, 0, blockCap.getInstance(), repository, System.nanoTime()/1000,
             System.nanoTime()/1000 + 50000, 3_000_000L);
     program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    result = program.stake(new DataWord(Base58.decode("27k66nycZATHzBasFT9782nTsYWqVtxdtAc")), new DataWord(2000000000));
+    result = program.stake(new DataWord("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F"), new DataWord(2000000000));
     Assert.assertFalse(result);
     repository.commit();
   }
