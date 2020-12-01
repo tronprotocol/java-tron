@@ -1516,7 +1516,6 @@ public class ZenTrc20Base {
     }
   }
 
-
   /**
    * constructor.
    */
@@ -1663,7 +1662,6 @@ public class ZenTrc20Base {
     HttpMethed.printJsonContent(responseContent);
     return responseContent.containsKey("is_spent") ? responseContent.getBoolean("is_spent") : false;
   }
-
 
   /**
    * constructor.

@@ -2,6 +2,7 @@ package org.tron.core.vm.nativecontract;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.actuator.ActuatorConstant;
@@ -13,8 +14,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnstakeParam;
 import org.tron.core.vm.repository.Repository;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 
 @Slf4j(topic = "Processor")
 public class UnstakeProcessor {
@@ -69,7 +68,7 @@ public class UnstakeProcessor {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-              ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
+          "Account[" + readableOwnerAddress + "] does not exist");
     }
     long now = unstakeParam.getNow();
 
@@ -77,7 +76,9 @@ public class UnstakeProcessor {
       throw new ContractValidateException("no frozenBalance(BANDWIDTH)");
     }
 
-    if (accountCapsule.getFrozenList().get(0).getExpireTime() > now) {
+    boolean needCheckFrozenTime = CommonParameter.getInstance()
+            .getCheckFrozenTime() == 1;//for test
+    if (needCheckFrozenTime && accountCapsule.getFrozenList().get(0).getExpireTime() > now) {
       throw new ContractValidateException("It's not time to unfreeze(BANDWIDTH).");
     }
   }

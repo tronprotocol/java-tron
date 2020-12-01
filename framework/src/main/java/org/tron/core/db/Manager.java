@@ -139,6 +139,9 @@ import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 
 
@@ -897,7 +900,17 @@ public class Manager {
             "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
       }
 
-      BlockCapsule newBlock = this.khaosDb.push(block);
+      BlockCapsule newBlock;
+      try {
+        newBlock = this.khaosDb.push(block);
+      } catch (UnLinkedBlockException e) {
+        logger.error(
+            "latestBlockHeaderHash:{}, latestBlockHeaderNumber:{}, latestSolidifiedBlockNum:{}",
+            getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+            getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+            getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        throw e;
+      }
 
       // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {

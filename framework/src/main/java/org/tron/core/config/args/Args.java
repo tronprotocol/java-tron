@@ -282,11 +282,6 @@ public class Args extends CommonParameter {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
     }
 
-    if (config.hasPath(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH)) {
-      PARAMETER.nodeHttpStatisticsSRRewardEnable = config
-          .getBoolean(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH);
-    }
-
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
       PARAMETER.minTimeRatio = config.getDouble(Constant.VM_MIN_TIME_RATIO);
     }
@@ -1103,6 +1098,6 @@ public class Args extends CommonParameter {
         logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
       }
     }
-  } 
+  }
 }
 
