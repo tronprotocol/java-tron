@@ -81,6 +81,11 @@ public class MortgageService {
     payReward(witnessAddress, value);
   }
 
+  public void payTransactionFeeReward(byte[] witnessAddress, long value) {
+    logger.debug("pay {} transaction fee reward {}", Hex.toHexString(witnessAddress), value);
+    payReward(witnessAddress, value);
+  }
+
   private void payReward(byte[] witnessAddress, long value) {
     long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
     int brokerage = delegationStore.getBrokerage(cycle, witnessAddress);
