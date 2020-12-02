@@ -621,6 +621,15 @@ public enum OpCode {
   CREATE2(0xf5, 4, 1, OpCode.Tier.SpecialTier),
 
   /**
+   * (0xf6) CREATE3, same as CREATE2. It will compute the address from the caller address of the
+   * creating contract instead of the address of the creating contract. The reason of creating this
+   * op is that the change of the address computation method of CREATE2 in version 4.1.0 may cause
+   * loss of assets. In order to avoid this situation, CREATE3 uses the old way to compute the
+   * address. So that users can deploy the contract to the right address which seems not right now.
+   */
+  CREATE3(0xf6, 4, 1, Tier.SpecialTier),
+
+  /**
    * opcode that can be used to call another contract (or itself) while disallowing any
    * modifications to the state during the call (and its subcalls, if present). Any opcode that
    * attempts to perform such a modification (see below for details) will result in an exception

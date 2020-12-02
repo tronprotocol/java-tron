@@ -125,7 +125,9 @@ public class VMConfig {
     return ALLOW_SHIELDED_TRC20_TRANSACTION;
   }
 
-  public static boolean allowTvmIstanbul() {return ALLOW_TVM_ISTANBUL; }
+  public static boolean allowTvmIstanbul() {
+    return ALLOW_TVM_ISTANBUL;
+  }
 
   public static boolean allowTvmStake() {
     return ALLOW_TVM_STAKE;

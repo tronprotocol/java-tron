@@ -1468,6 +1468,17 @@ public class Program {
     createContractImpl(value, programCode, contractAddress, true);
   }
 
+  public void createContract3(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
+    byte[] senderAddress = TransactionTrace.
+        convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+
+    byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
+
+    byte[] contractAddress = WalletUtil
+        .generateContractAddress2(senderAddress, salt.getData(), programCode);
+    createContractImpl(value, programCode, contractAddress, true);
+  }
+
   public void addListener(ProgramOutListener listener) {
     this.listener = listener;
   }
