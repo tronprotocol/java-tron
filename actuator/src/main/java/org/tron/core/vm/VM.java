@@ -1314,6 +1314,7 @@ public class VM {
           program.createContract2(value, inOffset, inSize, salt);
           program.step();
         }
+        break;
         case CREATE3: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
