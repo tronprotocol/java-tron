@@ -11,6 +11,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -58,20 +59,22 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
-    AccountCapsule old = super.getUnchecked(key);
-    if (old == null) {
-      if (item.getBalance() != 0) {
-        recordBalance(item, item.getBalance());
+    if (CommonParameter.getInstance().isHistoryBalanceLookup()) {
+      AccountCapsule old = super.getUnchecked(key);
+      if (old == null) {
+        if (item.getBalance() != 0) {
+          recordBalance(item, item.getBalance());
+          BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
+          if (blockId != null) {
+            accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
+          }
+        }
+      } else if (old.getBalance() != item.getBalance()) {
+        recordBalance(item, item.getBalance() - old.getBalance());
         BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
         if (blockId != null) {
           accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
         }
-      }
-    } else if (old.getBalance() != item.getBalance()) {
-      recordBalance(item, item.getBalance() - old.getBalance());
-      BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
-      if (blockId != null) {
-        accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
       }
     }
 
@@ -81,16 +84,17 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public void delete(byte[] key) {
-    AccountCapsule old = super.getUnchecked(key);
-    if (old != null) {
-      recordBalance(old, -old.getBalance());
-    }
+    if (CommonParameter.getInstance().isHistoryBalanceLookup()) {
+      AccountCapsule old = super.getUnchecked(key);
+      if (old != null) {
+        recordBalance(old, -old.getBalance());
+      }
 
-    BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
-    if (blockId != null) {
-      accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
+      BlockCapsule.BlockId blockId = balanceTraceStore.getCurrentBlockId();
+      if (blockId != null) {
+        accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
+      }
     }
-
     super.delete(key);
   }
 

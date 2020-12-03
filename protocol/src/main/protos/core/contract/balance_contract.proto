@@ -59,9 +59,29 @@ message BlockBalanceTrace {
   BlockIdentifier block_identifier = 1;
   int64 timestamp = 2;
   repeated TransactionBalanceTrace transaction_balance_trace = 3;
+  BlockIdentifier parent_block_identifier = 4;
 }
 
 message AccountTrace {
   int64 balance = 1;
   int64 placeholder = 99;
+}
+
+message BlockIdentifier {
+  int64 number = 1;
+  bytes hash = 2;
+}
+
+message AccountIdentifier {
+  bytes address = 1;
+}
+
+message AccountBalanceRequest {
+  AccountIdentifier account_identifier = 1;
+  BlockIdentifier block_identifier = 2;
+}
+
+message AccountBalanceResponse {
+  int64 balance = 1;
+  BlockIdentifier block_identifier = 2;
 }

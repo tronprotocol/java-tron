@@ -451,6 +451,11 @@ public class CommonParameter {
   @Parameter(names = {"--reset-number"})
   public long resetNumber = 0;
 
+  @Getter
+  @Setter
+  @Parameter(names = {"--history-balance-lookup"})
+  public boolean historyBalanceLookup = false;
+
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;

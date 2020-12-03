@@ -33,6 +33,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.AccountTraceStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.BalanceTraceStore;
@@ -193,6 +194,10 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private BalanceTraceStore balanceTraceStore;
+
+  @Autowired
+  @Getter
+  private AccountTraceStore accountTraceStore;
 
   @Getter
   private ForkController forkController = ForkController.instance();

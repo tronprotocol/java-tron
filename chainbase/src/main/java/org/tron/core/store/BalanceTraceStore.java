@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -64,6 +65,10 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
   }
 
   public void resetCurrentTransactionTrace() {
+    if (!CommonParameter.getInstance().isHistoryBalanceLookup()) {
+      return;
+    }
+
     if (currentBlockId == null) {
       return;
     }
@@ -77,17 +82,25 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
   }
 
   public void resetCurrentBlockTrace() {
-    putBlockBalanceTrace(currentBlockBalanceTraceCapsule);
-    currentBlockId = null;
-    currentBlockBalanceTraceCapsule = null;
+    if (CommonParameter.getInstance().isHistoryBalanceLookup()) {
+      putBlockBalanceTrace(currentBlockBalanceTraceCapsule);
+      currentBlockId = null;
+      currentBlockBalanceTraceCapsule = null;
+    }
   }
 
   public void initCurrentBlockBalanceTrace(BlockCapsule blockCapsule) {
-    setCurrentBlockId(blockCapsule);
-    currentBlockBalanceTraceCapsule = new BlockBalanceTraceCapsule(blockCapsule);
+    if (CommonParameter.getInstance().isHistoryBalanceLookup()) {
+      setCurrentBlockId(blockCapsule);
+      currentBlockBalanceTraceCapsule = new BlockBalanceTraceCapsule(blockCapsule);
+    }
   }
 
   public void initCurrentTransactionBalanceTrace(TransactionCapsule transactionCapsule) {
+    if (!CommonParameter.getInstance().isHistoryBalanceLookup()) {
+      return;
+    }
+
     if (currentBlockId == null) {
       return;
     }
@@ -100,7 +113,10 @@ public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCa
   }
 
   public void updateCurrentTransactionStatus(String status) {
-    if (currentBlockId == null) {
+    if (!CommonParameter.getInstance().isHistoryBalanceLookup()) {
+      return;
+    }
+      if (currentBlockId == null) {
       return;
     }
 
