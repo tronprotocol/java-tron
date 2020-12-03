@@ -48,7 +48,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size number of bytes needed
+   * @param size   number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -85,6 +85,20 @@ public class VM {
     return energyCost;
   }
 
+  private void judgeHardFork(OpCode op, byte currentOp) {
+    if (op == null
+        || (!VMConfig.allowTvmTransferTrc10()
+        && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE
+        || op == CALLTOKENID))
+        || (!VMConfig.allowTvmConstantinople()
+        && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH))
+        || (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT)
+        || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID))
+    ) {
+      throw Program.Exception.invalidOpCode(currentOp);
+    }
+  }
+
   public void step(Program program) {
     if (config.vmTrace()) {
       program.saveOpTrace();
@@ -92,17 +106,7 @@ public class VM {
 
     try {
       OpCode op = OpCode.code(program.getCurrentOp());
-      if (op == null
-          || (!VMConfig.allowTvmTransferTrc10()
-              && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE
-          || op == CALLTOKENID))
-          || (!VMConfig.allowTvmConstantinople()
-              && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH))
-          || (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT)
-          || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID))
-          ) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+      judgeHardFork(op, program.getCurrentOp());
 
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
