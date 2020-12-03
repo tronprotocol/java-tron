@@ -503,6 +503,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
+  public void setTimestamp(long timestamp) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setTimestamp(timestamp)
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
   public long getTimestamp() {
     return transaction.getRawData().getTimestamp();
   }

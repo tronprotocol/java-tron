@@ -288,4 +288,45 @@ public class Chainbase implements IRevokingDB {
 
     return result;
   }
+
+  // for accout-trace
+  @Override
+  public Map<byte[], byte[]> getNext(byte[] key, long limit) {
+    return getNext(head(), key, limit);
+  }
+
+  // for accout-trace
+  private Map<byte[], byte[]> getNext(Snapshot head, byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyMap();
+    }
+
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collect(collection);
+    }
+
+    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    }
+
+    levelDBMap.putAll(collection);
+
+    return levelDBMap.entrySet().stream()
+        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+        .sorted((e1, e2) -> ByteUtil.compare(e1.getKey(), e2.getKey()))
+        .filter(e -> ByteUtil.greaterOrEquals(e.getKey(), key))
+        .limit(limit)
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
 }
