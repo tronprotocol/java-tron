@@ -21,8 +21,13 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.store.AccountBalanceStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
@@ -42,6 +47,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   private Account account;
 
+  @Getter
+  private AccountBalanceCapsule accountBalanceCapsule;
+
+  @Setter
+  private AccountBalanceStore accountBalanceStore;
 
   /**
    * get account from bytes data.
@@ -49,6 +59,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public AccountCapsule(byte[] data) {
     try {
       this.account = Account.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage());
+    }
+  }
+
+  public AccountCapsule(byte[] data, AccountBalanceStore accountBalanceStore) {
+    try {
+      this.account = Account.parseFrom(data);
+      this.accountBalanceStore = accountBalanceStore;
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
@@ -307,13 +326,24 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return this.account.getWitnessPermission().getKeys(0).getAddress().toByteArray();
     }
   }
+  public long getOriginalBalance() {
+    return account.getBalance();
+  }
 
   public long getBalance() {
-    return this.account.getBalance();
+    if (Objects.nonNull(this.accountBalanceCapsule)) {
+      return this.accountBalanceCapsule.getBalance();
+    }
+    this.accountBalanceCapsule = accountBalanceStore.get(account.getAddress().toByteArray());
+    return accountBalanceCapsule.getBalance();
   }
 
   public void setBalance(long balance) {
-    this.account = this.account.toBuilder().setBalance(balance).build();
+    if (Objects.nonNull(this.accountBalanceCapsule)) {
+      this.accountBalanceCapsule.setBalance(balance);
+    }
+    this.accountBalanceCapsule = accountBalanceStore.get(account.getAddress().toByteArray());
+    this.accountBalanceCapsule.setBalance(balance);
   }
 
   public long getLatestOperationTime() {

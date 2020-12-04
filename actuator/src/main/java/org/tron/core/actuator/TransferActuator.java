@@ -8,11 +8,14 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountBalanceCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountBalanceStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
@@ -35,8 +38,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     long fee = calcFee();
-    AccountStore accountStore = chainBaseManager.getAccountStore();
-    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountBalanceStore accountBalanceStore = chainBaseManager.getAccountBalanceStore();
     try {
       TransferContract transferContract = any.unpack(TransferContract.class);
       long amount = transferContract.getAmount();
@@ -44,21 +46,25 @@ public class TransferActuator extends AbstractActuator {
       byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
 
       // if account with to_address does not exist, create it first.
-      AccountCapsule toAccount = accountStore.get(toAddress);
-      if (toAccount == null) {
+      AccountBalanceCapsule toAccountBalance = accountBalanceStore.get(toAddress);
+      DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+      checkToAccount(toAddress, dynamicStore);
+      if (toAccountBalance == null) {
         boolean withDefaultPermission =
-            dynamicStore.getAllowMultiSign() == 1;
-        toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
-        accountStore.put(toAddress, toAccount);
+                dynamicStore.getAllowMultiSign() == 1;
+        toAccountBalance = new AccountBalanceCapsule(
+                ByteString.copyFrom(toAddress),
+                AccountType.Normal,
+                withDefaultPermission);
+        accountBalanceStore.put(toAddress, toAccountBalance);
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
-      Commons.adjustBalance(accountStore, ownerAddress, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(accountBalanceStore, ownerAddress, -fee);
+      Commons.adjustBalance(accountBalanceStore, accountBalanceStore.getBlackhole().createDbKey(), fee);
       ret.setStatus(fee, code.SUCESS);
-      Commons.adjustBalance(accountStore, ownerAddress, -amount);
-      Commons.adjustBalance(accountStore, toAddress, amount);
+      Commons.adjustBalance(accountBalanceStore, ownerAddress, -amount);
+      Commons.adjustBalance(accountBalanceStore, toAddress, amount);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -75,6 +81,19 @@ public class TransferActuator extends AbstractActuator {
     return true;
   }
 
+  private void checkToAccount(byte[] toAddress, DynamicPropertiesStore dynamicStore) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountCapsule toAccount = accountStore.get(toAddress);
+    if (toAccount == null) {
+      boolean withDefaultPermission =
+              dynamicStore.getAllowMultiSign() == 1;
+      toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
+              dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
+      accountStore.put(toAddress, toAccount);
+    }
+  }
+
+
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
@@ -83,7 +102,7 @@ public class TransferActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountBalanceStore accountBalanceStore = chainBaseManager.getAccountBalanceStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(TransferContract.class)) {
       throw new ContractValidateException(
@@ -103,10 +122,10 @@ public class TransferActuator extends AbstractActuator {
     byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
     long amount = transferContract.getAmount();
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress!");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress!");
     }
 
@@ -114,7 +133,7 @@ public class TransferActuator extends AbstractActuator {
       throw new ContractValidateException("Cannot transfer TRX to yourself.");
     }
 
-    AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+    AccountBalanceCapsule ownerAccount = accountBalanceStore.get(ownerAddress);
 
     if (ownerAccount == null) {
       throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
@@ -127,7 +146,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     try {
-      AccountCapsule toAccount = accountStore.get(toAddress);
+      AccountBalanceCapsule toAccount = accountBalanceStore.get(toAddress);
       if (toAccount == null) {
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }

@@ -55,6 +55,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.backup.DbBackupConfig;
+import org.tron.core.store.AccountBalanceStore;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
@@ -822,6 +823,7 @@ public class Args {
       if (config.hasPath(Constant.GENESIS_BLOCK_ASSETS)) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));
         AccountStore.setAccount(config);
+        AccountBalanceStore.setAccount(config);
       }
       if (config.hasPath(Constant.GENESIS_BLOCK_WITNESSES)) {
         INSTANCE.genesisBlock.setWitnesses(getWitnessesFromConfig(config));

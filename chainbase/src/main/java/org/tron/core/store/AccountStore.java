@@ -4,6 +4,9 @@ import com.typesafe.config.ConfigObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Autowired
   private AccountStateCallBackUtils accountStateCallBackUtils;
 
+  @Getter
+  @Setter
+  private AccountBalanceStore accountBalanceStore;
+
   @Autowired
   private AccountStore(@Value("account") String dbName) {
     super(dbName);
@@ -41,13 +48,14 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value, accountBalanceStore);
   }
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
+    accountBalanceStore.put(key, item.getAccountBalanceCapsule());
   }
 
   /**

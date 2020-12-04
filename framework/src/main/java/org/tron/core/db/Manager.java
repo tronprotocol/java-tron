@@ -69,6 +69,7 @@ import org.tron.core.Constant;
 import org.tron.core.actuator.AbstractActuator;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AccountBalanceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -485,7 +486,7 @@ public class Manager {
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setDelegationService(delegationService);
-
+    accountStore.setAccountBalanceStore(chainBaseManager.getAccountBalanceStore());
     this.initGenesis();
     try {
       this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
@@ -602,6 +603,13 @@ public class Manager {
               this.accountStore.put(account.getAddress(), accountCapsule);
               this.accountIdIndexStore.put(accountCapsule);
               this.accountIndexStore.put(accountCapsule);
+
+              final AccountBalanceCapsule accountBalanceCapsule = new AccountBalanceCapsule(
+                      ByteString.copyFrom(account.getAddress()),
+                      account.getAccountType(),
+                      account.getBalance());
+              chainBaseManager.getAccountBalanceStore().put(account.getAddress(), accountBalanceCapsule);
+
             });
   }
 

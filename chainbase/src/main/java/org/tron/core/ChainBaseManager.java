@@ -30,6 +30,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.core.store.AccountBalanceStore;
 
 @Component
 public class ChainBaseManager {
@@ -38,6 +39,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private AccountStore accountStore;
+  @Autowired
+  @Getter
+  private AccountBalanceStore accountBalanceStore;
   @Autowired
   @Getter
   private BlockStore blockStore;

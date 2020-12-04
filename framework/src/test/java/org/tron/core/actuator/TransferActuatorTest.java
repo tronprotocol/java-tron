@@ -21,6 +21,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountBalanceCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -31,6 +32,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.AccountBalanceStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -111,6 +113,24 @@ public class TransferActuatorTest {
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
+  @Before
+  public void createAccountBalanceCapsule() {
+    AccountBalanceStore accountBalanceStore = dbManager.getChainBaseManager().getAccountBalanceStore();
+    AccountBalanceCapsule ownerCapsule =
+            new AccountBalanceCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+                    AccountType.Normal,
+                    OWNER_BALANCE);
+    AccountBalanceCapsule toAccountCapsule =
+            new AccountBalanceCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+                    AccountType.Normal,
+                    TO_BALANCE);
+    accountBalanceStore.put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    accountBalanceStore.put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+  }
+
+
   private Any getContract(long count) {
     return Any.pack(
         TransferContract.newBuilder()
@@ -178,6 +198,34 @@ public class TransferActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void perfectTransferByAccountBalance() {
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+            .setAny(getContract(OWNER_BALANCE - TRANSFER_FEE));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountBalanceCapsule owner =
+              dbManager.getChainBaseManager().getAccountBalanceStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountBalanceCapsule toAccount =
+              dbManager.getChainBaseManager().getAccountBalanceStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertEquals(owner.getBalance(), 0);
+      Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + OWNER_BALANCE);
+      Assert.assertTrue(true);
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
 
   @Test
   public void moreTransfer() {
