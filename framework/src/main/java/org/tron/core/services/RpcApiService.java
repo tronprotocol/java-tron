@@ -145,7 +145,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
-import org.tron.protos.contract.BalanceContract.BlockIdentifier;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -1001,32 +1000,26 @@ public class RpcApiService implements Service {
      */
     public void getAccountBalance(AccountBalanceRequest request,
                                   StreamObserver<AccountBalanceResponse> responseObserver) {
-      BalanceContract.AccountIdentifier accountIdentifier = request.getAccountIdentifier();
-      BlockIdentifier blockIdentifier = request.getBlockIdentifier();
-      if (accountIdentifier != null
-          && accountIdentifier.getAddress() != null
-          && !accountIdentifier.getAddress().isEmpty()
-          && blockIdentifier != null
-      ) {
+      try {
         AccountBalanceResponse accountBalanceResponse = wallet.getAccountBalance(request);
         responseObserver.onNext(accountBalanceResponse);
-      } else {
-        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+      } catch (Exception e) {
+        responseObserver.onError(e);
       }
-      responseObserver.onCompleted();
     }
 
     /**
      */
-    public void getBlockBalanceTrace(BlockIdentifier request,
+    public void getBlockBalanceTrace(BlockBalanceTrace.BlockIdentifier request,
                                      StreamObserver<BlockBalanceTrace> responseObserver) {
-      if (request != null) {
-        BlockBalanceTrace blockBalanceTrace = wallet.getBlockBalance(request);
-        responseObserver.onNext(blockBalanceTrace);
-      } else {
-        responseObserver.onNext(null);
+      try {
+          BlockBalanceTrace blockBalanceTrace = wallet.getBlockBalance(request);
+          responseObserver.onNext(blockBalanceTrace);
+        responseObserver.onCompleted();
+      } catch (Exception e) {
+        responseObserver.onError(e);
       }
-      responseObserver.onCompleted();
     }
 
     @Override

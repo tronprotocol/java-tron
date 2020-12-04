@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 
 
 @Component
@@ -21,7 +21,8 @@ public class GetBlockBalanceServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      BalanceContract.BlockIdentifier.Builder builder = BalanceContract.BlockIdentifier.newBuilder();
+      BlockBalanceTrace.BlockIdentifier.Builder builder = BlockBalanceTrace.BlockIdentifier
+          .newBuilder();
       JsonFormat.merge(params.getParams(), builder, params.isVisible());
       fillResponse(params.isVisible(), builder.build(), response);
     } catch (Exception e) {
@@ -29,12 +30,13 @@ public class GetBlockBalanceServlet extends RateLimiterServlet {
     }
   }
 
-  private void fillResponse(boolean visible, BalanceContract.BlockIdentifier request, HttpServletResponse response)
+  private void fillResponse(boolean visible, BlockBalanceTrace.BlockIdentifier request, HttpServletResponse response)
       throws Exception {
-    BalanceContract.BlockBalanceTrace reply = wallet.getBlockBalance(request);
+    BlockBalanceTrace reply = wallet.getBlockBalance(request);
     if (reply != null) {
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } else {
       response.getWriter().println("{}");
-    }  }
+    }
+  }
 }

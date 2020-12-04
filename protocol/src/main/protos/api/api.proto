@@ -51,7 +51,7 @@ service Wallet {
     };
   };
 
-  rpc GetBlockBalanceTrace (BlockIdentifier) returns (BlockBalanceTrace) {
+  rpc GetBlockBalanceTrace (BlockBalanceTrace.BlockIdentifier) returns (BlockBalanceTrace) {
     option (google.api.http) = {
       post: "/wallet/getblockbalancetrace"
       body: "*"

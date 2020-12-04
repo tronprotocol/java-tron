@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 
@@ -53,6 +54,12 @@ public class BlockBalanceTraceCapsule implements ProtoCapsule<BlockBalanceTrace>
         .setTransactionBalanceTrace(index, transactionBalanceTrace)
         .build();
   }
+
+//  public void setParentBlockIdentifier(BlockBalanceTrace.BlockIdentifier blockIdentifier) {
+//    balanceTrace = balanceTrace.toBuilder()
+//        .setParentBlockIdentifier(blockIdentifier)
+//        .build();
+//  }
 
   @Override
   public byte[] getData() {

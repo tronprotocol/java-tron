@@ -218,6 +218,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
@@ -3658,56 +3659,88 @@ public class Wallet {
   }
 
   public BalanceContract.AccountBalanceResponse getAccountBalance(
-      BalanceContract.AccountBalanceRequest request) {
+      BalanceContract.AccountBalanceRequest request)
+      throws ItemNotFoundException
+  {
+    BalanceContract.AccountIdentifier accountIdentifier = request.getAccountIdentifier();
+    checkAccountIdentifier(accountIdentifier);
+    BlockBalanceTrace.BlockIdentifier blockIdentifier = request.getBlockIdentifier();
+    checkBlockIdentifier(blockIdentifier);
+
     AccountTraceStore accountTraceStore = chainBaseManager.getAccountTraceStore();
     BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
-    BalanceContract.BlockIdentifier blockIdentifier = request.getBlockIdentifier();
-    try {
-      BlockId blockId = blockIndexStore.get(blockIdentifier.getNumber());
-      if (blockIdentifier.getHash() != null && !blockId.getByteString().equals(blockIdentifier.getHash())) {
-        return null;
-      }
-
-      BalanceContract.AccountIdentifier accountIdentifier = request.getAccountIdentifier();
-      Pair<Long, Long> pair = accountTraceStore.getPrevBalance(
-          accountIdentifier.getAddress().toByteArray(), blockIdentifier.getNumber());
-      BalanceContract.AccountBalanceResponse.Builder builder =
-          BalanceContract.AccountBalanceResponse.newBuilder();
-      if (pair.getLeft() == blockIdentifier.getNumber()) {
-        builder.setBlockIdentifier(blockIdentifier);
-      } else {
-        blockId = blockIndexStore.get(pair.getLeft());
-        builder.setBlockIdentifier(BalanceContract.BlockIdentifier.newBuilder()
-        .setNumber(pair.getLeft())
-        .setHash(blockId.getByteString()));
-      }
-
-      builder.setBalance(pair.getRight());
-      return builder.build();
-    } catch (ItemNotFoundException e) {
-      return null;
+    BlockId blockId = blockIndexStore.get(blockIdentifier.getNumber());
+    if (!blockId.getByteString().equals(blockIdentifier.getHash())) {
+      throw new IllegalArgumentException("number and hash do not match");
     }
+
+    Pair<Long, Long> pair = accountTraceStore.getPrevBalance(
+        accountIdentifier.getAddress().toByteArray(), blockIdentifier.getNumber());
+    BalanceContract.AccountBalanceResponse.Builder builder =
+        BalanceContract.AccountBalanceResponse.newBuilder();
+    if (pair.getLeft() == blockIdentifier.getNumber()) {
+      builder.setBlockIdentifier(blockIdentifier);
+    } else {
+      blockId = blockIndexStore.get(pair.getLeft());
+      builder.setBlockIdentifier(BlockBalanceTrace.BlockIdentifier.newBuilder()
+          .setNumber(pair.getLeft())
+          .setHash(blockId.getByteString()));
+    }
+
+    builder.setBalance(pair.getRight());
+    return builder.build();
   }
 
-  public BalanceContract.BlockBalanceTrace getBlockBalance(BalanceContract.BlockIdentifier request) {
+  public BalanceContract.BlockBalanceTrace getBlockBalance(BlockBalanceTrace.BlockIdentifier request)
+      throws ItemNotFoundException, BadItemException {
+    checkBlockIdentifier(request);
     BalanceTraceStore balanceTraceStore = chainBaseManager.getBalanceTraceStore();
     BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
-    try {
-      BlockId blockId = blockIndexStore.get(request.getNumber());
-      if (!blockId.getByteString().equals(request.getHash())) {
-        return null;
-      }
-
-      BlockBalanceTraceCapsule blockBalanceTraceCapsule = balanceTraceStore.getBlockBalanceTrace(blockId);
-      if (blockBalanceTraceCapsule == null) {
-        return null;
-      }
-
-      return blockBalanceTraceCapsule.getInstance();
-    } catch (ItemNotFoundException | BadItemException e) {
-      return null;
+    BlockId blockId = blockIndexStore.get(request.getNumber());
+    if (!blockId.getByteString().equals(request.getHash())) {
+      throw new IllegalArgumentException("number and hash do not match");
     }
 
+    BlockBalanceTraceCapsule blockBalanceTraceCapsule =
+        balanceTraceStore.getBlockBalanceTrace(blockId);
+    if (blockBalanceTraceCapsule == null) {
+      throw new ItemNotFoundException("This block does not exist");
+    }
+
+//      if (blockId.getNum() == 0) {
+//        blockBalanceTraceCapsule.setParentBlockIdentifier(blockBalanceTraceCapsule.getBlockIdentifier());
+//      } else {
+//        BlockId parentBlockId = chainBaseManager.getBlockIdByNum(blockId.getNum() - 1);
+//        blockBalanceTraceCapsule.setParentBlockIdentifier(
+//            BlockBalanceTrace.BlockIdentifier.newBuilder()
+//                .setNumber(parentBlockId.getNum())
+//                .setHash(parentBlockId.getByteString())
+//                .build());
+//      }
+
+    return blockBalanceTraceCapsule.getInstance();
+  }
+
+  public void checkBlockIdentifier(BlockBalanceTrace.BlockIdentifier blockIdentifier) {
+    if (blockIdentifier == blockIdentifier.getDefaultInstanceForType()) {
+      throw new IllegalArgumentException("block_identifier null");
+    }
+    if (blockIdentifier.getNumber() < 0) {
+      throw new IllegalArgumentException("block_identifier number less than 0");
+    }
+    if (blockIdentifier.getHash().size() != 32) {
+      throw new IllegalArgumentException("block_identifier hash length not equals 32");
+    }
+
+  }
+
+  public void checkAccountIdentifier(BalanceContract.AccountIdentifier accountIdentifier) {
+    if (accountIdentifier == accountIdentifier.getDefaultInstanceForType()) {
+      throw new IllegalArgumentException("account_identifier is null");
+    }
+    if (accountIdentifier.getAddress().isEmpty()) {
+      throw new IllegalArgumentException("account_identifier address is null");
+    }
   }
 }
 

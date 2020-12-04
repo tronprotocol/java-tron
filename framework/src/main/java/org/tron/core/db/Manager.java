@@ -1,6 +1,8 @@
 package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -69,6 +71,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -143,6 +146,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.BalanceContract;
 
 
 @Slf4j(topic = "DB")
@@ -438,6 +442,7 @@ public class Manager {
         this.initWitness();
         this.khaosDb.start(genesisBlock);
         this.updateRecentBlock(genesisBlock);
+        initAccountHistoryBalance();
       }
     }
   }
@@ -463,6 +468,37 @@ public class Manager {
               chainBaseManager.getAccountIdIndexStore().put(accountCapsule);
               chainBaseManager.getAccountIndexStore().put(accountCapsule);
             });
+  }
+
+  public void initAccountHistoryBalance() {
+    BlockCapsule genesis = chainBaseManager.getGenesisBlock();
+    BlockBalanceTraceCapsule genesisBlockBalanceTraceCapsule =
+        new BlockBalanceTraceCapsule(genesis);
+    List<TransactionCapsule> transactionCapsules = genesis.getTransactions();
+    for (TransactionCapsule transactionCapsule : transactionCapsules) {
+      BalanceContract.TransferContract transferContract = transactionCapsule.getTransferContract();
+      BalanceContract.TransactionBalanceTrace.Operation operation =
+          BalanceContract.TransactionBalanceTrace.Operation.newBuilder()
+              .setOperationIdentifier(0)
+              .setAddress(transferContract.getToAddress())
+              .setAmount(transferContract.getAmount())
+              .build();
+
+      BalanceContract.TransactionBalanceTrace transactionBalanceTrace =
+          BalanceContract.TransactionBalanceTrace.newBuilder()
+              .setTransactionIdentifier(transactionCapsule.getTransactionId().getByteString())
+              .setType(TransferContract.name())
+              .setStatus(SUCCESS.name())
+              .addOperation(operation)
+              .build();
+      genesisBlockBalanceTraceCapsule.addTransactionBalanceTrace(transactionBalanceTrace);
+
+      chainBaseManager.getAccountTraceStore().recordBalanceWithBlock(
+          transferContract.getToAddress().toByteArray(), 0, transferContract.getAmount());
+    }
+
+    chainBaseManager.getBalanceTraceStore()
+        .put(Longs.toByteArray(0), genesisBlockBalanceTraceCapsule);
   }
 
   /**
