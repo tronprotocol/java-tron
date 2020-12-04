@@ -14,15 +14,15 @@ import org.springframework.stereotype.Component;
 import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.PacketDecoder;
 import org.tron.common.overlay.server.WireTrafficStats;
-import org.tron.core.config.args.Args;
+import org.tron.common.parameter.CommonParameter;
 
 @Slf4j(topic = "backup")
 @Component
 public class BackupServer {
 
-  private Args args = Args.getInstance();
+  private CommonParameter commonParameter = CommonParameter.getInstance();
 
-  private int port = args.getBackupPort();
+  private int port = commonParameter.getBackupPort();
 
   private BackupManager backupManager;
 
@@ -39,7 +39,7 @@ public class BackupServer {
   }
 
   public void initServer() {
-    if (port > 0 && args.getBackupMembers().size() > 0) {
+    if (port > 0 && commonParameter.getBackupMembers().size() > 0) {
       new Thread(() -> {
         try {
           start();

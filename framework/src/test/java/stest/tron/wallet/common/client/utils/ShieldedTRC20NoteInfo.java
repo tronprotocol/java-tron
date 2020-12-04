@@ -9,6 +9,7 @@ import org.tron.common.utils.ByteArray;
 
 @AllArgsConstructor
 public class ShieldedTRC20NoteInfo {
+
   @Setter
   @Getter
   public long value = 0;
@@ -39,8 +40,6 @@ public class ShieldedTRC20NoteInfo {
 
   /**
    * format shieldedTRC20 note to a string
-   *
-   * @return
    */
   public String encode(byte[] encryptKey) throws CipherException {
     String encodeString = noteIndex + ";";
@@ -69,9 +68,6 @@ public class ShieldedTRC20NoteInfo {
 
   /**
    * parse string to get shieldedTRC20 note
-   *
-   * @param data
-   * @return
    */
   public boolean decode(String data, byte[] encryptKey) throws CipherException {
     byte[] chipherText = Base58.decode(data);

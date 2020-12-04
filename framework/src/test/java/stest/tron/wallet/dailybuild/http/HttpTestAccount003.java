@@ -19,10 +19,10 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class HttpTestAccount003 {
 
-  private static String updateAccountName = "updateAccount_"
-      + Long.toString(System.currentTimeMillis());
+  private static String updateAccountName =
+      "updateAccount_" + System.currentTimeMillis();
   private static String updateUrl =
-      "http://www.update.url" + Long.toString(System.currentTimeMillis());
+      "http://www.update.url" + System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -49,6 +49,8 @@ public class HttpTestAccount003 {
       .get(0);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
   /**
    * constructor.
@@ -59,8 +61,8 @@ public class HttpTestAccount003 {
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
 
-    response = HttpMethed.updateAccount(httpnode, updateAccountAddress, updateAccountName,
-        updateAccountKey);
+    response = HttpMethed
+        .updateAccount(httpnode, updateAccountAddress, updateAccountName, updateAccountKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
 
@@ -79,8 +81,8 @@ public class HttpTestAccount003 {
   @Test(enabled = true, description = "Vote witness account by http")
   public void test2VoteWitnessAccount() {
     //Freeze balance
-    response = HttpMethed.freezeBalance(httpnode, updateAccountAddress, 40000000L, 0,
-        0, updateAccountKey);
+    response = HttpMethed
+        .freezeBalance(httpnode, updateAccountAddress, 40000000L, 0, 0, updateAccountKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     voteElement.addProperty("vote_address", ByteArray.toHexString(witness1Address));
@@ -93,8 +95,8 @@ public class HttpTestAccount003 {
     voteElement.addProperty("vote_count", 12);
     voteKeys.add(voteElement);
 
-    response = HttpMethed.voteWitnessAccount(httpnode, updateAccountAddress, voteKeys,
-        updateAccountKey);
+    response = HttpMethed
+        .voteWitnessAccount(httpnode, updateAccountAddress, voteKeys, updateAccountKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAccount(httpnode, updateAccountAddress);
@@ -131,8 +133,22 @@ public class HttpTestAccount003 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "List witnesses from PBFT by http")
+  public void test5ListWitnessFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.listwitnessesFromPbft(httpPbftNode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("witnesses"));
+    Assert.assertTrue(jsonArray.size() >= 2);
+  }
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "Update witness by http")
-  public void test5UpdateWitness() {
+  public void test6UpdateWitness() {
     response = HttpMethed.updateWitness(httpnode, witness1Address, updateUrl, witnessKey001);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -148,7 +164,7 @@ public class HttpTestAccount003 {
    * constructor.
    */
   @Test(enabled = true, description = "Create account by http")
-  public void test6CreateAccount() {
+  public void test7CreateAccount() {
     PublicMethed.printAddress(newAccountKey);
     response = HttpMethed.createAccount(httpnode, fromAddress, newAccountAddress, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
@@ -163,9 +179,9 @@ public class HttpTestAccount003 {
    * constructor.
    */
   @Test(enabled = true, description = "Create witness by http")
-  public void test7CreateWitness() {
-    response = HttpMethed.sendCoin(httpnode, fromAddress, newAccountAddress, createWitnessAmount,
-        testKey002);
+  public void test8CreateWitness() {
+    response = HttpMethed
+        .sendCoin(httpnode, fromAddress, newAccountAddress, createWitnessAmount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     PublicMethed.printAddress(newAccountKey);
@@ -180,12 +196,12 @@ public class HttpTestAccount003 {
    * constructor.
    */
   @Test(enabled = true, description = "Withdraw by http")
-  public void test8Withdraw() {
+  public void test9Withdraw() {
     response = HttpMethed.withdrawBalance(httpnode, witness1Address);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(
-        responseContent.getString("Error").indexOf("is a guard representative") != -1);
+    Assert
+        .assertTrue(responseContent.getString("Error").indexOf("is a guard representative") != -1);
   }
 
   /**

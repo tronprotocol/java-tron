@@ -1,14 +1,12 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
-import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
+import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
@@ -20,19 +18,6 @@ public class GetAccountByIdServlet extends RateLimiterServlet {
   @Autowired
   private Wallet wallet;
 
-  private String convertOutput(Account account) {
-    // convert asset id
-    if (account.getAssetIssuedID().isEmpty()) {
-      return JsonFormat.printToString(account, false);
-    } else {
-      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
-      String assetId = accountJson.get("asset_issued_ID").toString();
-      accountJson.put(
-          "asset_issued_ID", ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
-      return accountJson.toJSONString();
-    }
-  }
-
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
@@ -41,17 +26,7 @@ public class GetAccountByIdServlet extends RateLimiterServlet {
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("account_id", accountId);
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
-
-      Account reply = wallet.getAccountById(build.build());
-      if (reply != null) {
-        if (visible) {
-          response.getWriter().println(JsonFormat.printToString(reply, true));
-        } else {
-          response.getWriter().println(convertOutput(reply));
-        }
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(build.build(), visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -59,25 +34,18 @@ public class GetAccountByIdServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String account = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(account);
-      boolean visible = Util.getVisiblePost(account);
+      PostParams params = PostParams.getPostParams(request);
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build, visible);
-
-      Account reply = wallet.getAccountById(build.build());
-      if (reply != null) {
-        if (visible) {
-          response.getWriter().println(JsonFormat.printToString(reply, true));
-        } else {
-          response.getWriter().println(convertOutput(reply));
-        }
-      } else {
-        response.getWriter().println("{}");
-      }
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(build.build(), params.isVisible(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private void fillResponse(Account account, boolean visible, HttpServletResponse response)
+      throws IOException {
+    Account reply = wallet.getAccountById(account);
+    Util.printAccount(reply, response, visible);
   }
 }

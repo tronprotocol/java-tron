@@ -1,5 +1,6 @@
 package stest.tron.wallet.onlinestress;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.BufferedReader;
@@ -19,6 +20,8 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
@@ -280,6 +283,27 @@ public class ContractEvent001 {
     }
 
 
+  }
+
+  @Test(enabled = true)
+  public void testSingForHex() {
+    try {
+      SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray
+          .fromHexString("6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC"),
+          true);
+      /*      ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
+          .signHash(Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
+              ByteArray.fromHexString(
+                  "ba989430c392dedef66a259a1f1112b178dbe7f2793975d8cf80f9b31ecd33ff"))
+                  .getBytes())));*/
+      //
+      ByteString sig =  ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
+          .signHash(ByteArray
+              .fromHexString("4f2a4c136f56a41714b42e14d497e38dcbe0f9c4ca2e5957cf3a340c62d133f8"))));
+      logger.info(ByteArray.toHexString(sig.toByteArray()));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
 

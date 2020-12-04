@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
@@ -31,6 +32,8 @@ public class ProgramResult {
   private boolean revert;
 
   private Set<DataWord> deleteAccounts;
+  private Set<DataWord> deleteVotes;
+  private Set<DataWord> deleteDelegation;
   private ByteArraySet touchedAccounts = new ByteArraySet();
   private List<InternalTransaction> internalTransactions;
   private List<LogInfo> logInfoList;
@@ -124,13 +127,47 @@ public class ProgramResult {
     return deleteAccounts;
   }
 
+  public Set<DataWord> getDeleteVotes() {
+    if (deleteVotes == null) {
+      deleteVotes = new HashSet<>();
+    }
+    return deleteVotes;
+  }
+
+  public Set<DataWord> getDeleteDelegation() {
+    if (deleteDelegation == null) {
+      deleteDelegation = new HashSet<>();
+    }
+    return deleteDelegation;
+  }
+
   public void addDeleteAccount(DataWord address) {
     getDeleteAccounts().add(address);
+  }
+
+  public void addDeleteVotes(DataWord address) {
+    getDeleteVotes().add(address);
+  }
+
+  public void addDeleteDelegation(DataWord address) {
+    getDeleteDelegation().add(address);
   }
 
   public void addDeleteAccounts(Set<DataWord> accounts) {
     if (!isEmpty(accounts)) {
       getDeleteAccounts().addAll(accounts);
+    }
+  }
+
+  public void addDeleteVotesSet(Set<DataWord> addresses) {
+    if (!isEmpty(addresses)) {
+      getDeleteVotes().addAll(addresses);
+    }
+  }
+
+  public void addDeleteDelegationSet(Set<DataWord> addresses) {
+    if (!isEmpty(addresses)) {
+      getDeleteDelegation().addAll(addresses);
     }
   }
 
@@ -221,6 +258,8 @@ public class ProgramResult {
 
   public void reset() {
     getDeleteAccounts().clear();
+    getDeleteVotes().clear();
+    getDeleteDelegation().clear();
     getLogInfoList().clear();
     resetFutureRefund();
   }
@@ -229,6 +268,8 @@ public class ProgramResult {
     addInternalTransactions(another.getInternalTransactions());
     if (another.getException() == null && !another.isRevert()) {
       addDeleteAccounts(another.getDeleteAccounts());
+      addDeleteVotesSet(another.getDeleteVotes());
+      addDeleteDelegationSet(another.getDeleteDelegation());
       addLogInfos(another.getLogInfoList());
       addFutureRefund(another.getFutureRefund());
       addTouchAccounts(another.getTouchedAccounts());

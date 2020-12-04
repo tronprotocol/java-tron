@@ -1,23 +1,30 @@
 package org.tron.core.net.messagehandler;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.consensus.ConsensusDelegate;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.capsule.PbftSignCapsule;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.PbftCommitMessage;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
@@ -26,12 +33,16 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.PBFTMessage.Raw;
 import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "net")
 @Component
 public class FetchInvDataMsgHandler implements TronMsgHandler {
+
+  private volatile Cache<Long, Boolean> epochCache = CacheBuilder.newBuilder().initialCapacity(100)
+      .maximumSize(1000).expireAfterWrite(1, TimeUnit.HOURS).build();
 
   private static final int MAX_SIZE = 1_000_000;
   @Autowired
@@ -40,6 +51,8 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   private SyncService syncService;
   @Autowired
   private AdvService advService;
+  @Autowired
+  private ConsensusDelegate consensusDelegate;
 
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
@@ -71,6 +84,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         if (peer.getBlockBothHave().getNum() < blockId.getNum()) {
           peer.setBlockBothHave(blockId);
         }
+        sendPbftCommitMessage(peer, ((BlockMessage) message).getBlockCapsule());
         peer.sendMessage(message);
       } else {
         transactions.add(((TransactionMessage) message).getTransactionCapsule().getInstance());
@@ -88,6 +102,36 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
     }
   }
 
+  private void sendPbftCommitMessage(PeerConnection peer, BlockCapsule blockCapsule) {
+    try {
+      if (!tronNetDelegate.allowPBFT() || peer.isSyncFinish()) {
+        return;
+      }
+      long epoch = 0;
+      PbftSignCapsule pbftSignCapsule = tronNetDelegate
+          .getBlockPbftCommitData(blockCapsule.getNum());
+      long maintenanceTimeInterval = consensusDelegate.getDynamicPropertiesStore()
+          .getMaintenanceTimeInterval();
+      if (pbftSignCapsule != null) {
+        Raw raw = Raw.parseFrom(pbftSignCapsule.getPbftCommitResult().getData());
+        epoch = raw.getEpoch();
+        peer.sendMessage(new PbftCommitMessage(pbftSignCapsule));
+      } else {
+        epoch =
+            (blockCapsule.getTimeStamp() / maintenanceTimeInterval + 1) * maintenanceTimeInterval;
+      }
+      if (epochCache.getIfPresent(epoch) == null) {
+        PbftSignCapsule srl = tronNetDelegate.getSRLPbftCommitData(epoch);
+        if (srl != null) {
+          epochCache.put(epoch, true);
+          peer.sendMessage(new PbftCommitMessage(srl));
+        }
+      }
+    } catch (Exception e) {
+      logger.error("", e);
+    }
+  }
+
   private void check(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) throws P2pException {
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
@@ -102,8 +146,8 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       int maxCount = advService.getTrxCount().getCount(60);
       if (fetchCount > maxCount) {
         logger.error("maxCount: " + maxCount + ", fetchCount: " + fetchCount);
-//        throw new P2pException(TypeEnum.BAD_MESSAGE,
-//            "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
+        //        throw new P2pException(TypeEnum.BAD_MESSAGE,
+        //            "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
       }
     } else {
       boolean isAdv = true;
@@ -121,8 +165,9 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         if (outBlockCountIn1min > producedBlockIn2min) {
           logger.error("producedBlockIn2min: " + producedBlockIn2min + ", outBlockCountIn1min: "
               + outBlockCountIn1min);
-//          throw new P2pException(TypeEnum.BAD_MESSAGE, "producedBlockIn2min: " + producedBlockIn2min
-//              + ", outBlockCountIn1min: " + outBlockCountIn1min);
+          //throw new P2pException(TypeEnum.BAD_MESSAGE, "producedBlockIn2min: "
+          // + producedBlockIn2min
+          //  + ", outBlockCountIn1min: " + outBlockCountIn1min);
         }
       } else {
         if (!peer.isNeedSyncFromUs()) {
@@ -131,7 +176,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
           long blockNum = new BlockId(hash).getNum();
           long minBlockNum =
-              peer.getLastSyncBlockId().getNum() - 2 * NodeConstant.SYNC_FETCH_BATCH_NUM;
+              peer.getLastSyncBlockId().getNum() - 2 * NetConstants.SYNC_FETCH_BATCH_NUM;
           if (blockNum < minBlockNum) {
             throw new P2pException(TypeEnum.BAD_MESSAGE,
                 "minBlockNum: " + minBlockNum + ", blockNum: " + blockNum);

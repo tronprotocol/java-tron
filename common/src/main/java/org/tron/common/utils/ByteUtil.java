@@ -25,12 +25,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.spongycastle.util.encoders.Hex;
 
 public class ByteUtil {
 
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final byte[] ZERO_BYTE_ARRAY = new byte[]{0};
+  public static final int WORD_SIZE = 32;
 
 
   /**
@@ -151,19 +151,6 @@ public class ByteUtil {
   }
 
   /**
-   * Convert a byte-array into a hex String.<br> Works similar to {@link Hex#toHexString} but allows
-   * for <code>null</code>
-   *
-   * @param data - byte-array to convert to a hex-string
-   * @return hex representation of the data.<br> Returns an empty String if the input is
-   * <code>null</code>
-   * @see Hex#toHexString
-   */
-  public static String toHexString(byte[] data) {
-    return data == null ? "" : Hex.toHexString(data);
-  }
-
-  /**
    * Cast hex encoded value from byte[] to int Limited to Integer.MAX_VALUE: 2^32-1 (4 bytes)
    *
    * @param b array contains the values
@@ -257,6 +244,15 @@ public class ByteUtil {
     return -1;
   }
 
+  public static int lastNonZeroByte(byte[] data) {
+    for (int i = data.length - 1; i >= 0; --i) {
+      if (data[i] != 0) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   public static byte[] stripLeadingZeroes(byte[] data) {
 
     if (data == null) {
@@ -279,6 +275,26 @@ public class ByteUtil {
     }
   }
 
+  public static byte[] stripEndingZeroes(byte[] data) {
+
+    if (data == null) {
+      return null;
+    }
+    if (data[data.length - 1] != 0) {
+      return data;
+    }
+    final int lastNonZeroByte = lastNonZeroByte(data);
+    switch (lastNonZeroByte) {
+      case -1:
+        return ZERO_BYTE_ARRAY;
+      default:
+        byte[] result = new byte[lastNonZeroByte + 1];
+        System.arraycopy(data, 0, result, 0, lastNonZeroByte + 1);
+
+        return result;
+    }
+  }
+
   /**
    * Utility function to copy a byte array into a new byte array with given size. If the src length
    * is smaller than the given size, the result will be left-padded with zeros.
@@ -287,7 +303,7 @@ public class ByteUtil {
    * @return Byte array of given size with a copy of the <code>src</code>
    */
   public static byte[] copyToArray(BigInteger value) {
-    byte[] dest = ByteBuffer.allocate(32).array();
+    byte[] dest = ByteBuffer.allocate(WORD_SIZE).array();
     byte[] src = ByteUtil.bigIntegerToBytes(value);
     if (src != null) {
       System.arraycopy(src, 0, dest, dest.length - src.length, src.length);
@@ -335,7 +351,7 @@ public class ByteUtil {
    * @param idx an index of the word starting from {@code 0}
    */
   public static byte[] parseWord(byte[] input, int idx) {
-    return parseBytes(input, 32 * idx, 32);
+    return parseBytes(input, WORD_SIZE * idx, WORD_SIZE);
   }
 
   /**
@@ -346,7 +362,7 @@ public class ByteUtil {
    * @param offset an offset in {@code input} array to start parsing from
    */
   public static byte[] parseWord(byte[] input, int offset, int idx) {
-    return parseBytes(input, offset + 32 * idx, 32);
+    return parseBytes(input, offset + WORD_SIZE * idx, WORD_SIZE);
   }
 
   public static boolean greater(byte[] bytes1, byte[] bytes2) {
@@ -412,6 +428,15 @@ public class ByteUtil {
     }
 
     return ret;
+  }
+
+  public static void reverse(byte[] bytes) {
+    int len = bytes.length / 2;
+    for (int i = 0; i < len; i++) {
+      byte b = bytes[i];
+      bytes[i] = bytes[bytes.length - i - 1];
+      bytes[bytes.length - i - 1] = b;
+    }
   }
 
   public static byte[] longTo32Bytes(long value) {

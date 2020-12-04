@@ -30,6 +30,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 
@@ -127,7 +128,8 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * SameTokenName close,first createExchange,result is success.
+   * SameTokenName close,first createExchange,result is success. 1024000000 is calcFee, caculated by
+   * calcFee()
    */
   @Test
   public void sameTokenNameCloseSuccessExchangeCreate() {
@@ -1397,6 +1399,41 @@ public class ExchangeCreateActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+
+  @Test
+  public void commonErrorCheck() {
+
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ExchangeCreateContract],real type[");
+    actuatorTest.invalidContractType();
+
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    String firstTokenId = "_";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "abc";
+    long secondTokenBalance = 100_000_000L;
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.setBalance(200_000_000_000000L);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), 200_000_000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    actuatorTest.setContract(getContract(
+        OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+
   }
 
 }

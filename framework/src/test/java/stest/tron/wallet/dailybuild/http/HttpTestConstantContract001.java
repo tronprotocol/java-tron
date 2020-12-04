@@ -46,9 +46,9 @@ public class HttpTestConstantContract001 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    String txid = HttpMethed.deployContractGetTxid(httpnode, contractName, abi, code, 1000000L,
-        1000000000L, 100, 11111111111111L,
-        0L, 0, 0L, assetOwnerAddress, assetOwnerKey);
+    String txid = HttpMethed
+        .deployContractGetTxid(httpnode, contractName, abi, code, 1000000L, 1000000000L, 100,
+            11111111111111L, 0L, 0, 0L, assetOwnerAddress, assetOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
     logger.info(txid);
@@ -86,10 +86,10 @@ public class HttpTestConstantContract001 {
    */
   @Test(enabled = true, description = "Trigger constant contract without parameterString by http")
   public void test3TriggerConstantContract() {
-    String param1 = "000000000000000000000000000000000000000000000000000000000000000"
-        + Integer.toHexString(3);
-    String param2 = "00000000000000000000000000000000000000000000000000000000000000"
-        + Integer.toHexString(30);
+    String param1 =
+        "000000000000000000000000000000000000000000000000000000000000000" + Integer.toHexString(3);
+    String param2 =
+        "00000000000000000000000000000000000000000000000000000000000000" + Integer.toHexString(30);
     logger.info(param1);
     logger.info(param2);
     String param = param1 + param2;
@@ -100,8 +100,8 @@ public class HttpTestConstantContract001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(!responseContent.getString("transaction").isEmpty());
-    JSONObject transactionObject = HttpMethed.parseStringContent(
-        responseContent.getString("transaction"));
+    JSONObject transactionObject = HttpMethed
+        .parseStringContent(responseContent.getString("transaction"));
     Assert.assertTrue(!transactionObject.getString("raw_data").isEmpty());
     Assert.assertTrue(!transactionObject.getString("raw_data_hex").isEmpty());
   }

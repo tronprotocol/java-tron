@@ -19,14 +19,9 @@ package org.tron.core.vm.program;
 
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.*;
+import org.tron.core.store.*;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
@@ -34,6 +29,8 @@ import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
+
+import java.util.Optional;
 
 public class ContractState implements Repository, ProgramListenerAware {
 
@@ -88,9 +85,13 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getAccount(addr);
   }
 
-
   public BytesCapsule getDynamic(byte[] bytesKey) {
     return repository.getDynamic(bytesKey);
+  }
+
+  @Override
+  public WitnessCapsule getWitnessCapsule(byte[] address) {
+    return repository.getWitnessCapsule(address);
   }
 
   @Override
@@ -203,6 +204,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putAssetIssue(Key key, Value value) {
+    repository.putAssetIssue(key, value);
+  }
+
+  @Override
+  public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
+    repository.putAssetIssueValue(tokenId, assetIssueCapsule);
+  }
+
+  @Override
+  public void putDelegation(Key key, Value value) {
+    repository.putDelegation(key, value);
+  }
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     return repository.addTokenBalance(address, tokenId, value);
   }
@@ -237,4 +253,118 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.createNormalAccount(address);
   }
 
+  @Override
+  public void saveTokenIdNum(long num) {
+    this.updateDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
+            new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  @Override
+  public long getTokenIdNum() {
+    return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("error in contract not found TOKEN_ID_NUM"));
+  }
+
+  @Override
+  public DelegationStore getDelegationStore() {
+    return repository.getDelegationStore();
+  }
+
+  @Override
+  public WitnessStore getWitnessStore() {
+    return repository.getWitnessStore();
+  }
+
+  @Override
+  public VotesCapsule getVotesCapsule(byte[] address) {
+    return repository.getVotesCapsule(address);
+  }
+
+  @Override
+  public long getBeginCycle(byte[] address) {
+    return repository.getBeginCycle(address);
+  }
+
+  @Override
+  public long getEndCycle(byte[] address) {
+    return repository.getEndCycle(address);
+  }
+
+  @Override
+  public AccountCapsule getAccountVote(long cycle, byte[] address) {
+    return repository.getAccountVote(cycle, address);
+  }
+
+  @Override
+  public BytesCapsule getDelegationCache(Key key) {
+    return repository.getDelegationCache(key);
+  }
+
+  @Override
+  public void updateDynamic(byte[] word, BytesCapsule bytesCapsule) {
+    repository.updateDynamic(word, bytesCapsule);
+  }
+
+  @Override
+  public void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule) {
+    repository.updateVotesCapsule(word, votesCapsule);
+  }
+
+  @Override
+  public void updateBeginCycle(byte[] word, long cycle) {
+    repository.updateBeginCycle(word, cycle);
+  }
+
+  @Override
+  public void updateEndCycle(byte[] word, long cycle) {
+    repository.updateEndCycle(word, cycle);
+  }
+
+  @Override
+  public void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule) {
+    repository.updateAccountVote(word, cycle, accountCapsule);
+  }
+
+  @Override
+  public void updateRemark(byte[] word, long cycle) {
+    repository.updateRemark(word, cycle);
+  }
+
+  @Override
+  public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
+    repository.updateDelegation(word, bytesCapsule);
+  }
+
+  @Override
+  public void updateLastWithdrawCycle(byte[] address, long cycle) {
+    repository.updateLastWithdrawCycle(address, cycle);
+  }
+
+  @Override
+  public void putDynamic(Key key, Value value) {
+    repository.putDynamic(key, value);
+  }
+
+  @Override
+  public void putVotesCapsule(Key key, Value value) {
+    repository.putVotesCapsule(key, value);
+  }
+
+  @Override
+  public void addTotalNetWeight(long amount) {
+    repository.addTotalNetWeight(amount);
+  }
+
+  @Override
+  public void saveTotalNetWeight(long totalNetWeight) {
+    repository.saveTotalNetWeight(totalNetWeight);
+  }
+
+  @Override
+  public long getTotalNetWeight() {
+    return repository.getTotalNetWeight();
+  }
 }

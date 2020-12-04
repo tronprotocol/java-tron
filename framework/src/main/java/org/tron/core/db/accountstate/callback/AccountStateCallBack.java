@@ -8,11 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.utils.RLP;
-import org.tron.core.db.Manager;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.BadBlockException;
@@ -27,7 +26,7 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
   private TrieImpl trie;
 
   @Setter
-  private Manager manager;
+  private ChainBaseManager chainBaseManager;
 
   @Autowired
   private AccountStateStoreTrie db;
@@ -38,7 +37,7 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
 
   public void exeTransFinish() {
     for (TrieEntry trieEntry : trieEntryList) {
-      trie.put(RLP.encodeElement(trieEntry.getKey()), trieEntry.getData());
+      trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
     }
     trieEntryList.clear();
   }
@@ -47,19 +46,20 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
     if (!exe()) {
       return;
     }
-    trie.delete(RLP.encodeElement(key));
+    trie.delete(Hash.encodeElement(key));
   }
 
   public void preExecute(BlockCapsule blockCapsule) {
     this.blockCapsule = blockCapsule;
     this.execute = true;
-    this.allowGenerateRoot = manager.getDynamicPropertiesStore().allowAccountStateRoot();
+    this.allowGenerateRoot = chainBaseManager.getDynamicPropertiesStore().allowAccountStateRoot();
     if (!exe()) {
       return;
     }
     byte[] rootHash = null;
     try {
-      BlockCapsule parentBlockCapsule = manager.getBlockById(blockCapsule.getParentBlockId());
+      BlockCapsule parentBlockCapsule =
+          chainBaseManager.getBlockById(blockCapsule.getParentBlockId());
       rootHash = parentBlockCapsule.getInstance().getBlockHeader().getRawData()
           .getAccountStateRoot().toByteArray();
     } catch (Exception e) {
@@ -85,8 +85,8 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
     }
     if (!oldRoot.isEmpty() && !Arrays.equals(oldRoot.toByteArray(), newRoot)) {
       logger.error("the accountStateRoot hash is error. {}, oldRoot: {}, newRoot: {}",
-          blockCapsule, ByteUtil.toHexString(oldRoot.toByteArray()),
-          ByteUtil.toHexString(newRoot));
+          blockCapsule, ByteArray.toHexString(oldRoot.toByteArray()),
+          ByteArray.toHexString(newRoot));
       throw new BadBlockException("the accountStateRoot hash is error");
     }
   }

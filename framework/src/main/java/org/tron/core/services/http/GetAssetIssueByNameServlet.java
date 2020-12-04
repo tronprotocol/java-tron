@@ -3,7 +3,6 @@ package org.tron.core.services.http;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -28,14 +27,7 @@ public class GetAssetIssueByNameServlet extends RateLimiterServlet {
       if (visible) {
         input = Util.getHexString(input);
       }
-      AssetIssueContract reply =
-          wallet.getAssetIssueByName(ByteString.copyFrom(ByteArray.fromHexString(input)));
-
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(input)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -43,24 +35,27 @@ public class GetAssetIssueByNameServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSON.parseObject(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSON.parseObject(params.getParams());
       String value = jsonObject.getString("value");
-      if (visible) {
+      if (params.isVisible()) {
         value = Util.getHexString(value);
       }
-      AssetIssueContract reply =
-          wallet.getAssetIssueByName(ByteString.copyFrom(ByteArray.fromHexString(value)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(params.isVisible(), ByteString.copyFrom(
+          ByteArray.fromHexString(value)), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, ByteString address, HttpServletResponse response)
+      throws Exception {
+    AssetIssueContract reply =
+        wallet.getAssetIssueByName(address);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

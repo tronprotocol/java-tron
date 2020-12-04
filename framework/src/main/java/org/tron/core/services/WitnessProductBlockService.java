@@ -108,12 +108,12 @@ public class WitnessProductBlockService {
 
     @Override
     public String toString() {
-      return "{" +
-          "times=" + times.get() +
-          ", time=" + time +
-          ", latestBlockNum=" + latestBlockNum +
-          ", blockCapsuleSet=" + blockCapsuleSet +
-          '}';
+      return "{"
+          + "times=" + times.get()
+          + ", time=" + time
+          + ", latestBlockNum=" + latestBlockNum
+          + ", blockCapsuleSet=" + blockCapsuleSet
+          + '}';
     }
   }
 }

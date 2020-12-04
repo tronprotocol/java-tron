@@ -10,7 +10,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
@@ -31,17 +31,21 @@ public class ConsensusService {
   @Autowired
   private BlockHandleImpl blockHandle;
 
-  private Args args = Args.getInstance();
+  @Autowired
+  private PbftBaseImpl pbftBaseImpl;
+
+  private CommonParameter parameter = Args.getInstance();
 
   public void start() {
-    Param param = new Param();
-    param.setEnable(args.isWitness());
-    param.setGenesisBlock(args.getGenesisBlock());
-    param.setMinParticipationRate(args.getMinParticipationRate());
+    Param param = Param.getInstance();
+    param.setEnable(parameter.isWitness());
+    param.setGenesisBlock(parameter.getGenesisBlock());
+    param.setMinParticipationRate(parameter.getMinParticipationRate());
     param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
-    param.setNeedSyncCheck(args.isNeedSyncCheck());
+    param.setNeedSyncCheck(parameter.isNeedSyncCheck());
+    param.setAgreeNodeCount(parameter.getAgreeNodeCount());
     List<Miner> miners = new ArrayList<>();
-    List<String> privateKeys = Args.getInstance().getLocalWitnesses().getPrivateKeys();
+    List<String> privateKeys = Args.getLocalWitnesses().getPrivateKeys();
     if (privateKeys.size() > 1) {
       for (String key : privateKeys) {
         byte[] privateKey = fromHexString(key);
@@ -59,11 +63,11 @@ public class ConsensusService {
       }
     } else {
       byte[] privateKey =
-          fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
+          fromHexString(Args.getLocalWitnesses().getPrivateKey());
       byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey,
           Args.getInstance().isECKeyCryptoEngine()).getAddress();
-      byte[] witnessAddress = Args.getInstance().getLocalWitnesses().getWitnessAccountAddress(
-          DBConfig.isECKeyCryptoEngine());
+      byte[] witnessAddress = Args.getLocalWitnesses().getWitnessAccountAddress(
+          Args.getInstance().isECKeyCryptoEngine());
       WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
       if (null == witnessCapsule) {
         logger.warn("Witness {} is not in witnessStore.", Hex.toHexString(witnessAddress));
@@ -75,7 +79,9 @@ public class ConsensusService {
 
     param.setMiners(miners);
     param.setBlockHandle(blockHandle);
+    param.setPbftInterface(pbftBaseImpl);
     consensus.start(param);
+    logger.info("consensus service start success");
   }
 
   public void stop() {

@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -26,19 +25,13 @@ public class CreateShieldedTransactionWithoutSpendAuthSigServlet extends RateLim
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(contract);
-      boolean visible = Util.getVisiblePost(contract);
-
+      PostParams params = PostParams.getPostParams(request);
       PrivateParametersWithoutAsk.Builder build = PrivateParametersWithoutAsk.newBuilder();
-      JsonFormat.merge(contract, build, visible);
-
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
       Transaction tx = wallet
           .createShieldedTransactionWithoutSpendAuthSig(build.build())
           .getInstance();
-
-      String txString = Util.printCreateTransaction(tx, visible);
+      String txString = Util.printCreateTransaction(tx, params.isVisible());
       JSONObject jsonObject = JSON.parseObject(txString);
       if (jsonObject.containsKey("txID")) {
         jsonObject.remove("txID");

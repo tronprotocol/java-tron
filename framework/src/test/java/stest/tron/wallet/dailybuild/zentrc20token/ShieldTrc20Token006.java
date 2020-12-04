@@ -13,7 +13,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -25,6 +24,7 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 
 @Slf4j
 public class ShieldTrc20Token006 extends ZenTrc20Base {
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -69,12 +69,12 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     shieldAddress1 = shieldAddressInfo1.get().getAddress();
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, shieldAddress1,
-        "" + publicFromAmount, memo,blockingStubFull);
+        "" + publicFromAmount, memo, blockingStubFull);
     //Create mint parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,
-        blockingStubFull,blockingStubSolidity
+        null, null, shieldOutList, "", 0L,
+        blockingStubFull, blockingStubSolidity
     );
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
@@ -90,9 +90,9 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Scan sender note
     shield1Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo1.get(),
         blockingStubFull);
-    Assert.assertEquals(shield1Note.getNoteTxs(0).getIsSpent(),false);
+    Assert.assertEquals(shield1Note.getNoteTxs(0).getIsSpent(), false);
     logger.info("" + shield1Note);
-    senderPosition =  shield1Note.getNoteTxs(0).getPosition();
+    senderPosition = shield1Note.getNoteTxs(0).getPosition();
     Assert.assertEquals(shield1Note.getNoteTxs(0).getNote().getValue(),
         publicFromAmount.longValue());
 
@@ -104,7 +104,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
    */
   @Test(enabled = true, description = "Shield TRC20 transfer with type 1 to 2")
   public void test01ShieldTrc20TransferWith1To2() throws Exception {
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     //Prepare parameters
     final String transferMemo1 = "1 to 2 for shieldAddressInfo1 " + System.currentTimeMillis();
     final String transferMemo2 = "1 to 2 for shieldAddressInfo2 " + System.currentTimeMillis();
@@ -114,17 +114,17 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     shield2ReceiveAmountFor1to2 = publicFromAmount.subtract(shield1ReceiveAmountFor1to2);
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, shieldAddress1,
-        "" + shield1ReceiveAmountFor1to2, transferMemo1,blockingStubFull);
+        "" + shield1ReceiveAmountFor1to2, transferMemo1, blockingStubFull);
     shieldOutList = addShieldTrc20OutputList(shieldOutList, shieldAddress2,
-        "" + shield2ReceiveAmountFor1to2, transferMemo2,blockingStubFull);
+        "" + shield2ReceiveAmountFor1to2, transferMemo2, blockingStubFull);
     inputShieldAddressList.clear();
     inputShieldAddressList.add(shieldAddressInfo1.get());
 
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        shield1Note,inputShieldAddressList,shieldOutList,"",0L,
-        blockingStubFull,blockingStubSolidity
+        shield1Note, inputShieldAddressList, shieldOutList, "", 0L,
+        blockingStubFull, blockingStubSolidity
     );
 
     //Create transfer transaction
@@ -132,6 +132,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     String txid = PublicMethed.triggerContract(shieldAddressByte,
         transfer, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -145,7 +146,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         blockingStubFull);
     logger.info("" + shield1Note);
     logger.info("" + shield2Note);
-    Assert.assertEquals(shield1Note.getNoteTxs(1).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield1Note.getNoteTxs(1).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield1Note.getNoteTxs(1).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo1));
     Assert.assertEquals(shield1Note.getNoteTxs(1).getNote().getValue(),
@@ -153,7 +154,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield1Note.getNoteTxs(1).getNote().getPaymentAddress(),
         shieldAddressInfo1.get().getAddress());
 
-    Assert.assertEquals(shield2Note.getNoteTxs(0).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield2Note.getNoteTxs(0).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield2Note.getNoteTxs(0).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo2));
     Assert.assertEquals(shield2Note.getNoteTxs(0).getNote().getValue(),
@@ -161,15 +162,15 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield2Note.getNoteTxs(0).getNote().getPaymentAddress(),
         shieldAddressInfo2.get().getAddress());
 
-    Assert.assertEquals(shield1Note.getNoteTxs(0).getIsSpent(),true);
+    Assert.assertEquals(shield1Note.getNoteTxs(0).getIsSpent(), true);
 
     //Scan 1 to 2 ovk note
     shield1Note = scanShieldedTrc20NoteByOvk(shieldAddressInfo1.get(),
         blockingStubFull);
     logger.info("scanShieldedTrc20NoteByOvk + shield1Note:" + shield1Note);
-    Assert.assertEquals(shield1Note.getNoteTxsCount(),2);
+    Assert.assertEquals(shield1Note.getNoteTxsCount(), 2);
 
-    Assert.assertEquals(shield1Note.getNoteTxs(0).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield1Note.getNoteTxs(0).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield1Note.getNoteTxs(0).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo1));
     Assert.assertEquals(shield1Note.getNoteTxs(0).getNote().getValue(),
@@ -177,7 +178,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield1Note.getNoteTxs(0).getNote().getPaymentAddress(),
         shieldAddressInfo1.get().getAddress());
 
-    Assert.assertEquals(shield1Note.getNoteTxs(1).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield1Note.getNoteTxs(1).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield1Note.getNoteTxs(1).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo2));
     Assert.assertEquals(shield1Note.getNoteTxs(1).getNote().getValue(),
@@ -197,12 +198,12 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     shieldAddress1 = shieldAddressInfo1.get().getAddress();
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, shieldAddress1,
-        "" + publicFromAmount, memo,blockingStubFull);
+        "" + publicFromAmount, memo, blockingStubFull);
     //Create mint parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,
-        blockingStubFull,blockingStubSolidity
+        null, null, shieldOutList, "", 0L,
+        blockingStubFull, blockingStubSolidity
     );
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
     //Do mint transaction type
@@ -210,7 +211,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         mint, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
@@ -220,7 +222,6 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     final GrpcAPI.DecryptNotesTRC20 inputNoteFor2to2 = GrpcAPI.DecryptNotesTRC20.newBuilder()
         .addNoteTxs(shield1Note.getNoteTxs(1))
         .addNoteTxs(shield1Note.getNoteTxs(2)).build();
-
 
     //Prepare parameters
     final String transferMemo1 = "2 to 2 for shieldAddressInfo1 " + System.currentTimeMillis();
@@ -232,9 +233,9 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         .subtract(shield1ReceiveAmountFor2to2);
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, shieldAddress1,
-        "" + shield1ReceiveAmountFor2to2, transferMemo1,blockingStubFull);
+        "" + shield1ReceiveAmountFor2to2, transferMemo1, blockingStubFull);
     shieldOutList = addShieldTrc20OutputList(shieldOutList, shieldAddress2,
-        "" + shield2ReceiveAmountFor2to2, transferMemo2,blockingStubFull);
+        "" + shield2ReceiveAmountFor2to2, transferMemo2, blockingStubFull);
     inputShieldAddressList.clear();
     inputShieldAddressList.add(shieldAddressInfo1.get());
     inputShieldAddressList.add(shieldAddressInfo1.get());
@@ -242,8 +243,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Create transfer parameters
     shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        inputNoteFor2to2,inputShieldAddressList,shieldOutList,"",0L,
-        blockingStubFull,blockingStubSolidity
+        inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L,
+        blockingStubFull, blockingStubSolidity
     );
 
     //Create transfer transaction
@@ -251,6 +252,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     txid = PublicMethed.triggerContract(shieldAddressByte,
         transfer, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -264,7 +266,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         blockingStubFull);
     logger.info("" + shield1Note);
     logger.info("" + shield2Note);
-    Assert.assertEquals(shield1Note.getNoteTxs(3).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield1Note.getNoteTxs(3).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield1Note.getNoteTxs(3).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo1));
     Assert.assertEquals(shield1Note.getNoteTxs(3).getNote().getValue(),
@@ -272,7 +274,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield1Note.getNoteTxs(3).getNote().getPaymentAddress(),
         shieldAddressInfo1.get().getAddress());
 
-    Assert.assertEquals(shield2Note.getNoteTxs(1).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield2Note.getNoteTxs(1).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield2Note.getNoteTxs(1).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo2));
     Assert.assertEquals(shield2Note.getNoteTxs(1).getNote().getValue(),
@@ -280,16 +282,16 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield2Note.getNoteTxs(1).getNote().getPaymentAddress(),
         shieldAddressInfo2.get().getAddress());
 
-    Assert.assertEquals(shield1Note.getNoteTxs(1).getIsSpent(),true);
-    Assert.assertEquals(shield1Note.getNoteTxs(2).getIsSpent(),true);
+    Assert.assertEquals(shield1Note.getNoteTxs(1).getIsSpent(), true);
+    Assert.assertEquals(shield1Note.getNoteTxs(2).getIsSpent(), true);
 
     //Scan 2 to 2 ovk note
     shield1Note = scanShieldedTrc20NoteByOvk(shieldAddressInfo1.get(),
         blockingStubFull);
     logger.info("scanShieldedTrc20NoteByOvk + shield1Note:" + shield1Note);
-    Assert.assertEquals(shield1Note.getNoteTxsCount(),4);
+    Assert.assertEquals(shield1Note.getNoteTxsCount(), 4);
 
-    Assert.assertEquals(shield1Note.getNoteTxs(2).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield1Note.getNoteTxs(2).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield1Note.getNoteTxs(2).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo1));
     Assert.assertEquals(shield1Note.getNoteTxs(2).getNote().getValue(),
@@ -297,7 +299,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield1Note.getNoteTxs(2).getNote().getPaymentAddress(),
         shieldAddressInfo1.get().getAddress());
 
-    Assert.assertEquals(shield1Note.getNoteTxs(3).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield1Note.getNoteTxs(3).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield1Note.getNoteTxs(3).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo2));
     Assert.assertEquals(shield1Note.getNoteTxs(3).getNote().getValue(),
@@ -311,7 +313,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
    */
   @Test(enabled = true, description = "Shield TRC20 transfer with type 2 to 1")
   public void test03ShieldTrc20TransferWith2To1() throws Exception {
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     shield2Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo2.get(),
         blockingStubFull);
 
@@ -323,7 +325,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         .getNote().getValue() + shield2Note.getNoteTxs(1).getNote().getValue());
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, shieldAddress1,
-        "" + shield1ReceiveAmountFor2to1, transferMemo1,blockingStubFull);
+        "" + shield1ReceiveAmountFor2to1, transferMemo1, blockingStubFull);
     inputShieldAddressList.clear();
     inputShieldAddressList.add(shieldAddressInfo2.get());
     inputShieldAddressList.add(shieldAddressInfo2.get());
@@ -331,8 +333,8 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        shield2Note,inputShieldAddressList,shieldOutList,"",0L,
-        blockingStubFull,blockingStubSolidity
+        shield2Note, inputShieldAddressList, shieldOutList, "", 0L,
+        blockingStubFull, blockingStubSolidity
     );
 
     //Create transfer transaction
@@ -341,12 +343,11 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         transfer, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 300000);
-
-
 
     //Scan 2 to 1 ivk note
     shield1Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo1.get(),
@@ -355,7 +356,7 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         blockingStubFull);
     logger.info("" + shield1Note);
     logger.info("" + shield2Note);
-    Assert.assertEquals(shield1Note.getNoteTxs(4).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield1Note.getNoteTxs(4).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield1Note.getNoteTxs(4).getNote().getMemo(),
         ByteString.copyFromUtf8(transferMemo1));
     Assert.assertEquals(shield1Note.getNoteTxs(4).getNote().getValue(),
@@ -363,16 +364,16 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield1Note.getNoteTxs(4).getNote().getPaymentAddress(),
         shieldAddressInfo1.get().getAddress());
 
-    Assert.assertEquals(shield2Note.getNoteTxs(0).getIsSpent(),true);
-    Assert.assertEquals(shield2Note.getNoteTxs(1).getIsSpent(),true);
+    Assert.assertEquals(shield2Note.getNoteTxs(0).getIsSpent(), true);
+    Assert.assertEquals(shield2Note.getNoteTxs(1).getIsSpent(), true);
 
     //Scan 2 to 1 ovk note
     shield2Note = scanShieldedTrc20NoteByOvk(shieldAddressInfo2.get(),
         blockingStubFull);
     logger.info("scanShieldedTrc20NoteByOvk + shield1Note:" + shield2Note);
-    Assert.assertEquals(shield2Note.getNoteTxsCount(),1);
+    Assert.assertEquals(shield2Note.getNoteTxsCount(), 1);
 
-    Assert.assertEquals(shield2Note.getNoteTxs(0).getTxid(),infoById.get().getId());
+    Assert.assertEquals(shield2Note.getNoteTxs(0).getTxid(), infoById.get().getId());
     Assert.assertEquals(shield2Note.getNoteTxs(0).getNote().getValue(),
         shield1ReceiveAmountFor2to1.longValue());
     Assert.assertEquals(shield2Note.getNoteTxs(0).getNote().getPaymentAddress(),
@@ -385,34 +386,34 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
    */
   @Test(enabled = true, description = "Scan shield trc20 note by ivk and ovk on solidity")
   public void test04ScanShieldTrc20NoteByIvkAndOvkOnSolidity() throws Exception {
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     shield1Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo1.get(),
         blockingStubFull);
     GrpcAPI.DecryptNotesTRC20 shield1NoteOnSolidity
         = scanShieldedTrc20NoteByIvk(shieldAddressInfo1.get(),
-        blockingStubFull,blockingStubSolidity);
-    Assert.assertEquals(shield1Note,shield1NoteOnSolidity);
+        blockingStubFull, blockingStubSolidity);
+    Assert.assertEquals(shield1Note, shield1NoteOnSolidity);
 
     shield2Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo2.get(),
         blockingStubFull);
     GrpcAPI.DecryptNotesTRC20 shield2NoteOnSolidity
         = scanShieldedTrc20NoteByIvk(shieldAddressInfo2.get(),
-        blockingStubFull,blockingStubSolidity);
-    Assert.assertEquals(shield2Note,shield2NoteOnSolidity);
+        blockingStubFull, blockingStubSolidity);
+    Assert.assertEquals(shield2Note, shield2NoteOnSolidity);
 
     shield1Note = scanShieldedTrc20NoteByOvk(shieldAddressInfo1.get(),
         blockingStubFull);
     shield1NoteOnSolidity
         = scanShieldedTrc20NoteByOvk(shieldAddressInfo1.get(),
-        blockingStubFull,blockingStubSolidity);
-    Assert.assertEquals(shield1Note,shield1NoteOnSolidity);
+        blockingStubFull, blockingStubSolidity);
+    Assert.assertEquals(shield1Note, shield1NoteOnSolidity);
 
     shield2Note = scanShieldedTrc20NoteByOvk(shieldAddressInfo2.get(),
         blockingStubFull);
     shield2NoteOnSolidity
         = scanShieldedTrc20NoteByOvk(shieldAddressInfo2.get(),
-        blockingStubFull,blockingStubSolidity);
-    Assert.assertEquals(shield2Note,shield2NoteOnSolidity);
+        blockingStubFull, blockingStubSolidity);
+    Assert.assertEquals(shield2Note, shield2NoteOnSolidity);
   }
 
 
@@ -427,32 +428,29 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         blockingStubFull);
 
     Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo1.get(),
-        shield1Note.getNoteTxs(0),blockingStubFull),true);
+        shield1Note.getNoteTxs(0), blockingStubFull), true);
 
     Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo1.get(),
-        shield1Note.getNoteTxs(0),blockingStubFull),
+        shield1Note.getNoteTxs(0), blockingStubFull),
         getTrc20SpendResult(shieldAddressInfo1.get(),
-            shield1Note.getNoteTxs(0),blockingStubFull,blockingStubSolidity));
+            shield1Note.getNoteTxs(0), blockingStubFull, blockingStubSolidity));
 
     Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo1.get(),
-        shield1Note.getNoteTxs(1),blockingStubFull),
-        getTrc20SpendResult(shieldAddressInfo1.get(),shield1Note.getNoteTxs(1),
-            blockingStubFull,blockingStubSolidity));
+        shield1Note.getNoteTxs(1), blockingStubFull),
+        getTrc20SpendResult(shieldAddressInfo1.get(), shield1Note.getNoteTxs(1),
+            blockingStubFull, blockingStubSolidity));
 
     Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo2.get(),
-        shield2Note.getNoteTxs(0),blockingStubFull),
-        getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(0),
-            blockingStubFull,blockingStubSolidity));
+        shield2Note.getNoteTxs(0), blockingStubFull),
+        getTrc20SpendResult(shieldAddressInfo2.get(), shield2Note.getNoteTxs(0),
+            blockingStubFull, blockingStubSolidity));
 
     Assert.assertEquals(getTrc20SpendResult(shieldAddressInfo2.get(),
-        shield2Note.getNoteTxs(1),blockingStubFull),
-        getTrc20SpendResult(shieldAddressInfo2.get(),shield2Note.getNoteTxs(1),
-            blockingStubFull,blockingStubSolidity));
+        shield2Note.getNoteTxs(1), blockingStubFull),
+        getTrc20SpendResult(shieldAddressInfo2.get(), shield2Note.getNoteTxs(1),
+            blockingStubFull, blockingStubSolidity));
 
   }
-
-
-
 
 
   /**

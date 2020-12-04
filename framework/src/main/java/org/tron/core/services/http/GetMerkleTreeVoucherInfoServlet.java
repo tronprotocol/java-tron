@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +23,12 @@ public class GetMerkleTreeVoucherInfoServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       OutputPointInfo.Builder build = OutputPointInfo.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(params.getParams(), build);
       IncrementalMerkleVoucherInfo reply = wallet.getMerkleTreeVoucherInfo(build.build());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
+        response.getWriter().println(JsonFormat.printToString(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }

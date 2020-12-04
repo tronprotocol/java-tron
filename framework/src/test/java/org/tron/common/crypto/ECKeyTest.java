@@ -3,6 +3,7 @@ package org.tron.common.crypto;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -31,6 +32,12 @@ public class ECKeyTest {
   private byte[] pubKey = Hex.decode(pubString);
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
   private String address = "cd2a3d9f938e13cd947ec05abc7fe734df8dd826";
+  String eventSign = "eventBytesL(address,bytes,bytes32,uint256,string)";
+
+  @Test
+  public void testSha3() {
+    assertNotEquals(Hash.sha3(eventSign.getBytes()).length, 0);
+  }
 
   @Test
   public void testHashCode() {
@@ -201,13 +208,6 @@ public class ECKeyTest {
     assertTrue(key1.equals(key2));
   }
 
-  @Test
-  public void decryptAECSIC() {
-    ECKey key = ECKey.fromPrivate(
-        Hex.decode("abb51256c1324a1350598653f46aa3ad693ac3cf5d05f36eba3f495a1f51590f"));
-    byte[] payload = key.decryptAES(Hex.decode("84a727bc81fa4b13947dc9728b88fd08"));
-    System.out.println(Hex.toHexString(payload));
-  }
 
   @Test
   public void testNodeId() {

@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
-import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 
 import java.util.Objects;
 import lombok.Getter;
@@ -10,14 +9,15 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.ForkUtils;
+import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -30,11 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -66,7 +62,11 @@ public class TransactionTrace {
 
   private Runtime runtime;
 
-  private ForkUtils forkUtils;
+  private ForkController forkController;
+
+  private VotesStore votesStore;
+
+  private DelegationStore delegationStore;
 
   @Getter
   private TransactionContext transactionContext;
@@ -98,8 +98,11 @@ public class TransactionTrace {
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
     this.runtime = runtime;
-    this.forkUtils = new ForkUtils();
-    forkUtils.init(dynamicPropertiesStore);
+    this.forkController = new ForkController();
+    forkController.init(storeFactory.getChainBaseManager());
+
+    this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
+    this.delegationStore = storeFactory.getChainBaseManager().getDelegationStore();
   }
 
   public TransactionCapsule getTrx() {
@@ -132,9 +135,9 @@ public class TransactionTrace {
       ContractCapsule contract = contractStore
           .get(triggerContractFromTransaction.getContractAddress().toByteArray());
       if (contract == null) {
-        logger.info("contract: {} is not in contract store", WalletUtil
+        logger.info("contract: {} is not in contract store", StringUtil
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
-        throw new ContractValidateException("contract: " + WalletUtil
+        throw new ContractValidateException("contract: " + StringUtil
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
             + " is not in contract store");
       }
@@ -174,7 +177,8 @@ public class TransactionTrace {
           .equals(receipt.getResult())) {
         setTimeResultType(TimeResultType.OUT_OF_TIME);
       } else if (System.currentTimeMillis() - txStartTimeInMs
-          > DBConfig.getLongRunningTime()) {
+          > CommonParameter.getInstance()
+          .getLongRunningTime()) {
         setTimeResultType(TimeResultType.LONG_RUNNING);
       }
     }
@@ -189,6 +193,12 @@ public class TransactionTrace {
     if (StringUtils.isEmpty(transactionContext.getProgramResult().getRuntimeError())) {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+      }
+      for (DataWord address : transactionContext.getProgramResult().getDeleteVotes()) {
+        votesStore.delete(convertToTronAddress((address.getLast20Bytes())));
+      }
+      for (DataWord address : transactionContext.getProgramResult().getDeleteDelegation()) {
+        deleteDelegationByAddress(convertToTronAddress((address.getLast20Bytes())));
       }
     }
   }
@@ -227,7 +237,7 @@ public class TransactionTrace {
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
     receipt.payEnergyBill(
-        dynamicPropertiesStore, accountStore, forkUtils,
+        dynamicPropertiesStore, accountStore, forkController,
         origin,
         caller,
         percent, originEnergyLimit,
@@ -288,15 +298,21 @@ public class TransactionTrace {
     contractStore.delete(address);
   }
 
-  private byte[] convertToTronAddress(byte[] address) {
+  public static byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
       byte[] newAddress = new byte[21];
-      byte[] temp = new byte[]{addressPreFixByte};
+      byte[] temp = new byte[]{DecodeUtil.addressPreFixByte};
       System.arraycopy(temp, 0, newAddress, 0, temp.length);
       System.arraycopy(address, 0, newAddress, temp.length, address.length);
       address = newAddress;
     }
     return address;
+  }
+
+  public void deleteDelegationByAddress(byte[] address){
+    delegationStore.delete(address); //begin Cycle
+    delegationStore.delete(("lastWithdraw-" + Hex.toHexString(address)).getBytes()); //last Withdraw cycle
+    delegationStore.delete(("end-" + Hex.toHexString(address)).getBytes()); //end cycle
   }
 
 

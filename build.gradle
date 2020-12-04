@@ -73,4 +73,5 @@ task copyToParent(type: Copy) {
     }
 }
 
-build.finalizedBy(copyToParent) 
+build.finalizedBy(copyToParent)
+

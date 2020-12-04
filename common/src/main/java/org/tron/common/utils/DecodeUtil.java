@@ -1,25 +1,16 @@
 package org.tron.common.utils;
 
-import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
-
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.math.ec.ECPoint;
+import org.tron.core.Constant;
 
 @Slf4j(topic = "Commons")
 public class DecodeUtil {
 
   public static final int ADDRESS_SIZE = 42;
-  public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
-  public static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
+  public static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
-  public static byte[] clone(byte[] value) {
-    byte[] clone = new byte[value.length];
-    System.arraycopy(value, 0, clone, 0, value.length);
-    return clone;
-  }
+  public static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;
 
   public static boolean addressValid(byte[] address) {
     if (ArrayUtils.isEmpty(address)) {
@@ -38,12 +29,7 @@ public class DecodeUtil {
           + address[0] + " !!");
       return false;
     }
-    //Other rule;
     return true;
-  }
-
-  public static String createReadableString(byte[] bytes) {
-    return ByteArray.toHexString(bytes);
   }
 
 }

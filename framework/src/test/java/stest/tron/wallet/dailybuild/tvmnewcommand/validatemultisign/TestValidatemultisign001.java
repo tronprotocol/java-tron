@@ -17,11 +17,11 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -177,16 +177,18 @@ public class TestValidatemultisign001 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
-    byte[] tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
     // Trigger with correct Permission address
-    List<Object> parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    List<Object> parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     String input = PublicMethed.parametersString(parameters);
 
@@ -204,13 +206,14 @@ public class TestValidatemultisign001 {
 
     // Trigger with wrong Permission address
     merged = ByteUtil.merge(dev001Address, ByteArray.fromInt(0), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(dev001Address),
+    parameters = Arrays.asList(StringUtil.encode58Check(dev001Address),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -225,13 +228,14 @@ public class TestValidatemultisign001 {
 
     // Trigger with address that have not permission
     merged = ByteUtil.merge(fromAddress, ByteArray.fromInt(0), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(fromAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(fromAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -246,13 +250,14 @@ public class TestValidatemultisign001 {
 
     // Trigger with not exist address
     merged = ByteUtil.merge(manager1Address, ByteArray.fromInt(0), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(manager1Address),
+    parameters = Arrays.asList(StringUtil.encode58Check(manager1Address),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -267,7 +272,8 @@ public class TestValidatemultisign001 {
 
     // Trigger with error format address
     merged = ByteUtil.merge(manager1Address, ByteArray.fromInt(0), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
@@ -297,18 +303,20 @@ public class TestValidatemultisign001 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     // Trigger with wrong PermissionID
     long permissionId = 2;
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
-    byte[] tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    List<Object> parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    List<Object> parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     String input = PublicMethed.parametersString(parameters);
 
@@ -327,13 +335,14 @@ public class TestValidatemultisign001 {
     // Trigger with error format PermissionID
     permissionId = 100;
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -349,13 +358,14 @@ public class TestValidatemultisign001 {
     // Trigger with Long.MAX_VALUE + 1 PermissionID
     permissionId = Long.MAX_VALUE + 1;
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -371,13 +381,14 @@ public class TestValidatemultisign001 {
     // Trigger with Long.MIN_VALUE - 1 PermissionID
     permissionId = Long.MIN_VALUE - 1;
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -402,16 +413,18 @@ public class TestValidatemultisign001 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
-    byte[] tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
     // Trigger with no sign hash
-    List<Object> parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    List<Object> parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     String input = PublicMethed.parametersString(parameters);
 
@@ -430,21 +443,25 @@ public class TestValidatemultisign001 {
     // Trigger with wrong hash
     transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
-    logger.info("hash: {}", Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),transaction.getRawData().toByteArray()).getBytes());
+    logger.info("hash: {}", Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes());
 
-    hash = Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),transaction.getRawData().toByteArray()).getBytes();
+    hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
     transaction = TransactionUtils.setTimestamp(transaction);
-    hash = Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),transaction.getRawData().toByteArray()).getBytes();
+    hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -464,16 +481,18 @@ public class TestValidatemultisign001 {
         fromAddress, 1L, dev001Address, 0, dev001Key, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
 
-    hash = Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),transaction.getRawData().toByteArray()).getBytes();
+    hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
-    tosign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
+    tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(WalletUtil.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 

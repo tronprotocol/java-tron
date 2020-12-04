@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+message MarketSellAssetContract {
+    bytes owner_address = 1;
+    bytes sell_token_id = 2;
+    int64 sell_token_quantity = 3;
+    bytes buy_token_id = 4;
+    int64 buy_token_quantity = 5; // min to receive
+}
+
+message MarketCancelOrderContract {
+    bytes owner_address = 1;
+    bytes order_id = 2;
+}

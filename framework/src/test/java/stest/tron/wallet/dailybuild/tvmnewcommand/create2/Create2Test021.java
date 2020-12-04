@@ -336,6 +336,7 @@ public class Create2Test021 {
         .triggerContract(bytes,
             "testTransferToken(uint256,trcToken)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> transactionInfoById1 = PublicMethed
         .getTransactionInfoById(txid1, blockingStubFull);
     Assert.assertTrue(transactionInfoById1.get().getResultValue() == 0);

@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +26,7 @@ public class GetAssetIssueByAccountServlet extends RateLimiterServlet {
       if (visible) {
         address = Util.getHexAddress(address);
       }
-      AssetIssueList reply = wallet
-          .getAssetIssueByAccount(ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(address)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -41,20 +34,22 @@ public class GetAssetIssueByAccountServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String account = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(account);
-      boolean visible = Util.getVisiblePost(account);
+      PostParams params = PostParams.getPostParams(request);
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build, visible);
-      AssetIssueList reply = wallet.getAssetIssueByAccount(build.getAddress());
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(params.isVisible(), build.getAddress(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, ByteString address, HttpServletResponse response)
+      throws Exception {
+    AssetIssueList reply = wallet.getAssetIssueByAccount(address);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

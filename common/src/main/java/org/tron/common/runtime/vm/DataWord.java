@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.db.ByteArrayWrapper;
@@ -44,7 +45,7 @@ public class DataWord implements Comparable<DataWord> {
   // TODO not safe
   public static final DataWord ZERO = new DataWord(
       new byte[WORD_SIZE]);      // don't push it in to the stack
-  private byte[] data = new byte[32];
+  private byte[] data = new byte[WORD_SIZE];
 
   public DataWord() {
   }
@@ -81,7 +82,7 @@ public class DataWord implements Comparable<DataWord> {
     } else if (data.length < WORD_SIZE) {
       System.arraycopy(data, 0, this.data, WORD_SIZE - data.length, data.length);
     } else {
-      throw new RuntimeException("Data word can't exceed 32 bytes: " + ByteUtil.toHexString(data));
+      throw new RuntimeException("Data word can't exceed 32 bytes: " + ByteArray.toHexString(data));
     }
   }
 
@@ -90,7 +91,7 @@ public class DataWord implements Comparable<DataWord> {
   }
 
   public static DataWord ZERO() {
-    return new DataWord(new byte[32]);
+    return new DataWord(new byte[WORD_SIZE]);
   }
 
   public static DataWord of(byte num) {
@@ -171,6 +172,10 @@ public class DataWord implements Comparable<DataWord> {
 
   public byte[] getNoLeadZeroesData() {
     return ByteUtil.stripLeadingZeroes(data);
+  }
+
+  public byte[] getNoEndZeroesData() {
+    return ByteUtil.stripEndingZeroes(data);
   }
 
   public byte[] getLast20Bytes() {
@@ -308,7 +313,7 @@ public class DataWord implements Comparable<DataWord> {
   // By   : Holger
   // From : http://stackoverflow.com/a/24023466/459349
   public void add(DataWord word) {
-    byte[] result = new byte[32];
+    byte[] result = new byte[WORD_SIZE];
     for (int i = 31, overflow = 0; i >= 0; i--) {
       int v = (this.data[i] & 0xff) + (word.data[i] & 0xff) + overflow;
       result[i] = (byte) v;
@@ -394,7 +399,7 @@ public class DataWord implements Comparable<DataWord> {
 
   public void addmod(DataWord word1, DataWord word2) {
     if (word2.isZero()) {
-      this.data = new byte[32];
+      this.data = new byte[WORD_SIZE];
       return;
     }
 
@@ -405,7 +410,7 @@ public class DataWord implements Comparable<DataWord> {
   public void mulmod(DataWord word1, DataWord word2) {
 
     if (this.isZero() || word1.isZero() || word2.isZero()) {
-      this.data = new byte[32];
+      this.data = new byte[WORD_SIZE];
       return;
     }
 

@@ -10,6 +10,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -18,15 +19,17 @@ import org.tron.protos.Protocol.Account;
 public class ManagerForTest {
 
   private Manager dbManager;
+  private ChainBaseManager chainBaseManager;
   private DposSlot dposSlot;
 
   public ManagerForTest(Manager dbManager, DposSlot dposSlot) {
     this.dbManager = dbManager;
+    this.chainBaseManager = dbManager.getChainBaseManager();
     this.dposSlot = dposSlot;
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
-    dbManager.getWitnesses().clear();
+    chainBaseManager.getWitnesses().clear();
     return IntStream.range(0, 2)
         .mapToObj(
             i -> {
@@ -35,12 +38,12 @@ public class ManagerForTest {
               ByteString address = ByteString.copyFrom(ecKey.getAddress());
 
               WitnessCapsule witnessCapsule = new WitnessCapsule(address);
-              dbManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
-              dbManager.addWitness(address);
+              chainBaseManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
+              chainBaseManager.addWitness(address);
 
               AccountCapsule accountCapsule =
                   new AccountCapsule(Account.newBuilder().setAddress(address).build());
-              dbManager.getAccountStore().put(address.toByteArray(), accountCapsule);
+              chainBaseManager.getAccountStore().put(address.toByteArray(), accountCapsule);
 
               return Maps.immutableEntry(address, privateKey);
             })
@@ -70,8 +73,10 @@ public class ManagerForTest {
       for (int i = 1; i <= count; i++) {
         ByteString hash = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
             .getByteString();
-        long time = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 3000L;
-        long number = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
+        long time =
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 3000L;
+        long number =
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
         BlockCapsule blockCapsule = createTestBlockCapsule(time, number, hash);
         dbManager.pushBlock(blockCapsule);
       }

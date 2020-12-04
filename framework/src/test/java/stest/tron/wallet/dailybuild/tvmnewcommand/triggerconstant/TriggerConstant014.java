@@ -50,8 +50,8 @@ public class TriggerConstant014 {
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private ManagedChannel channelRealSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -72,21 +72,14 @@ public class TriggerConstant014 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
-        .build();
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1).usePlaintext(true).build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode).usePlaintext(true).build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
-        .usePlaintext(true)
+    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode).usePlaintext(true)
         .build();
     blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
   }
@@ -103,15 +96,15 @@ public class TriggerConstant014 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
+    contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
+            contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -129,9 +122,8 @@ public class TriggerConstant014 {
     String txid = "";
     String num = "\"" + code1 + "\"" + "," + 1;
     txid = PublicMethed
-        .triggerContract(contractAddress,
-            "deploy(bytes,uint256)", num, false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(contractAddress, "deploy(bytes,uint256)", num, false, 0, maxFeeLimit, "0",
+            0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -150,8 +142,8 @@ public class TriggerConstant014 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -171,9 +163,8 @@ public class TriggerConstant014 {
     String returnAddress = Base58.encode58Check(returnAddressBytes);
     logger.info("returnAddress:" + returnAddress);
     txid = PublicMethed
-        .triggerContract(returnAddressBytes,
-            "plusOne()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(returnAddressBytes, "plusOne()", "#", false, 0, maxFeeLimit, "0", 0,
+            contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById1 = null;
     infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -190,8 +181,8 @@ public class TriggerConstant014 {
     logger.info("energyUsageTotal1:" + energyUsageTotal1);
 
     Account infoafter1 = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter1 = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter1 = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance1 = infoafter1.getBalance();
     Long afterEnergyUsed1 = resourceInfoafter1.getEnergyUsed();
     Long afterNetUsed1 = resourceInfoafter1.getNetUsed();
@@ -216,12 +207,10 @@ public class TriggerConstant014 {
     String returnAddress = Base58.encode58Check(returnAddressBytes);
     logger.info("returnAddress:" + returnAddress);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(returnAddressBytes,
-            "plusOne()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(returnAddressBytes, "plusOne()", "#", false, 0,
+            maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
@@ -237,12 +226,10 @@ public class TriggerConstant014 {
     String returnAddress = Base58.encode58Check(returnAddressBytes);
     logger.info("returnAddress:" + returnAddress);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(returnAddressBytes,
-            "plusOne()", "#", false,
+        .triggerConstantContractForExtentionOnSolidity(returnAddressBytes, "plusOne()", "#", false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
@@ -258,12 +245,10 @@ public class TriggerConstant014 {
     String returnAddress = Base58.encode58Check(returnAddressBytes);
     logger.info("returnAddress:" + returnAddress);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(returnAddressBytes,
-            "plusOne()", "#", false,
+        .triggerConstantContractForExtentionOnSolidity(returnAddressBytes, "plusOne()", "#", false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
