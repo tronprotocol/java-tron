@@ -30,6 +30,7 @@ package org.tron.core.services.http;
 */
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumDescriptor;
@@ -44,10 +45,12 @@ import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -103,6 +106,22 @@ public class JsonFormat {
 
   protected static void print(Message message, JsonGenerator generator, boolean selfType)
       throws IOException {
+    Set<FieldDescriptor> allFieldsWithDefaultValue = new HashSet<>(message.getDescriptorForType().getFields());
+    Set<FieldDescriptor> allFields = message.getAllFields().keySet();
+    Set<FieldDescriptor> diff = Sets.difference(allFieldsWithDefaultValue, allFields);
+    for (Iterator<FieldDescriptor> iter = diff.iterator(); iter.hasNext();) {
+      FieldDescriptor field = iter.next();
+      if (field.getType() == FieldDescriptor.Type.MESSAGE || field.getType() ==
+          FieldDescriptor.Type.GROUP) {
+
+      } else {
+        printField(field, field.getDefaultValue(), generator, selfType);
+      }
+
+      if (!allFields.isEmpty()) {
+        generator.print(",");
+      }
+    }
     for (Iterator<Map.Entry<FieldDescriptor, Object>> iter = message.getAllFields().entrySet()
         .iterator(); iter.hasNext(); ) {
       Map.Entry<FieldDescriptor, Object> field = iter.next();
