@@ -1469,8 +1469,8 @@ public class Program {
   }
 
   public void createContract3(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    byte[] senderAddress = TransactionTrace.
-        convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] senderAddress = TransactionTrace
+        .convertToTronAddress(this.getCallerAddress().getLast20Bytes());
 
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 

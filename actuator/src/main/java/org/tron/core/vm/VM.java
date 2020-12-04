@@ -94,6 +94,7 @@ public class VM {
         && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH))
         || (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT)
         || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID))
+        || (!VMConfig.allowTvmSolidity060() && (op == CREATE3))
     ) {
       throw Program.Exception.invalidOpCode(currentOp);
     }
