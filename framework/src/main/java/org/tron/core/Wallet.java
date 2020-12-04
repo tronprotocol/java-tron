@@ -988,6 +988,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTransactionFeePool())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmSolidity060")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity060())
+        .build());
+
     return builder.build();
   }
 

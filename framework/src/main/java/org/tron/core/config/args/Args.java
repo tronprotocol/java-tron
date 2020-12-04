@@ -181,6 +181,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
+    PARAMETER.allowTvmSolidity060 = 0;
   }
 
   /**
@@ -539,6 +540,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmSolidity059 =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) : 0;
+
+    PARAMETER.allowTvmSolidity060 =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY_060) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY_060) : 0;
 
     PARAMETER.forbidTransferToContract =
         config.hasPath(Constant.COMMITTEE_FORBID_TRANSFER_TO_CONTRACT) ? config

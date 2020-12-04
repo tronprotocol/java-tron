@@ -464,7 +464,9 @@ public class ProposalUtil {
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
-    ALLOW_TRANSACTION_FEE_POOL(48); // 0, 1
+    ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
+    ALLOW_TVM_SOLIDITY_060(49), // 0, 1
+    ;
 
     private long code;
 

@@ -50,6 +50,8 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_ASSET_ISSUE = false;
 
+  private static boolean ALLOW_TVM_SOLIDITY_060 = false;
+
   private VMConfig() {
   }
 
@@ -101,6 +103,10 @@ public class VMConfig {
     ALLOW_TVM_ASSET_ISSUE = allow == 1;
   }
 
+  public static void initAllowTvmSolidity060(long allow) {
+    ALLOW_TVM_SOLIDITY_060 = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -137,6 +143,9 @@ public class VMConfig {
     return ALLOW_TVM_ASSET_ISSUE;
   }
 
+  public static boolean allowTvmSolidity060() {
+    return ALLOW_TVM_SOLIDITY_060;
+  }
   private static class SystemPropertiesInstance {
 
     private static final VMConfig INSTANCE = new VMConfig();

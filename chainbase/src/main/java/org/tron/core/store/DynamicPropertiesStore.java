@@ -151,6 +151,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_TRANSACTION_FEE_POOL = "ALLOW_TRANSACTION_FEE_POOL".getBytes();
   private static final byte[] TRANSACTION_FEE_POOL = "TRANSACTION_FEE_POOL".getBytes();
+  private static final byte[] ALLOW_TVM_SOLIDITY_060 = "ALLOW_TVM_SOLIDITY_060".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -710,6 +711,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
     }
 
+    try {
+      this.getAllowTvmSolidity060();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmSolidity060(CommonParameter.getInstance()
+          .getAllowTvmSolidity060());
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -1585,6 +1592,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_059"));
+  }
+
+  public void saveAllowTvmSolidity060(long value) {
+    this.put(ALLOW_TVM_SOLIDITY_060,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmSolidity060() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SOLIDITY_060))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_060"));
   }
 
   public void saveForbidTransferToContract(long value) {

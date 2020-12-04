@@ -234,6 +234,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTransactionFeePool(entry.getValue());
           break;
         }
+        case ALLOW_TVM_SOLIDITY_060: {
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity060(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

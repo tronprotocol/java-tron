@@ -262,6 +262,7 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_STAKE = "committee.allowTvmStake";
 
   public static final String COMMITTEE_ALLOW_TVM_ASSETISSUE = "committee.allowTvmAssetIssue";
+  public static final String COMMITTEE_ALLOW_TVM_SOLIDITY_060 = "committee.allowTvmSolidity060";
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
