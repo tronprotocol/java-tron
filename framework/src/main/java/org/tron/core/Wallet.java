@@ -987,6 +987,10 @@ public class Wallet {
         .setKey("getAllowTransactionFeePool")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTransactionFeePool())
         .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMaxFeeLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxFeeLimit())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmSolidity060")
