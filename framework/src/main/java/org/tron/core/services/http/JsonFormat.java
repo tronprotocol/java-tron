@@ -30,13 +30,15 @@ package org.tron.core.services.http;
 */
 
 import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumDescriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.ExtensionRegistry;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UnknownFieldSet;
@@ -45,18 +47,19 @@ import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
+import org.tron.protos.contract.BalanceContract;
 
 /**
  * Provide ascii text parsing and formatting support for proto2 instances. The implementation
@@ -79,6 +82,12 @@ public class JsonFormat {
       = "Writing to a StringBuilder threw an IOException (should never happen).";
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
+
+  private final static boolean alwaysOutputDefaultValueFields = true;
+  private final static Set<Class<? extends GeneratedMessageV3>> messages = ImmutableSet.of(
+      BalanceContract.AccountBalanceResponse.class,
+      BalanceContract.BlockBalanceTrace.class
+  );
 
   /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
@@ -106,23 +115,30 @@ public class JsonFormat {
 
   protected static void print(Message message, JsonGenerator generator, boolean selfType)
       throws IOException {
-    Set<FieldDescriptor> allFieldsWithDefaultValue = new HashSet<>(message.getDescriptorForType().getFields());
-    Set<FieldDescriptor> allFields = message.getAllFields().keySet();
-    Set<FieldDescriptor> diff = Sets.difference(allFieldsWithDefaultValue, allFields);
-    for (Iterator<FieldDescriptor> iter = diff.iterator(); iter.hasNext();) {
-      FieldDescriptor field = iter.next();
-      if (field.getType() == FieldDescriptor.Type.MESSAGE || field.getType() ==
-          FieldDescriptor.Type.GROUP) {
-
-      } else {
-        printField(field, field.getDefaultValue(), generator, selfType);
-      }
-
-      if (!allFields.isEmpty()) {
-        generator.print(",");
+    Map<FieldDescriptor, Object> fieldsToPrint = new TreeMap<>(message.getAllFields());
+    if (alwaysOutputDefaultValueFields && messages.contains(message.getClass())) {
+      for (FieldDescriptor field : message.getDescriptorForType().getFields()) {
+        if (field.isOptional()) {
+          if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE
+              && !message.hasField(field)) {
+            // Always skip empty optional message fields. If not we will recurse indefinitely if
+            // a message has itself as a sub-field.
+            continue;
+          }
+          Descriptors.OneofDescriptor oneof = field.getContainingOneof();
+          if (oneof != null && !message.hasField(field)) {
+            // Skip all oneof fields except the one that is actually set
+            continue;
+          }
+        }
+        if (!fieldsToPrint.containsKey(field)) {
+          fieldsToPrint.put(field, message.getField(field));
+        }
       }
     }
-    for (Iterator<Map.Entry<FieldDescriptor, Object>> iter = message.getAllFields().entrySet()
+
+    //for (Iterator<Map.Entry<FieldDescriptor, Object>> iter = message.getAllFields().entrySet()
+    for (Iterator<Map.Entry<FieldDescriptor, Object>> iter = fieldsToPrint.entrySet()
         .iterator(); iter.hasNext(); ) {
       Map.Entry<FieldDescriptor, Object> field = iter.next();
       printField(field.getKey(), field.getValue(), generator, selfType);
