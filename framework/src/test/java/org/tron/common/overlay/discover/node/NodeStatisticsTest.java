@@ -64,7 +64,7 @@ public class NodeStatisticsTest {
     this.nodeStatistics.resetTcpFlow();
     this.nodeStatistics.discoverMessageLatency.add(10);
     this.nodeStatistics.discoverMessageLatency.add(20);
-    long avg = this.nodeStatistics.discoverMessageLatency.getAvrg();
+    long avg = this.nodeStatistics.discoverMessageLatency.getAvg();
     Assert.assertEquals(15, avg);
 
   }

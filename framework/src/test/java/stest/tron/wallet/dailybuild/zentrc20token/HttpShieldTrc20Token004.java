@@ -15,10 +15,15 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 @Slf4j
 public class HttpShieldTrc20Token004 extends ZenTrc20Base {
 
+  JSONArray shieldedReceives = new JSONArray();
+  String txid;
+  JSONArray shieldSpends = new JSONArray();
   private String httpnode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(0);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+          .getStringList("httpnode.ip.list").get(4);
   private JSONObject responseContent;
   private HttpResponse response;
   private JSONObject shieldAccountInfo1;
@@ -33,9 +38,6 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
   private Long account1Receive2V2Amount = 13L;
   private Long account2Receive2V2Amount = publicFromAmount + account2Receive1V2Amount
       - account1Receive2V2Amount;
-  JSONArray shieldedReceives = new JSONArray();
-  String txid;
-  JSONArray shieldSpends = new JSONArray();
 
   /**
    * constructor.
@@ -314,35 +316,51 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     account1IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode, shieldAccountInfo1);
     Assert.assertTrue(isShieldedTrc20ContractNoteSpent(httpnode, shieldAccountInfo1,
         account1IvkNoteTxs.getJSONObject(2)));
+    Assert.assertTrue(isShieldedTrc20ContractNoteSpentOnPbft(httpPbftNode, shieldAccountInfo1,
+            account1IvkNoteTxs.getJSONObject(2)));
     Assert.assertTrue(isShieldedTrc20ContractNoteSpent(httpnode, shieldAccountInfo1,
         account1IvkNoteTxs.getJSONObject(3)));
+    Assert.assertTrue(isShieldedTrc20ContractNoteSpentOnPbft(httpPbftNode, shieldAccountInfo1,
+            account1IvkNoteTxs.getJSONObject(3)));
 
   }
 
 
-  @Test(enabled = true, description = "Scan note by ivk and ovk on solidity by http")
-  public void test05ScanNoteByIvkAndOvkOnSOlidityByHttp() {
+  @Test(enabled = true, description = "Scan note by ivk and ovk on solidity and pbft by http")
+  public void test05ScanNoteByIvkAndOvkOnSOlidityAndPbftByHttp() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
 
     account1IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode, shieldAccountInfo1);
     JSONArray account1IvkNoteTxsOnSolidity = scanShieldTrc20NoteByIvkOnSolidity(httpSolidityNode,
         shieldAccountInfo1);
     Assert.assertEquals(account1IvkNoteTxs, account1IvkNoteTxsOnSolidity);
+    JSONArray account1IvkNoteTxsOnPbft = scanShieldTrc20NoteByIvkOnPbft(httpPbftNode,
+            shieldAccountInfo1);
+    Assert.assertEquals(account1IvkNoteTxs, account1IvkNoteTxsOnPbft);
 
     account1OvkNoteTxs = scanShieldTrc20NoteByOvk(httpnode, shieldAccountInfo1);
     JSONArray account1OvkNoteTxsOnSolidity = scanShieldTrc20NoteByOvkOnSolidity(httpSolidityNode,
         shieldAccountInfo1);
     Assert.assertEquals(account1OvkNoteTxs, account1OvkNoteTxsOnSolidity);
+    JSONArray account1OvkNoteTxsOnPbft = scanShieldTrc20NoteByOvkOnPbft(httpPbftNode,
+            shieldAccountInfo1);
+    Assert.assertEquals(account1OvkNoteTxs, account1OvkNoteTxsOnPbft);
 
     account2IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode, shieldAccountInfo2);
     JSONArray account2IvkNoteTxsOnSolidity = scanShieldTrc20NoteByIvkOnSolidity(httpSolidityNode,
         shieldAccountInfo2);
     Assert.assertEquals(account2IvkNoteTxs, account2IvkNoteTxsOnSolidity);
+    JSONArray account2IvkNoteTxsOnPbft = scanShieldTrc20NoteByIvkOnPbft(httpPbftNode,
+            shieldAccountInfo2);
+    Assert.assertEquals(account2IvkNoteTxs, account2IvkNoteTxsOnPbft);
 
     account2OvkNoteTxs = scanShieldTrc20NoteByOvk(httpnode, shieldAccountInfo2);
     JSONArray account2OvkNoteTxsOnSolidity = scanShieldTrc20NoteByOvkOnSolidity(httpSolidityNode,
         shieldAccountInfo2);
     Assert.assertEquals(account2OvkNoteTxs, account2OvkNoteTxsOnSolidity);
+    JSONArray account2OvkNoteTxsOnPbft = scanShieldTrc20NoteByOvkOnPbft(httpPbftNode,
+            shieldAccountInfo2);
+    Assert.assertEquals(account2OvkNoteTxs, account2OvkNoteTxsOnPbft);
 
   }
 

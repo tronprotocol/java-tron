@@ -14,6 +14,13 @@ contract Factory {
             emit Deployed(addr, salt, msg.sender);
             return addr;
         }
+
+    function get(bytes1 prefix, bytes calldata code, uint256 salt) external view returns(address) {
+        //bytes32 hash = keccak256(abi.encodePacked(bytes1(0x41),address(this), salt, keccak256(code)));
+        bytes32 hash = keccak256(abi.encodePacked(prefix,address(this), salt, keccak256(code)));
+        address addr = address(uint160(uint256(hash)));
+        return addr;
+    }
 }
 
 contract TestContract{

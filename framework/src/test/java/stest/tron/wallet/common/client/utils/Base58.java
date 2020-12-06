@@ -3,6 +3,7 @@ package stest.tron.wallet.common.client.utils;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 
 public class Base58 {
@@ -173,31 +174,11 @@ public class Base58 {
               + " !!");
       return null;
     }
-    byte[] address = decode58Check(addressBase58);
+    byte[] address = Commons.decode58Check(addressBase58);
     if (!addressValid(address)) {
       return null;
     }
     return address;
-  }
-
-  public static byte[] decode58Check(String input) {
-    byte[] decodeCheck = Base58.decode(input);
-    if (decodeCheck.length <= 4) {
-      return null;
-    }
-    byte[] decodeData = new byte[decodeCheck.length - 4];
-    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
-        .isECKeyCryptoEngine(), decodeData);
-    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance()
-        .isECKeyCryptoEngine(), hash0);
-    if (hash1[0] == decodeCheck[decodeData.length]
-        && hash1[1] == decodeCheck[decodeData.length + 1]
-        && hash1[2] == decodeCheck[decodeData.length + 2]
-        && hash1[3] == decodeCheck[decodeData.length + 3]) {
-      return decodeData;
-    }
-    return null;
   }
 
   /**

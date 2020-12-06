@@ -22,16 +22,13 @@ public class GetTriggerInputForShieldedTRC20ContractServlet extends RateLimiterS
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       ShieldedTRC20TriggerContractParameters.Builder builder =
           ShieldedTRC20TriggerContractParameters
               .newBuilder();
-      JsonFormat.merge(input, builder, visible);
+      JsonFormat.merge(params.getParams(), builder, params.isVisible());
       BytesMessage result = wallet.getTriggerInputForShieldedTRC20Contract(builder.build());
-      response.getWriter().println(JsonFormat.printToString(result, visible));
+      response.getWriter().println(JsonFormat.printToString(result, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }
