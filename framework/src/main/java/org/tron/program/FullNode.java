@@ -79,9 +79,6 @@ public class FullNode {
     context.register(DefaultConfig.class);
 
     context.refresh();
-    if (Args.getInstance().isFixDb()) {
-      fixDb(context);
-    }
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
@@ -128,27 +125,5 @@ public class FullNode {
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
-  }
-
-  public static void fixDb(TronApplicationContext context) {
-    System.out.println("begin to fix db account-trace");
-    AccountTraceStore accountTraceStore = context.getBean(AccountTraceStore.class);
-    BalanceTraceStore balanceTraceStore = context.getBean(BalanceTraceStore.class);
-    for (Map.Entry<byte[], BlockBalanceTraceCapsule> e : balanceTraceStore) {
-      BlockBalanceTraceCapsule blockBalanceTraceCapsule = e.getValue();
-      long number = blockBalanceTraceCapsule.getBlockIdentifier().getNumber();
-      for (TransactionBalanceTrace transactionBalanceTrace : blockBalanceTraceCapsule.getTransactions()) {
-        for (Operation operation : transactionBalanceTrace.getOperationList()) {
-          byte[] address = operation.getAddress().toByteArray();
-          byte[] key = Bytes.concat(address, Longs.toByteArray(number ^ Long.MAX_VALUE));
-          if (!accountTraceStore.has(key)) {
-            accountTraceStore.getRevokingDB().put(key, ArrayUtils.EMPTY_BYTE_ARRAY);
-          }
-        }
-      }
-    }
-
-    System.out.println("end to fix db account-trace");
-    System.exit(0);
   }
 }

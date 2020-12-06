@@ -450,16 +450,6 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  @Parameter(names = {"--fix-db"})
-  public boolean fixDb = false;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--reset-number"})
-  public long resetNumber = 0;
-
-  @Getter
-  @Setter
   @Parameter(names = {"--history-balance-lookup"})
   public boolean historyBalanceLookup = false;
 
