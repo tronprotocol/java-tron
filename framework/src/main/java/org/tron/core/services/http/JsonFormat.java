@@ -38,7 +38,6 @@ import com.google.protobuf.Descriptors.EnumDescriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.ExtensionRegistry;
-import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UnknownFieldSet;
@@ -84,7 +83,7 @@ public class JsonFormat {
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
 
   private final static boolean alwaysOutputDefaultValueFields = true;
-  private final static Set<Class<? extends GeneratedMessageV3>> messages = ImmutableSet.of(
+  private final static Set<Class<? extends Message>> messages = ImmutableSet.of(
       BalanceContract.AccountBalanceResponse.class,
       BalanceContract.BlockBalanceTrace.class
   );
