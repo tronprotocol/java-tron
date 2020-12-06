@@ -226,8 +226,7 @@ public class Chainbase implements IRevokingDB {
     }
 
     // just get the same token pair
-    List<WrappedByteArray> levelDBListFiltered = new ArrayList<>();
-    levelDBListFiltered = levelDBList.stream()
+    List<WrappedByteArray> levelDBListFiltered = levelDBList.stream()
         .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
         .collect(Collectors.toList());
 

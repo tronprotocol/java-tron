@@ -990,6 +990,15 @@ public class Wallet {
     //        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
     //        .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTransactionFeePool")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTransactionFeePool())
+        .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMaxFeeLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxFeeLimit())
+        .build());
+
     return builder.build();
   }
 
@@ -1386,7 +1395,7 @@ public class Wallet {
     return blockNum;
   }
 
-  //in:outPoint,out:blockNumber
+  //in:outPoint, out:blockNumber
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {

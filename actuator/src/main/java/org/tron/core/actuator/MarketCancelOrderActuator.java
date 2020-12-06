@@ -43,6 +43,10 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
 
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
+
 @Slf4j(topic = "actuator")
 public class MarketCancelOrderActuator extends AbstractActuator {
 
@@ -77,7 +81,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(TX_RESULT_NULL);
     }
     long fee = calcFee();
 
@@ -145,10 +149,10 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
     initStores();

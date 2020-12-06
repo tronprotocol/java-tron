@@ -22,11 +22,12 @@ import java.math.BigInteger;
 import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.Utils;
+import org.tron.core.Constant;
 
 public class Peer {
 
   private byte[] id;
-  private String host = "127.0.0.1";
+  private String host = Constant.LOCAL_HOST;
   private int port = 0;
 
   public Peer(byte[] id, String host, int port) {

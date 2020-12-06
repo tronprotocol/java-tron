@@ -58,10 +58,10 @@ public class Create2Test021 {
       .getStringList("fullnode.ip.list").get(1);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
-  private byte[] contractExcAddress = PublicMethed
-      .getFinalAddress("9fc9b78370cdeab1bc11ba5e387e5e4f205f17d1957b1bebf4ce6d0330a448a4");
-  private String contractExcKey =
-      "9fc9b78370cdeab1bc11ba5e387e5e4f205f17d1957b1bebf4ce6d0330a448a4";
+
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  private byte[] contractExcAddress = ecKey3.getAddress();
+  private String contractExcKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -93,7 +93,7 @@ public class Create2Test021 {
 
   }
 
-  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
+  @Test(enabled = true, description = "resource delegate with create2 contract, and suicide ")
   public void test1TriggerContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
@@ -134,60 +134,13 @@ public class Create2Test021 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    bytes = ByteArray.fromHexString("416CED4D6BF0AE10676347961BEFB7F47A8664AE36");
 
-    String param2 = "\"" + Base58.encode58Check(contractExcAddress) + "\"";
-    String txidn = PublicMethed
-        .triggerContract(bytes,
-            "testSuicideNonexistentTarget(address)", param2, false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-        .sendcoin(bytes, 1000000L, contractExcAddress, contractExcKey, blockingStubFull));
-    //Trigger contract to transfer trx and token.
-    Account getAssetIdFromAccount = PublicMethed
-        .queryAccount(resourceOnwerAddress, blockingStubFull);
-    assetAccountId = getAssetIdFromAccount.getAssetIssuedID();
-    Long contractBeforeBalance = PublicMethed.queryAccount(bytes, blockingStubFull).getBalance();
-
-    Assert.assertTrue(
-        PublicMethed.transferAsset(bytes, assetAccountId.toByteArray(), 100, resourceOnwerAddress,
-            resourceOnwerKey,
-            blockingStubFull));
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Account account1 = PublicMethed.queryAccount(bytes, blockingStubFull);
-    int typeValue1 = account1.getTypeValue();
-    Assert.assertEquals(0, typeValue1);
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 1000000L, 0, 0,
-        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 1000000L, 0, 1,
-        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    final Long beforeExcAccountBalance = PublicMethed
+    Long beforeExcAccountBalance = PublicMethed
         .queryAccount(resourceOnwerAddress, blockingStubFull).getBalance();
-    Assert.assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getNetLimit() > 0);
-    Assert
-        .assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getEnergyLimit() > 0);
-
+    //  create2 TestContract
     String contractName1 = "TestConstract";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
-    String code1 = "6080604052600160005534801561001557600080fd5b50d3801561002257600080fd5b50"
-        + "d2801561002f57600080fd5b506101fd8061003f6000396000f3fe60806040526004361061005b577"
-        + "c01000000000000000000000000000000000000000000000000000000006000350463040821fc8114"
-        + "61006057806317b6ad5b1461007f578063cc133e94146100b2578063e5aa3d58146100d5575b60008"
-        + "0fd5b61007d6004803603602081101561007657600080fd5b5035610116565b005b61007d60048036"
-        + "03602081101561009557600080fd5b503573ffffffffffffffffffffffffffffffffffffffff16610"
-        + "147565b61007d600480360360408110156100c857600080fd5b5080359060200135610160565b3480"
-        + "156100e157600080fd5b50d380156100ee57600080fd5b50d280156100fb57600080fd5b506101046"
-        + "101cb565b60408051918252519081900360200190f35b604051339082156108fc0290839060008181"
-        + "81858888f19350505050158015610143573d6000803e3d6000fd5b5050565b8073fffffffffffffff"
-        + "fffffffffffffffffffffffff16ff5b3382156108fc0283838015801561017657600080fd5b508067"
-        + "80000000000000001115801561018e57600080fd5b5080620f4240101580156101a157600080fd5b5"
-        + "0604051600081818185878a8ad09450505050501580156101c6573d6000803e3d6000fd5b50505056"
-        + "5b6000548156fea165627a7a72305820485b773c60fed3b76621350dd3da7ecf152a2d37ca02dc195"
-        + "d6f8a26aec196850029";
-    String abi1 = retMap1.get("abI").toString();
+    String code1 = retMap1.get("byteCode").toString();
     String txid = "";
     String num = "\"" + code1 + "\"" + "," + 1;
     txid = PublicMethed
@@ -196,28 +149,6 @@ public class Create2Test021 {
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 5000000L, 0, 0,
-        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
-    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 5000000L, 0, 1,
-        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
-    Long afterExcAccountBalance = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull)
-        .getBalance();
-    Assert.assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getNetLimit() == 0);
-    Assert
-        .assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getEnergyLimit() == 0);
-    logger.info("afterExcAccountBalance: " + afterExcAccountBalance);
-    logger.info("beforeExcAccountBalance:" + beforeExcAccountBalance);
-
-    Assert.assertTrue(afterExcAccountBalance - beforeExcAccountBalance == 0);
-
-    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress, resourceOnwerKey,
-        0, bytes, blockingStubFull));
-    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress, resourceOnwerKey,
-        1, bytes, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterUnfreezeBalance = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull)
-        .getBalance();
-    Assert.assertTrue(afterUnfreezeBalance == beforeExcAccountBalance + 1000000L * 2);
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -250,8 +181,83 @@ public class Create2Test021 {
     byte[] returnAddressBytes = infoById.get().getInternalTransactions(0).getTransferToAddress()
         .toByteArray();
     String returnAddress = Base58.encode58Check(returnAddressBytes);
-    Assert.assertEquals(Base58.encode58Check(bytes), returnAddress);
     logger.info("returnAddress:" + returnAddress);
+
+    bytes = returnAddressBytes;
+
+
+    // freezeBalanceForReceiver to create2 contract Address, transaction Failed
+
+    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 5000000L, 0, 0,
+        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
+    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 5000000L, 0, 1,
+        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
+    Long afterExcAccountBalance = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull)
+        .getBalance();
+    Assert.assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getNetLimit() == 0);
+    Assert
+        .assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getEnergyLimit() == 0);
+    logger.info("afterExcAccountBalance: " + afterExcAccountBalance);
+    logger.info("beforeExcAccountBalance:" + beforeExcAccountBalance);
+
+    Assert.assertTrue(afterExcAccountBalance - beforeExcAccountBalance == 0);
+
+
+    // create2 Address Suicide
+    String param2 = "\"" + Base58.encode58Check(contractExcAddress) + "\"";
+    String txidn = PublicMethed
+        .triggerContract(bytes,
+            "testSuicideNonexistentTarget(address)", param2, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
+    // active create2 Address to normal Address
+    Assert.assertTrue(PublicMethed
+        .sendcoin(bytes, 1000000L, contractExcAddress, contractExcKey, blockingStubFull));
+    //Trigger contract to transfer trx and token.
+    Account getAssetIdFromAccount = PublicMethed
+        .queryAccount(resourceOnwerAddress, blockingStubFull);
+    assetAccountId = getAssetIdFromAccount.getAssetIssuedID();
+    Long contractBeforeBalance = PublicMethed.queryAccount(bytes, blockingStubFull).getBalance();
+
+    Assert.assertTrue(
+        PublicMethed.transferAsset(bytes, assetAccountId.toByteArray(), 100, resourceOnwerAddress,
+            resourceOnwerKey,
+            blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Account account1 = PublicMethed.queryAccount(bytes, blockingStubFull);
+    int typeValue1 = account1.getTypeValue();
+    Assert.assertEquals(0, typeValue1);
+
+    // freezeBalanceForReceiver to "create2" contract Address, transaction SUCCESS
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 1000000L, 0, 0,
+        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(resourceOnwerAddress, 1000000L, 0, 1,
+        ByteString.copyFrom(bytes), resourceOnwerKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    beforeExcAccountBalance = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull)
+        .getBalance();
+
+    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress, resourceOnwerKey,
+        0, bytes, blockingStubFull));
+    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress, resourceOnwerKey,
+        1, bytes, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long afterUnfreezeBalance = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull)
+        .getBalance();
+    Assert.assertTrue(afterUnfreezeBalance == beforeExcAccountBalance + 1000000L * 2);
+
+
+    // create2 TestContract to turn AccountType To create2 Contract Address
+    txid = PublicMethed
+        .triggerContract(contractAddress,
+            "deploy(bytes,uint256)", num, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+
+    // triggercontract Create2 address, function normal
     txid = PublicMethed
         .triggerContract(returnAddressBytes,
             "i()", "#", false,
@@ -284,8 +290,6 @@ public class Create2Test021 {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed1);
 
     Assert.assertTrue(infoById1.get().getResultValue() == 0);
-    Assert.assertTrue(afterBalance1 + fee1 == afterBalance);
-    Assert.assertTrue(afterEnergyUsed + energyUsed1 >= afterEnergyUsed1);
     Long returnnumber = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById1.get().getContractResult(0).toByteArray())));
     Assert.assertTrue(1 == returnnumber);

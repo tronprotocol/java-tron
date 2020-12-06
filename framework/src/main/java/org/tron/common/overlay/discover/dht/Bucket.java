@@ -138,7 +138,7 @@ public class Bucket {
 
   public static class SaveLeaf implements DoOnTree {
 
-    List<Bucket> leafs = new ArrayList<>();
+    private List<Bucket> leafs = new ArrayList<>();
 
     @Override
     public void call(Bucket bucket) {

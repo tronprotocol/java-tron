@@ -45,10 +45,6 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
         || StringUtil.isNullOrEmpty(jsonObject.getString("contract_address"))) {
       throw new InvalidParameterException("contract_address isn't set.");
     }
-    if (!jsonObject.containsKey(functionSelector)
-        || StringUtil.isNullOrEmpty(jsonObject.getString(functionSelector))) {
-      throw new InvalidParameterException("function_selector isn't set.");
-    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -65,10 +61,18 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
       validateParameter(contract);
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      String selector = jsonObject.getString(functionSelector);
-      String parameter = jsonObject.getString("parameter");
-      String data = Util.parseMethod(selector, parameter);
-      build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+
+      boolean isFunctionSelectorSet = jsonObject.containsKey(functionSelector)
+          && !StringUtil.isNullOrEmpty(jsonObject.getString(functionSelector));
+      String data;
+      if (isFunctionSelectorSet) {
+        String selector = jsonObject.getString(functionSelector);
+        String parameter = jsonObject.getString("parameter");
+        data = Util.parseMethod(selector, parameter);
+        build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+      } else {
+        build.setData(ByteString.copyFrom(new byte[0]));
+      }
       long feeLimit = Util.getJsonLongValue(jsonObject, "fee_limit");
 
       TransactionCapsule trxCap = wallet

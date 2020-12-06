@@ -887,10 +887,7 @@ public class UpdateAccount2Test {
     transaction = TransactionUtils.sign(transaction, ecKey);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    if (response.getResult() == false) {
-      return false;
-    }
-    return true;
+    return response.getResult();
 
 
   }

@@ -332,7 +332,8 @@ public class Create2Test014 {
             containsString("Not enough energy for 'SWAP1' operation executing"));
   }
 
-  @Test(enabled = true, description = "Same code, salt and address,"
+  // Istanbul change create2 algorithm
+  @Test(enabled = false, description = "Same code, salt and address,"
       + " create contract using develop account")
   public void test03TriggerCreate2ToDeployTestContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -532,7 +533,8 @@ public class Create2Test014 {
     logger.info("ConsumeURPercent: " + consumeUserPercent);
   }
 
-  @Test(enabled = true, description = "Trigger test2 contract")
+  // Istanbul change create2 algorithm
+  @Test(enabled = false, description = "Trigger test2 contract")
   public void test05TriggerTest2Contract() {
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,

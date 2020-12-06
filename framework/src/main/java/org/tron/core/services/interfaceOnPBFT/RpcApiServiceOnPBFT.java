@@ -488,6 +488,5 @@ public class RpcApiServiceOnPBFT implements Service {
           .isShieldedTRC20ContractNoteSpent(request, responseObserver)
       );
     }
-
   }
 }

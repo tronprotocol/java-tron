@@ -54,39 +54,39 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Component
 public class TransactionUtil {
 
-  private static final int maxAccountNameLen = 200;
-  private static final int maxAccountIdLen = 32;
-  private static final int minAccountIdLen = 8;
-  private static final int maxAssetNameLen = 32;
-  private static final int maxTokenAbbrNameLen = 5;
-  private static final int maxAssetDescriptionLen = 200;
-  private static final int maxUrlLen = 256;
+  private static final int MAX_ACCOUNT_NAME_LEN = 200;
+  private static final int MAX_ACCOUNT_ID_LEN = 32;
+  private static final int MIN_ACCOUNT_ID_LEN = 8;
+  private static final int MAX_ASSET_NAME_LEN = 32;
+  private static final int MAX_TOKEN_ABBR_NAME_LEN = 5;
+  private static final int MAX_ASSET_DESCRIPTION_LEN = 200;
+  private static final int MAX_URL_LEN = 256;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
 
   public static boolean validAccountName(byte[] accountName) {
-    return validBytes(accountName, maxAccountNameLen, true);
+    return validBytes(accountName, MAX_ACCOUNT_NAME_LEN, true);
   }
 
   public static boolean validAssetDescription(byte[] description) {
-    return validBytes(description, maxAssetDescriptionLen, true);
+    return validBytes(description, MAX_ASSET_DESCRIPTION_LEN, true);
   }
 
   public static boolean validUrl(byte[] url) {
-    return validBytes(url, maxUrlLen, false);
+    return validBytes(url, MAX_URL_LEN, false);
   }
 
   public static boolean validAccountId(byte[] accountId) {
-    return validReadableBytes(accountId, maxAccountIdLen) && accountId.length >= minAccountIdLen;
+    return validReadableBytes(accountId, MAX_ACCOUNT_ID_LEN) && accountId.length >= MIN_ACCOUNT_ID_LEN;
   }
 
   public static boolean validAssetName(byte[] assetName) {
-    return validReadableBytes(assetName, maxAssetNameLen);
+    return validReadableBytes(assetName, MAX_ASSET_NAME_LEN);
   }
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
-    return validReadableBytes(abbrName, maxTokenAbbrNameLen);
+    return validReadableBytes(abbrName, MAX_TOKEN_ABBR_NAME_LEN);
   }
 
   private static boolean validBytes(byte[] bytes, int maxLength, boolean allowEmpty) {

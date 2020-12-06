@@ -102,7 +102,7 @@ public class batchValidateSignContract001 {
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
           "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
+              + ": CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
       Assert.assertEquals("11111111111111110000000000000000",
@@ -134,10 +134,8 @@ public class batchValidateSignContract001 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("01111111111111000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -167,10 +165,8 @@ public class batchValidateSignContract001 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("01111111111110000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -179,7 +175,7 @@ public class batchValidateSignContract001 {
     }
   }
 
-  @Test(enabled = false, description = "16 signatures with 15th incorrect signatures"
+  @Test(enabled = true, description = "16 signatures with 15th incorrect signatures"
       + " test pure multivalidatesign")
   public void test04Incorrect15thSignatures() {
     List<Object> signatures = new ArrayList<>();
@@ -204,10 +200,8 @@ public class batchValidateSignContract001 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("11111111111111010000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -216,7 +210,7 @@ public class batchValidateSignContract001 {
     }
   }
 
-  @Test(enabled = false, description = "15 signatures with 10th-15th incorrect address"
+  @Test(enabled = true, description = "15 signatures with 10th-15th incorrect address"
       + " test pure multivalidatesign")
   public void test05Incorrect15thTo30thAddress() {
     List<Object> signatures = new ArrayList<>();
@@ -239,10 +233,8 @@ public class batchValidateSignContract001 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("11111111100000100000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -251,7 +243,7 @@ public class batchValidateSignContract001 {
     }
   }
 
-  @Test(enabled = true, description = "16 signatures with 2nd、16th incorrect signatures"
+  @Test(enabled = true, description = "16 signatures with 2nd/16th incorrect signatures"
       + " test pure multivalidatesign")
   public void test06Incorrect2ndAnd32ndIncorrectSignatures() {
     List<Object> signatures = new ArrayList<>();
@@ -276,10 +268,8 @@ public class batchValidateSignContract001 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("10111111111111100000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -288,7 +278,7 @@ public class batchValidateSignContract001 {
     }
   }
 
-  @Test(enabled = true, description = "16 signatures with 6th、9th、11th、13nd incorrect address"
+  @Test(enabled = true, description = "16 signatures with 6th/9th/11th/13nd incorrect address"
       + " test pure multivalidatesign")
   public void test07IncorrectAddress() {
     List<Object> signatures = new ArrayList<>();
@@ -312,10 +302,8 @@ public class batchValidateSignContract001 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("11111011010101110000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -352,10 +340,8 @@ public class batchValidateSignContract001 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException "
-            + ": CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));

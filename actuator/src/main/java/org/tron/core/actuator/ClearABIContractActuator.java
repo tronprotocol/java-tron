@@ -19,6 +19,8 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+
 @Slf4j(topic = "actuator")
 public class ClearABIContractActuator extends AbstractActuator {
 
@@ -90,7 +92,7 @@ public class ClearABIContractActuator extends AbstractActuator {
     if (accountCapsule == null) {
       throw new ContractValidateException(
           ActuatorConstant.ACCOUNT_EXCEPTION_STR
-              + readableOwnerAddress + "] not exists");
+              + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
