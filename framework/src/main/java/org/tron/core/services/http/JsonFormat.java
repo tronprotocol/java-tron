@@ -82,8 +82,8 @@ public class JsonFormat {
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
 
-  private final static boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
-  private final static Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
+  public static final boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
+  public static final Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
       BalanceContract.AccountBalanceResponse.class,
       BalanceContract.BlockBalanceTrace.class
   );
