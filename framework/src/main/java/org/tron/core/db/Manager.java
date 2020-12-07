@@ -355,7 +355,7 @@ public class Manager {
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
-    accountStore.setAccountBalanceStore(chainBaseManager.getAccountBalanceStore());
+    chainBaseManager.getAccountStore().setAccountBalanceStore(chainBaseManager.getAccountBalanceStore());
     this.initGenesis();
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(

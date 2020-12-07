@@ -59,7 +59,6 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.db.backup.DbBackupConfig;
 import org.tron.core.store.AccountBalanceStore;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.CipherException;

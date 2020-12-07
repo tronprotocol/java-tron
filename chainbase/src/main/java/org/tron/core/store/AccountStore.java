@@ -1,7 +1,10 @@
 package org.tron.core.store;
 
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
 import com.typesafe.config.ConfigObject;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -13,9 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Commons;
+import org.tron.core.capsule.AccountBalanceCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
+import org.tron.core.exception.BadItemException;
 
 @Slf4j(topic = "DB")
 @Component
@@ -83,4 +88,37 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   public void close() {
     super.close();
   }
+
+  @Override
+  public Iterator<Map.Entry<byte[], AccountCapsule>> iterator() {
+    long start = System.currentTimeMillis();
+    Iterator<Map.Entry<byte[], AccountCapsule>> transform = Iterators.transform(revokingDB.iterator(), e -> {
+      try {
+        logger.info("Iterator: {}", System.currentTimeMillis() - start);
+        return Maps.immutableEntry(e.getKey(), of(e.getValue()));
+      } catch (BadItemException e1) {
+        throw new RuntimeException(e1);
+      }
+    });
+    return transform;
+  }
+
+  public Iterator<Map.Entry<byte[], AccountCapsule>> iterator2(AccountBalanceCapsule accountBalanceCapsule) {
+    Iterator<Map.Entry<byte[], AccountCapsule>> transform = Iterators.transform(revokingDB.iterator(), e -> {
+      try {
+        Map.Entry<byte[], AccountCapsule> accountCapsuleEntry = Maps.immutableEntry(e.getKey(), of(e.getValue()));
+
+
+
+
+
+        return accountCapsuleEntry;
+      } catch (BadItemException e1) {
+        throw new RuntimeException(e1);
+      }
+    });
+
+    return transform;
+  }
+
 }
