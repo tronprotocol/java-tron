@@ -976,8 +976,8 @@ public class RpcApiService implements Service {
     public void getBlockBalanceTrace(BlockBalanceTrace.BlockIdentifier request,
                                      StreamObserver<BlockBalanceTrace> responseObserver) {
       try {
-          BlockBalanceTrace blockBalanceTrace = wallet.getBlockBalance(request);
-          responseObserver.onNext(blockBalanceTrace);
+        BlockBalanceTrace blockBalanceTrace = wallet.getBlockBalance(request);
+        responseObserver.onNext(blockBalanceTrace);
         responseObserver.onCompleted();
       } catch (Exception e) {
         responseObserver.onError(e);

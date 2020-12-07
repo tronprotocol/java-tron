@@ -3669,8 +3669,7 @@ public class Wallet {
 
   public BalanceContract.AccountBalanceResponse getAccountBalance(
       BalanceContract.AccountBalanceRequest request)
-      throws ItemNotFoundException
-  {
+      throws ItemNotFoundException {
     BalanceContract.AccountIdentifier accountIdentifier = request.getAccountIdentifier();
     checkAccountIdentifier(accountIdentifier);
     BlockBalanceTrace.BlockIdentifier blockIdentifier = request.getBlockIdentifier();
@@ -3700,8 +3699,8 @@ public class Wallet {
     return builder.build();
   }
 
-  public BalanceContract.BlockBalanceTrace getBlockBalance(BlockBalanceTrace.BlockIdentifier request)
-      throws ItemNotFoundException, BadItemException {
+  public BalanceContract.BlockBalanceTrace getBlockBalance(
+      BlockBalanceTrace.BlockIdentifier request) throws ItemNotFoundException, BadItemException {
     checkBlockIdentifier(request);
     BalanceTraceStore balanceTraceStore = chainBaseManager.getBalanceTraceStore();
     BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
@@ -3715,17 +3714,6 @@ public class Wallet {
     if (blockBalanceTraceCapsule == null) {
       throw new ItemNotFoundException("This block does not exist");
     }
-
-//      if (blockId.getNum() == 0) {
-//        blockBalanceTraceCapsule.setParentBlockIdentifier(blockBalanceTraceCapsule.getBlockIdentifier());
-//      } else {
-//        BlockId parentBlockId = chainBaseManager.getBlockIdByNum(blockId.getNum() - 1);
-//        blockBalanceTraceCapsule.setParentBlockIdentifier(
-//            BlockBalanceTrace.BlockIdentifier.newBuilder()
-//                .setNumber(parentBlockId.getNum())
-//                .setHash(parentBlockId.getByteString())
-//                .build());
-//      }
 
     return blockBalanceTraceCapsule.getInstance();
   }

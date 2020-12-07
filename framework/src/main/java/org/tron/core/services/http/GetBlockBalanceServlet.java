@@ -30,7 +30,8 @@ public class GetBlockBalanceServlet extends RateLimiterServlet {
     }
   }
 
-  private void fillResponse(boolean visible, BlockBalanceTrace.BlockIdentifier request, HttpServletResponse response)
+  private void fillResponse(boolean visible, BlockBalanceTrace.BlockIdentifier request,
+                            HttpServletResponse response)
       throws Exception {
     BlockBalanceTrace reply = wallet.getBlockBalance(request);
     if (reply != null) {

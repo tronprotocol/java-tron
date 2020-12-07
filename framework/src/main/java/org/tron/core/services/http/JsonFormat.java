@@ -82,8 +82,8 @@ public class JsonFormat {
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
 
-  private final static boolean alwaysOutputDefaultValueFields = true;
-  private final static Set<Class<? extends Message>> messages = ImmutableSet.of(
+  private final static boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
+  private final static Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
       BalanceContract.AccountBalanceResponse.class,
       BalanceContract.BlockBalanceTrace.class
   );
@@ -115,7 +115,7 @@ public class JsonFormat {
   protected static void print(Message message, JsonGenerator generator, boolean selfType)
       throws IOException {
     Map<FieldDescriptor, Object> fieldsToPrint = new TreeMap<>(message.getAllFields());
-    if (alwaysOutputDefaultValueFields && messages.contains(message.getClass())) {
+    if (ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS && MESSAGES.contains(message.getClass())) {
       for (FieldDescriptor field : message.getDescriptorForType().getFields()) {
         if (field.isOptional()) {
           if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE
