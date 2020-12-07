@@ -269,6 +269,12 @@ public class FullNodeHttpApiService implements Service {
   private GetMarketPairListServlet getMarketPairListServlet;
 
   @Autowired
+  private GetAccountBalanceServlet getAccountBalanceServlet;
+
+  @Autowired
+  private GetBlockBalanceServlet getBlockBalanceServlet;
+
+  @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
   private static String getParamsFile(String fileName) {
@@ -504,6 +510,11 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getmarketorderlistbypair");
       context.addServlet(new ServletHolder(getMarketPairListServlet),
           "/wallet/getmarketpairlist");
+
+      context.addServlet(new ServletHolder(getAccountBalanceServlet),
+          "/wallet/getaccountbalance");
+      context.addServlet(new ServletHolder(getBlockBalanceServlet),
+          "/wallet/getblockbalance");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

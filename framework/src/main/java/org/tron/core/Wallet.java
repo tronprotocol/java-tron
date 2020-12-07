@@ -53,6 +53,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -126,6 +127,7 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -149,6 +151,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
@@ -174,6 +177,8 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.AccountTraceStore;
+import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.MarketOrderStore;
@@ -212,6 +217,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
@@ -3658,6 +3665,79 @@ public class Wallet {
     }
     BytesMessage.Builder bytesBuilder = BytesMessage.newBuilder();
     return bytesBuilder.setValue(ByteString.copyFrom(Hex.decode(input))).build();
+  }
+
+  public BalanceContract.AccountBalanceResponse getAccountBalance(
+      BalanceContract.AccountBalanceRequest request)
+      throws ItemNotFoundException {
+    BalanceContract.AccountIdentifier accountIdentifier = request.getAccountIdentifier();
+    checkAccountIdentifier(accountIdentifier);
+    BlockBalanceTrace.BlockIdentifier blockIdentifier = request.getBlockIdentifier();
+    checkBlockIdentifier(blockIdentifier);
+
+    AccountTraceStore accountTraceStore = chainBaseManager.getAccountTraceStore();
+    BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
+    BlockId blockId = blockIndexStore.get(blockIdentifier.getNumber());
+    if (!blockId.getByteString().equals(blockIdentifier.getHash())) {
+      throw new IllegalArgumentException("number and hash do not match");
+    }
+
+    Pair<Long, Long> pair = accountTraceStore.getPrevBalance(
+        accountIdentifier.getAddress().toByteArray(), blockIdentifier.getNumber());
+    BalanceContract.AccountBalanceResponse.Builder builder =
+        BalanceContract.AccountBalanceResponse.newBuilder();
+    if (pair.getLeft() == blockIdentifier.getNumber()) {
+      builder.setBlockIdentifier(blockIdentifier);
+    } else {
+      blockId = blockIndexStore.get(pair.getLeft());
+      builder.setBlockIdentifier(BlockBalanceTrace.BlockIdentifier.newBuilder()
+          .setNumber(pair.getLeft())
+          .setHash(blockId.getByteString()));
+    }
+
+    builder.setBalance(pair.getRight());
+    return builder.build();
+  }
+
+  public BalanceContract.BlockBalanceTrace getBlockBalance(
+      BlockBalanceTrace.BlockIdentifier request) throws ItemNotFoundException, BadItemException {
+    checkBlockIdentifier(request);
+    BalanceTraceStore balanceTraceStore = chainBaseManager.getBalanceTraceStore();
+    BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
+    BlockId blockId = blockIndexStore.get(request.getNumber());
+    if (!blockId.getByteString().equals(request.getHash())) {
+      throw new IllegalArgumentException("number and hash do not match");
+    }
+
+    BlockBalanceTraceCapsule blockBalanceTraceCapsule =
+        balanceTraceStore.getBlockBalanceTrace(blockId);
+    if (blockBalanceTraceCapsule == null) {
+      throw new ItemNotFoundException("This block does not exist");
+    }
+
+    return blockBalanceTraceCapsule.getInstance();
+  }
+
+  public void checkBlockIdentifier(BlockBalanceTrace.BlockIdentifier blockIdentifier) {
+    if (blockIdentifier == blockIdentifier.getDefaultInstanceForType()) {
+      throw new IllegalArgumentException("block_identifier null");
+    }
+    if (blockIdentifier.getNumber() < 0) {
+      throw new IllegalArgumentException("block_identifier number less than 0");
+    }
+    if (blockIdentifier.getHash().size() != 32) {
+      throw new IllegalArgumentException("block_identifier hash length not equals 32");
+    }
+
+  }
+
+  public void checkAccountIdentifier(BalanceContract.AccountIdentifier accountIdentifier) {
+    if (accountIdentifier == accountIdentifier.getDefaultInstanceForType()) {
+      throw new IllegalArgumentException("account_identifier is null");
+    }
+    if (accountIdentifier.getAddress().isEmpty()) {
+      throw new IllegalArgumentException("account_identifier address is null");
+    }
   }
 }
 

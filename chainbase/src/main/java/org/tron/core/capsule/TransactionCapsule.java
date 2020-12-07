@@ -70,6 +70,7 @@ import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
@@ -495,6 +496,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
+  public void setTimestamp(long timestamp) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setTimestamp(timestamp)
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
   public long getTimestamp() {
     return transaction.getRawData().getTimestamp();
   }
@@ -757,6 +765,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     } catch (Exception ex) {
       logger.warn("check contract type failed, reason {}", ex.getMessage());
       return false;
+    }
+  }
+
+  public BalanceContract.TransferContract getTransferContract() {
+    try {
+      return transaction.getRawData()
+          .getContract(0)
+          .getParameter()
+          .unpack(BalanceContract.TransferContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      return null;
     }
   }
 }

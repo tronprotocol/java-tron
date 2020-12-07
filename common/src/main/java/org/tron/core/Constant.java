@@ -268,6 +268,8 @@ public class Constant {
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
   public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
-  
+
+  public static final String HISTORY_BALANCE_LOOKUP = "storage.balance.history.lookup";
+
   public static final String LOCAL_HOST = "127.0.0.1";
 }

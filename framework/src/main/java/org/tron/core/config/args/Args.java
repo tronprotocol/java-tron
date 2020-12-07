@@ -181,6 +181,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
+    PARAMETER.historyBalanceLookup = false;
   }
 
   /**
@@ -727,6 +728,9 @@ public class Args extends CommonParameter {
     PARAMETER.setOpenHistoryQueryWhenLiteFN(
             config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
                     && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
+
+    PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
+        .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
 
     logConfig();
   }

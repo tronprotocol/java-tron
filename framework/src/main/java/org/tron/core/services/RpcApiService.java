@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -140,6 +142,10 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
+import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
+import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
@@ -950,6 +956,32 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
+    }
+
+    /**
+     */
+    public void getAccountBalance(AccountBalanceRequest request,
+                                  StreamObserver<AccountBalanceResponse> responseObserver) {
+      try {
+        AccountBalanceResponse accountBalanceResponse = wallet.getAccountBalance(request);
+        responseObserver.onNext(accountBalanceResponse);
+        responseObserver.onCompleted();
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+    }
+
+    /**
+     */
+    public void getBlockBalanceTrace(BlockBalanceTrace.BlockIdentifier request,
+                                     StreamObserver<BlockBalanceTrace> responseObserver) {
+      try {
+        BlockBalanceTrace blockBalanceTrace = wallet.getBlockBalance(request);
+        responseObserver.onNext(blockBalanceTrace);
+        responseObserver.onCompleted();
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
     }
 
     @Override
