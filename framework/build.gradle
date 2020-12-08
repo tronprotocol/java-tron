@@ -207,7 +207,7 @@ def binaryRelease(taskName, jarName, mainClass) {
             attributes "Main-Class": "${mainClass}"
         }
 
-        classifier(jarName)
+//        classifier(jarName)
     }
 }
 
