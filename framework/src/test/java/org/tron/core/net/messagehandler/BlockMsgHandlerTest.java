@@ -51,7 +51,7 @@ public class BlockMsgHandlerTest {
     }
 
     try {
-      List<Transaction> transactionList = Lists.newArrayList();
+      List<Transaction> transactionList = Lists.newArrayList(1100000);
       for (int i = 0; i < 1100000; i++) {
         transactionList.add(Transaction.newBuilder().build());
       }
