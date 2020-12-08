@@ -258,7 +258,6 @@ createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
 createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
-println(releaseBinary)
 if (releaseBinary == 'true') {
     artifacts {
         archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
