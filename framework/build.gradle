@@ -257,12 +257,16 @@ createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
 createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
 createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
-artifacts {
-    archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
-            binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-            binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+println(releaseBinary)
+if (releaseBinary == 'true') {
+    artifacts {
+        archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
+                binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
+                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
+                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+    }
 }
 
 task copyToParent(type: Copy) {
