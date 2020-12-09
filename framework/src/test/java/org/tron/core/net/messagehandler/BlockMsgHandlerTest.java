@@ -1,5 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
 import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
@@ -11,6 +13,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.BlockMessage;
@@ -51,10 +54,13 @@ public class BlockMsgHandlerTest {
     }
 
     try {
-      List<Transaction> transactionList = Lists.newArrayList();
-      for (int i = 0; i < 1100000; i++) {
-        transactionList.add(Transaction.newBuilder().build());
-      }
+      List<Transaction> transactionList = ImmutableList.of(
+          Transaction.newBuilder()
+              .setRawData(Transaction.raw.newBuilder()
+                  .setData(
+                      ByteString.copyFrom(
+                          new byte[Parameter.ChainConstant.BLOCK_SIZE + Constant.ONE_THOUSAND])))
+              .build());
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH.getByteString(),
           System.currentTimeMillis() + 10000, transactionList);
       msg = new BlockMessage(blockCapsule);
