@@ -1,7 +1,6 @@
 package stest.tron.wallet.dailybuild.http;
 
 import com.alibaba.fastjson.JSONObject;
-import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -25,71 +24,135 @@ public class HttpTestGetAccountBalance001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
-  private String httpSoliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(2);
-  private String httpPbftNode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(4);
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] assetOwnerAddress = ecKey2.getAddress();
   String assetOwnerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   Long amount = 2048000000L;
-  String contractAddress;
   String txid;
+  Integer sendcoinBlockNumber;
+  String sendcoinBlockHash;
+  Integer deployContractBlockNumber;
+  String deployContractBlockHash;
+  Long fee;
 
   /**
    * constructor.
    */
   @BeforeClass(enabled = true, description = "Deploy smart contract by http")
-  public void test01DeployContract() {
+  public void test01DeployContractForTest() {
     PublicMethed.printAddress(assetOwnerKey);
+    txid = HttpMethed.sendCoin(httpnode,fromAddress,assetOwnerAddress,amount,"",testKey002);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.sendCoin(httpnode, fromAddress, assetOwnerAddress, amount, testKey002);
-    Assert.assertTrue(HttpMethed.verificationResult(response));
-    HttpMethed.waitToProduceOneBlock(httpnode);
-
-    response = HttpMethed.getAccount(httpnode, assetOwnerAddress);
+    response = HttpMethed.getTransactionInfoById(httpnode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
+    sendcoinBlockNumber = responseContent.getInteger("blockNumber");
+    Assert.assertTrue(sendcoinBlockNumber > 0);
 
-    String filePath = "./src/test/resources/soliditycode//contractScenario004.sol";
-    String contractName = "TronToken";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    response = HttpMethed.getBlockByNum(httpnode, sendcoinBlockNumber);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    sendcoinBlockHash = responseContent.getString("blockID");
 
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
+    String contractName = "transferTokenContract";
+    String code = Configuration.getByPath("testng.conf")
+        .getString("code.code_ContractTrcToken001_transferTokenContract");
+    String abi = Configuration.getByPath("testng.conf")
+        .getString("abi.abi_ContractTrcToken001_transferTokenContract");
     txid = HttpMethed
         .deployContractGetTxid(httpnode, contractName, abi, code, 1000000L, 1000000000L, 100,
             11111111111111L, 0L, 0, 0L, assetOwnerAddress, assetOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
     logger.info(txid);
-    response = HttpMethed.getTransactionById(httpnode, txid);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(!responseContent.getString("contract_address").isEmpty());
-    contractAddress = responseContent.getString("contract_address");
 
     response = HttpMethed.getTransactionInfoById(httpnode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    fee = responseContent.getLong("fee");
+    deployContractBlockNumber = responseContent.getInteger("blockNumber");
     String receiptString = responseContent.getString("receipt");
     Assert
         .assertEquals(HttpMethed.parseStringContent(receiptString).getString("result"), "SUCCESS");
+
+    response = HttpMethed.getBlockByNum(httpnode, deployContractBlockNumber);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    deployContractBlockHash = responseContent.getString("blockID");
   }
-
-
 
   /**
    * constructor.
    */
   @Test(enabled = true, description = "Get account balance by http")
-  public void getAccountBalance() {
-    response = HttpMethed.getAccountBalance(httpnode, assetOwnerAddress,1L,"aaa");
-    logger.info("code is " + response.getStatusLine().getStatusCode());
+  public void test01GetAccountBalance() {
+    response = HttpMethed.getAccountBalance(httpnode, assetOwnerAddress,
+        sendcoinBlockNumber,sendcoinBlockHash);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.size() > 3);
+    Assert.assertTrue(responseContent.size() >= 2);
+    final Long beforeBalance = responseContent.getLong("balance");
+
+    response = HttpMethed.getAccountBalance(httpnode, assetOwnerAddress,
+        deployContractBlockNumber,deployContractBlockHash);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() >= 2);
+    Long afterBalance = responseContent.getLong("balance");
+
+    Assert.assertTrue(beforeBalance - afterBalance == fee);
+
+
+    response = HttpMethed.getAccountBalance(httpnode, assetOwnerAddress,
+        deployContractBlockNumber,deployContractBlockHash);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() >= 2);
+
+
+  }
+
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get block balance by http")
+  public void test02GetBlockBalance() {
+    response = HttpMethed.getBlockBalance(httpnode,
+        sendcoinBlockNumber,sendcoinBlockHash);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() >= 2);
+    Assert.assertEquals(sendcoinBlockNumber,responseContent.getJSONObject("block_identifier")
+        .getInteger("number"));
+    JSONObject transactionObject = responseContent.getJSONArray("transaction_balance_trace")
+        .getJSONObject(0);
+    Assert.assertEquals(transactionObject.getString("type"),"TransferContract");
+    Assert.assertTrue(transactionObject.getJSONArray("operation")
+        .getJSONObject(0).getLong("amount") == -100000L);
+    Assert.assertTrue(transactionObject.getJSONArray("operation")
+        .getJSONObject(1).getLong("amount") == -amount);
+
+    response = HttpMethed.getBlockBalance(httpnode,
+        deployContractBlockNumber,deployContractBlockHash);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() >= 2);
+
+    transactionObject = responseContent.getJSONArray("transaction_balance_trace").getJSONObject(0);
+    Assert.assertEquals(transactionObject.getString("transaction_identifier"),txid);
+    Assert.assertEquals(transactionObject.getString("type"),"CreateSmartContract");
+    Assert.assertTrue(transactionObject.getJSONArray("operation")
+        .getJSONObject(0).getLong("amount") == -fee);
+
+
+
+
   }
 
   /**

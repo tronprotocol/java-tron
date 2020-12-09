@@ -2039,9 +2039,10 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getAccountBalance(String httpNode, byte[] queryAddress,Long blockNum,String blockHash) {
+  public static HttpResponse getAccountBalance(String httpNode,
+      byte[] queryAddress,Integer blockNum,String blockHash) {
     try {
-      String requestUrl = "http://" + httpNode + "/wallet/getaccountbalance";
+      final String requestUrl = "http://" + httpNode + "/wallet/getaccountbalance";
       JsonObject addressObj = new JsonObject();
       addressObj.addProperty("address",Base58.encode58Check(queryAddress));
       JsonObject blockObj = new JsonObject();
@@ -2052,6 +2053,25 @@ public class HttpMethed {
       accountBalanceObj.add("block_identifier", blockObj);
       accountBalanceObj.addProperty("visible",true);
       response = createConnect(requestUrl, accountBalanceObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getBlockBalance(String httpNode, Integer blockNum,String blockHash) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getblockbalance";
+      JsonObject blockObj = new JsonObject();
+      blockObj.addProperty("hash",blockHash);
+      blockObj.addProperty("number",blockNum);
+      blockObj.addProperty("visible",true);
+      response = createConnect(requestUrl, blockObj);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -4721,6 +4741,9 @@ public class HttpMethed {
     return responseContent.getString("txID");
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderById(String httpNode, String orderId, String visible) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getmarketorderbyid";
@@ -4736,6 +4759,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByIdFromSolidity(String httpSolidityNode, String orderId,
       String visible) {
     try {
@@ -4752,6 +4778,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByIdFromPbft(String httpPbftNode, String orderId,
       String visible) {
     try {
@@ -4768,6 +4797,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static String marketCancelOrder(String httpNode, byte[] ownerAddress, String orderId,
       String fromKey, String visible) {
     try {
@@ -4795,6 +4827,9 @@ public class HttpMethed {
     return responseContent.getString("txID");
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByAccount(String httpNode, byte[] ownerAddress,
       String visible) {
     try {
@@ -4815,6 +4850,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByAccountFromSolidity(String httpSolidityNode,
       byte[] ownerAddress, String visible) {
     try {
@@ -4835,6 +4873,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByAccountFromPbft(String httpPbftNode,
       byte[] ownerAddress, String visible) {
     try {
@@ -4855,6 +4896,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPairList(String httpNode, String visible) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getmarketpairlist";
@@ -4869,6 +4913,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPairListFromSolidity(String httpSolidityNode,
       String visible) {
     try {
@@ -4884,6 +4931,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPairListFromPbft(String httpPbftNode, String visible) {
     try {
       String requestUrl = "http://" + httpPbftNode + "/walletpbft/getmarketpairlist";
@@ -4898,6 +4948,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderListByPair(String httpNode, String sellTokenId,
       String buyTokenId, String visible) {
     try {
@@ -4920,6 +4973,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderListByPairFromSolidity(String httpSolidityNode,
       String sellTokenId,
       String buyTokenId, String visible) {
@@ -4943,6 +4999,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderListByPairFromPbft(String httpPbftNode,
       String sellTokenId, String buyTokenId, String visible) {
     try {
@@ -4965,6 +5024,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPriceByPair(String httpNode, String sellTokenId,
       String buyTokenId, String visible) {
     try {
@@ -4987,6 +5049,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPriceByPairFromSolidity(String httpSolidityNode,
       String sellTokenId,
       String buyTokenId, String visible) {
@@ -5010,6 +5075,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPriceByPairFromPbft(String httpPbftNode,
       String sellTokenId, String buyTokenId, String visible) {
     try {
