@@ -2039,6 +2039,32 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getAccountBalance(String httpNode, byte[] queryAddress,Long blockNum,String blockHash) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getaccountbalance";
+      JsonObject addressObj = new JsonObject();
+      addressObj.addProperty("address",Base58.encode58Check(queryAddress));
+      JsonObject blockObj = new JsonObject();
+      blockObj.addProperty("hash",blockHash);
+      blockObj.addProperty("number",blockNum);
+      JsonObject accountBalanceObj = new JsonObject();
+      accountBalanceObj.add("account_identifier", addressObj);
+      accountBalanceObj.add("block_identifier", blockObj);
+      accountBalanceObj.addProperty("visible",true);
+      response = createConnect(requestUrl, accountBalanceObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getNowBlock(String httpNode) {
     return getNowBlock(httpNode, false);
   }
