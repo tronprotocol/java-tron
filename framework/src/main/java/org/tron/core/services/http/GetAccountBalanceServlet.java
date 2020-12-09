@@ -36,7 +36,9 @@ public class GetAccountBalanceServlet extends RateLimiterServlet {
       throws Exception {
     BalanceContract.AccountBalanceResponse reply = wallet.getAccountBalance(request);
     if (reply != null) {
+      JsonFormat.ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS.set(Boolean.TRUE);
       response.getWriter().println(JsonFormat.printToString(reply, visible));
+      JsonFormat.ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS.set(Boolean.FALSE);
     } else {
       response.getWriter().println("{}");
     }
