@@ -471,7 +471,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowTransactionFeePool();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTransactionFeePool(0L);
+      this.saveAllowTransactionFeePool(CommonParameter.getInstance().getAllowTransactionFeePool());
     }
 
     try {
@@ -1401,9 +1401,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowTransactionFeePool() == 1L;
   }
 
-  public void saveAllowTransactionFeePool(long limit) {
+  public void saveAllowTransactionFeePool(long value) {
     this.put(ALLOW_TRANSACTION_FEE_POOL,
-        new BytesCapsule(ByteArray.fromLong(limit)));
+        new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public long getAllowTransactionFeePool() {
