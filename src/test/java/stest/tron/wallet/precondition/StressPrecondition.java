@@ -129,6 +129,7 @@ public class StressPrecondition {
   private String fullnode = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
     .getStringList("fullnode.ip.list").get(0);
   ByteString assetIssueId;
+  Integer approveProposalIndex = 42;
   Optional<ExchangeList> listExchange;
   byte[] commonContractAddress1;
   byte[] commonContractAddress2;
@@ -210,6 +211,12 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(41L, 1L);
       }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTransactionFeePool") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(48L, 1L);
+        approveProposalIndex = i;
+      }
 
     }
 
@@ -256,7 +263,7 @@ public class StressPrecondition {
         PublicMethed.waitProduceNextBlock(blockingStubFull);
       }
 
-      waitProposalApprove(37, blockingStubFull);
+      waitProposalApprove(approveProposalIndex, blockingStubFull);
     }
   }
 
@@ -642,7 +649,7 @@ public class StressPrecondition {
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getMaintenanceTimeInterval") && getChainParameters.get().getChainParameter(i).getValue() == 300000) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(0L, 300000 * 12 * 6L);
+        proposalMap.put(0L, 300000 * 12 * 3L);
       }
 
     }
