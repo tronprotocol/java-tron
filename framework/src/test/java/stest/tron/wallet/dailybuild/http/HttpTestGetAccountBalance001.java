@@ -40,6 +40,7 @@ public class HttpTestGetAccountBalance001 {
    */
   @BeforeClass(enabled = true, description = "Deploy smart contract by http")
   public void test01DeployContractForTest() {
+    HttpMethed.waitToProduceOneBlock(httpnode);
     PublicMethed.printAddress(assetOwnerKey);
     txid = HttpMethed.sendCoin(httpnode,fromAddress,assetOwnerAddress,amount,"",testKey002);
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -132,10 +133,10 @@ public class HttpTestGetAccountBalance001 {
     JSONObject transactionObject = responseContent.getJSONArray("transaction_balance_trace")
         .getJSONObject(0);
     Assert.assertEquals(transactionObject.getString("type"),"TransferContract");
-    Assert.assertTrue(transactionObject.getJSONArray("operation")
-        .getJSONObject(0).getLong("amount") == -100000L);
-    Assert.assertTrue(transactionObject.getJSONArray("operation")
-        .getJSONObject(1).getLong("amount") == -amount);
+    Assert.assertTrue(Math.abs(transactionObject.getJSONArray("operation")
+        .getJSONObject(0).getLong("amount")) == amount);
+    Assert.assertTrue(Math.abs(transactionObject.getJSONArray("operation")
+        .getJSONObject(1).getLong("amount")) == amount);
 
     response = HttpMethed.getBlockBalance(httpnode,
         deployContractBlockNumber,deployContractBlockHash);
