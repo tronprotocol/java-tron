@@ -27,6 +27,8 @@ public class HttpTestGetAccountBalance001 {
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] assetOwnerAddress = ecKey2.getAddress();
   String assetOwnerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] randomAddress = ecKey3.getAddress();
   Long amount = 2048000000L;
   String txid;
   Integer sendcoinBlockNumber;
@@ -43,6 +45,9 @@ public class HttpTestGetAccountBalance001 {
     HttpMethed.waitToProduceOneBlock(httpnode);
     PublicMethed.printAddress(assetOwnerKey);
     txid = HttpMethed.sendCoin(httpnode,fromAddress,assetOwnerAddress,amount,"",testKey002);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    txid = HttpMethed.sendCoin(httpnode,assetOwnerAddress,randomAddress,
+        amount / 1000000L,"",assetOwnerKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getTransactionInfoById(httpnode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -134,9 +139,11 @@ public class HttpTestGetAccountBalance001 {
         .getJSONObject(0);
     Assert.assertEquals(transactionObject.getString("type"),"TransferContract");
     Assert.assertTrue(Math.abs(transactionObject.getJSONArray("operation")
-        .getJSONObject(0).getLong("amount")) == amount);
+        .getJSONObject(0).getLong("amount")) == 100000L);
     Assert.assertTrue(Math.abs(transactionObject.getJSONArray("operation")
-        .getJSONObject(1).getLong("amount")) == amount);
+        .getJSONObject(1).getLong("amount")) == amount / 1000000L);
+    Assert.assertTrue(Math.abs(transactionObject.getJSONArray("operation")
+        .getJSONObject(2).getLong("amount")) == amount / 1000000L);
 
     response = HttpMethed.getBlockBalance(httpnode,
         deployContractBlockNumber,deployContractBlockHash);
