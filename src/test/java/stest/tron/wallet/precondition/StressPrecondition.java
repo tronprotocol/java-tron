@@ -218,7 +218,7 @@ public class StressPrecondition {
         proposalMap.put(48L, 1L);
 
       }*/
-
+      //proposalMap.put(48L, 0L);
     }
 
     if (proposalMap.size() >= 1) {
@@ -650,7 +650,7 @@ public class StressPrecondition {
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getMaintenanceTimeInterval") && getChainParameters.get().getChainParameter(i).getValue() == 300000) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(0L, 300000 * 12 * 1L);
+        proposalMap.put(0L, 300000 * 6 * 1L);
       }
 
     }
