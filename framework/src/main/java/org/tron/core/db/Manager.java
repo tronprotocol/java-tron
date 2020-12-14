@@ -1455,8 +1455,8 @@ public class Manager {
     }
     BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap().get(blockNum);
     while (!contractLogTriggersQueue.isEmpty()) {
-      ContractLogTrigger logTriggerCapsule = (ContractLogTrigger)contractLogTriggersQueue.poll();
-      if(logTriggerCapsule==null)
+      ContractLogTrigger logTriggerCapsule = (ContractLogTrigger) contractLogTriggersQueue.poll();
+      if(logTriggerCapsule == null)
       {
         break;
       }
@@ -1475,8 +1475,8 @@ public class Manager {
     }
     BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap().get(blockNum);
     while (!contractEventTriggersQueue.isEmpty()) {
-      ContractEventTrigger eventTriggerCapsule = (ContractEventTrigger)contractEventTriggersQueue.poll();
-      if(eventTriggerCapsule==null){
+      ContractEventTrigger eventTriggerCapsule = (ContractEventTrigger) contractEventTriggersQueue.poll();
+      if(eventTriggerCapsule == null){
         break;
       }
       if (chainBaseManager.getTransactionStore()
