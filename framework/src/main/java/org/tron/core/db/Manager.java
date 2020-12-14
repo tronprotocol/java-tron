@@ -48,11 +48,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
-import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
-import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
-import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.capsule.*;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
@@ -1453,8 +1449,13 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractLogTrigger logTriggerCapsule : Args
-        .getSolidityContractLogTriggerMap().get(blockNum)) {
+    BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap().get(blockNum);
+    while (!contractLogTriggersQueue.isEmpty()) {
+      ContractLogTrigger logTriggerCapsule = (ContractLogTrigger)contractLogTriggersQueue.poll();
+      if(logTriggerCapsule==null)
+      {
+        break;
+      }
       if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
           logTriggerCapsule.getTransactionId())) != null) {
         logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
@@ -1468,8 +1469,12 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractEventTrigger eventTriggerCapsule : Args
-        .getSolidityContractEventTriggerMap().get(blockNum)) {
+    BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap().get(blockNum);
+    while (!contractEventTriggersQueue.isEmpty()) {
+      ContractEventTrigger eventTriggerCapsule = (ContractEventTrigger)contractEventTriggersQueue.poll();
+      if(eventTriggerCapsule==null){
+        break;
+      }
       if (chainBaseManager.getTransactionStore()
           .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
               .getTransactionId())) != null) {

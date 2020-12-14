@@ -19,12 +19,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -76,12 +72,12 @@ public class Args extends CommonParameter {
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
+  private static ConcurrentHashMap<Long, BlockingQueue<ContractLogTrigger>>
       solidityContractLogTriggerMap = new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
+  private static ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
   public static void clearParam() {
