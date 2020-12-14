@@ -1453,8 +1453,13 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractLogTrigger logTriggerCapsule : Args
-        .getSolidityContractLogTriggerMap().get(blockNum)) {
+    BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap().get(blockNum);
+    while (!contractLogTriggersQueue.isEmpty()) {
+      ContractLogTrigger logTriggerCapsule = (ContractLogTrigger) contractLogTriggersQueue.poll();
+      if(logTriggerCapsule == null)
+      {
+        break;
+      }
       if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
           logTriggerCapsule.getTransactionId())) != null) {
         logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
@@ -1468,8 +1473,12 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractEventTrigger eventTriggerCapsule : Args
-        .getSolidityContractEventTriggerMap().get(blockNum)) {
+    BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap().get(blockNum);
+    while (!contractEventTriggersQueue.isEmpty()) {
+      ContractEventTrigger eventTriggerCapsule = (ContractEventTrigger) contractEventTriggersQueue.poll();
+      if(eventTriggerCapsule == null){
+        break;
+      }
       if (chainBaseManager.getTransactionStore()
           .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
               .getTransactionId())) != null) {
