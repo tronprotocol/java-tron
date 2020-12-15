@@ -717,7 +717,7 @@ public class Manager {
           if (accountCapsule != null) {
             adjustBalance(getAccountStore(), accountCapsule, -fee);
             adjustBalance(getAccountStore(), this.getAccountStore()
-                .getBlackhole().createDbKey(), +fee);
+                .getBlackhole(), +fee);
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(

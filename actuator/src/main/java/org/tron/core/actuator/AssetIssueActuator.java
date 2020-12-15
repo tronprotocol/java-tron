@@ -85,7 +85,7 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().getAddress().toByteArray(),
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
           fee);//send to blackhole
 
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
