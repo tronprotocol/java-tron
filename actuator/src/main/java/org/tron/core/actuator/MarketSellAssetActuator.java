@@ -124,7 +124,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
       // add to blackhole address
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
 
       // 1. transfer of balance
       transferBalanceOrToken(accountCapsule);

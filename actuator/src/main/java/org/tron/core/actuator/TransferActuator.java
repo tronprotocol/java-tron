@@ -56,7 +56,7 @@ public class TransferActuator extends AbstractActuator {
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       ret.setStatus(fee, code.SUCESS);
       Commons.adjustBalance(accountStore, ownerAddress, -amount);
       Commons.adjustBalance(accountStore, toAddress, amount);

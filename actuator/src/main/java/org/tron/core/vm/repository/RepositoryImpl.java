@@ -635,7 +635,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public byte[] getBlackHoleAddress() {
-    return getAccountStore().getBlackhole().getAddress().toByteArray();
+    return getAccountStore().getBlackholeAddress();
   }
 
   @Override

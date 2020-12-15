@@ -140,7 +140,7 @@ public class WitnessCreateActuator extends AbstractActuator {
     Commons
         .adjustBalance(accountStore, witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
 
-    Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +cost);
+    Commons.adjustBalance(accountStore, accountStore.getBlackhole(), +cost);
 
     dynamicStore.addTotalCreateWitnessCost(cost);
   }

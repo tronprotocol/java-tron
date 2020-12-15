@@ -49,7 +49,7 @@ public class CreateAccountActuator extends AbstractActuator {
       Commons
           .adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {

@@ -194,7 +194,7 @@ public class ReceiptCapsule {
       account.setBalance(balance - energyFee);
 
       //send to blackHole
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().getAddress().toByteArray(),
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
           energyFee);
     }
 

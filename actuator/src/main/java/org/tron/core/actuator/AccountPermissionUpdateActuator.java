@@ -53,7 +53,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       accountStore.put(ownerAddress, account);
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
 
       result.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {
