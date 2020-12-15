@@ -650,12 +650,17 @@ public class Manager {
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    return containsTransaction(transactionCapsule.getTransactionId().getBytes());
+  }
+
+
+  private boolean containsTransaction(byte[] transactionId) {
     if (transactionCache != null) {
-      return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
+      return transactionCache.has(transactionId);
     }
 
     return chainBaseManager.getTransactionStore()
-        .has(transactionCapsule.getTransactionId().getBytes());
+            .has(transactionId);
   }
 
   /**
@@ -1460,8 +1465,8 @@ public class Manager {
       {
         break;
       }
-      if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
-          logTriggerCapsule.getTransactionId())) != null) {
+      if (containsTransaction(ByteArray.fromHexString(logTriggerCapsule
+              .getTransactionId()))) {
         logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
       }
@@ -1479,9 +1484,8 @@ public class Manager {
       if(eventTriggerCapsule == null){
         break;
       }
-      if (chainBaseManager.getTransactionStore()
-          .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
-              .getTransactionId())) != null) {
+      if (containsTransaction(ByteArray.fromHexString(eventTriggerCapsule
+              .getTransactionId()))) {
         eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
       }
