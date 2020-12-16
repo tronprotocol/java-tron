@@ -7,10 +7,8 @@ import static org.tron.core.config.Parameter.ChainConstant.SINGLE_REPEAT;
 import com.google.protobuf.ByteString;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteArray;
 import org.tron.consensus.ConsensusDelegate;
 
 @Slf4j(topic = "consensus")
