@@ -68,14 +68,8 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.actuator.ActuatorCreator;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionRetCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -355,7 +349,7 @@ public class Manager {
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setDelegationService(delegationService);
-
+    chainBaseManager.getAccountStore().setAccountBalanceStore(chainBaseManager.getAccountBalanceStore());
     this.initGenesis();
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(
@@ -381,6 +375,8 @@ public class Manager {
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }
+
+    chainBaseManager.getAccountBalanceStore().convertToAccountBalance();
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
@@ -462,6 +458,13 @@ public class Manager {
               chainBaseManager.getAccountStore().put(account.getAddress(), accountCapsule);
               chainBaseManager.getAccountIdIndexStore().put(accountCapsule);
               chainBaseManager.getAccountIndexStore().put(accountCapsule);
+
+              final AccountBalanceCapsule accountBalanceCapsule = new AccountBalanceCapsule(
+                      ByteString.copyFrom(account.getAddress()),
+                      account.getAccountType(),
+                      account.getBalance());
+              chainBaseManager.getAccountBalanceStore().put(account.getAddress(), accountBalanceCapsule);
+
             });
   }
 

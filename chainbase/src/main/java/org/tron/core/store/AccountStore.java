@@ -4,6 +4,8 @@ import com.typesafe.config.ConfigObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Autowired
   private AccountStateCallBackUtils accountStateCallBackUtils;
+
+  @Setter
+  private AccountBalanceStore accountBalanceStore;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {

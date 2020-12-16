@@ -3,15 +3,11 @@ package org.tron.common.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.capsule.AccountBalanceCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ExchangeStore;
-import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.*;
 
 @Slf4j(topic = "Commons")
 public class Commons {
@@ -78,6 +74,26 @@ public class Commons {
     }
     account.setBalance(Math.addExact(balance, amount));
     accountStore.put(account.getAddress().toByteArray(), account);
+  }
+
+
+  /**
+   * judge balance by AccountBalance
+   */
+  public static void adjustBalance(AccountBalanceStore accountBalanceStore, byte[] accountAddress, long amount)
+          throws BalanceInsufficientException {
+    AccountBalanceCapsule accountBalanceCapsule = accountBalanceStore.getUnchecked(accountAddress);
+    long balance = accountBalanceCapsule.getBalance();
+    if (amount == 0) {
+      return;
+    }
+
+    if (amount < 0 && balance < -amount) {
+      throw new BalanceInsufficientException(
+              StringUtil.createReadableString(accountBalanceCapsule.createDbKey()) + " insufficient balance");
+    }
+    accountBalanceCapsule.setBalance(Math.addExact(balance, amount));
+    accountBalanceStore.put(accountBalanceCapsule.getAddress().toByteArray(), accountBalanceCapsule);
   }
 
   public static ExchangeStore getExchangeStoreFinal(DynamicPropertiesStore dynamicPropertiesStore,

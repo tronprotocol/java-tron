@@ -211,6 +211,17 @@ message Account {
   repeated Permission active_permission = 33;
 }
 
+message AccountBalance {
+  // the create address
+  bytes address = 3;
+  // the trx balance
+  int64 balance = 4;
+  // witness block producing allowance
+  int64 allowance = 0x0B;
+
+  AccountType type = 2;
+}
+
 
 message Key {
   bytes address = 1;

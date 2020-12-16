@@ -150,6 +150,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MARKET_CANCEL_FEE = "MARKET_CANCEL_FEE".getBytes();
   private static final byte[] MARKET_QUANTITY_LIMIT = "MARKET_QUANTITY_LIMIT".getBytes();
 
+  private static final byte[] ACCOUNT_BALANCE_CONVERT = "ACCOUNT_BALANCE_CONVERT".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -693,6 +695,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowPBFT();
     } catch (IllegalArgumentException e) {
       this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
+    }
+
+    try {
+      this.getAccountBalanceConvert();
+    } catch (IllegalArgumentException e) {
+      this.setAccountBalanceConvert(0);
     }
 
   }
@@ -2044,6 +2052,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowPBFT() {
     return getAllowPBFT() == 1;
+  }
+
+  public void setAccountBalanceConvert(long limit) {
+    this.put(ACCOUNT_BALANCE_CONVERT,
+            new BytesCapsule(ByteArray.fromLong(limit)));
+  }
+
+  public long getAccountBalanceConvert() {
+    return Optional.ofNullable(getUnchecked(ACCOUNT_BALANCE_CONVERT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ACCOUNT_BALANCE_CONVERT"));
   }
 
   private static class DynamicResourceProperties {
