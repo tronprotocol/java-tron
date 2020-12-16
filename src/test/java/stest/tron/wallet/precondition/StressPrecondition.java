@@ -16,8 +16,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +31,18 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletGrpc.WalletBlockingStub;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Configuration;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.ChainParameters;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -210,15 +220,14 @@ public class StressPrecondition {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(41L, 1L);
-        approveProposalIndex = i;
       }
-/*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTransactionFeePool") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTransactionFeePool") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(48L, 1L);
+        approveProposalIndex = i;
 
-      }*/
-      //proposalMap.put(48L, 0L);
+      }
     }
 
     if (proposalMap.size() >= 1) {
@@ -703,7 +712,134 @@ public class StressPrecondition {
 
 
   @Test(enabled = false)
-  public void test15DeployJustlinkSmartContract() {
+  public void test15CreateSrUsedToken() {
+
+    ManagedChannel channelFull = ManagedChannelBuilder.forTarget("47.95.206.44:50051")
+        .usePlaintext(true)
+        .build();
+
+    WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    GrpcAPI.WitnessList witnessList= blockingStubFull.listWitnesses(EmptyMessage.newBuilder().build());
+
+    HashMap<ByteString,Long> map = new HashMap<>();
+
+    for(int i = 0; i < witnessList.getWitnessesCount();i++) {
+      logger.info("count:" + witnessList.getWitnesses(i).getVoteCount());
+      map.put(witnessList.getWitnesses(i).getAddress(),witnessList.getWitnesses(i).getVoteCount());
+    }
+    List<Map.Entry<ByteString,Long>> list=new ArrayList<>();
+    list.addAll(map.entrySet());
+    ValueComparator vc=new ValueComparator();
+    Collections.sort(list,vc);
+
+    logger.info("-----------------------------------");
+    int number = 0;
+    for(Iterator<Entry<ByteString,Long>> it=list.iterator();it.hasNext();)
+    {
+      if(++number == 27) {
+        break;
+      }
+      Entry<ByteString,Long> witnessInfo = it.next();
+      Account request = Account.newBuilder().setAddress(witnessInfo.getKey()).build();
+      logger.info("SR:" + number + blockingStubFull.getAccount(request).getAssetV2Count() + "");
+      logger.info("SR:" + number + blockingStubFull.getAccount(request).getAssetV2Map().size() + "");
+      logger.info("address:" + number + Base58.encode(witnessInfo.getKey().toByteArray()));
+    }
+    byte[] addressBytes = Wallet.decodeFromBase58Check("TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy");
+    ByteString addressBS = ByteString.copyFrom(addressBytes);
+    Account request = Account.newBuilder().setAddress(addressBS).build();
+    logger.info("blockhole:" + blockingStubFull.getAccount(request).getAssetV2Count());
+    logger.info("blockhole:" + blockingStubFull.getAccount(request).getAssetV2Map().size());
+
+
+
+
+
+  }
+
+  private static class ValueComparator implements Comparator<Entry<ByteString,Long>>
+  {
+    public int compare(Map.Entry<ByteString,Long> m,Map.Entry<ByteString,Long> n)
+    {
+      return (int)(n.getValue()-m.getValue());
+    }
+  }
+
+  @Test(enabled = false)
+  public void test16DispatchTokenToSR() throws Exception {
+    String foundAccountKey = "dc51f31e4de187c1c2530d65fb8f2958dff4c37f8cea430ce98d254baae37564";
+    byte[] foundAccountAddress = PublicMethed.getFinalAddress(foundAccountKey);
+    Integer tokenNumber = 600;
+    while (tokenNumber-- >= 0) {
+      ECKey ecKey1 = new ECKey(Utils.getRandom());
+      byte[] tokenAddress = ecKey1.getAddress();
+      String tokenKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+      //PublicMethed.printAddress(tokenKey);
+
+
+      try {
+        PublicMethed.sendcoin(tokenAddress,1030000000L,foundAccountAddress,foundAccountKey,blockingStubFull);
+        Thread.sleep(20);
+        Long start = System.currentTimeMillis() + 5000L;
+        Long end = System.currentTimeMillis() + 5000000L;
+        PublicMethed.createAssetIssue(tokenAddress, start+"id", 100000000000000L, 1,
+            1, start, end, 1, "11", "11", 10000L, 10000L,
+            1L, 1L, tokenKey, blockingStubFull);
+        Thread.sleep(20);
+      } catch (Exception e) {
+        continue;
+      }
+
+      Account getAssetIdFromThisAccount = PublicMethed.queryAccount(tokenAddress, blockingStubFull);
+      ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+
+      String[] witnessList = {
+          "541a2d585fcea7e9b1803df4eb49af0eb09f1fa2ce06aa5b8ed60ac95655d66d",
+          "7d5a7396d6430edb7f66aa5736ef388f2bea862c9259de8ad8c2cfe080f6f5a0",
+          "7c4977817417495f4ca0c35ab3d5a25e247355d68f89f593f3fea2ab62c8644f",
+          "4521c13f65cc9f5c1daa56923b8598d4015801ad28379675c64106f5f6afec30",
+          "f33101ea976d90491dcb9669be568db8bbc1ad23d90be4dede094976b67d550e",
+          "1bb32958909299db452d3c9bbfd15fd745160d63e4985357874ee57708435a00",
+          "29c91bd8b27c807d8dc2d2991aa0fbeafe7f54f4de9fac1e1684aa57242e3922",
+          "97317d4d68a0c5ce14e74ad04dfc7521f142f5c0f247b632c8f94c755bdbe669",
+          "1fe1d91bbe3ac4ac5dc9866c157ef7615ec248e3fd4f7d2b49b0428da5e046b2",
+          "7c37ef485e186e07952bcc8e30cd911a6cd9f2a847736c89132762fb67a42329",
+          "bcc142d57d872cd2cc1235bca454f2efd5a87f612856c979cc5b45a7399272a8",
+          "6054824dc03546f903a06da1f405e72409379b83395d0bbb3d4563f56e828d52",
+          "87cc8832b1b4860c3c69994bbfcdae9b520e6ce40cbe2a90566e707a7e04fc70",
+          "c96c92c8a5f68ffba2ced3f7cd4baa6b784838a366f62914efdc79c6c18cd7d0",
+          "d29e34899a21dc801c2be88184bed29a66246b5d85f26e8c77922ee2403a1934",
+          "dc51f31e4de187c1c2530d65fb8f2958dff4c37f8cea430ce98d254baae37564",
+          "ff43b371d67439bb8b6fa6c4ff615c954682008343d4cb2583b19f50adbac90f",
+          "dbc78781ad27f3751358333412d5edc85b13e5eee129a1a77f7232baadafae0e",
+          "a79a37a3d868e66456d76b233cb894d664b75fd91861340f3843db05ab3a8c66",
+          "a8107ea1c97c90cd4d84e79cd79d327def6362cc6fd498fc3d3766a6a71924f6",
+          "b5076206430b2ca069ae2f4dc6f20dd0d74551559878990d1df12a723c228039",
+          "442513e2e801bc42d14d33b8148851dae756d08eeb48881a44e1b2002b3fb700"
+      };
+      for(String witnessKey : witnessList) {
+        byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey);
+        PublicMethed.transferAsset(witnessAddress,assetAccountId.toByteArray(),1L,tokenAddress,tokenKey,blockingStubFull);
+        Thread.sleep(5);
+        if(tokenNumber % 20 == 0) {
+          Account request = Account.newBuilder().setAddress(ByteString.copyFrom(witnessAddress)).build();
+          logger.info("SR token number:" + blockingStubFull.getAccount(request).getAssetV2Map().size());
+        }
+      }
+      logger.info("number:" + tokenNumber);
+
+
+
+
+    }
+
+  }
+
+
+
+  @Test(enabled = false)
+  public void test16DeployJustlinkSmartContract() {
     // deployJst
     String contractName = "Jst";
     String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"stop\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_spender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"burn\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stopped\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"start\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_name\",\"type\":\"string\"}],\"name\":\"setName\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_addressFounder\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]";
@@ -808,7 +944,7 @@ public class StressPrecondition {
   }
 
   @Test(enabled = false)
-  public void test16DeployJustSwapSmartContract() {
+  public void test17DeployJustSwapSmartContract() {
     // deployJustswapFactory
     String contractName = "JustswapFactory";
     String abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getExchange\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"createExchange\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"exchangeTemplate\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"template\",\"type\":\"address\"}],\"name\":\"initializeFactory\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"exchange\",\"type\":\"address\"}],\"name\":\"getToken\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"tokenCount\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token_id\",\"type\":\"uint256\"}],\"name\":\"getTokenWithId\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"exchange\",\"type\":\"address\"}],\"name\":\"NewExchange\",\"type\":\"event\"}]";
