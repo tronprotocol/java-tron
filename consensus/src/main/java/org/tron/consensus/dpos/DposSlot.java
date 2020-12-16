@@ -7,8 +7,10 @@ import static org.tron.core.config.Parameter.ChainConstant.SINGLE_REPEAT;
 import com.google.protobuf.ByteString;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.consensus.ConsensusDelegate;
 
 @Slf4j(topic = "consensus")
@@ -26,7 +28,9 @@ public class DposSlot {
   }
 
   public long getSlot(long time) {
+    logger.warn("------trace bug: time: {}", time);
     long firstSlotTime = getTime(1);
+    logger.warn("------trace bug: firstSlotTime: {}", firstSlotTime);
     if (time < firstSlotTime) {
       return 0;
     }
@@ -45,6 +49,7 @@ public class DposSlot {
       slot += consensusDelegate.getMaintenanceSkipSlots();
     }
     long time = consensusDelegate.getLatestBlockHeaderTimestamp();
+    logger.warn("------trace bug: latestBlockHeaderTimestamp: {},genesisBlockTime:{},slot:{}", time,dposService.getGenesisBlockTime(),slot);
     time = time - ((time - dposService.getGenesisBlockTime()) % interval);
     return time + interval * slot;
   }
