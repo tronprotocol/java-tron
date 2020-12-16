@@ -76,7 +76,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
             shieldedTransferContract.getFromAmount(), ret, fee);
       }
-      Commons.adjustAssetBalanceV2(accountStore.getBlackhole().createDbKey(),
+      Commons.adjustAssetBalanceV2(accountStore.getBlackhole(),
           CommonParameter.getInstance().getZenTokenId(), fee,
           accountStore, assetIssueStore, dynamicStore);
     } catch (BalanceInsufficientException e) {

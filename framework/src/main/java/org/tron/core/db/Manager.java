@@ -650,12 +650,17 @@ public class Manager {
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    return containsTransaction(transactionCapsule.getTransactionId().getBytes());
+  }
+
+
+  private boolean containsTransaction(byte[] transactionId) {
     if (transactionCache != null) {
-      return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
+      return transactionCache.has(transactionId);
     }
 
     return chainBaseManager.getTransactionStore()
-        .has(transactionCapsule.getTransactionId().getBytes());
+            .has(transactionId);
   }
 
   /**
@@ -717,7 +722,7 @@ public class Manager {
           if (accountCapsule != null) {
             adjustBalance(getAccountStore(), accountCapsule, -fee);
             adjustBalance(getAccountStore(), this.getAccountStore()
-                .getBlackhole().createDbKey(), +fee);
+                .getBlackhole(), +fee);
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
@@ -1453,10 +1458,15 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractLogTrigger logTriggerCapsule : Args
-        .getSolidityContractLogTriggerMap().get(blockNum)) {
-      if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
-          logTriggerCapsule.getTransactionId())) != null) {
+    BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap().get(blockNum);
+    while (!contractLogTriggersQueue.isEmpty()) {
+      ContractLogTrigger logTriggerCapsule = (ContractLogTrigger) contractLogTriggersQueue.poll();
+      if(logTriggerCapsule == null)
+      {
+        break;
+      }
+      if (containsTransaction(ByteArray.fromHexString(logTriggerCapsule
+              .getTransactionId()))) {
         logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
       }
@@ -1468,11 +1478,14 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractEventTrigger eventTriggerCapsule : Args
-        .getSolidityContractEventTriggerMap().get(blockNum)) {
-      if (chainBaseManager.getTransactionStore()
-          .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
-              .getTransactionId())) != null) {
+    BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap().get(blockNum);
+    while (!contractEventTriggersQueue.isEmpty()) {
+      ContractEventTrigger eventTriggerCapsule = (ContractEventTrigger) contractEventTriggersQueue.poll();
+      if(eventTriggerCapsule == null){
+        break;
+      }
+      if (containsTransaction(ByteArray.fromHexString(eventTriggerCapsule
+              .getTransactionId()))) {
         eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
       }

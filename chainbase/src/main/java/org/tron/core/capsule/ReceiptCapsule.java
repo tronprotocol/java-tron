@@ -200,7 +200,7 @@ public class ReceiptCapsule {
             .saveTransactionFeePool(dynamicPropertiesStore.getTransactionFeePool() + energyFee);
       } else {
         //send to blackHole
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole().getAddress().toByteArray(),
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
             energyFee);
       }
 
