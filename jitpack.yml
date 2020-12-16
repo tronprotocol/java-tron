@@ -1,0 +1,2 @@
+install:
+  - ./gradlew clean -xtest -xlint -xcheck -PbinaryRelease=false install
