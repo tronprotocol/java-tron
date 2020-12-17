@@ -914,6 +914,7 @@ public class Manager {
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
+    logger.warn("-------trace log,Manager lock:{}",this);
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 

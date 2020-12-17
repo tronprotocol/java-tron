@@ -87,6 +87,7 @@ public class DposTask {
     synchronized (dposService.getBlockHandle().getLock()) {
 
       long slot = dposSlot.getSlot(System.currentTimeMillis() + 50);
+      logger.warn("--------trace bug,Dpos Task lock: {}",dposService.getBlockHandle().getLock());
       if (slot == 0) {
         return State.NOT_TIME_YET;
       }
