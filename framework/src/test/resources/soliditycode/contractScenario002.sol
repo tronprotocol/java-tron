@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 contract TronNative{
 
     address public voteContractAddress= address(0x10001);

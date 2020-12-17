@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+
 
 enum ErrorType {
     Revert_Error,    //0

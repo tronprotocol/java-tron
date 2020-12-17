@@ -1,5 +1,5 @@
 
-pragma solidity ^0.6.0;
+
 
 contract A {
     constructor() public payable{

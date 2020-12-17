@@ -1,4 +1,4 @@
-pragma solidity 0.6.0;
+
 
 struct S_out {
 uint x;

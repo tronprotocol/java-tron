@@ -15,7 +15,7 @@ contract A {
 
 contract B{
     constructor() public payable {}
-    function() external payable {}
+    fallback() external payable {}
     function kill(address payable toAddress) payable public{
          selfdestruct(toAddress);
      }

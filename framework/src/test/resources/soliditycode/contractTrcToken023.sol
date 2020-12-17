@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+
 
  contract tokenTest{
      constructor() public payable{}
@@ -10,16 +10,16 @@
 contract B{
     uint256 public flag = 0;
     constructor() public payable {}
-    function()  external {
+    fallback()  external {
          flag = 1;
 }
 
 }
-//pragma solidity ^0.4.24;
+
 contract C{
     uint256 public flag = 0;
     constructor() public payable {}
-    function() external payable {
+    fallback() external payable {
          //flag = 1;
 }
 

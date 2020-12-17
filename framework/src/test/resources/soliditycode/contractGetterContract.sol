@@ -1,10 +1,10 @@
-//pragma solidity ^0.4.0;
+
 
 
 contract  getterContract {
 
 constructor() public payable{}
-function() external payable{}
+fallback() external payable{}
 
 uint public c = msg.value;
 

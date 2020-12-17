@@ -1,9 +1,9 @@
-pragma solidity ^0.5.12;
+
 
 contract tvmAssetIssue005 {
     constructor() payable public{}
 
-    function() external payable {
+    fallback() external payable {
     }
 
     function tokenIssue(bytes32 name, bytes32 abbr, uint64 totalSupply, uint8 precision) public returns (uint) {

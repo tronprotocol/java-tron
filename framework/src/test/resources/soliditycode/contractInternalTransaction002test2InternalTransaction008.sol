@@ -1,8 +1,8 @@
-//pragma solidity ^0.4.24;
+
 
 contract A{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
 
     function testAssert(address bAddress,uint256 amount) public payable{
         bAddress.call.value(amount).gas(1000000)(abi.encodeWithSignature("callCGetZero(bool)",false));//2.1
@@ -27,7 +27,7 @@ contract A{
 
 contract B{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getOne() payable public returns(uint256){
         return 1;
     }
@@ -44,7 +44,7 @@ contract B{
 contract C{
     uint256 public flag=0;
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getZero() payable public returns(uint256){
         return 0;
     }

@@ -1,4 +1,4 @@
-pragma solidity ^0;
+
 
 library A {
     function getBalance(address) public view returns (uint256) {
