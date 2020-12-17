@@ -107,6 +107,10 @@ public class StressPrecondition {
       .getString("address.mutiSignOwnerAddress");
   private String mutiSignOwnerKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.mutiSignOwnerKey");
+  private String voteOwnerKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.voteOwnerKey");
+  private String voteOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.voteOwnerAddress");
 
   Long firstTokenInitialBalance = 500000000L;
   Long secondTokenInitialBalance = 500000000L;
@@ -312,6 +316,9 @@ public class StressPrecondition {
         .freezeBalanceGetEnergy(PublicMethed.getFinalAddress(triggerOwnerKey), 50000000000000L, 3,
             0, triggerOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed
+        .freezeBalanceGetEnergy(PublicMethed.getFinalAddress(voteOwnerKey), 10000000000000L, 3,
+            0, voteOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 

@@ -61,6 +61,10 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       .getString("address.commonWitnessAddress");
   protected String commonWitnessPrivateKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.commonWitnessPrivateKey");
+  protected String voteOwnerKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.voteOwnerKey");
+  protected String voteOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.voteOwnerAddress");
 
   protected String commonContractAddress1 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress1");

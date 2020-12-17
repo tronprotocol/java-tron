@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.Configuration;
 import org.tron.core.Wallet;
+import org.tron.program.FullNode;
 import org.tron.stresstest.dispatch.AbstractTransactionCreator;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
@@ -32,7 +33,7 @@ public class NiceTransferAssetTransactionCreator extends AbstractTransactionCrea
     Contract.TransferAssetContract contract = Contract.TransferAssetContract.newBuilder()
             .setAssetName(ByteString.copyFrom(assetName.getBytes()))
             .setOwnerAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(ownerAddress)))
-            .setToAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(toAddress)))
+            .setToAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(FullNode.accountQueue.poll())))
             .setAmount(amount)
             .build();
     Protocol.Transaction transaction = createTransaction(contract, ContractType.TransferAssetContract);
