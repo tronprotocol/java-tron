@@ -135,6 +135,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
@@ -150,6 +151,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
@@ -165,6 +167,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
@@ -181,6 +184,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
@@ -196,6 +200,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
@@ -211,6 +216,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
@@ -343,6 +349,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -360,6 +367,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -376,6 +384,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -392,6 +401,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -409,6 +419,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -425,6 +436,7 @@ public class TriggerConstant001 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
+    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
