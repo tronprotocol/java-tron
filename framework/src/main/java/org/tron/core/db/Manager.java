@@ -1481,8 +1481,9 @@ public class Manager {
     BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap()
             .get(blockNum);
     while (!contractEventTriggersQueue.isEmpty()) {
-      ContractEventTrigger triggerCapsule = (ContractEventTrigger) contractEventTriggersQueue.poll();
-      if (triggerCapsule == null){
+      ContractEventTrigger triggerCapsule = (ContractEventTrigger) contractEventTriggersQueue
+              .poll();
+      if (triggerCapsule == null) {
         break;
       }
       if (containsTransaction(ByteArray.fromHexString(triggerCapsule
