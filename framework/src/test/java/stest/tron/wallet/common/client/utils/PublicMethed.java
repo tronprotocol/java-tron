@@ -459,6 +459,10 @@ public class PublicMethed {
     return blockingStubFull.getAccount(request);
   }
 
+  /**
+   * constructor.
+   */
+
   public static Account getAccountById(String accountId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -1511,9 +1515,7 @@ public class PublicMethed {
     return assetOwnerAssetBalance;
   }
 
-  /**
-   * constructor.
-   */
+
   /*
   public static Optional<DeferredTransaction> getDeferredTransactionById(String txId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -3171,6 +3173,10 @@ public class PublicMethed {
     return Optional.ofNullable(transactionInfo);
   }
 
+
+  /**
+   * constructor.
+   */
   public static Optional<TransactionInfoList> getTransactionInfoByBlockNum(long blockNum,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -3180,6 +3186,9 @@ public class PublicMethed {
     return Optional.ofNullable(transactionInfoList);
   }
 
+  /**
+   * constructor.
+   */
   public static Optional<TransactionInfoList> getTransactionInfoByBlockNumFromSolidity(
       long blockNum, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -4102,6 +4111,9 @@ public class PublicMethed {
     return blockingStubFull.getAssetIssueById(request);
   }
 
+  /**
+   * constructor.
+   */
   public static Optional<AssetIssueList> getAssetIssueByAccount(byte[] address,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -5172,7 +5184,9 @@ public class PublicMethed {
 
   }
 
-
+  /**
+   * constructor.
+   */
   public static TransactionExtention triggerSolidityContractForExtention(byte[] contractAddress,
       String method, String argsStr,
       Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
@@ -6135,6 +6149,9 @@ public class PublicMethed {
             transaction.getRawData().toByteArray()));
   }
 
+  /**
+   * constructor.
+   */
   public static byte[] decode58Check(String input) {
     byte[] decodeCheck = org.tron.common.utils.Base58.decode(input);
     if (decodeCheck.length <= 4) {
@@ -6152,12 +6169,18 @@ public class PublicMethed {
     return null;
   }
 
+  /**
+   * constructor.
+   */
   public static void freedResource(byte[] fromAddress, String priKey, byte[] toAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     long balance = PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance();
     sendcoin(toAddress, balance - 500000, fromAddress, priKey, blockingStubFull);
   }
 
+  /**
+   * constructor.
+   */
   public static String parametersString(List<Object> parameters) {
     String[] inputArr = new String[parameters.size()];
     int i = 0;
@@ -6180,6 +6203,9 @@ public class PublicMethed {
     return input;
   }
 
+  /**
+   * constructor.
+   */
   public static String bytes32ToString(byte[] bytes) {
     if (bytes == null) {
       return "null";
@@ -6517,6 +6543,9 @@ public class PublicMethed {
     return Optional.ofNullable(marketOrderList);
   }
 
+  /**
+   * constructor.
+   */
   public static Optional<Protocol.MarketOrderList> getMarketOrderByAccountSolidity(byte[] address,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
     ByteString addressBS = ByteString.copyFrom(address);
@@ -6538,6 +6567,9 @@ public class PublicMethed {
     return Optional.ofNullable(orderPair);
   }
 
+  /**
+   * constructor.
+   */
   public static Optional<Protocol.MarketOrder> getMarketOrderByIdSolidity(byte[] order,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
     ByteString orderBytes = ByteString.copyFrom(order);
@@ -6576,6 +6608,9 @@ public class PublicMethed {
     return Optional.ofNullable(marketOrderList);
   }
 
+  /**
+   * constructor.
+   */
   public static Optional<Protocol.MarketOrderList> getMarketOrderListByPairSolidity(
       byte[] sellTokenId,
       byte[] buyTokenId, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
@@ -6600,6 +6635,9 @@ public class PublicMethed {
     return Optional.ofNullable(marketOrderList);
   }
 
+  /**
+   * constructor.
+   */
   public static Optional<Protocol.MarketOrderPairList> getMarketPairListSolidity(
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
     Protocol.MarketOrderPairList marketOrderList = blockingStubSolidity
@@ -6607,6 +6645,9 @@ public class PublicMethed {
     return Optional.ofNullable(marketOrderList);
   }
 
+  /**
+   * constructor.
+   */
   public static String stringToHexString(String s) {
     String str = "";
     for (int i = 0; i < s.length(); i++) {
@@ -6617,6 +6658,9 @@ public class PublicMethed {
     return str;
   }
 
+  /**
+   * constructor.
+   */
   public static String hexStringToString(String s) {
     if (s == null || s.equals("")) {
       return null;
@@ -6640,11 +6684,17 @@ public class PublicMethed {
     return s;
   }
 
+  /**
+   * constructor.
+   */
   public static String removeAll0sAtTheEndOfHexStr(String s) {
     return s.replaceAll("(00)+$", "");
   }
 
-  public static String replaceCode__$(String code, String address) {
+  /**
+   * constructor.
+   */
+  public static String replaceCode(String code, String address) {
     if (code.indexOf("__$") == -1) {
       return code;
     } else {
@@ -6656,4 +6706,107 @@ public class PublicMethed {
       return result;
     }
   }
+
+  /**
+   * constructor.
+   */
+  public static Map<String, Long> getAllowance2(Long startNum, Long endNum,
+                                                WalletGrpc.WalletBlockingStub blockingStubFull) {
+    final String blackHole = Configuration.getByPath("testng.conf")
+            .getString("defaultParameter.blackHoleAddress");
+    Long balanceBlackHole = 0L;
+    Long totalCount = 0L;
+    Map<String, Integer> witnessBlockCount = new HashMap<>();
+    Map<String, Long> witnessBrokerage = new HashMap<>();
+    Map<String, Long> witnessVoteCount = new HashMap<>();
+    Map<String, Long> witnessAllowance = new HashMap<>();
+    List<Protocol.Witness> witnessList = PublicMethed.listWitnesses(blockingStubFull)
+            .get().getWitnessesList();
+    for (Protocol.Witness witness : witnessList) {
+      witnessVoteCount.put(ByteArray.toHexString(witness.getAddress().toByteArray()),
+              witness.getVoteCount());
+      GrpcAPI.BytesMessage bytesMessage = GrpcAPI.BytesMessage.newBuilder()
+              .setValue(witness.getAddress()).build();
+      Long brokerager = blockingStubFull.getBrokerageInfo(bytesMessage).getNum();
+      witnessBrokerage.put(ByteArray.toHexString(witness.getAddress().toByteArray()), brokerager);
+      totalCount += witness.getVoteCount();
+    }
+    Optional<Protocol.TransactionInfo> infoById = null;
+    for (Long k = startNum; k < endNum; k++) {
+      String witnessAdd = ByteArray.toHexString(PublicMethed.getBlock(k, blockingStubFull)
+              .getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+      witnessBlockCount.put(witnessAdd, witnessBlockCount.getOrDefault(witnessAdd, 0) + 1);
+      List<Transaction> transList = PublicMethed.getBlock(k,
+              blockingStubFull).getTransactionsList();
+      for (Transaction tem : transList) {
+        String txid = ByteArray.toHexString(Sha256Hash
+                .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+                        tem.getRawData().toByteArray()));
+        logger.info("----ss txid:" + txid);
+        infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+
+        Long energyFee = infoById.get().getReceipt().getEnergyFee();
+        Long netFee = infoById.get().getReceipt().getNetFee();
+        if ("AccountCreateContract".equals(tem.getRawData().getContract(0).getType().toString())) {
+          logger.info("------account create  witnessAdd:" + witnessAdd + "   before add:"
+                  + witnessAllowance.getOrDefault(witnessAdd, 0L) + "    netfee:" + netFee);
+          witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L) + netFee);
+        } else {
+          if (infoById.get().getReceipt().getResult().toString().contains("OUT_OF_TIME")) {
+            logger.info("---out of time  " + infoById.get().getReceipt().getResult());
+            balanceBlackHole += infoById.get().getReceipt().getEnergyFee();
+            witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
+                    + netFee);
+          } else {
+            witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
+                    + energyFee + netFee);
+          }
+        }
+      }
+    }
+
+    logger.info("========totalCount:" + totalCount);
+    List<Protocol.ChainParameters.ChainParameter> chainParaList =
+            blockingStubFull.getChainParameters(EmptyMessage.newBuilder().build())
+                    .getChainParameterList();
+    Long witness127PayPerBlock = 0L;
+    Long witnessPayPerBlock = 0L;
+    for (Protocol.ChainParameters.ChainParameter para : chainParaList) {
+      if ("getWitness127PayPerBlock".equals(para.getKey())) {
+        witness127PayPerBlock = para.getValue();
+      }
+      if ("getWitnessPayPerBlock".equals(para.getKey())) {
+        witnessPayPerBlock = para.getValue();
+      }
+    }
+    logger.info("witness127PayPerBlock:" + witness127PayPerBlock
+            + "\n witnessPayPerBlock:" + witnessPayPerBlock);
+
+    for (Map.Entry<String, Long> entry : witnessBrokerage.entrySet()) {
+      logger.info("-----witnessBrokerage   " + entry.getKey() + " : " + entry.getValue());
+    }
+    for (Map.Entry<String, Long> entry : witnessVoteCount.entrySet()) {
+      logger.info("-----witnessVoteCount   " + entry.getKey() + " : " + entry.getValue());
+    }
+    for (Map.Entry<String, Integer> entry : witnessBlockCount.entrySet()) {
+      logger.info("-----witnessBlockCount   " + entry.getKey() + " : " + entry.getValue());
+    }
+
+    for (Map.Entry<String, Long> entry : witnessVoteCount.entrySet()) {
+      String witnessAdd = entry.getKey();
+      logger.info("----witnessAdd:" + witnessAdd + " block count:"
+              + witnessBlockCount.get(witnessAdd)
+              + "    all: " + witnessAllowance.getOrDefault(witnessAdd, 0L));
+      Long pay = (witnessBlockCount.get(witnessAdd) * witnessPayPerBlock
+              + (endNum - startNum) * witness127PayPerBlock * entry.getValue() / totalCount
+              + witnessAllowance.getOrDefault(witnessAdd, 0L))
+              * witnessBrokerage.get(witnessAdd) / 100;
+
+      witnessAllowance.put(witnessAdd, pay);
+      logger.info("******  " + witnessAdd + " : " + pay);
+    }
+    witnessAllowance.put(blackHole, balanceBlackHole);
+    return witnessAllowance;
+  }
+
 }
