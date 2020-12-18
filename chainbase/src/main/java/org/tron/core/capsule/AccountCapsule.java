@@ -63,6 +63,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
+
+  public AccountCapsule(byte[] data, AccountBalanceStore accountBalanceStore) {
+    try {
+      this.account = Account.parseFrom(data);
+      this.accountBalanceStore = accountBalanceStore;
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage());
+    }
+  }
+
   /**
    * initial account capsule.
    */
