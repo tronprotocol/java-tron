@@ -133,7 +133,8 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
         if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
           Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new LinkedBlockingQueue()).offer((ContractEventTrigger) event);
+              .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                  .offer((ContractEventTrigger) event);
         }
 
       } else {
@@ -143,7 +144,8 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
         if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
           Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new LinkedBlockingQueue()).offer((ContractLogTrigger) event);
+              .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                  .offer((ContractLogTrigger) event);
         }
       }
     }
