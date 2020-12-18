@@ -1,7 +1,7 @@
-//pragma solidity ^0.4.24;
+
 contract callerContract {
     constructor() public payable{}
-    function() external payable{}
+    fallback() external payable{}
     function sendToB(address called_address, address c) public payable{
        called_address.delegatecall(abi.encodeWithSignature("transferTo(address)",c));
     }
@@ -13,7 +13,7 @@ contract callerContract {
     }
 }
    contract calledContract {
-        function() external payable{}
+        fallback() external payable{}
        constructor() public payable {}
        function transferTo(address payable toAddress)public payable{
            toAddress.transfer(5);
@@ -29,7 +29,7 @@ contract callerContract {
     address public sender;
     constructor() public payable{}
     event log(address,address);
-    function() payable external{
+    fallback() payable external{
          emit log(tx.origin,msg.sender);
     }
    }

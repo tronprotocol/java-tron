@@ -87,6 +87,7 @@ public class ContractGrammar004 {
     Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "./src/test/resources/soliditycode/walletTestMutiSign004.sol";
     String contractName = "timeoutTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);

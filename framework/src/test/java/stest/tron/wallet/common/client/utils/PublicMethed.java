@@ -6809,4 +6809,9 @@ public class PublicMethed {
     return witnessAllowance;
   }
 
+
+  public static String getContractStringMsg(byte[] contractMsgArray) {
+    int resultLenth = ByteArray.toInt(ByteArray.subArray(contractMsgArray,32,64));
+    return ByteArray.toStr(ByteArray.subArray(contractMsgArray,64,64 + resultLenth));
+  }
 }

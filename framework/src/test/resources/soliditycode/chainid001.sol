@@ -1,4 +1,3 @@
-pragma solidity ^0.5.12;
 
 contract IstanbulTest {
   constructor() public payable {}

@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 
 contract testConstantContract{
  uint256 public i;
