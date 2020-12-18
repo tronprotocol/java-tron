@@ -45,6 +45,8 @@ public class RepositoryImpl implements Repository {
   @Getter
   private AccountStore accountStore;
   @Getter
+  private AccountBalanceStore accountBalanceStore;
+  @Getter
   private AssetIssueStore assetIssueStore;
   @Getter
   private AssetIssueV2Store assetIssueV2Store;
@@ -107,6 +109,7 @@ public class RepositoryImpl implements Repository {
       votesStore = manager.getVotesStore();
       delegationService = manager.getDelegationService();
       delegationStore = manager.getDelegationStore();
+      accountBalanceStore = manager.getAccountBalanceStore();
     }
     this.parent = parent;
   }
@@ -175,9 +178,10 @@ public class RepositoryImpl implements Repository {
   public AccountCapsule getAccount(byte[] address) {
     Key key = new Key(address);
     if (accountCache.containsKey(key)) {
-      return accountCache.get(key).getAccount();
+      AccountCapsule account = accountCache.get(key).getAccount();
+      account.setAccountBalanceStore(accountBalanceStore);
+      return account;
     }
-
     AccountCapsule accountCapsule;
     if (parent != null) {
       accountCapsule = parent.getAccount(address);
@@ -187,6 +191,7 @@ public class RepositoryImpl implements Repository {
 
     if (accountCapsule != null) {
       accountCache.put(key, Value.create(accountCapsule.getData()));
+      accountCapsule.setAccountBalanceStore(accountBalanceStore);
     }
     return accountCapsule;
   }

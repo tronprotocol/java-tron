@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -26,6 +27,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private AccountStateCallBackUtils accountStateCallBackUtils;
 
   @Setter
+  @Getter
   private AccountBalanceStore accountBalanceStore;
 
   @Autowired

@@ -376,7 +376,7 @@ public class Manager {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }
 
-    chainBaseManager.getAccountBalanceStore().convertToAccountBalance();
+     chainBaseManager.getAccountBalanceStore().convertToAccountBalance();
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();

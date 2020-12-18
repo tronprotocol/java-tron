@@ -47,7 +47,7 @@ public class AccountBalanceStore extends TronStoreWithRevoking<AccountBalanceCap
     }
 
     //插入一个空账户，用于启动判断是否结束
-    public void convertToAccountBalance() {
+//    public void convertToAccountBalance() {
 //        logger.info("Check if synchronization is required: {}", dynamicPropertiesStore.getAccountBalanceConvert());
 //
 //        long start = System.currentTimeMillis();
@@ -61,6 +61,7 @@ public class AccountBalanceStore extends TronStoreWithRevoking<AccountBalanceCap
 //                    accountCapsule.getType()));
 //            count++;
 //        }
+//
 //        logger.info("import balance time: {}, count{}", (System.currentTimeMillis() - start) / 1000, count);
 //        dynamicPropertiesStore.setAccountBalanceConvert(1);
 //        timer.cancel();
@@ -69,7 +70,30 @@ public class AccountBalanceStore extends TronStoreWithRevoking<AccountBalanceCap
 //        } else {
 //            logger.info("No synchronization required");
 //        }
+//    }
+
+
+    public void convertToAccountBalance() {
+        long start = System.currentTimeMillis();
+        logger.info("import balance of account store to account balance store ");
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        AccountRecordQueue accountRecordQueue = new AccountRecordQueue(BlockQueueFactory.getInstance(), countDownLatch);
+        accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
+
+        AccountConvertQueue accountConvertQueue = new AccountConvertQueue(BlockQueueFactory.getInstance(), accountStore, this);
+        accountConvertQueue.convert();
+        try {
+            Timer timer = countDown();
+            logger.debug("import balance await");
+            countDownLatch.await();
+            timer.cancel();
+        } catch (InterruptedException e) {
+            logger.info("import balance exception");
+        }
+        logger.info("import balance time: {}", (System.currentTimeMillis() - start) / 1000);
     }
+
 
     public Timer countDown() {
         Timer timer = new Timer();
@@ -104,7 +128,15 @@ public class AccountBalanceStore extends TronStoreWithRevoking<AccountBalanceCap
     @Override
     public void put(byte[] key, AccountBalanceCapsule item) {
         super.put(key, item);
-//        accountStateCallBackUtils.accountBalanceCallBack(key, item);
+        accountStateCallBackUtils.accountBalanceCallBack(key, item);
+    }
+
+    public void put(byte[] key, AccountCapsule item) {
+//        AccountBalanceCapsule accountBalanceCapsule = item.getAccountBalanceCapsule();
+//        if (null == accountBalanceCapsule) {
+//            accountBalanceCapsule = new AccountBalanceCapsule(ByteString.copyFrom(key), item.getType(), item.getOriginalBalance());
+//        }
+//        put(key, accountBalanceCapsule);
     }
 
     /**
@@ -141,26 +173,26 @@ public class AccountBalanceStore extends TronStoreWithRevoking<AccountBalanceCap
         }
 
         public void convert() {
-//            threadPoolExecutor = getThreadPoolExecutor();
-//            for (int i = 0; i < MAX_POOL_SIZE; i++) {
-//                threadPoolExecutor.execute(()-> {
-//                    try {
-//                        while (true) {
-//                            Map.Entry<byte[], byte[]> accountEntry = convertQueue.take();
-//                            if (null != accountEntry) {
-//                                AccountCapsule account = new AccountCapsule(accountEntry.getValue());
-//                                byte[] addressByte = account.getAddress().toByteArray();
-//                                accountBalanceStore.put(addressByte,  new AccountBalanceCapsule(
-//                                        account.getAddress(),
-//                                        account.getOriginalBalance(),
-//                                        account.getType()));
-//                            }
-//                        }
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
-//            }
+            threadPoolExecutor = getThreadPoolExecutor();
+            for (int i = 0; i < MAX_POOL_SIZE; i++) {
+                threadPoolExecutor.execute(()-> {
+                    try {
+                        while (true) {
+                            Map.Entry<byte[], byte[]> accountEntry = convertQueue.take();
+                            if (null != accountEntry) {
+                                AccountCapsule account = new AccountCapsule(accountEntry.getValue());
+                                byte[] addressByte = account.getAddress().toByteArray();
+                                accountBalanceStore.put(addressByte,  new AccountBalanceCapsule(
+                                        account.getAddress(),
+                                        account.getOriginalBalance(),
+                                        account.getType()));
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
         }
 
         private ThreadPoolExecutor getThreadPoolExecutor() {

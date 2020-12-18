@@ -59,6 +59,7 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.store.AccountBalanceStore;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
@@ -372,6 +373,7 @@ public class Args extends CommonParameter {
       if (config.hasPath(Constant.GENESIS_BLOCK_ASSETS)) {
         PARAMETER.genesisBlock.setAssets(getAccountsFromConfig(config));
         AccountStore.setAccount(config);
+        AccountBalanceStore.setAccount(config);
       }
       if (config.hasPath(Constant.GENESIS_BLOCK_WITNESSES)) {
         PARAMETER.genesisBlock.setWitnesses(getWitnessesFromConfig(config));

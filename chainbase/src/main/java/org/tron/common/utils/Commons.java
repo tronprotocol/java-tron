@@ -7,7 +7,13 @@ import org.tron.core.capsule.AccountBalanceCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
-import org.tron.core.store.*;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ExchangeStore;
+import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.AccountBalanceStore;
 
 @Slf4j(topic = "Commons")
 public class Commons {
@@ -62,7 +68,7 @@ public class Commons {
    */
   public static void adjustBalance(AccountStore accountStore, AccountCapsule account, long amount)
       throws BalanceInsufficientException {
-
+    account.setAccountBalanceStore(accountStore.getAccountBalanceStore());
     long balance = account.getBalance();
     if (amount == 0) {
       return;

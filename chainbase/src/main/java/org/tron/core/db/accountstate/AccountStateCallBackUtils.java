@@ -2,6 +2,8 @@ package org.tron.core.db.accountstate;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.tron.core.capsule.AccountBalanceCapsule;
 import org.tron.core.capsule.AccountCapsule;
 
 public class AccountStateCallBackUtils {
@@ -20,6 +22,18 @@ public class AccountStateCallBackUtils {
     trieEntryList
         .add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
   }
+
+  public void accountBalanceCallBack(byte[] key, AccountBalanceCapsule item) {
+    if (!exe()) {
+      return;
+    }
+    if (item == null) {
+      return;
+    }
+    trieEntryList
+            .add(TrieEntry.build(key, new AccountBalanceStateEntity(item.getInstance()).toByteArrays()));
+  }
+
 
   protected boolean exe() {
     if (!execute || !allowGenerateRoot) {

@@ -260,6 +260,7 @@ public class TransactionTrace {
     if (Objects.isNull(trx.getContractRet())) {
       throw new ReceiptCheckErrException("null resultCode");
     }
+    
     if (!trx.getContractRet().equals(receipt.getResult())) {
       logger.info(
           "this tx id: {}, the resultCode in received block: {}, the resultCode in self: {}",
