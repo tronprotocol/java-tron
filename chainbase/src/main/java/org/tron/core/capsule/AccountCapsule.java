@@ -325,10 +325,20 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return accountBalanceCapsule.getBalance();
   }
 
+//  public void setBalance(long balance) {
+//    this.account = this.account.toBuilder().setBalance(balance).build();
+//    this.accountBalanceCapsule.setBalance(balance);
+//  }
+
   public void setBalance(long balance) {
-    this.account = this.account.toBuilder().setBalance(balance).build();
+    if (this.accountBalanceCapsule != null) {
+      this.accountBalanceCapsule.setBalance(balance);
+    }
+    this.accountBalanceCapsule = accountBalanceStore.get(account.getAddress().toByteArray());
     this.accountBalanceCapsule.setBalance(balance);
+    this.account = this.account.toBuilder().setBalance(balance).build();
   }
+
 
   public long getLatestOperationTime() {
     return this.account.getLatestOprationTime();
