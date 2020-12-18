@@ -14,6 +14,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
@@ -55,7 +56,7 @@ public class tryCatchTest002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     PublicMethed
-        .sendcoin(testAddress001, 1000_000_000L, testFoundationAddress, testFoundationKey,
+        .sendcoin(testAddress001, 10000_000_000L, testFoundationAddress, testFoundationKey,
             blockingStubFull);
 
     String filePath = "src/test/resources/soliditycode/tryCatch001.sol";
@@ -76,7 +77,7 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "0";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -95,7 +96,7 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "1";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -114,7 +115,7 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "2";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -134,7 +135,7 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "3";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -153,18 +154,17 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "4";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
-    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
-    Assert.assertEquals(
-        "0000000000000000000000000000000000000000000000000000000000000000",
-        ByteArray.toHexString(transactionInfo.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1,transactionInfo.get().getResultValue());
+    Assert.assertEquals(maxFeeLimit.longValue(), transactionInfo.get().getFee());
+    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+        transactionInfo.get().getReceipt().getResult());
 
   }
 
@@ -173,7 +173,7 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "5";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -193,7 +193,7 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "6";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -213,18 +213,17 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "7";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
-    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
-    Assert.assertEquals(
-        "0000000000000000000000000000000000000000000000000000000000000000",
-        ByteArray.toHexString(transactionInfo.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1,transactionInfo.get().getResultValue());
+    Assert.assertEquals(maxFeeLimit.longValue(), transactionInfo.get().getFee());
+    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+        transactionInfo.get().getReceipt().getResult());
 
   }
 
@@ -233,18 +232,17 @@ public class tryCatchTest002 {
     String methodStr = "catchNewErrorSwitch(uint256)";
     String argStr = "8";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
-    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
-    Assert.assertEquals(
-        "0000000000000000000000000000000000000000000000000000000000000000",
-        ByteArray.toHexString(transactionInfo.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1,transactionInfo.get().getResultValue());
+    Assert.assertEquals(maxFeeLimit.longValue(), transactionInfo.get().getFee());
+    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+        transactionInfo.get().getReceipt().getResult());
 
   }
 
