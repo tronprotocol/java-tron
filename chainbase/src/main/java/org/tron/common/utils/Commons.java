@@ -60,6 +60,7 @@ public class Commons {
   public static void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    account.setAccountBalanceStore(accountStore.getAccountBalanceStore());
     adjustBalance(accountStore, account, amount);
   }
 
