@@ -101,7 +101,7 @@ public class TransactionFee001 {
   @Test(enabled = true, description = "Test deploy contract with energy fee to sr")
   public void test01DeployContractEnergyFeeToSr() {
 
-    Assert.assertTrue(PublicMethed.sendcoin(deployAddress, 200000000L, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(deployAddress, 20000000000L, fromAddress,
             testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -518,6 +518,7 @@ public class TransactionFee001 {
   public void shutdown() throws InterruptedException {
     PublicMethed.unFreezeBalance(deployAddress, deployKey, 1, deployAddress,
             blockingStubFull);
+    PublicMethed.freedResource(deployAddress, deployKey, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
