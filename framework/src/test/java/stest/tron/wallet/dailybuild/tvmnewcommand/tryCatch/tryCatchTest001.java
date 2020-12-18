@@ -14,6 +14,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
@@ -57,7 +58,7 @@ public class tryCatchTest001 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     PublicMethed
-        .sendcoin(testAddress001, 1000_000_000L, testFoundationAddress, testFoundationKey,
+        .sendcoin(testAddress001, 10000_000_000L, testFoundationAddress, testFoundationKey,
             blockingStubFull);
 
     String filePath = "src/test/resources/soliditycode/tryCatch001.sol";
@@ -84,9 +85,9 @@ public class tryCatchTest001 {
   @Test(enabled = true,  description = "try catch  revert no msg")
   public void tryCatchTest001() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",0";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",0";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -104,9 +105,9 @@ public class tryCatchTest001 {
   @Test(enabled = true, description = "try catch  revert msg")
   public void tryCatchTest002() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",1";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",1";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -122,9 +123,9 @@ public class tryCatchTest001 {
   @Test(enabled = true, description = "try catch  Require no msg")
   public void tryCatchTest003() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",2";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",2";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -141,9 +142,9 @@ public class tryCatchTest001 {
   @Test(enabled = true, description = "try catch  Require msg")
   public void tryCatchTest004() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",3";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",3";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -159,28 +160,28 @@ public class tryCatchTest001 {
   @Test(enabled = true, description = "try catch  assert")
   public void tryCatchTest005() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",4";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",4";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
-    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
-    Assert.assertEquals("NoErrorMsg", PublicMethed
-        .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1,transactionInfo.get().getResultValue());
+    Assert.assertEquals(transactionInfo.get().getFee(), maxFeeLimit.longValue());
+    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+        transactionInfo.get().getReceipt().getResult());
 
   }
 
   @Test(enabled = true, description = "try catch  transfer fail")
   public void tryCatchTest006() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",5";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",5";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -197,9 +198,9 @@ public class tryCatchTest001 {
   @Test(enabled = true, description = "try catch  Send_Error")
   public void tryCatchTest007() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",6";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",6";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -216,38 +217,38 @@ public class tryCatchTest001 {
   @Test(enabled = true, description = "try catch  Math_Error")
   public void tryCatchTest008() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",7";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",7";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
-    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
-    Assert.assertEquals("NoErrorMsg", PublicMethed
-        .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1,transactionInfo.get().getResultValue());
+    Assert.assertEquals(transactionInfo.get().getFee(), maxFeeLimit.longValue());
+    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+        transactionInfo.get().getReceipt().getResult());
 
   }
 
   @Test(enabled = true, description = "try catch  ArrayOverFlow_Error")
   public void tryCatchTest009() {
     String methodStr = "getErrorSwitch(address,uint256)";
-    String argStr = "\"" + Base58.encode58Check(errorContractAddress) +"\",8";
+    String argStr = "\"" + Base58.encode58Check(errorContractAddress) + "\",8";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
-    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
-    Assert.assertEquals("NoErrorMsg", PublicMethed
-        .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1,transactionInfo.get().getResultValue());
+    Assert.assertEquals(transactionInfo.get().getFee(), maxFeeLimit.longValue());
+    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+        transactionInfo.get().getReceipt().getResult());
 
   }
 
