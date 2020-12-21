@@ -774,15 +774,17 @@ public class HttpMethed {
   public static String triggerContractGetTxidWithVisibleTrue(String httpNode, String ownerAddress,
       String contractAddress, String functionSelector, String parameter, Long feeLimit,
       Long callValue, Integer tokenId, Long tokenValue, String fromKey) {
-    return triggerContractGetTxidWithVisibleTrue(httpNode,"",ownerAddress,
-        contractAddress,functionSelector,parameter,feeLimit,callValue,tokenId,tokenValue,
+    return triggerContractGetTxidWithVisibleTrue(httpNode, "", ownerAddress,
+        contractAddress, functionSelector, parameter, feeLimit, callValue, tokenId, tokenValue,
         fromKey);
 
   }
+
   /**
    * constructor.
    */
-  public static String triggerContractGetTxidWithVisibleTrue(String httpNode, String anotherHttpNode,
+  public static String triggerContractGetTxidWithVisibleTrue(String httpNode,
+      String anotherHttpNode,
       String ownerAddress,
       String contractAddress, String functionSelector, String parameter, Long feeLimit,
       Long callValue, Integer tokenId, Long tokenValue, String fromKey) {
@@ -806,7 +808,7 @@ public class HttpMethed {
           parseStringContent(transactionString).getString("transaction"), fromKey);
       logger.info(transactionSignString);
       response = broadcastTransaction(httpNode, transactionSignString);
-      if(!anotherHttpNode.isEmpty()) {
+      if (!anotherHttpNode.isEmpty()) {
         broadcastTransaction(anotherHttpNode, transactionSignString);
       }
     } catch (Exception e) {
@@ -2055,18 +2057,18 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getAccountBalance(String httpNode,
-      byte[] queryAddress,Integer blockNum,String blockHash) {
+      byte[] queryAddress, Integer blockNum, String blockHash) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getaccountbalance";
       JsonObject addressObj = new JsonObject();
-      addressObj.addProperty("address",Base58.encode58Check(queryAddress));
+      addressObj.addProperty("address", Base58.encode58Check(queryAddress));
       JsonObject blockObj = new JsonObject();
-      blockObj.addProperty("hash",blockHash);
-      blockObj.addProperty("number",blockNum);
+      blockObj.addProperty("hash", blockHash);
+      blockObj.addProperty("number", blockNum);
       JsonObject accountBalanceObj = new JsonObject();
       accountBalanceObj.add("account_identifier", addressObj);
       accountBalanceObj.add("block_identifier", blockObj);
-      accountBalanceObj.addProperty("visible",true);
+      accountBalanceObj.addProperty("visible", true);
       response = createConnect(requestUrl, accountBalanceObj);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2079,13 +2081,13 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getBlockBalance(String httpNode, Integer blockNum,String blockHash) {
+  public static HttpResponse getBlockBalance(String httpNode, Integer blockNum, String blockHash) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getblockbalance";
       JsonObject blockObj = new JsonObject();
-      blockObj.addProperty("hash",blockHash);
-      blockObj.addProperty("number",blockNum);
-      blockObj.addProperty("visible",true);
+      blockObj.addProperty("hash", blockHash);
+      blockObj.addProperty("number", blockNum);
+      blockObj.addProperty("visible", true);
       response = createConnect(requestUrl, blockObj);
     } catch (Exception e) {
       e.printStackTrace();
@@ -2094,7 +2096,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**

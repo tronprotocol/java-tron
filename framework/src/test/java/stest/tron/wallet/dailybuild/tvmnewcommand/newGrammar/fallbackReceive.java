@@ -2,10 +2,7 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.newGrammar;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.netty.util.Mapping;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,6 +28,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class fallbackReceive {
+
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
@@ -177,10 +175,9 @@ public class fallbackReceive {
     List<Protocol.TransactionInfo.Log> logList = infoById.get().getLogList();
     if (!Objects.isNull(logList)) {
       for (Protocol.TransactionInfo.Log log : logList) {
-        String tmp  = ByteArray.toHexString(log.getData().toByteArray());
         //logger.info("LOG data info:" + tmp);
-        String tp = "66616c6c6261636b000000000000000000000000000000000000000000000000";
-        Assert.assertEquals(tmp.substring(128,192),tp);
+        Assert.assertEquals("fallback",
+            PublicMethed.getContractStringMsg(log.getData().toByteArray()));
       }
     }
   }
@@ -217,7 +214,7 @@ public class fallbackReceive {
         100000, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("result:"+infoById.get().getReceipt().getResult());
+    logger.info("result:" + infoById.get().getReceipt().getResult());
     Assert.assertEquals("REVERT", infoById.get().getReceipt().getResult().toString());
   }
 
@@ -236,7 +233,7 @@ public class fallbackReceive {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("result:"+infoById.get().getReceipt().getResult());
+    logger.info("result:" + infoById.get().getReceipt().getResult());
     Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
     Long fee = infoById.get().getFee();
     logger.info("fee:" + fee);
@@ -253,7 +250,7 @@ public class fallbackReceive {
         maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("callTest2 result:"+infoById.get().getReceipt().getResult());
+    logger.info("callTest2 result:" + infoById.get().getReceipt().getResult());
     Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
     fee = infoById.get().getFee();
     logger.info("callTest2 fee:" + fee);
@@ -278,12 +275,10 @@ public class fallbackReceive {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("getResult: " + infoById.get().getResultValue());
     Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
-    String tp = "66616c6c6261636b000000000000000000000000000000000000000000000000";
-    String tmp = ByteArray.toHexString(infoById.get().getLog(0).getData().toByteArray());
-    Assert.assertEquals(tmp.substring(128, 192), tp);
-    tp = "7265636569766500000000000000000000000000000000000000000000000000";
-    tmp = ByteArray.toHexString(infoById.get().getLog(1).getData().toByteArray());
-    Assert.assertEquals(tmp.substring(128, 192), tp);
+    Assert.assertEquals("fallback",
+        PublicMethed.getContractStringMsg(infoById.get().getLog(0).getData().toByteArray()));
+    Assert.assertEquals("receive",
+        PublicMethed.getContractStringMsg(infoById.get().getLog(1).getData().toByteArray()));
   }
 
   @Test(enabled = true, description = "contract TestPayable has fallback and receive")
@@ -304,9 +299,9 @@ public class fallbackReceive {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    String tp = "66616c6c6261636b000000000000000000000000000000000000000000000000";
-    String tmp  = ByteArray.toHexString(infoById.get().getLog(0).getData().toByteArray());
-    Assert.assertEquals(tmp.substring(128,192),tp);
+    Assert.assertEquals("fallback",
+        PublicMethed.getContractStringMsg(infoById.get().getLog(0).getData().toByteArray()));
+
     Long fee = infoById.get().getFee();
     logger.info("fee:" + fee);
     Protocol.Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
@@ -328,15 +323,17 @@ public class fallbackReceive {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
-    String tp = "66616c6c6261636b000000000000000000000000000000000000000000000000";
-    String tmp  = ByteArray.toHexString(infoById.get().getLog(0).getData().toByteArray());
-    Assert.assertEquals(tmp.substring(128,192),tp);
-    Protocol.Account infoafter = PublicMethed.queryAccount(contractAddressTestPayable, blockingStubFull1);
-    GrpcAPI.AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractAddressTestPayable,
-        blockingStubFull1);
+    Assert.assertEquals("fallback",
+        PublicMethed.getContractStringMsg(infoById.get().getLog(0).getData().toByteArray()));
+
+    Protocol.Account infoafter = PublicMethed
+        .queryAccount(contractAddressTestPayable, blockingStubFull);
+    GrpcAPI.AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractAddressTestPayable,
+            blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     logger.info("contract balance:" + afterBalance.longValue());
-    Assert.assertEquals(10000,afterBalance.longValue());
+    Assert.assertEquals(11000, afterBalance.longValue());
 
     txid = PublicMethed.triggerContract(contractAddressTestPayable,
         "#", "#", false,
@@ -345,9 +342,9 @@ public class fallbackReceive {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info(infoById.get().getResult().toString());
     Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
-    tp = "7265636569766500000000000000000000000000000000000000000000000000";
-    tmp = ByteArray.toHexString(infoById.get().getLog(0).getData().toByteArray());
-    Assert.assertEquals(tmp.substring(128, 192), tp);
+    Assert.assertEquals("receive",
+        PublicMethed.getContractStringMsg(infoById.get().getLog(0).getData().toByteArray()));
+
   }
 
   //@AfterClass
