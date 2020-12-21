@@ -3481,7 +3481,10 @@ public class PublicMethed {
     }
 
     byte[] owner = ownerAddress;
-    byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+    byte[] input = new byte[0];
+    if (!method.equalsIgnoreCase("#")) {
+      input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+    }
 
     TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
