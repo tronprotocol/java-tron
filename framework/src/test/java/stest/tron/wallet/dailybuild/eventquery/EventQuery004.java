@@ -37,9 +37,13 @@ public class EventQuery004 {
   byte[] event001Address = ecKey1.getAddress();
   String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+          .getStringList("fullnode.ip.list").get(1);
   private String eventnode = Configuration.getByPath("testng.conf")
       .getStringList("eventnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -65,6 +69,11 @@ public class EventQuery004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+            .usePlaintext(true)
+            .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
         .usePlaintext(true)
@@ -169,9 +178,9 @@ public class EventQuery004 {
     while (retryTimes-- > 0) {
       byte[] message = req.recv();
       if (sendTransaction) {
-        txid = PublicMethed.triggerContract(contractAddress,
+        txid = PublicMethed.triggerContractBoth(contractAddress,
             "depositForLog()", "#", false,
-            1L, 100000000L, event001Address, event001Key, blockingStubFull);
+            1L, 100000000L, event001Address, event001Key, blockingStubFull, blockingStubFull1);
         logger.info(txid);
         sendTransaction = false;
       }
