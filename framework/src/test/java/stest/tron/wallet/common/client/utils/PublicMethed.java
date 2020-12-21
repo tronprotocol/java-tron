@@ -4994,8 +4994,8 @@ public class PublicMethed {
       WalletGrpc.WalletBlockingStub blockingStubFull1) {
     int i = 10;
     waitProduceNextBlock(blockingStubFull1);
-    GrpcAPI.Return response1 = blockingStubFull1.broadcastTransaction(transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    GrpcAPI.Return response = blockingStubFull1.broadcastTransaction(transaction);
+    GrpcAPI.Return response1 = blockingStubFull.broadcastTransaction(transaction);
     while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
         && i > 0) {
       try {
