@@ -76,13 +76,13 @@ public class PayableTest {
 
     Account account = PublicMethed
         .queryAccount(PublicMethed.decode58Check(
-            "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"), blockingStubFull);
+            "TBXSw8fM4jpQkGc6zZjsVABFpVN7UvXPdV"), blockingStubFull);
     Long balanceBefore = account.getBalance();
 
     String methodStr = "receiveMoneyTransfer(address,uint256)";
-    String argStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\",3";
+    String argStr = "\"TBXSw8fM4jpQkGc6zZjsVABFpVN7UvXPdV\",3";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -92,7 +92,7 @@ public class PayableTest {
     Assert.assertEquals(0,transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Long balanceAfter = PublicMethed.queryAccount(PublicMethed.decode58Check(
-        "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"), blockingStubFull).getBalance();
+        "TBXSw8fM4jpQkGc6zZjsVABFpVN7UvXPdV"), blockingStubFull).getBalance();
     Assert.assertEquals(balanceBefore + 3,balanceAfter.longValue());
   }
 
@@ -101,13 +101,13 @@ public class PayableTest {
 
     Account account = PublicMethed
         .queryAccount(PublicMethed.decode58Check(
-            "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"), blockingStubFull);
+            "TBXSw8fM4jpQkGc6zZjsVABFpVN7UvXPdV"), blockingStubFull);
     Long balanceBefore = account.getBalance();
 
     String methodStr = "receiveMoneySend(address,uint256)";
-    String argStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\",3";
+    String argStr = "\"TBXSw8fM4jpQkGc6zZjsVABFpVN7UvXPdV\",3";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed
@@ -117,7 +117,7 @@ public class PayableTest {
     Assert.assertEquals(0,transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Long balanceAfter = PublicMethed.queryAccount(PublicMethed.decode58Check(
-        "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"), blockingStubFull).getBalance();
+        "TBXSw8fM4jpQkGc6zZjsVABFpVN7UvXPdV"), blockingStubFull).getBalance();
     Assert.assertEquals(balanceBefore + 3,balanceAfter.longValue());
   }
 
@@ -131,7 +131,7 @@ public class PayableTest {
     String abi = retMap.get("abI").toString();
     byte[] AContract = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit, 0, 100, null,
-            testFoundationKey, testFoundationAddress, blockingStubFull);
+            testKey001, testAddress001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
 
@@ -142,7 +142,7 @@ public class PayableTest {
     String methodStr = "receiveMoneyTransferWithContract(address,uint256)";
     String argStr = "\"" + Base58.encode58Check(AContract) + "\",3";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
-        0, maxFeeLimit, testFoundationAddress, testFoundationKey, blockingStubFull);
+        0, maxFeeLimit, testAddress001, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> transactionInfo = PublicMethed

@@ -85,7 +85,9 @@ public class JsonFormat {
   public static final boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
   public static final Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
       BalanceContract.AccountBalanceResponse.class,
-      BalanceContract.BlockBalanceTrace.class
+      BalanceContract.BlockBalanceTrace.class,
+      BalanceContract.TransactionBalanceTrace.Operation.class,
+      BalanceContract.TransactionBalanceTrace.class
   );
 
   /**

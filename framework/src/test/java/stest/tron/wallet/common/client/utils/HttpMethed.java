@@ -774,6 +774,18 @@ public class HttpMethed {
   public static String triggerContractGetTxidWithVisibleTrue(String httpNode, String ownerAddress,
       String contractAddress, String functionSelector, String parameter, Long feeLimit,
       Long callValue, Integer tokenId, Long tokenValue, String fromKey) {
+    return triggerContractGetTxidWithVisibleTrue(httpNode,"",ownerAddress,
+        contractAddress,functionSelector,parameter,feeLimit,callValue,tokenId,tokenValue,
+        fromKey);
+
+  }
+  /**
+   * constructor.
+   */
+  public static String triggerContractGetTxidWithVisibleTrue(String httpNode, String anotherHttpNode,
+      String ownerAddress,
+      String contractAddress, String functionSelector, String parameter, Long feeLimit,
+      Long callValue, Integer tokenId, Long tokenValue, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/triggersmartcontract";
       JsonObject userBaseObj2 = new JsonObject();
@@ -794,6 +806,9 @@ public class HttpMethed {
           parseStringContent(transactionString).getString("transaction"), fromKey);
       logger.info(transactionSignString);
       response = broadcastTransaction(httpNode, transactionSignString);
+      if(!anotherHttpNode.isEmpty()) {
+        broadcastTransaction(anotherHttpNode, transactionSignString);
+      }
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
