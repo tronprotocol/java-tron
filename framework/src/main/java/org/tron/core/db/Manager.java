@@ -782,7 +782,6 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
-    block.getTransactions().forEach(t -> t.setVerified(true));
     processBlock(block);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -1458,17 +1457,17 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap().get(blockNum);
+    BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap()
+            .get(blockNum);
     while (!contractLogTriggersQueue.isEmpty()) {
-      ContractLogTrigger logTriggerCapsule = (ContractLogTrigger) contractLogTriggersQueue.poll();
-      if(logTriggerCapsule == null)
-      {
+      ContractLogTrigger triggerCapsule = (ContractLogTrigger) contractLogTriggersQueue.poll();
+      if (triggerCapsule == null) {
         break;
       }
-      if (containsTransaction(ByteArray.fromHexString(logTriggerCapsule
+      if (containsTransaction(ByteArray.fromHexString(triggerCapsule
               .getTransactionId()))) {
-        logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
-        EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
+        triggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityLogTrigger(triggerCapsule);
       }
     }
     Args.getSolidityContractLogTriggerMap().remove(blockNum);
@@ -1478,16 +1477,18 @@ public class Manager {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap().get(blockNum);
+    BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap()
+            .get(blockNum);
     while (!contractEventTriggersQueue.isEmpty()) {
-      ContractEventTrigger eventTriggerCapsule = (ContractEventTrigger) contractEventTriggersQueue.poll();
-      if(eventTriggerCapsule == null){
+      ContractEventTrigger triggerCapsule = (ContractEventTrigger) contractEventTriggersQueue
+              .poll();
+      if (triggerCapsule == null) {
         break;
       }
-      if (containsTransaction(ByteArray.fromHexString(eventTriggerCapsule
+      if (containsTransaction(ByteArray.fromHexString(triggerCapsule
               .getTransactionId()))) {
-        eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
-        EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
+        triggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityEventTrigger(triggerCapsule);
       }
     }
     Args.getSolidityContractEventTriggerMap().remove(blockNum);
