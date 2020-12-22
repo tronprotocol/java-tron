@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+
 
  contract tokenTest{
       uint256 codesize;

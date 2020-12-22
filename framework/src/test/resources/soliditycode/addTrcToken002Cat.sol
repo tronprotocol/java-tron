@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.11;
+
 
 
 /**
@@ -1287,7 +1287,7 @@ contract KittyCore is KittyMinting {
     /// @notice No tipping!
     /// @dev Reject all Ether from being sent here, unless it's from one of the
     ///  two auction contracts. (Hopefully, we can prevent user accidents.)
-    function() external payable {
+    fallback() external payable {
         require(
             msg.sender == address(saleAuction) ||
             msg.sender == address(siringAuction)

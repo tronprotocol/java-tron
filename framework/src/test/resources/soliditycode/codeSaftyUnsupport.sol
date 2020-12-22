@@ -1,10 +1,10 @@
-//pragma solidity ^0.4.24;
+
 
 contract SubC {
 
 event log(string);
 
-function () payable external{}
+fallback() payable external{}
 
 function receiveToken() payable public{}
 
@@ -15,7 +15,7 @@ r = address(this).balance;
 
 contract UseDot {
 constructor() payable public{}
-function() payable external{}
+fallback() payable external{}
 mapping(address => mapping(trcToken => uint256)) sender_tokens;
 
 function trigger1(address payable addr, trcToken tokenInputId) payable public {

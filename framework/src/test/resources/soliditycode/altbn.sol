@@ -1,5 +1,3 @@
-pragma solidity ^0.5.12;
-
 contract AltBn128 {
   constructor() public payable {}
   function callBn256Add(bytes32 ax, bytes32 ay, bytes32 bx, bytes32 by) public returns (bytes32[2] memory result) {
@@ -9,7 +7,7 @@ contract AltBn128 {
     input[2] = bx;
     input[3] = by;
     assembly {
-      let success := call(gas, 0x06, 0, input, 0x80, result, 0x40)
+      let success := call(gas(), 0x06, 0, input, 0x80, result, 0x40)
     }
 
   }
@@ -22,7 +20,7 @@ contract AltBn128 {
     input[2] = bx;
     input[3] = by;
     assembly {
-      let success := call(gas, 0xac, 0, input, 0x80, result, 0x40)
+      let success := call(gas(), 0xac, 0, input, 0x80, result, 0x40)
     }
   }
 
@@ -32,7 +30,7 @@ contract AltBn128 {
     input[1] = y;
     input[2] = scalar;
     assembly {
-      let success := call(gas, 0x07, 0, input, 0x60, result, 0x40)
+      let success := call(gas(), 0x07, 0, input, 0x60, result, 0x40)
       switch success
       case 0 {
         revert(0,0)
@@ -46,7 +44,7 @@ contract AltBn128 {
     require(len % 192 == 0);
     assembly {
       let memPtr := mload(0x40)
-      let success := call(gas, 0x08, 0, add(input, 0x20), len, memPtr, 0x20)
+      let success := call(gas(), 0x08, 0, add(input, 0x20), len, memPtr, 0x20)
       switch success
       case 0 {
         revert(0,0)
