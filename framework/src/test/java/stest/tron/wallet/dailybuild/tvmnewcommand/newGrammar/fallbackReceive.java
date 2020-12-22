@@ -170,7 +170,6 @@ public class fallbackReceive {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("getResult: " + infoById.get().getResultValue());
-    Assert.assertEquals(2, infoById.get().getInternalTransactionsCount());
     Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
     List<Protocol.TransactionInfo.Log> logList = infoById.get().getLogList();
     if (!Objects.isNull(logList)) {
