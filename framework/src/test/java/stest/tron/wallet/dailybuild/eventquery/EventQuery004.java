@@ -122,7 +122,8 @@ public class EventQuery004 {
             "depositForLog()", "#", false,
             1L, 100000000L, event001Address, event001Key, blockingStubFull);
         logger.info(txid);
-        if(PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getResultValue() == 0) {
+        if (PublicMethed.getTransactionInfoById(txid,blockingStubFull).get()
+            .getResultValue() == 0) {
           sendTransaction = false;
         }
       }
@@ -175,7 +176,8 @@ public class EventQuery004 {
             "depositForLog()", "#", false,
             1L, 100000000L, event001Address, event001Key, blockingStubFull);
         logger.info(txid);
-        if(PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getResultValue() == 0) {
+        if (PublicMethed.getTransactionInfoById(txid,blockingStubFull).get()
+            .getResultValue() == 0) {
           sendTransaction = false;
         }
 
