@@ -845,7 +845,7 @@ public class StressPrecondition {
 
 
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test16DeployJustlinkSmartContract() {
     // deployJst
     String contractName = "Jst";
@@ -950,7 +950,7 @@ public class StressPrecondition {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test17DeployJustSwapSmartContract() {
     // deployJustswapFactory
     String contractName = "JustswapFactory";
