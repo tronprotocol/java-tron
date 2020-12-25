@@ -95,10 +95,11 @@ public class TestStorageAndCpu {
     while (startNum <= endNum) {
       logger.info("scan block num:" + startNum);
       builder.setNum(startNum);
-      List<Transaction>  transactionList = blockingStubFull.getBlockByNum(builder.build()).getTransactionsList();
+      List<Transaction>  transactionList = blockingStubFull
+          .getBlockByNum(builder.build()).getTransactionsList();
       Integer transactionNumInThisBlock = transactionList.size();
       totalNum = totalNum + transactionNumInThisBlock;
-      for(Transaction transaction : transactionList) {
+      for (Transaction transaction : transactionList) {
         if (transaction.getRet(0).getContractRet().name().equals("SUCCESS")) {
           successNum++;
         } else {
