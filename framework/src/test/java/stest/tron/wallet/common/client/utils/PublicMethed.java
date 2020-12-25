@@ -75,6 +75,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -102,6 +103,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
@@ -2240,7 +2242,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-
   public static boolean sellStorage(long quantity, byte[] address, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2279,7 +2280,9 @@ public class PublicMethed {
     return response.getResult();
   }
 
-
+  /**
+   * constructor.
+   */
   public static byte[] deployContractFallbackReceive(String contractName, String abiString,
       String code,
       String data, Long feeLimit, long value, long consumeUserResourcePercent,
@@ -2522,6 +2525,9 @@ public class PublicMethed {
         blockingStubFull);
   }
 
+  /**
+   * constructor.
+   */
   public static byte[] deployContractFallback(String contractName, String abiString, String code,
       String data, Long feeLimit, long value, long consumeUserResourcePercent,
       String libraryAddress, String priKey, byte[] ownerAddress,
@@ -3024,6 +3030,9 @@ public class PublicMethed {
     }
   }
 
+  /**
+   * constructor.
+   */
   public static SmartContract.ABI.Entry.EntryType getEntryType2(String type) {
     switch (type) {
       case "constructor":
@@ -4372,8 +4381,8 @@ public class PublicMethed {
   public static Optional<AssetIssueList> getAssetIssueByAccount(byte[] address,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBS = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBS).build();
+    ByteString addressBs = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
     AssetIssueList assetIssueList = blockingStubFull.getAssetIssueByAccount(request);
     return Optional.ofNullable(assetIssueList);
   }
@@ -6754,8 +6763,8 @@ public class PublicMethed {
    */
   public static Optional<Protocol.MarketOrderList> getMarketOrderByAccount(byte[] address,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    ByteString addressBS = ByteString.copyFrom(address);
-    BytesMessage request = BytesMessage.newBuilder().setValue(addressBS).build();
+    ByteString addressBs = ByteString.copyFrom(address);
+    BytesMessage request = BytesMessage.newBuilder().setValue(addressBs).build();
 
     Protocol.MarketOrderList marketOrderList;
     marketOrderList = blockingStubFull.getMarketOrderByAccount(request);
@@ -6767,8 +6776,8 @@ public class PublicMethed {
    */
   public static Optional<Protocol.MarketOrderList> getMarketOrderByAccountSolidity(byte[] address,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
-    ByteString addressBS = ByteString.copyFrom(address);
-    BytesMessage request = BytesMessage.newBuilder().setValue(addressBS).build();
+    ByteString addressBs = ByteString.copyFrom(address);
+    BytesMessage request = BytesMessage.newBuilder().setValue(addressBs).build();
 
     Protocol.MarketOrderList marketOrderList;
     marketOrderList = blockingStubSolidity.getMarketOrderByAccount(request);
@@ -7065,5 +7074,49 @@ public class PublicMethed {
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
 
     return response.getResult();
+  }
+
+  /**
+   * constructor.
+   */
+  public static Long getAccountBalance(Protocol.Block block,byte[] address,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    final Long blockNum = block.getBlockHeader().getRawData().getNumber();
+    BlockId blockId = new BlockId(
+        org.tron.common.utils.Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            block.getBlockHeader().getRawData().toByteArray()),
+        block.getBlockHeader().getRawData().getNumber());
+
+
+
+    BalanceContract.AccountIdentifier accountIdentifier = BalanceContract
+        .AccountIdentifier.newBuilder().setAddress(ByteString.copyFrom(address)).build();
+    BalanceContract.BlockBalanceTrace.BlockIdentifier blockIdentifier
+        = BalanceContract.BlockBalanceTrace.BlockIdentifier.newBuilder()
+        .setHash(blockId.getByteString()).setNumber(blockNum).build();
+
+    BalanceContract.AccountBalanceRequest accountBalanceRequest
+        = BalanceContract.AccountBalanceRequest.newBuilder()
+        .setAccountIdentifier(accountIdentifier).setBlockIdentifier(blockIdentifier).build();
+    return blockingStubFull.getAccountBalance(accountBalanceRequest).getBalance();
+  }
+
+  /**
+   * constructor.
+   */
+  public static BalanceContract.BlockBalanceTrace getBlockBalance(Protocol.Block block,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    final Long blockNum = block.getBlockHeader().getRawData().getNumber();
+    BlockId blockId = new BlockId(
+        org.tron.common.utils.Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            block.getBlockHeader().getRawData().toByteArray()),
+        block.getBlockHeader().getRawData().getNumber());
+    BalanceContract.BlockBalanceTrace.BlockIdentifier blockIdentifier
+        = BalanceContract.BlockBalanceTrace.BlockIdentifier.newBuilder()
+        .setHash(blockId.getByteString()).setNumber(blockNum).build();
+
+    return blockingStubFull.getBlockBalanceTrace(blockIdentifier);
+
+
   }
 }
