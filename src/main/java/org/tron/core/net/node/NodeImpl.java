@@ -103,6 +103,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private MessageCount trxCount = new MessageCount();
 
   private long TPS = 0;
+  private boolean exitAble = false;
 
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
       .maximumSize(100_000_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000_000)
@@ -574,13 +575,22 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       }
     }
     int n = 0;
-    while (spread.size() > 0 && getActivePeer().size() > 0) {
+    while (advObjToSpread.size() > 0 && getActivePeer().size() > 0) {
+    //while (spread.size() > 0 && getActivePeer().size() > 0) {
       logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(), spread.size());
 
-        if (advObjToSpread.size()  < spread.size() * 6) {
+      if(advObjToSpread.size() > 5 * TPS) {
+        exitAble = true;
+      }
+        //if (advObjToSpread.size()  < spread.size() * 3 && advObjToSpread.size() > spread.size()) {
+        if (advObjToSpread.size()  < TPS * 3 && exitAble) {
+          logger.info("advObjToSpread {} TPS:{}", advObjToSpread.size(), TPS);
           logger.info("Stress task end.");
           System.exit(0);
         }
+      if(spread.size() <= 0) {
+        break;
+      }
 
       InvToSend sendPackage = new InvToSend();
       spread.entrySet().forEach(id -> getActivePeer().stream()
