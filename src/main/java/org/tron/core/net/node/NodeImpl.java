@@ -577,7 +577,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     while (spread.size() > 0 && getActivePeer().size() > 0) {
       logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(), spread.size());
 
-        if (advObjToSpread.size()  < spread.size()) {
+        if (advObjToSpread.size()  < spread.size() * 6) {
           logger.info("Stress task end.");
           System.exit(0);
         }
