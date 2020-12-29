@@ -1088,9 +1088,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           msg = del.getData(hash, type);
         } catch (StoreException e) {
           logger.error("fetch message {} {} failed.", type, hash);
-          peer.sendMessage(new ItemNotFound());
+          continue;
+          //peer.sendMessage(new ItemNotFound());
           //todo,should be disconnect?
-          return;
+          //return;
         }
       }
 
