@@ -168,11 +168,20 @@ public class EventQuery004 {
     String transactionMessage = "";
     Boolean sendTransaction = true;
     Integer retryTimes = 40;
+    String txid1 = "";
+    String txid2 = "";
+    String txid3 = "";
 
     while (retryTimes-- > 0) {
       byte[] message = req.recv();
       if (sendTransaction) {
-        txid = PublicMethed.triggerContract(contractAddress,
+        txid1 = PublicMethed.triggerContract(contractAddress,
+            "depositForLog()", "#", false,
+            1L, 100000000L, event001Address, event001Key, blockingStubFull);
+        txid2 = PublicMethed.triggerContract(contractAddress,
+            "depositForLog()", "#", false,
+            1L, 100000000L, event001Address, event001Key, blockingStubFull);
+        txid3 = PublicMethed.triggerContract(contractAddress,
             "depositForLog()", "#", false,
             1L, 100000000L, event001Address, event001Key, blockingStubFull);
         logger.info(txid);
@@ -197,8 +206,9 @@ public class EventQuery004 {
     JSONObject blockObject = JSONObject.parseObject(transactionMessage);
     Assert.assertTrue(blockObject.containsKey("timeStamp"));
     Assert.assertEquals(blockObject.getString("triggerName"), "solidityLogTrigger");
+    txid = blockObject.getString("transactionId");
 
-    Assert.assertEquals(blockObject.getString("transactionId"), txid);
+    Assert.assertTrue(txid1.equals(txid) || txid2.equals(txid) || txid3.equals(txid));
   }
 
 
