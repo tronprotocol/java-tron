@@ -60,6 +60,10 @@ public class StressPrecondition {
       .getString("address.triggerOwnerAddress");
   protected String triggerOwnerKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.triggerOwnerKey");
+  protected String triggerRandomTrc20Address = Configuration.getByPath("stress.conf")
+      .getString("address.triggerRandomTrc20Address");
+  protected String triggerRandomTrc20Key = Configuration.getByPath("stress.conf")
+      .getString("privateKey.triggerRandomTrc20Key");
   protected String commonOwnerPrivateKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.commonOwnerPrivateKey");
   protected String commonToAddress = Configuration.getByPath("stress.conf")
@@ -291,6 +295,7 @@ public class StressPrecondition {
     sendCoinToStressAccount(exchangeOwnerKey);
     sendCoinToStressAccount(mutiSignOwnerKey);
     sendCoinToStressAccount(dexAssetIssueOwnerKey);
+    sendCoinToStressAccount(triggerRandomTrc20Key);
     logger.info(
         "commonOwnerAddress " + PublicMethed.queryAccount(commonOwnerPrivateKey, blockingStubFull)
             .getBalance());
@@ -307,6 +312,8 @@ public class StressPrecondition {
     logger.info("exchangeOwnerKey " + PublicMethed.queryAccount(exchangeOwnerKey, blockingStubFull)
         .getBalance());
     logger.info("mutiSignOwnerKey " + PublicMethed.queryAccount(mutiSignOwnerKey, blockingStubFull)
+        .getBalance());
+    logger.info("triggerRandomTrc20Key " + PublicMethed.queryAccount(triggerRandomTrc20Key, blockingStubFull)
         .getBalance());
     PublicMethed
         .freezeBalanceGetEnergy(PublicMethed.getFinalAddress(triggerOwnerKey), 50000000000000L, 3,
@@ -633,7 +640,7 @@ public class StressPrecondition {
       commonContractAddress4 = PublicMethed
           .deployContract(contractName, abi, code, "", 1000000000L,
               0L, 100, 10000, "0",
-              0, null, triggerOwnerKey, PublicMethed.getFinalAddress(triggerOwnerKey),
+              0, null, triggerRandomTrc20Key, PublicMethed.getFinalAddress(triggerRandomTrc20Key),
               blockingStubFull);
       try {
         newContractAddress = WalletClient.encode58Check(commonContractAddress4);
