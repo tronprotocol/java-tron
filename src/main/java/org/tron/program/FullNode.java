@@ -60,7 +60,7 @@ public class FullNode {
   public BufferedReader br = null;
   private static  File filePath = new File(Configuration.getByPath("stress.conf").getString("param.mainnetAccountFile"));
   private static  File trc20ContractAddressPath = new File(Configuration.getByPath("stress.conf").getString("param.trc20ContractAddressFile"));
-
+  public static long trxCount = 0;
   /**
    * Start the FullNode.
    */
@@ -214,7 +214,7 @@ public class FullNode {
       System.exit(1);
     }
 
-    long trxCount = 0;
+    //long trxCount = 0;
     FileInputStream fis = null;
     for(int index = 1; index <= dispatchCount;index++) {
       logger.info("Start to process dispatch task {}",index);

@@ -76,6 +76,7 @@ import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.services.WitnessProductBlockService;
+import org.tron.program.FullNode;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
@@ -585,6 +586,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         //if (advObjToSpread.size()  < spread.size() * 3 && advObjToSpread.size() > spread.size()) {
         if (advObjToSpread.size()  < TPS * 3 && exitAble) {
           logger.info("advObjToSpread {} TPS:{}", advObjToSpread.size(), TPS);
+          logger.info("Transaction total count: {}", FullNode.trxCount);
           logger.info("Stress task end.");
           System.exit(0);
         }
