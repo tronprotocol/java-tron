@@ -721,8 +721,11 @@ public class Manager {
         try {
           if (accountCapsule != null) {
             adjustBalance(getAccountStore(), accountCapsule, -fee);
-            adjustBalance(getAccountStore(), this.getAccountStore()
-                .getBlackhole(), +fee);
+            if (getDynamicPropertiesStore().supportRemoveBlackHole()) {
+              getDynamicPropertiesStore().burnTrx(fee);
+            } else {
+              adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);
+            }
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(

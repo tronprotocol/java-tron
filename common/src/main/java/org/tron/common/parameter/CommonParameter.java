@@ -305,6 +305,10 @@ public class CommonParameter {
   @Setter
   public long allowTransactionFeePool;
 
+  @Getter
+  @Setter
+  public long allowRemoveBlackHole;
+
   // @Getter
   // @Setter
   // public long allowShieldedTransaction; //committee parameter

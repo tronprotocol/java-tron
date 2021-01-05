@@ -238,6 +238,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTransactionFeePool(entry.getValue());
           break;
         }
+        case ALLOW_REMOVE_BLACKHOLE: {
+          manager.getDynamicPropertiesStore().saveAllowRemoveBlackHole(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

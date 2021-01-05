@@ -75,6 +75,8 @@ abstract class ResourceProcessor {
       if (dynamicPropertiesStore.supportTransactionFeePool()) {
         dynamicPropertiesStore
             .saveTransactionFeePool(dynamicPropertiesStore.getTransactionFeePool() + fee);
+      } else if (dynamicPropertiesStore.supportRemoveBlackHole()) {
+        dynamicPropertiesStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
       }
