@@ -51,6 +51,10 @@ public class TransactionGenerator {
     this(context, "transaction.csv", count);
   }
 
+  public TransactionGenerator(TronApplicationContext context, int count,int index) {
+    this(context, "transaction" + index + ".csv", count);
+  }
+
 
 
   private void consumerGenerateTransaction() throws IOException {

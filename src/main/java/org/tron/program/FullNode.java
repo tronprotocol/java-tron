@@ -52,6 +52,8 @@ public class FullNode {
 
   private static ConcurrentLinkedQueue<Transaction> transactionIDs = new ConcurrentLinkedQueue<>();
   private static volatile boolean isFinishSend = false;
+  private static Integer singleTaskTransactionCount = 200000;
+  private static Integer dispatchCount;
 
   public static ConcurrentLinkedQueue<String> accountQueue = new ConcurrentLinkedQueue<>();
   public static List<String> contractAddressList = new ArrayList<>();
@@ -97,7 +99,11 @@ public class FullNode {
 
     if (cfgArgs.isGenerate()) {
       logger.info("is generate is true");
-      new TransactionGenerator(context, cfgArgs.getStressCount()).start();
+      dispatchCount = cfgArgs.getStressCount()/singleTaskTransactionCount;
+      for(int i = 1; i <= dispatchCount;i++) {
+        new TransactionGenerator(context, i == dispatchCount ? cfgArgs.getStressCount()%singleTaskTransactionCount : singleTaskTransactionCount,i).start();
+      }
+      //new TransactionGenerator(context, cfgArgs.getStressCount()).start();
 
     }
 
@@ -139,110 +145,130 @@ public class FullNode {
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
 
 
-    File f = new File("transaction.csv");
+    for(int i = 1; i <= dispatchCount;i++) {
+      //File f = new File("transaction" + i + ".csv");
+      //FileInputStream fis = null;
+      //long startTime = System.currentTimeMillis();
+      //long trxCount = 0;
+      int value = i;
+      isFinishSend = false;
+      saveTransactionIDPool.submit(() -> {
+        BufferedWriter bufferedWriter = null;
+        int count = 0;
+        try {
+          bufferedWriter = new BufferedWriter(
+              new FileWriter("transactionsID" + value + ".csv"));
+
+          while (!isFinishSend) {
+            count++;
+
+            if (transactionIDs.isEmpty()) {
+              try {
+                Thread.sleep(100);
+                continue;
+              } catch (InterruptedException e) {
+                System.out.println(e);
+              }
+            }
+
+            Transaction transaction = transactionIDs.peek();
+
+            try {
+
+              Sha256Hash id = getID(transaction);
+              bufferedWriter.write(id.toString());
+              bufferedWriter.newLine();
+              if (count % 1000 == 0) {
+                bufferedWriter.flush();
+                System.out.println("transaction id size: " + transactionIDs.size());
+              }
+              transactionIDs.poll();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        } finally {
+          if (bufferedWriter != null) {
+            try {
+              bufferedWriter.flush();
+              bufferedWriter.close();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        }
+      });
+
+
+    }
+/*    File f = new File("transaction.csv");
     FileInputStream fis = null;
     long startTime = System.currentTimeMillis();
-    long trxCount = 0;
+    long trxCount = 0;*/
 
-
-    saveTransactionIDPool.submit(() -> {
-      BufferedWriter bufferedWriter = null;
-      int count = 0;
-      try {
-        bufferedWriter = new BufferedWriter(
-            new FileWriter("transactionsID.csv"));
-
-        while (!isFinishSend) {
-          count++;
-
-          if (transactionIDs.isEmpty()) {
-            try {
-              Thread.sleep(100);
-              continue;
-            } catch (InterruptedException e) {
-              System.out.println(e);
-            }
-          }
-
-          Transaction transaction = transactionIDs.peek();
-
-          try {
-
-            Sha256Hash id = getID(transaction);
-            bufferedWriter.write(id.toString());
-            bufferedWriter.newLine();
-            if (count % 1000 == 0) {
-              bufferedWriter.flush();
-              System.out.println("transaction id size: " + transactionIDs.size());
-            }
-            transactionIDs.poll();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-      } finally {
-        if (bufferedWriter != null) {
-          try {
-            bufferedWriter.flush();
-            bufferedWriter.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
-      }
-    });
+    long startTime = System.currentTimeMillis();
 
     if(cfgArgs.getStressTps() < 5) {
       System.exit(1);
     }
 
-    try {
-      fis = new FileInputStream(f);
-      Transaction transaction;
-      Integer i = 0;
-      while ((transaction = Transaction.parseDelimitedFrom(fis)) != null) {
-        trxCount++;
-        //logger.info(i++ + "   " + transaction.toString());
-        Message message = new TransactionMessage(transaction);
-        // 单线程广播交易
-        while (true) {
-          if (nodeImpl.getAdvObjToSpreadSize() <= 100_000) {
-            nodeImpl.broadcast(message);
-            transactionIDs.add(transaction);
-            break;
-          } else {
-            Thread.sleep(500);
-          }
-        }
-      }
-
-      int emptyCount = 0;
-      while (true) {
-        if (transactionIDs.isEmpty()) {
-          if (emptyCount == 7) {
-            Thread.sleep(500);
-            isFinishSend = true;
-            break;
-          } else {
-            emptyCount++;
-          }
-        } else {
-          emptyCount = 0;
-        }
-        Thread.sleep(200);
-      }
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
+    long trxCount = 0;
+    FileInputStream fis = null;
+    for(int index = 1; index <= dispatchCount;index++) {
+      logger.info("Start to process dispatch task {}",index);
       try {
-        fis.close();
-      } catch (IOException e) {
+        isFinishSend = false;
+        //transactionIDs.clear();
+        File f = new File("transaction" + index + ".csv");
+        fis = new FileInputStream(f);
+        Transaction transaction;
+        Integer i = 0;
+        while ((transaction = Transaction.parseDelimitedFrom(fis)) != null) {
+          trxCount++;
+          //logger.info(i++ + "   " + transaction.toString());
+          Message message = new TransactionMessage(transaction);
+          // 单线程广播交易
+          while (true) {
+            if (nodeImpl.getAdvObjToSpreadSize() <= 100_000) {
+              nodeImpl.broadcast(message);
+              transactionIDs.add(transaction);
+              break;
+            } else {
+              Thread.sleep(500);
+            }
+          }
+        }
+
+        int emptyCount = 0;
+        while (true) {
+          if (transactionIDs.isEmpty()) {
+            if (emptyCount == 5) {
+              Thread.sleep(200);
+              isFinishSend = true;
+              break;
+            } else {
+              emptyCount++;
+            }
+          } else {
+            emptyCount = 0;
+          }
+          Thread.sleep(200);
+        }
+
+      } catch (Exception e) {
         e.printStackTrace();
+      } finally {
+        try {
+          logger.info("Finished process dispatch task {}",index);
+          fis.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
       }
     }
+
     long cost = System.currentTimeMillis() - startTime;
     logger.info("Trx size: {}, cost: {}, tps: {}, txid: {}",
         trxCount, cost, 1.0 * trxCount / cost * 1000, transactionIDs.size());
