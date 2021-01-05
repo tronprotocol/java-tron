@@ -94,6 +94,11 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String delegateResourceKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.delegateResourceKey");
 
+  protected String triggerRandomTrc20Address = Configuration.getByPath("stress.conf")
+      .getString("address.triggerRandomTrc20Address");
+  protected String triggerRandomTrc20Key = Configuration.getByPath("stress.conf")
+      .getString("privateKey.triggerRandomTrc20Key");
+
 
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();
