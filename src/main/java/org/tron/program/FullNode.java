@@ -52,7 +52,7 @@ public class FullNode {
 
   private static ConcurrentLinkedQueue<Transaction> transactionIDs = new ConcurrentLinkedQueue<>();
   private static volatile boolean isFinishSend = false;
-  private static Integer singleTaskTransactionCount = 200000;
+  private static Integer singleTaskTransactionCount = 800000;
   private static Integer dispatchCount;
 
   public static ConcurrentLinkedQueue<String> accountQueue = new ConcurrentLinkedQueue<>();
