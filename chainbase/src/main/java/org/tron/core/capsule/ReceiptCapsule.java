@@ -196,8 +196,7 @@ public class ReceiptCapsule {
 
       if (dynamicPropertiesStore.supportTransactionFeePool() &&
           !contractResult.equals(contractResult.OUT_OF_TIME)) {
-        dynamicPropertiesStore
-            .saveTransactionFeePool(dynamicPropertiesStore.getTransactionFeePool() + energyFee);
+        dynamicPropertiesStore.addTransactionFeePool(energyFee);
       } else if (dynamicPropertiesStore.supportRemoveBlackHole()) {
         dynamicPropertiesStore.burnTrx(energyFee);
       } else {

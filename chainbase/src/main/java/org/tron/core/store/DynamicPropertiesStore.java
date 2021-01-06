@@ -1425,6 +1425,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_TRANSACTION_FEE_POOL"));
   }
 
+  public void addTransactionFeePool(long amount) {
+    amount += getTransactionFeePool();
+    saveTransactionFeePool(amount);
+  }
+
   public void saveTransactionFeePool(long value) {
     this.put(TRANSACTION_FEE_POOL,
         new BytesCapsule(ByteArray.fromLong(value)));
