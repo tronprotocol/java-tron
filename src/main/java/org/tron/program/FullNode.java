@@ -145,7 +145,7 @@ public class FullNode {
     NodeImpl nodeImpl = context.getBean(NodeImpl.class);
 
 
-    for(int i = 1; i <= dispatchCount;i++) {
+    for(int i = 0; i <= dispatchCount;i++) {
       //File f = new File("transaction" + i + ".csv");
       //FileInputStream fis = null;
       //long startTime = System.currentTimeMillis();
@@ -216,7 +216,7 @@ public class FullNode {
 
     //long trxCount = 0;
     FileInputStream fis = null;
-    for(int index = 1; index <= dispatchCount;index++) {
+    for(int index = 0; index <= dispatchCount;index++) {
       logger.info("Start to process dispatch task {}",index);
       try {
         isFinishSend = false;
