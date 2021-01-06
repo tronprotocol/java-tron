@@ -26,7 +26,7 @@ import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 
 @Slf4j
-public class WalletTestMutiSign015 {
+public class MutiSignProposalTest {
 
   private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
@@ -82,7 +82,7 @@ public class WalletTestMutiSign015 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSignForProposal() {
     long needcoin = updateAccountPermissionFee + multiSignFee * 5;
     Assert.assertTrue(PublicMethed.sendcoin(witness001Address, needcoin + 10000000L,

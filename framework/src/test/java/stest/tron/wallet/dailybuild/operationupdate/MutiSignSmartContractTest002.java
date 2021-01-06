@@ -27,7 +27,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 @Slf4j
-public class WalletTestMutiSign014 {
+public class MutiSignSmartContractTest002 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -77,7 +77,7 @@ public class WalletTestMutiSign014 {
    * constructor.
    */
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -89,7 +89,7 @@ public class WalletTestMutiSign014 {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
-  @Test(enabled = false, threadPoolSize = 1, invocationCount = 1)
+  @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)
   public void testMutiSignForSmartContract() {
     ecKey1 = new ECKey(Utils.getRandom());
     manager1Address = ecKey1.getAddress();
@@ -154,7 +154,7 @@ public class WalletTestMutiSign014 {
         .getString("abi.abi_TestStorageAndCpu_storageAndCpu");
     byte[] contractAddress = PublicMethedForMutiSign.deployContract1(contractName, abi, code,
         "", maxFeeLimit,
-        0L, 100, null, ownerKey, ownerAddress, blockingStubFull, 0, ownerKeyString);
+        0L, 100, null, ownerKey, ownerAddress, blockingStubFull, 2, permissionKeyString);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
@@ -163,16 +163,16 @@ public class WalletTestMutiSign014 {
     String initParmes = "\"" + "930" + "\"";
     txid = PublicMethedForMutiSign.triggerContract1(contractAddress,
         "testUseCpu(uint256)", initParmes, false,
-        0, maxFeeLimit, ownerAddress, ownerKey, blockingStubFull, 0, ownerKeyString);
+        0, maxFeeLimit, ownerAddress, ownerKey, blockingStubFull, 2, permissionKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.getTransactionById(txid, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(
         PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
-            ownerAddress, 0, blockingStubFull, ownerKeyString));
+            ownerAddress, 2, blockingStubFull, permissionKeyString));
     Assert.assertTrue(
         PublicMethedForMutiSign.updateEnergyLimitWithPermissionId(contractAddress, 50, ownerKey,
-            ownerAddress, 0, blockingStubFull, ownerKeyString));
+            ownerAddress, 2, blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);

@@ -24,7 +24,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 @Slf4j
-public class WalletTestMutiSign012 {
+public class MutiSignAssetTest002 {
 
   private static final long now = System.currentTimeMillis();
   private static final long totalSupply = now;
@@ -76,7 +76,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -84,7 +84,7 @@ public class WalletTestMutiSign012 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign1CreateAssetissue() {
     ecKey1 = new ECKey(Utils.getRandom());
     manager1Address = ecKey1.getAddress();
@@ -157,7 +157,7 @@ public class WalletTestMutiSign012 {
     txid = PublicMethedForMutiSign
         .createAssetIssueForTransactionId1(ownerAddress, name, totalSupply, 1,
             1, start, end, 1, description, url, 2000L, 2000L,
-            1L, 1L, ownerKey, blockingStubFull, 0, ownerKeyString);
+            1L, 1L, ownerKey, blockingStubFull, 2, permissionKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertNotNull(txid);
@@ -184,7 +184,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign2TransferAssetissue() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.printAddress(manager1Key);
@@ -196,7 +196,7 @@ public class WalletTestMutiSign012 {
 
     String txid = PublicMethedForMutiSign.transferAssetForTransactionId1(manager1Address,
         assetAccountId1.toByteArray(), 10, ownerAddress, ownerKey, blockingStubFull,
-        0, ownerKeyString);
+        2, permissionKeyString);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -222,7 +222,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign3ParticipateAssetissue() {
     ecKey4 = new ECKey(Utils.getRandom());
     participateAddress = ecKey4.getAddress();
@@ -279,8 +279,8 @@ public class WalletTestMutiSign012 {
     balanceBefore = balanceAfter;
 
     txid = PublicMethedForMutiSign.participateAssetIssueForTransactionId(ownerAddress,
-        assetAccountId1.toByteArray(), 10, participateAddress, participateKey, 0,
-        blockingStubFull, ownerKeyString);
+        assetAccountId1.toByteArray(), 10, participateAddress, participateKey, 2,
+        blockingStubFull, permissionKeyString);
 
     Assert.assertNotNull(txid);
 
@@ -305,7 +305,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign4updateAssetissue() {
     url = "MutiSign001_update_url" + Long.toString(now);
     ownerKeyString[0] = ownerKey;
@@ -316,7 +316,7 @@ public class WalletTestMutiSign012 {
 
     String txid = PublicMethedForMutiSign
         .updateAssetForTransactionId(ownerAddress, description.getBytes(), url.getBytes(), 100L,
-            100L, ownerKey, 0, blockingStubFull, ownerKeyString);
+            100L, ownerKey, 2, blockingStubFull, permissionKeyString);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertNotNull(txid);
@@ -341,7 +341,7 @@ public class WalletTestMutiSign012 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
