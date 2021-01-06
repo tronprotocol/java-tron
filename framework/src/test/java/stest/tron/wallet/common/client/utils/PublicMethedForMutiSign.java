@@ -5319,7 +5319,8 @@ public class PublicMethedForMutiSign {
 
     if (transaction.getRawData().getContract(0).getType()
         != ContractType.MarketCancelOrderContract) {
-      System.out.println("Wrong ContractType :" + transaction.getRawData().getContract(0).getType());
+      System.out.println("Wrong ContractType :"
+          + transaction.getRawData().getContract(0).getType());
       return false;
     }
 
