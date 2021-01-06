@@ -73,8 +73,10 @@ abstract class ResourceProcessor {
       accountCapsule.setLatestOperationTime(latestOperationTime);
       Commons.adjustBalance(accountStore, accountCapsule, -fee);
       if (dynamicPropertiesStore.supportTransactionFeePool()) {
+        dynamicPropertiesStore.addTransactionFeeAmount(fee);
         dynamicPropertiesStore.addTransactionFeePool(fee);
       } else if (dynamicPropertiesStore.supportRemoveBlackHole()) {
+        dynamicPropertiesStore.addTransactionFeeAmount(fee);
         dynamicPropertiesStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
