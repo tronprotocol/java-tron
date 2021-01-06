@@ -154,8 +154,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
   private static final byte[] ALLOW_REMOVE_BLACKHOLE = "ALLOW_REMOVE_BLACKHOLE".getBytes();
 
-  private static final byte[] TRANSACTION_FEE_AMOUNT = "TRANSACTION_FEE_AMOUNT".getBytes();
-
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -723,12 +721,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBurnTrxAmount();
     } catch (IllegalArgumentException e) {
       this.saveBurnTrx(0L);
-    }
-
-    try {
-      this.getTransactionFeeAmount();
-    } catch (IllegalArgumentException e) {
-      this.saveTransactionFeeAmount(0L);
     }
 
     try {
@@ -2135,22 +2127,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveMaxFeeLimit(long maxFeeLimit) {
     this.put(MAX_FEE_LIMIT,
         new BytesCapsule(ByteArray.fromLong(maxFeeLimit)));
-  }
-
-  public long getTransactionFeeAmount() {
-    return Optional.ofNullable(getUnchecked(TRANSACTION_FEE_AMOUNT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(() -> new IllegalArgumentException("not found TRANSACTION_FEE_AMOUNT"));
-  }
-
-  public void addTransactionFeeAmount(long amount) {
-    amount += getTransactionFeeAmount();
-    saveTransactionFeeAmount(amount);
-  }
-
-  public void saveTransactionFeeAmount(long amount) {
-    this.put(TRANSACTION_FEE_AMOUNT, new BytesCapsule(ByteArray.fromLong(amount)));
   }
 
   public long getBurnTrxAmount() {
