@@ -24,7 +24,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 @Slf4j
-public class WalletTestMutiSign012 {
+public class MutiSignAssetTest {
 
   private static final long now = System.currentTimeMillis();
   private static final long totalSupply = now;
@@ -76,7 +76,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -84,7 +84,7 @@ public class WalletTestMutiSign012 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign1CreateAssetissue() {
     ecKey1 = new ECKey(Utils.getRandom());
     manager1Address = ecKey1.getAddress();
@@ -184,7 +184,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign2TransferAssetissue() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.printAddress(manager1Key);
@@ -222,7 +222,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign3ParticipateAssetissue() {
     ecKey4 = new ECKey(Utils.getRandom());
     participateAddress = ecKey4.getAddress();
@@ -305,7 +305,7 @@ public class WalletTestMutiSign012 {
    * constructor.
    */
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void testMutiSign4updateAssetissue() {
     url = "MutiSign001_update_url" + Long.toString(now);
     ownerKeyString[0] = ownerKey;
@@ -341,7 +341,7 @@ public class WalletTestMutiSign012 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

@@ -2,6 +2,8 @@ package stest.tron.wallet.dailybuild.operationupdate;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -9,6 +11,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -22,7 +26,7 @@ import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 
 @Slf4j
-public class WalletTestMutiSign019 {
+public class MutiSignProposalTest {
 
   private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
@@ -67,19 +71,22 @@ public class WalletTestMutiSign019 {
 
   @BeforeClass
   public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext(true)
+        .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode).usePlaintext(true).build();
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = false)
-  public void testMutiSignForUpdateBrokerage() {
-    long needcoin = updateAccountPermissionFee * 2 + multiSignFee * 5;
-    Assert.assertTrue(PublicMethed
-        .sendcoin(witness001Address, needcoin + 1000000L, fromAddress, testKey002,
-            blockingStubFull));
+  @Test(enabled = true)
+  public void testMutiSignForProposal() {
+    long needcoin = updateAccountPermissionFee + multiSignFee * 5;
+    Assert.assertTrue(PublicMethed.sendcoin(witness001Address, needcoin + 10000000L,
+        fromAddress, testKey002, blockingStubFull));
 
     ecKey1 = new ECKey(Utils.getRandom());
     manager1Address = ecKey1.getAddress();
@@ -103,48 +110,48 @@ public class WalletTestMutiSign019 {
 
     accountPermissionJson = "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\""
         + ",\"threshold\":2,\"keys\":[{\"address\":\"" + PublicMethed
-        .getAddressString(witnessKey001) + "\"," + "\"weight\":1},{\"address\":\"" + PublicMethed
-        .getAddressString(testKey002) + "\",\"weight\":1}]},"
+        .getAddressString(witnessKey001) + "\","
+        + "\"weight\":1},{\"address\":\"" + PublicMethed.getAddressString(testKey002)
+        + "\",\"weight\":1}]},"
         + "\"witness_permission\":{\"type\":1,\"permission_name\":\"owner\",\"threshold\":1,"
         + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
         + "\",\"weight\":1}]},"
         + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
-        + "\"operations\":\"7fff1fc0033e0300000000000000000000000000000000000000000000000000\","
+        + "\"operations\":\"7fff1fc0037e0000000000000000000000000000000000000000000000000000\","
         + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(manager1Key)
-        + "\",\"weight\":1}," + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key)
-        + "\",\"weight\":1}]}]} ";
+        + "\",\"weight\":1},"
+        + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}]}]} ";
     logger.info(accountPermissionJson);
-    PublicMethedForMutiSign
-        .accountPermissionUpdate(accountPermissionJson, witness001Address, witnessKey001,
-            blockingStubFull, ownerKeyString);
+    PublicMethedForMutiSign.accountPermissionUpdate(
+        accountPermissionJson, witness001Address, witnessKey001,
+        blockingStubFull, ownerKeyString);
 
-    //Update brokerage
+    //Create a proposal
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
+    proposalMap.put(0L, 81000L);
+    Assert.assertTrue(
+        PublicMethedForMutiSign.createProposalWithPermissionId(witness001Address, witnessKey001,
+            proposalMap, 0, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethedForMutiSign
-        .updateBrokerage(witness001Address, 70, witnessKey001, 2, permissionKeyString,
-            blockingStubFull));
+    //Get proposal list
+    ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
+    Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
+    final Integer proposalId = listProposals.get().getProposalsCount();
+    logger.info(Integer.toString(proposalId));
+
+    Assert.assertTrue(PublicMethedForMutiSign.approveProposalWithPermission(
+        witness001Address, witnessKey001, proposalId,
+        true, 0, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    //Delete proposal list after approve
+    Assert.assertTrue(PublicMethedForMutiSign.deleteProposalWithPermissionId(
+        witness001Address, witnessKey001, proposalId, 0, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    // wait a MaintenanceTimeInterval
-    accountPermissionJson = "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\""
-        + ",\"threshold\":1,\"keys\":[{\"address\":\"" + PublicMethed
-        .getAddressString(witnessKey001) + "\"," + "\"weight\":1}]},"
-        + "\"witness_permission\":{\"type\":1,\"permission_name\":\"owner\",\"threshold\":1,"
-        + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-        + "\",\"weight\":1}]},"
-        + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
-        + "\"operations\":\"7fff1fc0033e0300000000000000000000000000000000000000000000000000\","
-        + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-        + "\",\"weight\":1}]}]} ";
-    logger.info(accountPermissionJson);
-    PublicMethedForMutiSign
-        .accountPermissionUpdate(accountPermissionJson, witness001Address, witnessKey001,
-            blockingStubFull, ownerKeyString);
-
-    Long balanceAfter = PublicMethed.queryAccount(witness001Address, blockingStubFull).getBalance();
+    Long balanceAfter = PublicMethed.queryAccount(witness001Address, blockingStubFull)
+        .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
 
   }
