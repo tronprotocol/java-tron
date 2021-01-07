@@ -77,10 +77,9 @@ public class TransactionUtil {
         programResult.getRet().getFee() + traceReceipt.getEnergyFee()
             + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
 
-    DynamicPropertiesStore dynamicPropertiesStore = trace.getTransactionContext()
-        .getStoreFactory().getChainBaseManager().getDynamicPropertiesStore();
-    if (dynamicPropertiesStore.supportTransactionFeePool() ||
-        dynamicPropertiesStore.supportRemoveBlackHole()) {
+    boolean supportPunishmentAmount = trace.getTransactionContext().getStoreFactory()
+        .getChainBaseManager().getDynamicPropertiesStore().supportPunishmentAmount();
+    if (supportPunishmentAmount) {
       long punishment = 0L;
       if (traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
         fee = programResult.getRet().getFee() + traceReceipt.getNetFee() +
