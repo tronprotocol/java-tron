@@ -73,7 +73,6 @@ public class TransferAssetActuator extends AbstractActuator {
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
 
-
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
       if (!ownerAccountCapsule
           .reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
@@ -86,8 +85,13 @@ public class TransferAssetActuator extends AbstractActuator {
       accountStore.put(toAddress, toAccountCapsule);
 
       Commons.adjustBalance(accountStore, ownerAccountCapsule, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
-
+      if (dynamicStore.supportTransactionFeePool()) {
+        dynamicStore.addTransactionFeePool(fee);
+      } else  if (dynamicStore.supportOptimizeBlackHole()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);

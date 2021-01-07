@@ -142,9 +142,6 @@ import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.BalanceContract;
 
@@ -660,7 +657,7 @@ public class Manager {
     }
 
     return chainBaseManager.getTransactionStore()
-            .has(transactionId);
+        .has(transactionId);
   }
 
   /**
@@ -721,8 +718,14 @@ public class Manager {
         try {
           if (accountCapsule != null) {
             adjustBalance(getAccountStore(), accountCapsule, -fee);
-            adjustBalance(getAccountStore(), this.getAccountStore()
-                .getBlackhole(), +fee);
+
+            if (getDynamicPropertiesStore().supportTransactionFeePool()) {
+              getDynamicPropertiesStore().addTransactionFeePool(fee);
+            } else if (getDynamicPropertiesStore().supportOptimizeBlackHole()) {
+              getDynamicPropertiesStore().burnTrx(fee);
+            } else {
+              adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);
+            }
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
@@ -1458,14 +1461,14 @@ public class Manager {
       return;
     }
     BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap()
-            .get(blockNum);
+        .get(blockNum);
     while (!contractLogTriggersQueue.isEmpty()) {
       ContractLogTrigger triggerCapsule = (ContractLogTrigger) contractLogTriggersQueue.poll();
       if (triggerCapsule == null) {
         break;
       }
       if (containsTransaction(ByteArray.fromHexString(triggerCapsule
-              .getTransactionId()))) {
+          .getTransactionId()))) {
         triggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(triggerCapsule);
       }
@@ -1478,15 +1481,15 @@ public class Manager {
       return;
     }
     BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap()
-            .get(blockNum);
+        .get(blockNum);
     while (!contractEventTriggersQueue.isEmpty()) {
       ContractEventTrigger triggerCapsule = (ContractEventTrigger) contractEventTriggersQueue
-              .poll();
+          .poll();
       if (triggerCapsule == null) {
         break;
       }
       if (containsTransaction(ByteArray.fromHexString(triggerCapsule
-              .getTransactionId()))) {
+          .getTransactionId()))) {
         triggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityEventTrigger(triggerCapsule);
       }

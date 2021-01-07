@@ -85,9 +85,13 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
-          fee);//send to blackhole
-
+      if (dynamicStore.supportTransactionFeePool()) {
+        dynamicStore.addTransactionFeePool(fee);
+      } else if (dynamicStore.supportOptimizeBlackHole()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);//send to blackhole
+      }
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
       List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
       Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();

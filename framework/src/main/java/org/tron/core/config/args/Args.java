@@ -180,6 +180,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
     PARAMETER.allowTransactionFeePool = 0;
+    PARAMETER.allowOptimizeBlackHole = 0;
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
@@ -631,6 +632,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTransactionFeePool =
         config.hasPath(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) : 0;
+
+    PARAMETER.allowOptimizeBlackHole =
+        config.hasPath(Constant.COMMITTEE_ALLOW_OPTIMIZE_BLACK_HOLE) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_OPTIMIZE_BLACK_HOLE) : 0;
 
     PARAMETER.allowTvmIstanbul =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
