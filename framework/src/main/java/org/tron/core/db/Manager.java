@@ -142,9 +142,6 @@ import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.BalanceContract;
 
@@ -724,7 +721,7 @@ public class Manager {
 
             if (getDynamicPropertiesStore().supportTransactionFeePool()) {
               getDynamicPropertiesStore().addTransactionFeePool(fee);
-            } else if (getDynamicPropertiesStore().supportRemoveBlackHole()) {
+            } else if (getDynamicPropertiesStore().supportOptimizeBlackHole()) {
               getDynamicPropertiesStore().burnTrx(fee);
             } else {
               adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);

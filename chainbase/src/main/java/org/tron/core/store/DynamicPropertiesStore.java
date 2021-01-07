@@ -152,8 +152,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
-  private static final byte[] ALLOW_REMOVE_BLACKHOLE = "ALLOW_REMOVE_BLACKHOLE".getBytes();
-
+  private static final byte[] ALLOW_OPTIMIZE_BLACKHOLE = "ALLOW_OPTIMIZE_BLACKHOLE".getBytes();
+  
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -724,9 +724,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowRemoveBlackHole();
+      this.getAllowOptimizeBlackHole();
     } catch (IllegalArgumentException e) {
-      this.saveAllowRemoveBlackHole(CommonParameter.getInstance().getAllowRemoveBlackHole());
+      this.saveAllowOptimizeBlackHole(CommonParameter.getInstance().getAllowOptimizeBlackHole());
     }
 
   }
@@ -2152,23 +2152,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean supportPunishmentAmount() {
-    return supportRemoveBlackHole() || supportTransactionFeePool();
+    return supportOptimizeBlackHole() || supportTransactionFeePool();
   }
 
-  public boolean supportRemoveBlackHole() {
-    return getAllowRemoveBlackHole() == 1L;
+  public boolean supportOptimizeBlackHole() {
+    return getAllowOptimizeBlackHole() == 1L;
   }
 
-  public void saveAllowRemoveBlackHole(long value) {
-    this.put(ALLOW_REMOVE_BLACKHOLE, new BytesCapsule(ByteArray.fromLong(value)));
+  public void saveAllowOptimizeBlackHole(long value) {
+    this.put(ALLOW_OPTIMIZE_BLACKHOLE, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
-  public long getAllowRemoveBlackHole() {
-    return Optional.ofNullable(getUnchecked(ALLOW_REMOVE_BLACKHOLE))
+  public long getAllowOptimizeBlackHole() {
+    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZE_BLACKHOLE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_REMOVE_BLACKHOLE"));
+            () -> new IllegalArgumentException("not found ALLOW_OPTIMIZE_BLACKHOLE"));
   }
 
   private static class DynamicResourceProperties {

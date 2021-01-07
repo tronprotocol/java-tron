@@ -282,8 +282,8 @@ public class ProgramResultTest {
   public void successAndFailResultTest()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
       ContractValidateException {
-    byte[] cContract = deployC();
-    byte[] aContract = deployA();
+    byte[] cContract = deployC("C");
+    byte[] aContract = deployA("A");
     //false
     String params =
         Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData())
@@ -380,8 +380,8 @@ public class ProgramResultTest {
   public void timeOutFeeTest()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
       ContractValidateException {
-    byte[] cContract = deployC();
-    byte[] aContract = deployA();
+    byte[] cContract = deployC("D");
+    byte[] aContract = deployA("B");
     //false
     String params =
         Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData())
@@ -405,7 +405,7 @@ public class ProgramResultTest {
 
     DynamicPropertiesStore dynamicPropertiesStore = traceSuccess.getTransactionContext()
         .getStoreFactory().getChainBaseManager().getDynamicPropertiesStore();
-    dynamicPropertiesStore.saveAllowRemoveBlackHole(1L);
+    dynamicPropertiesStore.saveAllowOptimizeBlackHole(1L);
 
     trxInfoCapsule =
         buildTransactionInfoInstance(new TransactionCapsule(trx1), null, traceSuccess);
@@ -413,10 +413,9 @@ public class ProgramResultTest {
     Assert.assertEquals(trxInfoCapsule.getPunishment(), 12705900L);
   }
 
-  private byte[] deployC()
+  private byte[] deployC(String contractName)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
       VMIllegalException {
-    String contractName = "C";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
         "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\""
@@ -433,10 +432,9 @@ public class ProgramResultTest {
             feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
 
-  private byte[] deployA()
+  private byte[] deployA(String contractName)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
       VMIllegalException {
-    String contractName = "A";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
         "[{\"constant\":false,\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"name\""
