@@ -999,6 +999,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getMaxFeeLimit())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowRemoveBlackHole")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowRemoveBlackHole())
+        .build());
+
     return builder.build();
   }
 

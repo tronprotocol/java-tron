@@ -1426,6 +1426,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void addTransactionFeePool(long amount) {
+    if (amount <= 0) {
+      return;
+    }
     amount += getTransactionFeePool();
     saveTransactionFeePool(amount);
   }
@@ -2137,6 +2140,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void burnTrx(long amount) {
+    if (amount <= 0) {
+      return;
+    }
     amount += getBurnTrxAmount();
     saveBurnTrx(amount);
   }
