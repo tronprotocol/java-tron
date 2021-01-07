@@ -723,10 +723,8 @@ public class Manager {
             adjustBalance(getAccountStore(), accountCapsule, -fee);
 
             if (getDynamicPropertiesStore().supportTransactionFeePool()) {
-              getDynamicPropertiesStore().addTransactionFeeAmount(fee);
               getDynamicPropertiesStore().addTransactionFeePool(fee);
             } else if (getDynamicPropertiesStore().supportRemoveBlackHole()) {
-              getDynamicPropertiesStore().addTransactionFeeAmount(fee);
               getDynamicPropertiesStore().burnTrx(fee);
             } else {
               adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);
@@ -1175,12 +1173,6 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionUtil
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
-
-    if (getDynamicPropertiesStore().supportTransactionFeePool() ||
-        getDynamicPropertiesStore().supportRemoveBlackHole()) {
-      transactionInfo.setFee(getDynamicPropertiesStore().getTransactionFeeAmount());
-      getDynamicPropertiesStore().saveTransactionFeeAmount(0L);
-    }
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
