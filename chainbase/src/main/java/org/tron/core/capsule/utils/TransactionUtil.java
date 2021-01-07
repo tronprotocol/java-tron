@@ -32,6 +32,7 @@ import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -75,6 +76,20 @@ public class TransactionUtil {
     long fee =
         programResult.getRet().getFee() + traceReceipt.getEnergyFee()
             + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
+
+    DynamicPropertiesStore dynamicPropertiesStore = trace.getTransactionContext()
+        .getStoreFactory().getChainBaseManager().getDynamicPropertiesStore();
+    if (dynamicPropertiesStore.supportTransactionFeePool() ||
+        dynamicPropertiesStore.supportRemoveBlackHole()) {
+      long punishment = 0L;
+      if (traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
+        fee = programResult.getRet().getFee() + traceReceipt.getNetFee() +
+            traceReceipt.getMultiSignFee();
+        punishment += traceReceipt.getEnergyFee();
+      }
+      builder.setPunishment(punishment);
+    }
+
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
     ByteString ContractAddress = ByteString.copyFrom(programResult.getContractAddress());
 
