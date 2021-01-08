@@ -259,48 +259,6 @@ public class Manager {
         }
       };
 
-  private Runnable pendingLog =
-      () -> {
-        long times = 0;
-        while (true) {
-          try {
-            /*int sum = 0;
-            int txFromUser = 0;
-            int txFromNode = 0;
-            for (TransactionCapsule transactionCapsule : pendingTransactions) {
-              if ("user".equals(transactionCapsule.getSource())) {
-                txFromUser++;
-              } else if ("node".equals(transactionCapsule.getSource())) {
-                txFromNode++;
-              }
-              sum++;
-              if (Args.getInstance().getPrintPendingTxId()) {
-                logger.info("[server busy] pending: {}", transactionCapsule.getTransactionId().toString());
-              }
-            }
-            for (TransactionCapsule transactionCapsule : rePushTransactions) {
-              if ("user".equals(transactionCapsule.getSource())) {
-                txFromUser++;
-              } else if ("node".equals(transactionCapsule.getSource())) {
-                txFromNode++;
-              }
-              sum++;
-              if (Args.getInstance().getPrintPendingTxId()) {
-                logger.info("[server busy] repush: {}", transactionCapsule.getTransactionId().toString());
-              }
-            }
-            logger.info("[server busy] pending queue tx total:{}, from user: {}, from node: {}",
-                    sum, txFromUser, txFromNode);*/
-            if ((times++ % 10) == 0) {
-              logger.info("[server busy] pending summarize: {}", pendingInfo.toString());
-            }
-            Thread.sleep(Args.getInstance().getPrintPendingInterval());
-          } catch (Throwable e) {
-            logger.error("[server busy] unknown err when print pending log: {}", e.getMessage());
-          }
-        }
-      };
-
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
   }
@@ -446,9 +404,6 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
-
-    Thread logPending = new Thread(pendingLog);
-    logPending.start();
 
     //initStoreFactory
     prepareStoreFactory();

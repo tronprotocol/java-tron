@@ -1,14 +1,17 @@
 package org.tron.core.db;
 
+import com.beust.jcommander.internal.Sets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
@@ -73,20 +76,20 @@ public class PendingManager implements AutoCloseable {
     int txFromNode = 0;
     int txFromNodeOnChain = 0;
 
-    Map<String, String> blockTxs = Maps.newHashMap();
+    Set<Sha256Hash> blockTxs = Sets.newHashSet();
     blockCapsule.getTransactions().forEach(tx -> {
-      blockTxs.put(tx.getTransactionId().toString(), "");
+      blockTxs.add(tx.getTransactionId());
     });
 
     for (TransactionCapsule transactionCapsule: dbManager.getRePushTransactions()) {
       if ("user".equals(transactionCapsule.getSource())) {
         txFromUser++;
-        if (blockTxs.containsKey(transactionCapsule.getTransactionId().toString())) {
+        if (blockTxs.contains(transactionCapsule.getTransactionId())) {
           txFromUserOnChain++;
         }
       } else if ("node".equals(transactionCapsule.getSource())) {
         txFromNode++;
-        if (blockTxs.containsKey(transactionCapsule.getTransactionId().toString())) {
+        if (blockTxs.contains(transactionCapsule.getTransactionId())) {
           txFromNodeOnChain++;
         }
       }
@@ -100,6 +103,7 @@ public class PendingManager implements AutoCloseable {
     logger.info("[server busy] repush queue size: {}, txFromUser: {}, txFromNode: {}, " +
                     "txFromUserOnChain:{}, txFromNodeOnChain:{}, blocksize: {}",
             sum, txFromUser, txFromNode, txFromUserOnChain, txFromNodeOnChain, blockTxs.size());
+    logger.info("[server busy] pending summarize: {}", pendingInfo.toString());
 
   }
 

@@ -28,11 +28,6 @@ public class CommonParameter {
   @Setter
   public boolean printPendingTxId = false;
 
-  @Getter
-  @Setter
-  @Parameter(names = {"-i", "--interval"})
-  public long printPendingInterval = 3000;  //ms
-
   @Parameter(names = {"-c", "--config"}, description = "Config File")
   public String shellConfFileName = "";
   @Getter
