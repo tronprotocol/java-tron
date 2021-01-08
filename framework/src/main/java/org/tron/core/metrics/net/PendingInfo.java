@@ -1,9 +1,5 @@
 package org.tron.core.metrics.net;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Component;
 
@@ -15,44 +11,32 @@ public class PendingInfo {
   private AtomicLong trxFromNode = new AtomicLong();
   private AtomicLong trxFromNodeAccepted = new AtomicLong();
 
-  private ConcurrentHashMap<String, Long> trxByUser = new ConcurrentHashMap();
-  private ConcurrentHashMap<String, Long> trxByNode = new ConcurrentHashMap();
-
-
-  public ConcurrentHashMap<String, Long> getTrxByUser() {
-    return trxByUser;
-  }
-
-  public ConcurrentHashMap<String, Long> getTrxByNode() {
-    return trxByNode;
-  }
-
+  private AtomicLong repushOnChain = new AtomicLong();
 
   public AtomicLong getTrxFromUser() {
-    return trxFromUser;
+    return this.trxFromUser;
   }
 
   public AtomicLong getTrxFromNode() {
-    return trxFromNode;
+    return this.trxFromNode;
   }
 
   public AtomicLong getTrxFromUserAccepted() {
-    return trxFromUserAccepted;
+    return this.trxFromUserAccepted;
   }
 
   public AtomicLong getTrxFromNodeAccepted() {
-    return trxFromNodeAccepted;
+    return this.trxFromNodeAccepted;
   }
 
-  public void removeTransaction(String txId) {
-    trxByUser.remove(txId);
-    trxByNode.remove(txId);
+  public AtomicLong getRepushOnChain() {
+    return this.repushOnChain;
   }
 
   public String toString() {
     return String.format("trxFromUser: %d, trxFromUserAccepted:%d, " +
-            "trxFromNode: %d, trxFromNodeAccepted: %d",
-            trxFromUser.get(), trxFromUserAccepted.get(), trxFromNode.get(), trxFromNodeAccepted.get());
+            "trxFromNode: %d, trxFromNodeAccepted: %d, repushOnChain: %d",
+            trxFromUser.get(), trxFromUserAccepted.get(), trxFromNode.get(),
+            trxFromNodeAccepted.get(), repushOnChain.get());
   }
-
 }

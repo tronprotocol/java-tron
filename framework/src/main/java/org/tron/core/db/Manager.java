@@ -264,7 +264,7 @@ public class Manager {
         long times = 0;
         while (true) {
           try {
-            int sum = 0;
+            /*int sum = 0;
             int txFromUser = 0;
             int txFromNode = 0;
             for (TransactionCapsule transactionCapsule : pendingTransactions) {
@@ -290,7 +290,7 @@ public class Manager {
               }
             }
             logger.info("[server busy] pending queue tx total:{}, from user: {}, from node: {}",
-                    sum, txFromUser, txFromNode);
+                    sum, txFromUser, txFromNode);*/
             if ((times++ % 10) == 0) {
               logger.info("[server busy] pending summarize: {}", pendingInfo.toString());
             }
@@ -923,7 +923,7 @@ public class Manager {
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
-    try (PendingManager pm = new PendingManager(this)) {
+    try (PendingManager pm = new PendingManager(this, block, pendingInfo)) {
 
       if (!block.generatedByMyself) {
         if (!block.validateSignature(chainBaseManager.getDynamicPropertiesStore(),
