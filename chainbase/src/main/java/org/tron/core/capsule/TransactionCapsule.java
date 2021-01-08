@@ -102,6 +102,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private long time;
 
+  @Getter
+  @Setter
+  private String source;
+
   /**
    * constructor TransactionCapsule.
    */

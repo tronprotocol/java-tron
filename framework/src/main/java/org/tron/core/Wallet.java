@@ -169,6 +169,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.metrics.net.PendingInfo;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
@@ -228,6 +229,9 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Slf4j
 @Component
 public class Wallet {
+
+  @Autowired
+  private PendingInfo pendingInfo;
 
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
@@ -474,6 +478,9 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     trx.setTime(System.currentTimeMillis());
+    // debug
+    trx.setSource("user");
+    pendingInfo.getTrxFromUser().incrementAndGet();
     try {
       Message message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
@@ -516,6 +523,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
+      pendingInfo.getTrxFromUserAccepted().incrementAndGet();
       tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();

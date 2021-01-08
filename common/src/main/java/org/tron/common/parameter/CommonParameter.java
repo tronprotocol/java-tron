@@ -24,6 +24,15 @@ public class CommonParameter {
   public static CommonParameter PARAMETER = new CommonParameter();
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
+
+  @Setter
+  public boolean printPendingTxId = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"-i", "--interval"})
+  public long printPendingInterval = 3000;  //ms
+
   @Parameter(names = {"-c", "--config"}, description = "Config File")
   public String shellConfFileName = "";
   @Getter
@@ -453,5 +462,9 @@ public class CommonParameter {
   public boolean isECKeyCryptoEngine() {
 
     return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
+  }
+
+  public boolean getPrintPendingTxId() {
+    return this.printPendingTxId;
   }
 }

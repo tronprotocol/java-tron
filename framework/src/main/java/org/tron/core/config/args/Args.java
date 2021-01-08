@@ -743,6 +743,9 @@ public class Args extends CommonParameter {
             config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
                     && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
 
+    PARAMETER.printPendingTxId = config.hasPath("node.metrics.printpendingtxid") && config
+            .getBoolean("node.metrics.printpendingtxid");
+
     logConfig();
   }
 

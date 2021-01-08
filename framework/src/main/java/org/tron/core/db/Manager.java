@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -111,6 +112,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.metrics.net.PendingInfo;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -148,6 +150,9 @@ import org.tron.protos.Protocol.TransactionInfo;
 @Slf4j(topic = "DB")
 @Component
 public class Manager {
+
+  @Autowired
+  private PendingInfo pendingInfo;
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
@@ -212,6 +217,8 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
+  private ScheduledExecutorService pendingLogExecutor = Executors.newSingleThreadScheduledExecutor();
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -248,6 +255,48 @@ public class Manager {
             Thread.currentThread().interrupt();
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in process capsule loop", throwable);
+          }
+        }
+      };
+
+  private Runnable pendingLog =
+      () -> {
+        long times = 0;
+        while (true) {
+          try {
+            int sum = 0;
+            int txFromUser = 0;
+            int txFromNode = 0;
+            for (TransactionCapsule transactionCapsule : pendingTransactions) {
+              if ("user".equals(transactionCapsule.getSource())) {
+                txFromUser++;
+              } else if ("node".equals(transactionCapsule.getSource())) {
+                txFromNode++;
+              }
+              sum++;
+              if (Args.getInstance().getPrintPendingTxId()) {
+                logger.info("[server busy] pending: {}", transactionCapsule.getTransactionId().toString());
+              }
+            }
+            for (TransactionCapsule transactionCapsule : rePushTransactions) {
+              if ("user".equals(transactionCapsule.getSource())) {
+                txFromUser++;
+              } else if ("node".equals(transactionCapsule.getSource())) {
+                txFromNode++;
+              }
+              sum++;
+              if (Args.getInstance().getPrintPendingTxId()) {
+                logger.info("[server busy] repush: {}", transactionCapsule.getTransactionId().toString());
+              }
+            }
+            logger.info("[server busy] pending queue tx total:{}, from user: {}, from node: {}",
+                    sum, txFromUser, txFromNode);
+            if ((times++ % 10) == 0) {
+              logger.info("[server busy] pending summarize: {}", pendingInfo.toString());
+            }
+            Thread.sleep(Args.getInstance().getPrintPendingInterval());
+          } catch (Throwable e) {
+            logger.error("[server busy] unknown err when print pending log: {}", e.getMessage());
           }
         }
       };
@@ -397,6 +446,9 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
+
+    Thread logPending = new Thread(pendingLog);
+    logPending.start();
 
     //initStoreFactory
     prepareStoreFactory();

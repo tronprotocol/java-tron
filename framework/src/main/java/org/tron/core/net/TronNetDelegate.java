@@ -46,6 +46,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.net.PendingInfo;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
@@ -56,6 +57,9 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
+
+  @Autowired
+  private PendingInfo pendingInfo;
 
   @Autowired
   private SyncPool syncPool;
@@ -242,7 +246,11 @@ public class TronNetDelegate {
 
   public void pushTransaction(TransactionCapsule trx) throws P2pException {
     try {
+      pendingInfo.getTrxFromNode().incrementAndGet();
       trx.setTime(System.currentTimeMillis());
+      // debug
+      trx.setSource("node");
+      pendingInfo.getTrxFromNodeAccepted().incrementAndGet();
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
         | VMIllegalException e) {

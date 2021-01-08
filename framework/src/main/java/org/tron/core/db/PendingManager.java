@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace.TimeResultType;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.metrics.net.PendingInfo;
 
 @Slf4j(topic = "DB")
 public class PendingManager implements AutoCloseable {
@@ -23,12 +25,17 @@ public class PendingManager implements AutoCloseable {
     db.getPendingTransactions().forEach(transactionCapsule -> {
       if (System.currentTimeMillis() - transactionCapsule.getTime() < timeout) {
         tmpTransactions.add(transactionCapsule);
+      } else {
+        String txId = transactionCapsule.getTransactionId().toString();
+        logger.warn("[server busy] discard transaction from pending: {}", txId);
       }
     });
 
     if (db.getPendingTransactions().size() > tmpTransactions.size()) {
       MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_MISSED_TRANSACTION,
           db.getPendingTransactions().size() - tmpTransactions.size());
+      logger.info("[server busy] discard total: {}",
+              db.getPendingTransactions().size() - tmpTransactions.size());
     }
 
     db.getPendingTransactions().clear();
