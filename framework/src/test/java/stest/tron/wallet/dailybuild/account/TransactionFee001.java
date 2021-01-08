@@ -76,7 +76,7 @@ public class TransactionFee001 {
   Long blackHoleBalance2 = 0L;
   Long witness01Increase = 0L;
   Long witness02Increase = 0L;
-  Long blackHoleIncrease = 0L;
+  //Long blackHoleIncrease = 0L;
   String txid = null;
 
 
@@ -139,10 +139,8 @@ public class TransactionFee001 {
             blockingStubFull).getBalance();
     witness02Increase = witness02Allowance2 - witness02Allowance1;
     witness01Increase = witness01Allowance2 - witness01Allowance1;
-    blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
+    //blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
     logger.info("----startNum:" + startNum + " endNum:" + endNum);
-    logger.info("-----black hole 1: " + blackHoleBalance1 + "  black hole 2: " + blackHoleBalance2
-            + "   increase :" + blackHoleIncrease);
     logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "   witness02Allowance2 :"
             + witness02Allowance2 + "increase :" + witness02Increase);
     logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
@@ -229,10 +227,8 @@ public class TransactionFee001 {
        blockingStubFull).getBalance();
     witness02Increase = witness02Allowance2 - witness02Allowance1;
     witness01Increase = witness01Allowance2 - witness01Allowance1;
-    blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
+    //blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
     logger.info("----startNum:" + startNum + " endNum:" + endNum);
-    logger.info("-----black hole 1: " + blackHoleBalance1 + "  black hole 2: " + blackHoleBalance2
-            + "   increase :" + blackHoleIncrease);
     logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "   witness02Allowance2 :"
             + witness02Allowance2 + "increase :" + witness02Increase);
     logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
@@ -245,7 +241,7 @@ public class TransactionFee001 {
             - witness01Increase)) <= 2);
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
-    Assert.assertEquals(100000000L, blackHoleIncrease.longValue());
+    Assert.assertEquals(blackHoleBalance2, blackHoleBalance1);
 
     ownerPermissionKeys.clear();
     ownerPermissionKeys.add(tmpKey02);
@@ -309,10 +305,7 @@ public class TransactionFee001 {
             blockingStubFull).getBalance();
     witness02Increase = witness02Allowance2 - witness02Allowance1;
     witness01Increase = witness01Allowance2 - witness01Allowance1;
-    blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
     logger.info("----startNum:" + startNum + " endNum:" + endNum);
-    logger.info("-----black hole 1: " + blackHoleBalance1 + "  black hole 2: " + blackHoleBalance2
-            + "   increase :" + blackHoleIncrease);
     logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "   witness02Allowance2 :"
             + witness02Allowance2 + "increase :" + witness02Increase);
     logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
@@ -324,15 +317,14 @@ public class TransactionFee001 {
             - witness01Increase)) <= 2);
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
-    Assert.assertEquals(1000000L, blackHoleIncrease.longValue());
+    Assert.assertEquals(blackHoleBalance2, blackHoleBalance1);
   }
 
   @Test(enabled = true, description = "Test trigger result is \"OUT_OF_TIME\""
           + " with energy fee to sr")
   public void test03OutOfTimeEnergyFeeToBlackHole() {
     Random rand = new Random();
-    Integer randNum = rand.nextInt(30) + 1;
-    randNum = rand.nextInt(4000);
+    Integer randNum = rand.nextInt(4000);
 
     Assert.assertTrue(PublicMethed.sendcoin(deployAddress, maxFeeLimit * 10, fromAddress,
             testKey002, blockingStubFull));
@@ -372,25 +364,28 @@ public class TransactionFee001 {
        blockingStubFull).getBalance();
     witness02Increase = witness02Allowance2 - witness02Allowance1;
     witness01Increase = witness01Allowance2 - witness01Allowance1;
-    blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
 
     logger.info("----startNum:" + startNum + " endNum:" + endNum);
-    logger.info("-----black hole 1: " + blackHoleBalance1 + "  black hole 2: " + blackHoleBalance2
-            + "   increase :" + blackHoleIncrease);
     logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "   witness02Allowance2 :"
             + witness02Allowance2 + "increase :" + witness02Increase);
     logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
             + witness01Allowance2 + "  increase :" + witness01Increase);
     Optional<Protocol.TransactionInfo> infoById =
             PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+
     logger.info("InfoById:" + infoById);
+
     Map<String, Long> witnessAllowance =
             PublicMethed.getAllowance2(startNum, endNum, blockingStubFull);
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress01))
             - witness01Increase)) <= 2);
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
-    Assert.assertEquals(witnessAllowance.get(blackHoleAdd), blackHoleIncrease);
+    Assert.assertEquals(blackHoleBalance2, blackHoleBalance1);
+    Long punishment = infoById.get().getPunishment();
+    logger.info("receipt:" + infoById.get().getReceipt());
+    Assert.assertEquals(punishment, maxFeeLimit);
+    Assert.assertTrue(punishment == infoById.get().getReceipt().getEnergyFee());
   }
 
   @Test(enabled = true, description = "Test create account with netFee to sr")
@@ -423,10 +418,7 @@ public class TransactionFee001 {
 
     witness02Increase = witness02Allowance2 - witness02Allowance1;
     witness01Increase = witness01Allowance2 - witness01Allowance1;
-    blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
     logger.info("----startNum:" + startNum + " endNum:" + endNum);
-    logger.info("-----black hole 1: " + blackHoleBalance1 + "  black hole 2: " + blackHoleBalance2
-            + "   increase :" + blackHoleIncrease);
     logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "   witness02Allowance2 :"
             + witness02Allowance2 + "increase :" + witness02Increase);
     logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
@@ -438,7 +430,7 @@ public class TransactionFee001 {
             - witness01Increase)) <= 2);
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
-    Assert.assertEquals(witnessAllowance.get(blackHoleAdd), blackHoleIncrease);
+    Assert.assertEquals(blackHoleBalance1,blackHoleBalance2);
   }
 
   @Test(enabled = true, description = "Test trigger contract with netFee and energyFee to sr")
@@ -490,11 +482,8 @@ public class TransactionFee001 {
             blockingStubFull).getBalance();
     witness02Increase = witness02Allowance2 - witness02Allowance1;
     witness01Increase = witness01Allowance2 - witness01Allowance1;
-    blackHoleIncrease = blackHoleBalance2 - blackHoleBalance1;
 
     logger.info("----startNum:" + startNum + " endNum:" + endNum);
-    logger.info("-----black hole 1: " + blackHoleBalance1 + "  black hole 2: " + blackHoleBalance2
-            + "   increase :" + blackHoleIncrease);
     logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "   witness02Allowance2 :"
             + witness02Allowance2 + "increase :" + witness02Increase);
     logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
@@ -508,7 +497,7 @@ public class TransactionFee001 {
             - witness01Increase)) <= 2);
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
-    Assert.assertEquals(witnessAllowance.get(blackHoleAdd), blackHoleIncrease);
+    Assert.assertEquals(blackHoleBalance1,blackHoleBalance2);
   }
   /**
    * constructor.
