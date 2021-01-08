@@ -250,8 +250,8 @@ public class TronNetDelegate {
       trx.setTime(System.currentTimeMillis());
       // debug
       trx.setSource("node");
-      pendingInfo.getTrxFromNodeAccepted().incrementAndGet();
       dbManager.pushTransaction(trx);
+      pendingInfo.getTrxFromNodeAccepted().incrementAndGet();
     } catch (ContractSizeNotEqualToOneException
         | VMIllegalException e) {
       throw new P2pException(TypeEnum.BAD_TRX, e);
