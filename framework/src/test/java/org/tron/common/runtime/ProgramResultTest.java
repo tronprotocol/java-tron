@@ -395,22 +395,31 @@ public class ProgramResultTest {
     TransactionTrace traceSuccess = TvmTestUtils
         .processTransactionAndReturnTrace(trx1, deposit, null);
 
-    traceSuccess.getReceipt().setResult(contractResult.OUT_OF_TIME);
     Assert.assertEquals(traceSuccess.getReceipt().getEnergyFee(), 12705900L);
 
     TransactionInfoCapsule trxInfoCapsule =
         buildTransactionInfoInstance(new TransactionCapsule(trx1), null, traceSuccess);
     Assert.assertEquals(trxInfoCapsule.getFee(), 12705900L);
-    Assert.assertEquals(trxInfoCapsule.getPunishment(), 0L);
+    Assert.assertEquals(trxInfoCapsule.getPackingFee(), 0L);
 
     DynamicPropertiesStore dynamicPropertiesStore = traceSuccess.getTransactionContext()
         .getStoreFactory().getChainBaseManager().getDynamicPropertiesStore();
-    dynamicPropertiesStore.saveAllowOptimizeBlackHole(1L);
+    dynamicPropertiesStore.saveAllowTransactionFeePool(1L);
 
     trxInfoCapsule =
         buildTransactionInfoInstance(new TransactionCapsule(trx1), null, traceSuccess);
-    Assert.assertEquals(trxInfoCapsule.getFee(), 0L);
-    Assert.assertEquals(trxInfoCapsule.getPunishment(), 12705900L);
+    Assert.assertEquals(trxInfoCapsule.getFee(), 12705900L);
+    Assert.assertEquals(trxInfoCapsule.getPackingFee(), 12705900L);
+
+
+    traceSuccess.getReceipt().setResult(contractResult.OUT_OF_TIME);
+
+    trxInfoCapsule =
+        buildTransactionInfoInstance(new TransactionCapsule(trx1), null, traceSuccess);
+    Assert.assertEquals(trxInfoCapsule.getFee(), 12705900L);
+    Assert.assertEquals(trxInfoCapsule.getPackingFee(), 0L);
+
+
   }
 
   private byte[] deployC(String contractName)

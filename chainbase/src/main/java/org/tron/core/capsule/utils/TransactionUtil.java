@@ -77,16 +77,14 @@ public class TransactionUtil {
         programResult.getRet().getFee() + traceReceipt.getEnergyFee()
             + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
 
-    boolean supportPunishmentAmount = trace.getTransactionContext().getStoreFactory()
-        .getChainBaseManager().getDynamicPropertiesStore().supportPunishmentAmount();
-    if (supportPunishmentAmount) {
-      long punishment = 0L;
-      if (traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
-        fee = programResult.getRet().getFee() + traceReceipt.getNetFee() +
-            traceReceipt.getMultiSignFee();
-        punishment += traceReceipt.getEnergyFee();
+    boolean supportTransactionFeePool = trace.getTransactionContext().getStoreFactory()
+        .getChainBaseManager().getDynamicPropertiesStore().supportTransactionFeePool();
+    if (supportTransactionFeePool) {
+      long packingFee = traceReceipt.getNetFee();
+      if (!traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
+        packingFee += traceReceipt.getEnergyFee();
       }
-      builder.setPunishment(punishment);
+      builder.setPackingFee(packingFee);
     }
 
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());

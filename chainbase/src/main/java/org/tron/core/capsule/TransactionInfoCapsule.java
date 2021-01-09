@@ -34,8 +34,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
   }
 
 
-  public long getPunishment() {
-    return transactionInfo.getPunishment();
+  public long getPackingFee() {
+    return transactionInfo.getPackingFee();
   }
 
   public long getFee() {
