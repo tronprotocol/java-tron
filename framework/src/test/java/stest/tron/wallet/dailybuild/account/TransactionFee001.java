@@ -154,7 +154,9 @@ public class TransactionFee001 {
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
     Assert.assertEquals(blackHoleBalance1, blackHoleBalance2);
-
+    Optional<Protocol.TransactionInfo> infoById =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(infoById.get().getFee(),infoById.get().getPackingFee());
   }
 
   @Test(enabled = true, description = "Test update account permission fee to black hole,"
@@ -217,6 +219,11 @@ public class TransactionFee001 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<Protocol.TransactionInfo> infoById =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(infoById.get().getPackingFee(),0);
+    Assert.assertEquals(infoById.get().getFee(),100000000L);
+
     endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
        .getBlockHeader().getRawData().getNumber();
     witness01Allowance2 =
@@ -318,6 +325,9 @@ public class TransactionFee001 {
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
     Assert.assertEquals(blackHoleBalance2, blackHoleBalance1);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(infoById.get().getPackingFee(),0);
+    Assert.assertEquals(infoById.get().getFee(),1000000L);
   }
 
   @Test(enabled = true, description = "Test trigger result is \"OUT_OF_TIME\""
@@ -382,10 +392,10 @@ public class TransactionFee001 {
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
     Assert.assertEquals(blackHoleBalance2, blackHoleBalance1);
-    Long punishment = infoById.get().getPunishment();
+    Long packingFee = infoById.get().getPackingFee();
     logger.info("receipt:" + infoById.get().getReceipt());
-    Assert.assertEquals(punishment, maxFeeLimit);
-    Assert.assertTrue(punishment == infoById.get().getReceipt().getEnergyFee());
+    Assert.assertTrue(packingFee ==  0L);
+    Assert.assertTrue(infoById.get().getFee() >= maxFeeLimit);
   }
 
   @Test(enabled = true, description = "Test create account with netFee to sr")
@@ -402,8 +412,8 @@ public class TransactionFee001 {
 
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] lowBalAddress = ecKey.getAddress();
-    Assert.assertTrue(PublicMethed.createAccount(fromAddress, lowBalAddress,
-            testKey002, blockingStubFull));
+    txid = PublicMethed.createAccountGetTxid(fromAddress, lowBalAddress,
+        testKey002, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -419,10 +429,10 @@ public class TransactionFee001 {
     witness02Increase = witness02Allowance2 - witness02Allowance1;
     witness01Increase = witness01Allowance2 - witness01Allowance1;
     logger.info("----startNum:" + startNum + " endNum:" + endNum);
-    logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "   witness02Allowance2 :"
-            + witness02Allowance2 + "increase :" + witness02Increase);
     logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
-            + witness01Allowance2 + "  increase :" + witness01Increase);
+        + witness01Allowance2 + "  increase :" + witness01Increase);
+    logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "  witness02Allowance2 :"
+            + witness02Allowance2 + "  increase :" + witness02Increase);
 
     Map<String, Long> witnessAllowance =
             PublicMethed.getAllowance2(startNum, endNum, blockingStubFull);
@@ -431,6 +441,10 @@ public class TransactionFee001 {
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
     Assert.assertEquals(blackHoleBalance1,blackHoleBalance2);
+    Optional<Protocol.TransactionInfo> infoById =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getPackingFee() == 0L);
+    Assert.assertTrue(infoById.get().getFee() == 100000L);
   }
 
   @Test(enabled = true, description = "Test trigger contract with netFee and energyFee to sr")
@@ -498,6 +512,75 @@ public class TransactionFee001 {
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
     Assert.assertEquals(blackHoleBalance1,blackHoleBalance2);
+  }
+
+  /**
+   * constructor.
+   */
+
+  @Test(enabled = true, description = "Test create trc10 token with fee not to sr")
+  public void test06CreateAssetIssue() {
+    //get account
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] tokenAccountAddress = ecKey1.getAddress();
+    final String tokenAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    PublicMethed.printAddress(tokenAccountKey);
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(tokenAccountAddress, 1028000000L, fromAddress, testKey002, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    startNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+        .getBlockHeader().getRawData().getNumber();
+    witness01Allowance1 =
+        PublicMethed.queryAccount(witnessAddress01, blockingStubFull).getAllowance();
+    witness02Allowance1 =
+        PublicMethed.queryAccount(witnessAddress02, blockingStubFull).getAllowance();
+    blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
+        blockingStubFull).getBalance();
+
+    Long start = System.currentTimeMillis() + 2000;
+    Long end = System.currentTimeMillis() + 1000000000;
+    long now = System.currentTimeMillis();
+    long totalSupply = now;
+    String description = "for case assetissue016";
+    String url = "https://stest.assetissue016.url";
+    String name = "AssetIssue016_" + Long.toString(now);
+    txid = PublicMethed.createAssetIssueGetTxid(tokenAccountAddress, name, name,totalSupply,
+        1, 1, start, end, 1, description, url, 0L,
+        0L, 1L, 1L, tokenAccountKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+        .getBlockHeader().getRawData().getNumber();
+    witness01Allowance2 =
+        PublicMethed.queryAccount(witnessAddress01, blockingStubFull).getAllowance();
+    witness02Allowance2 =
+        PublicMethed.queryAccount(witnessAddress02, blockingStubFull).getAllowance();
+    blackHoleBalance2 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
+        blockingStubFull).getBalance();
+
+    witness02Increase = witness02Allowance2 - witness02Allowance1;
+    witness01Increase = witness01Allowance2 - witness01Allowance1;
+    logger.info("----startNum:" + startNum + " endNum:" + endNum);
+    logger.info("====== witness01Allowance1 :" + witness01Allowance1 + "  witness01Allowance2 :"
+        + witness01Allowance2 + "  increase :" + witness01Increase);
+    logger.info("====== witness02Allowance1 :" + witness02Allowance1 + "  witness02Allowance2 :"
+        + witness02Allowance2 + "  increase :" + witness02Increase);
+
+    Map<String, Long> witnessAllowance =
+        PublicMethed.getAllowance2(startNum, endNum, blockingStubFull);
+    Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress01))
+        - witness01Increase)) <= 2);
+    Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
+        - witness02Increase)) <= 2);
+    Assert.assertEquals(blackHoleBalance1,blackHoleBalance2);
+    Optional<Protocol.TransactionInfo> infoById =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getPackingFee() == 0L);
+    Assert.assertTrue(infoById.get().getFee() == 1024000000L);
   }
   /**
    * constructor.
