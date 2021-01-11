@@ -182,7 +182,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       TransactionTrace trace) {
     long fee = chainBaseManager.getDynamicPropertiesStore().getCreateAccountFee();
     if (consumeFeeForNewAccount(accountCapsule, fee)) {
-      trace.setNetBill(0, fee);
+      trace.setNetBillForCreateNewAccount(0, fee);
       chainBaseManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
       return true;
     } else {

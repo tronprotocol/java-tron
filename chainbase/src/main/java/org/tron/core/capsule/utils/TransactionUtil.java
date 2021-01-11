@@ -32,7 +32,6 @@ import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -80,7 +79,10 @@ public class TransactionUtil {
     boolean supportTransactionFeePool = trace.getTransactionContext().getStoreFactory()
         .getChainBaseManager().getDynamicPropertiesStore().supportTransactionFeePool();
     if (supportTransactionFeePool) {
-      long packingFee = traceReceipt.getNetFee();
+      long packingFee = 0L;
+      if (trace.isNetFeeForBandwidth()) {
+        packingFee += traceReceipt.getNetFee();
+      }
       if (!traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
         packingFee += traceReceipt.getEnergyFee();
       }
