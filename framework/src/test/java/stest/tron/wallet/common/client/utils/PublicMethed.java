@@ -153,6 +153,63 @@ public class PublicMethed {
    * constructor.
    */
 
+  public static String createAssetIssueGetTxid(byte[] address, String name, String abbreviation,
+      Long totalSupply, Integer trxNum, Integer icoNum, Long startTime, Long endTime,
+      Integer voteScore, String description, String url, Long freeAssetNetLimit,
+      Long publicFreeAssetNetLimit, Long fronzenAmount, Long frozenDay, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+    try {
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
+      builder.setOwnerAddress(ByteString.copyFrom(address));
+      builder.setName(ByteString.copyFrom(name.getBytes()));
+      builder.setAbbr(ByteString.copyFrom(abbreviation.getBytes()));
+      builder.setTotalSupply(totalSupply);
+      builder.setTrxNum(trxNum);
+      builder.setNum(icoNum);
+      builder.setStartTime(startTime);
+      builder.setEndTime(endTime);
+      builder.setVoteScore(voteScore);
+      builder.setDescription(ByteString.copyFrom(description.getBytes()));
+      builder.setUrl(ByteString.copyFrom(url.getBytes()));
+      builder.setFreeAssetNetLimit(freeAssetNetLimit);
+      builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder = AssetIssueContract.FrozenSupply
+          .newBuilder();
+      frozenBuilder.setFrozenAmount(fronzenAmount);
+      frozenBuilder.setFrozenDays(frozenDay);
+      builder.addFrozenSupply(0, frozenBuilder);
+
+      Protocol.Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
+      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+        logger.info("transaction == null");
+        return null;
+      }
+      transaction = signTransaction(ecKey, transaction);
+
+      GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+
+      return ByteArray.toHexString(Sha256Hash
+          .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+              transaction.getRawData().toByteArray()));
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
+
+  /**
+   * constructor.
+   */
   public static Boolean createAssetIssue(byte[] address, String name, Long totalSupply,
       Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
       String description, String url, Long freeAssetNetLimit, Long publicFreeAssetNetLimit,
@@ -1862,6 +1919,43 @@ public class PublicMethed {
     walletClient = new WalletClient(priKey);
     //walletClient.init(0);
     return walletClient.getAddress();
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static String createAccountGetTxid(byte[] ownerAddress, byte[] newAddress, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setAccountAddress(ByteString.copyFrom(newAddress));
+    AccountCreateContract contract = builder.build();
+    Transaction transaction = blockingStubFull.createAccount(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction == null");
+    }
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    if (response.getResult() == false) {
+      return null;
+    } else {
+      //logger.info("brodacast succesfully");
+      return ByteArray.toHexString(Sha256Hash
+          .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+              transaction.getRawData().toByteArray()));
+    }
   }
 
   /**
@@ -6942,7 +7036,6 @@ public class PublicMethed {
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     final String blackHole = Configuration.getByPath("testng.conf")
         .getString("defaultParameter.blackHoleAddress");
-    Long balanceBlackHole = 0L;
     Long totalCount = 0L;
     Map<String, Integer> witnessBlockCount = new HashMap<>();
     Map<String, Long> witnessBrokerage = new HashMap<>();
@@ -6972,24 +7065,10 @@ public class PublicMethed {
                 tem.getRawData().toByteArray()));
         logger.info("----ss txid:" + txid);
         infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+        Long packingFee = infoById.get().getPackingFee();
 
-        Long energyFee = infoById.get().getReceipt().getEnergyFee();
-        Long netFee = infoById.get().getReceipt().getNetFee();
-        if ("AccountCreateContract".equals(tem.getRawData().getContract(0).getType().toString())) {
-          logger.info("------account create  witnessAdd:" + witnessAdd + "   before add:"
-              + witnessAllowance.getOrDefault(witnessAdd, 0L) + "    netfee:" + netFee);
-          witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L) + netFee);
-        } else {
-          if (infoById.get().getReceipt().getResult().toString().contains("OUT_OF_TIME")) {
-            logger.info("---out of time  " + infoById.get().getReceipt().getResult());
-            balanceBlackHole += infoById.get().getReceipt().getEnergyFee();
-            witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
-                + netFee);
-          } else {
-            witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
-                + energyFee + netFee);
-          }
-        }
+        witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
+            + packingFee);
       }
     }
 
@@ -7033,7 +7112,6 @@ public class PublicMethed {
       witnessAllowance.put(witnessAdd, pay);
       logger.info("******  " + witnessAdd + " : " + pay);
     }
-    witnessAllowance.put(blackHole, balanceBlackHole);
     return witnessAllowance;
   }
 

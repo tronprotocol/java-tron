@@ -8,6 +8,7 @@
     <packages>
       <package name="stest.tron.wallet.dailybuild.*">
         <exclude name="stest.tron.wallet.dailybuild.multisign"></exclude>
+        <exclude name="stest.tron.wallet.dailybuild.operationupdate"></exclude>
       </package>
     </packages>
 
