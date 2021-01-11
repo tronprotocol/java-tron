@@ -6942,7 +6942,6 @@ public class PublicMethed {
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     final String blackHole = Configuration.getByPath("testng.conf")
         .getString("defaultParameter.blackHoleAddress");
-    Long balanceBlackHole = 0L;
     Long totalCount = 0L;
     Map<String, Integer> witnessBlockCount = new HashMap<>();
     Map<String, Long> witnessBrokerage = new HashMap<>();
@@ -6973,23 +6972,11 @@ public class PublicMethed {
         logger.info("----ss txid:" + txid);
         infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
-        Long energyFee = infoById.get().getReceipt().getEnergyFee();
-        Long netFee = infoById.get().getReceipt().getNetFee();
-        if ("AccountCreateContract".equals(tem.getRawData().getContract(0).getType().toString())) {
-          logger.info("------account create  witnessAdd:" + witnessAdd + "   before add:"
-              + witnessAllowance.getOrDefault(witnessAdd, 0L) + "    netfee:" + netFee);
-          witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L) + netFee);
-        } else {
-          if (infoById.get().getReceipt().getResult().toString().contains("OUT_OF_TIME")) {
-            logger.info("---out of time  " + infoById.get().getReceipt().getResult());
-            balanceBlackHole += infoById.get().getReceipt().getEnergyFee();
-            witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
-                + netFee);
-          } else {
-            witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
-                + energyFee + netFee);
-          }
-        }
+        //Long energyFee = infoById.get().getReceipt().getEnergyFee();
+        //Long netFee = infoById.get().getReceipt().getNetFee();
+        Long fee = infoById.get().getFee();
+        witnessAllowance.put(witnessAdd, witnessAllowance.getOrDefault(witnessAdd, 0L)
+            + fee);
       }
     }
 
@@ -7033,7 +7020,6 @@ public class PublicMethed {
       witnessAllowance.put(witnessAdd, pay);
       logger.info("******  " + witnessAdd + " : " + pay);
     }
-    witnessAllowance.put(blackHole, balanceBlackHole);
     return witnessAllowance;
   }
 
