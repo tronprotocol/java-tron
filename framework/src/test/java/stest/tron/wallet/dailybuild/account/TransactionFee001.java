@@ -104,7 +104,7 @@ public class TransactionFee001 {
     Assert.assertTrue(PublicMethed.sendcoin(deployAddress, 20000000000L, fromAddress,
             testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode//contractLinkage003.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = null;
