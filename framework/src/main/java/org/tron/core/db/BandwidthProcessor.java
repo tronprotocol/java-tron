@@ -130,7 +130,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes,
       TransactionTrace trace) {
     long fee = chainBaseManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
-    if (consumeFee(accountCapsule, fee)) {
+    if (consumeFeeForBandwidth(accountCapsule, fee)) {
       trace.setNetBill(0, fee);
       chainBaseManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
       return true;
@@ -181,8 +181,8 @@ public class BandwidthProcessor extends ResourceProcessor {
   public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule,
       TransactionTrace trace) {
     long fee = chainBaseManager.getDynamicPropertiesStore().getCreateAccountFee();
-    if (consumeFee(accountCapsule, fee)) {
-      trace.setNetBill(0, fee);
+    if (consumeFeeForNewAccount(accountCapsule, fee)) {
+      trace.setNetBillForCreateNewAccount(0, fee);
       chainBaseManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
       return true;
     } else {

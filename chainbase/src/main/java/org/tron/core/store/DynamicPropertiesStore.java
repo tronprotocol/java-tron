@@ -2151,10 +2151,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(BURN_TRX_AMOUNT, new BytesCapsule(ByteArray.fromLong(amount)));
   }
 
-  public boolean supportPunishmentAmount() {
-    return supportOptimizeBlackHole() || supportTransactionFeePool();
-  }
-
   public boolean supportOptimizeBlackHole() {
     return getAllowOptimizeBlackHole() == 1L;
   }

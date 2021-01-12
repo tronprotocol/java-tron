@@ -32,7 +32,6 @@ import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -77,16 +76,17 @@ public class TransactionUtil {
         programResult.getRet().getFee() + traceReceipt.getEnergyFee()
             + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
 
-    boolean supportPunishmentAmount = trace.getTransactionContext().getStoreFactory()
-        .getChainBaseManager().getDynamicPropertiesStore().supportPunishmentAmount();
-    if (supportPunishmentAmount) {
-      long punishment = 0L;
-      if (traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
-        fee = programResult.getRet().getFee() + traceReceipt.getNetFee() +
-            traceReceipt.getMultiSignFee();
-        punishment += traceReceipt.getEnergyFee();
+    boolean supportTransactionFeePool = trace.getTransactionContext().getStoreFactory()
+        .getChainBaseManager().getDynamicPropertiesStore().supportTransactionFeePool();
+    if (supportTransactionFeePool) {
+      long packingFee = 0L;
+      if (trace.isNetFeeForBandwidth()) {
+        packingFee += traceReceipt.getNetFee();
       }
-      builder.setPunishment(punishment);
+      if (!traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
+        packingFee += traceReceipt.getEnergyFee();
+      }
+      builder.setPackingFee(packingFee);
     }
 
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());

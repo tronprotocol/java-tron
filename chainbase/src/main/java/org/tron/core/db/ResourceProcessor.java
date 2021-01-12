@@ -67,7 +67,7 @@ abstract class ResourceProcessor {
     return usage * windowSize / precision;
   }
 
-  protected boolean consumeFee(AccountCapsule accountCapsule, long fee) {
+  protected boolean consumeFeeForBandwidth(AccountCapsule accountCapsule, long fee) {
     try {
       long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
@@ -75,6 +75,24 @@ abstract class ResourceProcessor {
       if (dynamicPropertiesStore.supportTransactionFeePool()) {
         dynamicPropertiesStore.addTransactionFeePool(fee);
       } else if (dynamicPropertiesStore.supportOptimizeBlackHole()) {
+        dynamicPropertiesStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
+      }
+
+      return true;
+    } catch (BalanceInsufficientException e) {
+      return false;
+    }
+  }
+
+
+  protected boolean consumeFeeForNewAccount(AccountCapsule accountCapsule, long fee) {
+    try {
+      long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+      accountCapsule.setLatestOperationTime(latestOperationTime);
+      Commons.adjustBalance(accountStore, accountCapsule, -fee);
+      if (dynamicPropertiesStore.supportOptimizeBlackHole()) {
         dynamicPropertiesStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
