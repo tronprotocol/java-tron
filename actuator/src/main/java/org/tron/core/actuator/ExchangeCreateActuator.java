@@ -118,7 +118,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
       dynamicStore.saveLatestExchangeNum(id);
-      if (dynamicStore.supportOptimizeBlackHole()) {
+      if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);

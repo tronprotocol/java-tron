@@ -994,7 +994,7 @@ public class Wallet {
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowOptimizeBlackHole")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeBlackHole())
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowBlackHoleOptimization())
         .build());
 
     return builder.build();

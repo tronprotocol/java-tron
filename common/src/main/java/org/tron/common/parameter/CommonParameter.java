@@ -307,7 +307,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowOptimizeBlackHole;
+  public long allowBlackHoleOptimization;
 
   // @Getter
   // @Setter

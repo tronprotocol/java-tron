@@ -126,7 +126,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
       // add to blackhole address
-      if (dynamicStore.supportOptimizeBlackHole()) {
+      if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
