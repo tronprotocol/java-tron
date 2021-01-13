@@ -74,7 +74,7 @@ abstract class ResourceProcessor {
       Commons.adjustBalance(accountStore, accountCapsule, -fee);
       if (dynamicPropertiesStore.supportTransactionFeePool()) {
         dynamicPropertiesStore.addTransactionFeePool(fee);
-      } else if (dynamicPropertiesStore.supportOptimizeBlackHole()) {
+      } else if (dynamicPropertiesStore.supportBlackHoleOptimization()) {
         dynamicPropertiesStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
@@ -92,7 +92,7 @@ abstract class ResourceProcessor {
       long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
       Commons.adjustBalance(accountStore, accountCapsule, -fee);
-      if (dynamicPropertiesStore.supportOptimizeBlackHole()) {
+      if (dynamicPropertiesStore.supportBlackHoleOptimization()) {
         dynamicPropertiesStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);

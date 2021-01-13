@@ -719,7 +719,7 @@ public class Manager {
           if (accountCapsule != null) {
             adjustBalance(getAccountStore(), accountCapsule, -fee);
 
-            if (getDynamicPropertiesStore().supportOptimizeBlackHole()) {
+            if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
               getDynamicPropertiesStore().burnTrx(fee);
             } else {
               adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);

@@ -13,6 +13,7 @@ import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
+import org.tron.core.services.http.GetBurnTrxServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -144,6 +145,9 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
+  @Autowired
+  private GetBurnTrxServlet getBurnTrxServlet;
+
   @Override
   public void init() {
 
@@ -239,6 +243,7 @@ public class HttpApiOnSolidityService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+      context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
 
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
