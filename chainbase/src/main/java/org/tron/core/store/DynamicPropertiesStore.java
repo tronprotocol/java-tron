@@ -152,7 +152,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
-  private static final byte[] ALLOW_OPTIMIZE_BLACKHOLE = "ALLOW_OPTIMIZE_BLACKHOLE".getBytes();
+  private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
   
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -724,9 +724,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowOptimizeBlackHole();
+      this.getAllowBlackHoleOptimization();
     } catch (IllegalArgumentException e) {
-      this.saveAllowOptimizeBlackHole(CommonParameter.getInstance().getAllowOptimizeBlackHole());
+      this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
     }
 
   }
@@ -2151,20 +2151,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(BURN_TRX_AMOUNT, new BytesCapsule(ByteArray.fromLong(amount)));
   }
 
-  public boolean supportOptimizeBlackHole() {
-    return getAllowOptimizeBlackHole() == 1L;
+  public boolean supportBlackHoleOptimization() {
+    return getAllowBlackHoleOptimization() == 1L;
   }
 
-  public void saveAllowOptimizeBlackHole(long value) {
-    this.put(ALLOW_OPTIMIZE_BLACKHOLE, new BytesCapsule(ByteArray.fromLong(value)));
+  public void saveAllowBlackHoleOptimization(long value) {
+    this.put(ALLOW_BLACKHOLE_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
-  public long getAllowOptimizeBlackHole() {
-    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZE_BLACKHOLE))
+  public long getAllowBlackHoleOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_BLACKHOLE_OPTIMIZATION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_OPTIMIZE_BLACKHOLE"));
+            () -> new IllegalArgumentException("not found ALLOW_BLACKHOLE_OPTIMIZATION"));
   }
 
   private static class DynamicResourceProperties {

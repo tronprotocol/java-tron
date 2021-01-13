@@ -57,7 +57,7 @@ public class TransferActuator extends AbstractActuator {
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -(Math.addExact(fee, amount)));
-      if (dynamicStore.supportOptimizeBlackHole()) {
+      if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
