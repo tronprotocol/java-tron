@@ -229,6 +229,11 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(41L, 1L);
       }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getMaxCpuTimeOfOneTx") && getChainParameters.get().getChainParameter(i).getValue() == 50) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(13L, 80L);
+      }
 /*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTransactionFeePool") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
