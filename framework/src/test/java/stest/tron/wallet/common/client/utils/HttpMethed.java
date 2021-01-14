@@ -2097,6 +2097,59 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
+  public static Long getBurnTrx(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getburntrx";
+      JsonObject blockObj = new JsonObject();
+      response = createConnect(requestUrl, blockObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    return responseContent.getLong("burnTrxAmount");
+  }
+
+  /**
+   * constructor.
+   */
+  public static Long getBurnTrxFromSolidity(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/walletsolidity/getburntrx";
+      JsonObject blockObj = new JsonObject();
+      response = createConnect(requestUrl, blockObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    return responseContent.getLong("burnTrxAmount");
+  }
+
+  /**
+   * constructor.
+   */
+  public static Long getBurnTrxFromPbft(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/walletpbft/getburntrx";
+      JsonObject blockObj = new JsonObject();
+      response = createConnect(requestUrl, blockObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    return responseContent.getLong("burnTrxAmount");
+  }
+
+
+
 
   /**
    * constructor.

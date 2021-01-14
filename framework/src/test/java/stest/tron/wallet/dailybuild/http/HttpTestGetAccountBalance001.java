@@ -22,8 +22,12 @@ public class HttpTestGetAccountBalance001 {
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private JSONObject responseContent;
   private HttpResponse response;
-  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(0);
+  private String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(0);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
+  private String httpSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] assetOwnerAddress = ecKey2.getAddress();
   String assetOwnerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
@@ -157,10 +161,24 @@ public class HttpTestGetAccountBalance001 {
     Assert.assertEquals(transactionObject.getString("type"),"CreateSmartContract");
     Assert.assertTrue(transactionObject.getJSONArray("operation")
         .getJSONObject(0).getLong("amount") == -fee);
+  }
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get burn trx by http")
+  public void test03GetBurnTrx() {
+    Long beforeBurnTrxAmount = HttpMethed.getBurnTrx(httpnode);
+    ECKey ecKey2 = new ECKey(Utils.getRandom());
+    byte[] assetOwnerAddress = ecKey2.getAddress();
 
+    HttpMethed.sendCoin(httpnode,fromAddress,assetOwnerAddress,amount,"",testKey002);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSolidityNode);
+    Long afterBurnTrxAmount = HttpMethed.getBurnTrx(httpnode);
+    Assert.assertTrue(afterBurnTrxAmount - beforeBurnTrxAmount == 100000L);
 
-
+    Assert.assertEquals(afterBurnTrxAmount,HttpMethed.getBurnTrxFromSolidity(httpSolidityNode));
+    Assert.assertEquals(afterBurnTrxAmount,HttpMethed.getBurnTrxFromPbft(httpPbftNode));
   }
 
   /**
