@@ -218,7 +218,7 @@ public class TransactionFee001 {
             PublicMethed.queryAccount(witnessAddress02, blockingStubFull).getAllowance();
     blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
             blockingStubFull).getBalance();
-    beforeBurnTrxAmount = blockingStubSolidity
+    beforeBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     String accountPermissionJson =
             "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
@@ -240,7 +240,8 @@ public class TransactionFee001 {
             ownerAddress, ownerKey, blockingStubFull,
             ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()]));
 
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById =
         PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(infoById.get().getPackingFee(),0);
@@ -298,12 +299,12 @@ public class TransactionFee001 {
     blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
             blockingStubFull).getBalance();
 
-    afterBurnTrxAmount = blockingStubSolidity
+    afterBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Assert.assertTrue(afterBurnTrxAmount - beforeBurnTrxAmount == 100000000L);
 
 
-    beforeBurnTrxAmount = blockingStubSolidity
+    beforeBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
 
     Protocol.Transaction transaction = PublicMethedForMutiSign
@@ -330,7 +331,7 @@ public class TransactionFee001 {
     logger.info("TransactionSignWeight info : " + txWeight);
 
     Assert.assertTrue(PublicMethedForMutiSign.broadcastTransaction(transaction2, blockingStubFull));
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
             .getBlockHeader().getRawData().getNumber();
@@ -358,7 +359,7 @@ public class TransactionFee001 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(infoById.get().getPackingFee(),0);
     Assert.assertEquals(infoById.get().getFee(),1000000L);
-    afterBurnTrxAmount = blockingStubSolidity
+    afterBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Assert.assertTrue(afterBurnTrxAmount - beforeBurnTrxAmount == 1000000L);
   }
