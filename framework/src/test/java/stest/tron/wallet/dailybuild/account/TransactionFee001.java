@@ -26,7 +26,6 @@ import org.tron.common.utils.Commons;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.SmartContractOuterClass;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -123,7 +122,7 @@ public class TransactionFee001 {
   public void test01DeployContractEnergyFeeToSr() {
     Assert.assertTrue(PublicMethed.sendcoin(deployAddress, 20000000000L, fromAddress,
             testKey002, blockingStubFull));
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode//contractLinkage003.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = null;
@@ -141,13 +140,13 @@ public class TransactionFee001 {
        .getAllowance();
     blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
             blockingStubFull).getBalance();
-    beforeBurnTrxAmount = blockingStubSolidity
+    beforeBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
 
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 0L, 0, null,
                     deployKey, deployAddress, blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
        .getBlockHeader().getRawData().getNumber();
@@ -177,7 +176,7 @@ public class TransactionFee001 {
     Optional<Protocol.TransactionInfo> infoById =
         PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(infoById.get().getFee(),infoById.get().getPackingFee());
-    afterBurnTrxAmount = blockingStubSolidity
+    afterBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Assert.assertEquals(beforeBurnTrxAmount,afterBurnTrxAmount);
   }
@@ -196,7 +195,7 @@ public class TransactionFee001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
             testKey002, blockingStubFull));
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
             .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -240,7 +239,6 @@ public class TransactionFee001 {
             ownerAddress, ownerKey, blockingStubFull,
             ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()]));
 
-    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById =
         PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -288,7 +286,6 @@ public class TransactionFee001 {
     logger.info(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
 
     startNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
             .getBlockHeader().getRawData().getNumber();
@@ -372,6 +369,7 @@ public class TransactionFee001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(deployAddress, maxFeeLimit * 10, fromAddress,
             testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String code = Configuration.getByPath("testng.conf")
@@ -382,7 +380,7 @@ public class TransactionFee001 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code,
             "", maxFeeLimit,
             0L, 100, null, deployKey, deployAddress, blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     startNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
             .getBlockHeader().getRawData().getNumber();
@@ -392,12 +390,12 @@ public class TransactionFee001 {
             PublicMethed.queryAccount(witnessAddress02, blockingStubFull).getAllowance();
     blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
        blockingStubFull).getBalance();
-    beforeBurnTrxAmount = blockingStubSolidity
+    beforeBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     txid = PublicMethed.triggerContract(contractAddress,
             "testUseCpu(uint256)", "90100", false,
             0, maxFeeLimit, deployAddress, deployKey, blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
        .getBlockHeader().getRawData().getNumber();
     witness01Allowance2 =
@@ -430,7 +428,7 @@ public class TransactionFee001 {
     logger.info("receipt:" + infoById.get().getReceipt());
     Assert.assertTrue(packingFee ==  0L);
     Assert.assertTrue(infoById.get().getFee() >= maxFeeLimit);
-    afterBurnTrxAmount = blockingStubSolidity
+    afterBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Assert.assertTrue(afterBurnTrxAmount - beforeBurnTrxAmount == maxFeeLimit);
   }
@@ -445,7 +443,7 @@ public class TransactionFee001 {
             PublicMethed.queryAccount(witnessAddress02, blockingStubFull).getAllowance();
     blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
             blockingStubFull).getBalance();
-    beforeBurnTrxAmount = blockingStubSolidity
+    beforeBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] lowBalAddress = ecKey.getAddress();
@@ -453,7 +451,7 @@ public class TransactionFee001 {
         testKey002, blockingStubFull);
 
 
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
        .getBlockHeader().getRawData().getNumber();
     witness01Allowance2 =
@@ -482,7 +480,7 @@ public class TransactionFee001 {
         PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getPackingFee() == 0L);
     Assert.assertTrue(infoById.get().getFee() == 100000L);
-    afterBurnTrxAmount = blockingStubSolidity
+    afterBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Assert.assertTrue(afterBurnTrxAmount - beforeBurnTrxAmount == 100000L);
   }
@@ -495,6 +493,7 @@ public class TransactionFee001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(deployAddress, maxFeeLimit * 10, fromAddress,
             testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String code = Configuration.getByPath("testng.conf")
@@ -511,7 +510,7 @@ public class TransactionFee001 {
               0, maxFeeLimit, deployAddress, deployKey, blockingStubFull);
     }
 
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     startNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
             .getBlockHeader().getRawData().getNumber();
@@ -521,13 +520,13 @@ public class TransactionFee001 {
             PublicMethed.queryAccount(witnessAddress02, blockingStubFull).getAllowance();
     blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
             blockingStubFull).getBalance();
-    beforeBurnTrxAmount = blockingStubSolidity
+    beforeBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     txid = PublicMethed.triggerContract(contractAddress,
             "testUseCpu(uint256)", "700", false,
             0, maxFeeLimit, deployAddress, deployKey, blockingStubFull);
     //    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
             .getBlockHeader().getRawData().getNumber();
     witness01Allowance2 =
@@ -554,7 +553,7 @@ public class TransactionFee001 {
     Assert.assertTrue((Math.abs(witnessAllowance.get(ByteArray.toHexString(witnessAddress02))
             - witness02Increase)) <= 2);
     Assert.assertEquals(blackHoleBalance1,blackHoleBalance2);
-    afterBurnTrxAmount = blockingStubSolidity
+    afterBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Assert.assertEquals(beforeBurnTrxAmount,afterBurnTrxAmount);
   }
@@ -575,7 +574,7 @@ public class TransactionFee001 {
     Assert.assertTrue(PublicMethed
         .sendcoin(tokenAccountAddress, 1028000000L, fromAddress, testKey002, blockingStubFull));
 
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     startNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber();
     witness01Allowance1 =
@@ -584,7 +583,7 @@ public class TransactionFee001 {
         PublicMethed.queryAccount(witnessAddress02, blockingStubFull).getAllowance();
     blackHoleBalance1 = PublicMethed.queryAccount(Commons.decode58Check(blackHoleAdd),
         blockingStubFull).getBalance();
-    beforeBurnTrxAmount = blockingStubSolidity
+    beforeBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
@@ -597,7 +596,7 @@ public class TransactionFee001 {
         1, 1, start, end, 1, description, url, 0L,
         0L, 1L, 1L, tokenAccountKey,
             blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     endNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber();
@@ -627,16 +626,26 @@ public class TransactionFee001 {
         PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getPackingFee() == 0L);
     Assert.assertTrue(infoById.get().getFee() == 1024000000L);
-    afterBurnTrxAmount = blockingStubSolidity
+    afterBurnTrxAmount = blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()).getNum();
     Assert.assertTrue(afterBurnTrxAmount - beforeBurnTrxAmount == 1024000000L);
 
+
+  }
+
+  /**
+   * constructor.
+   */
+
+  @Test(enabled = true, description = "Test getburntrx api from solidity or pbft")
+  public void test07GetBurnTrxFromSolidityOrPbft() {
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     Assert.assertEquals(blockingStubFull
         .getBurnTrx(EmptyMessage.newBuilder().build()),blockingStubSolidity.getBurnTrx(
         EmptyMessage.newBuilder().build()));
     Assert.assertEquals(blockingStubFull.getBurnTrx(EmptyMessage.newBuilder().build()),
         blockingStubPbft.getBurnTrx(
-        EmptyMessage.newBuilder().build()));
+            EmptyMessage.newBuilder().build()));
   }
   /**
    * constructor.
