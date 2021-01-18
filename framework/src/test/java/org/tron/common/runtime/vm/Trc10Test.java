@@ -182,7 +182,8 @@
 //    long updateP1 = 1000001;
 //    String updateP2 = "abc";
 //    String updateP3 = updateP2;
-//    hexInput = AbiUtil.parseMethod(methodUpdateAsset, Arrays.asList(updateP1, updateP2, updateP3));
+//    hexInput = AbiUtil.parseMethod(methodUpdateAsset,
+//    Arrays.asList(updateP1, updateP2, updateP3));
 //    result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
 //        factoryAddress,
 //        Hex.decode(hexInput), value, fee, manager, null);
@@ -209,7 +210,8 @@
 //            + "cabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca"
 //            + "bcab";
 //    updateP3 = "efg";
-//    hexInput = AbiUtil.parseMethod(methodUpdateAsset, Arrays.asList(updateP1, updateP2, updateP3));
+//    hexInput = AbiUtil.parseMethod(methodUpdateAsset,
+//    Arrays.asList(updateP1, updateP2, updateP3));
 //    result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
 //        factoryAddress,
 //        Hex.decode(hexInput), value, fee, manager, null);
@@ -228,7 +230,8 @@
 //            + "bcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcaabcabcabcabcabcabcab"
 //            + "cabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca";
 //    updateP2 = "efg";
-//    hexInput = AbiUtil.parseMethod(methodUpdateAsset, Arrays.asList(updateP1, updateP2, updateP3));
+//    hexInput = AbiUtil.parseMethod(methodUpdateAsset,
+//    Arrays.asList(updateP1, updateP2, updateP3));
 //    result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
 //        factoryAddress,
 //        Hex.decode(hexInput), value, fee, manager, null);
@@ -344,7 +347,8 @@
 //    updateP1 = 1000001;
 //    updateP2 = "abc";
 //    updateP3 = updateP2;
-//    hexInput = AbiUtil.parseMethod(methodUpdateAsset, Arrays.asList(updateP1, updateP2, updateP3));
+//    hexInput = AbiUtil.parseMethod(methodUpdateAsset,
+//    Arrays.asList(updateP1, updateP2, updateP3));
 //    result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
 //        factoryAddress,
 //        Hex.decode(hexInput), value, fee, manager, null);
@@ -525,7 +529,8 @@
 //        + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],"
 //        + "\"payable\":false,"
 //        + "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,"
-//        + "\"inputs\":[{\"internalType\":\"trcToken\",\"name\":\"tokenId\",\"type\":\"trcToken\"},"
+//        + "\"inputs\":[{\"internalType\":\"trcToken\",\"name\":
+//        \"tokenId\",\"type\":\"trcToken\"},"
 //        + "{\"internalType\":\"string\",\"name\":\"desc\",\"type\":\"string\"},"
 //        + "{\"internalType\":\"string\","
 //        + "\"name\":\"url\",\"type\":\"string\"}],\"name\":\"UpdateAsset\",\"outputs\":[],"
@@ -633,7 +638,8 @@
 //    result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
 //        factoryAddress,
 //        Hex.decode(hexInput), value, fee, manager, null);
-//    Assert.assertEquals(ByteArray.toInt(result.getRuntime().getResult().getHReturn()), 1000001);
+//    Assert.assertEquals(ByteArray.toInt(result.getRuntime().getResult().getHReturn()),
+//    1000001);
 //    Assert.assertNull(result.getRuntime().getRuntimeError());
 //
 //    // updateasset test
