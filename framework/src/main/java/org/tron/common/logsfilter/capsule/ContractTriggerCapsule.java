@@ -2,8 +2,9 @@ package org.tron.common.logsfilter.capsule;
 
 import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -132,7 +133,8 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
         if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
           Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractEventTrigger) event);
+              .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                  .offer((ContractEventTrigger) event);
         }
 
       } else {
@@ -142,7 +144,8 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
         if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
           Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractLogTrigger) event);
+              .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                  .offer((ContractLogTrigger) event);
         }
       }
     }

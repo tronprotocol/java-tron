@@ -24,11 +24,9 @@ public class IsSpendServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-
+      PostParams postParams = PostParams.getPostParams(request);
+      boolean visible = postParams.isVisible();
+      String input = postParams.getParams();
       NoteParameters.Builder build = NoteParameters.newBuilder();
       JsonFormat.merge(input, build, visible);
 

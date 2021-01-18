@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.collect.Lists;
@@ -19,9 +20,9 @@ import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -56,7 +57,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
-    DelegationService delegationService = chainBaseManager.getDelegationService();
+    MortgageService mortgageService = chainBaseManager.getMortgageService();
     try {
       unfreezeBalanceContract = any.unpack(UnfreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
@@ -67,7 +68,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
 
     //
-    delegationService.withdrawReward(ownerAddress);
+    mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
@@ -269,7 +270,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] does not exist");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();

@@ -1,4 +1,3 @@
-//pragma solidity ^0.4.11;
 
 
 /**
@@ -7,36 +6,36 @@
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-  address public owner;
+    address public owner;
 
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
     }
-  }
+
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
 
 }
 
@@ -151,7 +150,7 @@ contract KittyAccessControl {
     ///  compromised.
     /// @notice This is public rather than external so it can be called by
     ///  derived contracts.
-    function unpause() public onlyCEO whenPaused {
+    function unpause() public virtual onlyCEO whenPaused {
         // can't unpause if contract was upgraded
         paused = false;
     }
@@ -234,20 +233,20 @@ contract KittyBase is KittyAccessControl {
     ///  and over again. Caps out at one week (a cat can breed an unbounded number
     ///  of times, and the maximum cooldown is always seven days).
     uint32[14] public cooldowns = [
-        uint32(1 minutes),
-        uint32(2 minutes),
-        uint32(5 minutes),
-        uint32(10 minutes),
-        uint32(30 minutes),
-        uint32(1 hours),
-        uint32(2 hours),
-        uint32(4 hours),
-        uint32(8 hours),
-        uint32(16 hours),
-        uint32(1 days),
-        uint32(2 days),
-        uint32(4 days),
-        uint32(7 days)
+    uint32(1 minutes),
+    uint32(2 minutes),
+    uint32(5 minutes),
+    uint32(10 minutes),
+    uint32(30 minutes),
+    uint32(1 hours),
+    uint32(2 hours),
+    uint32(4 hours),
+    uint32(8 hours),
+    uint32(16 hours),
+    uint32(1 days),
+    uint32(2 days),
+    uint32(4 days),
+    uint32(7 days)
     ];
 
     // An approximation of currently how many seconds are in between blocks.
@@ -324,8 +323,8 @@ contract KittyBase is KittyAccessControl {
         uint256 _genes,
         address _owner
     )
-        internal
-        returns (uint)
+    internal
+    returns (uint)
     {
         // These requires are not strictly necessary, our calling code should make
         // sure that these conditions are never broken. However! _createKitty() is already
@@ -350,8 +349,9 @@ contract KittyBase is KittyAccessControl {
             siringWithId: 0,
             cooldownIndex: cooldownIndex,
             generation: uint16(_generation)
-        });
-        uint256 newKittenId = kitties.push(_kitty) - 1;
+            });
+        kitties.push(_kitty);
+        uint256 newKittenId = kitties.length - 1;
 
         // It's probably never going to happen, 4 billion cats is A LOT, but
         // let's just be 100% sure we never let this happen.
@@ -383,14 +383,14 @@ contract KittyBase is KittyAccessControl {
 
 /// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
 /// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
-contract ERC721 {
+abstract contract ERC721 {
     // Required methods
-    function totalSupply() public view returns (uint256 total);
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function ownerOf(uint256 _tokenId) external view returns (address owner);
-    function approve(address _to, uint256 _tokenId) external;
-    function transfer(address _to, uint256 _tokenId) external;
-    function transferFrom(address _from, address _to, uint256 _tokenId) external;
+    function totalSupply() public virtual view returns (uint256 total);
+    function balanceOf(address _owner) public virtual view returns (uint256 balance);
+    function ownerOf(uint256 _tokenId) external virtual view returns (address owner);
+    function approve(address _to, uint256 _tokenId) external virtual;
+    function transfer(address _to, uint256 _tokenId) external virtual;
+    function transferFrom(address _from, address _to, uint256 _tokenId) external virtual;
 
     // Events
     event Transfer(address from, address to, uint256 tokenId);
@@ -403,7 +403,7 @@ contract ERC721 {
     // function tokenMetadata(uint256 _tokenId, string _preferredTransport) public view returns (string infoUrl);
 
     // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
+    function supportsInterface(bytes4 _interfaceID) external virtual view returns (bool);
 }
 
 
@@ -421,24 +421,24 @@ contract KittyOwnership is ERC721, KittyBase {
     ERC721Metadata public erc721Metadata;
 
     bytes4 constant InterfaceSignature_ERC165 =
-        bytes4(keccak256('supportsInterface(bytes4)'));
+    bytes4(keccak256('supportsInterface(bytes4)'));
 
     bytes4 constant InterfaceSignature_ERC721 =
-        bytes4(keccak256('name()')) ^
-        bytes4(keccak256('symbol()')) ^
-        bytes4(keccak256('totalSupply()')) ^
-        bytes4(keccak256('balanceOf(address)')) ^
-        bytes4(keccak256('ownerOf(uint256)')) ^
-        bytes4(keccak256('approve(address,uint256)')) ^
-        bytes4(keccak256('transfer(address,uint256)')) ^
-        bytes4(keccak256('transferFrom(address,address,uint256)')) ^
-        bytes4(keccak256('tokensOfOwner(address)')) ^
-        bytes4(keccak256('tokenMetadata(uint256,string)'));
+    bytes4(keccak256('name()')) ^
+    bytes4(keccak256('symbol()')) ^
+    bytes4(keccak256('totalSupply()')) ^
+    bytes4(keccak256('balanceOf(address)')) ^
+    bytes4(keccak256('ownerOf(uint256)')) ^
+    bytes4(keccak256('approve(address,uint256)')) ^
+    bytes4(keccak256('transfer(address,uint256)')) ^
+    bytes4(keccak256('transferFrom(address,address,uint256)')) ^
+    bytes4(keccak256('tokensOfOwner(address)')) ^
+    bytes4(keccak256('tokenMetadata(uint256,string)'));
 
     /// @notice Introspection interface as per ERC-165 (https://github.com/ethereum/EIPs/issues/165).
     ///  Returns true for any standardized interfaces implemented by this contract. We implement
     ///  ERC-165 (obviously!) and ERC-721.
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool)
+    function supportsInterface(bytes4 _interfaceID) external override view returns (bool)
     {
         // DEBUG ONLY
         //require((InterfaceSignature_ERC165 == 0x01ffc9a7) && (InterfaceSignature_ERC721 == 0x9a20483d));
@@ -482,7 +482,7 @@ contract KittyOwnership is ERC721, KittyBase {
     /// @notice Returns the number of Kitties owned by a specific address.
     /// @param _owner The owner address to check.
     /// @dev Required for ERC-721 compliance
-    function balanceOf(address _owner) public view returns (uint256 count) {
+    function balanceOf(address _owner) public view override returns (uint256 count) {
         return ownershipTokenCount[_owner];
     }
 
@@ -496,8 +496,9 @@ contract KittyOwnership is ERC721, KittyBase {
         address _to,
         uint256 _tokenId
     )
-        external
-        whenNotPaused
+    override
+    external
+    whenNotPaused
     {
         // Safety check to prevent against an unexpected 0x0 default.
         require(_to != address(0));
@@ -528,8 +529,9 @@ contract KittyOwnership is ERC721, KittyBase {
         address _to,
         uint256 _tokenId
     )
-        external
-        whenNotPaused
+    external
+    override
+    whenNotPaused
     {
         // Only an owner can grant transfer approval.
         require(_owns(msg.sender, _tokenId));
@@ -553,8 +555,9 @@ contract KittyOwnership is ERC721, KittyBase {
         address _to,
         uint256 _tokenId
     )
-        external
-        whenNotPaused
+    external
+    override
+    whenNotPaused
     {
         // Safety check to prevent against an unexpected 0x0 default.
         require(_to != address(0));
@@ -572,16 +575,17 @@ contract KittyOwnership is ERC721, KittyBase {
 
     /// @notice Returns the total number of Kitties currently in existence.
     /// @dev Required for ERC-721 compliance.
-    function totalSupply() public view returns (uint) {
+    function totalSupply() public override view returns (uint) {
         return kitties.length - 1;
     }
 
     /// @notice Returns the address currently assigned ownership of a given Kitty.
     /// @dev Required for ERC-721 compliance.
     function ownerOf(uint256 _tokenId)
-        external
-        view
-        returns (address owner)
+    external
+    override
+    view
+    returns (address owner)
     {
         owner = kittyIndexToOwner[_tokenId];
 
@@ -688,7 +692,7 @@ contract KittyBreeding is KittyOwnership {
     /// @notice The minimum payment required to use breedWithAuto(). This fee goes towards
     ///  the gas cost paid by whatever calls giveBirth(), and can be dynamically updated by
     ///  the COO role as the gas price changes.
-    uint256 public autoBirthFee = 2 sun;
+    uint256 public autoBirthFee = 2 ;
 
     // Keeps track of number of pregnant kitties.
     uint256 public pregnantKitties;
@@ -751,8 +755,8 @@ contract KittyBreeding is KittyOwnership {
     ///  address(0) to clear all siring approvals for this Kitty.
     /// @param _sireId A Kitty that you own that _addr will now be able to sire with.
     function approveSiring(address _addr, uint256 _sireId)
-        external
-        whenNotPaused
+    external
+    whenNotPaused
     {
         require(_owns(msg.sender, _sireId));
         sireAllowedToAddress[_sireId] = _addr;
@@ -775,9 +779,9 @@ contract KittyBreeding is KittyOwnership {
     ///  in the middle of a siring cooldown).
     /// @param _kittyId reference the id of the kitten, any user can inquire about it
     function isReadyToBreed(uint256 _kittyId)
-        public
-        view
-        returns (bool)
+    public
+    view
+    returns (bool)
     {
         require(_kittyId > 0);
         Kitty storage kit = kitties[_kittyId];
@@ -787,9 +791,9 @@ contract KittyBreeding is KittyOwnership {
     /// @dev Checks whether a kitty is currently pregnant.
     /// @param _kittyId reference the id of the kitten, any user can inquire about it
     function isPregnant(uint256 _kittyId)
-        public
-        view
-        returns (bool)
+    public
+    view
+    returns (bool)
     {
         require(_kittyId > 0);
         // A kitty is pregnant if and only if this field is set
@@ -808,9 +812,9 @@ contract KittyBreeding is KittyOwnership {
         Kitty storage _sire,
         uint256 _sireId
     )
-        private
-        view
-        returns(bool)
+    private
+    view
+    returns(bool)
     {
         // A Kitty can't breed with itself!
         if (_matronId == _sireId) {
@@ -846,9 +850,9 @@ contract KittyBreeding is KittyOwnership {
     /// @dev Internal check to see if a given sire and matron are a valid mating pair for
     ///  breeding via auction (i.e. skips ownership and siring approval checks).
     function _canBreedWithViaAuction(uint256 _matronId, uint256 _sireId)
-        internal
-        view
-        returns (bool)
+    internal
+    view
+    returns (bool)
     {
         Kitty storage matron = kitties[_matronId];
         Kitty storage sire = kitties[_sireId];
@@ -862,16 +866,16 @@ contract KittyBreeding is KittyOwnership {
     /// @param _matronId The ID of the proposed matron.
     /// @param _sireId The ID of the proposed sire.
     function canBreedWith(uint256 _matronId, uint256 _sireId)
-        external
-        view
-        returns(bool)
+    external
+    view
+    returns(bool)
     {
         require(_matronId > 0);
         require(_sireId > 0);
         Kitty storage matron = kitties[_matronId];
         Kitty storage sire = kitties[_sireId];
         return _isValidMatingPair(matron, _matronId, sire, _sireId) &&
-            _isSiringPermitted(_sireId, _matronId);
+        _isSiringPermitted(_sireId, _matronId);
     }
 
     /// @dev Internal utility function to initiate breeding, assumes that all breeding
@@ -906,9 +910,9 @@ contract KittyBreeding is KittyOwnership {
     /// @param _matronId The ID of the Kitty acting as matron (will end up pregnant if successful)
     /// @param _sireId The ID of the Kitty acting as sire (will begin its siring cooldown if successful)
     function breedWithAuto(uint256 _matronId, uint256 _sireId)
-        external
-        payable
-        whenNotPaused
+    external
+    payable
+    whenNotPaused
     {
         // Checks for payment.
         require(msg.value >= autoBirthFee);
@@ -946,11 +950,11 @@ contract KittyBreeding is KittyOwnership {
 
         // Test that these cats are a valid mating pair.
         require(_isValidMatingPair(
-            matron,
-            _matronId,
-            sire,
-            _sireId
-        ));
+                matron,
+                _matronId,
+                sire,
+                _sireId
+            ));
 
         // All checks passed, kitty gets pregnant!
         _breedWith(_matronId, _sireId);
@@ -965,9 +969,9 @@ contract KittyBreeding is KittyOwnership {
     ///  new kitten will be ready to breed again. Note that anyone can call this function (if they
     ///  are willing to pay the gas!), but the new kitten always goes to the mother's owner.
     function giveBirth(uint256 _matronId)
-        external
-        whenNotPaused
-        returns(uint256)
+    external
+    whenNotPaused
+    returns(uint256)
     {
         // Grab a reference to the matron in storage.
         Kitty storage matron = kitties[_matronId];
@@ -1054,8 +1058,8 @@ contract KittyAuction is KittyBreeding {
         uint256 _endingPrice,
         uint256 _duration
     )
-        external
-        whenNotPaused
+    external
+    whenNotPaused
     {
         // Auction contract checks input sizes
         // If kitty is already on any auction, this will throw
@@ -1086,8 +1090,8 @@ contract KittyAuction is KittyBreeding {
         uint256 _endingPrice,
         uint256 _duration
     )
-        external
-        whenNotPaused
+    external
+    whenNotPaused
     {
         // Auction contract checks input sizes
         // If kitty is already on any auction, this will throw
@@ -1114,9 +1118,9 @@ contract KittyAuction is KittyBreeding {
         uint256 _sireId,
         uint256 _matronId
     )
-        external
-        payable
-        whenNotPaused
+    external
+    payable
+    whenNotPaused
     {
         // Auction contract checks input sizes
         require(_owns(msg.sender, _matronId));
@@ -1150,7 +1154,7 @@ contract KittyMinting is KittyAuction {
     uint256 public constant GEN0_CREATION_LIMIT = 45000;
 
     // Constants for gen0 auctions.
-    uint256 public constant GEN0_STARTING_PRICE = 10 sun;
+    uint256 public constant GEN0_STARTING_PRICE = 10 ;
     uint256 public constant GEN0_AUCTION_DURATION = 1 days;
 
     // Counts the number of cats the contract owner has created.
@@ -1163,7 +1167,7 @@ contract KittyMinting is KittyAuction {
     function createPromoKitty(uint256 _genes, address _owner) external onlyCOO {
         address kittyOwner = _owner;
         if (kittyOwner == address(0)) {
-             kittyOwner = cooAddress;
+            kittyOwner = cooAddress;
         }
         require(promoCreatedCount < PROMO_CREATION_LIMIT);
 
@@ -1287,7 +1291,7 @@ contract KittyCore is KittyMinting {
     /// @notice No tipping!
     /// @dev Reject all Ether from being sent here, unless it's from one of the
     ///  two auction contracts. (Hopefully, we can prevent user accidents.)
-    function() external payable {
+    fallback() external payable {
         require(
             msg.sender == address(saleAuction) ||
             msg.sender == address(siringAuction)
@@ -1297,9 +1301,9 @@ contract KittyCore is KittyMinting {
     /// @notice Returns all the relevant information about a specific kitty.
     /// @param _id The ID of the kitty of interest.
     function getKitty(uint256 _id)
-        external
-        view
-        returns (
+    external
+    view
+    returns (
         bool isGestating,
         bool isReady,
         uint256 cooldownIndex,
@@ -1332,7 +1336,7 @@ contract KittyCore is KittyMinting {
     /// @notice This is public rather than external so we can call super.unpause
     ///  without using an expensive CALL.
 
-    function unpause() public onlyCEO whenPaused {
+    function unpause() public override onlyCEO whenPaused {
         require(address(saleAuction) != address(0));
         require(address(siringAuction) != address(0));
         require(address(geneScience) != address(0));
@@ -1383,17 +1387,17 @@ contract GeneScienceInterface {
     function isGeneScience() public pure returns (bool){
         return true;
     }
-    
+
     /// @dev given genes of kitten 1 & 2, return a genetic combination - may have a random factor
     /// @param genes1 genes of mom
     /// @param genes2 genes of sire
     /// @return the genes that are supposed to be passed down the child
     function mixGenes(uint256 genes1, uint256 genes2, uint256 targetBlock) public pure returns (uint256){
-        
+
         return (genes1+genes2+targetBlock)/2;
-      
-    
-}
+
+
+    }
 }
 
 
@@ -1535,8 +1539,8 @@ contract ClockAuctionBase {
     /// @dev Computes the price and transfers winnings.
     /// Does NOT transfer ownership of token.
     function _bid(uint256 _tokenId, uint256 _bidAmount)
-        internal
-        returns (uint256)
+    internal
+    returns (uint256)
     {
         // Get a reference to the auction struct
         Auction storage auction = tokenIdToAuction[_tokenId];
@@ -1612,9 +1616,9 @@ contract ClockAuctionBase {
     ///  structure, and the other that does the price computation) so we
     ///  can easily test that the price computation works correctly.
     function _currentPrice(Auction storage _auction)
-        internal
-        view
-        returns (uint256)
+    internal
+    view
+    returns (uint256)
     {
         uint256 secondsPassed = 0;
 
@@ -1643,9 +1647,9 @@ contract ClockAuctionBase {
         uint256 _duration,
         uint256 _secondsPassed
     )
-        internal
-        pure
-        returns (uint256)
+    internal
+    pure
+    returns (uint256)
     {
         // NOTE: We don't use SafeMath (or similar) in this function because
         //  all of our public functions carefully cap the maximum values for
@@ -1698,45 +1702,45 @@ contract ClockAuctionBase {
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
 contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+    event Pause();
+    event Unpause();
 
-  bool public paused = false;
+    bool public paused = false;
 
 
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
+    /**
+     * @dev modifier to allow actions only when the contract IS paused
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
 
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused {
-    require(paused);
-    _;
-  }
+    /**
+     * @dev modifier to allow actions only when the contract IS NOT paused
+     */
+    modifier whenPaused {
+        require(paused);
+        _;
+    }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public returns (bool) {
-    paused = true;
-    emit Pause();
-    return true;
-  }
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public returns (bool) {
+        paused = true;
+        emit Pause();
+        return true;
+    }
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public returns (bool) {
-    paused = false;
-    emit Unpause();
-    return true;
-  }
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public returns (bool) {
+        paused = false;
+        emit Unpause();
+        return true;
+    }
 }
 
 
@@ -1793,8 +1797,9 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         uint256 _duration,
         address payable _seller
     )
-        external
-        whenNotPaused
+    external
+    virtual
+    whenNotPaused
     {
         // Sanity check that no inputs overflow how many bits we've allocated
         // to store them in the auction struct.
@@ -1818,9 +1823,10 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  ownership of the NFT if enough Ether is supplied.
     /// @param _tokenId - ID of token to bid on.
     function bid(uint256 _tokenId)
-        external
-        payable
-        whenNotPaused
+    external
+    payable
+    virtual
+    whenNotPaused
     {
         // _bid will throw if the bid or funds transfer fails
         _bid(_tokenId, msg.value);
@@ -1833,7 +1839,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  be called while the contract is paused.
     /// @param _tokenId - ID of token on auction
     function cancelAuction(uint256 _tokenId)
-        external
+    external
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -1847,9 +1853,9 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  the seller. This should only be used in emergencies.
     /// @param _tokenId - ID of the NFT on auction to cancel.
     function cancelAuctionWhenPaused(uint256 _tokenId)
-        whenPaused
-        onlyOwner
-        external
+    whenPaused
+    onlyOwner
+    external
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -1859,9 +1865,9 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     /// @dev Returns auction info for an NFT on auction.
     /// @param _tokenId - ID of NFT on auction.
     function getAuction(uint256 _tokenId)
-        external
-        view
-        returns
+    external
+    view
+    returns
     (
         address seller,
         uint256 startingPrice,
@@ -1872,20 +1878,20 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
         return (
-            auction.seller,
-            auction.startingPrice,
-            auction.endingPrice,
-            auction.duration,
-            auction.startedAt
+        auction.seller,
+        auction.startingPrice,
+        auction.endingPrice,
+        auction.duration,
+        auction.startedAt
         );
     }
 
     /// @dev Returns the current price of an auction.
     /// @param _tokenId - ID of the token price we are checking.
     function getCurrentPrice(uint256 _tokenId)
-        external
-        view
-        returns (uint256)
+    external
+    view
+    returns (uint256)
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -1905,7 +1911,7 @@ contract SiringClockAuction is ClockAuction {
 
     // Delegate constructor
     constructor(address _nftAddr, uint256 _cut) public
-        ClockAuction(_nftAddr, _cut) {}
+    ClockAuction(_nftAddr, _cut) {}
 
     /// @dev Creates and begins a new auction. Since this function is wrapped,
     /// require sender to be KittyCore contract.
@@ -1921,7 +1927,8 @@ contract SiringClockAuction is ClockAuction {
         uint256 _duration,
         address payable _seller
     )
-        external
+    external
+    override
     {
         // Sanity check that no inputs overflow how many bits we've allocated
         // to store them in the auction struct.
@@ -1946,8 +1953,9 @@ contract SiringClockAuction is ClockAuction {
     /// should be wrapped. Also returns the kitty to the
     /// seller rather than the winner.
     function bid(uint256 _tokenId)
-        external
-        payable
+    external
+    payable
+    override
     {
         require(msg.sender == address(nonFungibleContract));
         address seller = tokenIdToAuction[_tokenId].seller;
@@ -1978,7 +1986,7 @@ contract SaleClockAuction is ClockAuction {
 
     // Delegate constructor
     constructor(address _nftAddr, uint256 _cut) public
-        ClockAuction(_nftAddr, _cut) {}
+    ClockAuction(_nftAddr, _cut) {}
 
     /// @dev Creates and begins a new auction.
     /// @param _tokenId - ID of token to auction, sender must be owner.
@@ -1993,7 +2001,8 @@ contract SaleClockAuction is ClockAuction {
         uint256 _duration,
         address payable _seller
     )
-        external
+    external
+    override
     {
         // Sanity check that no inputs overflow how many bits we've allocated
         // to store them in the auction struct.
@@ -2016,8 +2025,9 @@ contract SaleClockAuction is ClockAuction {
     /// @dev Updates lastSalePrice if seller is the nft contract
     /// Otherwise, works the same as default bid method.
     function bid(uint256 _tokenId)
-        external
-        payable
+    external
+    payable
+    override
     {
         // _bid verifies token ID size
         address seller = tokenIdToAuction[_tokenId].seller;

@@ -55,11 +55,15 @@ public class TransferActuator extends AbstractActuator {
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
-      Commons.adjustBalance(accountStore, ownerAddress, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-      ret.setStatus(fee, code.SUCESS);
-      Commons.adjustBalance(accountStore, ownerAddress, -amount);
+
+      Commons.adjustBalance(accountStore, ownerAddress, -(Math.addExact(fee, amount)));
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       Commons.adjustBalance(accountStore, toAddress, amount);
+      ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

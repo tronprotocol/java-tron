@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -142,7 +143,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     long frozenBalance = freezeBalanceContract.getFrozenBalance();
@@ -207,7 +208,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
         String readableOwnerAddress = StringUtil.createReadableString(receiverAddress);
         throw new ContractValidateException(
             ActuatorConstant.ACCOUNT_EXCEPTION_STR
-                + readableOwnerAddress + "] not exists");
+                + readableOwnerAddress + NOT_EXIST_STR);
       }
 
       if (dynamicStore.getAllowTvmConstantinople() == 1

@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+
 
 contract transferTrc10 {
     function receive(address payable rec) public payable {
@@ -16,7 +16,7 @@ contract transferTrc10 {
 }
 
 contract receiveTrc10 {
-    function() external payable {
+    fallback() external payable {
     }
     function AssertError() public{
         assert(1==2);

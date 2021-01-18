@@ -24,6 +24,7 @@ public class HttpTestBlock001 {
       .getStringList("httpnode.ip.list").get(4);
   private Integer currentBlockNum;
   private JSONObject blockContent;
+  private JSONObject blockContentWithVisibleTrue;
   private String blockId;
 
 
@@ -112,6 +113,13 @@ public class HttpTestBlock001 {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     Assert.assertEquals(responseContent, blockContent);
+
+    //visible=true
+    response = HttpMethed.getBlockByNum(httpnode, currentBlockNum, true);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    Assert.assertEquals(responseContent.getString("blockID"),
+        blockContent.getString("blockID"));
 
   }
 

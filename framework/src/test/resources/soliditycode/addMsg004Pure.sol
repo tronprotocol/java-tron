@@ -1,10 +1,10 @@
-//pragma solidity ^0.4.24;
+
 
 contract IllegalDecorate {
 
 constructor() payable public{}
 
-function() payable external{}
+fallback() payable external{}
 
 event log(uint256);
 

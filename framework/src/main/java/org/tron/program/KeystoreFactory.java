@@ -13,7 +13,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
-import org.tron.keystore.CipherException;
+import org.tron.core.exception.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 

@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 
 contract testConstantContract{
 function testView() public view returns (uint256 z) {
