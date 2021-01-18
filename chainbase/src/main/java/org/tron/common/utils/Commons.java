@@ -18,7 +18,7 @@ public class Commons {
 
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
 
-  private static byte[] decode58Check(String input) {
+  public static byte[] decode58Check(String input) {
     byte[] decodeCheck = Base58.decode(input);
     if (decodeCheck.length <= 4) {
       return null;

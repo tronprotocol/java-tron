@@ -73,6 +73,9 @@ public class TransactionTrace {
   @Getter
   @Setter
   private TimeResultType timeResultType = TimeResultType.NORMAL;
+  @Getter
+  @Setter
+  private boolean netFeeForBandwidth = true;
 
   public TransactionTrace(TransactionCapsule trx, StoreFactory storeFactory,
       Runtime runtime) {
@@ -160,6 +163,12 @@ public class TransactionTrace {
   public void setNetBill(long netUsage, long netFee) {
     receipt.setNetUsage(netUsage);
     receipt.setNetFee(netFee);
+  }
+
+  public void setNetBillForCreateNewAccount(long netUsage, long netFee) {
+    receipt.setNetUsage(netUsage);
+    receipt.setNetFee(netFee);
+    setNetFeeForBandwidth(false);
   }
 
   public void addNetBill(long netFee) {

@@ -91,7 +91,7 @@ public class ContractTrcToken011 {
   }
 
   @Test(enabled = true, description = "TransferToken with correct value, deploy transfer contract")
-  public void test01DeployTransferTokenContract() {
+  public void test01DeployTransferTokenContract001() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 15048_000_000L, fromAddress,
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 14048_000_000L, fromAddress,
@@ -192,7 +192,7 @@ public class ContractTrcToken011 {
 
 
   @Test(enabled = true, description = "TransferToken with correct value, deploy receive contract")
-  public void test02DeployRevContract() {
+  public void test02DeployRevContract002() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
             blockingStubFull), 0, 1,
@@ -263,7 +263,7 @@ public class ContractTrcToken011 {
   }
 
   @Test(enabled = true, description = "TransferToken with correct value, transfer to a contract")
-  public void test03TriggerContract() {
+  public void test03TriggerContract003() {
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -387,7 +387,7 @@ public class ContractTrcToken011 {
   }
 
   @Test(enabled = true, description = "TransferToken with correct value, get contract tokenBalance")
-  public void test04TriggerTokenBalanceContract() {
+  public void test04TriggerTokenBalanceContract004() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 1000_000_000L,
         0, 1, user001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -477,7 +477,7 @@ public class ContractTrcToken011 {
   }
 
   @Test(enabled = true, description = "TransferToken after get transaction info by blocknum")
-  public void test05GetTransactionInfoByBlocknum() {
+  public void test05GetTransactionInfoByBlocknum005() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
             blockingStubFull), 0, 1,
@@ -524,7 +524,7 @@ public class ContractTrcToken011 {
   }
 
   @Test(enabled = true, description = "get transaction info by blocknum from solidity")
-  public void test06GetTransactionInfoByBlocknumFromSolidity() {
+  public void test06GetTransactionInfoByBlocknumFromSolidity006() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
             blockingStubFull), 0, 1,

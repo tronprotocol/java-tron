@@ -139,12 +139,11 @@ public class WithdrawBalance2Test {
 
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       return false;
     }
     logger.info("test withdraw" + priKey);
     return true;
-
   }
 
   /**
@@ -187,12 +186,11 @@ public class WithdrawBalance2Test {
     ECKey ecKey = temKey;
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       return response;
     }
     logger.info("test withdraw" + priKey);
     return ret;
-
   }
 
   /**
@@ -240,7 +238,7 @@ public class WithdrawBalance2Test {
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       return false;
     }
     Account afterVote = queryAccount(ecKey, searchBlockingStubFull);

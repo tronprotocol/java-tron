@@ -27,7 +27,8 @@ import lombok.Setter;
  */
 public class VMConfig {
 
-  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 TRX
+  //1000 TRX
+  //public static final int MAX_FEE_LIMIT = 1_000_000_000;
 
   private static boolean vmTraceCompressed = false;
 

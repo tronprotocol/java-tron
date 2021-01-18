@@ -36,6 +36,7 @@ import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -74,6 +75,7 @@ import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.MarketContract;
 import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
@@ -1073,7 +1075,7 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
     boolean result = broadcastTransaction(transaction, blockingStubFull);
-    if (result == false) {
+    if (!result) {
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
@@ -5237,6 +5239,97 @@ public class PublicMethedForMutiSign {
         .toHexString(Sha256Hash.hash(CommonParameter.getInstance()
             .isECKeyCryptoEngine(), transaction.getRawData().toByteArray())));
 
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+  public static boolean marketSellAsset(byte[] owner,  byte[] sellTokenId,
+      long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
+      int permissionId, String[] priKeys, WalletBlockingStub blockingStubFull) {
+
+    MarketContract.MarketSellAssetContract.Builder builder = MarketContract.MarketSellAssetContract
+        .newBuilder();
+    builder
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setSellTokenQuantity(sellTokenQuantity)
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+        .setBuyTokenQuantity(buyTokenQuantity);
+
+    TransactionExtention transactionExtention = blockingStubFull.marketSellAsset(builder.build());
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+
+    if (transaction.getRawData().getContract(0).getType()
+        != ContractType.MarketSellAssetContract) {
+      return false;
+    }
+
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+      transaction = signTransaction(transaction, blockingStubFull, priKeys);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+    return broadcastTransaction(transaction, blockingStubFull);
+
+  }
+
+  /**
+   * constructor.
+   */
+  public static boolean marketCancelOrder(byte[] owner, byte[] orderId,
+      int permissionId, String[] priKeys,
+      WalletBlockingStub blockingStubFull) {
+
+    MarketContract.MarketCancelOrderContract.Builder builder = MarketContract
+        .MarketCancelOrderContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
+
+    TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());
+
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+
+    if (transaction.getRawData().getContract(0).getType()
+        != ContractType.MarketCancelOrderContract) {
+      System.out.println("Wrong ContractType :"
+          + transaction.getRawData().getContract(0).getType());
+      return false;
+    }
+
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+      transaction = signTransaction(transaction,blockingStubFull,priKeys);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
     return broadcastTransaction(transaction, blockingStubFull);
   }
 }

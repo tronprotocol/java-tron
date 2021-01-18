@@ -280,10 +280,8 @@ public class Create2Test001 {
     logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
-    Assert.assertEquals(1, infoById.get().getResultValue());
-    Assert
-        .assertThat(infoById.get().getResMessage().toStringUtf8(),
-            containsString("Not enough energy for 'SWAP1' operation executing"));
+    // Istanbul change create2 algorithm
+    Assert.assertEquals(0, infoById.get().getResultValue());
   }
 
   @Test(enabled = true, description = "Trigger create2 command without meta data hash in bytecode")

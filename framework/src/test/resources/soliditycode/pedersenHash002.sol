@@ -1,12 +1,11 @@
-pragma solidity ^0.5.8;
 pragma experimental ABIEncoderV2;
 
 import "./SafeMath.sol";
 
-contract TokenTRC20 {
-    function transfer(address _to, uint256 _value) public returns (bool success);
+abstract contract TokenTRC20 {
+    function transfer(address _to, uint256 _value) public virtual returns (bool success);
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public virtual returns (bool success);
 }
 
 contract ShieldedTRC20 {

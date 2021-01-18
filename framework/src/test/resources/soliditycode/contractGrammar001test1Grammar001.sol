@@ -1,4 +1,4 @@
-pragma solidity >0.5.0;
+
 contract FunctionSelector {
  function select(bool useB, uint x) public returns (uint z) {
  //var f = a;

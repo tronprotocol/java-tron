@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+
 
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
@@ -603,7 +603,7 @@ contract FoMo3Dlong is F3Devents {
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
      */
-    function()
+    fallback()
     isActivated()
     isHuman()
     isWithinLimits(msg.value)

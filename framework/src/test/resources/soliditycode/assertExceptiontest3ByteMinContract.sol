@@ -1,4 +1,4 @@
-pragma solidity >0.5.0;
+
 contract byteContract{
 bytes b;
 function testBytesGet(uint i) public returns (bytes1){

@@ -77,10 +77,7 @@ public class TriggerConstant003 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-  }
 
-  @Test(enabled = true, description = "TriggerConstantContract a view function without ABI")
-  public void test001TriggerConstantContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -95,10 +92,17 @@ public class TriggerConstant003 {
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
+
+  }
+
+  @Test(enabled = true, description = "TriggerConstantContract a view function without ABI")
+  public void test001TriggerConstantContract() {
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -131,9 +135,43 @@ public class TriggerConstant003 {
             .toHexString(result))));
   }
 
-
-  @Test(enabled = true, description = "TriggerConstantContract a payable function with ABI")
+  @Test(enabled = true, description = "TriggerConstantContract a pure function without ABI")
   public void test002TriggerConstantContract() {
+
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testPure()", "#", false,
+            0, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+
+    Transaction transaction = transactionExtention.getTransaction();
+
+    byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result))));
+  }
+
+  @Test(enabled = true, description = "TriggerConstantContract a payable function without ABI")
+  public void test003TriggerConstantContract() {
 
     Account info;
 

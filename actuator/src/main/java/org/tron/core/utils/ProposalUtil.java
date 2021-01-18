@@ -400,6 +400,40 @@ public class ProposalUtil {
         }
         break;
       }
+      case MAX_FEE_LIMIT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1_2)) {
+          throw new ContractValidateException("Bad chain parameter id [MAX_FEE_LIMIT]");
+        }
+        if (value < 0 || value > 10_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad MAX_FEE_LIMIT parameter value, valid range is [0,10_000_000_000L]");
+        }
+        break;
+      }
+      case ALLOW_TRANSACTION_FEE_POOL: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TRANSACTION_FEE_POOL]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TRANSACTION_FEE_POOL] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+      case ALLOW_BLACKHOLE_OPTIMIZATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_REMOVE_BLACKHOLE]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_REMOVE_BLACKHOLE] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+
+
       default:
         break;
     }
@@ -449,7 +483,10 @@ public class ProposalUtil {
     // ALLOW_TVM_STAKE(43), // 0, 1
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
-    MARKET_CANCEL_FEE(46); // 0 [0,10_000_000_000]
+    MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
+    MAX_FEE_LIMIT(47), // [0, 10_000_000_000]
+    ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
+    ALLOW_BLACKHOLE_OPTIMIZATION(49);// 0,1
 
     private long code;
 

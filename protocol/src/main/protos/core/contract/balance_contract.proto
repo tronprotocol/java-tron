@@ -34,3 +34,49 @@ message TransferContract {
   bytes to_address = 2;
   int64 amount = 3;
 }
+
+message TransactionBalanceTrace {
+  message Operation {
+    int64 operation_identifier = 1;
+    bytes address = 2;
+    int64 amount = 3;
+  }
+
+  bytes transaction_identifier = 1;
+  repeated Operation operation = 2;
+  string type = 3;
+  string status = 4;
+}
+
+
+
+message BlockBalanceTrace {
+  message BlockIdentifier {
+    bytes hash = 1;
+    int64 number = 2;
+  }
+
+  BlockIdentifier block_identifier = 1;
+  int64 timestamp = 2;
+  repeated TransactionBalanceTrace transaction_balance_trace = 3;
+//  BlockIdentifier parent_block_identifier = 4;
+}
+
+message AccountTrace {
+  int64 balance = 1;
+  int64 placeholder = 99;
+}
+
+message AccountIdentifier {
+  bytes address = 1;
+}
+
+message AccountBalanceRequest {
+  AccountIdentifier account_identifier = 1;
+  BlockBalanceTrace.BlockIdentifier block_identifier = 2;
+}
+
+message AccountBalanceResponse {
+  int64 balance = 1;
+  BlockBalanceTrace.BlockIdentifier block_identifier = 2;
+}

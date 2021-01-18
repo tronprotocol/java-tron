@@ -2,7 +2,7 @@ contract C {
 	mapping (uint256 => uint256)[] a;
 
 	function n1(uint256 key, uint256 value) public {
-		a.length++;
+		a.push();
 		a[a.length - 1][key] = value;
 	}
 

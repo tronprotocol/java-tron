@@ -1,7 +1,7 @@
-//pragma solidity ^0.4.0;
+
 
 contract Test {
-    function() external { x = 1; }
+    fallback() external { x = 1; }
     uint x;
 }
 

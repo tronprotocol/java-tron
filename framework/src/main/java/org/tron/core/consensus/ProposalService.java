@@ -230,6 +230,18 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
           break;
         }
+        case MAX_FEE_LIMIT: {
+          manager.getDynamicPropertiesStore().saveMaxFeeLimit(entry.getValue());
+          break;
+        }
+        case ALLOW_TRANSACTION_FEE_POOL: {
+          manager.getDynamicPropertiesStore().saveAllowTransactionFeePool(entry.getValue());
+          break;
+        }
+        case ALLOW_BLACKHOLE_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().saveAllowBlackHoleOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

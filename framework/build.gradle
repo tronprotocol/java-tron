@@ -4,7 +4,6 @@ plugins {
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = 'org.tron.program.FullNode'
 
@@ -131,12 +130,6 @@ run {
     }
 }
 
-shadowJar {
-    baseName = 'java-tron'
-    classifier = null
-    version = null
-}
-
 test {
     testLogging {
         exceptionFormat = 'full'
@@ -213,6 +206,8 @@ def binaryRelease(taskName, jarName, mainClass) {
         manifest {
             attributes "Main-Class": "${mainClass}"
         }
+
+//        classifier(jarName)
     }
 }
 
@@ -262,12 +257,15 @@ createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
 createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
 createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
-artifacts {
-    archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
-            binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-            binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+if (releaseBinary == 'true') {
+    artifacts {
+        archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
+                binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
+                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
+                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+    }
 }
 
 task copyToParent(type: Copy) {
