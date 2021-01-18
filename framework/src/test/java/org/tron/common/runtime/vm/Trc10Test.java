@@ -647,7 +647,8 @@
 //    // 1,abc,abc,
 //    long updateP1 = 1000001;
 //    String updateP2 = "abc";
-//    hexInput = AbiUtil.parseMethod(methodUpdateAsset, Arrays.asList(updateP1, updateP2, updateP2));
+//    hexInput = AbiUtil.parseMethod(methodUpdateAsset,
+//    Arrays.asList(updateP1, updateP2, updateP2));
 //    result = TvmTestUtils.triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
 //        factoryAddress,
 //        Hex.decode(hexInput), value, fee, manager, null);
