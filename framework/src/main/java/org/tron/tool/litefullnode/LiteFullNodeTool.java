@@ -508,29 +508,29 @@ public class LiteFullNodeTool {
     DbTool.close();
   }
 
-  /**
-   * main.
-   */
-  public static void main(String[] args) {
-    Args argv = new Args();
-    CommonParameter.getInstance().setValidContractProtoThreadNum(1);
-    LiteFullNodeTool tool = new LiteFullNodeTool();
-    JCommander jct = JCommander.newBuilder()
-            .addObject(argv)
-            .build();
-    jct.setProgramName("lite fullnode tool");
-    try {
-      jct.parse(args);
-      if (argv.help) {
-        jct.usage();
-      } else {
-        tool.run(argv);
-      }
-    } catch (ParameterException parameterException) {
-      logger.error(parameterException.toString());
-      jct.usage();
-    }
-  }
+//  /**
+//   * main.
+//   */
+//  public static void main(String[] args) {
+//    Args argv = new Args();
+//    CommonParameter.getInstance().setValidContractProtoThreadNum(1);
+//    LiteFullNodeTool tool = new LiteFullNodeTool();
+//    JCommander jct = JCommander.newBuilder()
+//            .addObject(argv)
+//            .build();
+//    jct.setProgramName("lite fullnode tool");
+//    try {
+//      jct.parse(args);
+//      if (argv.help) {
+//        jct.usage();
+//      } else {
+//        tool.run(argv);
+//      }
+//    } catch (ParameterException parameterException) {
+//      logger.error(parameterException.toString());
+//      jct.usage();
+//    }
+//  }
 
   static class Args {
     @Parameter(
