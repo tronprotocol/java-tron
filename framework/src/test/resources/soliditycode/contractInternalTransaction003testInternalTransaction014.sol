@@ -1,6 +1,6 @@
 contract callerContract {
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function sendToB(address called_address,address c) public payable{
        called_address.delegatecall(abi.encodeWithSignature("transferTo(address)",c));
     }
@@ -13,7 +13,7 @@ contract callerContract {
 }
 
    contract calledContract {
-    function() payable external {}
+    fallback() payable external {}
     constructor() payable public{}
        function transferTo(address payable toAddress)public payable{
            toAddress.transfer(5);
@@ -34,5 +34,5 @@ contract callerContract {
        function setI() payable public{
            i=5;
        }
-       function() payable external{}
+       fallback() payable external{}
    }

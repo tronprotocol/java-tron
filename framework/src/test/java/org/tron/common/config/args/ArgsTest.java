@@ -27,5 +27,6 @@ public class ArgsTest {
   public void testConfig() {
     Assert.assertEquals(Args.getInstance().getMaxTransactionPendingSize(), 2000);
     Assert.assertEquals(Args.getInstance().getPendingTransactionTimeout(), 60_000);
+    Assert.assertEquals(Args.getInstance().getNodeDiscoveryPingTimeout(), 15_000);
   }
 }

@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+
 
 contract trcToken077 {
 function addressTest() public returns(bytes32 addressValue) {

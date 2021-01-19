@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+
 contract rTest {
 function info() public payable returns (uint,address,bytes4,uint,uint,uint,address,uint) {
 //function info() public payable returns (address ,uint,uint,uint,bytes32,uint,bytes,uint,address,bytes4,uint,uint,uint,address,uint) {

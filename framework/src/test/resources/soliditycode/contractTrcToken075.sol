@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 
 contract Dest {
     event logFallback(uint256 indexed, uint256 indexed, uint256 indexed);
@@ -20,7 +20,7 @@ contract Dest {
  emit logGetToken(msg.sender.tokenBalance(trcToken(9223372036855775827)), msg.tokenid, msg.tokenvalue, msg.value);
  }
 
- function () payable external{
+ fallback() payable external{
       emit  logFallback(msg.tokenid, msg.tokenvalue, msg.value);
  }
 }

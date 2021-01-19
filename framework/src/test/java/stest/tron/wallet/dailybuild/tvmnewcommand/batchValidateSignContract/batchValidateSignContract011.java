@@ -143,9 +143,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -197,9 +196,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("01111111111111000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -268,9 +266,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("01111111000000000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -340,9 +337,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("11011100000000000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -413,9 +409,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("11111100011000000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -513,9 +508,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -527,7 +521,7 @@ public class batchValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "44 signatures with 9th、11th、28th、32nd incorrect address"
+  @Test(enabled = true, description = "44 signatures with 9th/11th/28th/32nd incorrect address"
       + " test multivalidatesign")
   public void test07IncorrectAddress() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
@@ -592,9 +586,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -671,9 +664,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,

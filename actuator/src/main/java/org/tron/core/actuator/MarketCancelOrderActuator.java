@@ -15,6 +15,10 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
@@ -77,7 +81,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(TX_RESULT_NULL);
     }
     long fee = calcFee();
 
@@ -93,10 +97,14 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       // 1. return balance and token
-      MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
+      MarketUtils
+          .returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
@@ -145,10 +153,10 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
     initStores();

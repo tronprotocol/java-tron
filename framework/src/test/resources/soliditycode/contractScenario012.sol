@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 contract PayTest {
 
 uint256 public n;
@@ -42,7 +42,7 @@ return msg.sender.send(money);
 // return (msg.sender, msg.value, msg.sender.send(money));
 // }
 
-// function () payable {
+// fallback() payable {
 // msg.sender.send(1);
 // }
 

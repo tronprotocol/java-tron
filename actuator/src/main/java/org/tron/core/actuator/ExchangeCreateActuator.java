@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
@@ -22,7 +23,6 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
@@ -118,9 +118,11 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
       dynamicStore.saveLatestExchangeNum(id);
-
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       ret.setExchangeId(id);
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {
@@ -161,7 +163,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     }
 
     if (!accountStore.has(ownerAddress)) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("account[" + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);

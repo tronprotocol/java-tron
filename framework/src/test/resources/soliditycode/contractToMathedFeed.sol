@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 
 contract ToMathedFeed {
     uint public i=1;

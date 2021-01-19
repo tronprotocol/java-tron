@@ -1,6 +1,6 @@
 contract callerContract {
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function delegateCallCreate2(address called_address, bytes memory code, uint256 salt) public {
        called_address.delegatecall(abi.encodeWithSignature("deploy(bytes,uint256)",code,salt));
     }

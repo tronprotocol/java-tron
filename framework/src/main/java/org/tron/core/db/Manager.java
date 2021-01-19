@@ -1,6 +1,8 @@
 package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -69,6 +71,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -111,6 +114,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -131,7 +135,6 @@ import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.store.TransactionHistoryStore;
 import org.tron.core.store.TransactionRetStore;
-import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -139,10 +142,8 @@ import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.BalanceContract;
 
 
 @Slf4j(topic = "DB")
@@ -151,6 +152,8 @@ public class Manager {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
+  private static final int SLEEP_TIME_OUT = 50;
+  private static final int TX_ID_CACHE_SIZE = 100_000;
   private final int shieldedTransInPendingMaxCounts =
       Args.getInstance().getShieldedTransInPendingMaxCounts();
   @Getter
@@ -187,7 +190,7 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
-      .newBuilder().maximumSize(100_000).recordStats().build();
+      .newBuilder().maximumSize(TX_ID_CACHE_SIZE).recordStats().build();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
@@ -195,7 +198,7 @@ public class Manager {
   private Set<String> ownerAddressSet = new HashSet<>();
   @Getter
   @Autowired
-  private DelegationService delegationService;
+  private MortgageService mortgageService;
   @Autowired
   private Consensus consensus;
   @Autowired
@@ -224,7 +227,7 @@ public class Manager {
             if (tx != null) {
               this.rePush(tx);
             } else {
-              TimeUnit.MILLISECONDS.sleep(50L);
+              TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
             }
           } catch (Throwable ex) {
             logger.error("unknown exception happened in rePush loop", ex);
@@ -339,7 +342,7 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
-    delegationService
+    mortgageService
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
     accountStateCallBack.setChainBaseManager(chainBaseManager);
@@ -354,7 +357,7 @@ public class Manager {
     this.rePushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
-    chainBaseManager.setDelegationService(delegationService);
+    chainBaseManager.setMortgageService(mortgageService);
 
     this.initGenesis();
     try {
@@ -438,6 +441,7 @@ public class Manager {
         this.initWitness();
         this.khaosDb.start(genesisBlock);
         this.updateRecentBlock(genesisBlock);
+        initAccountHistoryBalance();
       }
     }
   }
@@ -463,6 +467,37 @@ public class Manager {
               chainBaseManager.getAccountIdIndexStore().put(accountCapsule);
               chainBaseManager.getAccountIndexStore().put(accountCapsule);
             });
+  }
+
+  public void initAccountHistoryBalance() {
+    BlockCapsule genesis = chainBaseManager.getGenesisBlock();
+    BlockBalanceTraceCapsule genesisBlockBalanceTraceCapsule =
+        new BlockBalanceTraceCapsule(genesis);
+    List<TransactionCapsule> transactionCapsules = genesis.getTransactions();
+    for (TransactionCapsule transactionCapsule : transactionCapsules) {
+      BalanceContract.TransferContract transferContract = transactionCapsule.getTransferContract();
+      BalanceContract.TransactionBalanceTrace.Operation operation =
+          BalanceContract.TransactionBalanceTrace.Operation.newBuilder()
+              .setOperationIdentifier(0)
+              .setAddress(transferContract.getToAddress())
+              .setAmount(transferContract.getAmount())
+              .build();
+
+      BalanceContract.TransactionBalanceTrace transactionBalanceTrace =
+          BalanceContract.TransactionBalanceTrace.newBuilder()
+              .setTransactionIdentifier(transactionCapsule.getTransactionId().getByteString())
+              .setType(TransferContract.name())
+              .setStatus(SUCCESS.name())
+              .addOperation(operation)
+              .build();
+      genesisBlockBalanceTraceCapsule.addTransactionBalanceTrace(transactionBalanceTrace);
+
+      chainBaseManager.getAccountTraceStore().recordBalanceWithBlock(
+          transferContract.getToAddress().toByteArray(), 0, transferContract.getAmount());
+    }
+
+    chainBaseManager.getBalanceTraceStore()
+        .put(Longs.toByteArray(0), genesisBlockBalanceTraceCapsule);
   }
 
   /**
@@ -612,12 +647,17 @@ public class Manager {
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    return containsTransaction(transactionCapsule.getTransactionId().getBytes());
+  }
+
+
+  private boolean containsTransaction(byte[] transactionId) {
     if (transactionCache != null) {
-      return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
+      return transactionCache.has(transactionId);
     }
 
     return chainBaseManager.getTransactionStore()
-        .has(transactionCapsule.getTransactionId().getBytes());
+        .has(transactionId);
   }
 
   /**
@@ -678,8 +718,12 @@ public class Manager {
         try {
           if (accountCapsule != null) {
             adjustBalance(getAccountStore(), accountCapsule, -fee);
-            adjustBalance(getAccountStore(), this.getAccountStore()
-                .getBlackhole().createDbKey(), +fee);
+
+            if (getDynamicPropertiesStore().supportBlackHoleOptimization()) {
+              getDynamicPropertiesStore().burnTrx(fee);
+            } else {
+              adjustBalance(getAccountStore(), this.getAccountStore().getBlackhole(), +fee);
+            }
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
@@ -787,7 +831,7 @@ public class Manager {
       while (!getDynamicPropertiesStore()
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
-        reorgContractTrigger();
+        reOrgContractTrigger();
         eraseBlock();
       }
     }
@@ -1065,6 +1109,10 @@ public class Manager {
       return null;
     }
 
+    if (Objects.nonNull(blockCap)) {
+      chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
+    }
+
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1126,6 +1174,13 @@ public class Manager {
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+    }
+
+    if (Objects.nonNull(blockCap)) {
+      chainBaseManager.getBalanceTraceStore()
+          .updateCurrentTransactionStatus(
+              trace.getRuntimeResult().getResultCode().name());
+      chainBaseManager.getBalanceTraceStore().resetCurrentTransactionTrace();
     }
 
     return transactionInfo.getInstance();
@@ -1261,8 +1316,8 @@ public class Manager {
         return true;
       }
       default:
+        return false;
     }
-    return false;
   }
 
   public TransactionStore getTransactionStore() {
@@ -1296,6 +1351,9 @@ public class Manager {
     if (!consensus.validBlock(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
+
+    chainBaseManager.getBalanceTraceStore().initCurrentBlockBalanceTrace(block);
+
     //reset BlockEnergyUsage
     chainBaseManager.getDynamicPropertiesStore().saveBlockEnergyUsage(0);
     //parallel check sign
@@ -1353,6 +1411,8 @@ public class Manager {
     updateTransHashCache(block);
     updateRecentBlock(block);
     updateDynamicProperties(block);
+
+    chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
   }
 
   private void payReward(BlockCapsule block) {
@@ -1360,44 +1420,76 @@ public class Manager {
         chainBaseManager.getWitnessStore().getUnchecked(block.getInstance().getBlockHeader()
             .getRawData().getWitnessAddress().toByteArray());
     if (getDynamicPropertiesStore().allowChangeDelegation()) {
-      delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
+      mortgageService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
           getDynamicPropertiesStore().getWitnessPayPerBlock());
-      delegationService.payStandbyWitness();
+      mortgageService.payStandbyWitness();
+
+      if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
+        long transactionFeeReward = Math
+            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD);
+        mortgageService.payTransactionFeeReward(witnessCapsule.getAddress().toByteArray(),
+            transactionFeeReward);
+        chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
+                - transactionFeeReward);
+      }
     } else {
       byte[] witness = block.getWitnessAddress().toByteArray();
       AccountCapsule account = getAccountStore().get(witness);
       account.setAllowance(account.getAllowance()
           + chainBaseManager.getDynamicPropertiesStore().getWitnessPayPerBlock());
+
+      if (chainBaseManager.getDynamicPropertiesStore().supportTransactionFeePool()) {
+        long transactionFeeReward = Math
+            .floorDiv(chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool(),
+                Constant.TRANSACTION_FEE_POOL_PERIOD);
+        account.setAllowance(account.getAllowance() + transactionFeeReward);
+        chainBaseManager.getDynamicPropertiesStore().saveTransactionFeePool(
+            chainBaseManager.getDynamicPropertiesStore().getTransactionFeePool()
+                - transactionFeeReward);
+      }
+
       getAccountStore().put(account.createDbKey(), account);
     }
   }
 
-  private void postSolitityLogContractTrigger(Long blockNum, Long lastSolidityNum) {
+  private void postSolidityLogContractTrigger(Long blockNum, Long lastSolidityNum) {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractLogTrigger logTriggerCapsule : Args
-        .getSolidityContractLogTriggerMap().get(blockNum)) {
-      if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
-          logTriggerCapsule.getTransactionId())) != null) {
-        logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
-        EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
+    BlockingQueue contractLogTriggersQueue = Args.getSolidityContractLogTriggerMap()
+        .get(blockNum);
+    while (!contractLogTriggersQueue.isEmpty()) {
+      ContractLogTrigger triggerCapsule = (ContractLogTrigger) contractLogTriggersQueue.poll();
+      if (triggerCapsule == null) {
+        break;
+      }
+      if (containsTransaction(ByteArray.fromHexString(triggerCapsule
+          .getTransactionId()))) {
+        triggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityLogTrigger(triggerCapsule);
       }
     }
     Args.getSolidityContractLogTriggerMap().remove(blockNum);
   }
 
-  private void postSolitityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
+  private void postSolidityEventContractTrigger(Long blockNum, Long lastSolidityNum) {
     if (blockNum > lastSolidityNum) {
       return;
     }
-    for (ContractEventTrigger eventTriggerCapsule : Args
-        .getSolidityContractEventTriggerMap().get(blockNum)) {
-      if (chainBaseManager.getTransactionStore()
-          .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
-              .getTransactionId())) != null) {
-        eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
-        EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
+    BlockingQueue contractEventTriggersQueue = Args.getSolidityContractEventTriggerMap()
+        .get(blockNum);
+    while (!contractEventTriggersQueue.isEmpty()) {
+      ContractEventTrigger triggerCapsule = (ContractEventTrigger) contractEventTriggersQueue
+          .poll();
+      if (triggerCapsule == null) {
+        break;
+      }
+      if (containsTransaction(ByteArray.fromHexString(triggerCapsule
+          .getTransactionId()))) {
+        triggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityEventTrigger(triggerCapsule);
       }
     }
     Args.getSolidityContractEventTriggerMap().remove(blockNum);
@@ -1416,6 +1508,10 @@ public class Manager {
   }
 
   public void updateFork(BlockCapsule block) {
+    int blockVersion = block.getInstance().getBlockHeader().getRawData().getVersion();
+    if (blockVersion > ChainConstant.BLOCK_VERSION) {
+      logger.warn("newer block version found: " + blockVersion + ", YOU MUST UPGRADE java-tron!");
+    }
     chainBaseManager
         .getForkController().update(block);
   }
@@ -1574,12 +1670,12 @@ public class Manager {
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
-        postSolitityLogContractTrigger(i, latestSolidifiedBlockNumber);
+        postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
       for (Long i : Args.getSolidityContractEventTriggerMap().keySet()) {
-        postSolitityEventContractTrigger(i, latestSolidifiedBlockNumber);
+        postSolidityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
   }
@@ -1611,11 +1707,11 @@ public class Manager {
     }
   }
 
-  private void reorgContractTrigger() {
+  private void reOrgContractTrigger() {
     if (eventPluginLoaded
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
-      logger.info("switchfork occurred, post reorgContractTrigger");
+      logger.info("switchfork occurred, post reOrgContractTrigger");
       try {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
