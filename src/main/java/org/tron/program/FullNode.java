@@ -60,7 +60,12 @@ public class FullNode {
   public BufferedReader br = null;
   private static  File filePath = new File(Configuration.getByPath("stress.conf").getString("param.mainnetAccountFile"));
   private static  File trc20ContractAddressPath = new File(Configuration.getByPath("stress.conf").getString("param.trc20ContractAddressFile"));
+  private static  File JustLendContractAddressPath = new File(Configuration.getByPath("stress.conf").getString("param.justLendContractAddressFile"));
   public static long trxCount = 0;
+
+  public static List<String> JustLendcontractList = new ArrayList<>();
+
+
   /**
    * Start the FullNode.
    */
@@ -73,6 +78,7 @@ public class FullNode {
 
     getAccountList();
     getContractList();
+    getJustLendContractList();
 
     ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
         .getLogger(Logger.ROOT_LOGGER_NAME);
@@ -312,4 +318,23 @@ public class FullNode {
       e.printStackTrace();
     }
   }
+
+  private static void getJustLendContractList() {
+    String line=null;
+    try {
+      //BufferedReader bufferedReader=new BufferedReader(new FileReader(filePath));
+      BufferedReader bufferedReader=new BufferedReader(new InputStreamReader(new FileInputStream(JustLendContractAddressPath),"utf-8"));
+
+      //int i=0;
+      while((line=bufferedReader.readLine())!=null){
+        JustLendcontractList.add(line);
+      }
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+
 }
