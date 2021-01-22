@@ -24,7 +24,7 @@ public class PendingManager implements AutoCloseable {
       if (System.currentTimeMillis() - transactionCapsule.getTime() < timeout) {
         tmpTransactions.add(transactionCapsule);
       } else if (Args.getInstance().isOpenPrintLog()) {
-        logger.warn("remove tx from pending, txId:{}", transactionCapsule.getTransactionId());
+        logger.warn("[timeout] remove tx from pending, txId:{}", transactionCapsule.getTransactionId());
       }
     });
 

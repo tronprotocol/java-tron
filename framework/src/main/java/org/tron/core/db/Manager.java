@@ -1271,7 +1271,7 @@ public class Manager {
           iterator.remove();
         }
       } catch (Exception e) {
-        logger.error("Process trx {} failed when generating block: {}",trx.getTransactionId() ,e.getMessage());
+        logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId() ,e.getMessage());
       }
     }
 
