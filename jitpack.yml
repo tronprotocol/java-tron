@@ -1,2 +1,2 @@
 install:
-   - ./gradlew build publishToMavenLocal -x test
+  - ./gradlew clean -xtest -xlint -xcheck -PbinaryRelease=false install

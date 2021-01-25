@@ -84,11 +84,10 @@ public class JLibrustzcash {
   }
 
   public static boolean librustzcashComputeNf(ComputeNfParams params) {
-    if (!isOpenZen()) {
-      return true;
+    if (isOpenZen()) {
+      INSTANCE.librustzcashSaplingComputeNf(params.getD(), params.getPkD(), params.getValue(),
+              params.getR(), params.getAk(), params.getNk(), params.getPosition(), params.getResult());
     }
-    INSTANCE.librustzcashSaplingComputeNf(params.getD(), params.getPkD(), params.getValue(),
-        params.getR(), params.getAk(), params.getNk(), params.getPosition(), params.getResult());
     return true;
   }
 

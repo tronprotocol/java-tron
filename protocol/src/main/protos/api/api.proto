@@ -41,6 +41,26 @@ service Wallet {
     };
   };
 
+  rpc GetAccountBalance (AccountBalanceRequest) returns (AccountBalanceResponse) {
+        option (google.api.http) = {
+      post: "/wallet/getaccountbalance"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getaccountbalance"
+      }
+    };
+  };
+
+  rpc GetBlockBalanceTrace (BlockBalanceTrace.BlockIdentifier) returns (BlockBalanceTrace) {
+    option (google.api.http) = {
+      post: "/wallet/getblockbalancetrace"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getblockbalancetrace"
+      }
+    };
+  };
+
   //Please use CreateTransaction2 instead of this function.
   rpc CreateTransaction (TransferContract) returns (Transaction) {
     option (google.api.http) = {

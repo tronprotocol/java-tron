@@ -138,6 +138,9 @@ public class CommonParameter {
   public boolean nodeDiscoveryPublicHomeNode;
   @Getter
   @Setter
+  public long nodeDiscoveryPingTimeout;
+  @Getter
+  @Setter
   public long nodeP2pPingInterval;
   @Getter
   @Setter
@@ -297,6 +300,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowMarketTransaction; //committee parameter
+
+  // @Getter
+  // @Setter
+  // public long allowShieldedTransaction; //committee parameter
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
@@ -440,6 +447,11 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean isLiteFullNode = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--history-balance-lookup"})
+  public boolean historyBalanceLookup = false;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

@@ -20,12 +20,7 @@ public class GetMarketPairListServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      MarketOrderPairList reply = wallet.getMarketPairList();
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -41,15 +36,19 @@ public class GetMarketPairListServlet extends RateLimiterServlet {
       if (!"".equals(input)) {
         visible = Util.getVisiblePost(input);
       }
-
-      MarketOrderPairList reply = wallet.getMarketPairList();
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, HttpServletResponse response)
+      throws Exception {
+    MarketOrderPairList reply = wallet.getMarketPairList();
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

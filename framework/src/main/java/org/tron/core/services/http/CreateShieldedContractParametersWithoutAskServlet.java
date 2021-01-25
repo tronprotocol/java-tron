@@ -22,16 +22,14 @@ public class CreateShieldedContractParametersWithoutAskServlet extends RateLimit
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(contract);
-      boolean visible = Util.getVisiblePost(contract);
+      PostParams params = PostParams.getPostParams(request);
       PrivateShieldedTRC20ParametersWithoutAsk.Builder build =
           PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
-      JsonFormat.merge(contract, build, visible);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
       ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
           .createShieldedContractParametersWithoutAsk(build.build());
-      response.getWriter().println(JsonFormat.printToString(shieldedTRC20Parameters, visible));
+      response.getWriter().println(JsonFormat
+              .printToString(shieldedTRC20Parameters, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }

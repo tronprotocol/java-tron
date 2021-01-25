@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter;
 
+import com.beust.jcommander.internal.Sets;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -112,6 +113,7 @@ public class EventPluginLoader {
     if (!matched) {
       return false;
     }
+
     return filterContractAddress(trigger, filterQuery.getContractAddressList())
         && filterContractTopicList(trigger, filterQuery.getContractTopicList());
   }
@@ -144,12 +146,12 @@ public class EventPluginLoader {
       return true;
     }
 
-    Set<String> hset = null;
+    Set<String> hset = Sets.newHashSet();
     if (trigger instanceof ContractLogTrigger) {
       hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
     } else if (trigger instanceof ContractEventTrigger) {
       hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
-    } else if (trigger instanceof ContractTrigger) {
+    } else if (trigger != null) {
       hset = trigger.getLogInfo().getClonedTopics()
               .stream().map(Hex::toHexString).collect(Collectors.toSet());
     }

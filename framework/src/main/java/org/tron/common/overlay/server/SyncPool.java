@@ -144,7 +144,7 @@ public class SyncPool {
       activePeers.add(peerConnection);
       activePeers
           .sort(Comparator.comparingDouble(
-              c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
+              c -> c.getNodeStatistics().pingMessageLatency.getAvg()));
       peerConnection.onConnect();
     }
   }
