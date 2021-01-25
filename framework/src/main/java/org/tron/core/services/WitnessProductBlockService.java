@@ -18,7 +18,7 @@ import org.tron.core.capsule.BlockCapsule;
 public class WitnessProductBlockService {
 
   private Cache<Long, BlockCapsule> historyBlockCapsuleCache = CacheBuilder.newBuilder()
-          .initialCapacity(200).maximumSize(200).build();
+      .initialCapacity(200).maximumSize(200).build();
 
   private Map<String, CheatWitnessInfo> cheatWitnessInfoMap = new HashMap<>();
 
@@ -26,21 +26,21 @@ public class WitnessProductBlockService {
     try {
       BlockCapsule blockCapsule = historyBlockCapsuleCache.getIfPresent(block.getNum());
       if (blockCapsule != null && Arrays.equals(blockCapsule.getWitnessAddress().toByteArray(),
-              block.getWitnessAddress().toByteArray()) && !Arrays.equals(block.getBlockId().getBytes(),
-              blockCapsule.getBlockId().getBytes())) {
+          block.getWitnessAddress().toByteArray()) && !Arrays.equals(block.getBlockId().getBytes(),
+          blockCapsule.getBlockId().getBytes())) {
         String key = ByteArray.toHexString(block.getWitnessAddress().toByteArray());
         if (!cheatWitnessInfoMap.containsKey(key)) {
           CheatWitnessInfo cheatWitnessInfo = new CheatWitnessInfo();
           cheatWitnessInfoMap.put(key, cheatWitnessInfo);
         }
         cheatWitnessInfoMap.get(key).clear().setTime(System.currentTimeMillis())
-                .setLatestBlockNum(block.getNum()).add(block).add(blockCapsule).increment();
+            .setLatestBlockNum(block.getNum()).add(block).add(blockCapsule).increment();
       } else {
         historyBlockCapsuleCache.put(block.getNum(), new BlockCapsule(block.getInstance()));
       }
     } catch (Exception e) {
       logger.error("valid witness same time product two block fail! blockNum: {}, blockHash: {}",
-              block.getNum(), block.getBlockId().toString(), e);
+          block.getNum(), block.getBlockId().toString(), e);
     }
   }
 
@@ -109,11 +109,11 @@ public class WitnessProductBlockService {
     @Override
     public String toString() {
       return "{"
-              + "times=" + times.get()
-              + ", time=" + time
-              + ", latestBlockNum=" + latestBlockNum
-              + ", blockCapsuleSet=" + blockCapsuleSet
-              + '}';
+          + "times=" + times.get()
+          + ", time=" + time
+          + ", latestBlockNum=" + latestBlockNum
+          + ", blockCapsuleSet=" + blockCapsuleSet
+          + '}';
     }
   }
 }
