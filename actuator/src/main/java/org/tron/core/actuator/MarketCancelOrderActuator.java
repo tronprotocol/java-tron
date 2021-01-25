@@ -15,6 +15,10 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
@@ -42,10 +46,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
-
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
-import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
-import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
 
 @Slf4j(topic = "actuator")
 public class MarketCancelOrderActuator extends AbstractActuator {
@@ -97,10 +97,14 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       // 1. return balance and token
-      MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
+      MarketUtils
+          .returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);

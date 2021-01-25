@@ -95,6 +95,7 @@ public class ZenTrc20Base {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
+    getDailyBuildStartNum();
     Assert.assertTrue(PublicMethed.sendcoin(zenTrc20TokenOwnerAddress, 10000000000000L,
         foundationAccountAddress, foundationAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -152,6 +153,15 @@ public class ZenTrc20Base {
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
 
 
+  }
+
+  /**
+   * constructor.
+   */
+  public void getDailyBuildStartNum() {
+    DailyBuildReport.startBlockNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder()
+            .build()).getBlockHeader().getRawData().getNumber();
+    System.out.println("!!!!!!! 222222222startnum:" + DailyBuildReport.startBlockNum);
   }
 
 

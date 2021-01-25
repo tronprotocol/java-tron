@@ -774,6 +774,20 @@ public class HttpMethed {
   public static String triggerContractGetTxidWithVisibleTrue(String httpNode, String ownerAddress,
       String contractAddress, String functionSelector, String parameter, Long feeLimit,
       Long callValue, Integer tokenId, Long tokenValue, String fromKey) {
+    return triggerContractGetTxidWithVisibleTrue(httpNode, "", ownerAddress,
+        contractAddress, functionSelector, parameter, feeLimit, callValue, tokenId, tokenValue,
+        fromKey);
+
+  }
+
+  /**
+   * constructor.
+   */
+  public static String triggerContractGetTxidWithVisibleTrue(String httpNode,
+      String anotherHttpNode,
+      String ownerAddress,
+      String contractAddress, String functionSelector, String parameter, Long feeLimit,
+      Long callValue, Integer tokenId, Long tokenValue, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/triggersmartcontract";
       JsonObject userBaseObj2 = new JsonObject();
@@ -794,6 +808,9 @@ public class HttpMethed {
           parseStringContent(transactionString).getString("transaction"), fromKey);
       logger.info(transactionSignString);
       response = broadcastTransaction(httpNode, transactionSignString);
+      if (!anotherHttpNode.isEmpty()) {
+        broadcastTransaction(anotherHttpNode, transactionSignString);
+      }
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -2035,6 +2052,104 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getAccountBalance(String httpNode,
+      byte[] queryAddress, Integer blockNum, String blockHash) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getaccountbalance";
+      JsonObject addressObj = new JsonObject();
+      addressObj.addProperty("address", Base58.encode58Check(queryAddress));
+      JsonObject blockObj = new JsonObject();
+      blockObj.addProperty("hash", blockHash);
+      blockObj.addProperty("number", blockNum);
+      JsonObject accountBalanceObj = new JsonObject();
+      accountBalanceObj.add("account_identifier", addressObj);
+      accountBalanceObj.add("block_identifier", blockObj);
+      accountBalanceObj.addProperty("visible", true);
+      response = createConnect(requestUrl, accountBalanceObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getBlockBalance(String httpNode, Integer blockNum, String blockHash) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getblockbalance";
+      JsonObject blockObj = new JsonObject();
+      blockObj.addProperty("hash", blockHash);
+      blockObj.addProperty("number", blockNum);
+      blockObj.addProperty("visible", true);
+      response = createConnect(requestUrl, blockObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static Long getBurnTrx(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getburntrx";
+      JsonObject blockObj = new JsonObject();
+      response = createConnect(requestUrl, blockObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    return responseContent.getLong("burnTrxAmount");
+  }
+
+  /**
+   * constructor.
+   */
+  public static Long getBurnTrxFromSolidity(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/walletsolidity/getburntrx";
+      JsonObject blockObj = new JsonObject();
+      response = createConnect(requestUrl, blockObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    return responseContent.getLong("burnTrxAmount");
+  }
+
+  /**
+   * constructor.
+   */
+  public static Long getBurnTrxFromPbft(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/walletpbft/getburntrx";
+      JsonObject blockObj = new JsonObject();
+      response = createConnect(requestUrl, blockObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    return responseContent.getLong("burnTrxAmount");
+  }
+
+
+
 
   /**
    * constructor.
@@ -4695,6 +4810,9 @@ public class HttpMethed {
     return responseContent.getString("txID");
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderById(String httpNode, String orderId, String visible) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getmarketorderbyid";
@@ -4710,6 +4828,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByIdFromSolidity(String httpSolidityNode, String orderId,
       String visible) {
     try {
@@ -4726,6 +4847,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByIdFromPbft(String httpPbftNode, String orderId,
       String visible) {
     try {
@@ -4742,6 +4866,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static String marketCancelOrder(String httpNode, byte[] ownerAddress, String orderId,
       String fromKey, String visible) {
     try {
@@ -4769,6 +4896,9 @@ public class HttpMethed {
     return responseContent.getString("txID");
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByAccount(String httpNode, byte[] ownerAddress,
       String visible) {
     try {
@@ -4789,6 +4919,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByAccountFromSolidity(String httpSolidityNode,
       byte[] ownerAddress, String visible) {
     try {
@@ -4809,6 +4942,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderByAccountFromPbft(String httpPbftNode,
       byte[] ownerAddress, String visible) {
     try {
@@ -4829,6 +4965,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPairList(String httpNode, String visible) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getmarketpairlist";
@@ -4843,6 +4982,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPairListFromSolidity(String httpSolidityNode,
       String visible) {
     try {
@@ -4858,6 +5000,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPairListFromPbft(String httpPbftNode, String visible) {
     try {
       String requestUrl = "http://" + httpPbftNode + "/walletpbft/getmarketpairlist";
@@ -4872,6 +5017,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderListByPair(String httpNode, String sellTokenId,
       String buyTokenId, String visible) {
     try {
@@ -4894,6 +5042,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderListByPairFromSolidity(String httpSolidityNode,
       String sellTokenId,
       String buyTokenId, String visible) {
@@ -4917,6 +5068,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketOrderListByPairFromPbft(String httpPbftNode,
       String sellTokenId, String buyTokenId, String visible) {
     try {
@@ -4939,6 +5093,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPriceByPair(String httpNode, String sellTokenId,
       String buyTokenId, String visible) {
     try {
@@ -4961,6 +5118,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPriceByPairFromSolidity(String httpSolidityNode,
       String sellTokenId,
       String buyTokenId, String visible) {
@@ -4984,6 +5144,9 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
   public static HttpResponse getMarketPriceByPairFromPbft(String httpPbftNode,
       String sellTokenId, String buyTokenId, String visible) {
     try {

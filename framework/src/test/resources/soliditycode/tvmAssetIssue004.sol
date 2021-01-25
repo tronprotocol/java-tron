@@ -1,9 +1,9 @@
-pragma solidity ^0.5.12;
+
 
 contract A {
 
     constructor() payable public{}
-    function() payable external {}
+    fallback() payable external {}
 
     function tokenIssueA(bytes32 name, bytes32 abbr, uint64 totalSupply, uint8 precision) public returns (uint){
         return assetissue(name, abbr, totalSupply, precision);

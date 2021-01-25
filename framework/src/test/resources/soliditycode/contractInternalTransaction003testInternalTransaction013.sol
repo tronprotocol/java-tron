@@ -1,8 +1,8 @@
-//pragma solidity ^0.4.24;
+
 
 contract A{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function test1(address dAddr) public payable{
         B b1 = (new B).value(10)();//1.1
         b1.testNN(dAddr,2);//1.6
@@ -16,7 +16,7 @@ contract A{
 
 contract B{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getOne() payable public returns(uint256){
         return 1;
     }
@@ -28,7 +28,7 @@ contract B{
 
 contract C{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getZero() payable public returns(uint256){
         return 0;
     }
@@ -38,7 +38,7 @@ contract C{
 }
 contract E{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getZero() payable public returns(uint256){
         return 0;
     }
@@ -48,7 +48,7 @@ contract E{
 }
 contract D{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getOne() payable public returns(uint256){
         E e = (new E).value(5)();
     }

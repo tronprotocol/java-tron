@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+
 
 contract transferTrc10 {
     function receive(address payable rec) public payable {
@@ -16,7 +16,7 @@ contract transferTrc10 {
 }
 
 contract receiveTrc10 {
-    function() external payable {}
+    fallback() external payable {}
     function checkTrc10(uint256 amount,trcToken tid,uint256 meamount) public{
         require(amount==address(this).tokenBalance(tid));
         require(meamount==msg.sender.tokenBalance(tid));

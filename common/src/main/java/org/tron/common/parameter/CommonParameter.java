@@ -301,6 +301,14 @@ public class CommonParameter {
   @Setter
   public long allowMarketTransaction; //committee parameter
 
+  @Getter
+  @Setter
+  public long allowTransactionFeePool;
+
+  @Getter
+  @Setter
+  public long allowBlackHoleOptimization;
+
   // @Getter
   // @Setter
   // public long allowShieldedTransaction; //committee parameter

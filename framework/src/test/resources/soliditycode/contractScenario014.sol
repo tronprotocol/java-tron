@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 contract Contract1 {
     constructor() public payable{}
     function send5SunToReceiver(address payable _receiver) payable public{

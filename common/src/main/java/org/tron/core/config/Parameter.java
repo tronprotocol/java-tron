@@ -62,7 +62,7 @@ public class Parameter {
     public static final int SINGLE_REPEAT = 1;
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 19;
+    public static final int BLOCK_VERSION = 20;
     public static final long FROZEN_PERIOD = 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
   }

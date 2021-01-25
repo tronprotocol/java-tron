@@ -24,6 +24,7 @@ import org.tron.core.services.interfaceOnPBFT.http.GetBlockByLatestNumOnPBFTServ
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByLimitNextOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByNumOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBrokerageOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetBurnTrxOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceAccountIndexOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetExchangeByIdOnPBFTServlet;
@@ -141,6 +142,8 @@ public class HttpApiOnPBFTService implements Service {
   @Autowired
   private IsShieldedTRC20ContractNoteSpentOnPBFTServlet
       isShieldedTRC20ContractNoteSpentOnPBFTServlet;
+  @Autowired
+  private GetBurnTrxOnPBFTServlet getBurnTrxOnPBFTServlet;
 
   @Override
   public void init() {
@@ -224,6 +227,8 @@ public class HttpApiOnPBFTService implements Service {
           "/scanshieldedtrc20notesbyovk");
       context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentOnPBFTServlet),
           "/isshieldedtrc20contractnotespent");
+      context.addServlet(new ServletHolder(getBurnTrxOnPBFTServlet),
+          "/getburntrx");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

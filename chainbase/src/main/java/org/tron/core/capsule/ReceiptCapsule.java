@@ -196,11 +196,12 @@ public class ReceiptCapsule {
 
       if (dynamicPropertiesStore.supportTransactionFeePool() &&
           !contractResult.equals(contractResult.OUT_OF_TIME)) {
-        dynamicPropertiesStore
-            .saveTransactionFeePool(dynamicPropertiesStore.getTransactionFeePool() + energyFee);
+        dynamicPropertiesStore.addTransactionFeePool(energyFee);
+      } else if (dynamicPropertiesStore.supportBlackHoleOptimization()) {
+        dynamicPropertiesStore.burnTrx(energyFee);
       } else {
         //send to blackHole
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole().getAddress().toByteArray(),
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
             energyFee);
       }
 

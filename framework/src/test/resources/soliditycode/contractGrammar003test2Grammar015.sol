@@ -1,11 +1,12 @@
-//pragma solidity ^0.4.0;
+
 
 contract ExecuteFallback{
 
   //回退事件，会把调用的数据打印出来
   event FallbackCalled(bytes data);
   //fallback函数，注意是没有名字的，没有参数，没有返回值的
-  function() external{
+  // 0.6.0 Split unnamed fallback functions into two cases defined using fallback() and receive()
+  fallback() external{
     emit FallbackCalled(msg.data);
   }
 

@@ -1,7 +1,5 @@
 package org.tron.core.services;
 
-import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
-
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -142,7 +140,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
-import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
@@ -673,6 +670,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
+      getBurnTrxCommon(request, responseObserver);
+    }
+
+    @Override
     public void getMerkleTreeVoucherInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
@@ -959,9 +961,10 @@ public class RpcApiService implements Service {
     }
 
     /**
+     *
      */
     public void getAccountBalance(AccountBalanceRequest request,
-                                  StreamObserver<AccountBalanceResponse> responseObserver) {
+        StreamObserver<AccountBalanceResponse> responseObserver) {
       try {
         AccountBalanceResponse accountBalanceResponse = wallet.getAccountBalance(request);
         responseObserver.onNext(accountBalanceResponse);
@@ -972,9 +975,10 @@ public class RpcApiService implements Service {
     }
 
     /**
+     *
      */
     public void getBlockBalanceTrace(BlockBalanceTrace.BlockIdentifier request,
-                                     StreamObserver<BlockBalanceTrace> responseObserver) {
+        StreamObserver<BlockBalanceTrace> responseObserver) {
       try {
         BlockBalanceTrace blockBalanceTrace = wallet.getBlockBalance(request);
         responseObserver.onNext(blockBalanceTrace);
@@ -1017,7 +1021,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString
-                    .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
+                .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -1895,7 +1899,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException | VMIllegalException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(Wallet
-                    .CONTRACT_VALIDATE_ERROR + e.getMessage()));
+                .CONTRACT_VALIDATE_ERROR + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
         logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (RuntimeException e) {
@@ -2069,7 +2073,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString
-                    .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
+                .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -2100,7 +2104,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString
-                    .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
+                .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -2511,6 +2515,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
+      getBurnTrxCommon(request, responseObserver);
+    }
+
+    @Override
     public void updateBrokerage(UpdateBrokerageContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UpdateBrokerageContract,
@@ -2650,6 +2659,19 @@ public class RpcApiService implements Service {
       StreamObserver<NumberMessage> responseObserver) {
     try {
       long value = dbManager.getMortgageService().queryReward(request.getValue().toByteArray());
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(value);
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getBurnTrxCommon(EmptyMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      long value = dbManager.getDynamicPropertiesStore().getBurnTrxAmount();
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(value);
       responseObserver.onNext(builder.build());
