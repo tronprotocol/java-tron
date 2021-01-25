@@ -14,7 +14,7 @@ public class Parameter {
     VERSION_4_0(16, 0L, 0),
     VERSION_4_0_1(17, 1596780000000L, 80),//GMT 2020-08-07 06:00:00,80 means 22 SR upgrade
     VERSION_4_1(19, 1596780000000L, 80),//GMT 2020-08-07 06:00:00,80 means 22 SR upgrade
-    VERSION_4_1_2(20, 0L, 80);//0,80 means 22 SR upgrade
+    VERSION_4_1_2(20, 1596780000000L, 80);
 
     @Getter
     private int value;
