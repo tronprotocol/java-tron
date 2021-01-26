@@ -29,6 +29,7 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionInfoList;
+import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
@@ -489,6 +490,22 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getTransactionFromPending(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getTransactionFromPending(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getTransactionListFromPending(EmptyMessage request,
+        StreamObserver<TransactionList> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getTransactionListFromPending(request, responseObserver)
       );
     }
   }

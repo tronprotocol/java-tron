@@ -16,6 +16,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,6 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
@@ -1271,7 +1273,8 @@ public class Manager {
           iterator.remove();
         }
       } catch (Exception e) {
-        logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId() ,e.getMessage());
+        logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
+            e.getMessage());
       }
     }
 
@@ -1777,5 +1780,36 @@ public class Manager {
       }
       return true;
     }
+  }
+
+  public TransactionCapsule getTxFromPending(String txId) {
+    AtomicReference<TransactionCapsule> transactionCapsule = new AtomicReference<>();
+    pendingTransactions.forEach(tx -> {
+      if (tx.getTransactionId().toString().equals(txId)) {
+        transactionCapsule.set(tx);
+        return;
+      }
+    });
+    if (transactionCapsule.get() != null) {
+      return transactionCapsule.get();
+    }
+    rePushTransactions.forEach(tx -> {
+      if (tx.getTransactionId().toString().equals(txId)) {
+        transactionCapsule.set(tx);
+        return;
+      }
+    });
+    return transactionCapsule.get();
+  }
+
+  public Collection<Transaction> getTxListFromPending() {
+    Set<Transaction> result = new HashSet<>();
+    pendingTransactions.forEach(tx -> {
+      result.add(tx.getInstance());
+    });
+    rePushTransactions.forEach(tx -> {
+      result.add(tx.getInstance());
+    });
+    return result;
   }
 }

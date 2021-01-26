@@ -39,7 +39,9 @@ import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServ
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetTransactionFromPendingOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionInfoByBlockNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetTransactionListFromPendingOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.IsShieldedTRC20ContractNoteSpentOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.IsSpendOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
@@ -146,6 +148,10 @@ public class HttpApiOnSolidityService implements Service {
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+  @Autowired
+  private GetTransactionFromPendingOnSolidityServlet getTransactionFromPendingOnSolidityServlet;
+  @Autowired
+  private GetTransactionListFromPendingOnSolidityServlet getTransactionListFromPendingOnSolidityServlet;
 
   @Override
   public void init() {
@@ -244,6 +250,10 @@ public class HttpApiOnSolidityService implements Service {
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       context
           .addServlet(new ServletHolder(getBurnTrxOnSolidityServlet), "/walletsolidity/getburntrx");
+      context.addServlet(new ServletHolder(getTransactionFromPendingOnSolidityServlet),
+          "/walletsolidity/gettransactionfrompending");
+      context.addServlet(new ServletHolder(getTransactionListFromPendingOnSolidityServlet),
+          "/walletsolidity/gettransactionlistfrompending");
 
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false

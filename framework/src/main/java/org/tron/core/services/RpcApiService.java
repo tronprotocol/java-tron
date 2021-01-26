@@ -901,6 +901,17 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getTransactionFromPending(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      getTransactionFromPendingCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getTransactionListFromPending(EmptyMessage request,
+        StreamObserver<TransactionList> responseObserver) {
+      getTransactionListFromPendingCommon(request, responseObserver);
+    }
   }
 
   /**
@@ -2628,6 +2639,18 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getTransactionFromPending(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      getTransactionFromPendingCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getTransactionListFromPending(EmptyMessage request,
+        StreamObserver<TransactionList> responseObserver) {
+      getTransactionListFromPendingCommon(request, responseObserver);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
@@ -2710,4 +2733,27 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
 
+  public void getTransactionFromPendingCommon(BytesMessage request,
+      StreamObserver<Transaction> responseObserver) {
+    try {
+      String txId = ByteArray.toHexString(request.getValue().toByteArray());
+      TransactionCapsule transactionCapsule = dbManager.getTxFromPending(txId);
+      responseObserver.onNext(transactionCapsule == null ? null : transactionCapsule.getInstance());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getTransactionListFromPendingCommon(EmptyMessage request,
+      StreamObserver<TransactionList> responseObserver) {
+    try {
+      TransactionList.Builder builder = TransactionList.newBuilder();
+      builder.addAllTransaction(dbManager.getTxListFromPending());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
 }
