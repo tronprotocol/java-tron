@@ -1812,4 +1812,10 @@ public class Manager {
     });
     return result;
   }
+
+  public long getPendingSize(){
+    long value =getPendingTransactions().size() + getRePushTransactions().size()
+        + getPoppedTransactions().size();
+    return value;
+  }
 }

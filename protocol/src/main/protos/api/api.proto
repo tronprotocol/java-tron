@@ -787,6 +787,8 @@ service Wallet {
   rpc GetTransactionListFromPending (EmptyMessage) returns (TransactionList) {
   }
 
+  rpc GetPendingSize (EmptyMessage) returns (NumberMessage) {
+  }
 };
 
 service WalletSolidity {
@@ -977,6 +979,9 @@ service WalletSolidity {
   }
 
   rpc GetTransactionListFromPending (EmptyMessage) returns (TransactionList) {
+  }
+
+  rpc GetPendingSize (EmptyMessage) returns (NumberMessage) {
   }
 };
 

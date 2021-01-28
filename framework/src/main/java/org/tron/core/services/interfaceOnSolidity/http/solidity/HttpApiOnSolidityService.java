@@ -37,6 +37,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoO
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetPendingSizeOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionFromPendingOnSolidityServlet;
@@ -152,6 +153,8 @@ public class HttpApiOnSolidityService implements Service {
   private GetTransactionFromPendingOnSolidityServlet getTransactionFromPendingOnSolidityServlet;
   @Autowired
   private GetTransactionListFromPendingOnSolidityServlet getTransactionListFromPendingOnSolidityServlet;
+  @Autowired
+  private GetPendingSizeOnSolidityServlet getPendingSizeOnSolidityServlet;
 
   @Override
   public void init() {
@@ -254,6 +257,8 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/gettransactionfrompending");
       context.addServlet(new ServletHolder(getTransactionListFromPendingOnSolidityServlet),
           "/walletsolidity/gettransactionlistfrompending");
+      context.addServlet(new ServletHolder(getPendingSizeOnSolidityServlet),
+          "/walletsolidity/getpendingsize");
 
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false

@@ -37,6 +37,7 @@ import org.tron.core.services.interfaceOnPBFT.http.GetMerkleTreeVoucherInfoOnPBF
 import org.tron.core.services.interfaceOnPBFT.http.GetNodeInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNowBlockOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetPaginatedAssetIssueListOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetPendingSizeOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetRewardOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetTransactionCountByBlockNumOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetTransactionFromPendingOnPBFTServlet;
@@ -150,6 +151,8 @@ public class HttpApiOnPBFTService implements Service {
   private GetTransactionFromPendingOnPBFTServlet getTransactionFromPendingOnPBFTServlet;
   @Autowired
   private GetTransactionListFromPendingOnPBFTServlet getTransactionListFromPendingOnPBFTServlet;
+  @Autowired
+  private GetPendingSizeOnPBFTServlet getPendingSizeOnPBFTServlet;
 
   @Override
   public void init() {
@@ -239,6 +242,7 @@ public class HttpApiOnPBFTService implements Service {
           "/gettransactionfrompending");
       context.addServlet(new ServletHolder(getTransactionListFromPendingOnPBFTServlet),
           "/gettransactionlistfrompending");
+      context.addServlet(new ServletHolder(getPendingSizeOnPBFTServlet), "/getpendingsize");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
@@ -248,7 +252,7 @@ public class HttpApiOnPBFTService implements Service {
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
-              EnumSet.allOf(DispatcherType.class));
+          EnumSet.allOf(DispatcherType.class));
 
       server.start();
     } catch (Exception e) {

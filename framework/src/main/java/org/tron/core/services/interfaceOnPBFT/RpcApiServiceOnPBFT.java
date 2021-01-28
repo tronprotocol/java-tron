@@ -512,5 +512,13 @@ public class RpcApiServiceOnPBFT implements Service {
           .getTransactionListFromPending(request, responseObserver)
       );
     }
+
+    @Override
+    public void getPendingSize(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      walletOnPBFT.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getPendingSize(request, responseObserver)
+      );
+    }
   }
 }

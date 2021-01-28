@@ -24,7 +24,8 @@ public class PendingManager implements AutoCloseable {
       if (System.currentTimeMillis() - transactionCapsule.getTime() < timeout) {
         tmpTransactions.add(transactionCapsule);
       } else if (Args.getInstance().isOpenPrintLog()) {
-        logger.warn("[timeout] remove tx from pending, txId:{}", transactionCapsule.getTransactionId());
+        logger.warn("[timeout] remove tx from pending, txId:{}",
+            transactionCapsule.getTransactionId());
       }
     });
 
@@ -50,6 +51,9 @@ public class PendingManager implements AutoCloseable {
       txIteration(tx);
     }
     dbManager.getPoppedTransactions().clear();
+    if (Args.getInstance().isOpenPrintLog()) {
+      logger.warn("pending tx size:{}", dbManager.getRePushTransactions().size());
+    }
   }
 
   private void txIteration(TransactionCapsule tx) {

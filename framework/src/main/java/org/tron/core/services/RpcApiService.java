@@ -912,6 +912,12 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionList> responseObserver) {
       getTransactionListFromPendingCommon(request, responseObserver);
     }
+
+    @Override
+    public void getPendingSize(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      getPendingSizeCommon(request, responseObserver);
+    }
   }
 
   /**
@@ -2651,6 +2657,12 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionList> responseObserver) {
       getTransactionListFromPendingCommon(request, responseObserver);
     }
+
+    @Override
+    public void getPendingSize(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      getPendingSizeCommon(request, responseObserver);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
@@ -2750,6 +2762,18 @@ public class RpcApiService implements Service {
     try {
       TransactionList.Builder builder = TransactionList.newBuilder();
       builder.addAllTransaction(dbManager.getTxListFromPending());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getPendingSizeCommon(EmptyMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(dbManager.getPendingSize());
       responseObserver.onNext(builder.build());
     } catch (Exception e) {
       responseObserver.onError(e);
