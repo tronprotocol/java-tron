@@ -68,7 +68,10 @@ public class ByteArraySet implements Set<byte[]> {
 
       @Override
       public byte[] next() {
-        return it.next().getData();
+        if (it.next() != null) {
+          return it.next().getData();
+        }
+        return null;
       }
 
       @Override

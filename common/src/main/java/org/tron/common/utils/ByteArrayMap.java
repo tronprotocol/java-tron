@@ -155,7 +155,10 @@ public class ByteArrayMap<V> implements Map<byte[], V> {
         @Override
         public Entry<byte[], V> next() {
           Entry<ByteArrayWrapper, V> next = it.next();
-          return Maps.immutableEntry(next.getKey().getData(), next.getValue());
+          if (next != null) {
+            return Maps.immutableEntry(next.getKey().getData(), next.getValue());
+          }
+          return null;
         }
 
         @Override
