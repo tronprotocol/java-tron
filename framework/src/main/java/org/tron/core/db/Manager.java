@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -33,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -207,14 +209,14 @@ public class Manager {
   @Getter
   private ChainBaseManager chainBaseManager;
   // transactions cache
-  private List<TransactionCapsule> pendingTransactions;
+  private PriorityBlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
   // transactions popped
   private List<TransactionCapsule> poppedTransactions =
       Collections.synchronizedList(Lists.newArrayList());
   // the capacity is equal to Integer.MAX_VALUE default
-  private BlockingQueue<TransactionCapsule> rePushTransactions;
+  private PriorityBlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
   /**
@@ -321,7 +323,7 @@ public class Manager {
     return chainBaseManager.getBlockIndexStore();
   }
 
-  public List<TransactionCapsule> getPendingTransactions() {
+  public PriorityBlockingQueue<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
 
@@ -341,6 +343,16 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
+  Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> {
+    if (o1.getOrder() > o2.getOrder()) {
+      return -1;
+    } else if (o1.getOrder() < o2.getOrder()) {
+      return 1;
+    } else {
+      return 0;
+    }
+  };
+
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
@@ -355,8 +367,8 @@ public class Manager {
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
             chainBaseManager.getMerkleTreeIndexStore()));
-    this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
-    this.rePushTransactions = new LinkedBlockingQueue<>();
+    this.pendingTransactions = new PriorityBlockingQueue(2000, downComparator);
+    this.rePushTransactions = new PriorityBlockingQueue<>(2000, downComparator);
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
@@ -1184,7 +1196,8 @@ public class Manager {
               trace.getRuntimeResult().getResultCode().name());
       chainBaseManager.getBalanceTraceStore().resetCurrentTransactionTrace();
     }
-
+    //set the sort order
+    trxCap.setOrder(transactionInfo.getFee());
     return transactionInfo.getInstance();
   }
 
@@ -1223,8 +1236,13 @@ public class Manager {
       boolean fromPending = false;
       TransactionCapsule trx;
       if (iterator.hasNext()) {
-        fromPending = true;
         trx = iterator.next();
+        TransactionCapsule trxRepush = rePushTransactions.peek();
+        if (trxRepush != null || trx.getOrder() >= trxRepush.getOrder()) {
+          fromPending = true;
+        } else {
+          trx = rePushTransactions.poll();
+        }
       } else {
         trx = rePushTransactions.poll();
       }
@@ -1813,8 +1831,8 @@ public class Manager {
     return result;
   }
 
-  public long getPendingSize(){
-    long value =getPendingTransactions().size() + getRePushTransactions().size()
+  public long getPendingSize() {
+    long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
   }
