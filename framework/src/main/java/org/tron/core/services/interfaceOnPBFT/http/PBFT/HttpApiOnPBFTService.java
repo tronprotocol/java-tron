@@ -37,11 +37,8 @@ import org.tron.core.services.interfaceOnPBFT.http.GetMerkleTreeVoucherInfoOnPBF
 import org.tron.core.services.interfaceOnPBFT.http.GetNodeInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNowBlockOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetPaginatedAssetIssueListOnPBFTServlet;
-import org.tron.core.services.interfaceOnPBFT.http.GetPendingSizeOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetRewardOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetTransactionCountByBlockNumOnPBFTServlet;
-import org.tron.core.services.interfaceOnPBFT.http.GetTransactionFromPendingOnPBFTServlet;
-import org.tron.core.services.interfaceOnPBFT.http.GetTransactionListFromPendingOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.IsShieldedTRC20ContractNoteSpentOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.IsSpendOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ListExchangesOnPBFTServlet;
@@ -147,12 +144,6 @@ public class HttpApiOnPBFTService implements Service {
       isShieldedTRC20ContractNoteSpentOnPBFTServlet;
   @Autowired
   private GetBurnTrxOnPBFTServlet getBurnTrxOnPBFTServlet;
-  @Autowired
-  private GetTransactionFromPendingOnPBFTServlet getTransactionFromPendingOnPBFTServlet;
-  @Autowired
-  private GetTransactionListFromPendingOnPBFTServlet getTransactionListFromPendingOnPBFTServlet;
-  @Autowired
-  private GetPendingSizeOnPBFTServlet getPendingSizeOnPBFTServlet;
 
   @Override
   public void init() {
@@ -238,11 +229,6 @@ public class HttpApiOnPBFTService implements Service {
           "/isshieldedtrc20contractnotespent");
       context.addServlet(new ServletHolder(getBurnTrxOnPBFTServlet),
           "/getburntrx");
-      context.addServlet(new ServletHolder(getTransactionFromPendingOnPBFTServlet),
-          "/gettransactionfrompending");
-      context.addServlet(new ServletHolder(getTransactionListFromPendingOnPBFTServlet),
-          "/gettransactionlistfrompending");
-      context.addServlet(new ServletHolder(getPendingSizeOnPBFTServlet), "/getpendingsize");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

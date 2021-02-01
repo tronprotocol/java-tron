@@ -30,7 +30,6 @@ import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
@@ -497,28 +496,5 @@ public class RpcApiServiceOnPBFT implements Service {
       );
     }
 
-    @Override
-    public void getTransactionFromPending(BytesMessage request,
-        StreamObserver<Transaction> responseObserver) {
-      walletOnPBFT.futureGet(() -> rpcApiService.getWalletSolidityApi()
-          .getTransactionFromPending(request, responseObserver)
-      );
-    }
-
-    @Override
-    public void getTransactionListFromPending(EmptyMessage request,
-        StreamObserver<TransactionList> responseObserver) {
-      walletOnPBFT.futureGet(() -> rpcApiService.getWalletSolidityApi()
-          .getTransactionListFromPending(request, responseObserver)
-      );
-    }
-
-    @Override
-    public void getPendingSize(EmptyMessage request,
-        StreamObserver<NumberMessage> responseObserver) {
-      walletOnPBFT.futureGet(() -> rpcApiService.getWalletSolidityApi()
-          .getPendingSize(request, responseObserver)
-      );
-    }
   }
 }
