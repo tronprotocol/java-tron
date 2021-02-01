@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -1231,14 +1230,13 @@ public class Manager {
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
-    Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
-    while (iterator.hasNext() || rePushTransactions.size() > 0) {
+    while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
-      if (iterator.hasNext()) {
-        trx = iterator.next();
+      if (pendingTransactions.size() > 0) {
+        trx = pendingTransactions.peek();
         TransactionCapsule trxRepush = rePushTransactions.peek();
-        if (trxRepush != null || trx.getOrder() >= trxRepush.getOrder()) {
+        if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
           fromPending = true;
         } else {
           trx = rePushTransactions.poll();
@@ -1288,7 +1286,7 @@ public class Manager {
           transactionRetCapsule.addTransactionInfo(result);
         }
         if (fromPending) {
-          iterator.remove();
+          pendingTransactions.poll();
         }
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
