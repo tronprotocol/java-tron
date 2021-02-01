@@ -76,8 +76,9 @@ public class FileUtil {
             .map(s -> fileName + System.getProperty("file.separator") + s)
             .forEachOrdered(FileUtil::recursiveDelete);
       }
-
-      file.setWritable(true);
+      if (!file.setWritable(true)) {
+        return file.delete();
+      }
       return file.delete();
     }
     return false;
