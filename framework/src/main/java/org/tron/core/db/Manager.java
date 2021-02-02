@@ -342,7 +342,8 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
-  Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long.compare(o2.getOrder(), o1.getOrder());
+  Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
+      .compare(o2.getOrder(), o1.getOrder());
 
   @PostConstruct
   public void init() {
@@ -1792,8 +1793,9 @@ public class Manager {
 
   public TransactionCapsule getTxFromPending(String txId) {
     AtomicReference<TransactionCapsule> transactionCapsule = new AtomicReference<>();
+    Sha256Hash txHash = Sha256Hash.wrap(ByteArray.fromHexString(txId));
     pendingTransactions.forEach(tx -> {
-      if (tx.getTransactionId().toString().equals(txId)) {
+      if (tx.getTransactionId().equals(txHash)) {
         transactionCapsule.set(tx);
         return;
       }
@@ -1802,7 +1804,7 @@ public class Manager {
       return transactionCapsule.get();
     }
     rePushTransactions.forEach(tx -> {
-      if (tx.getTransactionId().toString().equals(txId)) {
+      if (tx.getTransactionId().equals(txHash)) {
         transactionCapsule.set(tx);
         return;
       }
