@@ -1,4 +1,4 @@
-pragma solidity ^0.5.12;
+
 
 contract create2Istanbul {
   function deploy(bytes memory code, uint256 salt) public returns(address) {

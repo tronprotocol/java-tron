@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -76,12 +77,12 @@ public class Args extends CommonParameter {
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
+  private static ConcurrentHashMap<Long, BlockingQueue<ContractLogTrigger>>
       solidityContractLogTriggerMap = new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
+  private static ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
   public static void clearParam() {
@@ -178,6 +179,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
+    PARAMETER.allowTransactionFeePool = 0;
+    PARAMETER.allowBlackHoleOptimization = 0;
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
@@ -624,6 +627,15 @@ public class Args extends CommonParameter {
     PARAMETER.allowMarketTransaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
+
+
+    PARAMETER.allowTransactionFeePool =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) : 0;
+
+    PARAMETER.allowBlackHoleOptimization =
+        config.hasPath(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) : 0;
 
     PARAMETER.allowTvmIstanbul =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config

@@ -15,8 +15,8 @@
 
 package org.tron.core.actuator;
 
-import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.actuator.ActuatorConstant.CONTRACT_NOT_EXIST;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 
@@ -126,8 +126,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
       // add to blackhole address
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       // 1. transfer of balance
       transferBalanceOrToken(accountCapsule);
 
@@ -290,7 +293,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   /**
    * return marketPrice if matched, otherwise null
-   * */
+   */
   private MarketPrice hasMatch(List<byte[]> priceKeysList, MarketPrice takerPrice) {
     if (priceKeysList.isEmpty()) {
       return null;
@@ -320,7 +323,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // get maker price list
     List<byte[]> priceKeysList = pairPriceToOrderStore
         .getPriceKeysList(MarketUtils.getPairPriceHeadKey(makerSellTokenID, makerBuyTokenID),
-            (long)(MAX_MATCH_NUM + 1), makerPriceNumber, true);
+            (long) (MAX_MATCH_NUM + 1), makerPriceNumber, true);
 
     int matchOrderCount = 0;
     // match different price

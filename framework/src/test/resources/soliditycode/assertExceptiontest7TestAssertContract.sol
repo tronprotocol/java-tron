@@ -1,4 +1,3 @@
-pragma solidity >0.5.0;
 contract TestThrowsContract{
     function testAssert() public{
         assert(1==2);

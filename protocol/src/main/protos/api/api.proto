@@ -42,7 +42,7 @@ service Wallet {
   };
 
   rpc GetAccountBalance (AccountBalanceRequest) returns (AccountBalanceResponse) {
-        option (google.api.http) = {
+    option (google.api.http) = {
       post: "/wallet/getaccountbalance"
       body: "*"
       additional_bindings {
@@ -777,6 +777,9 @@ service Wallet {
 
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
+
+  rpc GetBurnTrx (EmptyMessage) returns (NumberMessage) {
+  }
 };
 
 service WalletSolidity {
@@ -960,6 +963,8 @@ service WalletSolidity {
   rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
   }
 
+  rpc GetBurnTrx (EmptyMessage) returns (NumberMessage) {
+  }
 };
 
 service WalletExtension {

@@ -1,24 +1,24 @@
-//pragma solidity ^0.4.19;
+
 contract Doug{
  mapping (bytes32 => uint) public contracts;
  constructor() public{
- contracts['hww'] = 1;
- contracts['brian'] = 2;
- contracts['zzy'] = 7;
+  contracts['hww'] = 1;
+  contracts['brian'] = 2;
+  contracts['zzy'] = 7;
  }
 
  function getDougName(string memory _name) public view returns(string memory) {
- return _name;
+  return _name;
  }
 
  function getDougAge(uint _age) public pure returns(uint) {
- return 3 ** _age;
+  return 3 ** _age;
  }
 }
 
-contract DogInterface {
- function getDougAge(uint _age) public returns (uint);
- function contracts(bytes32 name) public returns (uint);
+abstract contract DogInterface {
+ function getDougAge(uint _age) public virtual returns (uint);
+ function contracts(bytes32 name) public virtual returns (uint);
 }
 contract main{
 
@@ -30,25 +30,25 @@ contract main{
  DogInterface dogContract ;
 
  function setDOUG(address _doug) public  {
- DOUG = _doug;
+  DOUG = _doug;
  }
 
  constructor(address addr) public{
-     dogInterfaceAddress = addr;
-     dogContract = DogInterface(dogInterfaceAddress);
+  dogInterfaceAddress = addr;
+  dogContract = DogInterface(dogInterfaceAddress);
  }
 
  function dougOfage(uint _age) public  returns(uint) {
 
- uint num = dogContract.getDougAge(_age);
- return _age+num;
- // return num;
+  uint num = dogContract.getDougAge(_age);
+  return _age+num;
+  // return num;
  }
 
  function uintOfName(bytes32 _name) public returns (uint) {
 
- dogContract.contracts(_name);
- emit FetchContract(dogInterfaceAddress, msg.sender, _name);
+  dogContract.contracts(_name);
+  emit FetchContract(dogInterfaceAddress, msg.sender, _name);
 
  }
 

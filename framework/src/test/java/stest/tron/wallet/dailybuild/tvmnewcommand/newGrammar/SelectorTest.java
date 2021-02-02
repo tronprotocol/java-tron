@@ -78,7 +78,7 @@ public class SelectorTest {
     retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     abi = retMap.get("abI").toString();
     code = retMap.get("byteCode").toString();
-    code = PublicMethed.replaceCode__$(code, aContractAddress.substring(1));
+    code = PublicMethed.replaceCode(code, aContractAddress.substring(1));
     logger.info("code:" + code);
 
     contractAddress = PublicMethed

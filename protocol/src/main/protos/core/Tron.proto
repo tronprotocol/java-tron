@@ -445,6 +445,7 @@ message TransactionInfo {
 
   bytes orderId = 25;
   repeated MarketOrderDetail orderDetails = 26;
+  int64 packingFee = 27;
 
 }
 

@@ -1,4 +1,4 @@
-pragma solidity ^0;
+
 
 contract testStringSplit {
 string s1 = "s""1""2"",./";

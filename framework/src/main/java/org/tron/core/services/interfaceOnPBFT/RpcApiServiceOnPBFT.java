@@ -467,7 +467,7 @@ public class RpcApiServiceOnPBFT implements Service {
         StreamObserver<DecryptNotesTRC20> responseObserver) {
       walletOnPBFT.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
-          .scanShieldedTRC20NotesByIvk(request, responseObserver)
+              .scanShieldedTRC20NotesByIvk(request, responseObserver)
       );
     }
 
@@ -476,7 +476,7 @@ public class RpcApiServiceOnPBFT implements Service {
         StreamObserver<DecryptNotesTRC20> responseObserver) {
       walletOnPBFT.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
-          .scanShieldedTRC20NotesByOvk(request, responseObserver)
+              .scanShieldedTRC20NotesByOvk(request, responseObserver)
       );
     }
 
@@ -485,7 +485,14 @@ public class RpcApiServiceOnPBFT implements Service {
         StreamObserver<NullifierResult> responseObserver) {
       walletOnPBFT.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
-          .isShieldedTRC20ContractNoteSpent(request, responseObserver)
+              .isShieldedTRC20ContractNoteSpent(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
       );
     }
   }
