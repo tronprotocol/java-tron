@@ -342,15 +342,7 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
-  Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> {
-    if (o1.getOrder() > o2.getOrder()) {
-      return -1;
-    } else if (o1.getOrder() < o2.getOrder()) {
-      return 1;
-    } else {
-      return 0;
-    }
-  };
+  Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long.compare(o2.getOrder(), o1.getOrder());
 
   @PostConstruct
   public void init() {
