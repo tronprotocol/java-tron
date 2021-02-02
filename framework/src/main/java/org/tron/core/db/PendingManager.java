@@ -24,7 +24,7 @@ public class PendingManager implements AutoCloseable {
     }
     dbManager.getPendingTransactions().clear();
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
-      tx.setTime(0L);
+      tx.setTime(System.currentTimeMillis());
       txIteration(tx);
     }
     dbManager.getPoppedTransactions().clear();
