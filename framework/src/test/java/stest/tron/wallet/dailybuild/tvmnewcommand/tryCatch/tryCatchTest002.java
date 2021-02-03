@@ -59,6 +59,7 @@ public class tryCatchTest002 {
         .sendcoin(testAddress001, 10000_000_000L, testFoundationAddress, testFoundationKey,
             blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/tryCatch001.sol";
     String contractName = "tryTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
