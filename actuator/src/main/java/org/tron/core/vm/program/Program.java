@@ -523,7 +523,7 @@ public class Program {
     increaseNonce();
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
-        getContractState().getAccount(owner).getAssetMapV2());
+        getContractState().getAccountAssetIssue(owner).getAssetMapV2());
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
@@ -724,6 +724,13 @@ public class Program {
         existingAccount.updateAccountType(AccountType.Contract);
         existingAccount.clearDelegatedResource();
         deposit.updateAccount(newAddress, existingAccount);
+      }
+
+      AccountAssetIssueCapsule accountAssetIssue = getContractState().getAccountAssetIssue(newAddress);
+      if (accountAssetIssue == null) {
+        deposit.createAccountAssetIssue(newAddress);
+      } else {
+        deposit.updateAccountAssetIssue(newAddress, accountAssetIssue);
       }
 
       if (!contractAlreadyExists) {

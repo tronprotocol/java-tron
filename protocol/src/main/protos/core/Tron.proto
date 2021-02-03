@@ -211,6 +211,35 @@ message Account {
   repeated Permission active_permission = 33;
 }
 
+/* AccountAssetIssue */
+message AccountAssetIssue {
+
+  // the create address
+  bytes address = 3;
+
+  message Frozen {
+    int64 frozen_balance = 1; // the frozen trx balance
+    int64 expire_time = 2; // the expire time
+  }
+  // the other asset owned by this account
+  map<string, int64> asset = 6;
+
+  // the other asset owned by this account，key is assetId
+  map<string, int64> assetV2 = 56;
+
+  bytes asset_issued_name = 17;
+  bytes asset_issued_ID = 57;
+
+  // frozen asset(for asset issuer)
+  repeated Frozen frozen_supply = 16;
+
+  map<string, int64> latest_asset_operation_time = 18;
+  map<string, int64> latest_asset_operation_timeV2 = 58;
+
+  map<string, int64> free_asset_net_usage = 20;
+  map<string, int64> free_asset_net_usageV2 = 59;
+
+}
 
 message Key {
   bytes address = 1;

@@ -21,22 +21,13 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.MarketOrderCapsule;
-import org.tron.core.capsule.MarketOrderIdListCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.MarketAccountStore;
-import org.tron.core.store.MarketOrderStore;
-import org.tron.core.store.MarketPairPriceToOrderStore;
-import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.*;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -51,6 +42,8 @@ import static org.tron.core.actuator.ActuatorConstant.TX_RESULT_NULL;
 public class MarketCancelOrderActuator extends AbstractActuator {
 
   private AccountStore accountStore;
+  private AccountAssetIssueStore accountAssetIssueStore;
+
   private DynamicPropertiesStore dynamicStore;
   private AssetIssueStore assetIssueStore;
 
@@ -65,6 +58,8 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
   private void initStores() {
     accountStore = chainBaseManager.getAccountStore();
+    accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
 
@@ -89,8 +84,13 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       final MarketCancelOrderContract contract = this.any
           .unpack(MarketCancelOrderContract.class);
 
+      byte[] address = contract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
-          .get(contract.getOwnerAddress().toByteArray());
+          .get(address);
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore
+              .get(address);
+
 
       byte[] orderId = contract.getOrderId().toByteArray();
       MarketOrderCapsule orderCapsule = orderStore.get(orderId);
@@ -100,7 +100,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
       // 1. return balance and token
-      MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
+      MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore, accountAssetIssueCapsule);
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
