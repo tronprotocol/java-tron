@@ -1233,11 +1233,15 @@ public class Manager {
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
         trx = pendingTransactions.peek();
-        TransactionCapsule trxRepush = rePushTransactions.peek();
-        if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
-          fromPending = true;
+        if (Args.getInstance().isOpenTransactionSort()) {
+          TransactionCapsule trxRepush = rePushTransactions.peek();
+          if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
+            fromPending = true;
+          } else {
+            trx = rePushTransactions.poll();
+          }
         } else {
-          trx = rePushTransactions.poll();
+          fromPending = true;
         }
       } else {
         trx = rePushTransactions.poll();
