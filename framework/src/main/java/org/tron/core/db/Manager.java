@@ -208,14 +208,14 @@ public class Manager {
   @Getter
   private ChainBaseManager chainBaseManager;
   // transactions cache
-  private PriorityBlockingQueue<TransactionCapsule> pendingTransactions;
+  private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
   // transactions popped
   private List<TransactionCapsule> poppedTransactions =
       Collections.synchronizedList(Lists.newArrayList());
   // the capacity is equal to Integer.MAX_VALUE default
-  private PriorityBlockingQueue<TransactionCapsule> rePushTransactions;
+  private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
   /**
@@ -322,7 +322,7 @@ public class Manager {
     return chainBaseManager.getBlockIndexStore();
   }
 
-  public PriorityBlockingQueue<TransactionCapsule> getPendingTransactions() {
+  public BlockingQueue<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
 
@@ -359,8 +359,13 @@ public class Manager {
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
             chainBaseManager.getMerkleTreeIndexStore()));
-    this.pendingTransactions = new PriorityBlockingQueue(2000, downComparator);
-    this.rePushTransactions = new PriorityBlockingQueue<>(2000, downComparator);
+    if (Args.getInstance().isOpenTransactionSort()) {
+      this.pendingTransactions = new PriorityBlockingQueue(2000, downComparator);
+      this.rePushTransactions = new PriorityBlockingQueue<>(2000, downComparator);
+    } else {
+      this.pendingTransactions = new LinkedBlockingQueue<>();
+      this.rePushTransactions =new LinkedBlockingQueue<>();
+    }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
@@ -1228,11 +1233,15 @@ public class Manager {
       TransactionCapsule trx;
       if (pendingTransactions.size() > 0) {
         trx = pendingTransactions.peek();
-        TransactionCapsule trxRepush = rePushTransactions.peek();
-        if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
-          fromPending = true;
+        if (Args.getInstance().isOpenTransactionSort()) {
+          TransactionCapsule trxRepush = rePushTransactions.peek();
+          if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
+            fromPending = true;
+          } else {
+            trx = rePushTransactions.poll();
+          }
         } else {
-          trx = rePushTransactions.poll();
+          fromPending = true;
         }
       } else {
         trx = rePushTransactions.poll();
