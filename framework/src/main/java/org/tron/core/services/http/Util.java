@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +42,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.AccountAssetIssue;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -426,8 +426,8 @@ public class Util {
     }
   }
 
-  public static String convertOutput(Account account) {
-    if (account.getAssetIssuedID().isEmpty()) {
+  public static String convertOutput(Account account, AccountAssetIssue accountAssetIssue) {
+    if (accountAssetIssue.getAssetIssuedID().isEmpty()) {
       return JsonFormat.printToString(account, false);
     } else {
       JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
@@ -444,12 +444,26 @@ public class Util {
       if (visible) {
         response.getWriter().println(JsonFormat.printToString(reply, true));
       } else {
-        response.getWriter().println(convertOutput(reply));
+//        response.getWriter().println(convertOutput(reply));
       }
     } else {
       response.getWriter().println("{}");
     }
   }
+
+  public static void printAccount(Account reply, AccountAssetIssue accountAssetIssue, HttpServletResponse response, Boolean visible)
+          throws java.io.IOException {
+    if (reply != null) {
+      if (visible) {
+        response.getWriter().println(JsonFormat.printToString(reply, true));
+      } else {
+        response.getWriter().println(convertOutput(reply, accountAssetIssue));
+      }
+    } else {
+      response.getWriter().println("{}");
+    }
+  }
+
 
   public static byte[] getAddress(HttpServletRequest request) throws Exception {
     byte[] address = null;

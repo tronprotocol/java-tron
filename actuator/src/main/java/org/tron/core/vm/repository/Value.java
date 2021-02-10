@@ -5,6 +5,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.*;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.protos.Protocol;
 
 public class Value {
 
@@ -111,6 +112,16 @@ public class Value {
       return null;
     }
     return new AccountCapsule(any);
+  }
+
+  /**
+   * @return
+   */
+  public AccountAssetIssueCapsule getAccountAssetIssue() {
+    if (ArrayUtils.isEmpty(any)) {
+      return null;
+    }
+    return new AccountAssetIssueCapsule(any);
   }
 
   /**

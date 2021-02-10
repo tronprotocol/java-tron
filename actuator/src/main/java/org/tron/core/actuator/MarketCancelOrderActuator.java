@@ -51,6 +51,8 @@ import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
 public class MarketCancelOrderActuator extends AbstractActuator {
 
   private AccountStore accountStore;
+  private AccountAssetIssueStore accountAssetIssueStore;
+
   private DynamicPropertiesStore dynamicStore;
   private AssetIssueStore assetIssueStore;
 
@@ -65,6 +67,8 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
   private void initStores() {
     accountStore = chainBaseManager.getAccountStore();
+    accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
 
@@ -89,8 +93,13 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       final MarketCancelOrderContract contract = this.any
           .unpack(MarketCancelOrderContract.class);
 
+      byte[] address = contract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
-          .get(contract.getOwnerAddress().toByteArray());
+          .get(address);
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore
+              .get(address);
+
 
       byte[] orderId = contract.getOrderId().toByteArray();
       MarketOrderCapsule orderCapsule = orderStore.get(orderId);
@@ -103,8 +112,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
       // 1. return balance and token
-      MarketUtils
-          .returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
+      MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore, accountAssetIssueCapsule);
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);

@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -23,6 +24,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
@@ -43,6 +45,8 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
@@ -50,8 +54,11 @@ public class ExchangeCreateActuator extends AbstractActuator {
     try {
       final ExchangeCreateContract exchangeCreateContract = this.any
           .unpack(ExchangeCreateContract.class);
+      byte[] address = exchangeCreateContract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
-          .get(exchangeCreateContract.getOwnerAddress().toByteArray());
+          .get(address);
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
 
       byte[] firstTokenID = exchangeCreateContract.getFirstTokenId().toByteArray();
       byte[] secondTokenID = exchangeCreateContract.getSecondTokenId().toByteArray();
@@ -65,14 +72,14 @@ public class ExchangeCreateActuator extends AbstractActuator {
       if (Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance - firstTokenBalance);
       } else {
-        accountCapsule
+        accountAssetIssueCapsule
             .reduceAssetAmountV2(firstTokenID, firstTokenBalance, dynamicStore, assetIssueStore);
       }
 
       if (Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance - secondTokenBalance);
       } else {
-        accountCapsule
+        accountAssetIssueCapsule
             .reduceAssetAmountV2(secondTokenID, secondTokenBalance, dynamicStore, assetIssueStore);
       }
 

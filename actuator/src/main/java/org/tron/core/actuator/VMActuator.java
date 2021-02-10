@@ -390,6 +390,8 @@ public class VMActuator implements Actuator2 {
     repository.createAccount(contractAddress, newSmartContract.getName(),
         Protocol.AccountType.Contract);
 
+    repository.createAccountAssetIssue(contractAddress);
+
     repository.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
     if (!VMConfig.allowTvmConstantinople()) {
