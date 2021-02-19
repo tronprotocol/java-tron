@@ -57,7 +57,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
-    AccountStore accountStore = chainBaseManager.getAccountStore();
+//    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -74,7 +74,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
             shieldedTransferContract.getFromAmount(), ret, fee);
       }
-      Commons.adjustAssetBalanceV2(accountStore.getBlackhole(),
+      Commons.adjustAssetBalanceV2(accountAssetIssueStore.getBlackhole(),
           CommonParameter.getInstance().getZenTokenId(), fee,
               accountAssetIssueStore, assetIssueStore, dynamicStore);
     } catch (BalanceInsufficientException e) {
@@ -112,7 +112,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   private void executeTransparentFrom(byte[] ownerAddress, long amount,
       TransactionResultCapsule ret, long fee)
       throws ContractExeException {
-//    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
 
 

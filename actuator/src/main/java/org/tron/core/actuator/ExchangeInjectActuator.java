@@ -124,6 +124,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
     ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
@@ -151,7 +152,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for exchange inject fee!");
     }
@@ -234,7 +235,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dynamicStore)) {
+      if (!accountAssetIssueCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dynamicStore)) {
         throw new ContractValidateException("token balance is not enough");
       }
     }
@@ -244,7 +245,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnoughV2(anotherTokenID, anotherTokenQuant, dynamicStore)) {
+      if (!accountAssetIssueCapsule.assetBalanceEnoughV2(anotherTokenID, anotherTokenQuant, dynamicStore)) {
         throw new ContractValidateException("another token balance is not enough");
       }
     }

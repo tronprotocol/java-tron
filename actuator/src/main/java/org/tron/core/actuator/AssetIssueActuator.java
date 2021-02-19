@@ -33,10 +33,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.*;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountAssetIssue.Frozen;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -92,7 +89,7 @@ public class AssetIssueActuator extends AbstractActuator {
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);//send to blackhole
       }
-      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
       List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
       Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();
       long remainSupply = assetIssueContract.getTotalSupply();

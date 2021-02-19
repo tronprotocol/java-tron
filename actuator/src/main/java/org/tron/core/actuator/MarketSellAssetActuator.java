@@ -201,6 +201,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     // Whether the accountStore exist
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+    AccountAssetIssueCapsule ownerAccountAssetIssue = accountAssetIssueStore.get(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
     }
@@ -253,7 +254,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         if (assetIssueCapsule == null) {
           throw new ContractValidateException("No sellTokenId !");
         }
-        if (!ownerAccount.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
+        if (!ownerAccountAssetIssue.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
             dynamicStore)) {
           throw new ContractValidateException("SellToken balance is not enough !");
         }

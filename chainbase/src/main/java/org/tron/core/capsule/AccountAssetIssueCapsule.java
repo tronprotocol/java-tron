@@ -304,6 +304,33 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         this.accountAssetIssue = this.accountAssetIssue.toBuilder().putLatestAssetOperationTimeV2(key, value).build();
     }
 
+    /**
+     * asset balance enough
+     */
+    public boolean assetBalanceEnough(byte[] key, long amount) {
+        Map<String, Long> assetMap = this.accountAssetIssue.getAssetMap();
+        String nameKey = ByteArray.toStr(key);
+        Long currentAmount = assetMap.get(nameKey);
+
+        return amount > 0 && null != currentAmount && amount <= currentAmount;
+    }
+
+    public boolean assetBalanceEnoughV2(byte[] key, long amount,
+                                      DynamicPropertiesStore dynamicPropertiesStore) {
+        Map<String, Long> assetMap;
+        String nameKey;
+        Long currentAmount;
+        if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
+            assetMap = this.accountAssetIssue.getAssetMap();
+            nameKey = ByteArray.toStr(key);
+            currentAmount = assetMap.get(nameKey);
+        } else {
+            String tokenID = ByteArray.toStr(key);
+            assetMap = this.accountAssetIssue.getAssetV2Map();
+            currentAmount = assetMap.get(tokenID);
+        }
+    return amount > 0 && null != currentAmount && amount <= currentAmount;
+  }
 
     @Override
     public int compareTo(AccountAssetIssue o) {

@@ -114,6 +114,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
@@ -194,11 +195,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       AccountCapsule toAccount = accountStore.get(toAddress);
+      AccountAssetIssueCapsule toAccountAssetIssue = accountAssetIssueStore.get(toAddress);
       if (toAccount == null) {
         throw new ContractValidateException("To account does not exist!");
       }
 
-      if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
+      if (!toAccountAssetIssue.assetBalanceEnoughV2(assetName, exchangeAmount,
           dynamicStore)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }

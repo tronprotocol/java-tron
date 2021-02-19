@@ -4,6 +4,8 @@ import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_C
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +78,9 @@ public class TransactionTrace {
   @Getter
   @Setter
   private boolean netFeeForBandwidth = true;
+
+
+  private static AtomicLong count = new AtomicLong(0);
 
   public TransactionTrace(TransactionCapsule trx, StoreFactory storeFactory,
       Runtime runtime) {
@@ -175,10 +180,18 @@ public class TransactionTrace {
     receipt.addNetFee(netFee);
   }
 
+  static long count2 = 0;
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
     /*  VM execute  */
+
+    if (count2 == 1000000) {
+      logger.info("execute transaction end");
+    }
+    long start = System.nanoTime();
     runtime.execute(transactionContext);
+    logger.info("count: {}, execute transaction: {}" , count2++, System.nanoTime() - start);
+
     setBill(transactionContext.getProgramResult().getEnergyUsed());
 
     if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {

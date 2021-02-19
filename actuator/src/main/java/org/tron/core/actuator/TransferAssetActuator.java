@@ -178,7 +178,7 @@ public class TransferAssetActuator extends AbstractActuator {
     }
     AccountAssetIssueCapsule ownerAccountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
     if (ownerAccountAssetIssueCapsule == null) {
-      throw new ContractValidateException("No owner account!");
+      throw new ContractValidateException("No owner account asset issue!");
     }
 
     Map<String, Long> asset;

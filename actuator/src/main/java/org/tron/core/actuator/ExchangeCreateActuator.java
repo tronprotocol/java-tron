@@ -19,11 +19,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ExchangeStore;
-import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.*;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -149,6 +145,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(ExchangeCreateContract.class)) {
       throw new ContractValidateException(
@@ -174,7 +171,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for exchange create fee!");
     }
@@ -211,7 +208,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnoughV2(firstTokenID, firstTokenBalance, dynamicStore)) {
+      if (!accountAssetIssueCapsule.assetBalanceEnoughV2(firstTokenID, firstTokenBalance, dynamicStore)) {
         throw new ContractValidateException("first token balance is not enough");
       }
     }
@@ -221,7 +218,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnoughV2(secondTokenID, secondTokenBalance, dynamicStore)) {
+      if (!accountAssetIssueCapsule.assetBalanceEnoughV2(secondTokenID, secondTokenBalance, dynamicStore)) {
         throw new ContractValidateException("second token balance is not enough");
       }
     }
