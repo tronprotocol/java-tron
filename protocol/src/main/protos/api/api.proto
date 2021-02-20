@@ -974,15 +974,6 @@ service WalletSolidity {
 
   rpc GetBurnTrx (EmptyMessage) returns (NumberMessage) {
   }
-
-  rpc GetTransactionFromPending (BytesMessage) returns (Transaction) {
-  }
-
-  rpc GetTransactionListFromPending (EmptyMessage) returns (TransactionList) {
-  }
-
-  rpc GetPendingSize (EmptyMessage) returns (NumberMessage) {
-  }
 };
 
 service WalletExtension {
