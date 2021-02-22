@@ -7211,18 +7211,7 @@ public class PublicMethed {
     return Optional.ofNullable(transaction);
   }
 
-  /**
-   * 61 constructor.
-   */
 
-  public static Optional<Transaction> getTransactionFromPending(String txId,
-      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
-    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
-    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
-    Transaction transaction;
-    transaction = blockingStubSolidity.getTransactionFromPending(request);
-    return Optional.ofNullable(transaction);
-  }
 
 
 }
