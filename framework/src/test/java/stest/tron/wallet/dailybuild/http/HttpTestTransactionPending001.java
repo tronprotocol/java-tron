@@ -79,7 +79,7 @@ public class HttpTestTransactionPending001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get pending transaction list by http")
+  @Test(enabled = true, description = "Get transaction from pending by http")
   public void test03GetPendingTransactionList() {
     response = HttpMethed.getTransactionFromPending(httpnode,txid);
     responseContent = HttpMethed.parseResponseContent(response);
