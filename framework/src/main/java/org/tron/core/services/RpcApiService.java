@@ -900,24 +900,6 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
-
-    @Override
-    public void getTransactionFromPending(BytesMessage request,
-        StreamObserver<Transaction> responseObserver) {
-      getTransactionFromPendingCommon(request, responseObserver);
-    }
-
-    @Override
-    public void getTransactionListFromPending(EmptyMessage request,
-        StreamObserver<TransactionList> responseObserver) {
-      getTransactionListFromPendingCommon(request, responseObserver);
-    }
-
-    @Override
-    public void getPendingSize(EmptyMessage request,
-        StreamObserver<NumberMessage> responseObserver) {
-      getPendingSizeCommon(request, responseObserver);
-    }
   }
 
   /**
