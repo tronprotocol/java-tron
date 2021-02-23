@@ -116,9 +116,10 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore, accountAssetIssueCapsule);
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
-      accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+      byte[] accountAddress = orderCapsule.getOwnerAddress().toByteArray();
+      accountStore.put(accountAddress, accountCapsule);
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
-      accountAssetIssueStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountAssetIssueCapsule);
+      accountAssetIssueStore.put(accountAddress, accountAssetIssueCapsule);
       // 2. clear orderList
       byte[] pairPriceKey = MarketUtils.createPairPriceKey(
           orderCapsule.getSellTokenId(),
