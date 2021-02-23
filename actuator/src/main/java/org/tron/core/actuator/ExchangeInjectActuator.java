@@ -20,8 +20,12 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.*;
-import org.tron.core.utils.TransactionUtil;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ExchangeStore;
+import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
@@ -101,7 +105,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
             .reduceAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
       }
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
+      accountAssetIssueStore.put(accountCapsule.createDbKey(), accountAssetIssueCapsule);
       Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store,
           assetIssueStore);
 

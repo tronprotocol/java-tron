@@ -11,7 +11,11 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.*;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -49,7 +53,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       ByteString newUrl = updateAssetContract.getUrl();
       ByteString newDescription = updateAssetContract.getDescription();
 
-      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+//      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
 
       AssetIssueCapsule assetIssueCapsule;

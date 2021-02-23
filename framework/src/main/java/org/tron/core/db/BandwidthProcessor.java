@@ -347,9 +347,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     chainBaseManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     chainBaseManager.getAccountStore().put(issuerAccountCapsule.createDbKey(),
         issuerAccountCapsule);
-
+    chainBaseManager.getAccountAssetIssueStore().put(accountAssetIssueCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
     return true;
-
   }
 
   public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {

@@ -25,13 +25,24 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketOrderIdListCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.*;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -91,7 +102,6 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore
               .get(address);
 
-
       byte[] orderId = contract.getOrderId().toByteArray();
       MarketOrderCapsule orderCapsule = orderStore.get(orderId);
 
@@ -108,7 +118,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
-
+      accountAssetIssueStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountAssetIssueCapsule);
       // 2. clear orderList
       byte[] pairPriceKey = MarketUtils.createPairPriceKey(
           orderCapsule.getSellTokenId(),

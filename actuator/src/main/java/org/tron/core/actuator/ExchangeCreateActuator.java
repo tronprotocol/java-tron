@@ -19,8 +19,12 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.*;
-import org.tron.core.utils.TransactionUtil;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ExchangeStore;
+import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
@@ -118,8 +122,9 @@ public class ExchangeCreateActuator extends AbstractActuator {
         exchangeCapsuleV2.setBalance(firstTokenBalance, secondTokenBalance);
         exchangeV2Store.put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
       }
-
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+      byte[] accountAddress = accountCapsule.createDbKey();
+      accountStore.put(accountAddress, accountCapsule);
+      accountAssetIssueStore.put(accountAddress, accountAssetIssueCapsule);
       dynamicStore.saveLatestExchangeNum(id);
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);

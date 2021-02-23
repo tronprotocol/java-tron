@@ -30,13 +30,27 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketOrderIdListCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.*;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketOrderDetail;
 import org.tron.protos.Protocol.MarketPrice;
@@ -141,8 +155,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       }
 
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
+      byte[] accountAddress = accountCapsule.createDbKey();
+      accountStore.put(accountAddress, accountCapsule);
+      accountAssetIssueStore.put(accountAddress, accountAssetIssueCapsule);
       ret.setOrderId(orderCapsule.getID());
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException

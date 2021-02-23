@@ -79,6 +79,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
 
       accountStore.put(ownerAddress, accountCapsule);
+      accountAssetIssueStore.put(ownerAddress, accountAssetIssueCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
