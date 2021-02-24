@@ -4,7 +4,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.*;
 import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
 public interface Repository {

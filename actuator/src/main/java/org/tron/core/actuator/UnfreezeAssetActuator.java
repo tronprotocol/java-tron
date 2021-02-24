@@ -101,7 +101,6 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
 
-
       DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(UnfreezeAssetContract.class)) {
       throw new ContractValidateException(

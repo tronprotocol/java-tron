@@ -247,7 +247,6 @@ public final class VMUtils {
       throw new ContractValidateException("assetBalance is not sufficient.");
     }
 
-//    AccountCapsule toAccount = deposit.getAccount(toAddress);
     AccountAssetIssueCapsule toAccountAssetIssueCapsule = deposit.getAccountAssetIssue(toAddress);
     if (toAccountAssetIssueCapsule != null) {
       if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {

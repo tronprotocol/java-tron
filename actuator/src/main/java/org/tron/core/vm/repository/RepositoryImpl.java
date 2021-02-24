@@ -52,7 +52,6 @@ import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.AccountAssetIssue;
 
 @Slf4j(topic = "Repository")
 public class RepositoryImpl implements Repository {
@@ -710,23 +709,14 @@ public class RepositoryImpl implements Repository {
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
-
     Value V2 = Value.create(accountAssetIssueCapsule.getData(),
             Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
     accountAssetIssueCache.put(key, V2);
-
     return accountAssetIssueCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 
   @Override
   public long getTokenBalance(byte[] address, byte[] tokenId) {
-//    AccountCapsule accountCapsule = getAccount(address);
-//    if (accountCapsule == null) {
-//      return 0;
-//    }
-//    String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
-//    return accountCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
-
     AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
     if (accountAssetIssueCapsule == null) {
       return 0;

@@ -47,7 +47,6 @@ public class ExchangeInjectActuator extends AbstractActuator {
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
     ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
@@ -58,7 +57,6 @@ public class ExchangeInjectActuator extends AbstractActuator {
       byte[] address = exchangeInjectContract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
           .get(address);
-
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
 
       ExchangeCapsule exchangeCapsule;

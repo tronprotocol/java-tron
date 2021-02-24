@@ -426,7 +426,20 @@ public class Util {
     }
   }
 
+  public static String convertOutput(Account account) {
+    if (account.getAssetIssuedID().isEmpty()) {
+      return JsonFormat.printToString(account, false);
+    } else {
+      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
+      String assetId = accountJson.get("asset_issued_ID").toString();
+      accountJson.put("asset_issued_ID",
+          ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
+      return accountJson.toJSONString();
+    }
+  }
+
   public static String convertOutput(Account account, AccountAssetIssue accountAssetIssue) {
+
     if (accountAssetIssue.getAssetIssuedID().isEmpty()) {
       return JsonFormat.printToString(account, false);
     } else {
@@ -444,7 +457,7 @@ public class Util {
       if (visible) {
         response.getWriter().println(JsonFormat.printToString(reply, true));
       } else {
-//        response.getWriter().println(convertOutput(reply));
+        response.getWriter().println(convertOutput(reply));
       }
     } else {
       response.getWriter().println("{}");
@@ -463,7 +476,6 @@ public class Util {
       response.getWriter().println("{}");
     }
   }
-
 
   public static byte[] getAddress(HttpServletRequest request) throws Exception {
     byte[] address = null;

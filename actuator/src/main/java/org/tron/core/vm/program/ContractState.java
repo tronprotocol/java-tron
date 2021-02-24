@@ -79,6 +79,7 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.createAccount(address, accountName, type);
   }
 
+
   @Override
   public AccountCapsule getAccount(byte[] addr) {
     return repository.getAccount(addr);

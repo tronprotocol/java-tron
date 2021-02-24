@@ -37,9 +37,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
 
     long fee = calcFee();
-    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
@@ -53,7 +51,6 @@ public class UpdateAssetActuator extends AbstractActuator {
       ByteString newUrl = updateAssetContract.getUrl();
       ByteString newDescription = updateAssetContract.getDescription();
 
-//      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
 
       AssetIssueCapsule assetIssueCapsule;
@@ -104,7 +101,6 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();

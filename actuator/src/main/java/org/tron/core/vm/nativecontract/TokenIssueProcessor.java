@@ -27,18 +27,14 @@ public class TokenIssueProcessor {
         ByteArray.toStr(tokenIssueParam.getAbbr()), tokenIssueParam.getTotalSupply(),
         tokenIssueParam.getPrecision());
     repository.putAssetIssueValue(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-
     AccountCapsule accountCapsule = repository.getAccount(tokenIssueParam.getOwnerAddress());
     AccountAssetIssueCapsule accountAssetIssueCapsule = repository.getAccountAssetIssue(tokenIssueParam.getOwnerAddress());
-
     accountAssetIssueCapsule.setAssetIssuedName(assetIssueCapsule.getName().toByteArray());
     accountAssetIssueCapsule.setAssetIssuedID(ByteArray.fromString(assetIssueCapsule.getId()));
     accountAssetIssueCapsule
         .addAssetV2(assetIssueCapsule.createDbV2Key(), tokenIssueParam.getTotalSupply());
-
     accountAssetIssueCapsule.setInstance(accountAssetIssueCapsule.getInstance().toBuilder().build());
     repository.putAccountAssetIssueValue(accountAssetIssueCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
-
     // spend 1024trx for assetissue, send to blackhole address
     AccountCapsule bhAccountCapsule = repository.getAccount(repository.getBlackHoleAddress());
     bhAccountCapsule.setBalance(Math.addExact(bhAccountCapsule.getBalance(),
@@ -47,7 +43,6 @@ public class TokenIssueProcessor {
         repository.getDynamicPropertiesStore().getAssetIssueFee()));
     repository.putAccountValue(tokenIssueParam.getOwnerAddress(), accountCapsule);
     repository.putAccountValue(bhAccountCapsule.getAddress().toByteArray(), bhAccountCapsule);
-
   }
 
   public void validate(Object contract, Repository repository) throws ContractValidateException {
@@ -87,17 +82,12 @@ public class TokenIssueProcessor {
     if (accountCapsule == null) {
       throw new ContractValidateException("Account not exists");
     }
-//    if (!accountCapsule.getAssetIssuedName().isEmpty()) {
-//      throw new ContractValidateException("An account can only issue one asset");
-//    }
     if (accountCapsule.getBalance() < repository.getDynamicPropertiesStore().getAssetIssueFee()) {
       throw new ContractValidateException("No enough balance for fee!");
     }
-
     AccountAssetIssueCapsule accountAssetIssue = repository.getAccountAssetIssue(tokenIssueParam.getOwnerAddress());
     if (!accountAssetIssue.getAssetIssuedName().isEmpty()) {
       throw new ContractValidateException("An account can only issue one asset");
     }
-
   }
 }

@@ -40,9 +40,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   private void updateUsage(AccountCapsule accountCapsule, long now) {
-
     AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(accountCapsule.getAddress().toByteArray());
-
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
@@ -247,7 +245,6 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(accountCapsule.getAddress().toByteArray());
-
     String tokenName = ByteArray.toStr(assetName.toByteArray());
     String tokenID = assetIssueCapsule.getId();
     if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {
@@ -349,6 +346,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         issuerAccountCapsule);
     chainBaseManager.getAccountAssetIssueStore().put(accountAssetIssueCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
     return true;
+
   }
 
   public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {

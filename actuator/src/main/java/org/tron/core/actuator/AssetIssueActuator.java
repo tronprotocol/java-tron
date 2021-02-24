@@ -276,13 +276,13 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Account not exists");
     }
 
-    if (accountCapsule.getBalance() < calcFee()) {
-      throw new ContractValidateException("No enough balance for fee!");
-    }
-
     AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
     if (!accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
       throw new ContractValidateException("An account can only issue one asset");
+    }
+
+    if (accountCapsule.getBalance() < calcFee()) {
+      throw new ContractValidateException("No enough balance for fee!");
     }
     return true;
   }

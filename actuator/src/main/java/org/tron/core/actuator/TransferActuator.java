@@ -57,6 +57,8 @@ public class TransferActuator extends AbstractActuator {
         accountStore.put(toAddress, toAccount);
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
+      }
+      if (accountAssetIssueStore.get(toAddress) == null) {
         accountAssetIssueStore.put(toAddress, new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress)));
       }
 

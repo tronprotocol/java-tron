@@ -149,8 +149,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
+      }
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
+      if (accountAssetIssueCapsule == null) {
         accountAssetIssueStore.put(toAddress, new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress)));
       }
+
       Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
           amount, accountAssetIssueStore, assetIssueStore,
           dynamicStore);
@@ -469,19 +474,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
-//  private long getZenBalance(AccountCapsule account) {
-//    if (account.getAssetMapV2().get(CommonParameter
-//        .getInstance().getZenTokenId()) == null) {
-//      return 0L;
-//    } else {
-//      return account.getAssetMapV2().get(CommonParameter
-//          .getInstance().getZenTokenId());
-//    }
-//  }
-
   private long getZenBalance(byte[] address) {
-    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(address);
     if (accountAssetIssueCapsule.getAssetMapV2().get(CommonParameter
             .getInstance().getZenTokenId()) == null) {
       return 0L;

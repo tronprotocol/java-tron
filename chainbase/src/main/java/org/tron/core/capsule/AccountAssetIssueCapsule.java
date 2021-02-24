@@ -336,5 +336,4 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
     public int compareTo(AccountAssetIssue o) {
         return 0;
     }
-
 }

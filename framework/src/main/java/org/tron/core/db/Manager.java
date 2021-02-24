@@ -381,6 +381,8 @@ public class Manager {
       System.exit(1);
     }
     getChainBaseManager().getForkController().init(this.chainBaseManager);
+    //int account asset issue import
+    chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
@@ -401,7 +403,7 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
-    chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
+
 
     //initStoreFactory
     prepareStoreFactory();

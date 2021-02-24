@@ -571,6 +571,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
           .addAssetAmountV2(buyTokenId, num, dynamicStore, assetIssueStore);
     }
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+    accountAssetIssueStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountAssetIssueCapsule);
   }
 
   private void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
@@ -582,6 +583,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore, accountAssetIssueCapsule);
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+    accountAssetIssueStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountAssetIssueCapsule);
   }
 
   private void saveRemainOrder(MarketOrderCapsule orderCapsule)

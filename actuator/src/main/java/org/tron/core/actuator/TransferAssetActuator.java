@@ -58,7 +58,6 @@ public class TransferAssetActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
 
-
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     try {
@@ -66,7 +65,6 @@ public class TransferAssetActuator extends AbstractActuator {
       byte[] ownerAddress = transferAssetContract.getOwnerAddress().toByteArray();
       byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
       AccountCapsule toAccountCapsule = accountStore.get(toAddress);
-
       AccountAssetIssueCapsule toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
 
       if (toAccountCapsule == null) {
@@ -78,7 +76,6 @@ public class TransferAssetActuator extends AbstractActuator {
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
-
       if (toAccountAssetIssueCapsule == null) {
         toAccountAssetIssueCapsule = new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress));
         accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
@@ -131,7 +128,6 @@ public class TransferAssetActuator extends AbstractActuator {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();

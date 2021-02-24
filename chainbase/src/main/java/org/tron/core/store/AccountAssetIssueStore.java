@@ -115,21 +115,26 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         long start = System.currentTimeMillis();
         logger.info("import asset of account store to account asset store ");
         CountDownLatch countDownLatch = new CountDownLatch(1);
-
+        Timer timer = null;
         if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
-            AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(BlockQueueFactory.getInstance(), countDownLatch);
-            accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
-
-            AccountConvertQueue accountConvertQueue = new AccountConvertQueue(BlockQueueFactory.getInstance(), this);
-            accountConvertQueue.convert();
             try {
-                Timer timer = countDown();
+                AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(BlockQueueFactory.getInstance(), countDownLatch);
+                accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
+
+                AccountConvertQueue accountConvertQueue = new AccountConvertQueue(BlockQueueFactory.getInstance(), this);
+                accountConvertQueue.convert();
+                timer = countDown();
                 logger.debug("import asset await");
-                countDownLatch.await();
-                timer.cancel();
                 dynamicPropertiesStore.setAllowAssetImport(1L);
-            } catch (InterruptedException e) {
-                logger.info("import asset exception");
+            } finally {
+                try {
+                    countDownLatch.await();
+                    if (null != timer) {
+                        timer.cancel();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
         logger.info("import asset time: {}", (System.currentTimeMillis() - start) / 1000);
@@ -165,7 +170,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     }
 
 
-    //消费
     public static class AccountConvertQueue {
 
         private BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue;
@@ -230,7 +234,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                     MAX_POOL_SIZE,
                     KEEP_ALIVE_SECONDES,
                     TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>(5000)
+                    new LinkedBlockingQueue<>(20000)
             );
         }
 
