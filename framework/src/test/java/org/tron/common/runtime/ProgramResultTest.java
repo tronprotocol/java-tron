@@ -32,9 +32,11 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 
 @Slf4j
@@ -93,14 +95,14 @@ public class ProgramResultTest {
    * calledAddress.call(bytes4(keccak256("getZero()"))); return (address(c1),address(c2)); } }
    * contract A { address public calledAddress; constructor(address d) payable{ calledAddress = d;
    * }
-   *
+   * <p>
    * address public b1; address public b2; address public b3; address public b4; address public b5;
    * address public b6; address public b7; address public b8;
-   *
+   * <p>
    * function create(){ B b= new B(calledAddress); B bb = new B(calledAddress); b1 = address(b); b2
    * = address(bb); (b3,b4)=b.setB(); (b5,b6)=bb.setB(); (b7,b8)=bb.setB();
    * calledAddress.call(bytes4(keccak256("getZero()"))); } }
-   *
+   * <p>
    * contract calledContract { function getZero() returns(uint256){ return 0; } }
    */
 
@@ -265,7 +267,7 @@ public class ProgramResultTest {
 
   /**
    * pragma solidity ^0.4.24;
-   *
+   * <p>
    * contract A{ uint256 public num = 0; constructor() public payable{} function transfer(address c,
    * bool isRevert)  payable public returns(address){ B b = (new B).value(10)();//1
    * address(b).transfer(5);//2 b.payC(c, isRevert);//3 // b.payC(c,isRevert); return address(b); }
@@ -273,15 +275,15 @@ public class ProgramResultTest {
    * = 0; function f() payable returns(bool) { return true; } constructor() public payable {}
    * function payC(address c, bool isRevert) public{ c.transfer(1);//4 if (isRevert) { revert(); } }
    * function getBalance() returns(uint256){ return this.balance; } function () payable{} }
-   *
+   * <p>
    * contract C{ constructor () public payable{} function () payable{} }
    */
   @Test
   public void successAndFailResultTest()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
       ContractValidateException {
-    byte[] cContract = deployC();
-    byte[] aContract = deployA();
+    byte[] cContract = deployC("C");
+    byte[] aContract = deployA("A");
     //false
     String params =
         Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData())
@@ -374,10 +376,55 @@ public class ProgramResultTest {
     checkTransactionInfo(traceFailed, trx2, null, internalTransactionsListFail);
   }
 
-  private byte[] deployC()
+  @Test
+  public void timeOutFeeTest()
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
+    byte[] cContract = deployC("D");
+    byte[] aContract = deployA("B");
+    //false
+    String params =
+        Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData())
+            + "0000000000000000000000000000000000000000000000000000000000000000";
+
+    // ======================================= Test Success =======================================
+    byte[] triggerData1 = TvmTestUtils.parseAbi("transfer(address,bool)", params);
+    Transaction trx1 = TvmTestUtils
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
+            triggerData1, 0, 100000000);
+    TransactionTrace traceSuccess = TvmTestUtils
+        .processTransactionAndReturnTrace(trx1, deposit, null);
+
+    Assert.assertEquals(traceSuccess.getReceipt().getEnergyFee(), 12705900L);
+
+    TransactionInfoCapsule trxInfoCapsule =
+        buildTransactionInfoInstance(new TransactionCapsule(trx1), null, traceSuccess);
+    Assert.assertEquals(trxInfoCapsule.getFee(), 12705900L);
+    Assert.assertEquals(trxInfoCapsule.getPackingFee(), 0L);
+
+    DynamicPropertiesStore dynamicPropertiesStore = traceSuccess.getTransactionContext()
+        .getStoreFactory().getChainBaseManager().getDynamicPropertiesStore();
+    dynamicPropertiesStore.saveAllowTransactionFeePool(1L);
+
+    trxInfoCapsule =
+        buildTransactionInfoInstance(new TransactionCapsule(trx1), null, traceSuccess);
+    Assert.assertEquals(trxInfoCapsule.getFee(), 12705900L);
+    Assert.assertEquals(trxInfoCapsule.getPackingFee(), 12705900L);
+
+
+    traceSuccess.getReceipt().setResult(contractResult.OUT_OF_TIME);
+
+    trxInfoCapsule =
+        buildTransactionInfoInstance(new TransactionCapsule(trx1), null, traceSuccess);
+    Assert.assertEquals(trxInfoCapsule.getFee(), 12705900L);
+    Assert.assertEquals(trxInfoCapsule.getPackingFee(), 0L);
+
+
+  }
+
+  private byte[] deployC(String contractName)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
       VMIllegalException {
-    String contractName = "C";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
         "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\""
@@ -394,10 +441,9 @@ public class ProgramResultTest {
             feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
 
-  private byte[] deployA()
+  private byte[] deployA(String contractName)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
       VMIllegalException {
-    String contractName = "A";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
         "[{\"constant\":false,\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"name\""
@@ -449,7 +495,7 @@ public class ProgramResultTest {
 
   /**
    * pragma solidity ^0.4.24;
-   *
+   * <p>
    * contract A{ constructor () payable public{} function suicide(address toAddress) public payable{
    * selfdestruct(toAddress); } function () payable public{} }s
    */

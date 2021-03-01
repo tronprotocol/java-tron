@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+
    
     contract A{
         uint256 public num = 0;
@@ -204,7 +204,7 @@ pragma solidity ^0.4.24;
         function getBalance() returns(uint256){
             return this.balance;
         }
-        function () payable{}
+        fallback() payable{}
     }
    
   

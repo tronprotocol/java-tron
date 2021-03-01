@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,8 @@ public class CrossHeaderMsgProcess {
 
   public static final int SYNC_NUMBER = 200;
   private static final int MAX_HEADER_NUMBER = 10000;
+
+  private static boolean go = true;
 
   private static Set<PeerConnection> syncFailPeerSet = new HashSet<>();
 
@@ -83,8 +86,33 @@ public class CrossHeaderMsgProcess {
 
   @PostConstruct
   public void init() {
+    processHeaderService = Executors.newFixedThreadPool(20,
+        r -> new Thread(r, "process-cross-header"));
+    sendService = Executors.newFixedThreadPool(20,
+        r -> new Thread(r, "sync-cross-header"));
+    sendRequestExecutor = Executors.newSingleThreadExecutor(
+        new ThreadFactoryBuilder().setNameFormat("sendRequestExecutor").build());
+    processHeaderExecutor = Executors.newSingleThreadExecutor(
+        new ThreadFactoryBuilder().setNameFormat("processHeaderExecutor").build());
     sendRequestExecutor.submit(this::sendRequest);
     processHeaderExecutor.submit(this::processBlockHeader);
+  }
+
+  @PreDestroy
+  public void destroy() {
+    go = false;
+    if (sendService != null) {
+      sendService.shutdown();
+    }
+    if (processHeaderService != null) {
+      processHeaderService.shutdown();
+    }
+    if (sendRequestExecutor != null) {
+      sendRequestExecutor.shutdown();
+    }
+    if (processHeaderExecutor != null) {
+      processHeaderExecutor.shutdown();
+    }
   }
 
   public void handleCrossUpdatedNotice(PeerConnection peer, TronMessage msg)
@@ -219,7 +247,7 @@ public class CrossHeaderMsgProcess {
   }
 
   private void sendRequest() {
-    while (true) {
+    while (go) {
       try {
         if (syncDisabledMap.isEmpty()) {
           Thread.sleep(50);
@@ -292,7 +320,7 @@ public class CrossHeaderMsgProcess {
   }
 
   private void processBlockHeader() {
-    while (true) {
+    while (go) {
       chainHeaderCache.keySet().forEach(chainId -> {
         if (chainHeaderCache.get(chainId).size() > 0
             && startProcessHeaderMap.get(chainId) == null) {

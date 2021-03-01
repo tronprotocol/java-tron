@@ -36,7 +36,6 @@ public class EnergyWhenRequireStyleTest {
   private DepositImpl deposit;
   private String dbPath = "output_EnergyWhenRequireStyleTest";
   private String OWNER_ADDRESS;
-  private Application AppT;
   private long totalBalance = 30_000_000_000_000L;
 
 
@@ -47,7 +46,6 @@ public class EnergyWhenRequireStyleTest {
   public void init() {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);

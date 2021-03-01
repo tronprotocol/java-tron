@@ -22,6 +22,8 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 
 @Slf4j(topic = "app")
 public class FullNode {
+  
+  public static final int dbVersion = 2;
 
   public static void load(String path) {
     try {
@@ -44,11 +46,11 @@ public class FullNode {
    */
   public static void main(String[] args) {
     logger.info("Full node running.");
-    Args.setParam(args, Constant.TESTNET_CONF);
+    Args.setParam(args, "config-localtest.conf");
 
     CommonParameter parameter = Args.getInstance();
     load(parameter.getLogbackPath());
-
+parameter.setWitness(true);
     if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
@@ -82,7 +84,7 @@ public class FullNode {
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.
-    if (Args.getInstance().getStorage().getDbVersion() == 2) {
+    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
       RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
           .getBean(RpcApiServiceOnSolidity.class);
       appT.addService(rpcApiServiceOnSolidity);
@@ -94,7 +96,7 @@ public class FullNode {
     }
 
     // PBFT API (HTTP and GRPC)
-    if (Args.getInstance().getStorage().getDbVersion() == 2) {
+    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
       RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
           .getBean(RpcApiServiceOnPBFT.class);
       appT.addService(rpcApiServiceOnPBFT);

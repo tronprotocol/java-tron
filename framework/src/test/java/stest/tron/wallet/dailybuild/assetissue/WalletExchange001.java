@@ -97,7 +97,7 @@ public class WalletExchange001 {
     blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Create two asset issue to create exchange")
   public void test1CreateUsedAsset() {
     ecKey1 = new ECKey(Utils.getRandom());
     exchange001Address = ecKey1.getAddress();
@@ -126,7 +126,7 @@ public class WalletExchange001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test create exchange")
   public void test2CreateExchange() {
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     final Integer beforeCreateExchangeNum = listExchange.get().getExchangesCount();
@@ -169,7 +169,7 @@ public class WalletExchange001 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test list exchange api")
   public void test3ListExchange() {
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     for (Integer i = 0; i < listExchange.get().getExchangesCount(); i++) {
@@ -182,7 +182,7 @@ public class WalletExchange001 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test inject exchange")
   public void test4InjectExchange() {
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubFull);
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
@@ -233,7 +233,7 @@ public class WalletExchange001 {
         == injectBalance * exchangeRate);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test withdraw exchange")
   public void test5WithdrawExchange() {
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubFull);
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
@@ -287,7 +287,7 @@ public class WalletExchange001 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test exchange transaction")
   public void test6TransactionExchange() {
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubFull);
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
@@ -340,7 +340,7 @@ public class WalletExchange001 {
         == beforeToken2Balance - afterToken2Balance);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test GetExchangeListPaginated api")
   public void test7GetExchangeListPaginated() {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(0);
@@ -363,7 +363,7 @@ public class WalletExchange001 {
   /**
    * constructor.
    */
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test get exchange list from pbft")
   public void test8GetExchangeListFromPbft() {
     //Pbft support listexchange
     listExchange = PublicMethed.getExchangeList(blockingStubPbft);
@@ -373,7 +373,7 @@ public class WalletExchange001 {
   /**
    * constructor.
    */
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Test get exchange by id from pbft")
   public void test9GetExchangeByIdFromPbft() {
     Assert.assertEquals(PublicMethed.getExchange(exchangeId.toString(), blockingStubPbft),
         PublicMethed.getExchange(exchangeId.toString(), blockingStubSolidity));

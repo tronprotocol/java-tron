@@ -42,6 +42,26 @@ service Wallet {
     };
   };
 
+  rpc GetAccountBalance (AccountBalanceRequest) returns (AccountBalanceResponse) {
+    option (google.api.http) = {
+      post: "/wallet/getaccountbalance"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getaccountbalance"
+      }
+    };
+  };
+
+  rpc GetBlockBalanceTrace (BlockBalanceTrace.BlockIdentifier) returns (BlockBalanceTrace) {
+    option (google.api.http) = {
+      post: "/wallet/getblockbalancetrace"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getblockbalancetrace"
+      }
+    };
+  };
+
   //Please use CreateTransaction2 instead of this function.
   rpc CreateTransaction (TransferContract) returns (Transaction) {
     option (google.api.http) = {
@@ -758,6 +778,9 @@ service Wallet {
 
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
+
+  rpc GetBurnTrx (EmptyMessage) returns (NumberMessage) {
+  }
   //check the cross chain transaction is commit or not
   rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
   };
@@ -960,6 +983,8 @@ service WalletSolidity {
   rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
   }
 
+  rpc GetBurnTrx (EmptyMessage) returns (NumberMessage) {
+  }
   rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
 
   };

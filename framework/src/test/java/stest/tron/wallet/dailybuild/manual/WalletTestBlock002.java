@@ -236,8 +236,14 @@ public class WalletTestBlock002 {
     Block pbftNowBlock = blockingStubPbft.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long nowPbftBlockNum = pbftNowBlock.getBlockHeader().getRawData().getNumber();
     logger.info("nowBlockNum:" + nowBlockNum + " , nowPbftBlockNum:" + nowPbftBlockNum);
-
     Assert.assertTrue(nowPbftBlockNum >= nowBlockNum);
+
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubPbft);
+    GrpcAPI.BlockExtention pbftNowBlock2 = blockingStubPbft.getNowBlock2(GrpcAPI.EmptyMessage
+        .newBuilder().build());
+    Long nowPbftBlockNum2 = pbftNowBlock2.getBlockHeader().getRawData().getNumber();
+    logger.info("nowBlockNum:" + nowBlockNum + " , nowPbftBlockNum2:" + nowPbftBlockNum2);
+    Assert.assertTrue(nowPbftBlockNum2 >= nowBlockNum);
   }
 
 
@@ -285,6 +291,21 @@ public class WalletTestBlock002 {
     Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("Last second test from solidity succesfully");
+
+    //Query the second latest block getBlockByNum2.
+    NumberMessage.Builder builder4 = NumberMessage.newBuilder();
+    builder4.setNum(currentBlockNum - 1);
+    GrpcAPI.BlockExtention lastSecondBlock1 = blockingStubPbft.getBlockByNum2(builder4.build());
+    Assert.assertTrue(lastSecondBlock1.hasBlockHeader());
+    Assert.assertFalse(lastSecondBlock1.getBlockHeader().getWitnessSignature().isEmpty());
+    Assert.assertTrue(lastSecondBlock1.getBlockHeader().getRawData().getTimestamp() > 0);
+    Assert.assertFalse(lastSecondBlock1.getBlockHeader().getRawData().getWitnessAddress()
+        .isEmpty());
+    Assert.assertTrue(
+            lastSecondBlock1.getBlockHeader().getRawData().getNumber() + 1 == currentBlockNum);
+    Assert.assertFalse(lastSecondBlock1.getBlockHeader().getRawData().getParentHash().isEmpty());
+    Assert.assertTrue(lastSecondBlock1.getBlockHeader().getRawData().getWitnessId() >= 0);
+    logger.info("Last second test from getBlockByNum2 succesfully");
 
   }
 

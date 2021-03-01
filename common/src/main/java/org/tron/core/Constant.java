@@ -8,8 +8,6 @@ public class Constant {
   //config for junit test
   public static final String TEST_CONF = "config-test.conf";
 
-  public static final String DATABASE_DIR = "storage.directory";
-
   // locate in storageDbDirectory, store the db infos,
   // now only has the split block number
   public static final String INFO_FILE_NAME = "info.properties";
@@ -25,6 +23,7 @@ public class Constant {
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day
   public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1_000L; //60 seconds
+  public static final long TRANSACTION_FEE_POOL_PERIOD = 1; //1 blocks
   // config for smart contract
   public static final long SUN_PER_ENERGY = 100; // 1 us = 100 SUN = 100 * 10^-6 TRX
   public static final long ENERGY_LIMIT_IN_CONSTANT_TX = 3_000_000L; // ref: 1 us = 1 energy
@@ -86,6 +85,7 @@ public class Constant {
   public static final String NODE_MIN_PARTICIPATION_RATE = "node.minParticipationRate";
   public static final String NODE_LISTEN_PORT = "node.listen.port";
   public static final String NODE_DISCOVERY_PUBLIC_HOME_NODE = "node.discovery.public.home.node";
+  public static final String NODE_DISCOVERY_PING_TIMEOUT = "node.discovery.ping.timeout";
 
   public static final String NODE_P2P_PING_INTERVAL = "node.p2p.pingInterval";
   public static final String NODE_P2P_VERSION = "node.p2p.version";
@@ -96,7 +96,6 @@ public class Constant {
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
-  public static final String NODE_HTTP_STATISTICS_SR_REWARD_SWITCH = "node.http.statisticsSRRewardSwitch";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
@@ -269,11 +268,18 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_ASSETISSUE = "committee.allowTvmAssetIssue";
 
+  public static final String COMMITTEE_ALLOW_TRANSACTION_FEE_POOL = "committee.allowTransactionFeePool";
+  public static final String COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION = "committee.allowBlackHoleOptimization";
+
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
   public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
+
+  public static final String HISTORY_BALANCE_LOOKUP = "storage.balance.history.lookup";
+
+  public static final String LOCAL_HOST = "127.0.0.1";
   public static final String NODE_CROSS_CHAIN_CONNECT = "node.crossChain.ip";
   public static final String NODE_CROSS_CHAIN_PORT = "node.crossChain.port";
   public static final String NODE_CROSS_CHAIN_SHOULD_REGISTER = "node.crossChain.shouldRegister";

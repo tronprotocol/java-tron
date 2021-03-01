@@ -39,7 +39,6 @@ public class EnergyWhenAssertStyleTest {
   private DepositImpl deposit;
   private String dbPath = "output_EnergyWhenAssertStyleTest";
   private String OWNER_ADDRESS;
-  private Application AppT;
   private long totalBalance = 30_000_000_000_000L;
 
 
@@ -50,7 +49,6 @@ public class EnergyWhenAssertStyleTest {
   public void init() {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
@@ -580,13 +578,6 @@ public class EnergyWhenAssertStyleTest {
         .assertTrue(result.getRuntime().getResult().getException() instanceof OutOfMemoryException);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
-  }
-
-  @Test
-  @Ignore
-  public void overflowTest()
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException {
-    // done in ChargeTest
   }
 
   /**

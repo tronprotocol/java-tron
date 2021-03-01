@@ -3,6 +3,7 @@ package stest.tron.wallet.onlinestress;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -13,15 +14,19 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.ChainParameters;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.Sha256Hash;
 
 @Slf4j
 public class TestStorageAndCpu {
@@ -49,10 +54,8 @@ public class TestStorageAndCpu {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
+  private String fullnode = "47.94.243.150:50051";
+  private String fullnode1 = "47.94.243.150:50051";
 
   @BeforeSuite
   public void beforeSuite() {
@@ -79,6 +82,37 @@ public class TestStorageAndCpu {
     currentBlock = blockingStubFull1.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     beforeTime = System.currentTimeMillis();
+  }
+
+  @Test(enabled = true,threadPoolSize = 1, invocationCount = 1)
+  public void scanBlock() {
+    Long startNum = 26165658L;
+    Long endNum = 26166320L;
+    Integer totalNum = 0;
+    Integer successNum = 0;
+    Integer failedNum = 0;
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    while (startNum <= endNum) {
+      logger.info("scan block num:" + startNum);
+      builder.setNum(startNum);
+      List<Transaction>  transactionList = blockingStubFull
+          .getBlockByNum(builder.build()).getTransactionsList();
+      Integer transactionNumInThisBlock = transactionList.size();
+      totalNum = totalNum + transactionNumInThisBlock;
+      for (Transaction transaction : transactionList) {
+        if (transaction.getRet(0).getContractRet().name().equals("SUCCESS")) {
+          successNum++;
+        } else {
+          failedNum++;
+          logger.info(transaction.getRet(0).getContractRet().name());
+        }
+      }
+      startNum++;
+    }
+    logger.info("successNum:" + successNum);
+    logger.info("failedNum:" + failedNum);
+    logger.info("totalNum:" + totalNum);
+    logger.info("Success rate:" + (double)failedNum / (double)totalNum);
   }
 
   @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)

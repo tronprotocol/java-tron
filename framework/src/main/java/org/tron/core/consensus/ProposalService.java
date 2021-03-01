@@ -206,14 +206,14 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(entry.getValue());
           break;
         }
-        case ALLOW_TVM_STAKE: {
-          manager.getDynamicPropertiesStore().saveAllowTvmStake(entry.getValue());
-          break;
-        }
-        case ALLOW_TVM_ASSET_ISSUE: {
-          manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
-          break;
-        }
+        //case ALLOW_TVM_STAKE: {
+        //  manager.getDynamicPropertiesStore().saveAllowTvmStake(entry.getValue());
+        //  break;
+        //}
+        //case ALLOW_TVM_ASSET_ISSUE: {
+        //  manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
+        //  break;
+        //}
         case ALLOW_MARKET_TRANSACTION: {
           if (manager.getDynamicPropertiesStore().getAllowMarketTransaction() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMarketTransaction(entry.getValue());
@@ -228,6 +228,18 @@ public class ProposalService extends ProposalUtil {
         }
         case MARKET_CANCEL_FEE: {
           manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
+          break;
+        }
+        case MAX_FEE_LIMIT: {
+          manager.getDynamicPropertiesStore().saveMaxFeeLimit(entry.getValue());
+          break;
+        }
+        case ALLOW_TRANSACTION_FEE_POOL: {
+          manager.getDynamicPropertiesStore().saveAllowTransactionFeePool(entry.getValue());
+          break;
+        }
+        case ALLOW_BLACKHOLE_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().saveAllowBlackHoleOptimization(entry.getValue());
           break;
         }
 

@@ -24,6 +24,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.CipherException;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">
@@ -97,12 +98,12 @@ public class Wallet {
 
     WalletFile.Crypto crypto = new WalletFile.Crypto();
     crypto.setCipher(CIPHER);
-    crypto.setCipherText(ByteArray.toHexString(cipherText));
+    crypto.setCiphertext(ByteArray.toHexString(cipherText));
     walletFile.setCrypto(crypto);
 
     WalletFile.CipherParams cipherParams = new WalletFile.CipherParams();
     cipherParams.setIv(ByteArray.toHexString(iv));
-    crypto.setCipherParams(cipherParams);
+    crypto.setCipherparams(cipherParams);
 
     crypto.setKdf(SCRYPT);
     WalletFile.ScryptKdfParams kdfParams = new WalletFile.ScryptKdfParams();
@@ -111,7 +112,7 @@ public class Wallet {
     kdfParams.setP(p);
     kdfParams.setR(R);
     kdfParams.setSalt(ByteArray.toHexString(salt));
-    crypto.setKdfParams(kdfParams);
+    crypto.setKdfparams(kdfParams);
 
     crypto.setMac(ByteArray.toHexString(mac));
     walletFile.setCrypto(crypto);
@@ -175,15 +176,15 @@ public class Wallet {
     WalletFile.Crypto crypto = walletFile.getCrypto();
 
     byte[] mac = ByteArray.fromHexString(crypto.getMac());
-    byte[] iv = ByteArray.fromHexString(crypto.getCipherParams().getIv());
-    byte[] cipherText = ByteArray.fromHexString(crypto.getCipherText());
+    byte[] iv = ByteArray.fromHexString(crypto.getCipherparams().getIv());
+    byte[] cipherText = ByteArray.fromHexString(crypto.getCiphertext());
 
     byte[] derivedKey;
 
-    WalletFile.KdfParams kdfParams = crypto.getKdfParams();
+    WalletFile.KdfParams kdfParams = crypto.getKdfparams();
     if (kdfParams instanceof WalletFile.ScryptKdfParams) {
       WalletFile.ScryptKdfParams scryptKdfParams =
-          (WalletFile.ScryptKdfParams) crypto.getKdfParams();
+          (WalletFile.ScryptKdfParams) crypto.getKdfparams();
       int dklen = scryptKdfParams.getDklen();
       int n = scryptKdfParams.getN();
       int p = scryptKdfParams.getP();
@@ -192,7 +193,7 @@ public class Wallet {
       derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, r, p, dklen);
     } else if (kdfParams instanceof WalletFile.Aes128CtrKdfParams) {
       WalletFile.Aes128CtrKdfParams aes128CtrKdfParams =
-          (WalletFile.Aes128CtrKdfParams) crypto.getKdfParams();
+          (WalletFile.Aes128CtrKdfParams) crypto.getKdfparams();
       int c = aes128CtrKdfParams.getC();
       String prf = aes128CtrKdfParams.getPrf();
       byte[] salt = ByteArray.fromHexString(aes128CtrKdfParams.getSalt());

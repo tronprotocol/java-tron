@@ -1,7 +1,7 @@
-//pragma solidity ^0.4.24;
+
 contract IllegalDecorate {
 constructor() payable public{}
-function() payable external{}
+fallback() payable external{}
 event log(uint256);
 function transferTokenWithPure(address payable toAddress, uint256 tokenValue) public pure {
 emit log(msg.value);

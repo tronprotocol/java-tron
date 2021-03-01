@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter;
 
+import com.beust.jcommander.internal.Sets;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -13,6 +14,7 @@ import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.ManifestPluginDescriptorFinder;
 import org.pf4j.PluginManager;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
@@ -144,11 +146,14 @@ public class EventPluginLoader {
       return true;
     }
 
-    Set<String> hset = null;
+    Set<String> hset = Sets.newHashSet();
     if (trigger instanceof ContractLogTrigger) {
       hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
-    } else {
+    } else if (trigger instanceof ContractEventTrigger) {
       hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
+    } else if (trigger != null) {
+      hset = trigger.getLogInfo().getClonedTopics()
+              .stream().map(Hex::toHexString).collect(Collectors.toSet());
     }
 
     for (String top : topList) {

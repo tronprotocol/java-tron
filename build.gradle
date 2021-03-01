@@ -21,8 +21,8 @@ subprojects {
             maven { url 'https://jitpack.io' }
         }
         dependencies {
-            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
-            classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.12'
+            classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
         }
     }
 
@@ -38,7 +38,10 @@ subprojects {
         compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
         compile "org.slf4j:jcl-over-slf4j:1.7.25"
         compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-        compile group: 'org.projectlombok', name: 'lombok', version: '1.18.2'
+        compileOnly 'org.projectlombok:lombok:1.18.12'
+        annotationProcessor 'org.projectlombok:lombok:1.18.12'
+        testCompileOnly 'org.projectlombok:lombok:1.18.12'
+        testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
         compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
         compile "com.google.code.findbugs:jsr305:3.0.0"
         compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
@@ -55,10 +58,6 @@ subprojects {
         from sourceSets.main.allSource
     }
 
-    artifacts {
-//        archives jar
-        archives sourcesJar
-    }
 
     tasks.withType(AbstractArchiveTask) {
         preserveFileTimestamps = false

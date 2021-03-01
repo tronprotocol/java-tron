@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -69,6 +70,11 @@ public class CommunicateService implements Communicate {
 
   @Autowired
   private BlockHeaderIndexStore blockHeaderIndexStore;
+
+  @PreDestroy
+  public void destroy() {
+    executorService.shutdown();
+  }
 
   public void setPbftBlockListener(PbftBlockListener pbftBlockListener) {
     manager.setPbftBlockListener(pbftBlockListener);

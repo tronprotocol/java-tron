@@ -18,6 +18,8 @@ import org.tron.core.vm.nativecontract.param.StakeParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
+import static org.tron.core.actuator.ActuatorConstant.*;
+
 
 @Slf4j(topic = "Processor")
 public class StakeProcessor {
@@ -33,6 +35,8 @@ public class StakeProcessor {
       long frozenDuration = repository.getDynamicPropertiesStore().getMinFrozenTime();
       validateFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, repository);
       executeFreeze(stakeParam.getOwnerAddress(), frozenDuration, freezeBalance, stakeParam.getNow(), repository);
+    } else {
+      logger.info("no need to freeze for stake");
     }
     long voteCount = stakeParam.getStakeAmount() / ChainConstant.TRX_PRECISION;
     Protocol.Vote vote = Protocol.Vote.newBuilder()
@@ -60,7 +64,7 @@ public class StakeProcessor {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+              ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
   }
 

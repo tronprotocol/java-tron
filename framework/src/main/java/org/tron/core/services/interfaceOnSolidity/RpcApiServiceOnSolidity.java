@@ -486,6 +486,13 @@ public class RpcApiServiceOnSolidity implements Service {
     }
 
     @Override
+    public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
+      );
+    }
+
+    @Override
     public void checkCrossTransactionCommit(BytesMessage request,
         StreamObserver<Return> responseObserver) {
       walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()

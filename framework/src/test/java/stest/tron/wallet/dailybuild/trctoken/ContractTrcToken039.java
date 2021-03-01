@@ -150,7 +150,8 @@ public class ContractTrcToken039 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Trigger Proxy contract use AddressA")
+  @Test(enabled = true, dependsOnMethods = "deploy01TransferTokenContract",
+      description = "Trigger Proxy contract use AddressA")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
@@ -260,7 +261,8 @@ public class ContractTrcToken039 {
     Assert.assertTrue(afterAssetIssueBAddress == beforeAssetIssueBAddress);
   }
 
-  @Test(enabled = true, description = "Trigger Proxy contract use AddressB")
+  @Test(enabled = true,dependsOnMethods = "deploy02TransferTokenContract",
+      description = "Trigger Proxy contract use AddressB")
   public void deploy03TransferTokenContract() {
     Account info1;
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(dev001Address,

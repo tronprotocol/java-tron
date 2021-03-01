@@ -23,12 +23,13 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   protected Snapshot root;
 
   SnapshotImpl(Snapshot snapshot) {
-    root = snapshot.getRoot();
-    previous = snapshot;
-    snapshot.setNext(this);
     synchronized (this) {
       db = new HashDB(SnapshotImpl.class.getSimpleName());
     }
+
+    root = snapshot.getRoot();
+    previous = snapshot;
+    snapshot.setNext(this);
   }
 
   @Override
@@ -117,6 +118,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   /**
+   * Note: old --> new
    * In the snapshot, there may be same keys.
    * If we use Map to get all the data, the later will overwrite the previous value.
    * So, if we use list, we need to exclude duplicate keys.
@@ -127,14 +129,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Snapshot next = getRoot().getNext();
     while (next != null) {
       Streams.stream(((SnapshotImpl) next).db)
-          .forEach(e -> {
-            WrappedByteArray key = WrappedByteArray.of(e.getKey().getBytes());
-            if (!all.containsKey(key)) {
-              all.put(WrappedByteArray.of(e.getKey().getBytes()),
-                   e.getValue().getOperator());
-            }
-
-          });
+          .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
+              e.getValue().getOperator()));
       next = next.getNext();
     }
   }

@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.16;
+
 
 interface token {
     function transfer(address receiver, uint amount) external;
@@ -44,7 +44,7 @@ contract Crowdsale {
      * 无函数名的Fallback函数，
      * 在向合约转账时，这个函数会被调用
      */
-    function () payable external{
+    fallback() payable external{
         require(!crowdsaleClosed);
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
@@ -92,7 +92,7 @@ contract Crowdsale {
         }
 
         if (fundingGoalReached && beneficiary == msg.sender) {
-            if (address(beneficiary).send(amountRaised)) {
+            if (payable(beneficiary).send(amountRaised)) {
                 emit FundTransfer(beneficiary, amountRaised, false);
             } else {
                 //If we fail to send the funds to beneficiary, unlock funders balance

@@ -1,11 +1,11 @@
-//pragma solidity ^0.4.24;
+
 
 contract A{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function test1(address cAddr,address dcontract,address baddress) public payable{
         B b1 = (new B).value(10)();//1.1
-        address(b1).transfer(5);//1.3
+        payable(address(b1)).transfer(5);//1.3
         b1.callCGetZero(cAddr, 1);//1.4
         b1.getOne(dcontract,baddress);
     }
@@ -13,7 +13,7 @@ contract A{
 
 contract B{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getOne(address contractAddres, address toAddress) payable public{
         contractAddres.call(abi.encodeWithSignature("suicide1(address)",address(this)));
 
@@ -25,7 +25,7 @@ contract B{
 
 contract C{
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function getZero() payable public returns(uint256){
         return 0;
     }
@@ -40,7 +40,7 @@ contract D{
     function suicide1(address payable toAddress) public payable{
         selfdestruct(toAddress);
     }
-    function () payable external{}
+    fallback() payable external{}
     function getBalance() public view returns(uint256){
         return address(this).balance;
     }

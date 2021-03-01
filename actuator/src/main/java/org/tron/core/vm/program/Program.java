@@ -508,7 +508,9 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
 
-    withdrawRewardToBalance(owner, getContractState());
+    if (VMConfig.allowTvmStake()) {
+      withdrawRewardToBalance(owner, getContractState());
+    }
 
     long balance = getContractState().getBalance(owner);
 
@@ -546,17 +548,19 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
-    suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
+    if (VMConfig.allowTvmStake()) {
+      suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
+      //delete delegationStore
+      getResult().addDeleteDelegation(this.getContractAddress());
+    }
     getResult().addDeleteAccount(this.getContractAddress());
-    //delete delegationStore
-    getResult().addDeleteDelegation(this.getContractAddress());
   }
 
   public Repository getContractState() {
     return this.contractState;
   }
 
-  private void withdrawRewardToBalance(byte[] owner, Repository repository){
+  private void withdrawRewardToBalance(byte[] owner, Repository repository) {
     ContractService contractService = ContractService.getInstance();
     contractService.withdrawReward(owner, getContractState());
     AccountCapsule accountCapsule = repository.getAccount(owner);
@@ -575,9 +579,6 @@ public class Program {
   }
 
   private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository) {
-    if (!VMConfig.allowTvmStake()) {
-      return;
-    }
     AccountCapsule ownerCapsule = repository.getAccount(owner);
     if (ownerCapsule.getFrozenCount() == 0) {
       return;
@@ -1177,7 +1178,7 @@ public class Program {
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
       if (Objects.nonNull(blockCapsule)) {
-        return new DataWord(blockCapsule.getBlockId().getBytes());
+        return new DataWord(blockCapsule.getBlockId().getBytes()).clone();
       } else {
         return DataWord.ZERO.clone();
       }
@@ -1791,12 +1792,14 @@ public class Program {
     WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
     byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     withdrawRewardParam.setTargetAddress(ownerAddress);
-    try{
-      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository, getTimestamp().longValue());
-      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository, getTimestamp().longValue());
+    try {
+      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository,
+          getTimestamp().longValue() * 1000);
+      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository,
+          getTimestamp().longValue() * 1000);
       stackPush(new DataWord(allowance));
       repository.commit();
-    }catch (ContractValidateException e){
+    } catch (ContractValidateException e) {
       logger.error("validateForWithdrawReward failure:{}", e.getMessage());
       stackPushZero();
     }

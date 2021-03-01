@@ -23,6 +23,7 @@ import org.tron.core.services.http.GetBlockByLatestNumServlet;
 import org.tron.core.services.http.GetBlockByLimitNextServlet;
 import org.tron.core.services.http.GetBlockByNumServlet;
 import org.tron.core.services.http.GetBrokerageServlet;
+import org.tron.core.services.http.GetBurnTrxServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
@@ -128,7 +129,8 @@ public class SolidityNodeHttpApiService implements Service {
   private GetMarketOrderListByPairServlet getMarketOrderListByPairServlet;
   @Autowired
   private GetMarketPairListServlet getMarketPairListServlet;
-
+  @Autowired
+  private GetBurnTrxServlet getBurnTrxServlet;
   @Autowired
   private GetBrokerageServlet getBrokerageServlet;
   @Autowired
@@ -240,6 +242,8 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+      context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
+
       context.addServlet(new ServletHolder(checkCrossTransactionCommitServlet),
           "/walletsolidity/checkcrosscommit");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();

@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
@@ -95,7 +97,8 @@ public class WitnessCreateActuator extends AbstractActuator {
     } */
 
     if (witnessStore.has(ownerAddress)) {
-      throw new ContractValidateException("Witness[" + readableOwnerAddress + "] has existed");
+      throw new ContractValidateException(
+          WITNESS_EXCEPTION_STR + readableOwnerAddress + "] has existed");
     }
 
     if (accountCapsule.getBalance() < dynamicStore
@@ -139,9 +142,11 @@ public class WitnessCreateActuator extends AbstractActuator {
     long cost = dynamicStore.getAccountUpgradeCost();
     Commons
         .adjustBalance(accountStore, witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
-
-    Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +cost);
-
+    if (dynamicStore.supportBlackHoleOptimization()) {
+      dynamicStore.burnTrx(cost);
+    } else {
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole(), +cost);
+    }
     dynamicStore.addTotalCreateWitnessCost(cost);
   }
 }

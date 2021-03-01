@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
-import org.tron.common.runtime.TVMTestResult;
+import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
@@ -13,8 +13,15 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.invoke.ProgramInvoke;
+import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
+import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
@@ -68,8 +75,8 @@ public class IsSRCandidateTest extends VMTestBase {
 
   @Test
   public void testIsSRCandidate()
-          throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
-          ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -77,7 +84,8 @@ public class IsSRCandidateTest extends VMTestBase {
     VMConfig.initAllowTvmStake(1);
     String contractName = "TestIsSRCandidate";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
+    String abi =
+        "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
             + "\"type\":\"constructor\"},{\"constant\":false,"
             + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\","
             + "\"type\":\"address\"}],\"name\":\"isSRCandidateTest\","
@@ -101,7 +109,8 @@ public class IsSRCandidateTest extends VMTestBase {
             + "\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],"
             + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
-    String factoryCode = "60806040526040516100109061008b565b6"
+    String factoryCode =
+        "60806040526040516100109061008b565b6"
             + "04051809103906000f08015801561002c573d6000803e3d6"
             + "000fd5b50600180546001600160a01b0319166001600160a"
             + "01b039290921691909117905534801561005957600080fd5"
@@ -129,10 +138,15 @@ public class IsSRCandidateTest extends VMTestBase {
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
+    Repository repository;
+    StoreFactory storeFactory = StoreFactory.getInstance();
+    ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
+    VMConfig vmConfig = VMConfig.getInstance();
+
     // deploy contract
-    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
-        null);
+    Transaction trx =
+        TvmTestUtils.generateDeploySmartContractAndGetTransaction(
+            contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent, null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
@@ -141,123 +155,119 @@ public class IsSRCandidateTest extends VMTestBase {
     // Trigger contract method: isSRCandidateTest(address)
     String methodByAddr = "isSRCandidateTest(address)";
     String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
-    String hexInput = AbiUtil.parseMethod(methodByAddr,
-            Collections.singletonList(nonexistentAccount));
-    TVMTestResult result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
+    byte[] nonexistentAddr = Hex.decode("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F");
+    String hexInput =
+        AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
 
-    byte[] returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
+    trx =
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+            Hex.decode(OWNER_ADDRESS), factoryAddress, Hex.decode(hexInput), 0, fee);
+    InternalTransaction rootInternalTransaction =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
+    ProgramInvoke programInvoke =
+        programInvokeFactory.createProgramInvoke(
+            InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE,
+            trx,
+            0,
+            0,
+            null,
+            repository,
+            System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000,
+            3_000_000L);
+    Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    byte[] programResult = program.isSRCandidate(new DataWord(nonexistentAddr)).getData();
+    Assert.assertEquals(
+        Hex.toHexString(programResult),
         "0000000000000000000000000000000000000000000000000000000000000000");
+    repository.commit();
 
     // trigger deployed contract
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(factoryAddressStr));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000000");
+    trx =
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+            Hex.decode(OWNER_ADDRESS), factoryAddress, Hex.decode(hexInput), 0, fee);
+    rootInternalTransaction =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
+    programInvoke =
+        programInvokeFactory.createProgramInvoke(
+            InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE,
+            trx,
+            0,
+            0,
+            null,
+            repository,
+            System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000,
+            3_000_000L);
+    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    programResult = program.isSRCandidate(new DataWord(factoryAddress)).getData();
+    Assert.assertEquals(
+        Hex.toHexString(programResult),
+        "0000000000000000000000000000000000000000000000000000000000000000");
+    repository.commit();
 
     // trigger deployed contract
     String witnessAccount = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
+    byte[] witnessAddr = Hex.decode("a0299f3db80a24b20a254b89ce639d59132f157f13");
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(witnessAccount));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000001");
+    trx =
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+            Hex.decode(OWNER_ADDRESS), factoryAddress, Hex.decode(hexInput), 0, fee);
+    rootInternalTransaction =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
+    programInvoke =
+        programInvokeFactory.createProgramInvoke(
+            InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE,
+            trx,
+            0,
+            0,
+            null,
+            repository,
+            System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000,
+            3_000_000L);
+    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    programResult = program.isSRCandidate(new DataWord(witnessAddr)).getData();
+    Assert.assertEquals(
+        Hex.toHexString(programResult),
+        "0000000000000000000000000000000000000000000000000000000000000001");
+    repository.commit();
 
     // Trigger contract method: nullAddressTest(address)
     methodByAddr = "nullAddressTest()";
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000000");
-
-    // Trigger contract method: localContractAddrTest()
-    methodByAddr = "localContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000000");
-
-    // Trigger contract method: otherContractAddrTest()
-    methodByAddr = "otherContractAddrTest()";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(""));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000000");
-
-    // Trigger contract method: nonpayableAddrTest(address)
-    methodByAddr = "nonpayableAddrTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(witnessAccount));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000001");
-
-    // Trigger contract method: nonpayableAddrTest(address)
-    methodByAddr = "nonpayableAddrTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000000");
-
-    // Trigger contract method: payableAddrTest(address)
-    methodByAddr = "payableAddrTest(address)";
-    hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
-    result = TvmTestUtils
-            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-
-    returnValue = result.getRuntime().getResult().getHReturn();
-    // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue),
-            "0000000000000000000000000000000000000000000000000000000000000000");
+    trx =
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+            Hex.decode(OWNER_ADDRESS), factoryAddress, Hex.decode(hexInput), 0, fee);
+    rootInternalTransaction =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    repository = RepositoryImpl.createRoot(storeFactory);
+    programInvoke =
+        programInvokeFactory.createProgramInvoke(
+            InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+            InternalTransaction.ExecutorType.ET_PRE_TYPE,
+            trx,
+            0,
+            0,
+            null,
+            repository,
+            System.nanoTime() / 1000,
+            System.nanoTime() / 1000 + 50000,
+            3_000_000L);
+    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    programResult = program.isSRCandidate(new DataWord()).getData();
+    Assert.assertEquals(
+        Hex.toHexString(programResult),
+        "0000000000000000000000000000000000000000000000000000000000000000");
+    repository.commit();
 
     ConfigLoader.disable = false;
   }
 }
-
-

@@ -533,7 +533,8 @@ public class Create2Test006 {
         Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
   }
 
-  @Test(enabled = true, description = "Trigger create2 with salt f * 64")
+  // Istanbul change create2 algorithm
+  @Test(enabled = false, description = "Trigger create2 with salt f * 64")
   public void test06TriggerCreate2ToDeployTestContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,

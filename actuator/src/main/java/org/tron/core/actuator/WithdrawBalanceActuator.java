@@ -15,9 +15,9 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -42,7 +42,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     final WithdrawBalanceContract withdrawBalanceContract;
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    DelegationService delegationService = chainBaseManager.getDelegationService();
+    MortgageService mortgageService = chainBaseManager.getMortgageService();
     try {
       withdrawBalanceContract = any.unpack(WithdrawBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
@@ -51,12 +51,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
-    delegationService.withdrawReward(withdrawBalanceContract.getOwnerAddress()
+    mortgageService.withdrawReward(withdrawBalanceContract.getOwnerAddress()
         .toByteArray());
-
-    delegationService.getDelegationStore().setLastWithdrawCycle(
-        dynamicStore.getCurrentCycleNumber(), withdrawBalanceContract.getOwnerAddress()
-            .toByteArray());
 
     AccountCapsule accountCapsule = accountStore.
         get(withdrawBalanceContract.getOwnerAddress().toByteArray());
@@ -86,7 +82,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    DelegationService delegationService = chainBaseManager.getDelegationService();
+    MortgageService mortgageService = chainBaseManager.getMortgageService();
     if (!this.any.is(WithdrawBalanceContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [WithdrawBalanceContract], real type[" + any
@@ -132,7 +128,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     if (accountCapsule.getAllowance() <= 0 &&
-        delegationService.queryReward(ownerAddress) <= 0) {
+        mortgageService.queryReward(ownerAddress) <= 0) {
       throw new ContractValidateException("witnessAccount does not have any reward");
     }
     try {

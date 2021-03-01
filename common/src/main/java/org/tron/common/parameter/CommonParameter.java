@@ -142,6 +142,9 @@ public class CommonParameter {
   public boolean nodeDiscoveryPublicHomeNode;
   @Getter
   @Setter
+  public long nodeDiscoveryPingTimeout;
+  @Getter
+  @Setter
   public long nodeP2pPingInterval;
   @Getter
   @Setter
@@ -302,6 +305,14 @@ public class CommonParameter {
   @Setter
   public long allowMarketTransaction; //committee parameter
 
+  @Getter
+  @Setter
+  public long allowTransactionFeePool;
+
+  @Getter
+  @Setter
+  public long allowBlackHoleOptimization;
+
   // @Getter
   // @Setter
   // public long allowShieldedTransaction; //committee parameter
@@ -380,9 +391,6 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
-  public boolean nodeHttpStatisticsSRRewardEnable = false;
-  @Getter
-  @Setter
   public int maxTransactionPendingSize;
   @Getter
   @Setter
@@ -451,6 +459,11 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean isLiteFullNode = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--history-balance-lookup"})
+  public boolean historyBalanceLookup = false;
 
   @Getter
   @Setter

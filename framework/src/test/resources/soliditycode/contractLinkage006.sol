@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 contract AA{
     uint256 public count=0;
     constructor () payable public{}
