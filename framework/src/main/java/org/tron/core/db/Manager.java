@@ -141,6 +141,7 @@ import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -391,6 +392,8 @@ public class Manager {
       System.exit(1);
     }
     getChainBaseManager().getForkController().init(this.chainBaseManager);
+    //int account asset issue import
+    chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
@@ -411,6 +414,7 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
+
 
     //initStoreFactory
     prepareStoreFactory();
@@ -599,6 +603,10 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return chainBaseManager.getAccountStore();
+  }
+
+  public AccountAssetIssueStore getAccountAssetIssueStore() {
+    return chainBaseManager.getAccountAssetIssueStore();
   }
 
   public AccountIndexStore getAccountIndexStore() {

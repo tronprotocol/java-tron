@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -32,6 +33,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -53,6 +55,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
@@ -64,6 +68,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //subtract from owner address
       byte[] ownerAddress = participateAssetIssueContract.getOwnerAddress().toByteArray();
       AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+      AccountAssetIssueCapsule ownerAccountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+
       long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
       balance = Math.subtractExact(balance, fee);
       ownerAccount.setBalance(balance);
@@ -76,19 +82,23 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
       exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
-      ownerAccount.addAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore);
+      ownerAccountAssetIssueCapsule.addAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore);
 
       //add to to_address
       byte[] toAddress = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = accountStore.get(toAddress);
+      AccountAssetIssueCapsule toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
       toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
-      if (!toAccount.reduceAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore)) {
+      if (!toAccountAssetIssueCapsule.reduceAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
 
       //write to db
       accountStore.put(ownerAddress, ownerAccount);
       accountStore.put(toAddress, toAccount);
+      accountAssetIssueStore.put(ownerAddress, ownerAccountAssetIssueCapsule);
+      accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
+
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -108,6 +118,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
@@ -188,11 +199,12 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       AccountCapsule toAccount = accountStore.get(toAddress);
+      AccountAssetIssueCapsule toAccountAssetIssue = accountAssetIssueStore.get(toAddress);
       if (toAccount == null) {
         throw new ContractValidateException("To account does not exist!");
       }
 
-      if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
+      if (!toAccountAssetIssue.assetBalanceEnoughV2(assetName, exchangeAmount,
           dynamicStore)) {
         throw new ContractValidateException("Asset balance is not enough !");
       }

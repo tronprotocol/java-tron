@@ -92,7 +92,7 @@ contract Crowdsale {
         }
 
         if (fundingGoalReached && beneficiary == msg.sender) {
-            if (address(beneficiary).send(amountRaised)) {
+            if (payable(beneficiary).send(amountRaised)) {
                 emit FundTransfer(beneficiary, amountRaised, false);
             } else {
                 //If we fail to send the funds to beneficiary, unlock funders balance

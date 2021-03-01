@@ -26,6 +26,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketPriceCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
@@ -315,16 +316,16 @@ public class MarketUtils {
 
   // for taker
   public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
-      AccountCapsule accountCapsule,
-      DynamicPropertiesStore dynamicStore,
-      AssetIssueStore assetIssueStore) {
+                                           AccountCapsule accountCapsule,
+                                           DynamicPropertiesStore dynamicStore,
+                                           AssetIssueStore assetIssueStore, AccountAssetIssueCapsule accountAssetIssueCapsule) {
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
       accountCapsule.setBalance(Math.addExact(
           accountCapsule.getBalance(), sellTokenQuantityRemain));
     } else {
-      accountCapsule
+      accountAssetIssueCapsule
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
     }
     orderCapsule.setSellTokenQuantityRemain(0L);

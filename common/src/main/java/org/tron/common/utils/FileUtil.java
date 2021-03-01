@@ -76,8 +76,9 @@ public class FileUtil {
             .map(s -> fileName + System.getProperty("file.separator") + s)
             .forEachOrdered(FileUtil::recursiveDelete);
       }
-
-      file.setWritable(true);
+      if (!file.setWritable(true)) {
+        return file.delete();
+      }
       return file.delete();
     }
     return false;
@@ -86,10 +87,11 @@ public class FileUtil {
   public static void saveData(String filePath, String data, boolean append) {
     File priFile = new File(filePath);
     try {
-      priFile.createNewFile();
-      try (BufferedWriter bw = new BufferedWriter(new FileWriter(priFile, append))) {
-        bw.write(data);
-        bw.flush();
+      if (priFile.createNewFile()) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(priFile, append))) {
+          bw.write(data);
+          bw.flush();
+        }
       }
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
@@ -129,7 +131,7 @@ public class FileUtil {
     File file = new File(filepath);
     if (!file.exists()) {
       try {
-        file.createNewFile();
+        return file.createNewFile();
       } catch (Exception e) {
         return false;
       }

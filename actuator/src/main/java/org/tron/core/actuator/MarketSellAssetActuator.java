@@ -36,6 +36,7 @@ import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -49,6 +50,7 @@ import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketOrderDetail;
 import org.tron.protos.Protocol.MarketPrice;
@@ -67,6 +69,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private static int MAX_MATCH_NUM = 20;
 
   private AccountStore accountStore;
+  private AccountAssetIssueStore accountAssetIssueStore;
+
   private DynamicPropertiesStore dynamicStore;
   private AssetIssueStore assetIssueStore;
   private AssetIssueV2Store assetIssueV2Store;
@@ -91,6 +95,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     assetIssueStore = chainBaseManager.getAssetIssueStore();
     assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
 
+    accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+
     marketAccountStore = chainBaseManager.getMarketAccountStore();
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
@@ -112,8 +118,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
       final MarketSellAssetContract contract = this.any
           .unpack(MarketSellAssetContract.class);
 
+      byte[] address = contract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
-          .get(contract.getOwnerAddress().toByteArray());
+          .get(address);
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
 
       sellTokenID = contract.getSellTokenId().toByteArray();
       buyTokenID = contract.getBuyTokenId().toByteArray();
@@ -132,13 +141,13 @@ public class MarketSellAssetActuator extends AbstractActuator {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
       // 1. transfer of balance
-      transferBalanceOrToken(accountCapsule);
+      transferBalanceOrToken(accountCapsule, accountAssetIssueCapsule);
 
       // 2. create and save order
       MarketOrderCapsule orderCapsule = createAndSaveOrder(accountCapsule, contract);
 
       // 3. match order
-      matchOrder(orderCapsule, takerPrice, ret, accountCapsule);
+      matchOrder(orderCapsule, takerPrice, ret, accountCapsule, accountAssetIssueCapsule);
 
       // 4. save remain order into order book
       if (orderCapsule.getSellTokenQuantityRemain() != 0) {
@@ -146,8 +155,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       }
 
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
+      byte[] accountAddress = accountCapsule.createDbKey();
+      accountStore.put(accountAddress, accountCapsule);
+      accountAssetIssueStore.put(accountAddress, accountAssetIssueCapsule);
       ret.setOrderId(orderCapsule.getID());
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException
@@ -206,6 +216,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     // Whether the accountStore exist
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+    AccountAssetIssueCapsule ownerAccountAssetIssue = accountAssetIssueStore.get(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
     }
@@ -258,7 +269,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         if (assetIssueCapsule == null) {
           throw new ContractValidateException("No sellTokenId !");
         }
-        if (!ownerAccount.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
+        if (!ownerAccountAssetIssue.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
             dynamicStore)) {
           throw new ContractValidateException("SellToken balance is not enough !");
         }
@@ -306,7 +317,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   }
 
   private void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice,
-      TransactionResultCapsule ret, AccountCapsule takerAccountCapsule)
+      TransactionResultCapsule ret, AccountCapsule takerAccountCapsule, AccountAssetIssueCapsule accountAssetIssueCapsule)
       throws ItemNotFoundException, ContractValidateException {
 
     byte[] makerSellTokenID = buyTokenID;
@@ -345,7 +356,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         byte[] orderId = orderIdListCapsule.getHead();
         MarketOrderCapsule makerOrderCapsule = orderStore.get(orderId);
 
-        matchSingleOrder(takerCapsule, makerOrderCapsule, ret, takerAccountCapsule);
+        matchSingleOrder(takerCapsule, makerOrderCapsule, ret, takerAccountCapsule, accountAssetIssueCapsule);
 
         // remove order
         if (makerOrderCapsule.getSellTokenQuantityRemain() == 0) {
@@ -383,7 +394,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   // return all match or not
   private void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
       MarketOrderCapsule makerOrderCapsule, TransactionResultCapsule ret,
-      AccountCapsule takerAccountCapsule)
+      AccountCapsule takerAccountCapsule, AccountAssetIssueCapsule accountAssetIssueCapsule)
       throws ItemNotFoundException {
 
     long takerSellRemainQuantity = takerOrderCapsule.getSellTokenQuantityRemain();
@@ -407,7 +418,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // quantity too small, return sellToken to user
       takerOrderCapsule.setSellTokenQuantityReturn();
       MarketUtils.returnSellTokenRemain(takerOrderCapsule, takerAccountCapsule,
-          dynamicStore, assetIssueStore);
+          dynamicStore, assetIssueStore, accountAssetIssueCapsule);
       MarketUtils.updateOrderState(takerOrderCapsule, State.INACTIVE, marketAccountStore);
       return;
     }
@@ -484,7 +495,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     orderStore.put(makerOrderCapsule.getID().toByteArray(), makerOrderCapsule);
 
     // add token into account
-    addTrxOrToken(takerOrderCapsule, takerBuyTokenQuantityReceive, takerAccountCapsule);
+    addTrxOrToken(takerOrderCapsule, takerBuyTokenQuantityReceive, takerAccountCapsule, accountAssetIssueCapsule);
     addTrxOrToken(makerOrderCapsule, makerBuyTokenQuantityReceive);
 
     MarketOrderDetail orderDetail = MarketOrderDetail.newBuilder()
@@ -522,48 +533,57 @@ public class MarketSellAssetActuator extends AbstractActuator {
     return orderCapsule;
   }
 
-  private void transferBalanceOrToken(AccountCapsule accountCapsule) {
+  private void transferBalanceOrToken(AccountCapsule accountCapsule, AccountAssetIssueCapsule accountAssetIssueCapsule) {
     if (Arrays.equals(sellTokenID, "_".getBytes())) {
       accountCapsule.setBalance(Math.subtractExact(accountCapsule.getBalance(), sellTokenQuantity));
     } else {
-      accountCapsule
+      accountAssetIssueCapsule
           .reduceAssetAmountV2(sellTokenID, sellTokenQuantity, dynamicStore, assetIssueStore);
     }
   }
 
   // for taker
   private void addTrxOrToken(MarketOrderCapsule orderCapsule, long num,
-      AccountCapsule accountCapsule) {
+      AccountCapsule accountCapsule, AccountAssetIssueCapsule accountAssetIssueCapsule) {
 
     byte[] buyTokenId = orderCapsule.getBuyTokenId();
     if (Arrays.equals(buyTokenId, "_".getBytes())) {
       accountCapsule.setBalance(Math.addExact(accountCapsule.getBalance(), num));
     } else {
-      accountCapsule
+      accountAssetIssueCapsule
           .addAssetAmountV2(buyTokenId, num, dynamicStore, assetIssueStore);
     }
   }
 
   private void addTrxOrToken(MarketOrderCapsule orderCapsule, long num) {
+    byte[] address = orderCapsule.getOwnerAddress().toByteArray();
     AccountCapsule accountCapsule = accountStore
-        .get(orderCapsule.getOwnerAddress().toByteArray());
+        .get(address);
+
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore
+            .get(address);
 
     byte[] buyTokenId = orderCapsule.getBuyTokenId();
     if (Arrays.equals(buyTokenId, "_".getBytes())) {
       accountCapsule.setBalance(Math.addExact(accountCapsule.getBalance(), num));
     } else {
-      accountCapsule
+     accountAssetIssueCapsule
           .addAssetAmountV2(buyTokenId, num, dynamicStore, assetIssueStore);
     }
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+    accountAssetIssueStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountAssetIssueCapsule);
   }
 
   private void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
-    AccountCapsule accountCapsule = accountStore
-        .get(orderCapsule.getOwnerAddress().toByteArray());
 
-    MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
+    byte[] address = orderCapsule.getOwnerAddress().toByteArray();
+    AccountCapsule accountCapsule = accountStore
+        .get(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
+
+    MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore, accountAssetIssueCapsule);
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+    accountAssetIssueStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountAssetIssueCapsule);
   }
 
   private void saveRemainOrder(MarketOrderCapsule orderCapsule)

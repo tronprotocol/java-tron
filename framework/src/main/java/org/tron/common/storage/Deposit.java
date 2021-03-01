@@ -10,6 +10,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.vm.program.Storage;
 import org.tron.core.vm.repository.Key;
@@ -22,9 +23,13 @@ public interface Deposit {
 
   AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
+  AccountAssetIssueCapsule createAccountAssetIssue(byte[] address);
+
   AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
 
   AccountCapsule getAccount(byte[] address);
+
+  AccountAssetIssueCapsule getAccountAssetIssue(byte[] address);
 
   WitnessCapsule getWitness(byte[] address);
 
@@ -66,6 +71,8 @@ public interface Deposit {
 
   void putAccount(Key key, Value value);
 
+  void putAccountAssetIssue(Key key, Value value);
+
   void putTransaction(Key key, Value value);
 
   void putBlock(Key key, Value value);
@@ -85,6 +92,8 @@ public interface Deposit {
   void putDynamicProperties(Key key, Value value);
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
+
+  void putAccountAssetIssueValue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule);
 
   void putVoteValue(byte[] address, VotesCapsule votesCapsule);
 

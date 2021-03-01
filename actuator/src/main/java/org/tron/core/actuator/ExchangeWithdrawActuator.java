@@ -14,6 +14,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -25,7 +26,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.utils.TransactionUtil;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
@@ -46,6 +47,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
     ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
@@ -53,8 +56,11 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     try {
       final ExchangeWithdrawContract exchangeWithdrawContract = this.any
           .unpack(ExchangeWithdrawContract.class);
+      byte[] address = exchangeWithdrawContract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
-          .get(exchangeWithdrawContract.getOwnerAddress().toByteArray());
+          .get(address);
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
 
       ExchangeCapsule exchangeCapsule = Commons
           .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
@@ -97,18 +103,19 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance + tokenQuant);
       } else {
-        accountCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        accountAssetIssueCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
       }
 
       if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
-        accountCapsule
+        accountAssetIssueCapsule
             .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
       }
 
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
+      byte[] accountAddress = accountCapsule.createDbKey();
+      accountStore.put(accountAddress, accountCapsule);
+      accountAssetIssueStore.put(accountAddress, accountAssetIssueCapsule);
       Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store,
           assetIssueStore);
 

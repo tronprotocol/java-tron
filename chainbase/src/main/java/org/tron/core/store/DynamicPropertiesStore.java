@@ -153,7 +153,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
-  
+  //This value is only allowed to be 0, 1
+  private static final byte[] ALLOW_ASSET_IMPORT = "ALLOW_ASSET_IMPORT".getBytes();
+
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -727,6 +730,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowBlackHoleOptimization();
     } catch (IllegalArgumentException e) {
       this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
+    }
+
+    try {
+      this.getAllowAssetImport();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAssetImport(0L);
     }
 
   }
@@ -2165,6 +2174,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_BLACKHOLE_OPTIMIZATION"));
+  }
+
+  public long getAllowAssetImport() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ASSET_IMPORT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ASSET_IMPORT"));
+  }
+
+  public void setAllowAssetImport(long importFlag) {
+    this.put(ALLOW_ASSET_IMPORT, new BytesCapsule(ByteArray.fromLong(importFlag)));
   }
 
   private static class DynamicResourceProperties {

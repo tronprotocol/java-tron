@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -14,6 +15,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -35,7 +37,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
 
     long fee = calcFee();
-    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
@@ -49,13 +51,13 @@ public class UpdateAssetActuator extends AbstractActuator {
       ByteString newUrl = updateAssetContract.getUrl();
       ByteString newDescription = updateAssetContract.getDescription();
 
-      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
 
       AssetIssueCapsule assetIssueCapsule;
       AssetIssueCapsule assetIssueCapsuleV2;
 
       AssetIssueStore assetIssueStoreV2 = assetIssueV2Store;
-      assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
+      assetIssueCapsuleV2 = assetIssueStoreV2.get(accountAssetIssueCapsule.getAssetIssuedID().toByteArray());
 
       assetIssueCapsuleV2.setFreeAssetNetLimit(newLimit);
       assetIssueCapsuleV2.setPublicFreeAssetNetLimit(newPublicLimit);
@@ -63,7 +65,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       assetIssueCapsuleV2.setDescription(newDescription);
 
       if (dynamicStore.getAllowSameTokenName() == 0) {
-        assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
+        assetIssueCapsule = assetIssueStore.get(accountAssetIssueCapsule.getAssetIssuedName().toByteArray());
         assetIssueCapsule.setFreeAssetNetLimit(newLimit);
         assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
         assetIssueCapsule.setUrl(newUrl);
@@ -98,6 +100,7 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
@@ -129,21 +132,22 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Account does not exist");
     }
 
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
     if (dynamicStore.getAllowSameTokenName() == 0) {
-      if (account.getAssetIssuedName().isEmpty()) {
+      if (accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
         throw new ContractValidateException("Account has not issued any asset");
       }
 
-      if (assetIssueStore.get(account.getAssetIssuedName().toByteArray())
+      if (assetIssueStore.get(accountAssetIssueCapsule.getAssetIssuedName().toByteArray())
           == null) {
         throw new ContractValidateException("Asset is not existed in AssetIssueStore");
       }
     } else {
-      if (account.getAssetIssuedID().isEmpty()) {
+      if (accountAssetIssueCapsule.getAssetIssuedID().isEmpty()) {
         throw new ContractValidateException("Account has not issued any asset");
       }
 
-      if (assetIssueV2Store.get(account.getAssetIssuedID().toByteArray())
+      if (assetIssueV2Store.get(accountAssetIssueCapsule.getAssetIssuedID().toByteArray())
           == null) {
         throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
       }

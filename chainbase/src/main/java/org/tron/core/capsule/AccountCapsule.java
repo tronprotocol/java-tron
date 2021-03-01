@@ -421,23 +421,23 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public void clearAssetV2() {
-    this.account = this.account.toBuilder()
-        .clearAssetV2()
-        .build();
-  }
-
-  public void clearLatestAssetOperationTimeV2() {
-    this.account = this.account.toBuilder()
-        .clearLatestAssetOperationTimeV2()
-        .build();
-  }
-
-  public void clearFreeAssetNetUsageV2() {
-    this.account = this.account.toBuilder()
-        .clearFreeAssetNetUsageV2()
-        .build();
-  }
+//  public void clearAssetV2() {
+//    this.account = this.account.toBuilder()
+//        .clearAssetV2()
+//        .build();
+//  }
+//
+//  public void clearLatestAssetOperationTimeV2() {
+//    this.account = this.account.toBuilder()
+//        .clearLatestAssetOperationTimeV2()
+//        .build();
+//  }
+//
+//  public void clearFreeAssetNetUsageV2() {
+//    this.account = this.account.toBuilder()
+//        .clearFreeAssetNetUsageV2()
+//        .build();
+//  }
 
   public void clearVotes() {
     this.account = this.account.toBuilder()
@@ -468,17 +468,17 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     tp += account.getAccountResource().getDelegatedFrozenBalanceForEnergy();
     return tp;
   }
-
-  /**
-   * asset balance enough
-   */
-  public boolean assetBalanceEnough(byte[] key, long amount) {
-    Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(key);
-    Long currentAmount = assetMap.get(nameKey);
-
-    return amount > 0 && null != currentAmount && amount <= currentAmount;
-  }
+//
+//  /**
+//   * asset balance enough
+//   */
+//  public boolean assetBalanceEnough(byte[] key, long amount) {
+//    Map<String, Long> assetMap = this.account.getAssetMap();
+//    String nameKey = ByteArray.toStr(key);
+//    Long currentAmount = assetMap.get(nameKey);
+//
+//    return amount > 0 && null != currentAmount && amount <= currentAmount;
+//  }
 
   public boolean assetBalanceEnoughV2(byte[] key, long amount,
       DynamicPropertiesStore dynamicPropertiesStore) {

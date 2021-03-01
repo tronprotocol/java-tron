@@ -13,6 +13,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -24,7 +25,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.utils.TransactionUtil;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -45,6 +46,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
     ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
@@ -52,8 +55,12 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     try {
       final ExchangeTransactionContract exchangeTransactionContract = this.any
           .unpack(ExchangeTransactionContract.class);
+
+      byte[] address = exchangeTransactionContract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
-          .get(exchangeTransactionContract.getOwnerAddress().toByteArray());
+          .get(address);
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
 
       ExchangeCapsule exchangeCapsule = Commons
           .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
@@ -80,18 +87,18 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance - tokenQuant);
       } else {
-        accountCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        accountAssetIssueCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
       }
 
       if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
-        accountCapsule
+        accountAssetIssueCapsule
             .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
       }
-
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
+      byte[] dbKey = accountCapsule.createDbKey();
+      accountStore.put(dbKey, accountCapsule);
+      accountAssetIssueStore.put(dbKey, accountAssetIssueCapsule);
       Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store,
           assetIssueStore);
 
@@ -115,6 +122,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
     ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
@@ -142,6 +150,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
 
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for exchange transaction fee!");
@@ -200,7 +209,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dynamicStore)) {
+      if (!accountAssetIssueCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dynamicStore)) {
         throw new ContractValidateException("token balance is not enough");
       }
     }

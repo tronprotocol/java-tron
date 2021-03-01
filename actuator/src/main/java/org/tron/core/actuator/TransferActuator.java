@@ -9,11 +9,13 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
@@ -37,6 +39,7 @@ public class TransferActuator extends AbstractActuator {
 
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
       TransferContract transferContract = any.unpack(TransferContract.class);
@@ -54,6 +57,9 @@ public class TransferActuator extends AbstractActuator {
         accountStore.put(toAddress, toAccount);
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
+      }
+      if (accountAssetIssueStore.get(toAddress) == null) {
+        accountAssetIssueStore.put(toAddress, new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress)));
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -(Math.addExact(fee, amount)));

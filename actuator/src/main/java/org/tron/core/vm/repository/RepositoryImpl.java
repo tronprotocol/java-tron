@@ -43,6 +43,7 @@ import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
@@ -66,6 +67,8 @@ public class RepositoryImpl implements Repository {
   private DynamicPropertiesStore dynamicPropertiesStore;
   @Getter
   private AccountStore accountStore;
+  @Getter
+  private AccountAssetIssueStore accountAssetIssueStore;
   @Getter
   private AssetIssueStore assetIssueStore;
   @Getter
@@ -94,6 +97,7 @@ public class RepositoryImpl implements Repository {
   private Repository parent = null;
 
   private HashMap<Key, Value> accountCache = new HashMap<>();
+  private HashMap<Key, Value> accountAssetIssueCache = new HashMap<>();
   private HashMap<Key, Value> codeCache = new HashMap<>();
   private HashMap<Key, Value> contractCache = new HashMap<>();
   private HashMap<Key, Value> dynamicPropertiesCache = new HashMap<>();
@@ -117,6 +121,7 @@ public class RepositoryImpl implements Repository {
       ChainBaseManager manager = storeFactory.getChainBaseManager();
       dynamicPropertiesStore = manager.getDynamicPropertiesStore();
       accountStore = manager.getAccountStore();
+      accountAssetIssueStore = manager.getAccountAssetIssueStore();
       codeStore = manager.getCodeStore();
       contractStore = manager.getContractStore();
       assetIssueStore = manager.getAssetIssueStore();
@@ -182,6 +187,14 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public AccountAssetIssueCapsule createAccountAssetIssue(byte[] address) {
+    Key key = new Key(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule(ByteString.copyFrom(address));
+    accountAssetIssueCache.put(key, new Value(accountAssetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE));
+    return accountAssetIssueCapsule;
+  }
+
+  @Override
   public AccountCapsule createAccount(byte[] address, String accountName,
       Protocol.AccountType type) {
     Key key = new Key(address);
@@ -211,6 +224,26 @@ public class RepositoryImpl implements Repository {
       accountCache.put(key, Value.create(accountCapsule.getData()));
     }
     return accountCapsule;
+  }
+
+  @Override
+  public AccountAssetIssueCapsule getAccountAssetIssue(byte[] address) {
+    Key key = new Key(address);
+    if (accountAssetIssueCache.containsKey(key)) {
+      return accountAssetIssueCache.get(key).getAccountAssetIssue();
+    }
+
+    AccountAssetIssueCapsule accountAssetIssueCapsule;
+    if (parent != null) {
+      accountAssetIssueCapsule = parent.getAccountAssetIssue(address);
+    } else {
+      accountAssetIssueCapsule = getAccountAssetIssueStore().get(address);
+    }
+
+    if (accountAssetIssueCapsule != null) {
+      accountAssetIssueCache.put(key, Value.create(accountAssetIssueCapsule.getData()));
+    }
+    return accountAssetIssueCapsule;
   }
 
   @Override
@@ -354,6 +387,13 @@ public class RepositoryImpl implements Repository {
     Key key = Key.create(address);
     Value value = Value.create(accountCapsule.getData(), Type.VALUE_TYPE_DIRTY);
     accountCache.put(key, value);
+  }
+
+  @Override
+  public void updateAccountAssetIssue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+    Key key = Key.create(address);
+    Value value = Value.create(accountAssetIssueCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    accountAssetIssueCache.put(key, value);
   }
 
   @Override
@@ -519,6 +559,11 @@ public class RepositoryImpl implements Repository {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
 
+    AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
+    if (accountAssetIssueCapsule == null) {
+      accountAssetIssueCapsule = createAccountAssetIssue(address);
+    }
+
     long balance = accountCapsule.getBalance();
     if (value == 0) {
       return balance;
@@ -534,6 +579,10 @@ public class RepositoryImpl implements Repository {
     Value val = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
+
+    Value V2 = Value.create(accountAssetIssueCapsule.getData(),
+            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+    accountAssetIssueCache.put(key, V2);
     return accountCapsule.getBalance();
   }
 
@@ -549,6 +598,7 @@ public class RepositoryImpl implements Repository {
       repository = parent;
     }
     commitAccountCache(repository);
+    commitAccountAssetIssueCache(repository);
     commitCodeCache(repository);
     commitContractCache(repository);
     commitStorageCache(repository);
@@ -561,6 +611,11 @@ public class RepositoryImpl implements Repository {
   @Override
   public void putAccount(Key key, Value value) {
     accountCache.put(key, value);
+  }
+
+  @Override
+  public void putAccountAssetIssue(Key key, Value value) {
+    accountAssetIssueCache.put(key, value);
   }
 
   @Override
@@ -582,6 +637,12 @@ public class RepositoryImpl implements Repository {
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
     Key key = new Key(address);
     accountCache.put(key, new Value(accountCapsule.getData(), Type.VALUE_TYPE_CREATE));
+  }
+
+  @Override
+  public void putAccountAssetIssueValue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+    Key key = new Key(address);
+    accountAssetIssueCache.put(key, new Value(accountAssetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override
@@ -619,7 +680,13 @@ public class RepositoryImpl implements Repository {
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
-    long balance = accountCapsule.getAssetMapV2()
+
+    AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
+    if (accountAssetIssueCapsule == null) {
+      accountAssetIssueCapsule = createAccountAssetIssue(address);
+    }
+
+    long balance = accountAssetIssueCapsule.getAssetMapV2()
         .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
     if (value == 0) {
       return balance;
@@ -631,10 +698,10 @@ public class RepositoryImpl implements Repository {
               + " insufficient balance");
     }
     if (value >= 0) {
-      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, getDynamicPropertiesStore(),
+      accountAssetIssueCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, getDynamicPropertiesStore(),
           getAssetIssueStore());
     } else {
-      accountCapsule
+      accountAssetIssueCapsule
           .reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, getDynamicPropertiesStore(),
               getAssetIssueStore());
     }
@@ -642,17 +709,20 @@ public class RepositoryImpl implements Repository {
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
-    return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
+    Value V2 = Value.create(accountAssetIssueCapsule.getData(),
+            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+    accountAssetIssueCache.put(key, V2);
+    return accountAssetIssueCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 
   @Override
   public long getTokenBalance(byte[] address, byte[] tokenId) {
-    AccountCapsule accountCapsule = getAccount(address);
-    if (accountCapsule == null) {
+    AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
+    if (accountAssetIssueCapsule == null) {
       return 0;
     }
     String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
-    return accountCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
+    return accountAssetIssueCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
   }
 
   @Override
@@ -732,6 +802,18 @@ public class RepositoryImpl implements Repository {
           deposit.putAccount(key, value);
         } else {
           getAccountStore().put(key.getData(), value.getAccount());
+        }
+      }
+    });
+  }
+
+  private void commitAccountAssetIssueCache(Repository deposit) {
+    accountAssetIssueCache.forEach((key, value) -> {
+      if (value.getType().isCreate() || value.getType().isDirty()) {
+        if (deposit != null) {
+          deposit.putAccountAssetIssue(key, value);
+        } else {
+          getAccountAssetIssueStore().put(key.getData(), value.getAccountAssetIssue());
         }
       }
     });

@@ -37,6 +37,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.config.VMConfig;
@@ -214,7 +215,7 @@ public final class VMUtils {
       throw new ContractValidateException("Cannot transfer asset to yourself.");
     }
 
-    AccountCapsule ownerAccount = deposit.getAccount(ownerAddress);
+    AccountAssetIssueCapsule ownerAccount = deposit.getAccountAssetIssue(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("No owner account!");
     }
@@ -246,12 +247,12 @@ public final class VMUtils {
       throw new ContractValidateException("assetBalance is not sufficient.");
     }
 
-    AccountCapsule toAccount = deposit.getAccount(toAddress);
-    if (toAccount != null) {
+    AccountAssetIssueCapsule toAccountAssetIssueCapsule = deposit.getAccountAssetIssue(toAddress);
+    if (toAccountAssetIssueCapsule != null) {
       if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+        assetBalance = toAccountAssetIssueCapsule.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
       } else {
-        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+        assetBalance = toAccountAssetIssueCapsule.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
       }
       if (assetBalance != null) {
         try {

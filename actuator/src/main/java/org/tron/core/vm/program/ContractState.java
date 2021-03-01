@@ -120,6 +120,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void updateAccountAssetIssue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+    repository.updateAccountAssetIssue(address, accountAssetIssueCapsule);
+  }
+
+  @Override
   public void saveCode(byte[] address, byte[] code) {
     repository.saveCode(address, code);
   }
@@ -177,6 +182,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putAccountAssetIssue(Key key, Value value) {
+    repository.putAccountAssetIssue(key, value);
+  }
+
+  @Override
+  public AccountAssetIssueCapsule getAccountAssetIssue(byte[] address) {
+    return repository.getAccountAssetIssue(address);
+  }
+
+  @Override
   public void putCode(Key key, Value value) {
     repository.putCode(key, value);
   }
@@ -201,6 +216,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
     this.repository.putAccountValue(address, accountCapsule);
+  }
+
+  @Override
+  public void putAccountAssetIssueValue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+    this.repository.putAccountAssetIssueValue(address, accountAssetIssueCapsule);
   }
 
   @Override
@@ -367,4 +387,10 @@ public class ContractState implements Repository, ProgramListenerAware {
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
   }
+
+  @Override
+  public AccountAssetIssueCapsule createAccountAssetIssue(byte[] address) {
+    return repository.createAccountAssetIssue(address);
+  }
+
 }

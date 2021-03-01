@@ -4,7 +4,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.*;
 import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
-import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 
 public interface Repository {
 
@@ -20,13 +20,17 @@ public interface Repository {
 
   WitnessStore getWitnessStore();
 
-  AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
+  AccountCapsule createAccount(byte[] address, AccountType type);
 
-  AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
+  AccountAssetIssueCapsule createAccountAssetIssue(byte[] address);
+
+  AccountCapsule createAccount(byte[] address, String accountName, AccountType type);
 
   AccountCapsule getAccount(byte[] address);
 
-    BytesCapsule getDynamic(byte[] bytesKey);
+  AccountAssetIssueCapsule getAccountAssetIssue(byte[] address);
+
+  BytesCapsule getDynamic(byte[] bytesKey);
 
   VotesCapsule getVotesCapsule(byte[] address);
 
@@ -47,6 +51,8 @@ public interface Repository {
   void updateContract(byte[] address, ContractCapsule contractCapsule);
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
+
+  void updateAccountAssetIssue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule);
 
   void updateDynamic(byte[] word, BytesCapsule bytesCapsule);
 
@@ -86,6 +92,8 @@ public interface Repository {
 
   void putAccount(Key key, Value value);
 
+  void putAccountAssetIssue(Key key, Value value);
+
   void putCode(Key key, Value value);
 
   void putContract(Key key, Value value);
@@ -93,6 +101,8 @@ public interface Repository {
   void putStorage(Key key, Storage cache);
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
+
+  void putAccountAssetIssueValue(byte[] address, AccountAssetIssueCapsule accountCapsule);
 
   void putDynamic(Key key, Value value);
 

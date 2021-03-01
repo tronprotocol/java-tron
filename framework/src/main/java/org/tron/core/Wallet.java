@@ -124,6 +124,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
@@ -1046,17 +1047,17 @@ public class Wallet {
   }
 
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
-      AccountCapsule accountCapsule) {
+                                             AccountCapsule accountCapsule, AccountAssetIssueCapsule accountAssetIssueCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage = accountAssetIssueCapsule.getAllFreeAssetNetUsage();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
             .put(asset, chainBaseManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
       });
     } else {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage = accountAssetIssueCapsule.getAllFreeAssetNetUsageV2();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
@@ -1071,8 +1072,10 @@ public class Wallet {
       return null;
     }
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
+    byte[] address = accountAddress.toByteArray();
     AccountCapsule accountCapsule =
         chainBaseManager.getAccountStore().get(accountAddress.toByteArray());
+    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(address);
     if (accountCapsule == null) {
       return null;
     }
@@ -1087,7 +1090,7 @@ public class Wallet {
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
+    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -1105,8 +1108,10 @@ public class Wallet {
       return null;
     }
     AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
+    byte[] address = accountAddress.toByteArray();
     AccountCapsule accountCapsule =
-        chainBaseManager.getAccountStore().get(accountAddress.toByteArray());
+        chainBaseManager.getAccountStore().get(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(address);
     if (accountCapsule == null) {
       return null;
     }
@@ -1135,7 +1140,7 @@ public class Wallet {
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
+    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)

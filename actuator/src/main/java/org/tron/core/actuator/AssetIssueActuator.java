@@ -26,6 +26,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -36,8 +37,9 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.AccountAssetIssue.Frozen;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -62,6 +64,7 @@ public class AssetIssueActuator extends AbstractActuator {
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     try {
       AssetIssueContract assetIssueContract = any.unpack(AssetIssueContract.class);
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
@@ -90,7 +93,7 @@ public class AssetIssueActuator extends AbstractActuator {
       } else {
         Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);//send to blackhole
       }
-      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
       List<FrozenSupply> frozenSupplyList = assetIssueContract.getFrozenSupplyList();
       Iterator<FrozenSupply> iterator = frozenSupplyList.iterator();
       long remainSupply = assetIssueContract.getTotalSupply();
@@ -109,15 +112,15 @@ public class AssetIssueActuator extends AbstractActuator {
       }
 
       if (dynamicStore.getAllowSameTokenName() == 0) {
-        accountCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
+        accountAssetIssueCapsule.addAsset(assetIssueCapsule.createDbKey(), remainSupply);
       }
-      accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
-      accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
-      accountCapsule.addAssetV2(assetIssueCapsuleV2.createDbV2Key(), remainSupply);
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+      accountAssetIssueCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
+      accountAssetIssueCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
+      accountAssetIssueCapsule.addAssetV2(assetIssueCapsuleV2.createDbV2Key(), remainSupply);
+      accountAssetIssueCapsule.setInstance(accountAssetIssueCapsule.getInstance().toBuilder()
           .addAllFrozenSupply(frozenList).build());
 
-      accountStore.put(ownerAddress, accountCapsule);
+      accountAssetIssueStore.put(ownerAddress, accountAssetIssueCapsule);
 
       ret.setAssetIssueID(Long.toString(tokenIdNum));
       ret.setStatus(fee, code.SUCESS);
@@ -141,6 +144,7 @@ public class AssetIssueActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     if (!this.any.is(AssetIssueContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [AssetIssueContract],real type[" + any
@@ -272,7 +276,8 @@ public class AssetIssueActuator extends AbstractActuator {
       throw new ContractValidateException("Account not exists");
     }
 
-    if (!accountCapsule.getAssetIssuedName().isEmpty()) {
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+    if (!accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
       throw new ContractValidateException("An account can only issue one asset");
     }
 
