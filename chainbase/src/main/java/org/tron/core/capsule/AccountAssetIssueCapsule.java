@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountAssetIssue;
 
 import java.util.Map;
@@ -41,6 +40,13 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
 
     public AccountAssetIssueCapsule(AccountAssetIssue accountAssetIssue) {
         this.accountAssetIssue = accountAssetIssue;
+    }
+
+    public AccountAssetIssueCapsule(ByteString accountName, ByteString address) {
+        this.accountAssetIssue = AccountAssetIssue.newBuilder()
+                .setAssetIssuedName(accountName)
+                .setAddress(address)
+                .build();
     }
 
 

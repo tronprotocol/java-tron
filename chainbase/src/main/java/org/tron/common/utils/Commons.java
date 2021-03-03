@@ -115,6 +115,25 @@ public class Commons {
     }
   }
 
+
+  public static void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount,
+                                          AccountStore accountStore, AssetIssueStore assetIssueStore,
+                                          DynamicPropertiesStore dynamicPropertiesStore)
+          throws BalanceInsufficientException {
+    if (amount < 0) {
+      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, dynamicPropertiesStore,
+              assetIssueStore)) {
+        throw new BalanceInsufficientException("reduceAssetAmount failed !");
+      }
+    } else if (amount > 0 &&
+            !account.addAssetAmountV2(AssetID.getBytes(), amount, dynamicPropertiesStore,
+                    assetIssueStore)) {
+      throw new BalanceInsufficientException("addAssetAmount failed !");
+    }
+    accountStore.put(account.getAddress().toByteArray(), account);
+  }
+
+
   public static void adjustAssetBalanceV2(AccountAssetIssueCapsule accountAssetIssueCapsule, String AssetID, long amount,
                                           AccountAssetIssueStore accountAssetIssueStore, AssetIssueStore assetIssueStore,
                                           DynamicPropertiesStore dynamicPropertiesStore)throws BalanceInsufficientException {
@@ -148,6 +167,15 @@ public class Commons {
           throws BalanceInsufficientException {
     AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.getUnchecked(accountAddress);
     adjustAssetBalanceV2(accountAssetIssueCapsule, AssetID, amount, accountAssetIssueStore, assetIssueStore,
+            dynamicPropertiesStore);
+  }
+
+  public static void adjustAssetBalanceV2(byte[] accountAddress, String AssetID, long amount
+          , AccountStore accountStore, AssetIssueStore assetIssueStore,
+                                          DynamicPropertiesStore dynamicPropertiesStore)
+          throws BalanceInsufficientException {
+    AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    adjustAssetBalanceV2(account, AssetID, amount, accountStore, assetIssueStore,
             dynamicPropertiesStore);
   }
 

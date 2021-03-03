@@ -52,6 +52,8 @@ public class TransactionTrace {
 
   private AccountStore accountStore;
 
+  private AccountAssetIssueStore accountAssetIssueStore;
+
   private CodeStore codeStore;
 
   private EnergyProcessor energyProcessor;
@@ -97,6 +99,7 @@ public class TransactionTrace {
     this.contractStore = storeFactory.getChainBaseManager().getContractStore();
     this.codeStore = storeFactory.getChainBaseManager().getCodeStore();
     this.accountStore = storeFactory.getChainBaseManager().getAccountStore();
+    this.accountAssetIssueStore = storeFactory.getChainBaseManager().getAccountAssetIssueStore();
 
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
@@ -305,6 +308,7 @@ public class TransactionTrace {
     codeStore.delete(address);
     accountStore.delete(address);
     contractStore.delete(address);
+    accountAssetIssueStore.delete(address);
   }
 
   public static byte[] convertToTronAddress(byte[] address) {
