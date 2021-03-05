@@ -72,45 +72,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         return getUnchecked(assertsAddress.get("Blackhole"));
     }
 
-//    public void convertAccountAssert() {
-//        if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
-//            int count = 0;
-//            for (Map.Entry<byte[], byte[]> entry : accountStore.getRevokingDB()) {
-//                AccountCapsule accountCapsule = new AccountCapsule(entry.getValue());
-////                accountCapsule.getAddress();
-////                accountCapsule.getAssetIssuedID();
-////                accountCapsule.getAssetIssuedName();
-////                accountCapsule.getAssetMap();
-////                accountCapsule.getAssetMapV2();
-////
-////                accountCapsule.getAllFreeAssetNetUsage();
-////                accountCapsule.getAllFreeAssetNetUsageV2();
-////
-////                accountCapsule.getLatestAssetOperationTimeMap();
-////                accountCapsule.getLatestAssetOperationTimeMapV2();
-//
-//                AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule();
-//                AccountAssetIssue instance = AccountAssetIssue.newBuilder()
-//                        .setAddress(accountCapsule.getAddress())
-//                        .setAssetIssuedID(accountCapsule.getAssetIssuedID())
-//                        .setAssetIssuedName(accountCapsule.getAssetIssuedName())
-//                        .putAllAsset(accountCapsule.getAssetMap())
-//                        .putAllAssetV2(accountCapsule.getAssetMapV2())
-//
-//                        .putAllFreeAssetNetUsage(accountCapsule.getAllFreeAssetNetUsage())
-//                        .putAllFreeAssetNetUsageV2(accountCapsule.getAllFreeAssetNetUsageV2())
-//                        .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
-//                        .putAllLatestAssetOperationTimeV2(accountCapsule.getLatestAssetOperationTimeMapV2())
-//                        .build();
-//                accountAssetIssueCapsule.setInstance(instance);
-//                this.put(entry.getKey(), accountAssetIssueCapsule);
-//                count++;
-//            }
-//            logger.info("convert count: {}", count);
-//            dynamicPropertiesStore.setAllowAssetImport(1L);
-//        }
-//    }
-
     public void convertAccountAssert() {
         long start = System.currentTimeMillis();
         logger.info("import asset of account store to account asset store ");
@@ -234,7 +195,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                     MAX_POOL_SIZE,
                     KEEP_ALIVE_SECONDES,
                     TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>(20000)
+                    new LinkedBlockingQueue<>(40000)
             );
         }
 
@@ -252,7 +213,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             if (null == queue) {
                 synchronized (BlockQueueFactory.class) {
                     if (null == queue) {
-                        queue = new LinkedBlockingDeque(10000);
+                        queue = new LinkedBlockingDeque(20000);
                     }
                 }
             }

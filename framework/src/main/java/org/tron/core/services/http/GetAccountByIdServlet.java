@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.AccountAssetIssue;
 
 
 @Component
@@ -46,6 +47,8 @@ public class GetAccountByIdServlet extends RateLimiterServlet {
   private void fillResponse(Account account, boolean visible, HttpServletResponse response)
       throws IOException {
     Account reply = wallet.getAccountById(account);
-    Util.printAccount(reply, response, visible);
+    AccountAssetIssue accountAssetIssue = wallet.getAccountAssetIssueById(account);
+//    Util.printAccount(reply, response, visible);
+    Util.printAccount(reply, accountAssetIssue, response, visible);
   }
 }

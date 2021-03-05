@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountAssetIssue;
 
 import java.util.Map;
@@ -41,6 +40,13 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
 
     public AccountAssetIssueCapsule(AccountAssetIssue accountAssetIssue) {
         this.accountAssetIssue = accountAssetIssue;
+    }
+
+    public AccountAssetIssueCapsule(ByteString assetIssueName, ByteString address) {
+        this.accountAssetIssue = AccountAssetIssue.newBuilder()
+                .setAssetIssuedName(assetIssueName)
+                .setAddress(address)
+                .build();
     }
 
 
@@ -226,6 +232,21 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         return assetMap;
     }
 
+    /**
+     * reduce asset amount.
+     */
+    public boolean reduceAssetAmount(byte[] key, long amount) {
+        Map<String, Long> assetMap = this.accountAssetIssue.getAssetMap();
+        String nameKey = ByteArray.toStr(key);
+        Long currentAmount = assetMap.get(nameKey);
+        if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+            this.accountAssetIssue = this.accountAssetIssue.toBuilder()
+                    .putAsset(nameKey, Math.subtractExact(currentAmount, amount)).build();
+            return true;
+        }
+
+        return false;
+    }
 
     /**
      * reduce asset amount.
@@ -331,6 +352,11 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         }
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
+
+    @Override
+    public String toString() {
+        return this.accountAssetIssue.toString();
+    }
 
     @Override
     public int compareTo(AccountAssetIssue o) {

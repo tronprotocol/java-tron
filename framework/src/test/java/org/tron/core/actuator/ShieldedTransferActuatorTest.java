@@ -15,13 +15,7 @@ import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
-import org.tron.core.capsule.PedersenHashCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -151,7 +145,7 @@ public class ShieldedTransferActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE)),
             AccountType.Normal,
             OWNER_BALANCE);
-    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(tokenId)), OWNER_BALANCE);
+//    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(tokenId)), OWNER_BALANCE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     AccountCapsule toAccountCapsule =
@@ -161,6 +155,19 @@ public class ShieldedTransferActuatorTest {
             AccountType.Normal,
             TO_BALANCE);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+
+    AccountAssetIssueCapsule ownerAccountAssetIssue =
+            new AccountAssetIssueCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE))
+                    );
+    ownerAccountAssetIssue.addAssetV2(ByteArray.fromString(String.valueOf(tokenId)), OWNER_BALANCE);
+    dbManager.getAccountAssetIssueStore()
+            .put(ownerAccountAssetIssue.getAddress().toByteArray(), ownerAccountAssetIssue);
+    AccountAssetIssueCapsule toAccountAssetIssue =
+            new AccountAssetIssueCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO)));
+    dbManager.getAccountAssetIssueStore()
+            .put(toAccountAssetIssue.getAddress().toByteArray(), toAccountAssetIssue);
   }
 
   private TransactionCapsule getPublicToShieldedTransaction() throws Exception {
@@ -198,6 +205,14 @@ public class ShieldedTransferActuatorTest {
       return 0;
     }
   }
+  private long getAssertBalance(AccountAssetIssueCapsule accountCapsule) {
+    String token = String.valueOf(tokenId);
+    if (accountCapsule != null && accountCapsule.getAssetMapV2().containsKey(token)) {
+      return accountCapsule.getAssetMapV2().get(token);
+    } else {
+      return 0;
+    }
+  }
 
   private void setAssertBalance(AccountCapsule accountCapsule, long amount) {
     String token = String.valueOf(tokenId);
@@ -211,6 +226,21 @@ public class ShieldedTransferActuatorTest {
             dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
       }
       dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+    }
+  }
+
+  private void setAssertBalance(AccountAssetIssueCapsule accountCapsule, long amount) {
+    String token = String.valueOf(tokenId);
+    if (accountCapsule != null && amount >= 0) {
+      long currentBalance = getAssertBalance(accountCapsule);
+      if (currentBalance > amount) {
+        accountCapsule.reduceAssetAmountV2(token.getBytes(), (currentBalance - amount),
+                dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+      } else {
+        accountCapsule.addAssetAmountV2(token.getBytes(), (amount - currentBalance),
+                dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+      }
+      dbManager.getAccountAssetIssueStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
     }
   }
 
@@ -355,9 +385,12 @@ public class ShieldedTransferActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     AccountCapsule accountCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            dbManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
     try {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
-      setAssertBalance(accountCapsule, AMOUNT - 1000000);
+      setAssertBalance(accountAssetIssueCapsule, AMOUNT - 1000000);
 
       Contract contract =
           transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
@@ -437,16 +470,22 @@ public class ShieldedTransferActuatorTest {
 
       AccountCapsule accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule =
+              dbManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+
       long balance = accountCapsule.getBalance();
       long netUsage = accountCapsule.getNetUsage();
       long freeNetUsage = accountCapsule.getFreeNetUsage();
-      long assertBalance = getAssertBalance(accountCapsule);
+      long assertBalance = getAssertBalance(accountAssetIssueCapsule);
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
 
       accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
-      Assert.assertEquals(assertBalance - AMOUNT, getAssertBalance(accountCapsule));
+      accountAssetIssueCapsule =
+              dbManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+      Assert.assertEquals(assertBalance - AMOUNT, getAssertBalance(accountAssetIssueCapsule));
       Assert.assertEquals(balance, accountCapsule.getBalance());
       Assert.assertEquals(netUsage, accountCapsule.getNetUsage());
       Assert.assertEquals(freeNetUsage, accountCapsule.getFreeNetUsage());
@@ -994,7 +1033,7 @@ public class ShieldedTransferActuatorTest {
 
     try {
       //public address to shield address(one value is 0)
-      long ownerAssertBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
+      long ownerAssertBalance = getAssertBalance(dbManager.getAccountAssetIssueStore().get(ByteArray
           .fromHexString(PUBLIC_ADDRESS_ONE)));
       ZenTransactionBuilder builderOne = new ZenTransactionBuilder(wallet);
       //From amount
@@ -1027,8 +1066,8 @@ public class ShieldedTransferActuatorTest {
       transactionCapOne = transactionUtil.addSign(transactionSignBuild.build());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
-      AccountCapsule accountCapsuleOne =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+      AccountAssetIssueCapsule accountCapsuleOne =
+          dbManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
       Assert.assertEquals(getAssertBalance(accountCapsuleOne),
           ownerAssertBalance - AMOUNT - fee);
     } catch (Exception e) {
