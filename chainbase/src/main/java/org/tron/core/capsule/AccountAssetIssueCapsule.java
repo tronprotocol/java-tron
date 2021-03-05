@@ -42,9 +42,9 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         this.accountAssetIssue = accountAssetIssue;
     }
 
-    public AccountAssetIssueCapsule(ByteString accountName, ByteString address) {
+    public AccountAssetIssueCapsule(ByteString assetIssueName, ByteString address) {
         this.accountAssetIssue = AccountAssetIssue.newBuilder()
-                .setAssetIssuedName(accountName)
+                .setAssetIssuedName(assetIssueName)
                 .setAddress(address)
                 .build();
     }
@@ -232,6 +232,21 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         return assetMap;
     }
 
+    /**
+     * reduce asset amount.
+     */
+    public boolean reduceAssetAmount(byte[] key, long amount) {
+        Map<String, Long> assetMap = this.accountAssetIssue.getAssetMap();
+        String nameKey = ByteArray.toStr(key);
+        Long currentAmount = assetMap.get(nameKey);
+        if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+            this.accountAssetIssue = this.accountAssetIssue.toBuilder()
+                    .putAsset(nameKey, Math.subtractExact(currentAmount, amount)).build();
+            return true;
+        }
+
+        return false;
+    }
 
     /**
      * reduce asset amount.
@@ -337,6 +352,11 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         }
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
+
+    @Override
+    public String toString() {
+        return this.accountAssetIssue.toString();
+    }
 
     @Override
     public int compareTo(AccountAssetIssue o) {

@@ -195,7 +195,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                     MAX_POOL_SIZE,
                     KEEP_ALIVE_SECONDES,
                     TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>(20000)
+                    new LinkedBlockingQueue<>(40000)
             );
         }
 
@@ -213,7 +213,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             if (null == queue) {
                 synchronized (BlockQueueFactory.class) {
                     if (null == queue) {
-                        queue = new LinkedBlockingDeque(10000);
+                        queue = new LinkedBlockingDeque(20000);
                     }
                 }
             }
