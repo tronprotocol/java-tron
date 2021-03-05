@@ -62,6 +62,7 @@ public class TransferTokenTest {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
+    deposit.createAccountAssetIssue(Hex.decode(TRANSFER_TO));
     deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
     deposit.commit();
     ownerCapsule =
