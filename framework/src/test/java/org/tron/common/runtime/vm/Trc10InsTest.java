@@ -17,6 +17,7 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -75,11 +76,13 @@ public class Trc10InsTest {
 
     // add contract account
     deposit.createAccount(contractAddr, Protocol.AccountType.Contract);
+    deposit.createAccountAssetIssue(contractAddr);
     deposit.commit();
 
     // 1. test token issue
     // confirm contract exist and give it 1024 TRXs to issue asset
     Assert.assertNotNull(deposit.getAccount(contractAddr));
+    Assert.assertNotNull(deposit.getAccountAssetIssue(contractAddr));
     Assert.assertEquals(deposit.getBalance(contractAddr), 0);
 
     long balanceToAdd = deposit.getDynamicPropertiesStore().getAssetIssueFee();
@@ -115,11 +118,13 @@ public class Trc10InsTest {
 
     // check contract account updated
     AccountCapsule ownerAccountCap = deposit.getAccount(contractAddr);
+    AccountAssetIssueCapsule ownerAccountAssetIssueCap = deposit.getAccountAssetIssue(contractAddr);
+
     Assert.assertEquals(ByteString.copyFrom(
         Objects.requireNonNull(ByteArray.fromString(assetIssueCap.getId()))),
-        ownerAccountCap.getAssetIssuedID());
-    Assert.assertEquals(assetIssueCap.getName(), ownerAccountCap.getAssetIssuedName());
-    Assert.assertTrue(ownerAccountCap.getAssetMapV2().entrySet().stream().anyMatch(
+            ownerAccountAssetIssueCap.getAssetIssuedID());
+    Assert.assertEquals(assetIssueCap.getName(), ownerAccountAssetIssueCap.getAssetIssuedName());
+    Assert.assertTrue(ownerAccountAssetIssueCap.getAssetMapV2().entrySet().stream().anyMatch(
         e -> e.getKey().equals(createdAssetId)));
 
     // check balance of contract account and black hole account

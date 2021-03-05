@@ -505,10 +505,10 @@ public class DepositImpl implements Deposit {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
 
-    AccountAssetIssueCapsule accountAssetIssue = getAccountAssetIssue(address);
-    if (accountAssetIssue == null) {
-      accountAssetIssue = createAccountAssetIssue(address);
-    }
+//    AccountAssetIssueCapsule accountAssetIssue = getAccountAssetIssue(address);
+//    if (accountAssetIssue == null) {
+//      accountAssetIssue = createAccountAssetIssue(address);
+//    }
 
     long balance = accountCapsule.getBalance();
     if (value == 0) {
@@ -526,9 +526,9 @@ public class DepositImpl implements Deposit {
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
 
-    Value V2 = Value.create(accountAssetIssue.getData(),
-            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
-    accountAssetIssueCache.put(key, V2);
+//    Value V2 = Value.create(accountAssetIssue.getData(),
+//            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+//    accountAssetIssueCache.put(key, V2);
 
     return accountCapsule.getBalance();
   }

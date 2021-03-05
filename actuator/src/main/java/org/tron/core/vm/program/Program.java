@@ -1701,6 +1701,10 @@ public class Program {
       if (sender == null) {
         deposit.createNormalAccount(contextAddress);
       }
+      AccountAssetIssueCapsule accountAssetIssue = deposit.getAccountAssetIssue(contextAddress);
+      if (accountAssetIssue == null) {
+        deposit.createAccountAssetIssue(contextAddress);
+      }
     }
   }
 

@@ -443,12 +443,29 @@ public class Util {
     if (accountAssetIssue.getAssetIssuedID().isEmpty()) {
       return JsonFormat.printToString(account, false);
     } else {
+      account = convertAccount(account, accountAssetIssue);
       JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
       String assetId = accountJson.get("asset_issued_ID").toString();
       accountJson.put("asset_issued_ID",
           ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }
+  }
+
+  public static Account convertAccount(Account account, AccountAssetIssue accountAssetIssue) {
+    account = account.toBuilder()
+            .setAddress(accountAssetIssue.getAddress())
+            .setAssetIssuedID(accountAssetIssue.getAssetIssuedID())
+            .setAssetIssuedName(accountAssetIssue.getAssetIssuedName())
+            .putAllAsset(accountAssetIssue.getAssetMap())
+            .putAllAssetV2(accountAssetIssue.getAssetV2Map())
+
+            .putAllFreeAssetNetUsage(accountAssetIssue.getFreeAssetNetUsageMap())
+            .putAllFreeAssetNetUsageV2(accountAssetIssue.getFreeAssetNetUsageMap())
+            .putAllLatestAssetOperationTime(accountAssetIssue.getLatestAssetOperationTimeMap())
+            .putAllLatestAssetOperationTimeV2(accountAssetIssue.getLatestAssetOperationTimeV2Map())
+            .build();
+    return account;
   }
 
   public static void printAccount(Account reply, HttpServletResponse response, Boolean visible)
@@ -468,7 +485,7 @@ public class Util {
           throws java.io.IOException {
     if (reply != null) {
       if (visible) {
-        response.getWriter().println(JsonFormat.printToString(reply, true));
+        response.getWriter().println(JsonFormat.printToString(convertAccount(reply, accountAssetIssue), true));
       } else {
         response.getWriter().println(convertOutput(reply, accountAssetIssue));
       }

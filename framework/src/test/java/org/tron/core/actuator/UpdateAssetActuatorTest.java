@@ -20,6 +20,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -94,10 +95,18 @@ public class UpdateAssetActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS)),
             ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
             Protocol.AccountType.Normal);
+
+    AccountAssetIssueCapsule secondAccountAssetIssue =
+            new AccountAssetIssueCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS))
+            );
+
     dbManager.getAccountStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccount);
+    dbManager.getAccountAssetIssueStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccountAssetIssue);
 
     // address does not exist in accountStore
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
+    dbManager.getAccountAssetIssueStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
   }
 
   private Any getContract(
@@ -141,19 +150,25 @@ public class UpdateAssetActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
             Protocol.AccountType.Normal);
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            new AccountAssetIssueCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))
+    );
 
     // add asset issue
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(getAssetIssueContract());
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
-    accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
-    accountCapsule.setAssetIssuedID(assetIssueCapsule.getId().getBytes());
+    accountAssetIssueCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
+    accountAssetIssueCapsule.setAssetIssuedID(assetIssueCapsule.getId().getBytes());
 
-    accountCapsule.addAsset(assetIssueCapsule.createDbKey(), TOTAL_SUPPLY);
-    accountCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), TOTAL_SUPPLY);
+    accountAssetIssueCapsule.addAsset(assetIssueCapsule.createDbKey(), TOTAL_SUPPLY);
+    accountAssetIssueCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), TOTAL_SUPPLY);
 
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
+    dbManager.getAccountAssetIssueStore()
+            .put(ByteArray.fromHexString(OWNER_ADDRESS), accountAssetIssueCapsule);
   }
 
   private void createAssertSameTokenNameActive() {
@@ -170,11 +185,16 @@ public class UpdateAssetActuatorTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(getAssetIssueContract());
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
-    accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
-    accountCapsule.setAssetIssuedID(assetIssueCapsule.getId().getBytes());
-    accountCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), TOTAL_SUPPLY);
-
+    AccountAssetIssueCapsule accountAssetIssueCapsule = new
+            AccountAssetIssueCapsule(
+            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))
+    );
+    accountAssetIssueCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
+    accountAssetIssueCapsule.setAssetIssuedID(assetIssueCapsule.getId().getBytes());
+    accountAssetIssueCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), TOTAL_SUPPLY);
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
+    dbManager.getAccountAssetIssueStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountAssetIssueCapsule);
   }
 
   @Test

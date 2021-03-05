@@ -71,6 +71,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -467,9 +468,13 @@ public class Manager {
                       ByteString.copyFrom(account.getAddress()),
                       account.getAccountType(),
                       account.getBalance());
+
+              final AccountAssetIssueCapsule accountAssetIssueCapsule =
+                      new AccountAssetIssueCapsule(ByteString.copyFrom(account.getAddress()));
               chainBaseManager.getAccountStore().put(account.getAddress(), accountCapsule);
               chainBaseManager.getAccountIdIndexStore().put(accountCapsule);
               chainBaseManager.getAccountIndexStore().put(accountCapsule);
+              chainBaseManager.getAccountAssetIssueStore().put(account.getAddress(), accountAssetIssueCapsule);
             });
   }
 

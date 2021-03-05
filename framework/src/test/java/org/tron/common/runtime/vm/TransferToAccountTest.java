@@ -27,6 +27,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -63,6 +64,7 @@ public class TransferToAccountTest {
   private static Application appT;
   private static DepositImpl deposit;
   private static AccountCapsule ownerCapsule;
+  private static AccountAssetIssueCapsule ownerAccountAssetIssueCapsule;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
@@ -74,6 +76,7 @@ public class TransferToAccountTest {
     chainBaseManager = context.getBean(ChainBaseManager.class);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
+    deposit.createAccountAssetIssue(Hex.decode(TRANSFER_TO));
     deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
     deposit.commit();
     ownerCapsule =
@@ -83,6 +86,8 @@ public class TransferToAccountTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
+    ownerAccountAssetIssueCapsule =
+      new AccountAssetIssueCapsule(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
   }
 
   /**
@@ -125,8 +130,12 @@ public class TransferToAccountTest {
     chainBaseManager.getAssetIssueV2Store()
         .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
-    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
+//    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
+    ownerAccountAssetIssueCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
+    dbManager.getAccountAssetIssueStore()
+            .put(ownerAccountAssetIssueCapsule.getAddress().toByteArray(), ownerAccountAssetIssueCapsule);
     return id;
   }
 
@@ -146,7 +155,7 @@ public class TransferToAccountTest {
     byte[] contractAddress = deployTransferContract(id);
     deposit.commit();
     Assert.assertEquals(100,
-        chainBaseManager.getAccountStore()
+        chainBaseManager.getAccountAssetIssueStore()
             .get(contractAddress).getAssetMapV2().get(String.valueOf(id)).longValue());
     Assert.assertEquals(1000,
         chainBaseManager.getAccountStore().get(contractAddress).getBalance());
@@ -170,10 +179,10 @@ public class TransferToAccountTest {
 
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9,
-        chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+        chainBaseManager.getAccountAssetIssueStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
             .get(String.valueOf(id)).longValue());
     Assert.assertEquals(100 + tokenValue - 9,
-        chainBaseManager.getAccountStore().get(contractAddress)
+        chainBaseManager.getAccountAssetIssueStore().get(contractAddress)
             .getAssetMapV2().get(String.valueOf(id)).longValue());
     long energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
@@ -190,10 +199,10 @@ public class TransferToAccountTest {
 
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue * 2 - 18,
-        chainBaseManager.getAccountStore().get(contractAddress).getAssetMapV2()
+        chainBaseManager.getAccountAssetIssueStore().get(contractAddress).getAssetMapV2()
             .get(String.valueOf(id)).longValue());
     Assert.assertEquals(9,
-        chainBaseManager.getAccountStore().get(ecKey.getAddress()).getAssetMapV2()
+        chainBaseManager.getAccountAssetIssueStore().get(ecKey.getAddress()).getAssetMapV2()
             .get(String.valueOf(id)).longValue());
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
