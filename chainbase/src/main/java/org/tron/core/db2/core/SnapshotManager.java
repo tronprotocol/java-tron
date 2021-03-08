@@ -1,7 +1,6 @@
 package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.Futures;
@@ -17,7 +16,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,9 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
-import org.tron.common.utils.StringUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.common.DB;
@@ -35,7 +30,6 @@ import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.store.CheckTmpStore;
 
@@ -122,7 +116,7 @@ public class SnapshotManager implements RevokingDatabase {
     Chainbase revokingDB = (Chainbase) db;
     dbs.add(revokingDB);
     flushServices.put(revokingDB.getDbName(),
-        MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()));
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()));
   }
 
   private void advance() {
@@ -242,32 +236,14 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private boolean shouldBeRefreshed() {
-    return flushCount >= 1;
+    return flushCount >= maxFlushCount;
   }
 
   private void refresh() {
-
     List<ListenableFuture<?>> futures = new ArrayList<>(dbs.size());
-    Chainbase trxDB = null;
-    Chainbase blockDB = null;
     for (Chainbase db : dbs) {
-      if (db.getDbName().equals("block")) {
-        blockDB = db;
-      }
-      if (db.getDbName().equals("account")) {
-        trxDB = db;
-      }
       futures.add(flushServices.get(db.getDbName()).submit(() -> refreshOne(db)));
     }
-
-    long num = printDB(blockDB);
-    if (num <= 27302164) {
-      printTrx(trxDB, num);
-//      logger.info("check hash dbName: {}, blockNum: {} ---------------", "block", num);
-      logger.info("check hash=====================================");
-    }
-    logger.info("number====================================={}", 27302164);
-
     Future<?> future = Futures.allAsList(futures);
     try {
       future.get();
@@ -275,59 +251,6 @@ public class SnapshotManager implements RevokingDatabase {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       logger.error(e.getMessage(), e);
-    }
-  }
-
-
-
-  private long printDB(Chainbase db) {
-    if (Snapshot.isRoot(db.getHead())) {
-      return 0;
-    }
-    AtomicLong num = new AtomicLong();
-    SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-    Snapshot next = root;
-    for (int i = 0; i < flushCount; ++i) {
-      next = next.getNext();
-      SnapshotImpl from = (SnapshotImpl)next;
-      Streams.stream(from.db)
-              .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
-                      WrappedByteArray.of(e.getValue().getBytes())))
-              .forEach(e -> {
-                BlockCapsule blockCapsule = null;
-                try {
-                  blockCapsule = new BlockCapsule(e.getValue().getBytes());
-                  logger.info("check hash dbName: {}, blockNum: {} ---------------", db.getDbName(), blockCapsule.getNum());
-                  num.set(blockCapsule.getNum());
-                } catch (BadItemException badItemException) {
-                  badItemException.printStackTrace();
-                }
-              });
-    }
-    return num.get();
-  }
-
-  private void printTrx(Chainbase db, long num) {
-    if (Snapshot.isRoot(db.getHead())) {
-      return;
-    }
-
-    SnapshotRoot root = (SnapshotRoot) db.getHead().getRoot();
-    Snapshot next = root;
-    for (int i = 0; i < flushCount; ++i) {
-      next = next.getNext();
-      SnapshotImpl from = (SnapshotImpl)next;
-      Streams.stream(from.db)
-              .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
-                      WrappedByteArray.of(e.getValue().getBytes())))
-              .forEach(e -> {
-                byte[] bytes = e.getValue().getBytes();
-                if (bytes != null) {
-
-                  AccountCapsule accountBalanceCapsule = new AccountCapsule(bytes);
-                  logger.info("check hash dbName: {}, blockNum: {}, address: {}, accountBalance: {}, ", db.getDbName(), num, StringUtil.encode58Check(accountBalanceCapsule.getAddress().toByteArray()), accountBalanceCapsule.getBalance());
-                }
-              });
     }
   }
 
@@ -356,7 +279,6 @@ public class SnapshotManager implements RevokingDatabase {
     }
   }
 
-
   public void flush() {
     if (unChecked) {
       return;
@@ -370,9 +292,9 @@ public class SnapshotManager implements RevokingDatabase {
       refresh();
       flushCount = 0;
       logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
-          System.currentTimeMillis() - start,
-          checkPointEnd - start,
-          System.currentTimeMillis() - checkPointEnd
+              System.currentTimeMillis() - start,
+              checkPointEnd - start,
+              System.currentTimeMillis() - checkPointEnd
       );
     }
   }
@@ -395,16 +317,16 @@ public class SnapshotManager implements RevokingDatabase {
           Key k = e.getKey();
           Value v = e.getValue();
           batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
-              WrappedByteArray.of(v.encode()));
+                  WrappedByteArray.of(v.encode()));
         }
       }
     }
 
     checkTmpStore.getDbSource().updateByBatch(batch.entrySet().stream()
-            .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-            .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
-        WriteOptionsWrapper.getInstance().sync(CommonParameter
-            .getInstance().getStorage().isDbSync()));
+                    .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+                    .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
+            WriteOptionsWrapper.getInstance().sync(CommonParameter
+                    .getInstance().getStorage().isDbSync()));
   }
 
   private void deleteCheckpoint() {
@@ -429,8 +351,8 @@ public class SnapshotManager implements RevokingDatabase {
 
     if (!checkTmpStore.getDbSource().allKeys().isEmpty()) {
       Map<String, Chainbase> dbMap = dbs.stream()
-          .map(db -> Maps.immutableEntry(db.getDbName(), db))
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+              .map(db -> Maps.immutableEntry(db.getDbName(), db))
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       advance();
       for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
         byte[] key = e.getKey();
