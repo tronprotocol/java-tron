@@ -18,7 +18,13 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketOrderIdListCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -26,7 +32,12 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.*;
+import org.tron.core.store.AccountAssetIssueStore;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketOrderPair;
@@ -125,10 +136,12 @@ public class MarketCancelOrderActuatorTest {
             new AccountAssetIssueCapsule(
                     ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
                     ByteString.copyFrom(ownerAddressSecondBytes));
-    dbManager.getAccountAssetIssueStore().
-            put(ownerAccountAssetIssueFirstCapsule.getAddress().toByteArray(), ownerAccountAssetIssueFirstCapsule);
-    dbManager.getAccountAssetIssueStore().
-            put(ownerAccountAssetIssueSecondCapsule.getAddress().toByteArray(), ownerAccountAssetIssueSecondCapsule);
+    dbManager.getAccountAssetIssueStore()
+            .put(ownerAccountAssetIssueFirstCapsule.getAddress().toByteArray(),
+                    ownerAccountAssetIssueFirstCapsule);
+    dbManager.getAccountAssetIssueStore()
+            .put(ownerAccountAssetIssueSecondCapsule.getAddress().toByteArray(),
+                    ownerAccountAssetIssueSecondCapsule);
 
     // clean
     cleanMarketOrderByAccount(ownerAddressFirstBytes);
@@ -435,8 +448,7 @@ public class MarketCancelOrderActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(ownAddress);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-//    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
-//        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
     AccountAssetIssueCapsule accountAssetIssueCapsule =
@@ -518,7 +530,8 @@ public class MarketCancelOrderActuatorTest {
         dbManager.getDynamicPropertiesStore().getMarketCancelFee() + accountCapsule.getBalance());
 
     //check token number return
-    Assert.assertEquals(100L, accountAssetIssueCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
+    Assert.assertEquals(100L,
+            accountAssetIssueCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
@@ -701,7 +714,8 @@ public class MarketCancelOrderActuatorTest {
         +accountCapsule.getBalance());
 
     //check token number return
-    Assert.assertEquals(100L, accountAssetIssueCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
+    Assert.assertEquals(100L,
+            accountAssetIssueCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
@@ -791,7 +805,8 @@ public class MarketCancelOrderActuatorTest {
         +accountCapsule.getBalance());
 
     //check token number return
-    Assert.assertEquals(100L,accountAssetIssueCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
+    Assert.assertEquals(100L,
+            accountAssetIssueCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));

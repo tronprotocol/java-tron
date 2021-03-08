@@ -102,7 +102,8 @@ public class UpdateAssetActuatorTest {
             );
 
     dbManager.getAccountStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccount);
-    dbManager.getAccountAssetIssueStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccountAssetIssue);
+    dbManager.getAccountAssetIssueStore()
+            .put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccountAssetIssue);
 
     // address does not exist in accountStore
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
@@ -194,7 +195,8 @@ public class UpdateAssetActuatorTest {
     accountAssetIssueCapsule.setAssetIssuedID(assetIssueCapsule.getId().getBytes());
     accountAssetIssueCapsule.addAssetV2(assetIssueCapsule.createDbV2Key(), TOTAL_SUPPLY);
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
-    dbManager.getAccountAssetIssueStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountAssetIssueCapsule);
+    dbManager.getAccountAssetIssueStore()
+            .put(ByteArray.fromHexString(OWNER_ADDRESS), accountAssetIssueCapsule);
   }
 
   @Test

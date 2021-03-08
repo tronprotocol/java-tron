@@ -113,13 +113,12 @@ public class TransferTokenTest {
             .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-
-//    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     ownerAccountAssetIssueCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     dbManager.getAccountAssetIssueStore()
-            .put(ownerAccountAssetIssueCapsule.getAddress().toByteArray(), ownerAccountAssetIssueCapsule);
+            .put(ownerAccountAssetIssueCapsule.getAddress()
+                    .toByteArray(), ownerAccountAssetIssueCapsule);
     return id;
   }
 
@@ -143,9 +142,11 @@ public class TransferTokenTest {
     byte[] contractAddress = deployTransferTokenContract(id);
     deposit.commit();
     Assert.assertEquals(100,
-        dbManager.getAccountAssetIssueStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
+        dbManager.getAccountAssetIssueStore()
+                .get(contractAddress).getAssetMapV2().get(String.valueOf(id))
             .longValue());
-    Assert.assertEquals(1000, dbManager.getAccountStore().get(contractAddress).getBalance());
+    Assert.assertEquals(1000,
+            dbManager.getAccountStore().get(contractAddress).getBalance());
 
     String selectorStr = "TransferTokenTo(address,trcToken,uint256)";
     String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"
@@ -167,9 +168,12 @@ public class TransferTokenTest {
 
     org.testng.Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9,
-        dbManager.getAccountAssetIssueStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
+        dbManager.getAccountAssetIssueStore()
+                .get(contractAddress).getAssetMapV2().get(String.valueOf(id))
             .longValue());
-    Assert.assertEquals(9, dbManager.getAccountAssetIssueStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+    Assert.assertEquals(9,
+            dbManager.getAccountAssetIssueStore()
+                    .get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
         .get(String.valueOf(id)).longValue());
 
     /*   suicide test  */
@@ -196,7 +200,8 @@ public class TransferTokenTest {
     Assert.assertEquals(100 + tokenValue - 9 + 9,
         dbManager.getAccountAssetIssueStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
             .get(String.valueOf(id)).longValue());
-    Assert.assertEquals(99, dbManager.getAccountAssetIssueStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+    Assert.assertEquals(99,
+            dbManager.getAccountAssetIssueStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
         .get(String.valueOf(id2)).longValue());
   }
 

@@ -12,11 +12,11 @@ import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
@@ -166,7 +166,8 @@ public class AssetUpdateHelper {
       accountAssetIssueCapsule.clearFreeAssetNetUsageV2();
       if (accountAssetIssueCapsule.getAllFreeAssetNetUsage().size() != 0) {
         HashMap<String, Long> map = new HashMap<>();
-        for (Map.Entry<String, Long> entry : accountAssetIssueCapsule.getAllFreeAssetNetUsage().entrySet()) {
+        for (Map.Entry<String, Long> entry :
+                accountAssetIssueCapsule.getAllFreeAssetNetUsage().entrySet()) {
           map.put(ByteArray.toStr(assetNameToIdMap.get(entry.getKey())), entry.getValue());
         }
         accountAssetIssueCapsule.addAllFreeAssetNetUsageV2(map);
@@ -185,10 +186,12 @@ public class AssetUpdateHelper {
       if (!accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
         accountAssetIssueCapsule.setAssetIssuedID(
                 assetNameToIdMap.get(
-                        ByteArray.toStr(accountAssetIssueCapsule.getAssetIssuedName().toByteArray())));
+                        ByteArray.toStr(
+                                accountAssetIssueCapsule.getAssetIssuedName().toByteArray())));
       }
 
-      chainBaseManager.getAccountAssetIssueStore().put(accountAssetIssueCapsule.createDbKey(), accountAssetIssueCapsule);
+      chainBaseManager.getAccountAssetIssueStore()
+              .put(accountAssetIssueCapsule.createDbKey(), accountAssetIssueCapsule);
 
       if (count % 50000 == 0) {
         logger.info("The number of accounts that have completed the update: {}", count);

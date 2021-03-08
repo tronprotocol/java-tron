@@ -73,8 +73,8 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.actuator.ActuatorCreator;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -119,6 +119,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -142,7 +143,6 @@ import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -366,7 +366,7 @@ public class Manager {
       this.rePushTransactions = new PriorityBlockingQueue<>(2000, downComparator);
     } else {
       this.pendingTransactions = new LinkedBlockingQueue<>();
-      this.rePushTransactions =new LinkedBlockingQueue<>();
+      this.rePushTransactions = new LinkedBlockingQueue<>();
     }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
@@ -485,7 +485,8 @@ public class Manager {
               chainBaseManager.getAccountStore().put(account.getAddress(), accountCapsule);
               chainBaseManager.getAccountIdIndexStore().put(accountCapsule);
               chainBaseManager.getAccountIndexStore().put(accountCapsule);
-              chainBaseManager.getAccountAssetIssueStore().put(account.getAddress(), accountAssetIssueCapsule);
+              chainBaseManager.getAccountAssetIssueStore()
+                      .put(account.getAddress(), accountAssetIssueCapsule);
             });
   }
 

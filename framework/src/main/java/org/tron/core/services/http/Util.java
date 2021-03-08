@@ -481,11 +481,13 @@ public class Util {
     }
   }
 
-  public static void printAccount(Account reply, AccountAssetIssue accountAssetIssue, HttpServletResponse response, Boolean visible)
+  public static void printAccount(Account reply, AccountAssetIssue accountAssetIssue,
+                                  HttpServletResponse response, Boolean visible)
           throws java.io.IOException {
     if (reply != null) {
       if (visible) {
-        response.getWriter().println(JsonFormat.printToString(convertAccount(reply, accountAssetIssue), true));
+        response.getWriter().println(
+                JsonFormat.printToString(convertAccount(reply, accountAssetIssue), true));
       } else {
         response.getWriter().println(convertOutput(reply, accountAssetIssue));
       }
