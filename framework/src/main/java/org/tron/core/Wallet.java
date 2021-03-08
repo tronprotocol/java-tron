@@ -171,6 +171,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.services.http.Util;
 import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
@@ -346,7 +347,10 @@ public class Wallet {
     accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
 
-    return accountCapsule.getInstance();
+    Account instance = accountCapsule.getInstance();
+    AccountAssetIssue accountAssetIssue = getAccountAssetIssueById(instance);
+
+    return Util.convertAccount(instance, accountAssetIssue);
   }
 
   public Account getAccountById(Account account) {
@@ -376,7 +380,9 @@ public class Wallet {
     accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
 
-    return accountCapsule.getInstance();
+    Account instance = accountCapsule.getInstance();
+    AccountAssetIssue accountAssetIssue = getAccountAssetIssueById(instance);
+    return Util.convertAccount(instance, accountAssetIssue);
   }
 
   public AccountAssetIssue getAccountAssetIssueById(Account account) {
