@@ -60,8 +60,6 @@ public class TransactionTrace {
 
   private TrxType trxType;
 
-  private long txStartTimeInMs;
-
   private Runtime runtime;
 
   private ForkController forkController;
@@ -126,7 +124,6 @@ public class TransactionTrace {
 
   //pre transaction check
   public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
-    txStartTimeInMs = System.currentTimeMillis();
     transactionContext = new TransactionContext(blockCap, trx, storeFactory, false,
         eventPluginLoaded);
   }

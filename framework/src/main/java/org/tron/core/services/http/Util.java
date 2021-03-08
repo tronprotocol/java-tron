@@ -61,6 +61,7 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
+  public static final String ASSET_ISSUED_ID = "asset_issued_ID";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -431,8 +432,8 @@ public class Util {
       return JsonFormat.printToString(account, false);
     } else {
       JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
-      String assetId = accountJson.get("asset_issued_ID").toString();
-      accountJson.put("asset_issued_ID",
+      String assetId = accountJson.get(ASSET_ISSUED_ID).toString();
+      accountJson.put(ASSET_ISSUED_ID,
           ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }
@@ -445,8 +446,8 @@ public class Util {
     } else {
       account = convertAccount(account, accountAssetIssue);
       JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
-      String assetId = accountJson.get("asset_issued_ID").toString();
-      accountJson.put("asset_issued_ID",
+      String assetId = accountJson.get(ASSET_ISSUED_ID).toString();
+      accountJson.put(ASSET_ISSUED_ID,
           ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }

@@ -11,10 +11,22 @@ import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.common.IRevokingDB;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountAssetIssue;
 
-import java.util.*;
-import java.util.concurrent.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j(topic = "DB")
@@ -78,10 +90,15 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         Timer timer = null;
         if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
             try {
-                AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(BlockQueueFactory.getInstance(), countDownLatch);
+                AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
+                        BlockQueueFactory.getInstance(),
+                        countDownLatch);
                 accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
 
-                AccountConvertQueue accountConvertQueue = new AccountConvertQueue(BlockQueueFactory.getInstance(), this);
+                AccountConvertQueue accountConvertQueue = new AccountConvertQueue(
+                        BlockQueueFactory.getInstance(),
+                        this,
+                        accountStore);
                 accountConvertQueue.convert();
                 timer = countDown();
                 countDownLatch.await();
@@ -137,15 +154,19 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
         private ThreadPoolExecutor threadPoolExecutor;
 
+        private AccountStore accountStore;
+
         private static final int CORE_POOL_SIZE = 4;
 
         public static final int MAX_POOL_SIZE = 8;
 
         public static final int KEEP_ALIVE_SECONDES = 30;
 
-        public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue, AccountAssetIssueStore accountAssetIssueStore) {
+        public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
+                                   AccountAssetIssueStore accountAssetIssueStore, AccountStore accountStore) {
             this.convertQueue = convertQueue;
             this.accountAssetIssueStore = accountAssetIssueStore;
+            this.accountStore = accountStore;
         }
 
         public void convert() {
@@ -157,8 +178,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                             Map.Entry<byte[], byte[]> accountEntry = convertQueue.take();
                             AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule();
                             AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
-
-                            AccountAssetIssue instance = AccountAssetIssue.newBuilder()
+                            AccountAssetIssue accountAssetIssue = AccountAssetIssue.newBuilder()
                                     .setAddress(accountCapsule.getAddress())
                                     .setAssetIssuedID(accountCapsule.getAssetIssuedID())
                                     .setAssetIssuedName(accountCapsule.getAssetIssuedName())
@@ -170,9 +190,21 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                                     .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
                                     .putAllLatestAssetOperationTimeV2(accountCapsule.getLatestAssetOperationTimeMapV2())
                                     .build();
-                            accountAssetIssueCapsule.setInstance(instance);
+                            accountAssetIssueCapsule.setInstance(accountAssetIssue);
                             accountAssetIssueStore.put(accountCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
 
+                            Protocol.Account account = accountCapsule.getInstance();
+                            account = account.toBuilder()
+                                    .clearAssetIssuedID()
+                                    .clearAssetIssuedName()
+                                    .clearAsset()
+                                    .clearAssetV2()
+                                    .clearFreeAssetNetUsage()
+                                    .clearFreeAssetNetUsageV2()
+                                    .clearLatestAssetOperationTime()
+                                    .clearLatestAssetOperationTimeV2()
+                                    .build();
+                            accountStore.put(account.getAddress().toByteArray(), new AccountCapsule(account));
                         }
                     } catch (InterruptedException e) {
                         logger.error("account convert asset exception: {}", e.getMessage(), e);
@@ -204,12 +236,12 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
         public static BlockingQueue getInstance() {
             if (null == queue) {
-                queue = new LinkedBlockingDeque(20000);
+                queue = getInstance(20000);
             }
             return queue;
         }
 
-        public BlockingQueue getInstance(int capcity) {
+        public static BlockingQueue getInstance(int capcity) {
             if (null == queue) {
                 queue = new LinkedBlockingDeque<>(capcity);
             }

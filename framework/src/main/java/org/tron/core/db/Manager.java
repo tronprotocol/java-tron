@@ -344,7 +344,7 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
-  Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
+  private Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
       .compare(o2.getOrder(), o1.getOrder());
 
   @PostConstruct
