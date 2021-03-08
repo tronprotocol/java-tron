@@ -53,7 +53,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                 if (second % 5 == 0) {
                     logger.info("import asset current second: {} S", second);
                 }
-                ;
             }
         }, 0, 1000);
         return timer;
@@ -85,16 +84,14 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                 AccountConvertQueue accountConvertQueue = new AccountConvertQueue(BlockQueueFactory.getInstance(), this);
                 accountConvertQueue.convert();
                 timer = countDown();
-                logger.debug("import asset await");
+                countDownLatch.await();
                 dynamicPropertiesStore.setAllowAssetImport(1L);
+            } catch (InterruptedException e) {
+                logger.error("convert asset of account to account store exception: {}", e.getMessage(), e);
+                Thread.currentThread().interrupt();
             } finally {
-                try {
-                    countDownLatch.await();
-                    if (null != timer) {
-                        timer.cancel();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                if (null != timer) {
+                    timer.cancel();
                 }
             }
         }
@@ -116,7 +113,8 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             try {
                 productQueue.put(accountByte);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error("put account asset issue exception: {}", e.getMessage(), e);
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -145,10 +143,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
         public static final int KEEP_ALIVE_SECONDES = 30;
 
-        public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue) {
-            this.convertQueue = convertQueue;
-        }
-
         public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue, AccountAssetIssueStore accountAssetIssueStore) {
             this.convertQueue = convertQueue;
             this.accountAssetIssueStore = accountAssetIssueStore;
@@ -161,29 +155,28 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                     try {
                         while (true) {
                             Map.Entry<byte[], byte[]> accountEntry = convertQueue.take();
-                            if (null != accountEntry) {
-                                AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule();
-                                AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
+                            AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule();
+                            AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
 
-                                AccountAssetIssue instance = AccountAssetIssue.newBuilder()
-                                        .setAddress(accountCapsule.getAddress())
-                                        .setAssetIssuedID(accountCapsule.getAssetIssuedID())
-                                        .setAssetIssuedName(accountCapsule.getAssetIssuedName())
-                                        .putAllAsset(accountCapsule.getAssetMap())
-                                        .putAllAssetV2(accountCapsule.getAssetMapV2())
+                            AccountAssetIssue instance = AccountAssetIssue.newBuilder()
+                                    .setAddress(accountCapsule.getAddress())
+                                    .setAssetIssuedID(accountCapsule.getAssetIssuedID())
+                                    .setAssetIssuedName(accountCapsule.getAssetIssuedName())
+                                    .putAllAsset(accountCapsule.getAssetMap())
+                                    .putAllAssetV2(accountCapsule.getAssetMapV2())
 
-                                        .putAllFreeAssetNetUsage(accountCapsule.getAllFreeAssetNetUsage())
-                                        .putAllFreeAssetNetUsageV2(accountCapsule.getAllFreeAssetNetUsageV2())
-                                        .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
-                                        .putAllLatestAssetOperationTimeV2(accountCapsule.getLatestAssetOperationTimeMapV2())
-                                        .build();
-                                accountAssetIssueCapsule.setInstance(instance);
-                                accountAssetIssueStore.put(accountCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
+                                    .putAllFreeAssetNetUsage(accountCapsule.getAllFreeAssetNetUsage())
+                                    .putAllFreeAssetNetUsageV2(accountCapsule.getAllFreeAssetNetUsageV2())
+                                    .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
+                                    .putAllLatestAssetOperationTimeV2(accountCapsule.getLatestAssetOperationTimeMapV2())
+                                    .build();
+                            accountAssetIssueCapsule.setInstance(instance);
+                            accountAssetIssueStore.put(accountCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
 
-                            }
                         }
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        logger.error("account convert asset exception: {}", e.getMessage(), e);
+                        Thread.currentThread().interrupt();
                     }
                 });
             }
@@ -211,22 +204,14 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
         public static BlockingQueue getInstance() {
             if (null == queue) {
-                synchronized (BlockQueueFactory.class) {
-                    if (null == queue) {
-                        queue = new LinkedBlockingDeque(20000);
-                    }
-                }
+                queue = new LinkedBlockingDeque(20000);
             }
             return queue;
         }
 
         public BlockingQueue getInstance(int capcity) {
             if (null == queue) {
-                synchronized (this) {
-                    if (null == queue) {
-                        queue = new LinkedBlockingDeque<>(capcity);
-                    }
-                }
+                queue = new LinkedBlockingDeque<>(capcity);
             }
             return queue;
         }
