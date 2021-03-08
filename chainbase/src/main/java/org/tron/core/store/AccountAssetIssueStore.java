@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -176,7 +177,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                     try {
                         while (true) {
                             Map.Entry<byte[], byte[]> accountEntry = convertQueue.take();
-                            AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule();
                             AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
                             AccountAssetIssue accountAssetIssue = AccountAssetIssue.newBuilder()
                                     .setAddress(accountCapsule.getAddress())
@@ -190,9 +190,8 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                                     .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
                                     .putAllLatestAssetOperationTimeV2(accountCapsule.getLatestAssetOperationTimeMapV2())
                                     .build();
-                            accountAssetIssueCapsule.setInstance(accountAssetIssue);
-                            accountAssetIssueStore.put(accountCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
-
+                            accountAssetIssueStore.put(accountCapsule.getAddress().toByteArray(),
+                                    new AccountAssetIssueCapsule(accountAssetIssue));
                             Protocol.Account account = accountCapsule.getInstance();
                             account = account.toBuilder()
                                     .clearAssetIssuedID()
