@@ -120,11 +120,11 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.CodeCapsule;
@@ -171,7 +171,16 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.store.*;
+import org.tron.core.store.AccountAssetIssueStore;
+import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AccountTraceStore;
+import org.tron.core.store.BalanceTraceStore;
+import org.tron.core.store.ContractStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
@@ -372,7 +381,8 @@ public class Wallet {
 
   public AccountAssetIssue getAccountAssetIssueById(Account account) {
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(account.getAddress().toByteArray());
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            accountAssetIssueStore.get(account.getAddress().toByteArray());
     if (accountAssetIssueCapsule == null) {
       return null;
     }
@@ -1049,7 +1059,8 @@ public class Wallet {
   }
 
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
-                                             AccountCapsule accountCapsule, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+                                             AccountCapsule accountCapsule,
+                                             AccountAssetIssueCapsule accountAssetIssueCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       allFreeAssetNetUsage = accountAssetIssueCapsule.getAllFreeAssetNetUsage();
@@ -1093,7 +1104,8 @@ public class Wallet {
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
+    Map<String, Long> allFreeAssetNetUsage =
+            setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -1144,7 +1156,8 @@ public class Wallet {
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
+    Map<String, Long> allFreeAssetNetUsage =
+            setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)

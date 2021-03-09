@@ -48,7 +48,6 @@ public class GetAccountByIdServlet extends RateLimiterServlet {
       throws IOException {
     Account reply = wallet.getAccountById(account);
     AccountAssetIssue accountAssetIssue = wallet.getAccountAssetIssueById(account);
-//    Util.printAccount(reply, response, visible);
     Util.printAccount(reply, accountAssetIssue, response, visible);
   }
 }

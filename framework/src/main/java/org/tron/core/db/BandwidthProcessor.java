@@ -40,7 +40,9 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   private void updateUsage(AccountCapsule accountCapsule, long now) {
-    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(accountCapsule.getAddress().toByteArray());
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            chainBaseManager.getAccountAssetIssueStore()
+            .get(accountCapsule.getAddress().toByteArray());
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
@@ -52,15 +54,18 @@ public class BandwidthProcessor extends ResourceProcessor {
       Map<String, Long> assetMap = accountAssetIssueCapsule.getAssetMap();
       assetMap.forEach((assetName, balance) -> {
         long oldFreeAssetNetUsage = accountAssetIssueCapsule.getFreeAssetNetUsage(assetName);
-        long latestAssetOperationTime = accountAssetIssueCapsule.getLatestAssetOperationTime(assetName);
+        long latestAssetOperationTime = accountAssetIssueCapsule
+                .getLatestAssetOperationTime(assetName);
         accountAssetIssueCapsule.putFreeAssetNetUsage(assetName,
             increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
       });
     }
     Map<String, Long> assetMapV2 = accountAssetIssueCapsule.getAssetMapV2();
     assetMapV2.forEach((assetName, balance) -> {
-      long oldFreeAssetNetUsage = accountAssetIssueCapsule.getFreeAssetNetUsageV2(assetName);
-      long latestAssetOperationTime = accountAssetIssueCapsule.getLatestAssetOperationTimeV2(assetName);
+      long oldFreeAssetNetUsage = accountAssetIssueCapsule
+              .getFreeAssetNetUsageV2(assetName);
+      long latestAssetOperationTime = accountAssetIssueCapsule
+              .getLatestAssetOperationTimeV2(assetName);
       accountAssetIssueCapsule.putFreeAssetNetUsageV2(assetName,
           increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
     });
@@ -244,7 +249,9 @@ public class BandwidthProcessor extends ResourceProcessor {
       throw new ContractValidateException("asset does not exist");
     }
 
-    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(accountCapsule.getAddress().toByteArray());
+    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager
+            .getAccountAssetIssueStore()
+            .get(accountCapsule.getAddress().toByteArray());
     String tokenName = ByteArray.toStr(assetName.toByteArray());
     String tokenID = assetIssueCapsule.getId();
     if (assetIssueCapsule.getOwnerAddress() == accountCapsule.getAddress()) {
@@ -344,7 +351,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     chainBaseManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     chainBaseManager.getAccountStore().put(issuerAccountCapsule.createDbKey(),
         issuerAccountCapsule);
-    chainBaseManager.getAccountAssetIssueStore().put(accountAssetIssueCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
+    chainBaseManager.getAccountAssetIssueStore()
+            .put(accountAssetIssueCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
     return true;
 
   }

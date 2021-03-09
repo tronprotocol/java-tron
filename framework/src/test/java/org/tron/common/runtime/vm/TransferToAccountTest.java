@@ -23,11 +23,11 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -129,13 +129,12 @@ public class TransferToAccountTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     chainBaseManager.getAssetIssueV2Store()
         .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-
-//    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     ownerAccountAssetIssueCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     dbManager.getAccountAssetIssueStore()
-            .put(ownerAccountAssetIssueCapsule.getAddress().toByteArray(), ownerAccountAssetIssueCapsule);
+            .put(ownerAccountAssetIssueCapsule.getAddress().toByteArray(),
+                    ownerAccountAssetIssueCapsule);
     return id;
   }
 

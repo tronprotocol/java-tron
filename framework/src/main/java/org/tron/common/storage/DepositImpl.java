@@ -15,6 +15,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -24,12 +25,12 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
@@ -38,7 +39,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Storage;
 import org.tron.core.vm.repository.Key;
@@ -150,23 +150,27 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public AccountAssetIssueCapsule createAccountAssetIssue(byte[] address) {
-    Key key = new Key(address);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule(ByteString.copyFrom(address));
-    accountAssetIssueCache.put(key, new Value(accountAssetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE));
-    return accountAssetIssueCapsule;
-  }
-
-  @Override
-  public AccountCapsule createAccount(byte[] address, String accountName, AccountType type) {
+  public AccountCapsule createAccount(byte[] address, String accountName,
+                                      AccountType type) {
     Key key = new Key(address);
     AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address),
-        ByteString.copyFromUtf8(accountName),
-        type);
+            ByteString.copyFromUtf8(accountName),
+            type);
 
     accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
     return account;
   }
+
+  @Override
+  public AccountAssetIssueCapsule createAccountAssetIssue(byte[] address) {
+    Key key = new Key(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule(
+            ByteString.copyFrom(address));
+    accountAssetIssueCache.put(key,
+            new Value(accountAssetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE));
+    return accountAssetIssueCapsule;
+  }
+
 
   @Override
   public synchronized AccountCapsule getAccount(byte[] address) {
@@ -505,11 +509,6 @@ public class DepositImpl implements Deposit {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
 
-//    AccountAssetIssueCapsule accountAssetIssue = getAccountAssetIssue(address);
-//    if (accountAssetIssue == null) {
-//      accountAssetIssue = createAccountAssetIssue(address);
-//    }
-
     long balance = accountCapsule.getBalance();
     if (value == 0) {
       return balance;
@@ -525,11 +524,6 @@ public class DepositImpl implements Deposit {
     Value val = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
-
-//    Value V2 = Value.create(accountAssetIssue.getData(),
-//            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
-//    accountAssetIssueCache.put(key, V2);
-
     return accountCapsule.getBalance();
   }
 
@@ -543,11 +537,15 @@ public class DepositImpl implements Deposit {
   public synchronized long getTokenBalance(byte[] address, byte[] tokenId) {
     AccountCapsule accountCapsule = getAccount(address);
     AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
-    if (accountCapsule == null || accountAssetIssueCapsule ==null) {
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (accountAssetIssueCapsule == null) {
       return 0;
     }
     String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
-    return accountAssetIssueCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
+    return accountAssetIssueCapsule
+            .getAssetMapV2().getOrDefault(tokenStr, 0L);
   }
 
   @Override
@@ -841,13 +839,17 @@ public class DepositImpl implements Deposit {
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
     Key key = new Key(address);
-    accountCache.put(key, new Value(accountCapsule.getData(), Type.VALUE_TYPE_CREATE));
+    accountCache.put(key, new Value(
+            accountCapsule.getData(),
+            Type.VALUE_TYPE_CREATE));
   }
 
   @Override
-  public void putAccountAssetIssueValue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+  public void putAccountAssetIssueValue(byte[] address,
+                                        AccountAssetIssueCapsule accountAssetIssueCapsule) {
     Key key = new Key(address);
-    accountAssetIssueCache.put(key, new Value(accountAssetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE));
+    accountAssetIssueCache.put(key,
+            new Value(accountAssetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override

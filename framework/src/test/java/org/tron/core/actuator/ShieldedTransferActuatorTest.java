@@ -15,7 +15,14 @@ import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.PedersenHashCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -145,7 +152,6 @@ public class ShieldedTransferActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE)),
             AccountType.Normal,
             OWNER_BALANCE);
-//    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(tokenId)), OWNER_BALANCE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     AccountCapsule toAccountCapsule =
@@ -205,9 +211,11 @@ public class ShieldedTransferActuatorTest {
       return 0;
     }
   }
+
   private long getAssertBalance(AccountAssetIssueCapsule accountCapsule) {
     String token = String.valueOf(tokenId);
-    if (accountCapsule != null && accountCapsule.getAssetMapV2().containsKey(token)) {
+    if (accountCapsule != null && accountCapsule
+            .getAssetMapV2().containsKey(token)) {
       return accountCapsule.getAssetMapV2().get(token);
     } else {
       return 0;
@@ -240,7 +248,8 @@ public class ShieldedTransferActuatorTest {
         accountCapsule.addAssetAmountV2(token.getBytes(), (amount - currentBalance),
                 dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
       }
-      dbManager.getAccountAssetIssueStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+      dbManager.getAccountAssetIssueStore()
+              .put(accountCapsule.getAddress().toByteArray(), accountCapsule);
     }
   }
 
@@ -472,7 +481,8 @@ public class ShieldedTransferActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
 
       AccountAssetIssueCapsule accountAssetIssueCapsule =
-              dbManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+              dbManager.getAccountAssetIssueStore()
+                      .get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
 
       long balance = accountCapsule.getBalance();
       long netUsage = accountCapsule.getNetUsage();
@@ -484,7 +494,8 @@ public class ShieldedTransferActuatorTest {
       accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
       accountAssetIssueCapsule =
-              dbManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+              dbManager.getAccountAssetIssueStore()
+                      .get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
       Assert.assertEquals(assertBalance - AMOUNT, getAssertBalance(accountAssetIssueCapsule));
       Assert.assertEquals(balance, accountCapsule.getBalance());
       Assert.assertEquals(netUsage, accountCapsule.getNetUsage());

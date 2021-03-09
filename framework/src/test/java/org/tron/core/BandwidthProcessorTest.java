@@ -14,7 +14,11 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
@@ -120,8 +124,6 @@ public class BandwidthProcessorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
             AccountType.Normal,
             0L);
-//    ownerCapsule.addAsset(ASSET_NAME.getBytes(), 100L);
-//    ownerCapsule.addAsset(ASSET_NAME_V2.getBytes(), 100L);
 
     AccountAssetIssueCapsule ownerAssetIssueCapsule =
             new AccountAssetIssueCapsule(
@@ -169,21 +171,28 @@ public class BandwidthProcessorTest {
 
     chainBaseManager.getAccountStore().reset();
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-    chainBaseManager.getAccountAssetIssueStore().put(ownerAssetIssueCapsule.getAddress().toByteArray(),
+    chainBaseManager.getAccountAssetIssueStore()
+            .put(ownerAssetIssueCapsule.getAddress().toByteArray(),
             ownerAssetIssueCapsule);
 
-    chainBaseManager.getAccountAssetIssueStore().put(toAccountAssetIssueCapsule.getAddress().toByteArray(),
+    chainBaseManager.getAccountAssetIssueStore()
+            .put(toAccountAssetIssueCapsule.getAddress().toByteArray(),
             toAccountAssetIssueCapsule);
-    chainBaseManager.getAccountAssetIssueStore().put(accountAssetIssueCapsule.getAddress().toByteArray(),
+    chainBaseManager.getAccountAssetIssueStore()
+            .put(accountAssetIssueCapsule.getAddress().toByteArray(),
             accountAssetIssueCapsule);
-    chainBaseManager.getAccountAssetIssueStore().put(accountAssetIssueCapsule2.getAddress().toByteArray(),
+    chainBaseManager.getAccountAssetIssueStore()
+            .put(accountAssetIssueCapsule2.getAddress().toByteArray(),
             accountAssetIssueCapsule2);
 
     chainBaseManager.getAccountStore()
         .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
 
-    chainBaseManager.getAccountStore().put(assetCapsule.getAddress().toByteArray(), assetCapsule);
-    chainBaseManager.getAccountStore().put(assetCapsule2.getAddress().toByteArray(), assetCapsule2);
+    chainBaseManager.getAccountStore()
+            .put(assetCapsule.getAddress().toByteArray(), assetCapsule);
+    chainBaseManager.getAccountStore()
+            .put(assetCapsule2.getAddress().toByteArray(), assetCapsule2);
+
   }
 
   private TransferAssetContract getTransferAssetContract() {
@@ -243,12 +252,14 @@ public class BandwidthProcessorTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     AccountCapsule toAccountCapsule = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
-    AccountAssetIssueCapsule toAccountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore()
+    AccountAssetIssueCapsule toAccountAssetIssueCapsule =
+            chainBaseManager.getAccountAssetIssueStore()
             .get(ByteArray.fromHexString(TO_ADDRESS));
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
       chainBaseManager.getAssetIssueV2Store()
           .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-      toAccountAssetIssueCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
+      toAccountAssetIssueCapsule
+              .addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     } else {
       chainBaseManager.getAssetIssueStore()
           .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
@@ -377,7 +388,8 @@ public class BandwidthProcessorTest {
         .get(ByteArray.fromHexString(ASSET_ADDRESS));
 
     AccountAssetIssueCapsule ownerAssetIssueCapsuleNew =
-            chainBaseManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+            chainBaseManager.getAccountAssetIssueStore()
+                    .get(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Assert.assertEquals(508882612L, assetCapsuleNew.getLatestConsumeTime());
     Assert.assertEquals(1526647838000L, ownerCapsuleNew.getLatestOperationTime());
@@ -448,10 +460,12 @@ public class BandwidthProcessorTest {
     chainBaseManager.getAccountStore().put(issuerCapsuleV2.getAddress().toByteArray(),
         issuerCapsuleV2);
 
-    AccountAssetIssueCapsule issuerAccountAsstCapsuleV2 = chainBaseManager.getAccountAssetIssueStore()
+    AccountAssetIssueCapsule issuerAccountAsstCapsuleV2 =
+            chainBaseManager.getAccountAssetIssueStore()
             .get(ByteArray.fromHexString(ASSET_ADDRESS_V2));
 
-    chainBaseManager.getAccountAssetIssueStore().put(issuerAccountAsstCapsuleV2.getAddress().toByteArray(),
+    chainBaseManager.getAccountAssetIssueStore()
+            .put(issuerAccountAsstCapsuleV2.getAddress().toByteArray(),
             issuerAccountAsstCapsuleV2);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -464,13 +478,17 @@ public class BandwidthProcessorTest {
     AccountCapsule issuerCapsuleNew = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(ASSET_ADDRESS_V2));
 
-    AccountAssetIssueCapsule ownerAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore()
+    AccountAssetIssueCapsule ownerAssetIssueCapsule =
+            chainBaseManager.getAccountAssetIssueStore()
             .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    AccountAssetIssueCapsule issueAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore()
+    AccountAssetIssueCapsule issueAssetIssueCapsule =
+            chainBaseManager.getAccountAssetIssueStore()
             .get(ByteArray.fromHexString(ASSET_ADDRESS_V2));
 
-    Assert.assertEquals(508882612L, issuerCapsuleNew.getLatestConsumeTime());
-    Assert.assertEquals(1526647838000L, ownerCapsuleNew.getLatestOperationTime());
+    Assert.assertEquals(508882612L,
+            issuerCapsuleNew.getLatestConsumeTime());
+    Assert.assertEquals(1526647838000L,
+            ownerCapsuleNew.getLatestOperationTime());
 
     Assert.assertEquals(508882612L,
             ownerAssetIssueCapsule.getLatestAssetOperationTimeV2(ASSET_NAME_V2));
@@ -669,7 +687,8 @@ public class BandwidthProcessorTest {
             ByteString.copyFromUtf8("owner"),
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
     chainBaseManager.getAccountAssetIssueStore()
-            .put(ownerAccountAssetIssueCapsule.getAddress().toByteArray(), ownerAccountAssetIssueCapsule);
+            .put(ownerAccountAssetIssueCapsule.getAddress().toByteArray(),
+                    ownerAccountAssetIssueCapsule);
 
     AccountCapsule toAddressCapsule =
         new AccountCapsule(
@@ -858,10 +877,13 @@ public class BandwidthProcessorTest {
       Assert.assertNotNull(fromAccount);
 
       AccountAssetIssueCapsule fromAccountAssetIssue =
-              chainBaseManager.getAccountAssetIssueStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+              chainBaseManager.getAccountAssetIssueStore()
+                      .get(ByteArray.fromHexString(OWNER_ADDRESS));
 
-      Assert.assertEquals(fromAccountAssetIssue.getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
-      Assert.assertEquals(fromAccountAssetIssue.getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
+      Assert.assertEquals(fromAccountAssetIssue
+              .getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
+      Assert.assertEquals(fromAccountAssetIssue
+              .getFreeAssetNetUsageV2(String.valueOf(id)), byteSize);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);

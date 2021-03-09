@@ -20,7 +20,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -119,8 +123,12 @@ public class ExchangeWithdrawActuatorTest {
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
 
-    dbManager.getAccountAssetIssueStore().put(ownerAccountAssetIssueFirst.getAddress().toByteArray(), ownerAccountAssetIssueFirst);
-    dbManager.getAccountAssetIssueStore().put(ownerAccountAssetIssueSecond.getAddress().toByteArray(), ownerAccountAssetIssueSecond);
+    dbManager.getAccountAssetIssueStore()
+            .put(ownerAccountAssetIssueFirst.getAddress().toByteArray(),
+                    ownerAccountAssetIssueFirst);
+    dbManager.getAccountAssetIssueStore()
+            .put(ownerAccountAssetIssueSecond.getAddress().toByteArray(),
+                    ownerAccountAssetIssueSecond);
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
@@ -284,7 +292,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = dbManager.getAccountAssetIssueStore().get(ownerAddress);
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            dbManager.getAccountAssetIssueStore().get(ownerAddress);
 
     Map<String, Long> assetMap = accountAssetIssueCapsule.getAssetMap();
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
@@ -361,7 +370,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = dbManager.getAccountAssetIssueStore().get(ownerAddress);
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            dbManager.getAccountAssetIssueStore().get(ownerAddress);
     Map<String, Long> assetMap = accountAssetIssueCapsule.getAssetMap();
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(firstTokenId));
@@ -437,7 +447,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = dbManager.getAccountAssetIssueStore().get(ownerAddress);
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            dbManager.getAccountAssetIssueStore().get(ownerAddress);
 
     Map<String, Long> assetV2Map = accountAssetIssueCapsule.getAssetMapV2();
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
@@ -506,7 +517,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = dbManager.getAccountAssetIssueStore().get(ownerAddress);
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            dbManager.getAccountAssetIssueStore().get(ownerAddress);
 
     Map<String, Long> assetMap = accountAssetIssueCapsule.getAssetMap();
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
@@ -580,7 +592,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = dbManager.getAccountAssetIssueStore().get(ownerAddress);
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            dbManager.getAccountAssetIssueStore().get(ownerAddress);
 
     Map<String, Long> assetV2Map = accountAssetIssueCapsule.getAssetMapV2();
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());

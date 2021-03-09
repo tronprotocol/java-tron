@@ -117,10 +117,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   private void executeTransparentFrom(byte[] ownerAddress, long amount,
       TransactionResultCapsule ret, long fee)
       throws ContractExeException {
-    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-
-
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {

@@ -132,7 +132,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       Assert.assertEquals(1, result[31]);
 
       //update frontier and leafCount
-      
+
       int slot = result[63];
       if (slot == 0) {
         System.arraycopy(inputData, 0, frontier, 0, 32);
