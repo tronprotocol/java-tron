@@ -1093,16 +1093,17 @@ public class Wallet {
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
     byte[] address = accountAddress.toByteArray();
     AccountCapsule accountCapsule =
-        chainBaseManager.getAccountStore().get(accountAddress.toByteArray());
-    AccountAssetIssueCapsule accountAssetIssueCapsule =
-            chainBaseManager.getAccountAssetIssueStore().get(address);
+        chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       return null;
     }
 
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+
     processor.updateUsage(accountCapsule);
 
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            chainBaseManager.getAccountAssetIssueStore().get(address);
     long netLimit = processor
         .calculateGlobalNetLimit(accountCapsule);
     long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();

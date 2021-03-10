@@ -19,6 +19,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -40,9 +41,9 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   private void updateUsage(AccountCapsule accountCapsule, long now) {
-    AccountAssetIssueCapsule accountAssetIssueCapsule =
-            chainBaseManager.getAccountAssetIssueStore()
-            .get(accountCapsule.getAddress().toByteArray());
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(accountCapsule.getAddress().toByteArray());;
+
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     accountCapsule.setNetUsage(increase(oldNetUsage, 0, latestConsumeTime, now));
@@ -69,6 +70,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       accountAssetIssueCapsule.putFreeAssetNetUsageV2(assetName,
           increase(oldFreeAssetNetUsage, 0, latestAssetOperationTime, now));
     });
+    accountAssetIssueStore.put(accountAssetIssueCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
   }
 
   @Override

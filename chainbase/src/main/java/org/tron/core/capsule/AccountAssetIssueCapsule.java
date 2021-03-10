@@ -12,7 +12,7 @@ import org.tron.protos.Protocol.AccountAssetIssue;
 import java.util.Map;
 
 @Slf4j(topic = "capsule")
-public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>, Comparable<AccountAssetIssue> {
+public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue> {
 
     private AccountAssetIssue accountAssetIssue;
 
@@ -358,8 +358,4 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         return this.accountAssetIssue.toString();
     }
 
-    @Override
-    public int compareTo(AccountAssetIssue o) {
-        return 0;
-    }
 }
