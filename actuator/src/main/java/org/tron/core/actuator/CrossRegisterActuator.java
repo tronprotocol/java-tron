@@ -17,13 +17,13 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.BalanceContract.RegisterCrossContract;
+import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 @Slf4j(topic = "actuator")
 public class CrossRegisterActuator extends AbstractActuator {
 
   public CrossRegisterActuator() {
-    super(ContractType.RegisterCrossContract, RegisterCrossContract.class);
+    super(ContractType.RegisterCrossContract, CrossChainInfo.class);
   }
 
   @Override
@@ -38,13 +38,13 @@ public class CrossRegisterActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     try {
-      RegisterCrossContract registerCrossContract = any.unpack(RegisterCrossContract.class);
-      byte[] ownerAddress = registerCrossContract.getOwnerAddress().toByteArray();
-      String chainId = registerCrossContract.getCrossChainInfo().getChainId().toString();
+      CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
+      byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
+      String chainId = crossChainInfo.getChainId().toString();
       long burn = dynamicStore.getBurnedForRegisterCross();
       Commons.adjustBalance(accountStore, ownerAddress, -burn);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), burn);
-      crossRevokingStore.putChainInfo(chainId, registerCrossContract.getCrossChainInfo().toByteArray());
+      crossRevokingStore.putChainInfo(chainId, crossChainInfo.toByteArray());
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -65,21 +65,21 @@ public class CrossRegisterActuator extends AbstractActuator {
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
-    if (!this.any.is(RegisterCrossContract.class)) {
+    if (!this.any.is(CrossChainInfo.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [RegisterCrossContract], real type [" + this.any
               .getClass() + "]");
     }
-    final RegisterCrossContract registerCrossContract;
+    final CrossChainInfo CrossChainInfo;
     try {
-      registerCrossContract = any.unpack(RegisterCrossContract.class);
+      CrossChainInfo = any.unpack(CrossChainInfo.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
-    byte[] chainId = registerCrossContract.getCrossChainInfo().getChainId().toByteArray();
-    byte[] ownerAddress = registerCrossContract.getOwnerAddress().toByteArray();
+    byte[] chainId = CrossChainInfo.getChainId().toByteArray();
+    byte[] ownerAddress = CrossChainInfo.getOwnerAddress().toByteArray();
 
     // check chain_id is exist
     if (crossRevokingStore.getChainInfo(ByteArray.toStr(chainId)) != null) {
@@ -109,7 +109,7 @@ public class CrossRegisterActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(RegisterCrossContract.class).getOwnerAddress();
+    return any.unpack(CrossChainInfo.class).getOwnerAddress();
   }
 
   @Override

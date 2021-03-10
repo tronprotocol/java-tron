@@ -103,20 +103,11 @@ message CrossToken {
 }
 
 message CrossChainInfo {
-  bytes chain_id = 1;
-  bytes sr_list = 2;
-  int64 begin_sync_height = 3;
-  int64 maintenance_time_interval = 4;
-  bytes parent_block_hash = 5;
-  int64 block_time = 6;
-}
-
-message RegisterCrossContract {
   bytes owner_address = 1;
-  CrossChainInfo cross_chain_info = 2;
-}
-
-message UpdateCrossContract {
-  bytes owner_address = 1;
-  CrossChainInfo cross_chain_info = 2;
+  bytes chain_id = 2;
+  bytes sr_list = 3;
+  int64 begin_sync_height = 4;
+  int64 maintenance_time_interval = 5;
+  bytes parent_block_hash = 6;
+  int64 block_time = 7;
 }

@@ -785,7 +785,7 @@ service Wallet {
   rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
   };
 
-  rpc RegisterCross (RegisterCrossContract) returns (TransactionExtention) {
+  rpc RegisterCross (CrossChainInfo) returns (TransactionExtention) {
   };
 
   rpc GetRegisterCrossList (EmptyMessage) returns (RegisterCrossList) {
@@ -1536,7 +1536,7 @@ message ShieldedTRC20TriggerContractParameters {
 }
 
 message RegisterCrossList {
-  repeated RegisterCrossContract registerCrossContract = 1;
+  repeated CrossChainInfo crossChainInfo = 1;
 }
 
 message VoteCrossList {
