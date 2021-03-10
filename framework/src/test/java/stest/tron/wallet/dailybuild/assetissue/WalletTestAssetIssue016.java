@@ -132,8 +132,7 @@ public class WalletTestAssetIssue016 {
 
     AccountNetMessage assetIssueInfo = PublicMethed
         .getAccountNet(asset016Address, blockingStubFull);
-    Assert.
-            assertTrue(assetIssueInfo.getAssetNetLimitCount() == 1);
+    Assert.assertTrue(assetIssueInfo.getAssetNetLimitCount() == 1);
     Assert.assertTrue(assetIssueInfo.getAssetNetUsedCount() == 1);
     Assert.assertFalse(assetIssueInfo.getAssetNetLimitMap().isEmpty());
     Assert.assertFalse(assetIssueInfo.getAssetNetUsedMap().isEmpty());
