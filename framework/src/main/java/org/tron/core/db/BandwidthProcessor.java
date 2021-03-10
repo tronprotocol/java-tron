@@ -43,7 +43,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   private void updateUsage(AccountCapsule accountCapsule, long now) {
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     AccountAssetIssueCapsule accountAssetIssueCapsule =
-            accountAssetIssueStore.get(accountCapsule.getAddress().toByteArray());;
+            accountAssetIssueStore.get(accountCapsule.getAddress().toByteArray());
 
     long oldNetUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
