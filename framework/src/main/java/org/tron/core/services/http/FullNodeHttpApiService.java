@@ -281,6 +281,24 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
+  @Autowired
+  private RegisterCrossChainServlet registerCrossChainServlet;
+
+  @Autowired
+  private GetRegisterCrossChainListServlet getRegisterCrossChainListServlet;
+
+  @Autowired
+  private VoteCrossChainServlet voteCrossChainServlet;
+
+  @Autowired
+  private UnvoteCrossChainServlet unvoteCrossChainServlet;
+
+  @Autowired
+  private GetCrossChainVoteDetailListServlet getCrossChainVoteDetailListServlet;
+
+  @Autowired
+  private GetCrossChainVoteSummaryListServlet getCrossChainVoteSummaryListServlet;
+
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
@@ -523,6 +541,15 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockBalanceServlet),
           "/wallet/getblockbalance");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/wallet/getburntrx");
+
+      context.addServlet(new ServletHolder(registerCrossChainServlet), "/wallet/registercrosschain");
+      context.addServlet(new ServletHolder(getRegisterCrossChainListServlet), "/wallet/getcrosschainregisterlist");
+      context.addServlet(new ServletHolder(voteCrossChainServlet), "/wallet/votecrosschain");
+      context.addServlet(new ServletHolder(unvoteCrossChainServlet), "/wallet/unvotecrosschain");
+      context.addServlet(new ServletHolder(getCrossChainVoteDetailListServlet),
+              "/wallet/getcrosschainvotedetaillist");
+      context.addServlet(new ServletHolder(getCrossChainVoteSummaryListServlet),
+              "/wallet/getcrosschainvotesummarylist");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

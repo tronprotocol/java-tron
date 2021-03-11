@@ -16,14 +16,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.CrossChain.VoteCrossContract;
+import org.tron.protos.contract.CrossChain.VoteCrossChainContract;
 
 @Slf4j(topic = "actuator")
-public class VoteCrossActuator extends AbstractActuator {
+public class VoteCrossChainActuator extends AbstractActuator {
 
 
-  public VoteCrossActuator() {
-    super(ContractType.VoteCrossContract, VoteCrossContract.class);
+  public VoteCrossChainActuator() {
+    super(ContractType.VoteCrossChainContract, VoteCrossChainContract.class);
   }
 
   @Override
@@ -35,15 +35,23 @@ public class VoteCrossActuator extends AbstractActuator {
 
     long fee = calcFee();
     try {
-      VoteCrossContract voteCrossContract = any.unpack(VoteCrossContract.class);
+      VoteCrossChainContract voteCrossContract = any.unpack(VoteCrossChainContract.class);
       AccountStore accountStore = chainBaseManager.getAccountStore();
       CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
       String chainId = voteCrossContract.getChainId().toString();
       long amount = voteCrossContract.getAmount();
       byte[] address = voteCrossContract.getOwnerAddress().toByteArray();
-      long voted = crossRevokingStore.getChainVote(chainId, ByteArray.toHexString(address));
+
+      byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(chainId, ByteArray.toHexString(address));
+      if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
+        VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
+        VoteCrossChainContract.Builder builder = voteCrossContract.toBuilder();
+        builder.setAmount(voteCrossInfo.getAmount() + amount);
+        voteCrossContract = builder.build();
+      }
+
       Commons.adjustBalance(accountStore, address, -amount);
-      crossRevokingStore.putChainVote(chainId, ByteArray.toHexString(address), voted + amount);
+      crossRevokingStore.putChainVote(chainId, ByteArray.toHexString(address), voteCrossContract.toByteArray());
       crossRevokingStore.updateTotalChainVote(chainId, amount);
 
       Commons.adjustBalance(accountStore, address, -fee);
@@ -67,14 +75,14 @@ public class VoteCrossActuator extends AbstractActuator {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    if (!this.any.is(VoteCrossContract.class)) {
+    if (!this.any.is(VoteCrossChainContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [VoteCrossContract], real type[" + any
               .getClass() + "]");
     }
-    final VoteCrossContract contract;
+    final VoteCrossChainContract contract;
     try {
-      contract = this.any.unpack(VoteCrossContract.class);
+      contract = this.any.unpack(VoteCrossChainContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -93,11 +101,20 @@ public class VoteCrossActuator extends AbstractActuator {
     }
 
     String readableOwnerAddress = ByteArray.toHexString(ownerAddress);
-    long voteCountBefore = crossRevokingStore.getChainVote(chainId, readableOwnerAddress);
+    byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(chainId, readableOwnerAddress);
+    if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
+      try {
+        VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
+        long voteCountBefore = voteCrossInfo.getAmount();
 
-    if (voteCountBefore + amount < 0) {
-      throw new ContractValidateException(
-          "the amount for revoke is larger than the vote count.");
+        if (voteCountBefore + amount < 0) {
+          throw new ContractValidateException(
+                  "the amount for revoke is larger than the vote count.");
+        }
+      } catch (InvalidProtocolBufferException e) {
+        logger.debug(e.getMessage(), e);
+        throw new ContractValidateException(e.getMessage());
+      }
     }
 
     return true;
@@ -105,7 +122,7 @@ public class VoteCrossActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(VoteCrossContract.class).getOwnerAddress();
+    return any.unpack(VoteCrossChainContract.class).getOwnerAddress();
   }
 
   @Override

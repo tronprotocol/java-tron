@@ -84,21 +84,16 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
 
   // todo: vote-infos are only stored in the db, but not stored on the chain,
   // can track the details of the withdraw and deposit
-  public void putChainVote(String chainId, String address, long amount) {
-    this.put(buildVoteKey(chainId, address), new BytesCapsule(ByteArray.fromLong(amount)));
+  public void putChainVote(String chainId, String address, byte[] chainVoteInfo) {
+    this.put(buildVoteKey(chainId, address), new BytesCapsule(chainVoteInfo));
   }
 
   public void deleteChainVote(String chainId, String address) {
     this.delete(buildVoteKey(chainId, address));
   }
 
-  public Long getChainVote(String chainId, String address) {
-    BytesCapsule data = getUnchecked(buildVoteKey(chainId, address));
-    if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
-      return ByteArray.toLong(data.getData());
-    } else {
-      return 0L;
-    }
+  public byte[] getChainVote(String chainId, String address) {
+    return getUnchecked(buildVoteKey(chainId, address)).getData();
   }
 
   public void updateTotalChainVote(String chainId, long amount) {
@@ -151,6 +146,45 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     } else {
       return Collections.emptyList();
     }
+  }
+
+  public List<byte[]> getRegisterChainList(long offset, long limit) {
+    if (offset < 0 || limit < 0) {
+      return null;
+    }
+    return Streams.stream(iterator())
+        .filter(entry -> "register_".startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+        .map(entry -> entry.getValue().getData())
+        .skip(offset)
+        .limit(limit)
+        .collect(Collectors.toList());
+  }
+
+  public List<byte[]> getCrossChainVoteDetailList(long offset, long limit, String chainId) {
+    if (offset < 0 || limit < 0) {
+      return null;
+    }
+    String startStr = "vote_" + chainId;
+    return Streams.stream(iterator())
+            .filter(entry -> startStr.startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+            .map(entry -> entry.getValue().getData())
+            .skip(offset)
+            .limit(limit)
+            .collect(Collectors.toList());
+  }
+
+  public List<Pair<String, Long>> getCrossChainTotalVoteList(long offset, long limit) {
+    if (offset < 0 || limit < 0) {
+      return null;
+    }
+
+    return Streams.stream(iterator())
+            .filter(entry -> "voted_".startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+            .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey()).substring(6),
+                    ByteArray.toLong(entry.getValue().getData())))
+            .skip(offset)
+            .limit(limit)
+            .collect(Collectors.toList());
   }
 
   private byte[] buildTokenKey(String chainId, String tokenId) {

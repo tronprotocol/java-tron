@@ -785,20 +785,22 @@ service Wallet {
   rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
   };
 
-  rpc RegisterCross (CrossChainInfo) returns (TransactionExtention) {
+  rpc RegisterCrossChain (CrossChainInfo) returns (TransactionExtention) {
   };
 
-  rpc GetRegisterCrossList (EmptyMessage) returns (RegisterCrossList) {
+  rpc GetRegisterCrossChainList (PaginatedMessage) returns (RegisterCrossChainList) {
   };
 
-  rpc VoteCross (VoteCrossContract) returns (TransactionExtention) {
+  rpc VoteCrossChain (VoteCrossChainContract) returns (TransactionExtention) {
   };
 
-  rpc UnvoteCross (UnvoteCrossContract) returns (TransactionExtention) {
+  rpc UnvoteCrossChain (UnvoteCrossChainContract) returns (TransactionExtention) {
   };
 
-  // TODO: the data structure of PARAM and RETURN need to be discussed
-  rpc GetVoteCrossList (BytesMessage) returns (VoteCrossList) {
+  rpc GetCrossChainVoteSummaryList (PaginatedMessage) returns (CrossChainVoteSummaryList) {
+  };
+
+  rpc GetCrossChainVoteDetailList (CrossChainVotePaginated) returns (CrossChainVoteDetailList) {
   };
 };
 
@@ -1535,10 +1537,25 @@ message ShieldedTRC20TriggerContractParameters {
   bytes transparent_to_address = 4;
 }
 
-message RegisterCrossList {
+message RegisterCrossChainList {
   repeated CrossChainInfo crossChainInfo = 1;
 }
 
-message VoteCrossList {
-  repeated VoteCrossContract voteCrossContract = 1;
+message CrossChainVoteSummary {
+  bytes chain_id = 1;
+  int64 amount = 2;
+}
+
+message CrossChainVoteSummaryList {
+  repeated CrossChainVoteSummary crossChainVoteSummary = 1;
+}
+
+message CrossChainVotePaginated {
+  bytes chain_id = 1;
+  int64 offset = 2;
+  int64 limit = 3;
+}
+
+message CrossChainVoteDetailList {
+  repeated VoteCrossChainContract voteCrossChainContract = 1;
 }

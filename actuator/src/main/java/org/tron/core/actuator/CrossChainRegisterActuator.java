@@ -20,10 +20,10 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 @Slf4j(topic = "actuator")
-public class CrossRegisterActuator extends AbstractActuator {
+public class CrossChainRegisterActuator extends AbstractActuator {
 
-  public CrossRegisterActuator() {
-    super(ContractType.RegisterCrossContract, CrossChainInfo.class);
+  public CrossChainRegisterActuator() {
+    super(ContractType.RegisterCrossChainContract, CrossChainInfo.class);
   }
 
   @Override

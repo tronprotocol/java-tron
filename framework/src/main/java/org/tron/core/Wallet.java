@@ -145,11 +145,7 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.BandwidthProcessor;
-import org.tron.core.db.BlockIndexStore;
-import org.tron.core.db.EnergyProcessor;
-import org.tron.core.db.Manager;
-import org.tron.core.db.TransactionContext;
+import org.tron.core.db.*;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -213,6 +209,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.CrossChain;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
@@ -3746,6 +3743,56 @@ public class Wallet {
     if (accountIdentifier.getAddress().isEmpty()) {
       throw new IllegalArgumentException("account_identifier address is null");
     }
+  }
+
+  public GrpcAPI.RegisterCrossChainList getRegisterCrossList(long offset, long limit) {
+    GrpcAPI.RegisterCrossChainList.Builder builder = GrpcAPI.RegisterCrossChainList.newBuilder();
+    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    List<byte[]> chainList = crossRevokingStore.getRegisterChainList(offset, limit);
+    if (CollectionUtils.isEmpty(chainList)) {
+      return null;
+    }
+    chainList.forEach(chainInfo -> {
+      try {
+        builder.addCrossChainInfo(BalanceContract.CrossChainInfo.parseFrom(chainInfo));
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
+    });
+    return builder.build();
+  }
+
+  public GrpcAPI.CrossChainVoteDetailList getCrossChainVoteDetailList(long offset, long limit, String chainId) {
+    GrpcAPI.CrossChainVoteDetailList.Builder builder = GrpcAPI.CrossChainVoteDetailList.newBuilder();
+    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    List<byte[]> chainVoteList = crossRevokingStore.getCrossChainVoteDetailList(offset, limit, chainId);
+    if (CollectionUtils.isEmpty(chainVoteList)) {
+      return null;
+    }
+    chainVoteList.forEach(voteInfo -> {
+      try {
+        builder.addVoteCrossChainContract(CrossChain.VoteCrossChainContract.parseFrom(voteInfo));
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
+    });
+    return builder.build();
+  }
+
+  public GrpcAPI.CrossChainVoteSummaryList getCrossChainTotalVoteList(long offset, long limit) {
+    GrpcAPI.CrossChainVoteSummaryList.Builder builder = GrpcAPI.CrossChainVoteSummaryList.newBuilder();
+    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    List<org.tron.common.utils.Pair<String, Long>> chainVoteList = crossRevokingStore.getCrossChainTotalVoteList(offset, limit);
+    if (CollectionUtils.isEmpty(chainVoteList)) {
+      return null;
+    }
+    chainVoteList.forEach(voteInfo -> {
+        GrpcAPI.CrossChainVoteSummary.Builder totalVoteBuilder = GrpcAPI.CrossChainVoteSummary.newBuilder();
+        totalVoteBuilder.setChainId(ByteString.copyFrom(voteInfo.getKey().getBytes()));
+        totalVoteBuilder.setAmount(voteInfo.getValue());
+        builder.addCrossChainVoteSummary(totalVoteBuilder.build());
+    });
+    return builder.build();
   }
 }
 

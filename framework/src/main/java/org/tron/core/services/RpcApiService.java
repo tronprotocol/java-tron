@@ -141,6 +141,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
@@ -148,6 +149,7 @@ import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.CrossChain;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -2641,6 +2643,48 @@ public class RpcApiService implements Service {
     public void checkCrossTransactionCommit(BytesMessage request,
         StreamObserver<Return> responseObserver) {
       checkCrossTransactionCommitCommon(request, responseObserver);
+    }
+
+    @Override
+    public void registerCrossChain(BalanceContract.CrossChainInfo request,
+                              StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.RegisterCrossChainContract, responseObserver);
+    }
+
+    @Override
+    public void getRegisterCrossChainList(PaginatedMessage request,
+                                     StreamObserver<GrpcAPI.RegisterCrossChainList> responseObserver) {
+      GrpcAPI.RegisterCrossChainList registerCrossList =
+              wallet.getRegisterCrossList(request.getOffset(), request.getLimit());
+      responseObserver.onNext(registerCrossList);
+    }
+
+    @Override
+    public void voteCrossChain(CrossChain.VoteCrossChainContract request,
+                          StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.VoteCrossChainContract, responseObserver);
+    }
+
+    @Override
+    public void unvoteCrossChain(CrossChain.UnvoteCrossChainContract request,
+                          StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnvoteCrossChainContract, responseObserver);
+    }
+
+    @Override
+    public void getCrossChainVoteSummaryList(PaginatedMessage request,
+                                      StreamObserver<GrpcAPI.CrossChainVoteSummaryList> responseObserver) {
+      GrpcAPI.CrossChainVoteSummaryList crossTotalVoteList =
+              wallet.getCrossChainTotalVoteList(request.getOffset(), request.getLimit());
+      responseObserver.onNext(crossTotalVoteList);
+    }
+
+    @Override
+    public void getCrossChainVoteDetailList(GrpcAPI.CrossChainVotePaginated request,
+                                       StreamObserver<GrpcAPI.CrossChainVoteDetailList> responseObserver) {
+      GrpcAPI.CrossChainVoteDetailList voteCrossList = wallet.getCrossChainVoteDetailList(request.getOffset(),
+              request.getLimit(), request.getChainId().toString());
+      responseObserver.onNext(voteCrossList);
     }
   }
 
