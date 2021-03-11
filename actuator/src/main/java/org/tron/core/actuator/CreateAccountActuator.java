@@ -9,11 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -38,6 +40,7 @@ public class CreateAccountActuator extends AbstractActuator {
     long fee = calcFee();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     try {
       AccountCreateContract accountCreateContract = any.unpack(AccountCreateContract.class);
       boolean withDefaultPermission =
@@ -47,6 +50,10 @@ public class CreateAccountActuator extends AbstractActuator {
 
       accountStore
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
+
+      AccountAssetIssueCapsule accountAssetIssueCapsule =
+              new AccountAssetIssueCapsule(accountCapsule.getAddress());
+      accountAssetIssueStore.put(accountCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
 
       Commons
           .adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
