@@ -788,6 +788,9 @@ service Wallet {
   rpc RegisterCrossChain (CrossChainInfo) returns (TransactionExtention) {
   };
 
+  rpc UpdateCrossChain (CrossChainInfo) returns (TransactionExtention) {
+  };
+
   rpc GetRegisterCrossChainList (PaginatedMessage) returns (RegisterCrossChainList) {
   };
 

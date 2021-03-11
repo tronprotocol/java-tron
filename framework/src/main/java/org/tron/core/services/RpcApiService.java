@@ -2652,6 +2652,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void updateCrossChain(BalanceContract.CrossChainInfo request,
+                                   StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UpdateCrossChainContract, responseObserver);
+    }
+
+    @Override
     public void getRegisterCrossChainList(PaginatedMessage request,
                                      StreamObserver<GrpcAPI.RegisterCrossChainList> responseObserver) {
       GrpcAPI.RegisterCrossChainList registerCrossList =
