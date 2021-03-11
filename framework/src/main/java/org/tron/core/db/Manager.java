@@ -396,6 +396,8 @@ public class Manager {
     //int account asset issue import
     chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
 
+//    chainBaseManager.getAccountAssetIssueStore().RollbackAssetIssueToAccount();
+
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }

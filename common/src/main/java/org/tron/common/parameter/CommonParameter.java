@@ -97,6 +97,11 @@ public class CommonParameter {
   @Getter
   @Parameter(names = {"--fast-forward"})
   public boolean fastForward = false;
+
+  @Getter
+  @Parameter(names = {"--rollback"}, description = "Rollback")
+  public boolean rollback = false;
+
   @Getter
   @Setter
   public String chainId;

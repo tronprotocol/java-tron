@@ -19,6 +19,7 @@ import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.core.store.AccountAssetIssueStore;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -67,8 +68,10 @@ public class FullNode {
     TronApplicationContext context =
         new TronApplicationContext(beanFactory);
     context.register(DefaultConfig.class);
-
     context.refresh();
+
+    checkRollback(context);
+
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
@@ -115,5 +118,12 @@ public class FullNode {
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+  }
+
+  public static void checkRollback(TronApplicationContext context) {
+    if (Args.getInstance().isRollback()) {
+      AccountAssetIssueStore accountAssetIssueStore = context.getBean(AccountAssetIssueStore.class);
+      accountAssetIssueStore.RollbackAssetIssueToAccount();
+    }
   }
 }

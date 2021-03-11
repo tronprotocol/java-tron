@@ -454,7 +454,7 @@ public class Util {
   }
 
   public static Account convertAccount(Account account, AccountAssetIssue accountAssetIssue) {
-    account = account.toBuilder()
+    return account.toBuilder()
             .setAddress(accountAssetIssue.getAddress())
             .setAssetIssuedID(accountAssetIssue.getAssetIssuedID())
             .setAssetIssuedName(accountAssetIssue.getAssetIssuedName())
@@ -462,11 +462,11 @@ public class Util {
             .putAllAssetV2(accountAssetIssue.getAssetV2Map())
 
             .putAllFreeAssetNetUsage(accountAssetIssue.getFreeAssetNetUsageMap())
-            .putAllFreeAssetNetUsageV2(accountAssetIssue.getFreeAssetNetUsageMap())
+            .putAllFreeAssetNetUsageV2(accountAssetIssue.getFreeAssetNetUsageV2Map())
+
             .putAllLatestAssetOperationTime(accountAssetIssue.getLatestAssetOperationTimeMap())
             .putAllLatestAssetOperationTimeV2(accountAssetIssue.getLatestAssetOperationTimeV2Map())
             .build();
-    return account;
   }
 
   public static void printAccount(Account reply, HttpServletResponse response, Boolean visible)
