@@ -69,7 +69,6 @@ public class ByteArraySet implements Set<byte[]> {
 
       @Override
       public byte[] next() {
-        ByteArrayWrapper next = it.next();
         if (!hasNext()) {
           throw new NoSuchElementException();
         }
