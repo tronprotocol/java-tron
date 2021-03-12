@@ -95,7 +95,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
       accountConvertQueue.convertAccountAssetIssueToAccount();
       long readC = readCount.get();
       long writeC = writeCount.get();
-      logger.info("import asset time: {}s, r({})/w({})",
+      logger.info("import asset time: {}s, r({}s)/w({}s)",
           (System.currentTimeMillis() - start) / 1000,
           readC,
           writeC);
@@ -121,21 +121,21 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
           this,
           accountStore);
       accountConvertQueue.convert();
-      dynamicPropertiesStore.setAllowAssetImport(1L);
     } finally {
       TimerUtil.cancel(timer);
     }
 
     long readC = readCount.get();
     long writeC = writeCount.get();
-    logger.info("import asset time: {}s, r({})/w({})",
+    logger.info("import asset time: {}s, r({}s)/w({}s)",
         (System.currentTimeMillis() - start) / 1000,
         readC,
         writeC);
   }
 
-  public void waitUtilConvertFinish() {
+  public void waitUtilConvertAccountFinish() {
     accountConvertQueue.waitUtilConvertFinish();
+    dynamicPropertiesStore.setAllowAssetImport(1L);
   }
 
   public class AccountAssetIssueRecordQueue {
