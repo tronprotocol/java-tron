@@ -393,9 +393,6 @@ public class Manager {
       System.exit(1);
     }
     getChainBaseManager().getForkController().init(this.chainBaseManager);
-    //int account asset issue import
-    chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
-
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }
@@ -403,7 +400,10 @@ public class Manager {
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
+    //int account asset issue import
+    chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
     initCacheTxs();
+    chainBaseManager.getAccountAssetIssueStore().waitUtilConvertFinish();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
