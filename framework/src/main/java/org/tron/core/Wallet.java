@@ -1133,15 +1133,13 @@ public class Wallet {
     byte[] address = accountAddress.toByteArray();
     AccountCapsule accountCapsule =
         chainBaseManager.getAccountStore().get(address);
-    AccountAssetIssueCapsule accountAssetIssueCapsule =
-            chainBaseManager.getAccountAssetIssueStore().get(address);
     if (accountCapsule == null) {
       return null;
     }
-
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
-
+    AccountAssetIssueCapsule accountAssetIssueCapsule =
+            chainBaseManager.getAccountAssetIssueStore().get(address);
     EnergyProcessor energyProcessor = new EnergyProcessor(
         chainBaseManager.getDynamicPropertiesStore(),
         chainBaseManager.getAccountStore());
