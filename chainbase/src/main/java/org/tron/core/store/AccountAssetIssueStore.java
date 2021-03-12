@@ -185,12 +185,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     private AccountStore accountStore;
 
     public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
-                               AccountAssetIssueStore accountAssetIssueStore) {
-      this.convertQueue = convertQueue;
-      this.accountAssetIssueStore = accountAssetIssueStore;
-    }
-
-    public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
                                AccountAssetIssueStore accountAssetIssueStore,
                                AccountStore accountStore) {
       this.convertQueue = convertQueue;
