@@ -1,18 +1,20 @@
 package org.tron.core.store;
 
-import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.BlockQueueFactoryUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.ThreadPoolUtil;
+import org.tron.common.utils.TimerUtil;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.common.IRevokingDB;
-import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountAssetIssue;
 
 
@@ -21,14 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j(topic = "DB")
 @Component
@@ -57,20 +54,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         }
     }
 
-    public Timer countDown() {
-        Timer timer = new Timer();
-        AtomicInteger count = new AtomicInteger();
-        timer.schedule(new TimerTask() {
-            public void run() {
-                int second = count.incrementAndGet();
-                if (second % 5 == 0) {
-                    logger.info("import asset current second: {} S", second);
-                }
-            }
-        }, 0, 1000);
-        return timer;
-    }
-
     @Override
     public AccountAssetIssueCapsule get(byte[] key) {
         byte[] value = revokingDB.getUnchecked(key);
@@ -84,6 +67,36 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         return getUnchecked(assertsAddress.get("Blackhole"));
     }
 
+    public void RollbackAssetIssueToAccount() {
+        long start = System.currentTimeMillis();
+        logger.info("rollback asset to account store");
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        Timer timer = null;
+        if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
+            logger.info("");
+            return;
+        }
+        AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
+                BlockQueueFactoryUtil.getInstance(),
+                countDownLatch);
+        accountRecordQueue.fetchAccountAssetIssue(this.getRevokingDB());
+        AccountConvertQueue accountConvertQueue = new AccountConvertQueue(
+                BlockQueueFactoryUtil.getInstance(),
+                this,
+                accountStore);
+        accountConvertQueue.convertAccountAssetIssueToAccount();
+
+        try {
+            timer = TimerUtil.countDown("rollback account asset issue to account time spent ");
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            TimerUtil.cancel(timer);
+        }
+        logger.info("import asset time: {}", (System.currentTimeMillis() - start) / 1000);
+    }
+
     public void convertAccountAssert() {
         long start = System.currentTimeMillis();
         logger.info("import asset of account store to account asset store ");
@@ -92,25 +105,22 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
             try {
                 AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
-                        BlockQueueFactory.getInstance(),
+                        BlockQueueFactoryUtil.getInstance(),
                         countDownLatch);
                 accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
-
                 AccountConvertQueue accountConvertQueue = new AccountConvertQueue(
-                        BlockQueueFactory.getInstance(),
+                        BlockQueueFactoryUtil.getInstance(),
                         this,
                         accountStore);
                 accountConvertQueue.convert();
-                timer = countDown();
+                timer = TimerUtil.countDown("import asset time spent ");
                 countDownLatch.await();
                 dynamicPropertiesStore.setAllowAssetImport(1L);
             } catch (InterruptedException e) {
                 logger.error("convert asset of account to account store exception: {}", e.getMessage(), e);
                 Thread.currentThread().interrupt();
             } finally {
-                if (null != timer) {
-                    timer.cancel();
-                }
+                TimerUtil.cancel(timer);
             }
         }
         logger.info("import asset time: {}", (System.currentTimeMillis() - start) / 1000);
@@ -137,6 +147,14 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         }
 
         public void fetchAccount(IRevokingDB revokingDB) {
+            fetch(revokingDB);
+        }
+
+        public void fetchAccountAssetIssue(IRevokingDB revokingDB) {
+            fetch(revokingDB);
+        }
+
+        private void fetch(IRevokingDB revokingDB) {
             new Thread(() -> {
                 for (Map.Entry<byte[], byte[]> accountRecord : revokingDB) {
                     put(accountRecord);
@@ -145,7 +163,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             }).start();
         }
     }
-
 
     public static class AccountConvertQueue {
 
@@ -157,11 +174,11 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
         private AccountStore accountStore;
 
-        private static final int CORE_POOL_SIZE = 4;
-
-        public static final int MAX_POOL_SIZE = 8;
-
-        public static final int KEEP_ALIVE_SECONDES = 30;
+        public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
+                                   AccountAssetIssueStore accountAssetIssueStore) {
+            this.convertQueue = convertQueue;
+            this.accountAssetIssueStore = accountAssetIssueStore;
+        }
 
         public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
                                    AccountAssetIssueStore accountAssetIssueStore, AccountStore accountStore) {
@@ -171,28 +188,29 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         }
 
         public void convert() {
-            threadPoolExecutor = getThreadPoolExecutor();
-            for (int i = 0; i < MAX_POOL_SIZE; i++) {
+            threadPoolExecutor = ThreadPoolUtil.getThreadPoolExecutor(40000);
+            for (int i = 0; i < threadPoolExecutor.getMaximumPoolSize(); i++) {
                 threadPoolExecutor.execute(() -> {
                     try {
                         while (true) {
                             Map.Entry<byte[], byte[]> accountEntry = convertQueue.take();
                             AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
+                            byte[] address = accountCapsule.getAddress().toByteArray();
                             AccountAssetIssue accountAssetIssue = AccountAssetIssue.newBuilder()
                                     .setAddress(accountCapsule.getAddress())
                                     .setAssetIssuedID(accountCapsule.getAssetIssuedID())
                                     .setAssetIssuedName(accountCapsule.getAssetIssuedName())
                                     .putAllAsset(accountCapsule.getAssetMap())
                                     .putAllAssetV2(accountCapsule.getAssetMapV2())
-
                                     .putAllFreeAssetNetUsage(accountCapsule.getAllFreeAssetNetUsage())
                                     .putAllFreeAssetNetUsageV2(accountCapsule.getAllFreeAssetNetUsageV2())
                                     .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
                                     .putAllLatestAssetOperationTimeV2(accountCapsule.getLatestAssetOperationTimeMapV2())
                                     .build();
-                            accountAssetIssueStore.put(accountCapsule.getAddress().toByteArray(),
+
+                            accountAssetIssueStore.put(address,
                                     new AccountAssetIssueCapsule(accountAssetIssue));
-                            Protocol.Account account = accountCapsule.getInstance();
+                            Account account = accountCapsule.getInstance();
                             account = account.toBuilder()
                                     .clearAssetIssuedID()
                                     .clearAssetIssuedName()
@@ -203,7 +221,8 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                                     .clearLatestAssetOperationTime()
                                     .clearLatestAssetOperationTimeV2()
                                     .build();
-                            accountStore.put(account.getAddress().toByteArray(), new AccountCapsule(account));
+                            accountCapsule.setInstance(account);
+                            accountStore.put(address, accountCapsule);
                         }
                     } catch (InterruptedException e) {
                         logger.error("account convert asset exception: {}", e.getMessage(), e);
@@ -213,38 +232,38 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             }
         }
 
-        private ThreadPoolExecutor getThreadPoolExecutor() {
-            return new ThreadPoolExecutor(
-                    CORE_POOL_SIZE,
-                    MAX_POOL_SIZE,
-                    KEEP_ALIVE_SECONDES,
-                    TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>(40000)
-            );
-        }
-
-        public void closeTask() {
-            threadPoolExecutor.shutdown();
+        public void convertAccountAssetIssueToAccount () {
+            threadPoolExecutor = ThreadPoolUtil.getThreadPoolExecutor(40000);
+            for (int i = 0; i < threadPoolExecutor.getMaximumPoolSize(); i++) {
+                threadPoolExecutor.execute(() -> {
+                    try {
+                        while (true) {
+                            Map.Entry<byte[], byte[]> accountAssetIssue = convertQueue.take();
+                            AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule(accountAssetIssue.getValue());
+                            byte[] address = accountAssetIssueCapsule.getAddress().toByteArray();
+                            AccountCapsule accountCapsule = accountStore.get(address);
+                            Account account = accountCapsule.getInstance()
+                                    .toBuilder()
+                                    .setAddress(accountAssetIssueCapsule.getAddress())
+                                    .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
+                                    .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
+                                    .putAllAsset(accountAssetIssueCapsule.getAssetMap())
+                                    .putAllAssetV2(accountAssetIssueCapsule.getAssetMapV2())
+                                    .putAllFreeAssetNetUsage(accountAssetIssueCapsule.getAllFreeAssetNetUsage())
+                                    .putAllFreeAssetNetUsageV2(accountAssetIssueCapsule.getAllFreeAssetNetUsageV2())
+                                    .putAllLatestAssetOperationTime(accountAssetIssueCapsule.getLatestAssetOperationTimeMap())
+                                    .putAllLatestAssetOperationTimeV2(accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
+                                    .build();
+                            accountCapsule.setInstance(account);
+                            accountStore.put(address, accountCapsule);
+                        }
+                    } catch (InterruptedException e) {
+                        logger.error("convert account asset assue to account exception: {}", e.getMessage(), e);
+                        Thread.currentThread().interrupt();
+                    }
+                });
+            }
         }
     }
 
-
-    public static class BlockQueueFactory {
-
-        private static BlockingQueue queue;
-
-        public static BlockingQueue getInstance() {
-            if (null == queue) {
-                queue = getInstance(20000);
-            }
-            return queue;
-        }
-
-        public static BlockingQueue getInstance(int capcity) {
-            if (null == queue) {
-                queue = new LinkedBlockingDeque<>(capcity);
-            }
-            return queue;
-        }
-    }
 }
