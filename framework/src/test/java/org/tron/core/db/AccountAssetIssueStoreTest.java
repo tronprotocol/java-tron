@@ -24,7 +24,7 @@ public class AccountAssetIssueStoreTest {
   private static TronApplicationContext context;
   private static AccountAssetIssueStore accountAssetIssueStore;
   private static byte[] address = TransactionStoreTest.randomBytes(32);
-  private static byte[] accounAssetIssuetName = TransactionStoreTest.randomBytes(32);
+  private static byte[] accountAssetIssuetName = TransactionStoreTest.randomBytes(32);
 
   static {
     Args.setParam(
@@ -42,7 +42,7 @@ public class AccountAssetIssueStoreTest {
   public static void init() {
     accountAssetIssueStore = context.getBean(AccountAssetIssueStore.class);
     AccountAssetIssueCapsule accountCapsule = new AccountAssetIssueCapsule(
-                    ByteString.copyFrom(accounAssetIssuetName),
+                    ByteString.copyFrom(accountAssetIssuetName),
                     ByteString.copyFrom(address)
             );
     accountAssetIssueStore.put(data, accountCapsule);
@@ -64,7 +64,7 @@ public class AccountAssetIssueStoreTest {
                             .getInstance().getAddress().toByteArray()))
     ;
     Assert
-            .assertEquals(ByteArray.toHexString(accounAssetIssuetName), ByteArray
+            .assertEquals(ByteArray.toHexString(accountAssetIssuetName), ByteArray
                     .toHexString(accountAssetIssueStore.get(data)
                             .getInstance().getAssetIssuedName().toByteArray()))
     ;
