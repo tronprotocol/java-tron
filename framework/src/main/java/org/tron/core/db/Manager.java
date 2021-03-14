@@ -91,6 +91,7 @@ import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.api.VotePowerUpdateHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
@@ -268,6 +269,10 @@ public class Manager {
     return getDynamicPropertiesStore().getTokenUpdateDone() == 0L;
   }
 
+  public boolean needToUpdateVotePower() {
+    return getDynamicPropertiesStore().getVotePowerUpdateDone() == 0L;
+  }
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return chainBaseManager.getDynamicPropertiesStore();
   }
@@ -398,6 +403,10 @@ public class Manager {
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
+    }
+
+    if (Args.getInstance().isNeedToUpdateVotePower() && needToUpdateVotePower()) {
+      new VotePowerUpdateHelper(chainBaseManager).doWork();
     }
 
     //for test only

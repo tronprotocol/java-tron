@@ -297,6 +297,9 @@ public class CommonParameter {
   public boolean needToUpdateAsset;
   @Getter
   @Setter
+  public boolean needToUpdateVotePower;
+  @Getter
+  @Setter
   public String trxReferenceBlock;
   @Getter
   @Setter

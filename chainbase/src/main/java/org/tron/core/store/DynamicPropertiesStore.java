@@ -117,6 +117,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
   //Used only for token updates, once，value is {0,1}
   private static final byte[] TOKEN_UPDATE_DONE = "TOKEN_UPDATE_DONE".getBytes();
+  //Used only for vote power updates, once，value is {0,1}
+  private static final byte[] VOTE_POWER_UPDATE_DONE = "VOTE_POWER_UPDATE_DONE".getBytes();
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
   //If the parameter is larger than 0, allow ZKsnark Transaction
@@ -232,6 +234,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTokenUpdateDone();
     } catch (IllegalArgumentException e) {
       this.saveTokenUpdateDone(0);
+    }
+
+    try {
+      this.getVotePowerUpdateDone();
+    } catch (IllegalArgumentException e) {
+      this.saveVotePowerUpdateDone(0);
     }
 
     try {
@@ -782,6 +790,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOKEN_UPDATE_DONE"));
   }
+
+  public void saveVotePowerUpdateDone(long num) {
+    this.put(VOTE_POWER_UPDATE_DONE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getVotePowerUpdateDone() {
+    return Optional.ofNullable(getUnchecked(VOTE_POWER_UPDATE_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found VOTE_POWER_UPDATE_DONE"));
+  }
+
 
   public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
     logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
