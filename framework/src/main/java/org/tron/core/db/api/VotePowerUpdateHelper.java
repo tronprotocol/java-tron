@@ -33,7 +33,7 @@ public class VotePowerUpdateHelper {
         chainBaseManager.getAccountStore().iterator();
     while (iterator.hasNext()) {
       AccountCapsule accountCapsule = iterator.next().getValue();
-      accountCapsule.setVotePower12(accountCapsule.getTronPower());
+      accountCapsule.setVotePower413(accountCapsule.getTronPower());
       chainBaseManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
       if (count % 50000 == 0) {

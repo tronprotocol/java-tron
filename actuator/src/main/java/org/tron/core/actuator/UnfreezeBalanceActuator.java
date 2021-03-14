@@ -130,7 +130,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       accountCapsule.setBalance(oldBalance + unfreezeBalance);
-      accountCapsule.setVotePower12(accountCapsule.getVotePower12() - unfreezeBalance);
+      accountCapsule.setVotePower413(accountCapsule.getVotePower413() - unfreezeBalance);
 
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
