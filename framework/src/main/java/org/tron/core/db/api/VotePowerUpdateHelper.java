@@ -42,7 +42,7 @@ public class VotePowerUpdateHelper {
       count++;
     }
 
-    logger.info("Complete the account store update, total assets: {}", count);
+    logger.info("Complete the account vote power update, total account: {}", count);
   }
 
   public void finish() {
