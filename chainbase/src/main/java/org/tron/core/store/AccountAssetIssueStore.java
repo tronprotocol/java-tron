@@ -222,9 +222,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
               AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
               byte[] address = accountCapsule.getAddress().toByteArray();
-              if (StringUtil.encode58Check(address).equals("TFKPPxamwpQqsTdBF6azgPqbRgYMVu8FFk")) {
-                System.out.println(accountCapsule.toString());
-              }
               AccountAssetIssue accountAssetIssue = AccountAssetIssue.newBuilder()
                   .setAddress(accountCapsule.getAddress())
                   .setAssetIssuedID(accountCapsule.getAssetIssuedID())
