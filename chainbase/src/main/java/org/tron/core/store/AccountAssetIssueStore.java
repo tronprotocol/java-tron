@@ -21,9 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.util.Args;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.BlockQueueFactoryUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
@@ -83,11 +85,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void RollbackAssetIssueToAccount(String outputDirectory) {
-    if (dynamicPropertiesStore.getAllowAssetImport()) {
-      logger.info("no synchronization has been performed, no rollback is required");
-      return;
-    }
-
     long start = System.currentTimeMillis();
     logger.info("rollback asset to account store");
     timer = TimerUtil.countDown("The database is being indexed ",
@@ -99,15 +96,12 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     accountConvertQueue =
             new AccountConvertQueue(BlockQueueFactoryUtil.getInstance(), this, accountStore);
     accountConvertQueue.convertAccountAssetIssueToAccount();
-    long rea = readCount.get();
-    long writeC = writeCount.get();
     logger.info("The database indexing completed, total time spent:{}s," +
                     " r({}s)/w({}s), total account count:{}",
             (System.currentTimeMillis() - start) / 1000,
             readCost,
             writeCost,
             writeCount);
-    waitUtilConvertAccountFinish();
     logger.info("rollback account asset issue to account successful!!");
     dynamicPropertiesStore.setAllowAssetImport(true);
     removeDB(outputDirectory);
@@ -115,6 +109,11 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void convertAccountAssert() {
+    if (CommonParameter.getInstance().isRollback()) {
+      logger.info("import asset of account store to account asset store has been skipped");
+      return;
+    }
+
     if (!dynamicPropertiesStore.getAllowAssetImport()) {
       logger.info("import asset of account store to account asset store has been done, skip");
       return;
@@ -134,15 +133,13 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void waitUtilConvertAccountFinish() {
+    if (!dynamicPropertiesStore.getAllowAssetImport()) {
+      return;
+    }
     try {
       long start = System.currentTimeMillis();
-      if (accountConvertQueue != null) {
-        accountConvertQueue.waitUtilConvertFinish();
-      }
-      if (dynamicPropertiesStore != null) {
-        dynamicPropertiesStore.setAllowAssetImport(false);
-      }
-
+      accountConvertQueue.waitUtilConvertFinish();
+      dynamicPropertiesStore.setAllowAssetImport(false);
       logger.info("The database indexing completed, total time spent:{}s," +
                       " r({}s)/w({}s, total account count:{})",
               (System.currentTimeMillis() - start) / 1000,
@@ -224,6 +221,10 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
               if (accountEntry == null) {
                 TimeUnit.MILLISECONDS.sleep(5);
+                continue;
+              }
+
+              if (accountAssetIssueStore.has(accountEntry.getKey())) {
                 continue;
               }
 
@@ -326,14 +327,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         writeFutures.add(future);
       }
 
-      for (Future<?> future : writeFutures) {
-        try {
-          future.get();
-        } catch (InterruptedException | ExecutionException e) {
-          logger.error(e.getMessage(), e);
-        }
-      }
-      writeCost.set(System.currentTimeMillis() - writeCost.get());
+      waitUtilConvertFinish();
     }
   }
 
@@ -348,7 +342,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
           int second = count.incrementAndGet();
           if (second % 5 == 0) {
             logger.info(message + ": {}s, r({})/w({}), Completed {}%",
-                second, readCount, writeCount, writeCount.get() / ACCOUNT_ESTIMATED_COUNT * 100);
+                second, readCount, writeCount, writeCount.get() * 100 / ACCOUNT_ESTIMATED_COUNT);
           }
         }
       }, 0, 1000);
