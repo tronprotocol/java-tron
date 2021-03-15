@@ -109,6 +109,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void convertAccountAssert() {
+    dynamicPropertiesStore.setAllowAssetImport(true);
     if (CommonParameter.getInstance().isRollback()) {
       logger.info("import asset of account store to account asset store has been skipped");
       return;
