@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -89,6 +90,12 @@ public class UnvoteCrossActuator extends AbstractActuator {
     if (voteCountBefore == 0) {
       throw new ContractValidateException(
           "this address has not voted for this chain.");
+    }
+
+    List<String> paraChainList = crossRevokingStore.getParaChainList();
+    if (paraChainList.contains(chainId)) {
+      throw new ContractValidateException(
+              "can not unvote from a parachain");
     }
 
     return true;
