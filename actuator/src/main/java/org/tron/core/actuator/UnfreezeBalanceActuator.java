@@ -130,7 +130,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       accountCapsule.setBalance(oldBalance + unfreezeBalance);
-      accountCapsule.setVotePower413(accountCapsule.getVotePower413() - unfreezeBalance);
 
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
@@ -218,6 +217,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         //this should never happen
         break;
     }
+
+    accountCapsule.setVotePower413(accountCapsule.getVotePower413() - unfreezeBalance);
 
     VotesCapsule votesCapsule;
     if (!votesStore.has(ownerAddress)) {
