@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -13,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -22,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.BlockQueueFactoryUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.ThreadPoolUtil;
-import org.tron.common.utils.TimerUtil;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -35,6 +36,7 @@ import org.tron.protos.Protocol.AccountAssetIssue;
 public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIssueCapsule> {
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>();
+  public static final long ACCOUNT_ESTIMATED_COUNT = 22_500_000;
   AccountConvertQueue accountConvertQueue;
   @Autowired
   private AccountStore accountStore;
@@ -47,6 +49,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   private AtomicLong writeCount = new AtomicLong(0);
   private AtomicLong writeCost = new AtomicLong(0);
   private List<Future<?>> writeFutures = new ArrayList<>();
+  private Timer timer;
 
   @Autowired
   protected AccountAssetIssueStore(@Value("account-asset-issue") String dbName) {
@@ -81,38 +84,39 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     try {
       long start = System.currentTimeMillis();
       logger.info("rollback asset to account store");
-      timer = TimerUtil.countDown("rollback account asset issue to account time spent ",
+      timer = TimerUtil.countDown("The database is being indexed ",
           readCount, writeCount);
-      if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
-        logger.info("");
-        return;
-      }
+
       AccountAssetIssueRecordQueue accountRecordQueue =
           new AccountAssetIssueRecordQueue(BlockQueueFactoryUtil.getInstance());
       accountRecordQueue.fetchAccountAssetIssue(this.getRevokingDB());
       accountConvertQueue =
-          new AccountConvertQueue(BlockQueueFactoryUtil.getInstance(), this, accountStore);
+          new AccountConvertQueue(BlockQueueFactoryUtil.getInstance(),
+              this, accountStore);
       accountConvertQueue.convertAccountAssetIssueToAccount();
-      long readC = readCount.get();
+      long rea = readCount.get();
       long writeC = writeCount.get();
-      logger.info("import asset time: {}s, r({}s)/w({}s)",
+      logger.info("The database indexing completed, total time spent:{}s," +
+              " r({}s)/w({}s), total account count:{}",
           (System.currentTimeMillis() - start) / 1000,
-          readC,
-          writeC);
+          readCost,
+          writeCost,
+          writeCount);
+      dynamicPropertiesStore.setAllowAssetImport(true);
     } finally {
       TimerUtil.cancel(timer);
     }
   }
 
   public void convertAccountAssert() {
-    if (dynamicPropertiesStore.getAllowAssetImport() != 0L) {
-      logger.info("import asset of account store to account asset store has been done");
+    if (!dynamicPropertiesStore.getAllowAssetImport()) {
+      logger.info("import asset of account store to account asset store has been done, skip");
+      return;
     }
 
-    logger.info("import asset of account store to account asset store ");
-    long start = System.currentTimeMillis();
-    Timer timer = TimerUtil.countDown("import asset time spent ", readCount, writeCount);
-    try {
+    logger.info("begin to index the database");
+    timer = TimerUtil.countDown("The database is being indexed ",
+        readCount, writeCount);
       AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
           BlockQueueFactoryUtil.getInstance());
       accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
@@ -121,21 +125,22 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
           this,
           accountStore);
       accountConvertQueue.convert();
-    } finally {
-      TimerUtil.cancel(timer);
-    }
-
-    long readC = readCount.get();
-    long writeC = writeCount.get();
-    logger.info("import asset time: {}s, r({}s)/w({}s)",
-        (System.currentTimeMillis() - start) / 1000,
-        readC,
-        writeC);
   }
 
   public void waitUtilConvertAccountFinish() {
-    accountConvertQueue.waitUtilConvertFinish();
-    dynamicPropertiesStore.setAllowAssetImport(1L);
+    try {
+      long start = System.currentTimeMillis();
+      accountConvertQueue.waitUtilConvertFinish();
+      dynamicPropertiesStore.setAllowAssetImport(false);
+      logger.info("The database indexing completed, total time spent:{}s," +
+              " r({}s)/w({}s, total account count:{})",
+          (System.currentTimeMillis() - start) / 1000,
+          readCost.get(),
+          writeCost.get(),
+          writeCount);
+    } finally {
+      TimerUtil.cancel(timer);
+    }
   }
 
   public class AccountAssetIssueRecordQueue {
@@ -318,4 +323,30 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
       writeCost.set(System.currentTimeMillis() - writeCost.get());
     }
   }
+
+  @Slf4j(topic = "DB")
+  public static class TimerUtil {
+
+    public static Timer countDown(String message, AtomicLong readCount, AtomicLong writeCount) {
+      Timer timer = new Timer();
+      AtomicInteger count = new AtomicInteger();
+      timer.schedule(new TimerTask() {
+        public void run() {
+          int second = count.incrementAndGet();
+          if (second % 5 == 0) {
+            logger.info(message + ": {}s, r({})/w({}), Completed {}%",
+                second, readCount, writeCount, writeCount.get() / ACCOUNT_ESTIMATED_COUNT * 100);
+          }
+        }
+      }, 0, 1000);
+      return timer;
+    }
+
+    public static void cancel (Timer timer) {
+      if (null != timer) {
+        timer.cancel();
+      }
+    }
+  }
+
 }

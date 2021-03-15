@@ -1,5 +1,7 @@
 package org.tron.common.utils;
 
+import java.util.Optional;
+import java.util.concurrent.Callable;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+@Deprecated
 @Slf4j(topic = "DB")
 public class AssetConverter<T, V> {
 
@@ -100,11 +103,15 @@ public class AssetConverter<T, V> {
               continue;
             }
             V v = consumer.apply(t);
-            succeed.apply(v);
+            if (Objects.nonNull(succeed)) {
+              succeed.apply(v);
+            }
             stats.writeCount.incrementAndGet();
             stats.writeCost.getAndSet(System.currentTimeMillis() - stats.writeStarter.get());
           } catch (Exception e) {
-            error.run();
+            if (Objects.nonNull(error)) {
+              error.run();
+            }
           }
         }
       }));
@@ -114,12 +121,20 @@ public class AssetConverter<T, V> {
   }
 
   public void done() {
+    done(null);
+  }
+
+  public void done(Runnable runnable) {
     for (Future<?> future : futures) {
       try {
         future.get();
       } catch (InterruptedException | ExecutionException e) {
         logger.error(e.getMessage(), e);
       }
+    }
+
+    if (Objects.nonNull(runnable)) {
+      runnable.run();
     }
   }
 

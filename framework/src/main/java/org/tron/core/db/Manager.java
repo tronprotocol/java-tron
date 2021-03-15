@@ -402,8 +402,8 @@ public class Manager {
 
     //int account asset issue import
     chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
-    initCacheTxs();
     chainBaseManager.getAccountAssetIssueStore().waitUtilConvertAccountFinish();
+    initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -422,6 +422,7 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
+    System.exit(0);
   }
 
   /**
