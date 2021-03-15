@@ -130,6 +130,7 @@ public class AssetConverter<T, V> {
         future.get();
       } catch (InterruptedException | ExecutionException e) {
         logger.error(e.getMessage(), e);
+        Thread.currentThread().interrupt();
       }
     }
 

@@ -480,13 +480,9 @@ public class Manager {
                       account.getAccountType(),
                       account.getBalance());
 
-              final AccountAssetIssueCapsule accountAssetIssueCapsule =
-                      new AccountAssetIssueCapsule(ByteString.copyFrom(account.getAddress()));
               chainBaseManager.getAccountStore().put(account.getAddress(), accountCapsule);
               chainBaseManager.getAccountIdIndexStore().put(accountCapsule);
               chainBaseManager.getAccountIndexStore().put(accountCapsule);
-              chainBaseManager.getAccountAssetIssueStore()
-                      .put(account.getAddress(), accountAssetIssueCapsule);
             });
   }
 

@@ -109,6 +109,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void convertAccountAssert() {
+    dynamicPropertiesStore.setAllowAssetImport(true);
     if (CommonParameter.getInstance().isRollback()) {
       logger.info("import asset of account store to account asset store has been skipped");
       return;
@@ -282,6 +283,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
           future.get();
         } catch (InterruptedException | ExecutionException e) {
           logger.error(e.getMessage(), e);
+          Thread.currentThread().interrupt();
         }
       }
       writeCost.set(System.currentTimeMillis() - writeCost.get());
