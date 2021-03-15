@@ -261,11 +261,11 @@ def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') 
 if (releaseBinary == 'true') {
     artifacts {
         archives(
-//                binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
+                binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
                 binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-//                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-//                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-//                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool')
+                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
+                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool')
         )
     }
 }
