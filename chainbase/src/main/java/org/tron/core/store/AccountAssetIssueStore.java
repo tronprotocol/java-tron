@@ -133,7 +133,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void waitUtilConvertAccountFinish() {
-    if (!dynamicPropertiesStore.getAllowAssetImport()) {
+    if (CommonParameter.getInstance().isRollback() || !dynamicPropertiesStore.getAllowAssetImport()) {
       return;
     }
     try {
