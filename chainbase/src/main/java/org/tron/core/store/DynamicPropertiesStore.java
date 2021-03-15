@@ -735,7 +735,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowAssetImport();
     } catch (IllegalArgumentException e) {
-      this.setAllowAssetImport(0L);
+      this.setAllowAssetImport(true);
     }
 
   }
@@ -2176,15 +2176,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_BLACKHOLE_OPTIMIZATION"));
   }
 
-  public long getAllowAssetImport() {
+  // 0: disable 1: enable
+  public boolean getAllowAssetImport() {
     return Optional.ofNullable(getUnchecked(ALLOW_ASSET_IMPORT))
             .map(BytesCapsule::getData)
             .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ASSET_IMPORT"));
+            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ASSET_IMPORT")) != 0;
   }
 
-  public void setAllowAssetImport(long importFlag) {
-    this.put(ALLOW_ASSET_IMPORT, new BytesCapsule(ByteArray.fromLong(importFlag)));
+  public void setAllowAssetImport(boolean importFlag) {
+    this.put(ALLOW_ASSET_IMPORT, new BytesCapsule(ByteArray.fromLong(importFlag?1:0)));
   }
 
   private static class DynamicResourceProperties {

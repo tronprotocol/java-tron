@@ -1,22 +1,14 @@
 package org.tron.common.utils;
 
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
-public class BlockQueueFactoryUtil<T> {
-    private static BlockingQueue queue;
+public class BlockQueueFactoryUtil {
+    private static final BlockingQueue<Map.Entry<byte[], byte[]>> QUEUE
+        = new LinkedBlockingDeque<>(2_000_000);
 
-    public static synchronized BlockingQueue getInstance() {
-        if (null == queue) {
-            queue = getInstance(20000);
-        }
-        return queue;
-    }
-
-    public static synchronized BlockingQueue getInstance(int capacity) {
-        if (null == queue) {
-            queue = new LinkedBlockingDeque<>(capacity);
-        }
-        return queue;
+    public static BlockingQueue<Map.Entry<byte[], byte[]>> getInstance() {
+        return QUEUE;
     }
 }

@@ -123,7 +123,8 @@ public class FullNode {
   public static void checkRollback(TronApplicationContext context) {
     if (Args.getInstance().isRollback()) {
       AccountAssetIssueStore accountAssetIssueStore = context.getBean(AccountAssetIssueStore.class);
-      accountAssetIssueStore.RollbackAssetIssueToAccount();
+      String outputDirectory = Args.getInstance().getOutputDirectory();
+      accountAssetIssueStore.RollbackAssetIssueToAccount(outputDirectory);
     }
   }
 }
