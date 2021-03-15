@@ -282,6 +282,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
           future.get();
         } catch (InterruptedException | ExecutionException e) {
           logger.error(e.getMessage(), e);
+          Thread.currentThread().interrupt();
         }
       }
       writeCost.set(System.currentTimeMillis() - writeCost.get());
