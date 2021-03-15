@@ -42,7 +42,7 @@ import org.tron.protos.Protocol.AccountAssetIssue;
 public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIssueCapsule> {
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>();
-  public static final long ACCOUNT_ESTIMATED_COUNT = 22_500_000;
+  public static final long ACCOUNT_ESTIMATED_COUNT = 25_000_000;
   AccountConvertQueue accountConvertQueue;
   @Autowired
   private AccountStore accountStore;
@@ -348,8 +348,13 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         public void run() {
           int second = count.incrementAndGet();
           if (second % 5 == 0) {
+            long completed = writeCount.get() * 100 / ACCOUNT_ESTIMATED_COUNT;
+            if (completed > 99) {
+              completed = 99;
+            }
+
             logger.info(message + ": {}s, r({})/w({}), Completed {}%",
-                second, readCount, writeCount, writeCount.get() * 100 / ACCOUNT_ESTIMATED_COUNT);
+                second, readCount, writeCount, completed);
           }
         }
       }, 0, 1000);
