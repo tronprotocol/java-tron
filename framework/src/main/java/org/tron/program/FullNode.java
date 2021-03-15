@@ -124,7 +124,7 @@ public class FullNode {
     if (Args.getInstance().isRollback()) {
       AccountAssetIssueStore accountAssetIssueStore = context.getBean(AccountAssetIssueStore.class);
       String outputDirectory = Args.getInstance().getOutputDirectory();
-      accountAssetIssueStore.RollbackAssetIssueToAccount(outputDirectory);
+      accountAssetIssueStore.rollbackAssetIssueToAccount(outputDirectory);
     }
   }
 }
