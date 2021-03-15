@@ -256,9 +256,14 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                   .clearLatestAssetOperationTime()
                   .clearLatestAssetOperationTimeV2()
                   .build();
+
+              //set VotePower
+              accountCapsule.setVotePower413(accountCapsule.getTronPower());
+
               accountCapsule.setInstance(account);
               accountStore.put(address, accountCapsule);
               writeCount.incrementAndGet();
+
             }
           } catch (InterruptedException e) {
             logger.error("account convert asset exception: {}", e.getMessage(), e);
