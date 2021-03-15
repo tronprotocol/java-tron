@@ -635,6 +635,10 @@ public class TransferFailed003 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     Assert.assertNotEquals(10000000, energyUsageTotal);
 
+    Long nonexistentAddressAccount = PublicMethed
+        .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
+    Assert.assertEquals(0L, nonexistentAddressAccount.longValue());
+
 
   }
 
