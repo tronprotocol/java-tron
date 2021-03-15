@@ -402,6 +402,7 @@ public class Manager {
 
     //int account asset issue import
     chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
+    chainBaseManager.getAccountAssetIssueStore().waitUtilConvertAccountFinish();
     initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
