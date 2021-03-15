@@ -4,7 +4,6 @@ import com.typesafe.config.ConfigObject;
 
 import java.io.File;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +83,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void RollbackAssetIssueToAccount(String outputDirectory) {
-    if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
+    if (dynamicPropertiesStore.getAllowAssetImport()) {
       logger.info("no synchronization has been performed, no rollback is required");
       return;
     }
@@ -214,7 +213,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     public void convert() {
       ExecutorService writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
       writeCost.set(System.currentTimeMillis());
-
       for (int i = 0; i < ThreadPoolUtil.getMaxPoolSize(); i++) {
         Future<?> future = writeExecutor.submit(() -> {
           try {
