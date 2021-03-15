@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.BlockQueueFactoryUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.ThreadPoolUtil;
 import org.tron.common.utils.TimerUtil;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
