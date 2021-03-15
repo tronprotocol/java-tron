@@ -260,11 +260,13 @@ createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNo
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
 if (releaseBinary == 'true') {
     artifacts {
-        archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
+        archives(
+//                binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
                 binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+//                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+//                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
+//                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool')
+        )
     }
 }
 
