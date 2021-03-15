@@ -1,6 +1,8 @@
 package org.tron.core.store;
 
 import com.typesafe.config.ConfigObject;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.BlockQueueFactoryUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.ThreadPoolUtil;
 import org.tron.common.utils.TimerUtil;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
@@ -47,6 +51,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   private AtomicLong writeCount = new AtomicLong(0);
   private AtomicLong writeCost = new AtomicLong(0);
   private List<Future<?>> writeFutures = new ArrayList<>();
+  private static Timer timer = null;
 
   @Autowired
   protected AccountAssetIssueStore(@Value("account-asset-issue") String dbName) {
@@ -75,67 +80,72 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     return getUnchecked(assertsAddress.get("Blackhole"));
   }
 
-  public void RollbackAssetIssueToAccount() {
-
-    Timer timer = null;
-    try {
-      long start = System.currentTimeMillis();
-      logger.info("rollback asset to account store");
-      timer = TimerUtil.countDown("rollback account asset issue to account time spent ",
-          readCount, writeCount);
-      if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
-        logger.info("");
-        return;
-      }
-      AccountAssetIssueRecordQueue accountRecordQueue =
-          new AccountAssetIssueRecordQueue(BlockQueueFactoryUtil.getInstance());
-      accountRecordQueue.fetchAccountAssetIssue(this.getRevokingDB());
-      accountConvertQueue =
-          new AccountConvertQueue(BlockQueueFactoryUtil.getInstance(), this, accountStore);
-      accountConvertQueue.convertAccountAssetIssueToAccount();
-      long readC = readCount.get();
-      long writeC = writeCount.get();
-      logger.info("import asset time: {}s, r({}s)/w({}s)",
-          (System.currentTimeMillis() - start) / 1000,
-          readC,
-          writeC);
-    } finally {
-      TimerUtil.cancel(timer);
+  public void RollbackAssetIssueToAccount(String outputDirectory) {
+    if (dynamicPropertiesStore.getAllowAssetImport() == 0L) {
+      logger.info("no synchronization has been performed, no rollback is required");
+      return;
     }
+    long start = System.currentTimeMillis();
+    logger.info("rollback asset to account store");
+    timer = TimerUtil.countDown("rollback account asset issue to account time spent ",
+            readCount, writeCount);
+
+    AccountAssetIssueRecordQueue accountRecordQueue =
+            new AccountAssetIssueRecordQueue(BlockQueueFactoryUtil.getInstance());
+    accountRecordQueue.fetchAccountAssetIssue(this.getRevokingDB());
+    accountConvertQueue =
+            new AccountConvertQueue(BlockQueueFactoryUtil.getInstance(), this, accountStore);
+    accountConvertQueue.convertAccountAssetIssueToAccount();
+    long readC = readCount.get();
+    long writeC = writeCount.get();
+    logger.info("rollback asset time: {}s, r({}s)/w({}s)",
+            (System.currentTimeMillis() - start) / 1000,
+            readC,
+            writeC);
+    waitUtilConvertAccountFinish();
+    logger.info("rollback account asset issue to account successful!!");
+    dynamicPropertiesStore.setAllowAssetImport(0L);
+    removeDB(outputDirectory);
+    System.exit(0);
   }
 
   public void convertAccountAssert() {
     if (dynamicPropertiesStore.getAllowAssetImport() != 0L) {
       logger.info("import asset of account store to account asset store has been done");
+      return;
     }
 
     logger.info("import asset of account store to account asset store ");
     long start = System.currentTimeMillis();
-    Timer timer = TimerUtil.countDown("import asset time spent ", readCount, writeCount);
-    try {
-      AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
-          BlockQueueFactoryUtil.getInstance());
-      accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
-      accountConvertQueue = new AccountConvertQueue(
-          BlockQueueFactoryUtil.getInstance(),
-          this,
-          accountStore);
-      accountConvertQueue.convert();
-    } finally {
-      TimerUtil.cancel(timer);
-    }
 
+    AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
+            BlockQueueFactoryUtil.getInstance());
+    timer = TimerUtil.countDown("import asset time spent ", readCount, writeCount);
+    accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
+    accountConvertQueue = new AccountConvertQueue(
+            BlockQueueFactoryUtil.getInstance(),
+            this,
+            accountStore);
+    accountConvertQueue.convert();
     long readC = readCount.get();
     long writeC = writeCount.get();
     logger.info("import asset time: {}s, r({}s)/w({}s)",
-        (System.currentTimeMillis() - start) / 1000,
-        readC,
-        writeC);
+            (System.currentTimeMillis() - start) / 1000,
+            readC,
+            writeC);
+    waitUtilConvertAccountFinish();
   }
 
   public void waitUtilConvertAccountFinish() {
-    accountConvertQueue.waitUtilConvertFinish();
-    dynamicPropertiesStore.setAllowAssetImport(1L);
+    if (accountConvertQueue != null) {
+      accountConvertQueue.waitUtilConvertFinish();
+    }
+    if (dynamicPropertiesStore != null) {
+      dynamicPropertiesStore.setAllowAssetImport(1L);
+    }
+    if (timer != null) {
+      TimerUtil.cancel(timer);
+    }
   }
 
   public class AccountAssetIssueRecordQueue {
@@ -195,6 +205,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     public void convert() {
       ExecutorService writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
       writeCost.set(System.currentTimeMillis());
+
       for (int i = 0; i < ThreadPoolUtil.getMaxPoolSize(); i++) {
         Future<?> future = writeExecutor.submit(() -> {
           try {
@@ -211,6 +222,9 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
               AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
               byte[] address = accountCapsule.getAddress().toByteArray();
+              if (StringUtil.encode58Check(address).equals("TFKPPxamwpQqsTdBF6azgPqbRgYMVu8FFk")) {
+                System.out.println(accountCapsule.toString());
+              }
               AccountAssetIssue accountAssetIssue = AccountAssetIssue.newBuilder()
                   .setAddress(accountCapsule.getAddress())
                   .setAssetIssuedID(accountCapsule.getAssetIssuedID())
@@ -316,6 +330,15 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         }
       }
       writeCost.set(System.currentTimeMillis() - writeCost.get());
+    }
+  }
+
+  private void removeDB(String outputDirectory) {
+    String accountAssetIssueDB = outputDirectory + File.separator + "database" + File.separator + "account-asset-issue";
+    if (FileUtil.deleteDir(new File(accountAssetIssueDB))) {
+      logger.info("remove account-asset-issue DB, success");
+    } else {
+      logger.info("remove account-asset-issue DB, fail");
     }
   }
 }
