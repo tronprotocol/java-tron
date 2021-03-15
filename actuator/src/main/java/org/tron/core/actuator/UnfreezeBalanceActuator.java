@@ -218,6 +218,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         break;
     }
 
+    accountCapsule.setVotePower413(accountCapsule.getVotePower413() - unfreezeBalance);
+
     VotesCapsule votesCapsule;
     if (!votesStore.has(ownerAddress)) {
       votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),

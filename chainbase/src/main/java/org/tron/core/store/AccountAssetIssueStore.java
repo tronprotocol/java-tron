@@ -221,7 +221,12 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                                     .clearLatestAssetOperationTime()
                                     .clearLatestAssetOperationTimeV2()
                                     .build();
+
                             accountCapsule.setInstance(account);
+
+                            //set VotePower
+                            accountCapsule.setVotePower413(accountCapsule.getTronPower());
+
                             accountStore.put(address, accountCapsule);
                         }
                     } catch (InterruptedException e) {
