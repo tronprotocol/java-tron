@@ -42,7 +42,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>();
   public static final long ACCOUNT_ESTIMATED_COUNT = 25_000_000;
-  AccountConvertQueue accountConvertQueue;
+  private AccountConvertQueue accountConvertQueue;
   @Autowired
   private AccountStore accountStore;
   // key = name , value = address
@@ -83,7 +83,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     return getUnchecked(assertsAddress.get("Blackhole"));
   }
 
-  public void RollbackAssetIssueToAccount(String outputDirectory) {
+  public void rollbackAssetIssueToAccount(String outputDirectory) {
     long start = System.currentTimeMillis();
     logger.info("rollback asset to account store");
     timer = TimerUtil.countDown("The database is being indexed ",
@@ -108,7 +108,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void convertAccountAssert() {
-    dynamicPropertiesStore.setAllowAssetImport(true);
     if (CommonParameter.getInstance().isRollback()) {
       logger.info("import asset of account store to account asset store has been skipped");
       return;
