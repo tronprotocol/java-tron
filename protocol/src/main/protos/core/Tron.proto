@@ -211,7 +211,7 @@ message Account {
   repeated Permission active_permission = 33;
 
   //vote power,include frozen bandwidth and frozen energy
-  int64 vote_power_413 = 60;
+  int64 old_vote_power = 60;
 }
 
 /* AccountAssetIssue */

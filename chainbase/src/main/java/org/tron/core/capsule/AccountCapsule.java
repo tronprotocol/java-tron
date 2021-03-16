@@ -470,13 +470,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  public long getVotePower413(){
-    return this.account.getVotePower413();
+  public long getOldVotePower(){
+    return this.account.getOldVotePower();
   }
 
-  public void setVotePower413(long amount){
+  public void setOldVotePower(long amount){
     this.account = this.account.toBuilder()
-      .setVotePower413(amount)
+      .setOldVotePower(amount)
       .build();
   }
   /**
