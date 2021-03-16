@@ -485,6 +485,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
+  public void setReference(ByteString refBlockHash, ByteString blockBytes) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setRefBlockHash(refBlockHash).setRefBlockBytes(blockBytes).build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
   public long getExpiration() {
     return transaction.getRawData().getExpiration();
   }
