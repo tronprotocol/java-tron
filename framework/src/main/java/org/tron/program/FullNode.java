@@ -46,11 +46,11 @@ public class FullNode {
    */
   public static void main(String[] args) {
     logger.info("Full node running.");
-    Args.setParam(args, "config-localtest.conf");
+    Args.setParam(args, Constant.TESTNET_CONF);
 
     CommonParameter parameter = Args.getInstance();
     load(parameter.getLogbackPath());
-parameter.setWitness(true);
+
     if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
