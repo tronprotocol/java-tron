@@ -39,6 +39,7 @@ public class TransferFailed004 {
   private static final long now = System.currentTimeMillis();
   private static final long TotalSupply = 10000000L;
   private static ByteString assetAccountId = null;
+  private static ByteString assetAccountId2 = null;
   private static String tokenName = "testAssetIssue_" + Long.toString(now);
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
@@ -47,6 +48,9 @@ public class TransferFailed004 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress3 = ecKey3.getAddress();
+  String contractExcKey3 = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] nonexistentAddress = ecKey2.getAddress();
   long energyUsageTotal = 0;
@@ -196,6 +200,10 @@ public class TransferFailed004 {
     Assert.assertEquals(testNetAccountCountBefore, testNetAccountCountAfter);
     Assert.assertEquals(0L, contractAccountCountAfter.longValue());
     Assert.assertNotEquals(10000000, energyUsageTotal);
+    String assetIssueId = PublicMethed.queryAccount(contractAddress, blockingStubFull).getAssetIssuedID()
+        .toStringUtf8();
+    logger.info("assetIssueId: " + assetIssueId);
+    Assert.assertEquals(0, assetIssueId.length());
 
     Account nonexistentAddressAccountTrxBalance = PublicMethed
         .queryAccount(nonexistentAddress, blockingStubFull1);
@@ -385,8 +393,8 @@ public class TransferFailed004 {
     Assert.assertEquals(1000000L, nonexistentAddressAccount.getBalance());
   }
 
-  @Test(enabled = true, description = "transfer to a suicide Contract Address")
-  public void test4transferToSuicideContract() {
+  @Test(enabled = true, description = "transfer to a suicide contract address same token")
+  public void test4transferToSuicideContractSameToken() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -477,6 +485,79 @@ public class TransferFailed004 {
     Assert.assertEquals(1L, contractAccountCountAfter.longValue());
   }
 
+  @Test(enabled = true, description = "transfer to a suicide contract address different token")
+  public void test5transferToSuicideContractDifferentToken() {
+    // create different token
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractExcAddress3, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    long start = System.currentTimeMillis() + 2000;
+    long end = System.currentTimeMillis() + 1000000000;
+    //Create a new AssetIssue success.
+    Assert
+        .assertTrue(PublicMethed.createAssetIssue(contractExcAddress3, tokenName, TotalSupply, 1,
+            10000, start, end, 1, description, url, 100000L,
+            100000L, 1L, 1L, contractExcKey3, blockingStubFull));
+    assetAccountId2 = PublicMethed.queryAccount(contractExcAddress3, blockingStubFull)
+        .getAssetIssuedID();
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractExcAddress3, 10000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
+    String contractName = "EnergyOfTransferFailedTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    byte[] contractAddress4 = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        1000000L, 100, 1000000000L,
+        assetAccountId2.toStringUtf8(), 1000L,null, contractExcKey3,
+        contractExcAddress3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Account info;
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress3,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey3, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    Account nonexistentAddressAccount = PublicMethed
+        .queryAccount(contractAddress, blockingStubFull1);
+    Assert.assertEquals(1L, nonexistentAddressAccount.getBalance());
+
+    String num =
+        "\"1" + "\",\"" + Base58.encode58Check(contractAddress) + "\",\"" + assetAccountId2
+            .toStringUtf8() + "\"";
+    String txid = PublicMethed.triggerContract(contractAddress4,
+        "testTransferTokenNonexistentTarget(uint256,address,trcToken)", num, false,
+        0, maxFeeLimit, contractExcAddress3, contractExcKey3, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    Long contractAccountCountTokenBalance = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    Assert.assertEquals(1L, contractAccountCountTokenBalance.longValue());
+    Long contractAccountCountTokenBalance2 = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId2, blockingStubFull);
+    Assert.assertEquals(1L, contractAccountCountTokenBalance2.longValue());
+
+    String assetIssueId = PublicMethed.queryAccount(contractAddress, blockingStubFull).getAssetIssuedID()
+        .toStringUtf8();
+    logger.info("assetIssueId: " + assetIssueId);
+    Assert.assertEquals(0, assetIssueId.length());
+  }
+
 
   /**
    * constructor.
@@ -484,7 +565,7 @@ public class TransferFailed004 {
   @AfterClass
   public void shutdown() throws InterruptedException {
     PublicMethed
-        .freedResource(contractAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

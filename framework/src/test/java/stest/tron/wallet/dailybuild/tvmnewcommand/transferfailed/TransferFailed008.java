@@ -109,6 +109,11 @@ public class TransferFailed008 {
 
     assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
         .getAssetIssuedID();
+    System.out.println("assetAccountId:"+assetAccountId.toStringUtf8());
+
+    Long testNetAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    logger.info("testNetAccountCountBefore:" + testNetAccountCountBefore);
   }
 
 
@@ -149,12 +154,13 @@ public class TransferFailed008 {
     logger.info("testNetAccountCountBefore:" + testNetAccountCountBefore);
     logger.info("contractAccountCountBefore:" + contractAccountCountBefore);
     String txid = "";
-    ECKey ecKey2 = new ECKey(Utils.getRandom());
-    byte[] nonexistentAddress = ecKey2.getAddress();
-    String oldContractAddress = "";// v4.1.2 contract address ----Manual input
+    // TUtbvvfggwQLrDZCNqYpfieCvCaKgKk5k9 selfdestruct contractAddress
+    // TQ1sSomxqmgqKiGqL3Lt8iybHt28FvUTwN exist accountAddress have token
+    // TWvKUjxH37F9BoeBrdD1hhWf7Es4CDTsRP exist contractAddress haven't token
+    // TKK8PhmACsJVX9T7Jkwr2QuWmhB8LjvwUW exist accountAddress haven't token
+    String oldContractAddress = "TV1ExzvFmSTMj67sxnzHrkZmjpsG5QWSne";// v4.1.2 contract address ----Manual input
     String num =
-        "\"1" + "\",\"" + oldContractAddress + "\",\"" + assetAccountId
-            .toStringUtf8() + "\"";
+        "\"" + oldContractAddress + "\",\"1\",\"" + assetAccountId.toStringUtf8() + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
         "transferTokenTest(address,uint256,trcToken)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -202,9 +208,9 @@ public class TransferFailed008 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     Assert.assertNotEquals(10000000, energyUsageTotal);
 
-    Long nonexistentAddressAccount = PublicMethed
-        .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
-    Assert.assertEquals(1L, nonexistentAddressAccount.longValue());
+    Long oldContractAddressAccount = PublicMethed
+        .getAssetIssueValue(PublicMethed.decode58Check(oldContractAddress), assetAccountId, blockingStubFull1);
+    Assert.assertEquals(1L, oldContractAddressAccount.longValue());
   }
 
   @Test(enabled = true, description = "TransferToken to new contract")
@@ -244,7 +250,7 @@ public class TransferFailed008 {
     logger.info("testNetAccountCountBefore:" + testNetAccountCountBefore);
     logger.info("contractAccountCountBefore:" + contractAccountCountBefore);
     String txid = "";
-    String num = "\"1" + "\",\"" + assetAccountId.toStringUtf8() + "\"";
+    String num = "\"1"+"\",\"" + assetAccountId.toStringUtf8() + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
         "createContractTest(uint256,trcToken)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -462,7 +468,7 @@ public class TransferFailed008 {
   @AfterClass
   public void shutdown() throws InterruptedException {
     PublicMethed
-        .freedResource(contractAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

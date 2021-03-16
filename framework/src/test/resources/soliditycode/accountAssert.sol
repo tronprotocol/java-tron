@@ -61,32 +61,32 @@ contract transferTokenTestB {
     fallback() payable external{}
 
     function transferTest(address payable toAddress, uint256 tokenValue) payable public    {
-    toAddress.transfer(tokenValue);
+        toAddress.transfer(tokenValue);
     }
 
     function transferTokenTest(address payable toAddress, uint256 tokenValue, trcToken id) payable public    {
-    toAddress.transferToken(tokenValue, id);
+        toAddress.transferToken(tokenValue, id);
     }
 
     // suicide to a new address
     function selfdestructTest(address payable toAddress) payable public{
-    selfdestruct(toAddress);
+        selfdestruct(toAddress);
     }
 
     // transfer to a new contract
     function createContractTest(uint256 tokenValue, trcToken id) payable public returns(address){
-    Simple s = new Simple();
-    require(address(s).tokenBalance(id)==0, "tokenBalance should be 0");
-    address(s).transferToken(tokenValue, id);
-    require(address(s).tokenBalance(id)==tokenValue, "tokenBalance should not be 0");
-    return address(s);
+        Simple s = new Simple();
+        require(address(s).tokenBalance(id)==0, "tokenBalance should be 0");
+        address(s).transferToken(tokenValue, id);
+        require(address(s).tokenBalance(id)==tokenValue, "tokenBalance should not be 0");
+        return address(s);
     }
 
     // revert transfer to a new contract
     function revertCreateContractTest(uint256 tokenValue, trcToken id) payable public {
-    Simple s = new Simple();
-    address(s).transferToken(tokenValue, id);
-    revert();
+        Simple s = new Simple();
+        address(s).transferToken(tokenValue, id);
+        revert();
     }
 }
 
