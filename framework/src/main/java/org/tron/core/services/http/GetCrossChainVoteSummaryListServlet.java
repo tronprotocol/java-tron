@@ -29,4 +29,22 @@ public class GetCrossChainVoteSummaryListServlet extends RateLimiterServlet {
       Util.processError(e, response);
     }
   }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      PostParams params = PostParams.getPostParams(request);
+      String input = params.getParams();
+      boolean visible = params.isVisible();
+      GrpcAPI.PaginatedMessage.Builder build = GrpcAPI.PaginatedMessage.newBuilder();
+      JsonFormat.merge(input, build, visible);
+      GrpcAPI.CrossChainVoteSummaryList reply = wallet.getCrossChainTotalVoteList(build.getOffset(), build.getLimit());
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
+  }
 }

@@ -548,7 +548,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(registerCrossChainServlet), "/wallet/registercrosschain");
       context.addServlet(new ServletHolder(updateCrossChainServlet), "/wallet/updatecrosschain");
       context.addServlet(new ServletHolder(getRegisterCrossChainListServlet),
-              "/wallet/getcrosschainregisterlist");
+              "/wallet/getregistercrosschainlist");
       context.addServlet(new ServletHolder(voteCrossChainServlet), "/wallet/votecrosschain");
       context.addServlet(new ServletHolder(unvoteCrossChainServlet), "/wallet/unvotecrosschain");
       context.addServlet(new ServletHolder(getCrossChainVoteDetailListServlet),
