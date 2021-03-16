@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.http.util.Args;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -262,7 +261,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
               accountCapsule.setInstance(account);
 
               //set VotePower
-              accountCapsule.setVotePower413(accountCapsule.getTronPower());
+              accountCapsule.setOldVotePower(accountCapsule.getTronPower());
 
               accountStore.put(address, accountCapsule);
               writeCount.incrementAndGet();
