@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.google.protobuf.ByteString;
 import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -8,9 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionIdList;
-import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.core.db.Manager;
-import org.tron.protos.Protocol.Transaction;
 
 
 @Component
@@ -26,7 +23,7 @@ public class GetTransactionListFromPendingServlet extends RateLimiterServlet {
       Collection<String> result = manager.getTxListFromPending();
       TransactionIdList.Builder builder = TransactionIdList.newBuilder();
       builder.addAllTxId(result);
-      response.getWriter().println(Util.printTransactionList(builder.build(), visible));
+      response.getWriter().println(Util.printTransactionIdList(builder.build(), visible));
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -39,7 +36,7 @@ public class GetTransactionListFromPendingServlet extends RateLimiterServlet {
       TransactionIdList.Builder builder = TransactionIdList.newBuilder();
       builder.addAllTxId(result);
       response.getWriter()
-          .println(Util.printTransactionList(builder.build(), params.isVisible()));
+          .println(Util.printTransactionIdList(builder.build(), params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }

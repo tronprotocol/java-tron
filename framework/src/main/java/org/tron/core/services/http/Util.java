@@ -58,7 +58,6 @@ public class Util {
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
   public static final String TRANSACTION = "transaction";
-  public static final String TRANSACTION_ID = "transactionId";
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
@@ -114,13 +113,9 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static String printTransactionList(TransactionIdList list, boolean selfType) {
+  public static String printTransactionIdList(TransactionIdList list, boolean selfType) {
     List<String> transactions = list.getTxIdList();
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
-    JSONArray jsonArray = new JSONArray();
-    transactions.stream()
-        .forEach(transaction -> jsonArray.add(transaction));
-    jsonObject.put(TRANSACTION_ID, jsonArray);
 
     return jsonObject.toJSONString();
   }
