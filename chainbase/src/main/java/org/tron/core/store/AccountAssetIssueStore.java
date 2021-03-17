@@ -260,9 +260,6 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
               accountCapsule.setInstance(account);
 
-              //set VotePower
-              accountCapsule.setOldVotePower(accountCapsule.getTronPower());
-
               accountStore.put(address, accountCapsule);
               writeCount.incrementAndGet();
 

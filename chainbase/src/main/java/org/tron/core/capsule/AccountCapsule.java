@@ -469,16 +469,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return tp;
   }
 
-
-  public long getOldVotePower(){
-    return this.account.getOldVotePower();
-  }
-
-  public void setOldVotePower(long amount){
-    this.account = this.account.toBuilder()
-      .setOldVotePower(amount)
-      .build();
-  }
   /**
    * asset balance enough
    */
