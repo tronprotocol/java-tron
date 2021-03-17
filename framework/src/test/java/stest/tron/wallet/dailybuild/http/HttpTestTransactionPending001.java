@@ -64,15 +64,12 @@ public class HttpTestTransactionPending001 {
       if (retryTimes % 5 == 0) {
         response = HttpMethed.getTransactionListFromPending(httpnode);
         responseContent = HttpMethed.parseResponseContent(response);
-        transactionSize = responseContent.getJSONArray("transaction").size();
+        transactionSize = responseContent.getJSONArray("txId").size();
       }
     }
     Assert.assertNotEquals(transactionSize,0);
 
-    transaction = responseContent.getJSONArray("transaction").getJSONObject(0);
-    HttpMethed.printJsonContent(transaction);
-    txid = transaction.getString("txID");
-    Assert.assertTrue(transaction.containsKey("raw_data"));
+    txid = responseContent.getJSONArray("txId").getString(0);
   }
 
 
