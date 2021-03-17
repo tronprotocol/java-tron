@@ -24,6 +24,12 @@ public class ReceiptCapsule {
   @Setter
   private long multiSignFee;
 
+  @Setter
+  private long originEnergyLeft;
+
+  @Setter
+  private long callerEnergyLeft;
+
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
@@ -149,6 +155,10 @@ public class ReceiptCapsule {
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
 
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+      return Math.min(originUsage, Math.min(originEnergyLeft, originEnergyLimit));
+    }
+
     if (checkForEnergyLimit(dynamicPropertiesStore)) {
       return Math.min(originUsage,
           Math.min(energyProcessor.getAccountLeftEnergyFromFreeze(origin), originEnergyLimit));
@@ -165,6 +175,9 @@ public class ReceiptCapsule {
       EnergyProcessor energyProcessor,
       long now) throws BalanceInsufficientException {
     long accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+      accountEnergyLeft = callerEnergyLeft;
+    }
     if (accountEnergyLeft >= usage) {
       energyProcessor.useEnergy(account, usage, now);
       this.setEnergyUsage(usage);
