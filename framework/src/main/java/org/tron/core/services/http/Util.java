@@ -114,7 +114,7 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static String printTransactionList(TransactionIdList list, boolean selfType) {
+  public static String printTransactionIdList(TransactionIdList list, boolean selfType) {
     List<String> transactions = list.getTxIdList();
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
