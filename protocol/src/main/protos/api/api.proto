@@ -784,7 +784,7 @@ service Wallet {
   rpc GetTransactionFromPending (BytesMessage) returns (Transaction) {
   }
 
-  rpc GetTransactionListFromPending (EmptyMessage) returns (TransactionList) {
+  rpc GetTransactionListFromPending (EmptyMessage) returns (TransactionIdList) {
   }
 
   rpc GetPendingSize (EmptyMessage) returns (NumberMessage) {
@@ -1083,6 +1083,9 @@ message BlockList {
 }
 message TransactionList {
   repeated Transaction transaction = 1;
+}
+message TransactionIdList {
+  repeated string txId = 1;
 }
 message DelegatedResourceMessage {
   bytes fromAddress = 1;

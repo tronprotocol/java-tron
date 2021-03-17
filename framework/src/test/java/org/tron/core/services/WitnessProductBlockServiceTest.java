@@ -88,13 +88,13 @@ public class WitnessProductBlockServiceTest {
     Assert.assertEquals(block.getBlockCapsuleSet().contains(blockCapsule2), true);
 
     Iterator<BlockCapsule> iterator = block.getBlockCapsuleSet()
-            .iterator();
+        .iterator();
     boolean isInner = false;
     while (iterator.hasNext()) {
       BlockCapsule blockCapsule = iterator.next();
       blockCapsule.getBlockId();
       if (blockCapsule.getBlockId().equals(blockCapsule1.getBlockId())) {
-       isInner = true;
+        isInner = true;
       }
     }
     Assert.assertTrue(isInner);

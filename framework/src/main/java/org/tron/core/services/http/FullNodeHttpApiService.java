@@ -524,8 +524,10 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockBalanceServlet),
           "/wallet/getblockbalance");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/wallet/getburntrx");
-      context.addServlet(new ServletHolder(getTransactionFromPendingServlet), "/wallet/gettransactionfrompending");
-      context.addServlet(new ServletHolder(getTransactionListFromPendingServlet), "/wallet/gettransactionlistfrompending");
+      context.addServlet(new ServletHolder(getTransactionFromPendingServlet),
+          "/wallet/gettransactionfrompending");
+      context.addServlet(new ServletHolder(getTransactionListFromPendingServlet),
+          "/wallet/gettransactionlistfrompending");
       context.addServlet(new ServletHolder(getPendingSizeServlet), "/wallet/getpendingsize");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
