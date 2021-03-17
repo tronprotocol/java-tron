@@ -29,6 +29,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
@@ -57,6 +58,7 @@ public class Util {
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
   public static final String TRANSACTION = "transaction";
+  public static final String TRANSACTION_ID = "transactionId";
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
@@ -108,6 +110,17 @@ public class Util {
     transactions.stream()
         .forEach(transaction -> jsonArray.add(printTransactionToJSON(transaction, selfType)));
     jsonObject.put(TRANSACTION, jsonArray);
+
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionList(TransactionIdList list, boolean selfType) {
+    List<String> transactions = list.getTxIdList();
+    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
+    JSONArray jsonArray = new JSONArray();
+    transactions.stream()
+        .forEach(transaction -> jsonArray.add(transaction));
+    jsonObject.put(TRANSACTION_ID, jsonArray);
 
     return jsonObject.toJSONString();
   }

@@ -1824,13 +1824,13 @@ public class Manager {
     return transactionCapsule.get();
   }
 
-  public Collection<Transaction> getTxListFromPending() {
-    Set<Transaction> result = new HashSet<>();
+  public Collection<String> getTxListFromPending() {
+    Set<String> result = new HashSet<>();
     pendingTransactions.forEach(tx -> {
-      result.add(tx.getInstance());
+      result.add(tx.getTransactionId().toString());
     });
     rePushTransactions.forEach(tx -> {
-      result.add(tx.getInstance());
+      result.add(tx.getTransactionId().toString());
     });
     return result;
   }
