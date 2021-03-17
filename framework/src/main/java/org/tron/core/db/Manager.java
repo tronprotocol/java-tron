@@ -227,7 +227,10 @@ public class Manager {
           TransactionCapsule tx = null;
           try {
             tx = getRePushTransactions().peek();
-            if (tx != null) {
+            if (tx != null && System.currentTimeMillis() - tx.getTime() >= Args.getInstance()
+                .getPendingTransactionTimeout()) {
+              logger.warn("[timeout] remove tx from rePush, txId:{}", tx.getTransactionId());
+            } else if (tx != null) {
               this.rePush(tx);
             } else {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
@@ -364,7 +367,7 @@ public class Manager {
       this.rePushTransactions = new PriorityBlockingQueue<>(2000, downComparator);
     } else {
       this.pendingTransactions = new LinkedBlockingQueue<>();
-      this.rePushTransactions =new LinkedBlockingQueue<>();
+      this.rePushTransactions = new LinkedBlockingQueue<>();
     }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
