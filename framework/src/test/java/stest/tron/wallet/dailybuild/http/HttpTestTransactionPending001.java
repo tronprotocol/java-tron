@@ -82,7 +82,7 @@ public class HttpTestTransactionPending001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
-    Assert.assertEquals(transaction,responseContent);
+    Assert.assertEquals(txid,responseContent.getString("txID"));
     Assert.assertNotEquals(null,responseContent);
   }
 
