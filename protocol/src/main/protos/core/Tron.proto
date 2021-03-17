@@ -209,9 +209,6 @@ message Account {
   Permission owner_permission = 31;
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
-
-  //vote power,include frozen bandwidth and frozen energy
-  int64 old_vote_power = 60;
 }
 
 /* AccountAssetIssue */

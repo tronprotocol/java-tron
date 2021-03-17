@@ -102,7 +102,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
         logger.debug("Resource Code Error.");
     }
 
-    accountCapsule.setOldVotePower(accountCapsule.getOldVotePower() + frozenBalance);
     accountCapsule.setBalance(newBalance);
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
