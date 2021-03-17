@@ -124,54 +124,6 @@ public class TransactionPendingQuery001 {
         .hash(true, transaction.getRawData().toByteArray())),txid);
   }
 
-  @Test(enabled = false, description = "Test get pending size on solidity")
-  public void test04GetPendingSizeOnSolidity() {
-
-    long pendingSizeInFullNode = 0;
-    int retryTimes = 100;
-    while (pendingSizeInFullNode == 0 && retryTimes-- > 0) {
-      PublicMethed.sendcoin(receiverAddress,1L,fromAddress,testKey002,blockingStubFull);
-      if (retryTimes % 10 == 0) {
-        pendingSizeInFullNode = blockingStubSolidity
-            .getPendingSize(EmptyMessage.newBuilder().build()).getNum();
-      }
-    }
-    Assert.assertNotEquals(pendingSizeInFullNode,0);
-  }
-
-
-
-
-  @Test(enabled = false, description = "Test get pending transaction list on solidity")
-  public void test05GetPendingTransactionListOnSolidity() {
-    int retryTimes = 100;
-    TransactionList transactionList = blockingStubSolidity
-        .getTransactionListFromPending(EmptyMessage.newBuilder().build());
-    while (transactionList.getTransactionCount() == 0 && retryTimes-- > 0) {
-      PublicMethed.sendcoin(receiverAddress,1L,fromAddress,testKey002,blockingStubFull);
-      if (retryTimes % 5 == 0) {
-        transactionList = blockingStubSolidity
-            .getTransactionListFromPending(EmptyMessage.newBuilder().build());
-      }
-    }
-    Assert.assertNotEquals(transactionList.getTransactionCount(),0);
-
-    txid = ByteArray.toHexString(Sha256Hash
-        .hash(true, transactionList
-            .getTransaction(0).getRawData().toByteArray()));
-
-    logger.info("txid:" + txid);
-
-  }
-
-
-  @Test(enabled = false, description = "Test transaction from pending on solidity")
-  public void test06GetTransactionFromPendingOnSolidity() {
-    Transaction transaction = PublicMethed
-        .getTransactionFromPending(txid,blockingStubSolidity).get();
-    Assert.assertEquals(ByteArray.toHexString(Sha256Hash
-        .hash(true, transaction.getRawData().toByteArray())),txid);
-  }
 
   /**
    * constructor.
