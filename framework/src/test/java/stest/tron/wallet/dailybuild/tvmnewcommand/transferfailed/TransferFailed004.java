@@ -128,9 +128,9 @@ public class TransferFailed004 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContractFallbackReceive(contractName, abi, code, "", maxFeeLimit,
-        1000000L, 100,1000L, assetAccountId.toStringUtf8(), 1000L, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
+    contractAddress = PublicMethed.deployContractFallbackReceive(contractName, abi, code, "",
+        maxFeeLimit, 1000000L, 100,1000L, assetAccountId.toStringUtf8(), 1000L,
+        null, contractExcKey, contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
@@ -164,8 +164,8 @@ public class TransferFailed004 {
 
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
-    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    Long netFee = infoById.get().getReceipt().getNetFee();
+    final Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    final Long netFee = infoById.get().getReceipt().getNetFee();
     energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
     Long testNetAccountCountAfter = PublicMethed
         .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
@@ -200,8 +200,8 @@ public class TransferFailed004 {
     Assert.assertEquals(testNetAccountCountBefore, testNetAccountCountAfter);
     Assert.assertEquals(0L, contractAccountCountAfter.longValue());
     Assert.assertNotEquals(10000000, energyUsageTotal);
-    String assetIssueId = PublicMethed.queryAccount(contractAddress, blockingStubFull).getAssetIssuedID()
-        .toStringUtf8();
+    String assetIssueId = PublicMethed.queryAccount(contractAddress, blockingStubFull)
+        .getAssetIssuedID().toStringUtf8();
     logger.info("assetIssueId: " + assetIssueId);
     Assert.assertEquals(0, assetIssueId.length());
 
@@ -224,9 +224,9 @@ public class TransferFailed004 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress2 = PublicMethed.deployContractFallbackReceive(contractName, abi, code, "", maxFeeLimit,
-        1000000L, 100,1000L, assetAccountId.toStringUtf8(), 1000L,null, contractExcKey,
-        contractExcAddress, blockingStubFull);
+    contractAddress2 = PublicMethed.deployContractFallbackReceive(contractName, abi, code, "",
+        maxFeeLimit, 1000000L, 100,1000L, assetAccountId.toStringUtf8(),
+        1000L,null, contractExcKey, contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
@@ -263,8 +263,8 @@ public class TransferFailed004 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
-    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    Long netFee = infoById.get().getReceipt().getNetFee();
+    final Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    final Long netFee = infoById.get().getReceipt().getNetFee();
     energyUsageTotal2 = infoById.get().getReceipt().getEnergyUsageTotal();
     Long testNetAccountCountAfter = PublicMethed
         .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
@@ -359,8 +359,8 @@ public class TransferFailed004 {
 
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
-    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    Long netFee = infoById.get().getReceipt().getNetFee();
+    final Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    final Long netFee = infoById.get().getReceipt().getNetFee();
     energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("fee:" + fee);
     logger.info("netUsed:" + netUsed);
@@ -404,17 +404,15 @@ public class TransferFailed004 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    byte[] contractAddress4 = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        1000000L, 100, 1000000000L,
+    final byte[] contractAddress4 = PublicMethed.deployContract(contractName, abi, code, "",
+        maxFeeLimit, 1000000L, 100, 1000000000L,
         assetAccountId.toStringUtf8(), 1000L,null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Account info;
-
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Account info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -512,8 +510,8 @@ public class TransferFailed004 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    byte[] contractAddress4 = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        1000000L, 100, 1000000000L,
+    final byte[] contractAddress4 = PublicMethed.deployContract(contractName, abi, code, "",
+        maxFeeLimit, 1000000L, 100, 1000000000L,
         assetAccountId2.toStringUtf8(), 1000L,null, contractExcKey3,
         contractExcAddress3, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -542,7 +540,8 @@ public class TransferFailed004 {
         "testTransferTokenNonexistentTarget(uint256,address,trcToken)", num, false,
         0, maxFeeLimit, contractExcAddress3, contractExcKey3, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
 
     Long contractAccountCountTokenBalance = PublicMethed
@@ -552,8 +551,8 @@ public class TransferFailed004 {
         .getAssetIssueValue(contractAddress, assetAccountId2, blockingStubFull);
     Assert.assertEquals(1L, contractAccountCountTokenBalance2.longValue());
 
-    String assetIssueId = PublicMethed.queryAccount(contractAddress, blockingStubFull).getAssetIssuedID()
-        .toStringUtf8();
+    String assetIssueId = PublicMethed.queryAccount(contractAddress, blockingStubFull)
+        .getAssetIssuedID().toStringUtf8();
     logger.info("assetIssueId: " + assetIssueId);
     Assert.assertEquals(0, assetIssueId.length());
   }

@@ -109,7 +109,7 @@ public class TransferFailed008 {
 
     assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
         .getAssetIssuedID();
-    System.out.println("assetAccountId:"+assetAccountId.toStringUtf8());
+    System.out.println("assetAccountId:" + assetAccountId.toStringUtf8());
 
     Long testNetAccountCountBefore = PublicMethed
         .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
@@ -158,7 +158,8 @@ public class TransferFailed008 {
     // TQ1sSomxqmgqKiGqL3Lt8iybHt28FvUTwN exist accountAddress have token
     // TWvKUjxH37F9BoeBrdD1hhWf7Es4CDTsRP exist contractAddress haven't token
     // TKK8PhmACsJVX9T7Jkwr2QuWmhB8LjvwUW exist accountAddress haven't token
-    String oldContractAddress = "TV1ExzvFmSTMj67sxnzHrkZmjpsG5QWSne";// v4.1.2 contract address ----Manual input
+    // v4.1.2 contract address ----Manual input
+    String oldContractAddress = "TV1ExzvFmSTMj67sxnzHrkZmjpsG5QWSne";
     String num =
         "\"" + oldContractAddress + "\",\"1\",\"" + assetAccountId.toStringUtf8() + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -208,8 +209,8 @@ public class TransferFailed008 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     Assert.assertNotEquals(10000000, energyUsageTotal);
 
-    Long oldContractAddressAccount = PublicMethed
-        .getAssetIssueValue(PublicMethed.decode58Check(oldContractAddress), assetAccountId, blockingStubFull1);
+    Long oldContractAddressAccount = PublicMethed.getAssetIssueValue(
+        PublicMethed.decode58Check(oldContractAddress), assetAccountId, blockingStubFull1);
     Assert.assertEquals(1L, oldContractAddressAccount.longValue());
   }
 
@@ -250,7 +251,7 @@ public class TransferFailed008 {
     logger.info("testNetAccountCountBefore:" + testNetAccountCountBefore);
     logger.info("contractAccountCountBefore:" + contractAccountCountBefore);
     String txid = "";
-    String num = "\"1"+"\",\"" + assetAccountId.toStringUtf8() + "\"";
+    String num = "\"1" + "\",\"" + assetAccountId.toStringUtf8() + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
         "createContractTest(uint256,trcToken)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -333,8 +334,9 @@ public class TransferFailed008 {
         "\"" + Base58.encode58Check(nonexistentAddress) + "\",\"1\",\"" + assetAccountId
             .toStringUtf8() + "\"";
 
-    String deplTxid = PublicMethed.deployContractWithConstantParame(contractName, abi, code, constructorStr, argsStr, "", maxFeeLimit,
-        1000000L, 100,1000L, assetAccountId.toStringUtf8(), 1000L, null, contractExcKey,
+    String deplTxid = PublicMethed.deployContractWithConstantParame(contractName, abi, code,
+        constructorStr, argsStr, "", maxFeeLimit, 1000000L, 100,1000L,
+        assetAccountId.toStringUtf8(), 1000L, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed
@@ -349,7 +351,8 @@ public class TransferFailed008 {
     logger.info("testNetAccountCountAfter:" + testNetAccountCountAfter);
     logger.info("contractAccountCountAfter:" + contractAccountCountAfter);
 
-    Assert.assertEquals(testNetAccountCountBefore.longValue()-1000L, testNetAccountCountAfter.longValue());
+    Assert.assertEquals(testNetAccountCountBefore.longValue() - 1000L,
+        testNetAccountCountAfter.longValue());
     Assert.assertEquals(999L, contractAccountCountAfter.longValue());
 
     Account nonexistentAddressAccountTrxBalance = PublicMethed
@@ -401,8 +404,9 @@ public class TransferFailed008 {
         "\"" + Base58.encode58Check(nonexistentAddress) + "\",\"1\",\"" + assetAccountId2
             .toStringUtf8() + "\"";
 
-    String deplTxid = PublicMethed.deployContractWithConstantParame(contractName, abi, code, constructorStr, argsStr, "", maxFeeLimit,
-        1000000L, 100,1000L, assetAccountId2.toStringUtf8(), 1000L, null, contractExcKey3,
+    String deplTxid = PublicMethed.deployContractWithConstantParame(contractName, abi, code,
+        constructorStr, argsStr, "", maxFeeLimit, 1000000L, 100,
+        1000L, assetAccountId2.toStringUtf8(), 1000L, null, contractExcKey3,
         contractExcAddress3, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed
@@ -417,7 +421,8 @@ public class TransferFailed008 {
     logger.info("testNetAccountCountAfter:" + testNetAccountCountAfter);
     logger.info("contractAccountCountAfter:" + contractAccountCountAfter);
 
-    Assert.assertEquals(testNetAccountCountBefore.longValue()-1000L, testNetAccountCountAfter.longValue());
+    Assert.assertEquals(testNetAccountCountBefore.longValue() - 1000L,
+        testNetAccountCountAfter.longValue());
     Assert.assertEquals(999L, contractAccountCountAfter.longValue());
 
     Account nonexistentAddressAccountTrxBalance = PublicMethed
@@ -444,11 +449,11 @@ public class TransferFailed008 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     String constructorStr = "constructor(trcToken)";
-    String argsStr ="\"" + assetAccountId.toStringUtf8() + "\"";
+    String argsStr = "\"" + assetAccountId.toStringUtf8() + "\"";
 
-    String deplTxid = PublicMethed.deployContractWithConstantParame(contractName, abi, code, constructorStr, argsStr, "", maxFeeLimit,
-        1000000L, 100,1000L, "0", 0L, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
+    String deplTxid = PublicMethed.deployContractWithConstantParame(contractName, abi, code,
+        constructorStr, argsStr, "", maxFeeLimit, 1000000L, 100,1000L,
+        "0", 0L, null, contractExcKey, contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed
         .getTransactionInfoById(deplTxid, blockingStubFull);
