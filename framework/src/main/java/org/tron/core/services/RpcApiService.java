@@ -74,6 +74,7 @@ import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -900,7 +901,6 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
-
   }
 
   /**
@@ -2628,6 +2628,24 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getTransactionFromPending(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      getTransactionFromPendingCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getTransactionListFromPending(EmptyMessage request,
+        StreamObserver<TransactionIdList> responseObserver) {
+      getTransactionListFromPendingCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getPendingSize(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      getPendingSizeCommon(request, responseObserver);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
@@ -2710,4 +2728,39 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
 
+  public void getTransactionFromPendingCommon(BytesMessage request,
+      StreamObserver<Transaction> responseObserver) {
+    try {
+      String txId = ByteArray.toHexString(request.getValue().toByteArray());
+      TransactionCapsule transactionCapsule = dbManager.getTxFromPending(txId);
+      responseObserver.onNext(transactionCapsule == null ? null : transactionCapsule.getInstance());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getTransactionListFromPendingCommon(EmptyMessage request,
+      StreamObserver<TransactionIdList> responseObserver) {
+    try {
+      TransactionIdList.Builder builder = TransactionIdList.newBuilder();
+      builder.addAllTxId(dbManager.getTxListFromPending());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getPendingSizeCommon(EmptyMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(dbManager.getPendingSize());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
 }

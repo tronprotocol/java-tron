@@ -60,6 +60,7 @@ public class tryCatchTest001 {
     PublicMethed
         .sendcoin(testAddress001, 10000_000_000L, testFoundationAddress, testFoundationKey,
             blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "src/test/resources/soliditycode/tryCatch001.sol";
     String contractName = "tryTest";

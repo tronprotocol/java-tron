@@ -26,6 +26,7 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.Retry;
 
 @Slf4j
 
@@ -445,7 +446,8 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time")
+  @Test(enabled = true,retryAnalyzer = Retry.class,
+      description = "Test maxfeelimit can trigger call create call max time")
   public void testInternalTransaction018() {
     Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -486,7 +488,7 @@ public class ContractInternalTransaction003 {
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed
-        .sendcoin(internalTxsAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(internalTxsAddress, 2000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -503,14 +505,19 @@ public class ContractInternalTransaction003 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("InfoById:" + infoById);
 
-    // retry 1 times
-    txid = PublicMethed.triggerContract(contractAddress,
-        "test1(address,address)", initParmes, false,
-        100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("InfoById-1" + ": " + infoById);
+    int retryTimes = 1;
+    while (retryTimes++ < 5 && infoById.get().getResultValue() != 0) {
+      // retry 5 times
+      txid = PublicMethed.triggerContract(contractAddress,
+          "test1(address,address)", initParmes, false,
+          100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      logger.info("InfoById retry "  + retryTimes +  " : " + infoById);
+    }
+
+
 
     Assert.assertEquals(0, infoById.get().getResultValue());
     int transactionsCount = infoById.get().getInternalTransactionsCount();

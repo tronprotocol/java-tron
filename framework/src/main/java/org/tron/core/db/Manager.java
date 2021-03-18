@@ -16,9 +16,10 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -32,9 +33,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
@@ -205,7 +208,7 @@ public class Manager {
   @Getter
   private ChainBaseManager chainBaseManager;
   // transactions cache
-  private List<TransactionCapsule> pendingTransactions;
+  private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
   // transactions popped
@@ -224,7 +227,10 @@ public class Manager {
           TransactionCapsule tx = null;
           try {
             tx = getRePushTransactions().peek();
-            if (tx != null) {
+            if (tx != null && System.currentTimeMillis() - tx.getTime() >= Args.getInstance()
+                .getPendingTransactionTimeout()) {
+              logger.warn("[timeout] remove tx from rePush, txId:{}", tx.getTransactionId());
+            } else if (tx != null) {
               this.rePush(tx);
             } else {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
@@ -319,7 +325,7 @@ public class Manager {
     return chainBaseManager.getBlockIndexStore();
   }
 
-  public List<TransactionCapsule> getPendingTransactions() {
+  public BlockingQueue<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
 
@@ -339,6 +345,9 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
+  private Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
+      .compare(o2.getOrder(), o1.getOrder());
+
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
@@ -353,8 +362,13 @@ public class Manager {
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
             chainBaseManager.getMerkleTreeIndexStore()));
-    this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
-    this.rePushTransactions = new LinkedBlockingQueue<>();
+    if (Args.getInstance().isOpenTransactionSort()) {
+      this.pendingTransactions = new PriorityBlockingQueue(2000, downComparator);
+      this.rePushTransactions = new PriorityBlockingQueue<>(2000, downComparator);
+    } else {
+      this.pendingTransactions = new LinkedBlockingQueue<>();
+      this.rePushTransactions = new LinkedBlockingQueue<>();
+    }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
@@ -1182,7 +1196,8 @@ public class Manager {
               trace.getRuntimeResult().getResultCode().name());
       chainBaseManager.getBalanceTraceStore().resetCurrentTransactionTrace();
     }
-
+    //set the sort order
+    trxCap.setOrder(transactionInfo.getFee());
     return transactionInfo.getInstance();
   }
 
@@ -1216,13 +1231,21 @@ public class Manager {
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
-    Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
-    while (iterator.hasNext() || rePushTransactions.size() > 0) {
+    while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
-      if (iterator.hasNext()) {
-        fromPending = true;
-        trx = iterator.next();
+      if (pendingTransactions.size() > 0) {
+        trx = pendingTransactions.peek();
+        if (Args.getInstance().isOpenTransactionSort()) {
+          TransactionCapsule trxRepush = rePushTransactions.peek();
+          if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
+            fromPending = true;
+          } else {
+            trx = rePushTransactions.poll();
+          }
+        } else {
+          fromPending = true;
+        }
       } else {
         trx = rePushTransactions.poll();
       }
@@ -1268,10 +1291,11 @@ public class Manager {
           transactionRetCapsule.addTransactionInfo(result);
         }
         if (fromPending) {
-          iterator.remove();
+          pendingTransactions.poll();
         }
       } catch (Exception e) {
-        logger.error("Process trx failed when generating block: {}", e.getMessage());
+        logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
+            e.getMessage());
       }
     }
 
@@ -1777,5 +1801,43 @@ public class Manager {
       }
       return true;
     }
+  }
+
+  public TransactionCapsule getTxFromPending(String txId) {
+    AtomicReference<TransactionCapsule> transactionCapsule = new AtomicReference<>();
+    Sha256Hash txHash = Sha256Hash.wrap(ByteArray.fromHexString(txId));
+    pendingTransactions.forEach(tx -> {
+      if (tx.getTransactionId().equals(txHash)) {
+        transactionCapsule.set(tx);
+        return;
+      }
+    });
+    if (transactionCapsule.get() != null) {
+      return transactionCapsule.get();
+    }
+    rePushTransactions.forEach(tx -> {
+      if (tx.getTransactionId().equals(txHash)) {
+        transactionCapsule.set(tx);
+        return;
+      }
+    });
+    return transactionCapsule.get();
+  }
+
+  public Collection<String> getTxListFromPending() {
+    Set<String> result = new HashSet<>();
+    pendingTransactions.forEach(tx -> {
+      result.add(tx.getTransactionId().toString());
+    });
+    rePushTransactions.forEach(tx -> {
+      result.add(tx.getTransactionId().toString());
+    });
+    return result;
+  }
+
+  public long getPendingSize() {
+    long value = getPendingTransactions().size() + getRePushTransactions().size()
+        + getPoppedTransactions().size();
+    return value;
   }
 }

@@ -185,6 +185,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
     PARAMETER.historyBalanceLookup = false;
+    PARAMETER.openPrintLog = true;
+    PARAMETER.openTransactionSort = false;
   }
 
   /**
@@ -743,6 +745,11 @@ public class Args extends CommonParameter {
 
     PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
         .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
+
+    PARAMETER.openPrintLog = config.hasPath(Constant.OPEN_PRINT_LOG) && config
+        .getBoolean(Constant.OPEN_PRINT_LOG);
+    PARAMETER.openTransactionSort = config.hasPath(Constant.OPEN_TRANSACTION_SORT) && config
+        .getBoolean(Constant.OPEN_TRANSACTION_SORT);
 
     logConfig();
   }

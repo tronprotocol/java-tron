@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TronMessage;
@@ -58,12 +59,18 @@ public class InventoryMsgHandler implements TronMsgHandler {
       if (count > maxCountIn10s) {
         logger.warn("Drop inv: {} size: {} from Peer {}, Inv count: {} is overload.",
             type, size, peer.getInetAddress(), count);
+        if (Args.getInstance().isOpenPrintLog()) {
+          logger.warn("[overload]Drop tx list is: {}", inventoryMessage.getHashList());
+        }
         return false;
       }
 
       if (transactionsMsgHandler.isBusy()) {
         logger.warn("Drop inv: {} size: {} from Peer {}, transactionsMsgHandler is busy.",
             type, size, peer.getInetAddress());
+        if (Args.getInstance().isOpenPrintLog()) {
+          logger.warn("[isBusy]Drop tx list is: {}", inventoryMessage.getHashList());
+        }
         return false;
       }
     }
