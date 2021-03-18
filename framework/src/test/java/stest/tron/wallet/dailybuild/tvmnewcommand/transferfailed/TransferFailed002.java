@@ -570,7 +570,7 @@ public class TransferFailed002 {
   @AfterClass
   public void shutdown() throws InterruptedException {
     PublicMethed
-        .freedResource(contractAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

@@ -635,6 +635,10 @@ public class TransferFailed003 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     Assert.assertNotEquals(10000000, energyUsageTotal);
 
+    Long nonexistentAddressAccount = PublicMethed
+        .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
+    Assert.assertEquals(0L, nonexistentAddressAccount.longValue());
+
 
   }
 
@@ -801,7 +805,7 @@ public class TransferFailed003 {
   @AfterClass
   public void shutdown() throws InterruptedException {
     PublicMethed
-        .freedResource(contractAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
