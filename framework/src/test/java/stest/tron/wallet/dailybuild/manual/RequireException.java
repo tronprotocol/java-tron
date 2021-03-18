@@ -85,11 +85,11 @@ public class RequireException {
     testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Assert.assertTrue(PublicMethed
         .sendcoin(asset016Address, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath =
         "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
     String contractName = "TestThrowsContract";

@@ -30,6 +30,7 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
+import stest.tron.wallet.common.client.utils.Retry;
 import stest.tron.wallet.common.client.utils.Sha256Hash;
 
 
@@ -181,7 +182,8 @@ public class TransactionFee001 {
     Assert.assertEquals(beforeBurnTrxAmount,afterBurnTrxAmount);
   }
 
-  @Test(enabled = true, description = "Test update account permission fee to black hole,"
+  @Test(enabled = true, retryAnalyzer = Retry.class,
+      description = "Test update account permission fee to black hole,"
           + "trans with multi sign and fee to sr")
   public void test02UpdateAccountPermissionAndMultiSiginTrans() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());

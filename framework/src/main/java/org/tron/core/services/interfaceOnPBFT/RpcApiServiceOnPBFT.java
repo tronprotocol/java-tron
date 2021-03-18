@@ -495,5 +495,6 @@ public class RpcApiServiceOnPBFT implements Service {
           () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
       );
     }
+
   }
 }
