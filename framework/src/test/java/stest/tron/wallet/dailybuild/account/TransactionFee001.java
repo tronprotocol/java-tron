@@ -182,7 +182,8 @@ public class TransactionFee001 {
     Assert.assertEquals(beforeBurnTrxAmount,afterBurnTrxAmount);
   }
 
-  @Test(enabled = true, retryAnalyzer = Retry.class,description = "Test update account permission fee to black hole,"
+  @Test(enabled = true, retryAnalyzer = Retry.class,
+      description = "Test update account permission fee to black hole,"
           + "trans with multi sign and fee to sr")
   public void test02UpdateAccountPermissionAndMultiSiginTrans() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
