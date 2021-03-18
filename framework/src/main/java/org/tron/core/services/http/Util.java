@@ -114,7 +114,6 @@ public class Util {
   }
 
   public static String printTransactionIdList(TransactionIdList list, boolean selfType) {
-    List<String> transactions = list.getTxIdList();
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
 
     return jsonObject.toJSONString();
