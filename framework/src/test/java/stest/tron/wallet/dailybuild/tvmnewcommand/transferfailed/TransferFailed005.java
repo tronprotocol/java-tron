@@ -109,11 +109,11 @@ public class TransferFailed005 {
     contractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100L, null, accountExcKey,
             accountExcAddress, blockingStubFull);
-    String Txid1 = PublicMethed
+    String txid1 = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
             null, accountExcKey, accountExcAddress, blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(Txid1, blockingStubFull);
+        .getTransactionInfoById(txid1, blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
     Assert.assertEquals(0, infoById.get().getResultValue());
 
@@ -126,10 +126,10 @@ public class TransferFailed005 {
     contractAddress1 = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100L, null, accountExcKey,
             accountExcAddress, blockingStubFull);
-    Txid1 = PublicMethed
+    txid1 = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
             null, accountExcKey, accountExcAddress, blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(Txid1, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     contractAddress1 = infoById.get().getContractAddress().toByteArray();
     logger.info("caller address : " + Base58.encode58Check(contractAddress1));
     Assert.assertEquals(0, infoById.get().getResultValue());
@@ -270,7 +270,7 @@ public class TransferFailed005 {
 
   @Test(enabled = true, description = "TransferFailed for create")
   public void triggerContract02() {
-    Long ContractBalance = PublicMethed.queryAccount(contractAddress, blockingStubFull)
+    final Long contractBalance = PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getBalance();
     Account info = null;
 
@@ -325,11 +325,11 @@ public class TransferFailed005 {
         .queryAccount(contractAddress1, blockingStubFull).getBalance());
     Assert.assertEquals(infoById.get().getResultValue(), 0);
     Assert.assertFalse(infoById.get().getInternalTransactions(0).getRejected());
-    Assert.assertEquals(ContractBalance - 1,
+    Assert.assertEquals(contractBalance - 1,
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
-    param = "\"" + (ContractBalance + 1) + "\"";
+    param = "\"" + (contractBalance + 1) + "\"";
     triggerTxid = PublicMethed
         .triggerContract(contractAddress, "testCreateTrxInsufficientBalance(uint256)", param, false,
             0L, maxFeeLimit, accountExcAddress, accountExcKey, blockingStubFull);
@@ -354,7 +354,7 @@ public class TransferFailed005 {
 
     Assert.assertEquals(infoById.get().getResultValue(), 1);
     Assert.assertEquals(infoById.get().getResMessage().toStringUtf8(), "REVERT opcode executed");
-    Assert.assertEquals(ContractBalance - 1,
+    Assert.assertEquals(contractBalance - 1,
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
@@ -363,7 +363,7 @@ public class TransferFailed005 {
 
   @Test(enabled = true, description = "TransferFailed for create2")
   public void triggerContract03() {
-    Long ContractBalance = PublicMethed.queryAccount(contractAddress, blockingStubFull)
+    final Long contractBalance = PublicMethed.queryAccount(contractAddress, blockingStubFull)
         .getBalance();
 
     Account info;
@@ -418,7 +418,7 @@ public class TransferFailed005 {
         .queryAccount(contractAddress, blockingStubFull).getBalance());
     Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
-    Assert.assertEquals(ContractBalance - 10L, afterBalance.longValue());
+    Assert.assertEquals(contractBalance - 10L, afterBalance.longValue());
     Assert.assertFalse(infoById.get().getInternalTransactions(0).getRejected());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
@@ -444,7 +444,7 @@ public class TransferFailed005 {
         .queryAccount(contractAddress, blockingStubFull).getBalance());
     Assert.assertEquals(1, infoById.get().getResultValue());
     Assert.assertEquals("FAILED", infoById.get().getResult().toString());
-    Assert.assertEquals(ContractBalance - 10L, afterBalance.longValue());
+    Assert.assertEquals(contractBalance - 10L, afterBalance.longValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
@@ -453,10 +453,10 @@ public class TransferFailed005 {
   @Test(enabled = true, description = "Triggerconstant a transfer function")
   public void triggerContract04() {
     Account account = PublicMethed.queryAccount(accountExcAddress, blockingStubFull);
-    Account ContractAccount = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    Account contractAccount = PublicMethed.queryAccount(contractAddress, blockingStubFull);
 
-    Long AccountBeforeBalance = account.getBalance();
-    Long ContractAccountBalance = ContractAccount.getBalance();
+    final Long AccountBeforeBalance = account.getBalance();
+    final Long contractAccountBalance = contractAccount.getBalance();
 
     TransactionExtention return1 = PublicMethed.triggerConstantContractForExtention(contractAddress,
         "testTransferTrxInsufficientBalance(uint256)", "1", false, 0L, 1000000000, "0", 0L,
@@ -470,10 +470,10 @@ public class TransferFailed005 {
     logger.info("return1: " + return1);
 
     account = PublicMethed.queryAccount(accountExcAddress, blockingStubFull);
-    ContractAccount = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    contractAccount = PublicMethed.queryAccount(contractAddress, blockingStubFull);
 
     Assert.assertEquals(AccountBeforeBalance.longValue(), account.getBalance());
-    Assert.assertEquals(ContractAccountBalance.longValue(), ContractAccount.getBalance());
+    Assert.assertEquals(contractAccountBalance.longValue(), contractAccount.getBalance());
   }
 
   /**
