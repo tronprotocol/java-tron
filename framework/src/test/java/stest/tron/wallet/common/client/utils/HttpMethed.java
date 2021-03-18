@@ -5169,4 +5169,59 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
+  public static int getTransactionPendingSize(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getpendingsize";
+      JsonObject userBaseObj2 = new JsonObject();
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return 0;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    return responseContent.getInteger("pendingSize");
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getTransactionListFromPending(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettransactionlistfrompending";
+      JsonObject userBaseObj2 = new JsonObject();
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getTransactionFromPending(String httpNode,String txid) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettransactionfrompending";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value",txid);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
+
+
 }

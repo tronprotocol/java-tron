@@ -461,6 +461,13 @@ public class CommonParameter {
   @Parameter(names = {"--history-balance-lookup"})
   public boolean historyBalanceLookup = false;
 
+  @Getter
+  @Setter
+  public boolean openPrintLog = true;
+  @Getter
+  @Setter
+  public boolean openTransactionSort = false;
+
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;

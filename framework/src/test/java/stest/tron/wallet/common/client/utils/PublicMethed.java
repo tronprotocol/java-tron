@@ -1824,7 +1824,7 @@ public class PublicMethed {
     Integer wait = 0;
     logger.info("Fullnode block num is " + currentBlock.getBlockHeader().getRawData().getNumber());
     while (solidityCurrentBlock.getBlockHeader().getRawData().getNumber()
-        < currentBlock.getBlockHeader().getRawData().getNumber() + 1 && wait <= 10) {
+        < currentBlock.getBlockHeader().getRawData().getNumber() + 1  && wait <= 24) {
       try {
         Thread.sleep(3000);
       } catch (InterruptedException e) {
@@ -1834,7 +1834,7 @@ public class PublicMethed {
           .getNumber());
       solidityCurrentBlock = blockingStubSolidity
           .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-      if (wait == 10) {
+      if (wait == 24) {
         logger.info("Didn't syn,skip to next case.");
         return false;
       }
@@ -7197,4 +7197,18 @@ public class PublicMethed {
 
 
   }
+
+  /**
+   * 61 constructor.
+   */
+
+  public static Optional<Transaction> getTransactionFromPending(String txId,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    Transaction transaction;
+    transaction = blockingStubFull.getTransactionFromPending(request);
+    return Optional.ofNullable(transaction);
+  }
+
 }

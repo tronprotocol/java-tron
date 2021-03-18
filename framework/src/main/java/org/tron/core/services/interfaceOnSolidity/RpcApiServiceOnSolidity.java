@@ -491,5 +491,6 @@ public class RpcApiServiceOnSolidity implements Service {
           () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
       );
     }
+
   }
 }

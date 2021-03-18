@@ -273,6 +273,8 @@ public class Constant {
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
 
   public static final String HISTORY_BALANCE_LOOKUP = "storage.balance.history.lookup";
+  public static final String OPEN_PRINT_LOG = "node.openPrintLog";
+  public static final String OPEN_TRANSACTION_SORT = "node.openTransactionSort";
 
   public static final String LOCAL_HOST = "127.0.0.1";
 }
