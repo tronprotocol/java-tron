@@ -74,6 +74,7 @@ import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -2636,7 +2637,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getTransactionListFromPending(EmptyMessage request,
-        StreamObserver<TransactionList> responseObserver) {
+        StreamObserver<TransactionIdList> responseObserver) {
       getTransactionListFromPendingCommon(request, responseObserver);
     }
 
@@ -2740,10 +2741,10 @@ public class RpcApiService implements Service {
   }
 
   public void getTransactionListFromPendingCommon(EmptyMessage request,
-      StreamObserver<TransactionList> responseObserver) {
+      StreamObserver<TransactionIdList> responseObserver) {
     try {
-      TransactionList.Builder builder = TransactionList.newBuilder();
-      builder.addAllTransaction(dbManager.getTxListFromPending());
+      TransactionIdList.Builder builder = TransactionIdList.newBuilder();
+      builder.addAllTxId(dbManager.getTxListFromPending());
       responseObserver.onNext(builder.build());
     } catch (Exception e) {
       responseObserver.onError(e);

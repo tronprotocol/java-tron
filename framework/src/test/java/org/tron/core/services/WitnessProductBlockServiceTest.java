@@ -2,6 +2,7 @@ package org.tron.core.services;
 
 import com.google.protobuf.ByteString;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
@@ -85,6 +86,17 @@ public class WitnessProductBlockServiceTest {
     Assert.assertEquals(blockCapsule2.getNum(), block.getLatestBlockNum());
 
     Assert.assertEquals(block.getBlockCapsuleSet().contains(blockCapsule2), true);
-    //    Assert.assertEquals(block.getBlockCapsuleSet().contains(blockCapsule1), true);
+
+    Iterator<BlockCapsule> iterator = block.getBlockCapsuleSet()
+        .iterator();
+    boolean isInner = false;
+    while (iterator.hasNext()) {
+      BlockCapsule blockCapsule = iterator.next();
+      blockCapsule.getBlockId();
+      if (blockCapsule.getBlockId().equals(blockCapsule1.getBlockId())) {
+        isInner = true;
+      }
+    }
+    Assert.assertTrue(isInner);
   }
 }

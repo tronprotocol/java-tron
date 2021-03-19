@@ -26,6 +26,7 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.Retry;
 
 @Slf4j
 
@@ -445,7 +446,8 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time")
+  @Test(enabled = true,retryAnalyzer = Retry.class,
+      description = "Test maxfeelimit can trigger call create call max time")
   public void testInternalTransaction018() {
     Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

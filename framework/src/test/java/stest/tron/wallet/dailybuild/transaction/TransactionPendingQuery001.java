@@ -10,6 +10,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -94,23 +95,27 @@ public class TransactionPendingQuery001 {
     Assert.assertNotEquals(pendingSizeInFullNode,0);
   }
 
+
   @Test(enabled = true, description = "Test get pending transaction list")
   public void test02GetPendingTransactionList() {
     int retryTimes = 100;
-    TransactionList transactionList = blockingStubFull
+    TransactionIdList transactionList = blockingStubFull
         .getTransactionListFromPending(EmptyMessage.newBuilder().build());
-    while (transactionList.getTransactionCount() == 0 && retryTimes-- > 0) {
+    while (transactionList.getTxIdCount() == 0 && retryTimes-- > 0) {
       PublicMethed.sendcoin(receiverAddress,1L,fromAddress,testKey002,blockingStubFull);
       if (retryTimes % 5 == 0) {
         transactionList = blockingStubFull
             .getTransactionListFromPending(EmptyMessage.newBuilder().build());
       }
     }
-    Assert.assertNotEquals(transactionList.getTransactionCount(),0);
-    txid = ByteArray.toHexString(Sha256Hash
-        .hash(true, transactionList.getTransaction(0).getRawData().toByteArray()));
+    Assert.assertNotEquals(transactionList.getTxIdCount(),0);
+
+    txid = transactionList.getTxId(0);
+
     logger.info("txid:" + txid);
+
   }
+
 
   @Test(enabled = true, description = "Test transaction from pending")
   public void test03GetTransactionFromPending() {
@@ -118,6 +123,7 @@ public class TransactionPendingQuery001 {
     Assert.assertEquals(ByteArray.toHexString(Sha256Hash
         .hash(true, transaction.getRawData().toByteArray())),txid);
   }
+
 
   /**
    * constructor.

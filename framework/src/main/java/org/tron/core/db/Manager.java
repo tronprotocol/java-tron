@@ -229,7 +229,10 @@ public class Manager {
           TransactionCapsule tx = null;
           try {
             tx = getRePushTransactions().peek();
-            if (tx != null) {
+            if (tx != null && System.currentTimeMillis() - tx.getTime() >= Args.getInstance()
+                .getPendingTransactionTimeout()) {
+              logger.warn("[timeout] remove tx from rePush, txId:{}", tx.getTransactionId());
+            } else if (tx != null) {
               this.rePush(tx);
             } else {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
@@ -1831,13 +1834,13 @@ public class Manager {
     return transactionCapsule.get();
   }
 
-  public Collection<Transaction> getTxListFromPending() {
-    Set<Transaction> result = new HashSet<>();
+  public Collection<String> getTxListFromPending() {
+    Set<String> result = new HashSet<>();
     pendingTransactions.forEach(tx -> {
-      result.add(tx.getInstance());
+      result.add(tx.getTransactionId().toString());
     });
     rePushTransactions.forEach(tx -> {
-      result.add(tx.getInstance());
+      result.add(tx.getTransactionId().toString());
     });
     return result;
   }
