@@ -1,37 +1,17 @@
 package org.tron.core.db;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.TransactionTrace.TimeResultType;
-import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsUtil;
 
 @Slf4j(topic = "DB")
 public class PendingManager implements AutoCloseable {
 
-  @Getter
-  private List<TransactionCapsule> tmpTransactions = new ArrayList<>();
   private Manager dbManager;
   private long timeout = Args.getInstance().getPendingTransactionTimeout();
 
   public PendingManager(Manager db) {
     this.dbManager = db;
-    db.getPendingTransactions().forEach(transactionCapsule -> {
-      if (System.currentTimeMillis() - transactionCapsule.getTime() < timeout) {
-        tmpTransactions.add(transactionCapsule);
-      }
-    });
-
-    if (db.getPendingTransactions().size() > tmpTransactions.size()) {
-      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_MISSED_TRANSACTION,
-          db.getPendingTransactions().size() - tmpTransactions.size());
-    }
-
-    db.getPendingTransactions().clear();
     db.getSession().reset();
     db.getShieldedTransInPendingCounts().set(0);
   }
@@ -39,22 +19,26 @@ public class PendingManager implements AutoCloseable {
   @Override
   public void close() {
 
-    for (TransactionCapsule tx : tmpTransactions) {
+    for (TransactionCapsule tx : dbManager.getPendingTransactions()) {
       txIteration(tx);
     }
-    tmpTransactions.clear();
-
+    dbManager.getPendingTransactions().clear();
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
+      tx.setTime(System.currentTimeMillis());
       txIteration(tx);
     }
     dbManager.getPoppedTransactions().clear();
+    if (Args.getInstance().isOpenPrintLog()) {
+      logger.warn("pending tx size:{}", dbManager.getRePushTransactions().size());
+    }
   }
 
   private void txIteration(TransactionCapsule tx) {
     try {
-      if (tx.getTrxTrace() != null
-          && tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
+      if (System.currentTimeMillis() - tx.getTime() < timeout) {
         dbManager.getRePushTransactions().put(tx);
+      } else if (Args.getInstance().isOpenPrintLog()) {
+        logger.warn("[timeout] remove tx from pending, txId:{}", tx.getTransactionId());
       }
     } catch (InterruptedException e) {
       logger.error(e.getMessage());
