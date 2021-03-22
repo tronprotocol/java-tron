@@ -1,9 +1,7 @@
 package org.tron.core.store;
 
 import com.typesafe.config.ConfigObject;
-
 import java.io.File;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.http.util.Args;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -94,7 +91,10 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             new AccountAssetIssueRecordQueue(BlockQueueFactoryUtil.getInstance());
     accountRecordQueue.fetchAccountAssetIssue(this.getRevokingDB());
     accountConvertQueue =
-            new AccountConvertQueue(BlockQueueFactoryUtil.getInstance(), this, accountStore);
+            new AccountConvertQueue(
+                    BlockQueueFactoryUtil.getInstance(),
+                    this,
+                    accountStore);
     accountConvertQueue.convertAccountAssetIssueToAccount();
     logger.info("The database indexing completed, total time spent:{}s," +
                     " r({}s)/w({}s), total account count:{}",
@@ -133,12 +133,14 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   public void waitUtilConvertAccountFinish() {
-    if (CommonParameter.getInstance().isRollback() || !dynamicPropertiesStore.getAllowAssetImport()) {
+    if (CommonParameter.getInstance().isRollback() ||
+            !dynamicPropertiesStore.getAllowAssetImport()) {
       return;
     }
     try {
       long start = System.currentTimeMillis();
       accountConvertQueue.waitUtilConvertFinish();
+      accountConvertQueue.shutdownExecutor();
       dynamicPropertiesStore.setAllowAssetImport(false);
       logger.info("The database indexing completed, total time spent:{}s," +
                       " r({}s)/w({}s, total account count:{})",
@@ -182,8 +184,10 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
       new Thread(() -> {
         long start = System.currentTimeMillis();
         for (Map.Entry<byte[], byte[]> accountRecord : revokingDB) {
-          put(accountRecord);
-          readCount.incrementAndGet();
+          if (accountRecord != null) {
+            put(accountRecord);
+            readCount.incrementAndGet();
+          }
         }
         readCost.set(System.currentTimeMillis() - start);
         readFinish.set(true);
@@ -199,6 +203,8 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
     private AccountStore accountStore;
 
+    private ExecutorService writeExecutor;
+
     public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
                                AccountAssetIssueStore accountAssetIssueStore,
                                AccountStore accountStore) {
@@ -208,7 +214,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     }
 
     public void convert() {
-      ExecutorService writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
+      writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
       writeCost.set(System.currentTimeMillis());
       for (int i = 0; i < ThreadPoolUtil.getMaxPoolSize(); i++) {
         Future<?> future = writeExecutor.submit(() -> {
@@ -245,8 +251,7 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
 
               accountAssetIssueStore.put(address,
                   new AccountAssetIssueCapsule(accountAssetIssue));
-              Account account = accountCapsule.getInstance();
-              account = account.toBuilder()
+              Account account = accountCapsule.getInstance().toBuilder()
                   .clearAssetIssuedID()
                   .clearAssetIssuedName()
                   .clearAsset()
@@ -256,16 +261,12 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                   .clearLatestAssetOperationTime()
                   .clearLatestAssetOperationTimeV2()
                   .build();
-
-
               accountCapsule.setInstance(account);
-
               //set VotePower
               accountCapsule.setVotePower413(accountCapsule.getTronPower());
 
               accountStore.put(address, accountCapsule);
               writeCount.incrementAndGet();
-
             }
           } catch (InterruptedException e) {
             logger.error("account convert asset exception: {}", e.getMessage(), e);
@@ -334,15 +335,19 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
         });
         writeFutures.add(future);
       }
-
       waitUtilConvertFinish();
+    }
+
+    public void shutdownExecutor() {
+      writeExecutor.shutdown();
     }
   }
 
   @Slf4j(topic = "DB")
   public static class TimerUtil {
 
-    public static Timer countDown(String message, AtomicLong readCount, AtomicLong writeCount) {
+    public static Timer countDown(String message,
+                                  AtomicLong readCount, AtomicLong writeCount) {
       Timer timer = new Timer();
       AtomicInteger count = new AtomicInteger();
       timer.schedule(new TimerTask() {
@@ -370,7 +375,8 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   private void removeDB(String outputDirectory) {
-    String accountAssetIssueDB = outputDirectory + File.separator + "database" + File.separator + "account-asset-issue";
+    String accountAssetIssueDB = outputDirectory + File.separator
+            + "database" + File.separator + "account-asset-issue";
     if (FileUtil.deleteDir(new File(accountAssetIssueDB))) {
       logger.info("remove account-asset-issue DB, success");
     } else {
