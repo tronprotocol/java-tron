@@ -18,13 +18,13 @@ import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract;
-import org.tron.protos.contract.BalanceContract.UpdateCrossContract;
+import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 @Slf4j(topic = "actuator")
 public class CrossUpdateActuator extends AbstractActuator {
 
   public CrossUpdateActuator() {
-    super(ContractType.UpdateCrossContract, UpdateCrossContract.class);
+    super(ContractType.UpdateCrossContract, CrossChainInfo.class);
   }
 
   @Override
@@ -38,12 +38,12 @@ public class CrossUpdateActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     try {
-      UpdateCrossContract updateCrossContract = any.unpack(UpdateCrossContract.class);
-      byte[] ownerAddress = updateCrossContract.getOwnerAddress().toByteArray();
-      String chainId = updateCrossContract.getCrossChainInfo().getChainId().toString();
+      CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
+      byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
+      String chainId = crossChainInfo.getChainId().toString();
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-      crossRevokingStore.putChainInfo(chainId, updateCrossContract.getCrossChainInfo().toByteArray());
+      crossRevokingStore.putChainInfo(chainId, crossChainInfo.toByteArray());
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -63,31 +63,31 @@ public class CrossUpdateActuator extends AbstractActuator {
     }
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
-    if (!this.any.is(UpdateCrossContract.class)) {
+    if (!this.any.is(CrossChainInfo.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [UpdateCrossContract], real type [" + this.any
+          "contract type error, expected type [ParaChainInfo], real type [" + this.any
               .getClass() + "]");
     }
-    final UpdateCrossContract updateCrossContract;
+    final CrossChainInfo crossChainInfo;
     try {
-      updateCrossContract = any.unpack(UpdateCrossContract.class);
+      crossChainInfo = any.unpack(CrossChainInfo.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
-    byte[] chainId = updateCrossContract.getCrossChainInfo().getChainId().toByteArray();
-    byte[] ownerAddress = updateCrossContract.getOwnerAddress().toByteArray();
+    byte[] chainId = crossChainInfo.getChainId().toByteArray();
+    byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
 
     byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(ByteArray.toStr(chainId));
-    BalanceContract.CrossChainInfo crossChainInfo = null;
+    BalanceContract.CrossChainInfo crossChainInfoOld = null;
 
     if (crossChainInfoBytes == null) {
       throw new ContractValidateException("ChainId has not been registered!");
     }
 
     try {
-      crossChainInfo = BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
+      crossChainInfoOld = BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException("the format of crossChainInfo stored in db is not right!");
     }
@@ -96,7 +96,7 @@ public class CrossUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid ownerAddress!");
     }
 
-    if (!Arrays.equals(crossChainInfo.toByteArray(), ownerAddress)) {
+    if (!Arrays.equals(crossChainInfoOld.getOwnerAddress().toByteArray(), ownerAddress)) {
       throw new ContractValidateException("ownerAddress must be the same with the register address!");
     }
 
@@ -119,7 +119,7 @@ public class CrossUpdateActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(UpdateCrossContract.class).getOwnerAddress();
+    return any.unpack(CrossChainInfo.class).getOwnerAddress();
   }
 
   @Override

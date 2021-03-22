@@ -1,9 +1,9 @@
 package org.tron.core.ibc.verify;
 
-import org.tron.protos.contract.BalanceContract.RegisterCrossContract;
+import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 public class ChainParam {
 
-  private RegisterCrossContract registerCrossContract;
+  private CrossChainInfo CrossChainInfo;
 
 }
