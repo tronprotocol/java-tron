@@ -36,7 +36,7 @@ public class WitnessProductBlockService {
         cheatWitnessInfoMap.get(key).clear().setTime(System.currentTimeMillis())
             .setLatestBlockNum(block.getNum()).add(block).add(blockCapsule).increment();
       } else {
-        historyBlockCapsuleCache.put(block.getNum(), block);
+        historyBlockCapsuleCache.put(block.getNum(), new BlockCapsule(block.getInstance()));
       }
     } catch (Exception e) {
       logger.error("valid witness same time product two block fail! blockNum: {}, blockHash: {}",
@@ -108,12 +108,12 @@ public class WitnessProductBlockService {
 
     @Override
     public String toString() {
-      return "{" +
-          "times=" + times.get() +
-          ", time=" + time +
-          ", latestBlockNum=" + latestBlockNum +
-          ", blockCapsuleSet=" + blockCapsuleSet +
-          '}';
+      return "{"
+          + "times=" + times.get()
+          + ", time=" + time
+          + ", latestBlockNum=" + latestBlockNum
+          + ", blockCapsuleSet=" + blockCapsuleSet
+          + '}';
     }
   }
 }

@@ -29,6 +29,7 @@ public class EnergyProcessorTest {
   private static final String CONTRACT_PROVIDER_ADDRESS;
   private static final String USER_ADDRESS;
   private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
   private static TronApplicationContext context;
 
   static {
@@ -46,6 +47,7 @@ public class EnergyProcessorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -141,7 +143,7 @@ public class EnergyProcessorTest {
 
     // Test resource usage auto reply
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
-    long now = dbManager.getHeadSlot();
+    long now = chainBaseManager.getHeadSlot();
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(4000L);
 

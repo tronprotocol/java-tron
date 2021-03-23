@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.PongMessage;
+import org.tron.consensus.pbft.message.PbftBaseMessage;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -26,15 +29,15 @@ import org.tron.protos.Protocol.ReasonCode;
 @Scope("prototype")
 public class MessageQueue {
 
-  private static ScheduledExecutorService sendTimer = Executors.
-      newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
+  private static ScheduledExecutorService sendTimer =
+      Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
   private volatile boolean sendMsgFlag = false;
   private volatile long sendTime;
   private volatile long sendPing;
   private Thread sendMsgThread;
   private Channel channel;
   private ChannelHandlerContext ctx = null;
-  private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
+  private Queue<MessageRoundTrip> requestQueue = new ConcurrentLinkedQueue<>();
   private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
   private ScheduledFuture<?> sendTask;
 
@@ -65,11 +68,11 @@ public class MessageQueue {
           Message msg = msgQueue.take();
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
             if (!future.isSuccess() && !channel.isDisconnect()) {
-              logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
+              logger.error("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
             }
           });
         } catch (Exception e) {
-          logger.error("Fail send to {}, error info: {}", ctx.channel().remoteAddress(),
+          logger.error("Failed to send to {}, error info: {}", ctx.channel().remoteAddress(),
               e.getMessage());
         }
       }
@@ -80,6 +83,15 @@ public class MessageQueue {
 
   public void setChannel(Channel channel) {
     this.channel = channel;
+  }
+
+  public void fastSend(Message msg) {
+    logger.info("Fast send to {}, {} ", ctx.channel().remoteAddress(), msg);
+    ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+      if (!future.isSuccess() && !channel.isDisconnect()) {
+        logger.error("Fast send to {} failed, {}", ctx.channel().remoteAddress(), msg);
+      }
+    });
   }
 
   public boolean sendMessage(Message msg) {
@@ -94,9 +106,10 @@ public class MessageQueue {
       logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
+    MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC, msg.getSendData().readableBytes());
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
-      requestQueue.add(new MessageRoundtrip(msg));
+      requestQueue.add(new MessageRoundTrip(msg));
     } else {
       msgQueue.offer(msg);
     }
@@ -108,7 +121,7 @@ public class MessageQueue {
       logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
-    MessageRoundtrip rt = requestQueue.peek();
+    MessageRoundTrip rt = requestQueue.peek();
     if (rt != null && rt.getMsg().getAnswerMessage() == msg.getClass()) {
       requestQueue.remove();
       if (rt.getMsg() instanceof PingMessage) {
@@ -135,14 +148,15 @@ public class MessageQueue {
   }
 
   private boolean needToLog(Message msg) {
-    if (msg instanceof PingMessage ||
-        msg instanceof PongMessage ||
-        msg instanceof TransactionsMessage) {
+    if (msg instanceof PingMessage
+        || msg instanceof PongMessage
+        || msg instanceof TransactionsMessage
+        || msg instanceof PbftBaseMessage) {
       return false;
     }
 
-    if (msg instanceof InventoryMessage &&
-        ((InventoryMessage) msg).getInventoryType().equals(InventoryType.TRX)) {
+    if (msg instanceof InventoryMessage
+        && ((InventoryMessage) msg).getInventoryType().equals(InventoryType.TRX)) {
       return false;
     }
 
@@ -150,7 +164,7 @@ public class MessageQueue {
   }
 
   private void send() {
-    MessageRoundtrip rt = requestQueue.peek();
+    MessageRoundTrip rt = requestQueue.peek();
     if (!sendMsgFlag || rt == null) {
       return;
     }

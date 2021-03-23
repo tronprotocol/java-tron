@@ -224,7 +224,7 @@ public class VoteWitnessAccount2Test {
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     }
@@ -529,11 +529,7 @@ public class VoteWitnessAccount2Test {
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
-      return true;
-    }
+    return response.getResult();
   }
 
   /**

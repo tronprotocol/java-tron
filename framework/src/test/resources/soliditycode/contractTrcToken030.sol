@@ -1,4 +1,3 @@
-//pragma solidity ^0.4.24;
 
  contract token{
      constructor() public payable{}
@@ -14,5 +13,5 @@
 
 contract B{
     constructor() public payable {}
-    function() external payable {}
+    fallback() external payable {}
 }

@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -41,13 +40,11 @@ public class ScanAndMarkNoteByIvkServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+
       IvkDecryptAndMarkParameters.Builder ivkDecryptParameters =
           IvkDecryptAndMarkParameters.newBuilder();
-      JsonFormat.merge(input, ivkDecryptParameters);
+      JsonFormat.merge(params.getParams(), ivkDecryptParameters);
 
       GrpcAPI.DecryptNotesMarked notes = wallet
           .scanAndMarkNoteByIvk(ivkDecryptParameters.getStartBlockIndex(),
@@ -56,7 +53,7 @@ public class ScanAndMarkNoteByIvkServlet extends RateLimiterServlet {
               ivkDecryptParameters.getAk().toByteArray(),
               ivkDecryptParameters.getNk().toByteArray());
 
-      response.getWriter().println(convertOutput(notes, visible));
+      response.getWriter().println(convertOutput(notes, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }

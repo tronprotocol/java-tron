@@ -1,8 +1,10 @@
 package org.tron.core.vm.config;
 
 
+import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
+
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 
@@ -15,7 +17,7 @@ public class ConfigLoader {
   public static void load(StoreFactory storeFactory) {
     if (!disable) {
       DynamicPropertiesStore ds = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
-      VMConfig.setVmTrace(DBConfig.isVmTrace());
+      VMConfig.setVmTrace(CommonParameter.getInstance().isVmTrace());
       if (ds != null) {
         VMConfig.initVmHardFork(checkForEnergyLimit(ds));
         VMConfig.initAllowMultiSign(ds.getAllowMultiSign());
@@ -23,13 +25,10 @@ public class ConfigLoader {
         VMConfig.initAllowTvmConstantinople(ds.getAllowTvmConstantinople());
         VMConfig.initAllowTvmSolidity059(ds.getAllowTvmSolidity059());
         VMConfig.initAllowShieldedTRC20Transaction(ds.getAllowShieldedTRC20Transaction());
+        VMConfig.initAllowTvmIstanbul(ds.getAllowTvmIstanbul());
+        VMConfig.initAllowTvmStake(ds.getAllowTvmStake());
+        VMConfig.initAllowTvmAssetIssue(ds.getAllowTvmAssetIssue());
       }
     }
   }
-
-  private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
-    long blockNum = ds.getLatestBlockHeaderNumber();
-    return blockNum >= DBConfig.getBlockNumForEneryLimit();
-  }
-
 }

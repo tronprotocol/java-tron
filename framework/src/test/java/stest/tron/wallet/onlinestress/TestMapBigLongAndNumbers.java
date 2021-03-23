@@ -162,7 +162,7 @@ public class TestMapBigLongAndNumbers {
       String isSuccess;
 
       if (infoById.get().getResultValue() == 0) {
-        logger.info("success:" + " Number：" + ii);
+        logger.info("success:" + " Number:" + ii);
         isSuccess = "success";
       } else {
         logger.info("failed" + " Number:" + ii);

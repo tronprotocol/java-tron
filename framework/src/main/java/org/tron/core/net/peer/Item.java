@@ -30,8 +30,8 @@ public class Item {
       return false;
     }
     Item item = (Item) o;
-    return hash.equals(item.getHash()) &&
-        type.equals(item.getType());
+    return hash.equals(item.getHash())
+        && type.equals(item.getType());
   }
 
   @Override

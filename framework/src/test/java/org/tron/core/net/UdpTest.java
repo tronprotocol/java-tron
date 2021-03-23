@@ -93,7 +93,7 @@ public class UdpTest {
         pingFlag = true;
         Assert.assertTrue(msg instanceof PingMessage);
         Assert.assertTrue(Arrays.equals(((PingMessage) msg).getTo().getId(), from.getId()));
-        PongMessage pongMessage = new PongMessage(from, msg.getTimestamp());
+        PongMessage pongMessage = new PongMessage(from);
         DatagramPacket pongPacket = new DatagramPacket(pongMessage.getSendData(),
             pongMessage.getSendData().length, server, port);
         socket.send(pongPacket);

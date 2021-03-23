@@ -56,12 +56,5 @@ public class VotesStoreTest {
         .get(ByteString.copyFromUtf8("100000000x").toByteArray());
     Assert.assertEquals(votesCapsule.getAddress(), votesSource.getAddress());
     Assert.assertEquals(ByteString.copyFromUtf8("100000000x"), votesSource.getAddress());
-
-//    votesCapsule = new VotesCapsule(ByteString.copyFromUtf8(""), oldVotes);
-//    this.votesStore.put(votesCapsule.createDbKey(), votesCapsule);
-//    votesSource = this.votesStore.get(ByteString.copyFromUtf8("").toByteArray());
-//    Assert.assertEquals(votesStore.getAllVotes().size(), 2);
-//    Assert.assertEquals(votesCapsule.getAddress(), votesSource.getAddress());
-//    Assert.assertEquals(null, votesSource.getAddress());
   }
 }

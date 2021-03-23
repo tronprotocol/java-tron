@@ -47,9 +47,12 @@ public class TriggerConstant013 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private ManagedChannel channelSolidity = null;
+  public ManagedChannel channelPbft = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private ManagedChannel channelRealSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
+  public WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
@@ -58,6 +61,8 @@ public class TriggerConstant013 {
       .getStringList("solidityNode.ip.list").get(0);
   private String realSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+          .getStringList("solidityNode.ip.list").get(2);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -89,6 +94,10 @@ public class TriggerConstant013 {
         .usePlaintext(true)
         .build();
     blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+            .usePlaintext(true)
+            .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
   @Test(enabled = true, description = "triggerContract a constant function created by create2")
@@ -283,6 +292,31 @@ public class TriggerConstant013 {
     Assert.assertEquals(1, ByteArray.toLong(ByteArray
         .fromHexString(Hex
             .toHexString(result))));
+  }
+
+  @Test(enabled = true, description = "TriggerConstantContract a constant function "
+          + "created by create2 on pbft")
+  public void test17TriggerConstantContractOnPbft() {
+    SmartContract smartContract = PublicMethed.getContract(returnAddressBytes, blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
+    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
+    String returnAddress = Base58.encode58Check(returnAddressBytes);
+    logger.info("returnAddress:" + returnAddress);
+    TransactionExtention transactionExtention = PublicMethed
+            .triggerConstantContractForExtentionOnSolidity(returnAddressBytes,
+                    "plusOne()", "#", false,
+                    0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubPbft);
+    Transaction transaction = transactionExtention.getTransaction();
+
+    byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+            .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+            .fromHexString(Hex
+                    .toHexString(result))));
   }
 
   /**

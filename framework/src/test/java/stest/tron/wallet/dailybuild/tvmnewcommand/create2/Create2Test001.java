@@ -80,6 +80,7 @@ public class Create2Test001 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 10000_000_000L, fromAddress,
         testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "./src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -280,10 +281,8 @@ public class Create2Test001 {
     logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
-    Assert.assertEquals(1, infoById.get().getResultValue());
-    Assert
-        .assertThat(infoById.get().getResMessage().toStringUtf8(),
-            containsString("Not enough energy for 'SWAP1' operation executing"));
+    // Istanbul change create2 algorithm
+    Assert.assertEquals(0, infoById.get().getResultValue());
   }
 
   @Test(enabled = true, description = "Trigger create2 command without meta data hash in bytecode")

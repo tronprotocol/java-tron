@@ -81,12 +81,12 @@ public class TransferFailed007 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    String Txid1 = PublicMethed
+    String txid1 = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
             null, accountExcKey, accountExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(Txid1, blockingStubFull);
+        .getTransactionInfoById(txid1, blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
     Assert.assertEquals(0, infoById.get().getResultValue());
   }

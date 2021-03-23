@@ -12,11 +12,10 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -25,20 +24,21 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 
 
 @Slf4j
-@Ignore
+//@Ignore
 public class UpdateEnergyLimitContractActuatorTest {
 
   private static final String dbPath = "output_updateEnergyLimitContractActuator_test";
@@ -93,7 +93,7 @@ public class UpdateEnergyLimitContractActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
+    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   /**
@@ -194,7 +194,7 @@ public class UpdateEnergyLimitContractActuatorTest {
       fail("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists");
     } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists", e.getMessage());
+      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOTEXIST + "] does not exist", e.getMessage());
     }
   }
 
@@ -212,7 +212,7 @@ public class UpdateEnergyLimitContractActuatorTest {
       fail("origin energy limit less than 0");
     } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("origin energy limit must > 0", e.getMessage());
+      Assert.assertEquals("origin energy limit must be > 0", e.getMessage());
     }
   }
 
@@ -230,7 +230,7 @@ public class UpdateEnergyLimitContractActuatorTest {
       fail("Contract not exists");
     } catch (TronException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Contract not exists", e.getMessage());
+      Assert.assertEquals("Contract does not exist", e.getMessage());
     }
   }
 
@@ -289,5 +289,71 @@ public class UpdateEnergyLimitContractActuatorTest {
       Assert.fail(e.getMessage());
     }
   }
+
+
+  @Test
+  public void nullDBManger() {
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(null)
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No account store or dynamic store!",
+        "No account store or dynamic store!");
+  }
+
+  @Test
+  public void noContract() {
+
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    // create AssetIssueContract, not a valid UpdateEnergyLimitContract contract , which will
+    // throw e exception
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error, expected type [UpdateEnergyLimitContract],real type["
+            + invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void nullTransactionResult() {
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
+    TransactionResultCapsule ret = null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+  }
+
+  private void processAndCheckInvalid(UpdateEnergyLimitContractActuator actuator,
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
 
 }

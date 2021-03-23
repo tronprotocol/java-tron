@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -7,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -30,9 +32,9 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)object;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) object;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -72,11 +74,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
       accountStore.put(ownerAddress, accountCapsule);
       ret.setStatus(fee, code.SUCESS);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (ArithmeticException e) {
+    } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -88,10 +86,10 @@ public class UnfreezeAssetActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -108,7 +106,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -116,7 +114,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] does not exist");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
     if (accountCapsule.getFrozenSupplyCount() <= 0) {

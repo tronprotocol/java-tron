@@ -1,7 +1,7 @@
-//pragma solidity ^0.4.24;
+
 contract transferTokenContract {
     constructor() payable public{}
-    function() payable external{}
+    fallback() payable external{}
     function transferTokenTest(address payable toAddress, uint256 tokenValue, trcToken id) payable public  {
             toAddress.transferToken(tokenValue, id);
     }
@@ -28,7 +28,7 @@ contract transferTokenContract {
 contract Result {
    event log(uint256,uint256,uint256);
    constructor() payable public{}
-    function() payable external{
+    fallback() payable external{
          emit log(msg.tokenid,msg.tokenvalue,msg.value);
     }
 }

@@ -23,6 +23,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -46,9 +47,9 @@ public class TransferAssetActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -72,9 +73,6 @@ public class TransferAssetActuator extends AbstractActuator {
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
 
-      Commons.adjustBalance(accountStore, ownerAddress, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
       if (!ownerAccountCapsule
           .reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
@@ -86,15 +84,18 @@ public class TransferAssetActuator extends AbstractActuator {
           .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
       accountStore.put(toAddress, toAccountCapsule);
 
+      Commons.adjustBalance(accountStore, ownerAccountCapsule, -fee);
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (ArithmeticException e) {
+    } catch (InvalidProtocolBufferException | ArithmeticException e) {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
@@ -105,10 +106,10 @@ public class TransferAssetActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -133,15 +134,13 @@ public class TransferAssetActuator extends AbstractActuator {
     byte[] assetName = transferAssetContract.getAssetName().toByteArray();
     long amount = transferAssetContract.getAmount();
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
-//    if (!TransactionUtil.validAssetName(assetName)) {
-//      throw new ContractValidateException("Invalid assetName");
-//    }
+
     if (amount <= 0) {
       throw new ContractValidateException("Amount must be greater than 0.");
     }

@@ -2,12 +2,12 @@ package org.tron.program;
 
 public class Version {
 
-  public static final String versionName = "Odyssey-v3.7-216-gb01d5c721";
-  public static final String versionCode = "13200";
-  private static final String version = "4.0.0";
+  public static final String VERSION_NAME = "GreatVoyage-v4.1.1-2046-gc465c9ee4";
+  public static final String VERSION_CODE = "15262";
+  private static final String VERSION = "4.1.3";
 
   public static String getVersion() {
-    return version;
+    return VERSION;
   }
 }
 

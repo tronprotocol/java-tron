@@ -21,7 +21,7 @@ public class HttpTestClearAbiContract001 {
 
   private static final long now = System.currentTimeMillis();
   private static final long totalSupply = now;
-  private static String name = "testAssetIssue002_" + Long.toString(now);
+  private static String name = "testAssetIssue002_" + now;
   private static String assetIssueId;
   private static String contractName;
   private final String testKey002 = Configuration.getByPath("testng.conf")
@@ -35,12 +35,15 @@ public class HttpTestClearAbiContract001 {
   Long amount = 2048000000L;
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
-  String url = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetUrl");
+  String url = Configuration.getByPath("testng.conf").getString("defaultParameter.assetUrl");
   private JSONObject responseContent;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
   /**
    * constructor.
@@ -65,9 +68,9 @@ public class HttpTestClearAbiContract001 {
     logger.info("abi:" + abi);
     logger.info("code:" + code);
 
-    String txid = HttpMethed.deployContractGetTxid(httpnode, contractName, abi, code, 1000000L,
-        1000000000L, 100, 11111111111111L,
-        0L, 0, 0L, assetOwnerAddress, assetOwnerKey);
+    String txid = HttpMethed
+        .deployContractGetTxid(httpnode, contractName, abi, code, 1000000L, 1000000000L, 100,
+            11111111111111L, 0L, 0, 0L, assetOwnerAddress, assetOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
     logger.info(txid);
@@ -96,9 +99,7 @@ public class HttpTestClearAbiContract001 {
     Assert.assertEquals(responseContent.getString("contract_address"), contractAddress);
     Assert.assertEquals(responseContent.getString("origin_address"),
         ByteArray.toHexString(assetOwnerAddress));
-    Assert
-        .assertThat(responseContent.getString("abi"),
-            containsString("testView"));
+    Assert.assertThat(responseContent.getString("abi"), containsString("testView"));
 
     Assert.assertEquals(responseContent.getString("origin_energy_limit"), "11111111111111");
     Assert.assertEquals(responseContent.getString("name"), contractName);
@@ -111,15 +112,34 @@ public class HttpTestClearAbiContract001 {
   public void test3TriggerConstantContract() {
 
     HttpResponse httpResponse = HttpMethed
-        .triggerConstantContract(httpnode, assetOwnerAddress, contractAddress,
-            "testView()",
-            "");
+        .triggerConstantContract(httpnode, assetOwnerAddress, contractAddress, "testView()", "");
 
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
     Assert.assertEquals(responseContent.getString("constant_result"),
         "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
+
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    httpResponse = HttpMethed.triggerConstantContractFromSolidity(httpSoliditynode,
+        assetOwnerAddress, contractAddress, "testView()", "");
+
+    responseContent = HttpMethed.parseResponseContent(httpResponse);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
+    Assert.assertEquals(responseContent.getString("constant_result"),
+            "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
+
+    httpResponse = HttpMethed.triggerConstantContractFromPbft(httpPbftnode, assetOwnerAddress,
+        contractAddress, "testView()", "");
+
+    responseContent = HttpMethed.parseResponseContent(httpResponse);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
+    Assert.assertEquals(responseContent.getString("constant_result"),
+            "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
   }
 
   /**

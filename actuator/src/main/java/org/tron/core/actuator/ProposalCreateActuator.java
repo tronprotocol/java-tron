@@ -9,8 +9,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -30,9 +30,9 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -53,7 +53,7 @@ public class ProposalCreateActuator extends AbstractActuator {
 
       long currentMaintenanceTime =
           chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-      long now3 = now + DBConfig.getProposalExpireTime();
+      long now3 = now + CommonParameter.getInstance().getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
@@ -74,7 +74,7 @@ public class ProposalCreateActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No dbManager!");
@@ -94,7 +94,7 @@ public class ProposalCreateActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -120,8 +120,9 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
-    ProposalUtil.validator(chainBaseManager.getDynamicPropertiesStore(), forkUtils, entry.getKey(),
-        entry.getValue());
+    ProposalUtil
+        .validator(chainBaseManager.getDynamicPropertiesStore(), forkController, entry.getKey(),
+            entry.getValue());
   }
 
   @Override

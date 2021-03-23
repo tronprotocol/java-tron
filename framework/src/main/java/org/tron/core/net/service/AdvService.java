@@ -1,8 +1,8 @@
 package org.tron.core.net.service;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_FETCH_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -39,6 +39,11 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class AdvService {
+  
+  private final int MAX_INV_TO_FETCH_CACHE_SIZE = 100_000;
+  private final int MAX_TRX_CACHE_SIZE = 50_000;
+  private final int MAX_BLOCK_CACHE_SIZE = 10;
+  private final int MAX_SPREAD_SIZE = 1_000;
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -48,13 +53,16 @@ public class AdvService {
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
 
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
-      .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+      .maximumSize(MAX_INV_TO_FETCH_CACHE_SIZE).expireAfterWrite(1, TimeUnit.HOURS)
+      .recordStats().build();
 
   private Cache<Item, Message> trxCache = CacheBuilder.newBuilder()
-      .maximumSize(50_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+      .maximumSize(MAX_TRX_CACHE_SIZE).expireAfterWrite(1, TimeUnit.HOURS)
+      .recordStats().build();
 
   private Cache<Item, Message> blockCache = CacheBuilder.newBuilder()
-      .maximumSize(10).expireAfterWrite(1, TimeUnit.MINUTES).recordStats().build();
+      .maximumSize(MAX_BLOCK_CACHE_SIZE).expireAfterWrite(1, TimeUnit.MINUTES)
+      .recordStats().build();
 
   private ScheduledExecutorService spreadExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -62,8 +70,6 @@ public class AdvService {
 
   @Getter
   private MessageCount trxCount = new MessageCount();
-
-  private int maxSpreadSize = 1_000;
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
@@ -144,7 +150,7 @@ public class AdvService {
       return;
     }
 
-    if (invToSpread.size() > maxSpreadSize) {
+    if (invToSpread.size() > MAX_SPREAD_SIZE) {
       logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
       return;
     }
@@ -191,7 +197,7 @@ public class AdvService {
     }
 
     peers.forEach(peer -> {
-      peer.sendMessage(msg);
+      peer.fastSend(msg);
       peer.getAdvInvSpread().put(item, System.currentTimeMillis());
       peer.setFastForwardBlock(msg.getBlockId());
     });
@@ -234,15 +240,14 @@ public class AdvService {
         invToFetchCache.invalidate(item);
         return;
       }
-      peers.stream()
-          .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null
-              && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
+      peers.stream().filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null
+          && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
-        invSender.add(item, peer);
-        peer.getAdvInvRequest().put(item, now);
-        invToFetch.remove(item);
-      });
+            invSender.add(item, peer);
+            peer.getAdvInvRequest().put(item, now);
+            invToFetch.remove(item);
+          });
     });
 
     invSender.sendFetch();
@@ -276,7 +281,8 @@ public class AdvService {
 
   class InvSender {
 
-    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send = new HashMap<>();
+    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
+        = new HashMap<>();
 
     public void clear() {
       this.send.clear();
@@ -316,8 +322,10 @@ public class AdvService {
         }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
+          peer.fastSend(new InventoryMessage(value, key));
+        } else {
+          peer.sendMessage(new InventoryMessage(value, key));
         }
-        peer.sendMessage(new InventoryMessage(value, key));
       }));
     }
 
@@ -325,8 +333,10 @@ public class AdvService {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
+          peer.fastSend(new FetchInvDataMessage(value, key));
+        } else {
+          peer.sendMessage(new FetchInvDataMessage(value, key));
         }
-        peer.sendMessage(new FetchInvDataMessage(value, key));
       }));
     }
   }

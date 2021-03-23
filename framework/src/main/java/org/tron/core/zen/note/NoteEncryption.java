@@ -247,12 +247,6 @@ public class NoteEncryption {
 
     /**
      * encrypt the message by ovk used for scanning
-     *
-     * @param ovk
-     * @param toAmount
-     * @param transparentToAddress
-     * @return
-     * @throws ZksnarkException
      */
     public static Optional<byte[]> encryptBurnMessageByOvk(byte[] ovk, BigInteger toAmount,
         byte[] transparentToAddress)
@@ -276,11 +270,6 @@ public class NoteEncryption {
 
     /**
      * decrypt the message by ovk used for scanning
-     *
-     * @param ovk
-     * @param ciphertext
-     * @return
-     * @throws ZksnarkException
      */
     public static Optional<byte[]> decryptBurnMessageByOvk(byte[] ovk, byte[] ciphertext)
         throws ZksnarkException {

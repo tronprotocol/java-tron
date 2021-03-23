@@ -1,4 +1,3 @@
-// pragma solidity ^0.4.0;
 contract InfoFeed {
 function d1(uint x) public{
         assembly{
@@ -12,10 +11,15 @@ function d1(uint x) public{
         assembly { x := sub(x, 1) }
 
     }
-    function d(uint x) public{
+    // 0.6.0 Variable declarations cannot shadow declarations outside the assembly block.
+    function d(uint x1) public returns(uint256){
+        uint256 x;
         assembly{
-            let x := add(2, 3) let y := mload(0x40) x := add(x, y)
+            x := add(2, 3)
+            let y := mload(0x40)
+            x := add(x, y)
         }
+        return x;
     }
     function d4(uint x) public{
         // Error: The labels 'repeat' is disallowed. Please use "if", "switch", "for" or function calls instead

@@ -6,6 +6,7 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 
 public class SolidityLogCapsule extends TriggerCapsule {
+
   @Getter
   @Setter
   private ContractLogTrigger solidityLogTrigger;

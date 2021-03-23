@@ -72,12 +72,13 @@ public class DBConvert {
     }
     File dbDirectory = new File(dbSrc);
     if (!dbDirectory.exists()) {
-      System.out.println(dbSrc + "is not exists.");
+      System.out.println(dbSrc + "does not exist.");
       return;
     }
     File[] files = dbDirectory.listFiles();
+
     if (files == null || files.length == 0) {
-      System.out.println(dbSrc + " not contains any database.");
+      System.out.println(dbSrc + "does not contain any database.");
       return;
     }
     long time = System.currentTimeMillis();
@@ -108,7 +109,7 @@ public class DBConvert {
   }
 
   public DB newLevelDb(Path db) throws IOException {
-    DB database = null;
+    DB database;
     File file = db.toFile();
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions();
     try {
@@ -208,7 +209,7 @@ public class DBConvert {
 
     File levelDbFile = srcDbPath.toFile();
     if (!levelDbFile.exists()) {
-      System.out.println(srcDbPath.toString() + " not exists.");
+      System.out.println(srcDbPath.toString() + "does not exist.");
       return false;
     }
 
@@ -216,12 +217,11 @@ public class DBConvert {
     try {
       level = newLevelDb(srcDbPath);
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error("{}", e);
     }
 
     FileUtil.createDirIfNotExists(dstDir);
-    RocksDB rocks = null;
-    rocks = newRocksDb(dstDbPath);
+    RocksDB rocks = newRocksDb(dstDbPath);
 
     return convertLevelToRocks(level, rocks) && createEngine(dstDbPath.toString());
   }

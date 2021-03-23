@@ -1,8 +1,8 @@
 package org.tron.consensus.dpos;
 
 
-import static org.tron.consensus.base.Constant.SINGLE_REPEAT;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.SINGLE_REPEAT;
 
 import com.google.protobuf.ByteString;
 import lombok.Setter;

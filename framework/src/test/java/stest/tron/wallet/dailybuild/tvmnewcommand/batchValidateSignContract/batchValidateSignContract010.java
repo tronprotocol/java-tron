@@ -17,10 +17,10 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
@@ -89,7 +89,7 @@ public class batchValidateSignContract010 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
@@ -99,9 +99,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -120,7 +119,7 @@ public class batchValidateSignContract010 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
     signatures.set(0, Hex.toHexString(sign));
@@ -132,9 +131,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("01000000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -153,9 +151,9 @@ public class batchValidateSignContract010 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
-    addresses.set(0, WalletUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(0, StringUtil.encode58Check(new ECKey().getAddress()));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
@@ -164,9 +162,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("01100000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -185,7 +182,7 @@ public class batchValidateSignContract010 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
     signatures.set(6, Hex.toHexString(sign));
@@ -197,9 +194,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("11111101100000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -218,10 +214,10 @@ public class batchValidateSignContract010 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     for (int i = 1; i < 4; i++) {
-      addresses.set(i, WalletUtil.encode58Check(new ECKey().getAddress()));
+      addresses.set(i, StringUtil.encode58Check(new ECKey().getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
@@ -231,9 +227,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("10001000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -242,7 +237,7 @@ public class batchValidateSignContract010 {
     }
   }
 
-  @Test(enabled = true, description = "150 signatures with 2nd、32nd incorrect signatures"
+  @Test(enabled = true, description = "150 signatures with 2nd/32nd incorrect signatures"
       + " test multivalidatesign")
   public void test06Incorrect2ndAnd32ndIncorrectSignatures() {
     List<Object> signatures = new ArrayList<>();
@@ -257,7 +252,7 @@ public class batchValidateSignContract010 {
       } else {
         signatures.add(Hex.toHexString(sign));
       }
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
@@ -267,9 +262,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -278,7 +272,7 @@ public class batchValidateSignContract010 {
     }
   }
 
-  @Test(enabled = true, description = "88 signatures with 9th、11th、28th、32nd incorrect address"
+  @Test(enabled = true, description = "88 signatures with 9th/11th/28th/32nd incorrect address"
       + " test multivalidatesign")
   public void test07IncorrectAddress() {
     List<Object> signatures = new ArrayList<>();
@@ -288,12 +282,12 @@ public class batchValidateSignContract010 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
-    addresses.set(8, WalletUtil.encode58Check(new ECKey().getAddress()));
-    addresses.set(10, WalletUtil.encode58Check(new ECKey().getAddress()));
-    addresses.set(27, WalletUtil.encode58Check(new ECKey().getAddress()));
-    addresses.set(31, WalletUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(8, StringUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(10, StringUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(27, StringUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(31, StringUtil.encode58Check(new ECKey().getAddress()));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
@@ -302,9 +296,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
@@ -326,7 +319,7 @@ public class batchValidateSignContract010 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays
         .asList("0x" + Hex.toHexString(Hash.sha3(incorrecttxid.getBytes())), signatures, addresses);
@@ -337,9 +330,8 @@ public class batchValidateSignContract010 {
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
-      Assert.assertEquals(
-          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
-          transactionExtention.getResult().getMessage().toStringUtf8());
+      Assert.assertTrue(transactionExtention.getResult().getMessage().toStringUtf8().contains(
+          "class org.tron.core.vm.program.Program$OutOfTimeException : CPU timeout for"));
     } else {
       Assert.assertEquals("00000000000000000000000000000000",
           PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));

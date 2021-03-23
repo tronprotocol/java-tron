@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 
 contract AssertException{
   function divideIHaveArgsReturn(int x,int y) public returns (int z) {

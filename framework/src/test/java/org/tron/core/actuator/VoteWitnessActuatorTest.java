@@ -31,6 +31,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
@@ -131,6 +132,15 @@ public class VoteWitnessActuatorTest {
             .build());
   }
 
+  private Any getContract(String ownerAddress, long frozenBalance, long duration) {
+    return Any.pack(
+        FreezeBalanceContract.newBuilder()
+            .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
+            .setFrozenBalance(frozenBalance)
+            .setFrozenDuration(duration)
+            .build());
+  }
+
   private Any getRepeateContract(String address, String voteaddress, Long value, int times) {
     VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(StringUtil.hexString2ByteString(address));
@@ -140,15 +150,6 @@ public class VoteWitnessActuatorTest {
           .setVoteCount(value).build());
     }
     return Any.pack(builder.build());
-  }
-
-  private Any getContract(String ownerAddress, long frozenBalance, long duration) {
-    return Any.pack(
-        FreezeBalanceContract.newBuilder()
-            .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
-            .setFrozenBalance(frozenBalance)
-            .setFrozenDuration(duration)
-            .build());
   }
 
   /**
@@ -557,4 +558,24 @@ public class VoteWitnessActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+  @Test
+  public void commonErrorCheck() {
+
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [VoteWitnessContract], real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L));
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+  }
+
 }

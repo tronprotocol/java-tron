@@ -1,8 +1,8 @@
 package org.tron.common.crypto.sm2;
 
+import static org.tron.common.crypto.Hash.computeAddress;
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-import static org.tron.common.utils.Hash.computeAddress;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -167,9 +167,6 @@ public class SM2 implements Serializable, SignInterface {
 
   /**
    * Convert a BigInteger into a PrivateKey object
-   *
-   * @param priv
-   * @return
    */
   private static PrivateKey privateKeyFromBigInteger(BigInteger priv) {
     if (priv == null) {
@@ -258,7 +255,7 @@ public class SM2 implements Serializable, SignInterface {
    * know you have the right values already. The compression state of pub will be preserved.
    *
    * @param priv -
-   * @param pub  -
+   * @param pub -
    * @return -
    */
   public static SM2 fromPrivateAndPrecalculatedPublic(BigInteger priv,
@@ -272,7 +269,7 @@ public class SM2 implements Serializable, SignInterface {
    * know you have the right values already. The compression state of the point will be preserved.
    *
    * @param priv -
-   * @param pub  -
+   * @param pub -
    * @return -
    */
   public static SM2 fromPrivateAndPrecalculatedPublic(byte[] priv, byte[]
@@ -309,7 +306,7 @@ public class SM2 implements Serializable, SignInterface {
    * Returns public key bytes from the given private key. To convert a byte array into a BigInteger,
    * use <tt> new BigInteger(1, bytes);</tt>
    *
-   * @param privKey    -
+   * @param privKey -
    * @param compressed -
    * @return -
    */
@@ -428,17 +425,11 @@ public class SM2 implements Serializable, SignInterface {
     return pubKeyHash;
   }
 
-  @Override
-  public byte[] signToAddress(byte[] messageHash, String
-      signatureBase64) throws SignatureException {
-    return computeAddress(signatureToKeyBytes(messageHash,
-        signatureBase64));
-  }
 
   /**
    * Compute the address of the key that signed the given signature.
    *
-   * @param messageHash     32-byte hash of message
+   * @param messageHash 32-byte hash of message
    * @param signatureBase64 Base-64 encoded signature
    * @return 20-byte address
    */
@@ -452,7 +443,7 @@ public class SM2 implements Serializable, SignInterface {
    * Compute the address of the key that signed the given signature.
    *
    * @param messageHash 32-byte hash of message
-   * @param sig         -
+   * @param sig -
    * @return 20-byte address
    */
   public static byte[] signatureToAddress(byte[] messageHash,
@@ -464,7 +455,7 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * Compute the key that signed the given signature.
    *
-   * @param messageHash     32-byte hash of message
+   * @param messageHash 32-byte hash of message
    * @param signatureBase64 Base-64 encoded signature
    * @return ECKey
    */
@@ -479,7 +470,7 @@ public class SM2 implements Serializable, SignInterface {
    * Compute the key that signed the given signature.
    *
    * @param messageHash 32-byte hash of message
-   * @param sig         -
+   * @param sig -
    * @return ECKey
    */
   public static SM2 signatureToKey(byte[] messageHash, SM2Signature
@@ -546,7 +537,6 @@ public class SM2 implements Serializable, SignInterface {
    * Takes the message of data and returns the SM2 signature
    *
    * @param message -
-   * @param userID
    * @return -
    * @throws IllegalStateException if this ECKey does not have the private part.
    */
@@ -578,8 +568,7 @@ public class SM2 implements Serializable, SignInterface {
    * Signs the given hash and returns the R and S components as BigIntegers and putData them in
    * SM2Signature
    *
-   * @param msg    to sign
-   * @param userID
+   * @param msg to sign
    * @return SM2Signature signature that contains the R and S components
    */
   public SM2Signature signMsg(byte[] msg, @Nullable String userID) {
@@ -603,8 +592,6 @@ public class SM2 implements Serializable, SignInterface {
 
   /**
    * used to generate the SM3 hash for SM2 signature generation or verification
-   *
-   * @return
    */
   public SM2Signer getSM2SignerForHash() {
     SM2Signer signer = new SM2Signer();
@@ -617,11 +604,6 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * <p>Given the components of a signature and a selector value, recover and return the public key
    * that generated the signature
-   *
-   * @param recId
-   * @param sig
-   * @param messageHash
-   * @return
    */
   @Nullable
   public static byte[] recoverPubBytesFromSignature(int recId,
@@ -684,7 +666,7 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * Decompress a compressed public key (x co-ord and low-bit of y-coord).
    *
-   * @param xBN  -
+   * @param xBN -
    * @param yBit -
    * @return -
    */
@@ -708,9 +690,9 @@ public class SM2 implements Serializable, SignInterface {
    * <p> <p>When using native SM2 verification, data must be 32 bytes, and no element may be
    * larger than 520 bytes.</p>
    *
-   * @param data      Hash of the data to verify.
+   * @param data Hash of the data to verify.
    * @param signature signature.
-   * @param pub       The public key bytes to use.
+   * @param pub The public key bytes to use.
    * @return -
    */
   public static boolean verify(byte[] data, SM2Signature signature,
@@ -734,9 +716,9 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
    *
-   * @param data      Hash of the data to verify.
+   * @param data Hash of the data to verify.
    * @param signature signature.
-   * @param pub       The public key bytes to use.
+   * @param pub The public key bytes to use.
    * @return -
    */
   public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
@@ -746,9 +728,9 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * <p>Verifies the given SM2 signature against the message bytes using the public key bytes.
    *
-   * @param msg       the message data to verify.
+   * @param msg the message data to verify.
    * @param signature signature.
-   * @param pub       The public key bytes to use.
+   * @param pub The public key bytes to use.
    * @return -
    */
   public static boolean verifyMessage(byte[] msg, SM2Signature signature,
@@ -772,9 +754,9 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
    *
-   * @param msg       the message data to verify.
+   * @param msg the message data to verify.
    * @param signature signature.
-   * @param pub       The public key bytes to use.
+   * @param pub The public key bytes to use.
    * @return -
    */
   public static boolean verifyMessage(byte[] msg, byte[] signature, byte[] pub,
@@ -803,8 +785,8 @@ public class SM2 implements Serializable, SignInterface {
   }
 
   /**
-   * @param recId       Which possible key to recover.
-   * @param sig         the R and S components of the signature, wrapped.
+   * @param recId Which possible key to recover.
+   * @param sig the R and S components of the signature, wrapped.
    * @param messageHash Hash of the data that was signed.
    * @return 20-byte address
    */
@@ -822,8 +804,8 @@ public class SM2 implements Serializable, SignInterface {
   }
 
   /**
-   * @param recId       Which possible key to recover.
-   * @param sig         the R and S components of the signature, wrapped.
+   * @param recId Which possible key to recover.
+   * @param sig the R and S components of the signature, wrapped.
    * @param messageHash Hash of the data that was signed.
    * @return ECKey
    */
@@ -961,7 +943,7 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
    *
-   * @param data      Hash of the data to verify.
+   * @param data Hash of the data to verify.
    * @param signature signature.
    * @return -
    */
@@ -972,7 +954,7 @@ public class SM2 implements Serializable, SignInterface {
   /**
    * Verifies the given R/S pair (signature) against a hash using the public key.
    *
-   * @param sigHash   -
+   * @param sigHash -
    * @param signature -
    * @return -
    */

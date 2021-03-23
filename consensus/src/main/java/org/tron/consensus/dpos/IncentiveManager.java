@@ -1,6 +1,6 @@
 package org.tron.consensus.dpos;
 
-import static org.tron.consensus.base.Constant.WITNESS_STANDBY_LENGTH;
+import static org.tron.core.config.Parameter.ChainConstant.WITNESS_STANDBY_LENGTH;
 
 import com.google.protobuf.ByteString;
 import java.util.List;

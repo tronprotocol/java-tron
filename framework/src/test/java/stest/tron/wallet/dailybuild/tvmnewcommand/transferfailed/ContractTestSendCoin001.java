@@ -378,8 +378,8 @@ public class ContractTestSendCoin001 {
   }
 
 
-  @Test(enabled = true, description = "Use create2 to generate a contract address \"\n"
-      + "      + \"Sendcoin and transferAsset to contractAddresss ,then selfdestruct")
+  @Test(enabled = true, description = "Use create2 to generate a contract address "
+      + "Sendcoin and transferAsset to contractAddresss ,then selfdestruct")
   public void testSendCoinAndTransferAssetContract003() {
 
     ECKey ecKey1 = new ECKey(Utils.getRandom());

@@ -1,6 +1,6 @@
 package org.tron.core.db;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
@@ -67,12 +67,37 @@ abstract class ResourceProcessor {
     return usage * windowSize / precision;
   }
 
-  protected boolean consumeFee(AccountCapsule accountCapsule, long fee) {
+  protected boolean consumeFeeForBandwidth(AccountCapsule accountCapsule, long fee) {
     try {
       long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
       Commons.adjustBalance(accountStore, accountCapsule, -fee);
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
+      if (dynamicPropertiesStore.supportTransactionFeePool()) {
+        dynamicPropertiesStore.addTransactionFeePool(fee);
+      } else if (dynamicPropertiesStore.supportBlackHoleOptimization()) {
+        dynamicPropertiesStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
+      }
+
+      return true;
+    } catch (BalanceInsufficientException e) {
+      return false;
+    }
+  }
+
+
+  protected boolean consumeFeeForNewAccount(AccountCapsule accountCapsule, long fee) {
+    try {
+      long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+      accountCapsule.setLatestOperationTime(latestOperationTime);
+      Commons.adjustBalance(accountStore, accountCapsule, -fee);
+      if (dynamicPropertiesStore.supportBlackHoleOptimization()) {
+        dynamicPropertiesStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +fee);
+      }
+
       return true;
     } catch (BalanceInsufficientException e) {
       return false;

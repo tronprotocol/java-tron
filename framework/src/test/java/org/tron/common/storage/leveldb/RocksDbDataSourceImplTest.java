@@ -5,10 +5,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -214,6 +217,7 @@ public class RocksDbDataSourceImplTest {
     dataSource.resetDb();
 
     putSomeKeyValue(dataSource);
+    Assert.assertTrue(true);
     dataSource.resetDb();
     dataSource.closeDB();
   }
@@ -260,8 +264,7 @@ public class RocksDbDataSourceImplTest {
     FileUtil.createDirIfNotExists(dir + File.separator + "test_engine");
     FileUtil.createFileIfNotExists(enginePath);
     PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
-    Assert.assertEquals(PropUtil.readProperty(enginePath, "ENGINE"),
-        "ROCKSDB");
+    Assert.assertEquals("ROCKSDB", PropUtil.readProperty(enginePath, "ENGINE"));
 
     RocksDbDataSourceImpl dataSource;
     dataSource = new RocksDbDataSourceImpl(dir, "test_engine");
@@ -272,8 +275,7 @@ public class RocksDbDataSourceImplTest {
     dataSource = null;
     System.gc();
     PropUtil.writeProperty(enginePath, "ENGINE", "LEVELDB");
-    Assert.assertEquals(PropUtil.readProperty(enginePath, "ENGINE"),
-        "LEVELDB");
+    Assert.assertEquals("LEVELDB", PropUtil.readProperty(enginePath, "ENGINE"));
     dataSource = new RocksDbDataSourceImpl(dir, "test_engine");
     try {
       dataSource.initDB();
@@ -282,5 +284,72 @@ public class RocksDbDataSourceImplTest {
     }
     Assert.assertNull(dataSource.getDatabase());
     PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
+  }
+
+  @Test
+  public void testGetNext() {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getNext_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+    putSomeKeyValue(dataSource);
+    // case: normal
+    Map<byte[], byte[]> seekKvLimitNext = dataSource.getNext("0000000300".getBytes(), 2);
+    Map<String, String> hashMap = Maps.newHashMap();
+    hashMap.put(ByteArray.toStr(key3), ByteArray.toStr(value3));
+    hashMap.put(ByteArray.toStr(key4), ByteArray.toStr(value4));
+    seekKvLimitNext.forEach((key, value) -> {
+      String keyStr = ByteArray.toStr(key);
+      Assert.assertTrue("getNext", hashMap.containsKey(keyStr));
+      Assert.assertEquals(ByteArray.toStr(value), hashMap.get(keyStr));
+    });
+    // case: targetKey greater than all existed keys
+    seekKvLimitNext = dataSource.getNext("0000000700".getBytes(), 2);
+    Assert.assertEquals(0, seekKvLimitNext.size());
+    // case: limit<=0
+    seekKvLimitNext = dataSource.getNext("0000000300".getBytes(), 0);
+    Assert.assertEquals(0, seekKvLimitNext.size());
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void testGetlatestValues() {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getlatestValues_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+    putSomeKeyValue(dataSource);
+    // case: normal
+    Set<byte[]> seekKeyLimitNext = dataSource.getlatestValues(2);
+    Set<String> hashSet = Sets.newHashSet(ByteArray.toStr(value5), ByteArray.toStr(value6));
+    seekKeyLimitNext.forEach(value -> {
+      Assert.assertTrue(hashSet.contains(ByteArray.toStr(value)));
+    });
+    // case: limit<=0
+    seekKeyLimitNext = dataSource.getlatestValues(0);
+    assertEquals(0, seekKeyLimitNext.size());
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void getKeysNext() {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getKeysNext_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+    putSomeKeyValue(dataSource);
+
+    int limit = 2;
+    List<byte[]> seekKeyLimitNext = dataSource.getKeysNext("0000000300".getBytes(), limit);
+    List<byte[]> list = Arrays.asList(key3, key4);
+
+    for (int i = 0; i < limit; i++) {
+      Assert.assertArrayEquals(list.get(i), seekKeyLimitNext.get(i));
+    }
+
+    dataSource.resetDb();
+    dataSource.closeDB();
   }
 }

@@ -73,7 +73,6 @@ public class SM2Signer
    * generate the signature for the message
    *
    * @param message plaintext
-   * @return
    */
   public BigInteger[] generateSignature(byte[] message) {
     byte[] eHash = generateSM3Hash(message);
@@ -82,9 +81,6 @@ public class SM2Signer
 
   /**
    * generate the signature for the message
-   *
-   * @param message
-   * @return
    */
 
   public byte[] generateSM3Hash(byte[] message) {
@@ -104,9 +100,6 @@ public class SM2Signer
 
   /**
    * generate the signature from the 32 byte hash
-   *
-   * @param hash
-   * @return
    */
   public BigInteger[] generateHashSignature(byte[] hash) {
     if (hash.length != 32) {
@@ -151,11 +144,6 @@ public class SM2Signer
 
   /**
    * verify the message signature
-   *
-   * @param message
-   * @param r
-   * @param s
-   * @return
    */
   public boolean verifySignature(byte[] message, BigInteger r, BigInteger s,
       @Nullable String userID) {
@@ -198,11 +186,6 @@ public class SM2Signer
 
   /**
    * verfify the hash signature
-   *
-   * @param hash
-   * @param r
-   * @param s
-   * @return
    */
   public boolean verifyHashSignature(byte[] hash, BigInteger r, BigInteger s) {
     BigInteger n = ecParams.getN();

@@ -89,6 +89,7 @@ public class TransferFailed001 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
     String contractName = "EnergyOfTransferFailedTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -907,7 +908,7 @@ public class TransferFailed001 {
   @AfterClass
   public void shutdown() throws InterruptedException {
     PublicMethed
-        .freedResource(contractAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

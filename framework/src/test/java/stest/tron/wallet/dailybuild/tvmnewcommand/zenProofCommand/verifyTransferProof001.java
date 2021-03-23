@@ -708,7 +708,8 @@ public class verifyTransferProof001 {
 
   @Test(enabled = true, description = "normal")
   public void test08Normal() {
-    String method = "test3(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32,uint64,bytes32[33],uint256)";
+    String method = "test3(bytes32[10][],bytes32[2][],bytes32[9][]"
+        + ",bytes32[2],bytes32,uint64,bytes32[33],uint256)";
     txid = PublicMethed.triggerContract(contractAddress, method,
         "0000000000000000000000000000000000000000000000000000000000000520"
             + "0000000000000000000000000000000000000000000000000000000000000680"

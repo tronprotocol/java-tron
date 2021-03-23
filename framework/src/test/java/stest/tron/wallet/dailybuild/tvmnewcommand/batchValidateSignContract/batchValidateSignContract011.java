@@ -18,10 +18,10 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -104,7 +104,7 @@ public class batchValidateSignContract011 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
@@ -143,9 +143,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -179,7 +178,7 @@ public class batchValidateSignContract011 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
     signatures.set(0, Hex.toHexString(sign));
@@ -197,9 +196,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("01111111111111000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -251,9 +249,9 @@ public class batchValidateSignContract011 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
-    addresses.set(0, WalletUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(0, StringUtil.encode58Check(new ECKey().getAddress()));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
@@ -268,9 +266,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("01111111000000000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -322,7 +319,7 @@ public class batchValidateSignContract011 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
     signatures.set(2, Hex.toHexString(sign));
@@ -340,9 +337,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("11011100000000000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -394,10 +390,10 @@ public class batchValidateSignContract011 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     for (int i = 6; i < 9; i++) {
-      addresses.set(i, WalletUtil.encode58Check(new ECKey().getAddress()));
+      addresses.set(i, StringUtil.encode58Check(new ECKey().getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
@@ -413,9 +409,8 @@ public class batchValidateSignContract011 {
       Assert.assertEquals("11111100011000000000000000000000",
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee = infoById.get().getFee();
@@ -472,7 +467,7 @@ public class batchValidateSignContract011 {
       } else {
         signatures.add(Hex.toHexString(sign));
       }
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
@@ -513,9 +508,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -527,7 +521,7 @@ public class batchValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "44 signatures with 9th、11th、28th、32nd incorrect address"
+  @Test(enabled = true, description = "44 signatures with 9th/11th/28th/32nd incorrect address"
       + " test multivalidatesign")
   public void test07IncorrectAddress() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
@@ -549,12 +543,12 @@ public class batchValidateSignContract011 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
-    addresses.set(8, WalletUtil.encode58Check(new ECKey().getAddress()));
-    addresses.set(10, WalletUtil.encode58Check(new ECKey().getAddress()));
-    addresses.set(27, WalletUtil.encode58Check(new ECKey().getAddress()));
-    addresses.set(31, WalletUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(8, StringUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(10, StringUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(27, StringUtil.encode58Check(new ECKey().getAddress()));
+    addresses.set(31, StringUtil.encode58Check(new ECKey().getAddress()));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
@@ -592,9 +586,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -631,7 +624,7 @@ public class batchValidateSignContract011 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays
         .asList("0x" + Hex.toHexString(Hash.sha3(incorrecttxid.getBytes())), signatures, addresses);
@@ -671,9 +664,8 @@ public class batchValidateSignContract011 {
           PublicMethed.bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
       Assert.assertTrue(afterBalance == 0);
       txid = PublicMethed
           .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,

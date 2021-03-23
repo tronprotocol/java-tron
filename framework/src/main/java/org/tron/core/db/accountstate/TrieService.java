@@ -6,9 +6,9 @@ import java.util.Arrays;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.db.Manager;
 import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 
 @Slf4j(topic = "AccountState")
@@ -16,18 +16,19 @@ import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 public class TrieService {
 
   @Setter
-  private Manager manager;
+  private ChainBaseManager chainBaseManager;
 
   @Setter
   private AccountStateStoreTrie accountStateStoreTrie;
 
   public byte[] getFullAccountStateRootHash() {
-    long latestNumber = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long latestNumber = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     return getAccountStateRootHash(latestNumber);
   }
 
   public byte[] getSolidityAccountStateRootHash() {
-    long latestSolidityNumber = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long latestSolidityNumber =
+        chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     return getAccountStateRootHash(latestSolidityNumber);
   }
 
@@ -35,7 +36,7 @@ public class TrieService {
     long latestNumber = blockNumber;
     byte[] rootHash = null;
     try {
-      BlockCapsule blockCapsule = manager.getBlockByNum(latestNumber);
+      BlockCapsule blockCapsule = chainBaseManager.getBlockByNum(latestNumber);
       ByteString value = blockCapsule.getInstance().getBlockHeader().getRawData()
           .getAccountStateRoot();
       rootHash = value == null ? null : value.toByteArray();

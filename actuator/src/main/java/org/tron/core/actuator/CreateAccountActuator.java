@@ -1,10 +1,13 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -27,9 +30,9 @@ public class CreateAccountActuator extends AbstractActuator {
   @Override
   public boolean execute(Object result)
       throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
-      throw new RuntimeException("TransactionResultCapsule is null");
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -48,14 +51,13 @@ public class CreateAccountActuator extends AbstractActuator {
       Commons
           .adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       ret.setStatus(fee, code.SUCESS);
-    } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
+    } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -67,7 +69,7 @@ public class CreateAccountActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or contract store!");
@@ -89,7 +91,7 @@ public class CreateAccountActuator extends AbstractActuator {
 //      throw new ContractValidateException("AccountName is null");
 //    }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 
@@ -97,7 +99,8 @@ public class CreateAccountActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR
+              + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     final long fee = calcFee();
@@ -107,7 +110,7 @@ public class CreateAccountActuator extends AbstractActuator {
     }
 
     byte[] accountAddress = contract.getAccountAddress().toByteArray();
-    if (!Commons.addressValid(accountAddress)) {
+    if (!DecodeUtil.addressValid(accountAddress)) {
       throw new ContractValidateException("Invalid account address");
     }
 

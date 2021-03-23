@@ -19,10 +19,10 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -101,7 +101,7 @@ public class batchValidateSignContract007 {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
-      addresses.add(WalletUtil.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String data = PublicMethed.parametersString(parameters);
@@ -146,9 +146,8 @@ public class batchValidateSignContract007 {
       Assert.assertEquals("11111111111111110000000000000000",
           PublicMethed.bytes32ToString(infoById2.get().getContractResult(0).toByteArray()));
     } else {
-      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
-          .equals(infoById2.get().getResMessage().toStringUtf8()) || "Already Time Out"
-          .equals(infoById2.get().getResMessage().toStringUtf8()));
+      Assert.assertTrue(infoById2.get().getResMessage().toStringUtf8().contains("CPU timeout for")
+          || "Already Time Out".equals(infoById2.get().getResMessage().toStringUtf8()));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
     Long fee2 = infoById2.get().getFee();

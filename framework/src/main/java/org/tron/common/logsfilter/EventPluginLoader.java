@@ -1,20 +1,26 @@
 package org.tron.common.logsfilter;
 
+import com.beust.jcommander.internal.Sets;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.ManifestPluginDescriptorFinder;
 import org.pf4j.PluginManager;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.logsfilter.trigger.SolidityTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
@@ -65,6 +71,99 @@ public class EventPluginLoader {
     return instance;
   }
 
+  public static boolean matchFilter(ContractTrigger trigger) {
+    long blockNumber = trigger.getBlockNumber();
+
+    FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
+    if (Objects.isNull(filterQuery)) {
+      return true;
+    }
+
+    long fromBlockNumber = filterQuery.getFromBlock();
+    long toBlockNumber = filterQuery.getToBlock();
+
+    boolean matched = false;
+    if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
+        || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+      logger.error("invalid filter: fromBlockNumber: {}, toBlockNumber: {}",
+          fromBlockNumber, toBlockNumber);
+      return false;
+    }
+
+    if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
+      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+        matched = true;
+      } else {
+        if (blockNumber >= fromBlockNumber) {
+          matched = true;
+        }
+      }
+    } else {
+      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+        if (blockNumber <= toBlockNumber) {
+          matched = true;
+        }
+      } else {
+        if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
+          matched = true;
+        }
+      }
+    }
+
+    if (!matched) {
+      return false;
+    }
+
+    return filterContractAddress(trigger, filterQuery.getContractAddressList())
+        && filterContractTopicList(trigger, filterQuery.getContractTopicList());
+  }
+
+  private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
+    addressList = addressList.stream().filter(item ->
+        org.apache.commons.lang3.StringUtils.isNotEmpty(item))
+        .collect(Collectors.toList());
+    if (Objects.isNull(addressList) || addressList.isEmpty()) {
+      return true;
+    }
+
+    String contractAddress = trigger.getContractAddress();
+    if (Objects.isNull(contractAddress)) {
+      return false;
+    }
+
+    for (String address : addressList) {
+      if (contractAddress.equalsIgnoreCase(address)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
+    topList = topList.stream().filter(item -> org.apache.commons.lang3.StringUtils.isNotEmpty(item))
+        .collect(Collectors.toList());
+    if (Objects.isNull(topList) || topList.isEmpty()) {
+      return true;
+    }
+
+    Set<String> hset = Sets.newHashSet();
+    if (trigger instanceof ContractLogTrigger) {
+      hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
+    } else if (trigger instanceof ContractEventTrigger) {
+      hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
+    } else if (trigger != null) {
+      hset = trigger.getLogInfo().getClonedTopics()
+              .stream().map(Hex::toHexString).collect(Collectors.toSet());
+    }
+
+    for (String top : topList) {
+      if (hset.contains(top)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private boolean launchNativeQueue(EventPluginConfig config) {
 
     if (!NativeMessageQueue.getInstance()
@@ -85,7 +184,6 @@ public class EventPluginLoader {
   }
 
   private boolean launchEventPlugin(EventPluginConfig config) {
-    boolean success = false;
     // parsing subscribe config from config.conf
     String pluginPath = config.getPluginPath();
     this.serverAddress = config.getServerAddress();
@@ -93,7 +191,7 @@ public class EventPluginLoader {
 
     if (!startPlugin(pluginPath)) {
       logger.error("failed to load '{}'", pluginPath);
-      return success;
+      return false;
     }
 
     setPluginConfig();
@@ -106,10 +204,9 @@ public class EventPluginLoader {
   }
 
   public boolean start(EventPluginConfig config) {
-    boolean success = false;
 
     if (Objects.isNull(config)) {
-      return success;
+      return false;
     }
 
     this.triggerConfigList = config.getTriggerConfigList();
@@ -132,7 +229,7 @@ public class EventPluginLoader {
     // set server address to plugin
     eventListeners.forEach(listener -> listener.setServerAddress(this.serverAddress));
 
-    // set dbconfig to plugin
+    // set db config to plugin
     eventListeners.forEach(listener -> listener.setDBConfig(this.dbConfig));
 
     triggerConfigList.forEach(triggerConfig -> {
@@ -264,13 +361,13 @@ public class EventPluginLoader {
   }
 
   private boolean startPlugin(String path) {
-    boolean loaded = false;
+
     logger.info("start loading '{}'", path);
 
     File pluginPath = new File(path);
     if (!pluginPath.exists()) {
       logger.error("'{}' doesn't exist", path);
-      return loaded;
+      return false;
     }
 
     if (Objects.isNull(pluginManager)) {
@@ -287,7 +384,7 @@ public class EventPluginLoader {
     String pluginId = pluginManager.loadPlugin(pluginPath.toPath());
     if (StringUtils.isEmpty(pluginId)) {
       logger.error("invalid pluginID");
-      return loaded;
+      return false;
     }
 
     pluginManager.startPlugins();
@@ -296,14 +393,12 @@ public class EventPluginLoader {
 
     if (Objects.isNull(eventListeners) || eventListeners.isEmpty()) {
       logger.error("No eventListener is registered");
-      return loaded;
+      return false;
     }
-
-    loaded = true;
 
     logger.info("'{}' loaded", path);
 
-    return loaded;
+    return true;
   }
 
   public void stopPlugin() {

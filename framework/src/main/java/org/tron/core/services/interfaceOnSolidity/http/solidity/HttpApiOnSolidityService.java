@@ -1,13 +1,18 @@
 package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -19,9 +24,15 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSoli
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBurnTrxOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByAccountOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderListByPairOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketPairListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMarketPriceByPairOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
@@ -116,10 +127,25 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetRewardOnSolidityServlet getRewardServlet;
   @Autowired
+  private GetBurnTrxOnSolidityServlet getBurnTrxOnSolidityServlet;
+  @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
   @Autowired
   private GetTransactionInfoByBlockNumOnSolidityServlet
       getTransactionInfoByBlockNumOnSolidityServlet;
+  @Autowired
+  private GetMarketOrderByAccountOnSolidityServlet getMarketOrderByAccountOnSolidityServlet;
+  @Autowired
+  private GetMarketOrderByIdOnSolidityServlet getMarketOrderByIdOnSolidityServlet;
+  @Autowired
+  private GetMarketPriceByPairOnSolidityServlet getMarketPriceByPairOnSolidityServlet;
+  @Autowired
+  private GetMarketOrderListByPairOnSolidityServlet getMarketOrderListByPairOnSolidityServlet;
+  @Autowired
+  private GetMarketPairListOnSolidityServlet getMarketPairListOnSolidityServlet;
+
+  @Autowired
+  private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
   @Override
   public void init() {
@@ -127,7 +153,7 @@ public class HttpApiOnSolidityService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
 
   }
 
@@ -193,21 +219,37 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/triggerconstantcontract");
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumOnSolidityServlet),
           "/walletsolidity/gettransactioninfobyblocknum");
+      context.addServlet(new ServletHolder(getMarketOrderByAccountOnSolidityServlet),
+          "/walletsolidity/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdOnSolidityServlet),
+          "/walletsolidity/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairOnSolidityServlet),
+          "/walletsolidity/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairOnSolidityServlet),
+          "/walletsolidity/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListOnSolidityServlet),
+          "/walletsolidity/getmarketpairlist");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
           "/walletsolidity/gettransactionbyid");
-      context
-          .addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
-              "/walletsolidity/gettransactioninfobyid");
+      context.addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
+          "/walletsolidity/gettransactioninfobyid");
 
-      context
-          .addServlet(new ServletHolder(getTransactionCountByBlockNumOnSolidityServlet),
-              "/walletsolidity/gettransactioncountbyblocknum");
+      context.addServlet(new ServletHolder(getTransactionCountByBlockNumOnSolidityServlet),
+          "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+      context
+          .addServlet(new ServletHolder(getBurnTrxOnSolidityServlet), "/walletsolidity/getburntrx");
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

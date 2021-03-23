@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.11;
+
 
 contract TRON_ERC721 {
   //name

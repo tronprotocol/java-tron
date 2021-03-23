@@ -39,7 +39,7 @@ public class BackupRocksDBAspect {
       try {
         util.doBackup(block);
       } catch (Exception e) {
-        logger.error("backup db failure:", e);
+        logger.error("backup db failed:", e);
       }
     }
   }

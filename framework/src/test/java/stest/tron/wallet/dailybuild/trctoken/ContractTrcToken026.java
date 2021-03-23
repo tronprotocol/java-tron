@@ -80,7 +80,7 @@ public class ContractTrcToken026 {
   }
 
   @Test(enabled = true, description = "Deploy transferToken contract")
-  public void deploy01TransferTokenContract() {
+  public void deploy01TransferTokenContract001() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L, fromAddress,
@@ -154,7 +154,7 @@ public class ContractTrcToken026 {
   }
 
   @Test(enabled = true, description = "Multistage call transferToken use right tokenID")
-  public void deploy02TransferTokenContract() {
+  public void deploy02TransferTokenContract002() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -262,7 +262,7 @@ public class ContractTrcToken026 {
   }
 
   @Test(enabled = true, description = "Multistage call transferToken use fake tokenID")
-  public void deploy03TransferTokenContract() {
+  public void deploy03TransferTokenContract003() {
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -372,7 +372,7 @@ public class ContractTrcToken026 {
   }
 
   @Test(enabled = true, description = "Multistage call transferToken token value not enough")
-  public void deploy04TransferTokenContract() {
+  public void deploy04TransferTokenContract004() {
     Account infoafter1 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter1 = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -467,7 +467,7 @@ public class ContractTrcToken026 {
   }
 
   @Test(enabled = true, description = "Multistage call transferToken calltoken ID not exist")
-  public void deploy05TransferTokenContract() {
+  public void deploy05TransferTokenContract005() {
     Account infoafter2 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter2 = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -565,7 +565,7 @@ public class ContractTrcToken026 {
   }
 
   @Test(enabled = true, description = "Multistage call transferToken calltoken value not enough")
-  public void deploy06TransferTokenContract() {
+  public void deploy06TransferTokenContract006() {
     Account infoafter3 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter3 = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -662,7 +662,7 @@ public class ContractTrcToken026 {
   }
 
   @Test(enabled = true, description = "Multistage call transferToken use right tokenID,tokenvalue")
-  public void deploy07TransferTokenContract() {
+  public void deploy07TransferTokenContract007() {
     Account infoafter4 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter4 = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);

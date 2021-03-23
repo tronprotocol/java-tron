@@ -4,10 +4,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
 import java.util.Optional;
-import jdk.nashorn.internal.runtime.options.Option;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -15,7 +13,6 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteString;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -24,7 +21,6 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 
 @Slf4j
 public class VerifyMintProof001 {
@@ -70,7 +66,6 @@ public class VerifyMintProof001 {
   @Test(enabled = true, description = "Deploy VerfyMintProof contract ")
   public void verifyMintProofTest001() {
 
-
     //before deploy, check account resource
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(testAddress001,
         blockingStubFull);
@@ -103,7 +98,7 @@ public class VerifyMintProof001 {
 
     Assert.assertEquals(0, infoById.get().getResultValue());
 
-   contractAddress = infoById.get().getContractAddress().toByteArray();
+    contractAddress = infoById.get().getContractAddress().toByteArray();
     SmartContract smartContract = PublicMethed.getContract(contractAddress,
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
@@ -177,18 +172,20 @@ public class VerifyMintProof001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("TriggerTxid: " + TriggerTxid);
 
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(TriggerTxid,blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
-    String contractResult = ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    String contractResult = ByteArray
+        .toHexString(infoById.get().getContractResult(0).toByteArray());
 
     Assert.assertEquals(""
         + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
         + "0000000000000000000000000000000000000000000000000000000000000040"
         + "0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000000",contractResult);
+        + "0000000000000000000000000000000000000000000000000000000000000000", contractResult);
 
 
   }
@@ -202,18 +199,20 @@ public class VerifyMintProof001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("TriggerTxid: " + TriggerTxid);
 
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(TriggerTxid,blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
-    String contractResult = ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    String contractResult = ByteArray
+        .toHexString(infoById.get().getContractResult(0).toByteArray());
 
     Assert.assertEquals(""
         + "0000000000000000000000000000000000000000000000000000000000000001"  // 1 : true
         + "0000000000000000000000000000000000000000000000000000000000000040"
         + "0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000000",contractResult);
+        + "0000000000000000000000000000000000000000000000000000000000000000", contractResult);
 
   }
 
@@ -221,7 +220,6 @@ public class VerifyMintProof001 {
   public void verifyMintProofTest004() {
 
     String methedStr = "VerifyMintProofSize002(bytes)";
-
 
     String argsStr = "\""
         + "b55a21aaee0ce8f1c8ffaa0dbd23105cb55a21aaee0ce8f1c8ffaa0dbd23105a"
@@ -284,11 +282,11 @@ public class VerifyMintProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(infoById.get()
         .getContractResult(0).toByteArray());
 
@@ -297,13 +295,13 @@ public class VerifyMintProof001 {
         + "0000000000000000000000000000000000000000000000000000000000000001"
         + "0000000000000000000000000000000000000000000000000000000000000040"
         + "0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000000",contractResult);
+        + "0000000000000000000000000000000000000000000000000000000000000000", contractResult);
   }
 
   @Test(enabled = true, description = "verify success with address call")
   public void verifyMintProofTest005() {
     String argsStr =
-              "\"a634da705bbacb108a276ce26470568873d573e6f1f00d3a2b2e93b93f4b1a0c"
+        "\"a634da705bbacb108a276ce26470568873d573e6f1f00d3a2b2e93b93f4b1a0c"
             + "2eb2b8ae07c858dafd7d99f4487a779878b1f87fb632c7fccff14d44c0b23e56"
             + "61ba88273d52c44cf4e1939ce6e76b97ef2611ce4cf472c5e8a61e66463f948d"
             + "8ffed5e9e6125a292dcb2f2855a753893467176b19ed366b3fc7c182e5b62cc1"
@@ -364,11 +362,11 @@ public class VerifyMintProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(infoById.get()
         .getContractResult(0).toByteArray());
 
@@ -378,14 +376,14 @@ public class VerifyMintProof001 {
         + "0000000000000000000000000000000000000000000000000000000000000060"
         + "0000000000000000000000000000000000000000000000000000000000000001"
         + "0000000000000000000000000000000000000000000000000000000000000000"
-        + "39e261b362110781a20878cc19f480cb50df5e6b896ed9a1fea8b8a9a4239a17",contractResult);
+        + "39e261b362110781a20878cc19f480cb50df5e6b896ed9a1fea8b8a9a4239a17", contractResult);
 
   }
 
   @Test(enabled = true, description = "verify success with fuction call")
   public void verifyMintProofTest006() {
     String argsStr =
-              "a634da705bbacb108a276ce26470568873d573e6f1f00d3a2b2e93b93f4b1a0c"
+        "a634da705bbacb108a276ce26470568873d573e6f1f00d3a2b2e93b93f4b1a0c"
             + "2eb2b8ae07c858dafd7d99f4487a779878b1f87fb632c7fccff14d44c0b23e56"
             + "61ba88273d52c44cf4e1939ce6e76b97ef2611ce4cf472c5e8a61e66463f948d"
             + "8ffed5e9e6125a292dcb2f2855a753893467176b19ed366b3fc7c182e5b62cc1"
@@ -447,11 +445,11 @@ public class VerifyMintProof001 {
     logger.info("TriggerTxid: " + TriggerTxid);
 
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(TriggerTxid,blockingStubFull);
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("infoById : " + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     String contractResult = ByteArray.toHexString(infoById.get()
         .getContractResult(0).toByteArray());
 
