@@ -99,7 +99,8 @@ public class VM {
           || (!VMConfig.allowTvmConstantinople()
               && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH))
           || (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT)
-          || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID))
+          || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)
+          || (!VMConfig.allowTvmFreeze() && (op == FREEZE || op == UNFREEZE || op == FREEZEEXPIRETIME)))
           ) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
@@ -154,6 +155,22 @@ public class VM {
         case BALANCE:
         case ISCONTRACT:
           energyCost = energyCosts.getBALANCE();
+          break;
+        case FREEZE:
+          // TODO: 2021/3/19 冻结能量消耗，是否包含创建账户能量
+          energyCost = energyCosts.getFREEZE();
+          DataWord receiverAddressWord = stack.get(stack.size() - 3);
+          if (isDeadAccount(program, receiverAddressWord)) {
+            energyCost += energyCosts.getNEW_ACCT_FREEZE();
+          }
+          break;
+        case UNFREEZE:
+          // TODO: 2021/3/19 解冻能量消耗
+          energyCost = energyCosts.getUNFREEZE();
+          break;
+        case FREEZEEXPIRETIME:
+          // TODO: 2021/3/24 查询冻结时间能量消耗
+          energyCost = energyCosts.getFREEZE_EXPIRE_TIME();
           break;
 
         // These all operate on memory and therefore potentially expand it:
@@ -1390,6 +1407,34 @@ public class VM {
           } else {
             program.callToAddress(msg);
           }
+
+          program.step();
+          break;
+        }
+        case FREEZE: {
+          DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
+          DataWord frozenBalance = program.stackPop();
+          DataWord receiverAddress = program.stackPop();
+          boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
+          program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+
+          program.step();
+          break;
+        }
+        case UNFREEZE: {
+          DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
+          DataWord receiverAddress = program.stackPop();
+          boolean result = program.unfreeze(receiverAddress, resourceType);
+          program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+
+          program.step();
+          break;
+        }
+        case FREEZEEXPIRETIME: {
+          DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
+          DataWord targetAddress = program.stackPop();
+          long expireTime = program.freezeExpireTime(targetAddress, resourceType);
+          program.stackPush(new DataWord(expireTime / 1000));
 
           program.step();
           break;
