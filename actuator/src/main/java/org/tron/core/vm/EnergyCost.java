@@ -59,6 +59,10 @@ public class EnergyCost {
   private final int EXT_CODE_COPY = 20;
   private final int EXT_CODE_HASH = 400;
   private final int NEW_ACCT_SUICIDE = 0;
+  private final int NEW_ACCT_FREEZE = 0;
+  private final int FREEZE = 23333;
+  private final int UNFREEZE = 23333;
+  private final int FREEZE_EXPIRE_TIME = 23333;
   private final int STAKE_UNSTAKE = 35000;
   private final int WITHDRAW_REWARD = 25000;
   private final int TOKEN_ISSUE = 25000;
@@ -188,6 +192,10 @@ public class EnergyCost {
     return NEW_ACCT_SUICIDE;
   }
 
+  public int getNEW_ACCT_FREEZE() {
+    return NEW_ACCT_FREEZE;
+  }
+
   public int getMEMORY() {
     return MEMORY;
   }
@@ -282,6 +290,18 @@ public class EnergyCost {
 
   public int getEXT_CODE_HASH() {
     return EXT_CODE_HASH;
+  }
+
+  public int getFREEZE() {
+    return FREEZE;
+  }
+
+  public int getUNFREEZE() {
+    return UNFREEZE;
+  }
+
+  public int getFREEZE_EXPIRE_TIME() {
+    return FREEZE_EXPIRE_TIME;
   }
 
   public int getStakeAndUnstake() {
