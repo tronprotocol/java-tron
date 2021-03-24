@@ -183,7 +183,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTransactionFeePool = 0;
     PARAMETER.allowBlackHoleOptimization = 0;
     PARAMETER.allowTvmIstanbul = 0;
-    PARAMETER.allowTvmStake = 0;
+    PARAMETER.allowTvmFreeze = 0;
     PARAMETER.allowTvmAssetIssue = 0;
     PARAMETER.historyBalanceLookup = false;
     PARAMETER.openPrintLog = true;
@@ -705,9 +705,9 @@ public class Args extends CommonParameter {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
-    PARAMETER.allowTvmStake =
-            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_STAKE) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_TVM_STAKE) : 0;
+    PARAMETER.allowTvmFreeze =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
 
     PARAMETER.allowTvmAssetIssue =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config

@@ -206,10 +206,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(entry.getValue());
           break;
         }
-        //case ALLOW_TVM_STAKE: {
-        //  manager.getDynamicPropertiesStore().saveAllowTvmStake(entry.getValue());
-        //  break;
-        //}
+        case ALLOW_TVM_FREEZE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
+          break;
+        }
         //case ALLOW_TVM_ASSET_ISSUE: {
         //  manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
         //  break;

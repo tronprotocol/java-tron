@@ -125,7 +125,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "ALLOW_SHIELDED_TRC20_TRANSACTION"
           .getBytes();
   private static final byte[] ALLOW_TVM_ISTANBUL = "ALLOW_TVM_ISTANBUL".getBytes();
-  private static final byte[] ALLOW_TVM_STAKE = "ALLOW_TVM_STAKE".getBytes();
+  private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_ASSET_ISSUE = "ALLOW_TVM_ASSET_ISSUE".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
@@ -622,10 +622,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowTvmStake();
+      this.getAllowTvmFreeze();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmStake(
-          CommonParameter.getInstance().getAllowTvmStake());
+      this.saveAllowTvmFreeze(
+          CommonParameter.getInstance().getAllowTvmFreeze());
     }
 
     try {
@@ -1793,9 +1793,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
-  public void saveAllowTvmStake(long allowTvmStake) {
-    this.put(DynamicPropertiesStore.ALLOW_TVM_STAKE,
-        new BytesCapsule(ByteArray.fromLong(allowTvmStake)));
+  public void saveAllowTvmFreeze(long allowTvmFreeze) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_FREEZE,
+        new BytesCapsule(ByteArray.fromLong(allowTvmFreeze)));
   }
 
   public void saveAllowTvmAssetIssue(long allowTvmAssetIssue) {
@@ -1803,13 +1803,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(allowTvmAssetIssue)));
   }
 
-  public long getAllowTvmStake() {
-    String msg = "not found ALLOW_TVM_STAKE";
-    return Optional.ofNullable(getUnchecked(ALLOW_TVM_STAKE))
+  public long getAllowTvmFreeze() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_FREEZE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException(msg));
+            () -> new IllegalArgumentException("not found ALLOW_TVM_FREEZE"));
   }
 
   public long getAllowTvmAssetIssue() {
