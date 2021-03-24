@@ -53,6 +53,7 @@ import org.tron.core.vm.trace.ProgramTraceListener;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
@@ -65,7 +66,7 @@ import static java.lang.StrictMath.min;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ArrayUtils.*;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 /**
  * @author Roman Mandeleil
@@ -508,10 +509,6 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
 
-    if (VMConfig.allowTvmStake()) {
-      withdrawRewardToBalance(owner, getContractState());
-    }
-
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -525,6 +522,7 @@ public class Program {
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
         getContractState().getAccountAssetIssue(owner).getAssetMapV2());
 
+    // TODO: 2021/3/22 Tron地址是21位，这里只比较了前20位
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
       getContractState().addBalance(owner, -balance);
@@ -548,9 +546,15 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
-    if (VMConfig.allowTvmStake()) {
-      suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
-      //delete delegationStore
+    if (VMConfig.allowTvmFreeze()) {
+      byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
+      if (obtainerAddress.isZero()
+          || FastByteComparisons.isEqual(owner, obtainer)
+          || FastByteComparisons.isEqual(owner, blackHoleAddress)) {
+        transferDelegatedResourceToBlackHole(owner, blackHoleAddress, getContractState());
+      } else {
+        transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
+      }
       getResult().addDeleteDelegation(this.getContractAddress());
     }
     getResult().addDeleteAccount(this.getContractAddress());
@@ -560,119 +564,398 @@ public class Program {
     return this.contractState;
   }
 
-  private void withdrawRewardToBalance(byte[] owner, Repository repository) {
-    ContractService contractService = ContractService.getInstance();
-    contractService.withdrawReward(owner, getContractState());
-    AccountCapsule accountCapsule = repository.getAccount(owner);
-    long oldBalance = accountCapsule.getBalance();
-    long allowance = accountCapsule.getAllowance();
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-            .setBalance(oldBalance + allowance)
-            .setAllowance(0L)
-            .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
-            .build());
-    // todo internal tx
-    repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
-    if (logger.isDebugEnabled()) {
-      logger.debug("Transfer withdraw allowance to balance {}", allowance);
+  private void transferDelegatedResourceToBlackHole(byte[] ownerAddr, byte[] blackHoleAddr, Repository repo) {
+
+    // delegated resource from sender to owner, just abandon
+    // in order to making that sender can unfreeze their balance in future
+    // nothing will be deleted
+
+    // process delegated resource from owner to receiver
+    long totalDelegatedFrozenBalance = 0;
+    DelegatedResourceAccountIndexCapsule indexCapsule = repo.getDelegatedResourceAccountIndex(ownerAddr);
+    for(ByteString receiver : indexCapsule.getToAccountsList()){
+      byte[] receiverAddr = receiver.toByteArray();
+      byte[] key = DelegatedResourceCapsule.createDbKey(ownerAddr, receiverAddr);
+      DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
+
+      // take back delegated resource from receiver account
+      // no need to check like UnfreezeBalanceProcessor
+      // because allowTvmFreeze is after allowTvmSolidity059
+      AccountCapsule receiverCapsule = repo.getAccount(receiverAddr);
+      // take back receiver`s delegated bandwidth
+      long frozenBalanceForBandwidth = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
+      totalDelegatedFrozenBalance += frozenBalanceForBandwidth;
+      if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() < frozenBalanceForBandwidth) {
+        receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+      } else {
+        receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-frozenBalanceForBandwidth);
+      }
+      // reduce total net weight
+      repo.addTotalNetWeight(-frozenBalanceForBandwidth / TRX_PRECISION);
+      // take back receiver`s delegated energy
+      long frozenBalanceForEnergy = delegatedResourceCapsule.getFrozenBalanceForEnergy();
+      totalDelegatedFrozenBalance += frozenBalanceForEnergy;
+      if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < frozenBalanceForEnergy) {
+        receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+      } else {
+        receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-frozenBalanceForEnergy);
+      }
+      // reduce total energy weight
+      repo.addTotalEnergyWeight(-frozenBalanceForEnergy / TRX_PRECISION);
+      repo.updateAccount(receiverCapsule.createDbKey(), receiverCapsule);
+
+      // remove delegated resource index in receiver`s fromList
+      removeOrInsertDelegatedIndexAndUpdate(receiverAddr, ownerAddr, null, ListType.FROM_LIST, repo);
+
+      // set delegated resource to zero
+      delegatedResourceCapsule.setFrozenBalanceForBandwidth(0, 0);
+      delegatedResourceCapsule.setFrozenBalanceForEnergy(0, 0);
+      repo.updateDelegatedResource(key, delegatedResourceCapsule);
     }
+
+    // clear owner`s toList
+    indexCapsule.setAllToAccounts(new ArrayList<>());
+    repo.updateDelegatedResourceAccountIndex(ownerAddr, indexCapsule);
+
+    // transfer owner`s frozen balance for bandwidth to black hole
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
+    long frozenBalanceForBandwidthOfOwner = 0;
+    // check if frozen for bandwidth exists
+    if (ownerCapsule.getFrozenCount() != 0) {
+      frozenBalanceForBandwidthOfOwner = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+    }
+    repo.addTotalNetWeight(-frozenBalanceForBandwidthOfOwner / TRX_PRECISION);
+    long frozenBalanceForEnergyOfOwner =
+        ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
+    repo.addTotalEnergyWeight(-frozenBalanceForEnergyOfOwner / TRX_PRECISION);
+
+    // TODO: 2021/3/19 是否需要，本来owner账户就要删除了
+    // reset owner account
+    clearAccountCapsule(ownerCapsule);
+    repo.updateAccount(ownerAddr, ownerCapsule);
+
+    // transfer all kinds of frozen balance to BlackHole
+    repo.addBalance(blackHoleAddr, totalDelegatedFrozenBalance
+            + frozenBalanceForBandwidthOfOwner
+            + frozenBalanceForEnergyOfOwner);
   }
 
-  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository) {
-    AccountCapsule ownerCapsule = repository.getAccount(owner);
-    if (ownerCapsule.getFrozenCount() == 0) {
-      return;
+  private void transferDelegatedResourceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
+    AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
+    DelegatedResourceAccountIndexCapsule indexCapsule = repo.getDelegatedResourceAccountIndex(ownerAddr);
+
+    // process delegated resource from sender to owner
+    for(ByteString sender : indexCapsule.getFromAccountsList()) {
+      byte[] senderAddr = sender.toByteArray();
+
+      // if sender == inheritor, just abandon this part of resource and do nothing
+      if (Arrays.equals(senderAddr, inheritorAddr)) {
+        continue;
+      }
+
+      byte[] senderToOwnerKey = DelegatedResourceCapsule.createDbKey(senderAddr, ownerAddr);
+      DelegatedResourceCapsule senderToOwnerRes = repo.getDelegatedResource(senderToOwnerKey);
+
+      byte[] senderToInheritorKey = DelegatedResourceCapsule.createDbKey(senderAddr, inheritorAddr);
+      DelegatedResourceCapsule senderToInheritorRes = repo.getDelegatedResource(senderToInheritorKey);
+
+      /* process delegated resource from sender to inheritor */
+      // create a new sender->inheritor delegated resource
+      if(senderToInheritorRes == null) {
+        senderToInheritorRes = new DelegatedResourceCapsule(
+            ByteString.copyFrom(senderAddr),
+            ByteString.copyFrom(inheritorAddr));
+      }
+
+      // update sender->inheritor delegated resource
+      if (senderToOwnerRes.getFrozenBalanceForBandwidth() != 0) { // for non-zero bandwidth
+        senderToInheritorRes.addFrozenBalanceForBandwidth(
+            senderToOwnerRes.getFrozenBalanceForBandwidth(),
+            calculateNewExpireTime(
+                senderToInheritorRes.getFrozenBalanceForBandwidth(),
+                senderToInheritorRes.getExpireTimeForBandwidth(),
+                senderToOwnerRes.getFrozenBalanceForBandwidth(),
+                senderToOwnerRes.getExpireTimeForBandwidth(),
+                repo)
+        );
+      }
+      if (senderToOwnerRes.getFrozenBalanceForEnergy() != 0) { // for non-zero energy
+        senderToInheritorRes.addFrozenBalanceForEnergy(
+            senderToOwnerRes.getFrozenBalanceForEnergy(),
+            calculateNewExpireTime(
+                senderToInheritorRes.getFrozenBalanceForEnergy(),
+                senderToInheritorRes.getExpireTimeForEnergy(),
+                senderToOwnerRes.getFrozenBalanceForEnergy(),
+                senderToOwnerRes.getExpireTimeForEnergy(),
+                repo)
+        );
+      }
+      repo.updateDelegatedResource(senderToInheritorKey, senderToInheritorRes);
+
+      /* process inheritor account */
+      // increase acquired delegated balance for bandwidth or energy
+      inheritorCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(
+          senderToOwnerRes.getFrozenBalanceForBandwidth());
+      inheritorCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(
+          senderToOwnerRes.getFrozenBalanceForEnergy());
+
+      // update delegated resource index for sender`s toList
+      removeOrInsertDelegatedIndexAndUpdate(senderAddr, ownerAddr, inheritorAddr, ListType.TO_LIST, repo);
+
+      // update delegated resource index for inheritor`s fromList
+      removeOrInsertDelegatedIndexAndUpdate(inheritorAddr, null, senderAddr, ListType.FROM_LIST, repo);
+
+      // set sender->owner delegated resource to zero
+      senderToOwnerRes.setFrozenBalanceForBandwidth(0, 0);
+      senderToOwnerRes.setFrozenBalanceForEnergy(0, 0);
+      repo.updateDelegatedResource(senderToOwnerKey, senderToOwnerRes);
     }
 
-    //process owner frozen for self
-    if (FastByteComparisons.compareTo(obtainer, 0, 20,
-            TransactionTrace.convertToTronAddress(new byte[20]), 0, 20) == 0
-            || FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0
-            || FastByteComparisons.compareTo(obtainer, 0, 20,
-            repository.getBlackHoleAddress(), 0, 20) == 0) {
-      // if obtainer equal zero or black hole or owner
-      byte[] realObtain = obtainer;
-      if(FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
-        realObtain = repository.getBlackHoleAddress();
-      }
-      long unfreezeBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
-      AccountCapsule realObtainCapsule = repository.getAccount(realObtain);
-      realObtainCapsule.setBalance(realObtainCapsule.getBalance() + unfreezeBalance);
-      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-              .removeFrozen(0).build());
-      repository.updateAccount(realObtain, realObtainCapsule);
-      repository
-              .addTotalNetWeight(-unfreezeBalance / Parameter.ChainConstant.TRX_PRECISION);
-    } else {
-      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
-      long now = getTimestamp().longValue() * 1000;
-      long ownerBandwidthBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
-      long ownerBandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
-      long newBandwidthExpire = ownerBandwidthExpire;
-      long newFrozenBalanceForBandwidth = ownerBandwidthBalance;
-      if (obtainCapsule.getFrozenCount() > 0) {
-        long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
-        long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
-        long maxExpire = repository.getDynamicPropertiesStore().getMinFrozenTime() * Parameter.ChainConstant.FROZEN_PERIOD;
-        newBandwidthExpire = now
-                + BigInteger.valueOf(Long.max(0, Long.min(ownerBandwidthExpire - now, maxExpire)))
-                .multiply(BigInteger.valueOf(ownerBandwidthBalance))
-                .add(BigInteger.valueOf(Long.max(0, Long.min(obtainBandwidthExpire - now, maxExpire)))
-                        .multiply(BigInteger.valueOf(obtainBandwidthBalance)))
-                .divide(BigInteger.valueOf(
-                        Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance)))
-                .longValue();
-        newFrozenBalanceForBandwidth = Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance);
-      }
-      obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
-      repository.updateAccount(obtainer, obtainCapsule);
-      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-              .removeFrozen(0).build());
-    }
-    //vote
-    {
-      VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
+    // process delegated resource from owner to receiver
+    for(ByteString receiver : indexCapsule.getToAccountsList()){
+      byte[] receiverAddr = receiver.toByteArray();
+      byte[] ownerToReceiverKey = DelegatedResourceCapsule.createDbKey(ownerAddr, receiverAddr);
+      DelegatedResourceCapsule ownerToReceiverRes = repo.getDelegatedResource(ownerToReceiverKey);
 
-      //get owner oldVotes
-      List<Protocol.Vote> oldVotes;
-      if (ownerVotesCapsule == null) {
-        oldVotes = ownerCapsule.getVotesList();
-      } else {
-        oldVotes = ownerVotesCapsule.getOldVotes();
-        //delete ownerVotesCapsule
-        getResult().addDeleteVotes(this.getContractAddress());
-      }
-      // merge oldVotes to address(zero)
-      if (!oldVotes.isEmpty()) {
-        ownerCapsule.clearVotes();
-        //merge oldVotes to zero
-        byte[] zeroAddress = TransactionTrace.convertToTronAddress(new byte[20]);
-        VotesCapsule zeroVotesCapsule = repository.getVotesCapsule(zeroAddress);
-        if (zeroVotesCapsule == null) {
-          zeroVotesCapsule = new VotesCapsule(ByteString.copyFrom(zeroAddress), oldVotes);
-        } else {
-          int zeroOldVoteSize = zeroVotesCapsule.getOldVotes().size();
-          Map<ByteString, Integer> zeroOldVotesIndex = new HashMap<>(zeroOldVoteSize);
-          for(int i = 0; i < zeroOldVoteSize; i++){
-            zeroOldVotesIndex.put(zeroVotesCapsule.getOldVotes().get(i).getVoteAddress(), i);
-          }
-          for (Protocol.Vote vote : oldVotes) {
-            if (zeroOldVotesIndex.containsKey(vote.getVoteAddress())) {
-              int index = zeroOldVotesIndex.get(vote.getVoteAddress());
-              long newOldVoteCount = vote.getVoteCount() + zeroVotesCapsule.getOldVotes().get(index).getVoteCount();
-              zeroVotesCapsule.setOldVote(index, Protocol.Vote.newBuilder()
-                      .setVoteAddress(vote.getVoteAddress())
-                      .setVoteCount(newOldVoteCount).build());
-            } else {
-              zeroVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount());
-            }
-          }
+      // if inheritor == receiver, just take this part of resource as resource that inheritor freeze for self
+      if(Arrays.equals(inheritorAddr, receiverAddr)){
+
+        /* process inheritor account */
+        // transfer owner`s delegated frozen balance for bandwidth to inheritor`s frozen balance
+        long frozenBalanceForBandwidth = 0;
+        long expireTimeForBandwidth = 0;
+        // check if frozen for bandwidth exists
+        if (inheritorCapsule.getFrozenCount() != 0) {
+          frozenBalanceForBandwidth = inheritorCapsule.getFrozenList().get(0).getFrozenBalance();
+          expireTimeForBandwidth = inheritorCapsule.getFrozenList().get(0).getExpireTime();
         }
-        repository.updateVotesCapsule(zeroAddress, zeroVotesCapsule);
+        if (ownerToReceiverRes.getFrozenBalanceForBandwidth() != 0) { // for non-zero bandwidth
+          inheritorCapsule.setFrozenForBandwidth(
+              Math.addExact(frozenBalanceForBandwidth,
+                  ownerToReceiverRes.getFrozenBalanceForBandwidth()),
+              calculateNewExpireTime(
+                  frozenBalanceForBandwidth,
+                  expireTimeForBandwidth,
+                  ownerToReceiverRes.getFrozenBalanceForBandwidth(),
+                  ownerToReceiverRes.getExpireTimeForBandwidth(),
+                  repo)
+          );
+        }
+
+        // transfer owner`s delegated frozen balance for energy to inheritor`s frozen balance
+        long frozenBalanceForEnergy =
+            inheritorCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
+        long expireTimeForEnergy =
+            inheritorCapsule.getAccountResource().getFrozenBalanceForEnergy().getExpireTime();
+        if (ownerToReceiverRes.getFrozenBalanceForEnergy() != 0) { // for non-zero energy
+          inheritorCapsule.setFrozenForEnergy(
+              Math.addExact(frozenBalanceForEnergy,
+                  ownerToReceiverRes.getFrozenBalanceForEnergy()),
+              calculateNewExpireTime(
+                  frozenBalanceForEnergy,
+                  expireTimeForEnergy,
+                  ownerToReceiverRes.getFrozenBalanceForEnergy(),
+                  ownerToReceiverRes.getExpireTimeForEnergy(),
+                  repo)
+          );
+        }
+
+        // take back inheritor`s delegated bandwidth
+        inheritorCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(
+            Math.max(0, inheritorCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+                - ownerToReceiverRes.getFrozenBalanceForBandwidth()));
+
+        // take back inheritor`s delegated energy
+        inheritorCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(
+            Math.max(0, inheritorCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
+                - ownerToReceiverRes.getFrozenBalanceForEnergy()));
+
+        /* process delegated resource account index */
+        // remove delegated resource index for owner`s toList
+        removeOrInsertDelegatedIndexAndUpdate(ownerAddr, receiverAddr, null, ListType.TO_LIST, repo);
+
+        // remove delegated resource index for receiver`s fromList
+        removeOrInsertDelegatedIndexAndUpdate(receiverAddr, ownerAddr, null, ListType.FROM_LIST, repo);
+      } else {
+        byte[] inheritorToReceiverKey = DelegatedResourceCapsule.createDbKey(inheritorAddr, receiverAddr);
+        DelegatedResourceCapsule inheritorToReceiverRes = repo.getDelegatedResource(inheritorToReceiverKey);
+
+        /* process delegated resource from inheritor to receiver */
+        // create a new inheritor->receiver delegated resource
+        if(inheritorToReceiverRes == null) {
+          inheritorToReceiverRes = new DelegatedResourceCapsule(
+              ByteString.copyFrom(inheritorAddr),
+              ByteString.copyFrom(receiverAddr));
+        }
+
+        // update inheritor->receiver delegated resource
+        if (ownerToReceiverRes.getFrozenBalanceForBandwidth() != 0) { // for non-zero bandwidth
+          inheritorToReceiverRes.addFrozenBalanceForBandwidth(
+              ownerToReceiverRes.getFrozenBalanceForBandwidth(),
+              calculateNewExpireTime(
+                  inheritorToReceiverRes.getFrozenBalanceForBandwidth(),
+                  inheritorToReceiverRes.getExpireTimeForBandwidth(),
+                  ownerToReceiverRes.getFrozenBalanceForBandwidth(),
+                  ownerToReceiverRes.getExpireTimeForBandwidth(),
+                  repo)
+          );
+        }
+        if (ownerToReceiverRes.getFrozenBalanceForEnergy() != 0) { // for non-zero energy
+          inheritorToReceiverRes.addFrozenBalanceForEnergy(
+              ownerToReceiverRes.getFrozenBalanceForEnergy(),
+              calculateNewExpireTime(
+                  inheritorToReceiverRes.getFrozenBalanceForEnergy(),
+                  inheritorToReceiverRes.getExpireTimeForEnergy(),
+                  ownerToReceiverRes.getFrozenBalanceForEnergy(),
+                  ownerToReceiverRes.getExpireTimeForEnergy(),
+                  repo)
+          );
+        }
+        repo.updateDelegatedResource(inheritorToReceiverKey, inheritorToReceiverRes);
+
+        /* process inheritor account */
+        // increase delegated balance for bandwidth or energy
+        inheritorCapsule.addDelegatedFrozenBalanceForBandwidth(
+            ownerToReceiverRes.getFrozenBalanceForBandwidth());
+        inheritorCapsule.addDelegatedFrozenBalanceForEnergy(
+            ownerToReceiverRes.getFrozenBalanceForEnergy());
+
+        /* process delegated resource account index */
+        // update delegated resource index for receiver`s fromList
+        removeOrInsertDelegatedIndexAndUpdate(receiverAddr, ownerAddr, inheritorAddr, ListType.FROM_LIST, repo);
+
+        // update delegated resource index for inheritor`s toList
+        removeOrInsertDelegatedIndexAndUpdate(inheritorAddr, null, receiverAddr, ListType.TO_LIST, repo);
       }
+
+      // set owner->receiver delegated resource to zero
+      ownerToReceiverRes.setFrozenBalanceForBandwidth(0, 0);
+      ownerToReceiverRes.setFrozenBalanceForEnergy(0, 0);
+      repo.updateDelegatedResource(ownerToReceiverKey, ownerToReceiverRes);
     }
 
-    repository.updateAccount(owner, ownerCapsule);
+    // clear delegated resource index for owner
+    indexCapsule.setAllFromAccounts(new ArrayList<>());
+    indexCapsule.setAllToAccounts(new ArrayList<>());
+    repo.updateDelegatedResourceAccountIndex(ownerAddr, indexCapsule);
+
+    /* process owner`s frozen balance */
+    // transfer owner`s frozen balance for bandwidth to inheritor
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
+    long frozenBalanceForBandwidthOfOwner = 0;
+    long expireTimeForBandwidthOfOwner = 0;
+    // check if frozen for bandwidth exists
+    if (ownerCapsule.getFrozenCount() != 0) {
+      frozenBalanceForBandwidthOfOwner = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
+      expireTimeForBandwidthOfOwner = ownerCapsule.getFrozenList().get(0).getExpireTime();
+    }
+    long frozenBalanceForBandwidthOfInheritor = 0;
+    long expireTimeForBandwidthOfInheritor = 0;
+    // check if frozen for bandwidth exists
+    if (inheritorCapsule.getFrozenCount() != 0) {
+      frozenBalanceForBandwidthOfInheritor = inheritorCapsule.getFrozenList().get(0).getFrozenBalance();
+      expireTimeForBandwidthOfInheritor = inheritorCapsule.getFrozenList().get(0).getExpireTime();
+    }
+    if (frozenBalanceForBandwidthOfOwner != 0) { // for non-zero bandwidth
+      inheritorCapsule.setFrozenForBandwidth(
+          Math.addExact(frozenBalanceForBandwidthOfInheritor,
+              frozenBalanceForBandwidthOfOwner),
+          calculateNewExpireTime(
+              frozenBalanceForBandwidthOfInheritor,
+              expireTimeForBandwidthOfInheritor,
+              frozenBalanceForBandwidthOfOwner,
+              expireTimeForBandwidthOfOwner,
+              repo)
+      );
+    }
+
+    // transfer owner`s frozen balance for energy to inheritor
+    long frozenBalanceForEnergyOfOwner =
+        ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
+    long expireTimeForEnergyOfOwner =
+        ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getExpireTime();
+    long frozenBalanceForEnergyOfInheritor =
+        inheritorCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
+    long expireTimeForEnergyOfInheritor =
+        inheritorCapsule.getAccountResource().getFrozenBalanceForEnergy().getExpireTime();
+    if (frozenBalanceForEnergyOfOwner != 0) { // for non-zero energy
+      inheritorCapsule.setFrozenForEnergy(
+          Math.addExact(frozenBalanceForEnergyOfInheritor,
+              frozenBalanceForEnergyOfOwner),
+          calculateNewExpireTime(
+              frozenBalanceForEnergyOfInheritor,
+              expireTimeForEnergyOfInheritor,
+              frozenBalanceForEnergyOfOwner,
+              expireTimeForEnergyOfOwner,
+              repo)
+      );
+    }
+
+    // reset owner account and update
+    clearAccountCapsule(ownerCapsule);
+    repo.updateAccount(ownerAddr, ownerCapsule);
+
+    // update inheritor account
+    repo.updateAccount(inheritorAddr, inheritorCapsule);
+  }
+
+  private enum ListType {
+    FROM_LIST, TO_LIST
+  }
+
+  private void clearAccountCapsule(AccountCapsule accountCapsule) {
+    accountCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+    accountCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+    accountCapsule.setDelegatedFrozenBalanceForBandwidth(0);
+    accountCapsule.setDelegatedFrozenBalanceForEnergy(0);
+    accountCapsule.setFrozenForBandwidth(0, 0);
+    accountCapsule.setFrozenForEnergy(0, 0);
+  }
+
+  // TODO: 2021/3/19 即使取cache也会发生反序列化，对性能的影响，某些index capsule可以待处理完毕后再写入缓存
+  private void removeOrInsertDelegatedIndexAndUpdate(byte[] accountAddr, byte[] removeAddr, byte[] insertAddr,
+                                                     ListType listType, Repository repo) {
+    DelegatedResourceAccountIndexCapsule indexCapsule = repo.getDelegatedResourceAccountIndex(accountAddr);
+    if (indexCapsule == null) {
+      indexCapsule = new DelegatedResourceAccountIndexCapsule(accountAddr);
+    }
+    List<ByteString> list = new ArrayList<>(listType == ListType.FROM_LIST ?
+        indexCapsule.getFromAccountsList() : indexCapsule.getToAccountsList());
+    if (removeAddr != null) {
+      list.remove(ByteString.copyFrom(removeAddr));
+    }
+    if (insertAddr != null && !list.contains(ByteString.copyFrom(insertAddr))) {
+      list.add(ByteString.copyFrom(insertAddr));
+    }
+    if (listType == ListType.FROM_LIST) {
+      indexCapsule.setAllFromAccounts(list);
+    } else {
+      indexCapsule.setAllToAccounts(list);
+    }
+    repo.updateDelegatedResourceAccountIndex(accountAddr, indexCapsule);
+  }
+
+  // TODO: 2021/3/22 这里添加的balance已经可以解冻的话，会使原冻结时间缩短，考虑让新解冻时间增加而不能早于原时间？
+  private long calculateNewExpireTime(
+      long originFrozenBalance,
+      long originExpireTime,
+      long addedFrozenBalance,
+      long addedExpireTime,
+      Repository repo) {
+    long now = getTimestamp().longValue() * 1000;
+    long maxExpire = repo.getDynamicPropertiesStore().getMinFrozenTime() * Parameter.ChainConstant.FROZEN_PERIOD;
+
+    if (originFrozenBalance == 0) return addedExpireTime;
+
+    if (addedFrozenBalance == 0) return originExpireTime;
+
+    return now +
+        BigInteger.valueOf(Math.max(0, Math.min(originExpireTime - now, maxExpire)))
+            .multiply(BigInteger.valueOf(originFrozenBalance))
+            .add(BigInteger.valueOf(Math.max(0, Math.min(addedExpireTime - now, maxExpire)))
+                .multiply(BigInteger.valueOf(addedFrozenBalance)))
+            .divide(BigInteger.valueOf(Math.addExact(originFrozenBalance, addedFrozenBalance)))
+            .longValue();
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1751,6 +2034,98 @@ public class Program {
     public boolean next() {
       pc += 1 + getCurOpcodeArg().length;
       return pc < code.length;
+    }
+  }
+
+  public boolean freeze(DataWord receiverAddress, DataWord frozenBalance, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    FreezeBalanceProcessor processor = new FreezeBalanceProcessor();
+    FreezeBalanceParam param = new FreezeBalanceParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    param.setOwnerAddress(owner);
+    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    param.setFrozenDuration(repository.getDynamicPropertiesStore().getMinFrozenTime());
+    param.setResourceType(parseResourceCode(resourceType));
+    try {
+      param.setFrozenBalance(frozenBalance.sValue().longValueExact());
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForFreeze failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForFreeze failure:{}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("frozenBalance out of long range");
+    }
+    return false;
+  }
+
+  public boolean unfreeze(DataWord receiverAddress, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    UnfreezeBalanceProcessor processor = new UnfreezeBalanceProcessor();
+    UnfreezeBalanceParam param = new UnfreezeBalanceParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    param.setOwnerAddress(owner);
+    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    param.setResourceType(parseResourceCode(resourceType));
+    try {
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForUnfreeze failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForUnfreeze failure:{}", e.getMessage());
+    }
+    return false;
+  }
+
+  public long freezeExpireTime(DataWord targetAddress, DataWord resourceType) {
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] target = TransactionTrace.convertToTronAddress(targetAddress.getLast20Bytes());
+    int resourceCode = resourceType.intValue();
+    // when targetAddress is all-zero or owner, lookup freeze expire time for owner
+    if (targetAddress.isZero() || FastByteComparisons.isEqual(owner, target)) {
+      AccountCapsule ownerCapsule = getContractState().getAccount(owner);
+      if (resourceCode == 0) { //  for bandwidth
+        if (ownerCapsule.getFrozenCount() != 0
+            && ownerCapsule.getFrozenList().get(0).getFrozenBalance() != 0) {
+          return ownerCapsule.getFrozenList().get(0).getExpireTime();
+        }
+      } else if (resourceCode == 1) { // for energy
+        if (ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance() != 0) {
+          return ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getExpireTime();
+        }
+      }
+    } else {
+      byte[] key = DelegatedResourceCapsule.createDbKey(owner, target);
+      DelegatedResourceCapsule delegatedResourceCapsule = getContractState().getDelegatedResource(key);
+      if (delegatedResourceCapsule != null) {
+        if (resourceCode == 0) {
+          if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() != 0) {
+            return delegatedResourceCapsule.getExpireTimeForBandwidth();
+          }
+        } else if (resourceCode == 1) {
+          if (delegatedResourceCapsule.getFrozenBalanceForEnergy() != 0) {
+            return delegatedResourceCapsule.getExpireTimeForEnergy();
+          }
+        }
+      }
+    }
+    return 0;
+  }
+
+  private Common.ResourceCode parseResourceCode(DataWord resourceType) {
+    switch (resourceType.intValue()) {
+      case 0:
+        return Common.ResourceCode.BANDWIDTH;
+      case 1:
+        return Common.ResourceCode.ENERGY;
+      default:
+        return Common.ResourceCode.UNRECOGNIZED;
     }
   }
 
