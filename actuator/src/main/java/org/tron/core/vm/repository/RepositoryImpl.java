@@ -60,6 +60,8 @@ public class RepositoryImpl implements Repository {
   private long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
       BLOCK_PRODUCED_INTERVAL;
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
+  private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+  private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
 
   private StoreFactory storeFactory;
   @Getter
@@ -967,9 +969,22 @@ public class RepositoryImpl implements Repository {
     saveTotalNetWeight(totalNetWeight);
   }
 
+  //The unit is trx
+  @Override
+  public void addTotalEnergyWeight(long amount) {
+    long totalEnergyWeight = getTotalEnergyWeight();
+    totalEnergyWeight += amount;
+    saveTotalEnergyWeight(totalEnergyWeight);
+  }
+
   @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     updateDynamic(TOTAL_NET_WEIGHT, new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+  }
+
+  @Override
+  public void saveTotalEnergyWeight(long totalEnergyWeight) {
+    updateDynamic(TOTAL_ENERGY_WEIGHT, new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
   @Override
@@ -979,5 +994,14 @@ public class RepositoryImpl implements Repository {
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
+  }
+
+  @Override
+  public long getTotalEnergyWeight() {
+    return Optional.ofNullable(getDynamic(TOTAL_ENERGY_WEIGHT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
 }
