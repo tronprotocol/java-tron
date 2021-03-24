@@ -409,13 +409,28 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void addTotalEnergyWeight(long amount) {
+    repository.addTotalEnergyWeight(amount);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
   }
 
   @Override
+  public void saveTotalEnergyWeight(long totalEnergyWeight) {
+    repository.saveTotalEnergyWeight(totalEnergyWeight);
+  }
+
+  @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
+  }
+
+  @Override
+  public long getTotalEnergyWeight() {
+    return repository.getTotalEnergyWeight();
   }
 
   @Override

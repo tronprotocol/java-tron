@@ -148,7 +148,13 @@ public interface Repository {
 
   void addTotalNetWeight(long amount);
 
+  void addTotalEnergyWeight(long amount);
+
   void saveTotalNetWeight(long totalNetWeight);
 
+  void saveTotalEnergyWeight(long totalEnergyWeight);
+
   long getTotalNetWeight();
+
+  long getTotalEnergyWeight();
 }
