@@ -340,17 +340,23 @@ public class ProposalUtil {
         }
         break;
       }
-//      case ALLOW_TVM_STAKE: {
-//          if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
-//          throw new ContractValidateException(
-//              "Bad chain parameter id [ALLOW_TVM_STAKE]");
-//        }
-//        if (value != 1 && value != 0) {
-//          throw new ContractValidateException(
-//              "This value[ALLOW_TVM_STAKE] is only allowed to be 1 or 0");
-//        }
-//        break;
-//      }
+      case ALLOW_TVM_FREEZE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1_3)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_FREEZE]");
+        }
+        // TODO: 2021/3/24 switch or once mode
+        if (value != 1) {
+          throw new ContractValidateException(
+              PRE_VALUE_NOT_ONE_ERROR + "ALLOW_TVM_FREEZE" + VALUE_NOT_ONE_ERROR);
+        }
+        if (dynamicPropertiesStore.getAllowDelegateResource() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_DELEGATE_RESOURCE] proposal must be approved "
+                  + "before [ALLOW_TVM_FREEZE] can be proposed");
+        }
+        break;
+      }
       //  case ALLOW_TVM_ASSET_ISSUE: {
       //  if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
       //      throw new ContractValidateException(
@@ -504,7 +510,7 @@ public class ProposalUtil {
     ALLOW_PBFT(40),// 1,40
     ALLOW_TVM_ISTANBUL(41),//1, {0,1}
     //ALLOW_TVM_ASSET_ISSUE(42), // 0, 1
-    // ALLOW_TVM_STAKE(43), // 0, 1
+    ALLOW_TVM_FREEZE(43), // 0, 1
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]

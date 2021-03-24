@@ -447,7 +447,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowTvmStake;
+  public long allowTvmFreeze;
 
   @Getter
   @Setter
