@@ -119,7 +119,7 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public byte[] get(byte[] key) throws ItemNotFoundException {
+  public synchronized byte[] get(byte[] key) throws ItemNotFoundException {
     byte[] value = getUnchecked(key);
     if (value == null) {
       throw new ItemNotFoundException();
@@ -129,7 +129,7 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public synchronized byte[] getUnchecked(byte[] key) {
+  public byte[] getUnchecked(byte[] key) {
     return head().get(key);
   }
 
