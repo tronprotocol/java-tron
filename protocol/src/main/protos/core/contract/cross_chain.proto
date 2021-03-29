@@ -11,9 +11,18 @@ message VoteCrossChainContract {
     bytes owner_address = 1;
     bytes chain_id = 2;
     int64 amount = 3;
+    int32 round = 4;
 }
 
 message UnvoteCrossChainContract {
     bytes owner_address = 1;
     bytes chain_id = 2;
+    int32 round = 3;
+}
+
+message AuctionRoundContract {
+    int32 round = 1;
+    int32 slot_count = 2;
+    int64 end_time = 3;
+    int64 duration = 4;
 }
