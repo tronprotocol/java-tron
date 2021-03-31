@@ -45,7 +45,6 @@ public class UnfreezeBalanceProcessor {
         throw new ContractValidateException("delegated Resource does not exist");
       }
 
-      AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
       // validate args @frozenBalance and @expireTime
       switch (param.getResourceType()) {
         case BANDWIDTH:
