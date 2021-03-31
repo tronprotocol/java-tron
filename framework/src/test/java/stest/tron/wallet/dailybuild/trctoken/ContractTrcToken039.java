@@ -81,14 +81,12 @@ public class ContractTrcToken039 {
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L, fromAddress,
             testKey002, blockingStubFull));
-    logger.info(
-        "dev001Address:" + Base58.encode58Check(dev001Address));
+    logger.info("dev001Address:" + Base58.encode58Check(dev001Address));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert
         .assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L, fromAddress,
             testKey002, blockingStubFull));
-    logger.info(
-        "user001Address:" + Base58.encode58Check(user001Address));
+    logger.info("user001Address:" + Base58.encode58Check(user001Address));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // freeze balance
@@ -105,8 +103,8 @@ public class ContractTrcToken039 {
     Assert.assertTrue(PublicMethed.createAssetIssue(dev001Address, tokenName, TotalSupply, 1,
         100, start, end, 1, description, url, 10000L,
         10000L, 1L, 1L, dev001Key, blockingStubFull));
-    assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
 
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
@@ -121,7 +119,6 @@ public class ContractTrcToken039 {
             1000L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
             1000, null, dev001Key, dev001Address,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName1 = "A";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
@@ -308,11 +305,8 @@ public class ContractTrcToken039 {
             + "\"";
 
     String triggerTxid2 = PublicMethed.triggerContract(proxyTestAddress,
-        "upgradeTo(address)",
-        param3, false, 0, 1000000000L, assetAccountId
-            .toStringUtf8(),
-        1, dev001Address, dev001Key,
-        blockingStubFull);
+        "upgradeTo(address)", param3, false, 0, 1000000000L,
+            assetAccountId.toStringUtf8(), 1, dev001Address, dev001Key, blockingStubFull);
     String triggerTxid3 = PublicMethed.triggerContract(proxyTestAddress,
         "trans(uint256,address,trcToken)",
         param2, false, 0, 1000000000L, assetAccountId
