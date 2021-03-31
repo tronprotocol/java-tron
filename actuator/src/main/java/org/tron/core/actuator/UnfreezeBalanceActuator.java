@@ -195,7 +195,12 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
               .setAccountResource(newAccountResource).build());
-
+          break;
+        case VOTE_POWER:
+          unfreezeBalance = accountCapsule.getVotePowerFrozenBalance();
+          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+              .setBalance(oldBalance + unfreezeBalance)
+              .clearNewVotePower().build());
           break;
         default:
           //this should never happen
@@ -397,9 +402,28 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           }
 
           break;
+        case VOTE_POWER:
+          if (dynamicStore.supportAllowNewResourceModel()) {
+            Frozen frozenBalanceForVotePower = accountCapsule.getInstance().getNewVotePower();
+            if (frozenBalanceForVotePower.getFrozenBalance() <= 0) {
+              throw new ContractValidateException("no frozenBalance(VotePower)");
+            }
+            if (frozenBalanceForVotePower.getExpireTime() > now) {
+              throw new ContractValidateException("It's not time to unfreeze(VotePower).");
+            }
+          } else {
+            throw new ContractValidateException(
+                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          }
+          break;
         default:
-          throw new ContractValidateException(
-              "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          if (dynamicStore.supportAllowNewResourceModel()) {
+            throw new ContractValidateException(
+                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、VOTE_POWER]");
+          } else {
+            throw new ContractValidateException(
+                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          }
       }
 
     }
