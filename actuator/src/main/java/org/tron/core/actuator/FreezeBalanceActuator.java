@@ -193,31 +193,30 @@ public class FreezeBalanceActuator extends AbstractActuator {
               + "and more than " + minFrozenTime + " days");
     }
 
-    if (dynamicStore.supportAllowNewResourceModel()) {
-      switch (freezeBalanceContract.getResource()) {
-        case BANDWIDTH:
-        case ENERGY:
-          break;
-        case VOTE_POWER:
+    switch (freezeBalanceContract.getResource()) {
+      case BANDWIDTH:
+      case ENERGY:
+        break;
+      case VOTE_POWER:
+        if (dynamicStore.supportAllowNewResourceModel()) {
           byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
           if (!ArrayUtils.isEmpty(receiverAddress)) {
             throw new ContractValidateException(
                 "Vote power is not allowed to delegate to other accounts.");
           }
-          break;
-        default:
-          throw new ContractValidateException(
-              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY、VOTE_POWER]");
-      }
-    } else {
-      switch (freezeBalanceContract.getResource()) {
-        case BANDWIDTH:
-        case ENERGY:
-          break;
-        default:
+        } else {
           throw new ContractValidateException(
               "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
-      }
+        }
+        break;
+      default:
+        if (dynamicStore.supportAllowNewResourceModel()) {
+          throw new ContractValidateException(
+              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY、VOTE_POWER]");
+        } else {
+          throw new ContractValidateException(
+              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+        }
     }
 
     //todo：need version control and config for delegating resource
