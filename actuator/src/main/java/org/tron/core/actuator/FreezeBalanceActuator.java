@@ -109,7 +109,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
         accountCapsule.setFrozenForVotePower(newFrozenBalanceForVotePower, expireTime);
 
         dynamicStore
-            .addTotalVotePowerWeight(frozenBalance / TRX_PRECISION);
+            .addTotalNewVotePowerWeight(frozenBalance / TRX_PRECISION);
         break;
       default:
         logger.debug("Resource Code Error.");

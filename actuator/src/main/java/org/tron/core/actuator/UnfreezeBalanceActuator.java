@@ -223,6 +223,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         dynamicStore
             .addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
         break;
+      case VOTE_POWER:
+        dynamicStore
+            .addTotalNewVotePowerWeight(-unfreezeBalance / TRX_PRECISION);
+        break;
       default:
         //this should never happen
         break;
