@@ -469,6 +469,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return tp;
   }
 
+  public long getAllTronPower() {
+    if (account.getOldVotePower() == -1) {
+      return getVotePowerFrozenBalance();
+    } else {
+      return account.getOldVotePower() + getVotePowerFrozenBalance();
+    }
+  }
+
   /**
    * asset balance enough
    */

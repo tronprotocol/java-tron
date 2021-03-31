@@ -22,6 +22,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -126,6 +127,11 @@ public class VoteWitnessActuator extends AbstractActuator {
       }
 
       long tronPower = accountCapsule.getTronPower();
+
+      DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+      if (dynamicStore.supportAllowNewResourceModel()) {
+        tronPower = accountCapsule.getAllTronPower();
+      }
 
       sum = LongMath
           .checkedMultiply(sum, TRX_PRECISION); //trx -> drop. The vote count is based on TRX
