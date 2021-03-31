@@ -57,6 +57,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore
         .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
+    if (dynamicStore.supportAllowNewResourceModel() && accountCapsule
+        .oldVotePowerIsNotInitialized()) {
+      accountCapsule.InitializeOldVotePower();
+    }
+
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     long duration = freezeBalanceContract.getFrozenDuration() * FROZEN_PERIOD;
 

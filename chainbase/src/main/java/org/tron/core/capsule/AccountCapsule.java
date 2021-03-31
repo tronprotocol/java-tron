@@ -472,6 +472,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public long getAllTronPower() {
     if (account.getOldVotePower() == -1) {
       return getVotePowerFrozenBalance();
+    } else if (account.getOldVotePower() == 0) {
+      return getTronPower() + getVotePowerFrozenBalance();
     } else {
       return account.getOldVotePower() + getVotePowerFrozenBalance();
     }
@@ -844,6 +846,29 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
   }
 
+  public boolean oldVotePowerIsNotInitialized() {
+    return this.account.getOldVotePower() == 0;
+  }
+
+  public boolean oldVotePowerIsInvalid() {
+    return this.account.getOldVotePower() == -1;
+  }
+
+  public void InitializeOldVotePower() {
+    long value = getTronPower();
+    if (value == 0) {
+      value = -1;
+    }
+    setInstance(getInstance().toBuilder()
+        .setOldVotePower(value)
+        .build());
+  }
+
+  public void InvalidateOldVotePower() {
+    setInstance(getInstance().toBuilder()
+        .setOldVotePower(-1)
+        .build());
+  }
 
   public void setFrozenForVotePower(long frozenBalance, long expireTime) {
     Frozen newFrozen = Frozen.newBuilder()

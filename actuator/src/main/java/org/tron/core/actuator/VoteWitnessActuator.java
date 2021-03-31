@@ -161,6 +161,12 @@ public class VoteWitnessActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (dynamicStore.supportAllowNewResourceModel() && accountCapsule
+        .oldVotePowerIsNotInitialized()) {
+      accountCapsule.InitializeOldVotePower();
+    }
+
     if (!votesStore.has(ownerAddress)) {
       votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
           accountCapsule.getVotesList());

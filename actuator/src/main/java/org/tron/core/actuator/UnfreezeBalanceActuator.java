@@ -75,6 +75,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     long unfreezeBalance = 0L;
 
+    if (dynamicStore.supportAllowNewResourceModel() && !accountCapsule
+        .oldVotePowerIsInvalid()) {
+      accountCapsule.InvalidateOldVotePower();
+    }
+
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
