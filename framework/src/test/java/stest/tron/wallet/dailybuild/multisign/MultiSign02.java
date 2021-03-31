@@ -418,9 +418,6 @@ public class MultiSign02 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    ownerPermissionKeys.clear();
-    ownerPermissionKeys.add(tmpKey02);
-
     Assert.assertEquals(2,
         PublicMethedForMutiSign.getActivePermissionKeyCount(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getActivePermissionList()));
