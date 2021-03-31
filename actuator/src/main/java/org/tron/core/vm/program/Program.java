@@ -522,7 +522,6 @@ public class Program {
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
         getContractState().getAccountAssetIssue(owner).getAssetMapV2());
 
-    // TODO: 2021/3/22 Tron地址是21位，这里只比较了前20位
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
       // if owner == obtainer just zeroing account according to Yellow Paper
       getContractState().addBalance(owner, -balance);
@@ -548,9 +547,8 @@ public class Program {
     }
     if (VMConfig.allowTvmFreeze()) {
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
-      if (obtainerAddress.isZero()
-          || FastByteComparisons.isEqual(owner, obtainer)
-          || FastByteComparisons.isEqual(owner, blackHoleAddress)) {
+      if (FastByteComparisons.isEqual(owner, obtainer)
+          || FastByteComparisons.isEqual(obtainer, blackHoleAddress)) {
         transferDelegatedResourceToBlackHole(owner, blackHoleAddress, getContractState());
       } else {
         transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
@@ -573,7 +571,7 @@ public class Program {
     // process delegated resource from owner to receiver
     long totalDelegatedFrozenBalance = 0;
     DelegatedResourceAccountIndexCapsule indexCapsule = repo.getDelegatedResourceAccountIndex(ownerAddr);
-    for(ByteString receiver : indexCapsule.getToAccountsList()){
+    for (ByteString receiver : indexCapsule.getToAccountsList()) {
       byte[] receiverAddr = receiver.toByteArray();
       byte[] key = DelegatedResourceCapsule.createDbKey(ownerAddr, receiverAddr);
       DelegatedResourceCapsule delegatedResourceCapsule = repo.getDelegatedResource(key);
@@ -585,21 +583,13 @@ public class Program {
       // take back receiver`s delegated bandwidth
       long frozenBalanceForBandwidth = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
       totalDelegatedFrozenBalance += frozenBalanceForBandwidth;
-      if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() < frozenBalanceForBandwidth) {
-        receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
-      } else {
-        receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-frozenBalanceForBandwidth);
-      }
+      receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForBandwidth(-frozenBalanceForBandwidth);
       // reduce total net weight
       repo.addTotalNetWeight(-frozenBalanceForBandwidth / TRX_PRECISION);
       // take back receiver`s delegated energy
       long frozenBalanceForEnergy = delegatedResourceCapsule.getFrozenBalanceForEnergy();
       totalDelegatedFrozenBalance += frozenBalanceForEnergy;
-      if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < frozenBalanceForEnergy) {
-        receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
-      } else {
-        receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-frozenBalanceForEnergy);
-      }
+      receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForEnergy(-frozenBalanceForEnergy);
       // reduce total energy weight
       repo.addTotalEnergyWeight(-frozenBalanceForEnergy / TRX_PRECISION);
       repo.updateAccount(receiverCapsule.createDbKey(), receiverCapsule);
@@ -718,7 +708,7 @@ public class Program {
       DelegatedResourceCapsule ownerToReceiverRes = repo.getDelegatedResource(ownerToReceiverKey);
 
       // if inheritor == receiver, just take this part of resource as resource that inheritor freeze for self
-      if(Arrays.equals(inheritorAddr, receiverAddr)){
+      if (Arrays.equals(inheritorAddr, receiverAddr)) {
 
         /* process inheritor account */
         // transfer owner`s delegated frozen balance for bandwidth to inheritor`s frozen balance
@@ -761,14 +751,12 @@ public class Program {
         }
 
         // take back inheritor`s delegated bandwidth
-        inheritorCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(
-            Math.max(0, inheritorCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-                - ownerToReceiverRes.getFrozenBalanceForBandwidth()));
+        inheritorCapsule.safeAddAcquiredDelegatedFrozenBalanceForBandwidth(
+            ownerToReceiverRes.getFrozenBalanceForBandwidth());
 
         // take back inheritor`s delegated energy
-        inheritorCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(
-            Math.max(0, inheritorCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-                - ownerToReceiverRes.getFrozenBalanceForEnergy()));
+        inheritorCapsule.safeAddAcquiredDelegatedFrozenBalanceForEnergy(
+            ownerToReceiverRes.getFrozenBalanceForEnergy());
 
         /* process delegated resource account index */
         // remove delegated resource index for owner`s toList
@@ -917,7 +905,7 @@ public class Program {
                                                      ListType listType, Repository repo) {
     DelegatedResourceAccountIndexCapsule indexCapsule = repo.getDelegatedResourceAccountIndex(accountAddr);
     if (indexCapsule == null) {
-      indexCapsule = new DelegatedResourceAccountIndexCapsule(accountAddr);
+      indexCapsule = new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(accountAddr));
     }
     List<ByteString> list = new ArrayList<>(listType == ListType.FROM_LIST ?
         indexCapsule.getFromAccountsList() : indexCapsule.getToAccountsList());
