@@ -730,6 +730,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
     }
 
+    try {
+      this.getAllowReceiptsMerkleRoot();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowReceiptsMerkleRoot(0L);
+    }
   }
 
   public String intArrayToString(int[] a) {

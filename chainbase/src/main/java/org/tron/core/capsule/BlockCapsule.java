@@ -271,6 +271,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
   }
   public Sha256Hash getReceiptsRoot() {
+    if (this.block.getBlockHeader().getRawData().getReceiptsRoot().isEmpty())
+      return Sha256Hash.ZERO_HASH;
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getReceiptsRoot());
   }
 
