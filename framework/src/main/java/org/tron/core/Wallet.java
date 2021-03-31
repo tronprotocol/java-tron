@@ -997,6 +997,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowBlackHoleOptimization())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowNewResourceModel")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
+        .build());
+
     return builder.build();
   }
 

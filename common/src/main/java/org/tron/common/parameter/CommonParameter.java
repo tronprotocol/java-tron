@@ -309,6 +309,11 @@ public class CommonParameter {
   @Setter
   public long allowBlackHoleOptimization;
 
+  @Getter
+  @Setter
+  public long allowNewResourceModel;
+
+
   // @Getter
   // @Setter
   // public long allowShieldedTransaction; //committee parameter

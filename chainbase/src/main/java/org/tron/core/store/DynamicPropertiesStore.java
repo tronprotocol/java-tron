@@ -153,7 +153,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
-  
+  private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -728,6 +729,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
     }
+
+    try {
+      this.getAllowNewResourceModel();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowNewResourceModel(CommonParameter.getInstance().getAllowNewResourceModel());
+    }
+
 
   }
 
@@ -2165,6 +2173,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_BLACKHOLE_OPTIMIZATION"));
+  }
+
+  public boolean supportAllowNewResourceModel() {
+    return getAllowNewResourceModel() == 1L;
+  }
+
+  public void saveAllowNewResourceModel(long value) {
+    this.put(ALLOW_NEW_RESOURCE_MODEL, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowNewResourceModel() {
+    return Optional.ofNullable(getUnchecked(ALLOW_NEW_RESOURCE_MODEL))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_NEW_RESOURCE_MODEL"));
   }
 
   private static class DynamicResourceProperties {
