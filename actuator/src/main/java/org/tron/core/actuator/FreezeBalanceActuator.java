@@ -98,6 +98,14 @@ public class FreezeBalanceActuator extends AbstractActuator {
         dynamicStore
             .addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
         break;
+      case VOTE_POWER:
+        long newFrozenBalanceForVotePower =
+            frozenBalance + accountCapsule.getVotePowerFrozenBalance();
+        accountCapsule.setFrozenForVotePower(newFrozenBalanceForVotePower, expireTime);
+
+        dynamicStore
+            .addTotalVotePowerWeight(frozenBalance / TRX_PRECISION);
+        break;
       default:
         logger.debug("Resource Code Error.");
     }
@@ -180,14 +188,31 @@ public class FreezeBalanceActuator extends AbstractActuator {
               + "and more than " + minFrozenTime + " days");
     }
 
-    switch (freezeBalanceContract.getResource()) {
-      case BANDWIDTH:
-        break;
-      case ENERGY:
-        break;
-      default:
-        throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+    if (dynamicStore.supportAllowNewResourceModel()) {
+      switch (freezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+        case ENERGY:
+          break;
+        case VOTE_POWER:
+          byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
+          if (!ArrayUtils.isEmpty(receiverAddress)) {
+            throw new ContractValidateException(
+                "Vote power is not allowed to delegate to other accounts.");
+          }
+          break;
+        default:
+          throw new ContractValidateException(
+              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY、VOTE_POWER]");
+      }
+    } else {
+      switch (freezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+        case ENERGY:
+          break;
+        default:
+          throw new ContractValidateException(
+              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+      }
     }
 
     //todo：need version control and config for delegating resource

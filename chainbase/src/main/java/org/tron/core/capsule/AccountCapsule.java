@@ -836,6 +836,23 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
   }
 
+
+  public void setFrozenForVotePower(long frozenBalance, long expireTime) {
+    Frozen newFrozen = Frozen.newBuilder()
+        .setFrozenBalance(frozenBalance)
+        .setExpireTime(expireTime)
+        .build();
+
+    setInstance(getInstance().toBuilder()
+        .setNewVotePower(newFrozen)
+        .build());
+  }
+
+  public long getVotePowerFrozenBalance() {
+    return this.account.getNewVotePower().getFrozenBalance();
+  }
+
+
   public long getEnergyUsage() {
     return this.account.getAccountResource().getEnergyUsage();
   }
