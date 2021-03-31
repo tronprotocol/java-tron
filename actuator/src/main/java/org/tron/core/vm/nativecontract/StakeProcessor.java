@@ -142,11 +142,6 @@ public class StakeProcessor {
       throws ContractExeException {
     AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
 
-    if (repository.getDynamicPropertiesStore().supportAllowNewResourceModel() &&
-        accountCapsule.oldVotePowerIsNotInitialized()) {
-      accountCapsule.InitializeOldVotePower();
-    }
-
     long duration = frozenDuration * ChainConstant.FROZEN_PERIOD;
 
     long newBalance = accountCapsule.getBalance() - frozenBalance;
