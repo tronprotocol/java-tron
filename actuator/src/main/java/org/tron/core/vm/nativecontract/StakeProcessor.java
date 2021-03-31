@@ -119,11 +119,6 @@ public class StakeProcessor {
       }
       long tronPower = accountCapsule.getTronPower();
 
-      DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
-      if (dynamicStore.supportAllowNewResourceModel()) {
-        tronPower = accountCapsule.getAllTronPower();
-      }
-
       // trx -> drop. The vote count is based on TRX
       sum = LongMath.checkedMultiply(sum, ChainConstant.TRX_PRECISION);
       if (sum > tronPower) {
