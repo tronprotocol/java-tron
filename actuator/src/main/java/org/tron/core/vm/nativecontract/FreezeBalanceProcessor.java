@@ -124,6 +124,19 @@ public class FreezeBalanceProcessor {
       }
     }
 
+    // adjust total resource
+    switch (param.getResourceType()) {
+      case BANDWIDTH:
+        repo.addTotalNetWeight(frozenBalance / TRX_PRECISION);
+        break;
+      case ENERGY:
+        repo.addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
+        break;
+      default:
+        //this should never happen
+        break;
+    }
+
     // deduce balance of owner account
     long newBalance = accountCapsule.getBalance() - frozenBalance;
     accountCapsule.setBalance(newBalance);
