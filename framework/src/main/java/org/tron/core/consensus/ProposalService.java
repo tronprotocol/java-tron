@@ -206,10 +206,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(entry.getValue());
           break;
         }
-        case ALLOW_TVM_FREEZE: {
-          manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
-          break;
-        }
+        //case ALLOW_TVM_STAKE: {
+        //  manager.getDynamicPropertiesStore().saveAllowTvmStake(entry.getValue());
+        //  break;
+        //}
         //case ALLOW_TVM_ASSET_ISSUE: {
         //  manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
         //  break;
@@ -240,6 +240,10 @@ public class ProposalService extends ProposalUtil {
         }
         case ALLOW_BLACKHOLE_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().saveAllowBlackHoleOptimization(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_FREEZE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
           break;
         }
         default:
