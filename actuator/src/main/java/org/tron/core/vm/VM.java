@@ -157,19 +157,16 @@ public class VM {
           energyCost = energyCosts.getBALANCE();
           break;
         case FREEZE:
-          // TODO: 2021/3/19 冻结能量消耗，是否包含创建账户能量
           energyCost = energyCosts.getFREEZE();
           DataWord receiverAddressWord = stack.get(stack.size() - 3);
           if (isDeadAccount(program, receiverAddressWord)) {
-            energyCost += energyCosts.getNEW_ACCT_FREEZE();
+            energyCost += energyCosts.getNEW_ACCT_CALL();
           }
           break;
         case UNFREEZE:
-          // TODO: 2021/3/19 解冻能量消耗
           energyCost = energyCosts.getUNFREEZE();
           break;
         case FREEZEEXPIRETIME:
-          // TODO: 2021/3/24 查询冻结时间能量消耗
           energyCost = energyCosts.getFREEZE_EXPIRE_TIME();
           break;
 
