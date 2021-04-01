@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
@@ -75,6 +76,9 @@ public class FreezeTest {
     rootDeposit.commit();
 
     ConfigLoader.disable = true;
+    CommonParameter.getInstance().setBlockNumForEnergyLimit(0);
+    //manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
+    VMConfig.initVmHardFork(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
@@ -84,14 +88,14 @@ public class FreezeTest {
 
   private byte[] deployContract(String contractName, String code) throws Exception {
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    long consumeUserResourcePercent = 0;
+    long consumeUserResourcePercent = 50;
 
     AccountStore accountStore = manager.getAccountStore();
 
     // deploy contract
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, "[]", code, value, fee, consumeUserResourcePercent,
-        null);
+        null, 10_000_000);
     byte[] contractAddr = WalletUtil.generateContractAddress(trx);
     //String contractAddrStr = StringUtil.encode58Check(contractAddr);
     Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
