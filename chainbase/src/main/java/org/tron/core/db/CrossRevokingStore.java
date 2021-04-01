@@ -187,6 +187,8 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
             .collect(Collectors.toList());
   }
 
+
+
   private byte[] buildTokenKey(String chainId, String tokenId) {
     return ("token_" + chainId + "_" + tokenId).getBytes();
   }

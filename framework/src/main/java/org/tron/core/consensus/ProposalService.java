@@ -252,8 +252,8 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(58);
           break;
         }
-        case AUCTION_END_TIME: {
-          manager.getDynamicPropertiesStore().saveAuctionEndTime(entry.getValue());
+        case AUCTION_CONFIG: {
+          manager.getDynamicPropertiesStore().saveAuctionConfig(entry.getValue());
           break;
         }
         default:

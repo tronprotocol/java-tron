@@ -1,10 +1,12 @@
 package org.tron.core.store;
 
-import static org.tron.core.Constant.ONE_YEAR_MS;
-
+import com.google.common.collect.Streams;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.AuctionConfigParser;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -167,7 +170,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION"
       .getBytes();
 
-  private static final byte[] AUTION_END_TIME = "AUTION_END_TIME".getBytes();
+  private static final String AUCTION_CONFIG_ROUND = "AUCTION_CONFIG_ROUND";
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -769,11 +772,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveBurnedForRegisterCross();
     }
 
-    try {
-      this.getAuctionEndTime();
-    } catch (IllegalArgumentException e) {
-      this.saveAuctionEndTime(System.currentTimeMillis() + ONE_YEAR_MS);
-    }
+//    try {
+//      this.getAuctionConfig();
+//    } catch (IllegalArgumentException e) {
+//      this.saveAuctionConfig(0L);
+//    }
 
   }
 
@@ -2241,17 +2244,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getCrossChain() == 1;
   }
 
-  public void saveAuctionEndTime(long number) {
-    this.put(AUTION_END_TIME,
-        new BytesCapsule(ByteArray.fromLong(number)));
+  public void saveAuctionConfig(long value) {
+    int round =AuctionConfigParser.getAuctionRound(value);
+    //AUCTION_CONFIG_ROUND_1 : 1
+    String key = AUCTION_CONFIG_ROUND+"_"+round;
+    this.put(key.getBytes(),
+        new BytesCapsule(ByteArray.fromLong(value)));
   }
 
-  public long getAuctionEndTime() {
-    return Optional.ofNullable(getUnchecked(AUTION_END_TIME))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(() -> new IllegalArgumentException("not found AUTION_END_TIME"));
+  public List<Long> listAuctionConfigs() {
+    String startStr = "AUCTION_CONFIG_";
+    return  Streams.stream(iterator())
+            .filter(entry -> startStr.startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+            .map(entry -> entry.getValue().getData())
+            .map(entry -> ByteArray.toLong(entry))
+            .collect(Collectors.toList());
   }
+
 
   public long getSrListCurrentCycle() {
     return Optional.ofNullable(getUnchecked(SR_LIST_CURRENT_CYCLE))

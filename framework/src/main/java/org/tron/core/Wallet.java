@@ -103,12 +103,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.*;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -166,15 +161,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.store.AccountIdIndexStore;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AccountTraceStore;
-import org.tron.core.store.BalanceTraceStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.MarketOrderStore;
-import org.tron.core.store.MarketPairPriceToOrderStore;
-import org.tron.core.store.MarketPairToPriceStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
@@ -3791,6 +3778,25 @@ public class Wallet {
         totalVoteBuilder.setChainId(ByteString.copyFrom(voteInfo.getKey().getBytes()));
         totalVoteBuilder.setAmount(voteInfo.getValue());
         builder.addCrossChainVoteSummary(totalVoteBuilder.build());
+    });
+    return builder.build();
+  }
+
+  public GrpcAPI.CrossChainAuctinConfigDetailList getCrossChainAuctionConfigDetailList() {
+    GrpcAPI.CrossChainAuctinConfigDetailList.Builder builder = GrpcAPI.CrossChainAuctinConfigDetailList.newBuilder();
+    DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
+    List<Long> auctionConfigDetailList = dynamicPropertiesStore.listAuctionConfigs();
+    if (CollectionUtils.isEmpty(auctionConfigDetailList)) {
+      return null;
+    }
+    auctionConfigDetailList.forEach(value -> {
+      CrossChain.AuctionRoundContract auctionRoundContract = CrossChain.AuctionRoundContract.newBuilder()
+                .setDuration(AuctionConfigParser.getAuctionDuration(value))
+                .setEndTime(AuctionConfigParser.getAuctionEndTime(value))
+                .setRound(AuctionConfigParser.getAuctionRound(value))
+                .setSlotCount(AuctionConfigParser.getSlotCount(value))
+                .build();
+      builder.addAuctionConfigDetail(auctionRoundContract);
     });
     return builder.build();
   }
