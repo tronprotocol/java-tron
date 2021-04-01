@@ -70,8 +70,6 @@ public class FullNode {
     context.register(DefaultConfig.class);
     context.refresh();
 
-    checkRollback(context);
-
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
@@ -118,13 +116,5 @@ public class FullNode {
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
-  }
-
-  public static void checkRollback(TronApplicationContext context) {
-    if (Args.getInstance().isRollback()) {
-      AccountAssetIssueStore accountAssetIssueStore = context.getBean(AccountAssetIssueStore.class);
-      String outputDirectory = Args.getInstance().getOutputDirectory();
-      accountAssetIssueStore.rollbackAssetIssueToAccount(outputDirectory);
-    }
   }
 }

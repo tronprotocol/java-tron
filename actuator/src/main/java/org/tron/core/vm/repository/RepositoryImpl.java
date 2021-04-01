@@ -242,6 +242,11 @@ public class RepositoryImpl implements Repository {
 
     if (accountAssetIssueCapsule != null) {
       accountAssetIssueCache.put(key, Value.create(accountAssetIssueCapsule.getData()));
+    } else {
+      accountAssetIssueCapsule = accountAssetIssueStore.getAndImport(address, accountStore);
+      if (accountAssetIssueCapsule != null) {
+        accountAssetIssueCache.put(key, Value.create(accountAssetIssueCapsule.getData()));
+      }
     }
     return accountAssetIssueCapsule;
   }

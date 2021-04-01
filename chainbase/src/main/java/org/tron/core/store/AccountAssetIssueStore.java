@@ -1,11 +1,14 @@
 package org.tron.core.store;
 
 import com.typesafe.config.ConfigObject;
+
 import java.io.File;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -17,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +31,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.BlockQueueFactoryUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.ThreadPoolUtil;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
@@ -39,20 +45,20 @@ import org.tron.protos.Protocol.AccountAssetIssue;
 public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIssueCapsule> {
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>();
-  public static final long ACCOUNT_ESTIMATED_COUNT = 25_000_000;
-  private AccountConvertQueue accountConvertQueue;
-  @Autowired
-  private AccountStore accountStore;
+//  public static final long ACCOUNT_ESTIMATED_COUNT = 25_000_000;
+//  private AccountConvertQueue accountConvertQueue;
+//  @Autowired
+//  private AccountStore accountStore;
   // key = name , value = address
-  @Autowired
-  private DynamicPropertiesStore dynamicPropertiesStore;
-  private AtomicBoolean readFinish = new AtomicBoolean(false);
-  private AtomicLong readCount = new AtomicLong(0);
-  private AtomicLong readCost = new AtomicLong(0);
-  private AtomicLong writeCount = new AtomicLong(0);
-  private AtomicLong writeCost = new AtomicLong(0);
-  private List<Future<?>> writeFutures = new ArrayList<>();
-  private Timer timer;
+//  @Autowired
+//  private DynamicPropertiesStore dynamicPropertiesStore;
+//  private AtomicBoolean readFinish = new AtomicBoolean(false);
+//  private AtomicLong readCount = new AtomicLong(0);
+//  private AtomicLong readCost = new AtomicLong(0);
+//  private AtomicLong writeCount = new AtomicLong(0);
+//  private AtomicLong writeCost = new AtomicLong(0);
+//  private List<Future<?>> writeFutures = new ArrayList<>();
+//  private Timer timer;
 
   @Autowired
   protected AccountAssetIssueStore(@Value("account-asset-issue") String dbName) {
@@ -81,306 +87,407 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     return getUnchecked(assertsAddress.get("Blackhole"));
   }
 
-  public void rollbackAssetIssueToAccount(String outputDirectory) {
-    long start = System.currentTimeMillis();
-    logger.info("rollback asset to account store");
-    timer = TimerUtil.countDown("The database is being indexed ",
-            readCount, writeCount);
+//  public void rollbackAssetIssueToAccount(String outputDirectory) {
+//    long start = System.currentTimeMillis();
+//    logger.info("rollback asset to account store");
+//    timer = TimerUtil.countDown("The database is being indexed ",
+//            readCount, writeCount);
+//
+//    AccountAssetIssueRecordQueue accountRecordQueue =
+//            new AccountAssetIssueRecordQueue(BlockQueueFactoryUtil.getInstance());
+//    accountRecordQueue.fetchAccountAssetIssue(this.getRevokingDB());
+//    accountConvertQueue =
+//            new AccountConvertQueue(
+//                    BlockQueueFactoryUtil.getInstance(),
+//                    this,
+//                    accountStore);
+//    accountConvertQueue.convertAccountAssetIssueToAccount();
+//    logger.info("The database indexing completed, total time spent:{}s," +
+//                    " r({}s)/w({}s), total account count:{}",
+//            (System.currentTimeMillis() - start) / 1000,
+//            readCost,
+//            writeCost,
+//            writeCount);
+//    logger.info("rollback account asset issue to account successful!!");
+//    dynamicPropertiesStore.setAllowAssetImport(true);
+//    removeDB(outputDirectory);
+//    System.exit(0);
+//  }
 
-    AccountAssetIssueRecordQueue accountRecordQueue =
-            new AccountAssetIssueRecordQueue(BlockQueueFactoryUtil.getInstance());
-    accountRecordQueue.fetchAccountAssetIssue(this.getRevokingDB());
-    accountConvertQueue =
-            new AccountConvertQueue(
-                    BlockQueueFactoryUtil.getInstance(),
-                    this,
-                    accountStore);
-    accountConvertQueue.convertAccountAssetIssueToAccount();
-    logger.info("The database indexing completed, total time spent:{}s," +
-                    " r({}s)/w({}s), total account count:{}",
-            (System.currentTimeMillis() - start) / 1000,
-            readCost,
-            writeCost,
-            writeCount);
-    logger.info("rollback account asset issue to account successful!!");
-    dynamicPropertiesStore.setAllowAssetImport(true);
-    removeDB(outputDirectory);
-    System.exit(0);
+  public AccountCapsule convertAccountAssetIssue(AccountCapsule accountCapsule) {
+    logger.info("pushBlock convert--> accountCapsule getAssetV2Map : {}, {}", accountCapsule.getInstance().getAssetV2Map().toString(), StringUtil.encode58Check(accountCapsule.createDbKey()));
+    AccountAssetIssue accountAssetIssue = buildAccountAssetIssue(accountCapsule);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule(accountAssetIssue);
+    this.put(accountCapsule.createDbKey(),
+            accountAssetIssueCapsule);
+    Account account = buildAccount(accountCapsule);
+    accountCapsule.setInstance(account);
+    logger.info("pushBlock convert--> accountAssetIssue getAssetV2Map : {}, {}", accountAssetIssue.getAssetV2Map().toString(), StringUtil.encode58Check(accountCapsule.createDbKey()));
+    logger.info("pushBlock convert--> AccountAssetIssueCapsule getAssetV2Map: {}", accountAssetIssueCapsule.getInstance().getAssetV2Map().toString());
+    AccountAssetIssueCapsule accountAssetIssueCapsule1 = get(accountCapsule.createDbKey());
+    logger.info("pushBlock convert--> accountAssetIssueCapsule11111111 getAssetV2Map: {}, {}", accountAssetIssueCapsule1.getInstance().getAssetV2Map().toString(), StringUtil.encode58Check(accountAssetIssueCapsule1.createDbKey()));
+    return accountCapsule;
   }
 
-  public void convertAccountAssert() {
-    if (CommonParameter.getInstance().isRollback()) {
-      logger.info("import asset of account store to account asset store has been skipped");
-      return;
-    }
-
-    if (!dynamicPropertiesStore.getAllowAssetImport()) {
-      logger.info("import asset of account store to account asset store has been done, skip");
-      return;
-    }
-
-    logger.info("begin to index the database");
-    timer = TimerUtil.countDown("The database is being indexed ",
-            readCount, writeCount);
-    AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
-            BlockQueueFactoryUtil.getInstance());
-    accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
-    accountConvertQueue = new AccountConvertQueue(
-            BlockQueueFactoryUtil.getInstance(),
-            this,
-            accountStore);
-    accountConvertQueue.convert();
+  public AccountAssetIssueCapsule getAndImport(byte[] address, AccountStore accountStore) {
+    AccountCapsule accountCapsule = accountStore.get(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = get(address);
+//    if (null != accountCapsule && !accountCapsule.getImportAsset()) {
+//      AccountAssetIssue accountAssetIssue = buildAccountAssetIssue(accountCapsule);
+//      accountAssetIssueCapsule = new AccountAssetIssueCapsule(accountAssetIssue);
+//      this.put(accountCapsule.getAddress().toByteArray(),
+//              accountAssetIssueCapsule);
+//      Account account = buildAccount(accountCapsule);
+//      accountCapsule.setInstance(account);
+//      accountStore.put(address, accountCapsule);
+//    }
+    return accountAssetIssueCapsule;
   }
 
-  public void waitUtilConvertAccountFinish() {
-    if (CommonParameter.getInstance().isRollback() ||
-            !dynamicPropertiesStore.getAllowAssetImport()) {
-      return;
-    }
-    try {
-      long start = System.currentTimeMillis();
-      accountConvertQueue.waitUtilConvertFinish();
-      accountConvertQueue.shutdownExecutor();
-      dynamicPropertiesStore.setAllowAssetImport(false);
-      logger.info("The database indexing completed, total time spent:{}s," +
-                      " r({}s)/w({}s, total account count:{})",
-              (System.currentTimeMillis() - start) / 1000,
-              readCost.get(),
-              writeCost.get(),
-              writeCount);
-    } finally {
-      if (timer != null) {
-        TimerUtil.cancel(timer);
-      }
-    }
+
+
+//  public void convertAccountAssert() {
+//    if (CommonParameter.getInstance().isRollback()) {
+//      logger.info("import asset of account store to account asset store has been skipped");
+//      return;
+//    }
+//
+//    if (!dynamicPropertiesStore.getAllowAssetImport()) {
+//      logger.info("import asset of account store to account asset store has been done, skip");
+//      return;
+//    }
+//
+//    logger.info("begin to index the database");
+//    timer = TimerUtil.countDown("The database is being indexed ",
+//            readCount, writeCount);
+//    AccountAssetIssueRecordQueue accountRecordQueue = new AccountAssetIssueRecordQueue(
+//            BlockQueueFactoryUtil.getInstance());
+//    accountRecordQueue.fetchAccount(accountStore.getRevokingDB());
+//    accountConvertQueue = new AccountConvertQueue(
+//            BlockQueueFactoryUtil.getInstance(),
+//            this,
+//            accountStore);
+//    accountConvertQueue.convert();
+//  }
+
+//  public void waitUtilConvertAccountFinish() {
+//    if (CommonParameter.getInstance().isRollback() ||
+//            !dynamicPropertiesStore.getAllowAssetImport()) {
+//      return;
+//    }
+//    try {
+//      long start = System.currentTimeMillis();
+//      accountConvertQueue.waitUtilConvertFinish();
+//      accountConvertQueue.shutdownExecutor();
+//      dynamicPropertiesStore.setAllowAssetImport(false);
+//      logger.info("The database indexing completed, total time spent:{}s," +
+//                      " r({}s)/w({}s, total account count:{})",
+//              (System.currentTimeMillis() - start) / 1000,
+//              readCost.get(),
+//              writeCost.get(),
+//              writeCount);
+//    } finally {
+//      if (timer != null) {
+//        TimerUtil.cancel(timer);
+//      }
+//    }
+//  }
+
+//  public class AccountAssetIssueRecordQueue {
+//
+//    private BlockingQueue<Map.Entry<byte[], byte[]>> productQueue;
+//
+//    public AccountAssetIssueRecordQueue(BlockingQueue<Map.Entry<byte[], byte[]>> productQueue) {
+//      this.productQueue = productQueue;
+//    }
+//
+//    public void put(Map.Entry<byte[], byte[]> accountByte) {
+//      try {
+//        productQueue.put(accountByte);
+//      } catch (InterruptedException e) {
+//        logger.error("put account asset issue exception: {}", e.getMessage(), e);
+//        Thread.currentThread().interrupt();
+//      }
+//    }
+//
+//    public void fetchAccount(IRevokingDB revokingDB) {
+//      fetch(revokingDB);
+//    }
+//
+//    public void fetchAccountAssetIssue(IRevokingDB revokingDB) {
+//      fetch(revokingDB);
+//    }
+//
+//    private void fetch(IRevokingDB revokingDB) {
+//      new Thread(() -> {
+//        long start = System.currentTimeMillis();
+//        for (Map.Entry<byte[], byte[]> accountRecord : revokingDB) {
+//          if (accountRecord != null) {
+//            put(accountRecord);
+//            readCount.incrementAndGet();
+//          }
+//        }
+//        readCost.set(System.currentTimeMillis() - start);
+//        readFinish.set(true);
+//      }).start();
+//    }
+//  }
+
+//  public class AccountConvertQueue {
+//
+//    private BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue;
+//
+//    private AccountAssetIssueStore accountAssetIssueStore;
+//
+//    private AccountStore accountStore;
+//
+//    private ExecutorService writeExecutor;
+//
+//    public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
+//                               AccountAssetIssueStore accountAssetIssueStore,
+//                               AccountStore accountStore) {
+//      this.convertQueue = convertQueue;
+//      this.accountAssetIssueStore = accountAssetIssueStore;
+//      this.accountStore = accountStore;
+//    }
+//
+//    public void convert() {
+//      writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
+//      writeCost.set(System.currentTimeMillis());
+//      for (int i = 0; i < ThreadPoolUtil.getMaxPoolSize(); i++) {
+//        Future<?> future = writeExecutor.submit(() -> {
+//          try {
+//            while (true) {
+//              Map.Entry<byte[], byte[]> accountEntry = convertQueue.poll();
+//              if (readFinish.get() && accountEntry == null) {
+//                break;
+//              }
+//
+//              if (accountEntry == null) {
+//                TimeUnit.MILLISECONDS.sleep(5);
+//                continue;
+//              }
+//
+//              if (accountAssetIssueStore.has(accountEntry.getKey())) {
+//                continue;
+//              }
+//
+//              AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
+//              byte[] address = accountCapsule.getAddress().toByteArray();
+//              AccountAssetIssue accountAssetIssue = AccountAssetIssue.newBuilder()
+//                  .setAddress(accountCapsule.getAddress())
+//                  .setAssetIssuedID(accountCapsule.getAssetIssuedID())
+//                  .setAssetIssuedName(accountCapsule.getAssetIssuedName())
+//                  .putAllAsset(accountCapsule.getAssetMap())
+//                  .putAllAssetV2(accountCapsule.getAssetMapV2())
+//                  .putAllFreeAssetNetUsage(accountCapsule.getAllFreeAssetNetUsage())
+//                  .putAllFreeAssetNetUsageV2(accountCapsule.getAllFreeAssetNetUsageV2())
+//                  .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
+//                  .putAllLatestAssetOperationTimeV2(
+//                      accountCapsule.getLatestAssetOperationTimeMapV2())
+//                      .addAllFrozenSupply(getFrozen(accountCapsule.getFrozenSupplyList()))
+//                  .build();
+//
+//              accountAssetIssueStore.put(address,
+//                  new AccountAssetIssueCapsule(accountAssetIssue));
+//              Account account = accountCapsule.getInstance().toBuilder()
+//                  .clearAssetIssuedID()
+//                  .clearAssetIssuedName()
+//                  .clearAsset()
+//                  .clearAssetV2()
+//                  .clearFreeAssetNetUsage()
+//                  .clearFreeAssetNetUsageV2()
+//                  .clearLatestAssetOperationTime()
+//                  .clearLatestAssetOperationTimeV2()
+//                      .clearFrozenSupply()
+//                  .build();
+//              accountCapsule.setInstance(account);
+//              //set VotePower
+////              accountCapsule.setVotePower413(accountCapsule.getTronPower());
+//
+//              accountStore.put(address, accountCapsule);
+//              writeCount.incrementAndGet();
+//            }
+//          } catch (InterruptedException e) {
+//            logger.error("account convert asset exception: {}", e.getMessage(), e);
+//            Thread.currentThread().interrupt();
+//          }
+//        });
+//        writeFutures.add(future);
+//      }
+//    }
+//
+//    private List<AccountAssetIssue.Frozen> getFrozen (List<Account.Frozen> frozenSupplyList) {
+//      return Optional.ofNullable(frozenSupplyList)
+//              .orElseGet(ArrayList::new)
+//              .stream()
+//              .map(frozen -> AccountAssetIssue.Frozen.newBuilder()
+//                      .setExpireTime(frozen.getExpireTime())
+//                      .setFrozenBalance(frozen.getFrozenBalance())
+//                      .build())
+//              .collect(Collectors.toList());
+//    }
+//
+//    private List<Account.Frozen> getAccountFrozen (List<AccountAssetIssue.Frozen> frozenSupplyList) {
+//      return Optional.ofNullable(frozenSupplyList)
+//              .orElseGet(ArrayList::new)
+//              .stream()
+//              .map(frozen -> Account.Frozen.newBuilder()
+//                      .setExpireTime(frozen.getExpireTime())
+//                      .setFrozenBalance(frozen.getFrozenBalance())
+//                      .build())
+//              .collect(Collectors.toList());
+//    }
+//
+//
+//    public void waitUtilConvertFinish() {
+//      for (Future<?> future : writeFutures) {
+//        try {
+//          future.get();
+//        } catch (InterruptedException | ExecutionException e) {
+//          logger.error(e.getMessage(), e);
+//          Thread.currentThread().interrupt();
+//        }
+//      }
+//      writeCost.set(System.currentTimeMillis() - writeCost.get());
+//    }
+//
+//    public void convertAccountAssetIssueToAccount() {
+//      writeCost.set(System.currentTimeMillis());
+//      ExecutorService writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
+//      for (int i = 0; i < ThreadPoolUtil.getMaxPoolSize(); i++) {
+//        Future<?> future = writeExecutor.submit(() -> {
+//          try {
+//            while (true) {
+//              Map.Entry<byte[], byte[]> accountAssetIssue = convertQueue.poll();
+//              if (readFinish.get() && accountAssetIssue == null) {
+//                break;
+//              }
+//
+//              if (accountAssetIssue == null) {
+//                TimeUnit.MILLISECONDS.sleep(5);
+//                continue;
+//              }
+//
+//              AccountAssetIssueCapsule accountAssetIssueCapsule =
+//                  new AccountAssetIssueCapsule(accountAssetIssue.getValue());
+//              byte[] address = accountAssetIssueCapsule.getAddress().toByteArray();
+//              AccountCapsule accountCapsule = accountStore.get(address);
+//              Account account = accountCapsule.getInstance()
+//                  .toBuilder()
+//                  .setAddress(accountAssetIssueCapsule.getAddress())
+//                  .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
+//                  .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
+//                  .putAllAsset(accountAssetIssueCapsule.getAssetMap())
+//                  .putAllAssetV2(accountAssetIssueCapsule.getAssetMapV2())
+//                  .putAllFreeAssetNetUsage(accountAssetIssueCapsule.getAllFreeAssetNetUsage())
+//                  .putAllFreeAssetNetUsageV2(accountAssetIssueCapsule.getAllFreeAssetNetUsageV2())
+//                  .putAllLatestAssetOperationTime(
+//                      accountAssetIssueCapsule.getLatestAssetOperationTimeMap())
+//                  .putAllLatestAssetOperationTimeV2(
+//                      accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
+//                  .addAllFrozenSupply(getAccountFrozen(accountAssetIssueCapsule
+//                              .getInstance().getFrozenSupplyList()))
+//                  .build();
+//              accountCapsule.setInstance(account);
+//              accountStore.put(address, accountCapsule);
+//              writeCount.incrementAndGet();
+//            }
+//          } catch (InterruptedException e) {
+//            logger.error("convert account asset assue to account exception: {}", e.getMessage(), e);
+//            Thread.currentThread().interrupt();
+//          }
+//        });
+//        writeFutures.add(future);
+//      }
+//      waitUtilConvertFinish();
+//    }
+//
+//    public void shutdownExecutor() {
+//      writeExecutor.shutdown();
+//    }
+//  }
+
+//  @Slf4j(topic = "DB")
+//  public static class TimerUtil {
+//
+//    public static Timer countDown(String message,
+//                                  AtomicLong readCount, AtomicLong writeCount) {
+//      Timer timer = new Timer();
+//      AtomicInteger count = new AtomicInteger();
+//      timer.schedule(new TimerTask() {
+//        public void run() {
+//          int second = count.incrementAndGet();
+//          if (second % 5 == 0) {
+//            long completed = writeCount.get() * 100 / ACCOUNT_ESTIMATED_COUNT;
+//            if (completed > 99) {
+//              completed = 99;
+//            }
+//
+//            logger.info(message + ": {}s, r({})/w({}), Completed {}%",
+//                second, readCount, writeCount, completed);
+//          }
+//        }
+//      }, 0, 1000);
+//      return timer;
+//    }
+//
+//    public static void cancel (Timer timer) {
+//      if (null != timer) {
+//        timer.cancel();
+//      }
+//    }
+//  }
+
+//  private void removeDB(String outputDirectory) {
+//    String accountAssetIssueDB = outputDirectory + File.separator
+//            + "database" + File.separator + "account-asset-issue";
+//    if (FileUtil.deleteDir(new File(accountAssetIssueDB))) {
+//      logger.info("remove account-asset-issue DB, success");
+//    } else {
+//      logger.info("remove account-asset-issue DB, fail");
+//    }
+//  }
+
+  public static AccountAssetIssue buildAccountAssetIssue (AccountCapsule accountCapsule) {
+    return AccountAssetIssue.newBuilder()
+            .setAddress(accountCapsule.getAddress())
+            .setAssetIssuedID(accountCapsule.getAssetIssuedID())
+            .setAssetIssuedName(accountCapsule.getAssetIssuedName())
+            .putAllAsset(accountCapsule.getAssetMap())
+            .putAllAssetV2(accountCapsule.getAssetMapV2())
+            .putAllFreeAssetNetUsage(accountCapsule.getAllFreeAssetNetUsage())
+            .putAllFreeAssetNetUsageV2(accountCapsule.getAllFreeAssetNetUsageV2())
+            .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
+            .putAllLatestAssetOperationTimeV2(
+                    accountCapsule.getLatestAssetOperationTimeMapV2())
+            .addAllFrozenSupply(getFrozen(accountCapsule.getFrozenSupplyList()))
+            .build();
   }
 
-  public class AccountAssetIssueRecordQueue {
-
-    private BlockingQueue<Map.Entry<byte[], byte[]>> productQueue;
-
-    public AccountAssetIssueRecordQueue(BlockingQueue<Map.Entry<byte[], byte[]>> productQueue) {
-      this.productQueue = productQueue;
-    }
-
-    public void put(Map.Entry<byte[], byte[]> accountByte) {
-      try {
-        productQueue.put(accountByte);
-      } catch (InterruptedException e) {
-        logger.error("put account asset issue exception: {}", e.getMessage(), e);
-        Thread.currentThread().interrupt();
-      }
-    }
-
-    public void fetchAccount(IRevokingDB revokingDB) {
-      fetch(revokingDB);
-    }
-
-    public void fetchAccountAssetIssue(IRevokingDB revokingDB) {
-      fetch(revokingDB);
-    }
-
-    private void fetch(IRevokingDB revokingDB) {
-      new Thread(() -> {
-        long start = System.currentTimeMillis();
-        for (Map.Entry<byte[], byte[]> accountRecord : revokingDB) {
-          if (accountRecord != null) {
-            put(accountRecord);
-            readCount.incrementAndGet();
-          }
-        }
-        readCost.set(System.currentTimeMillis() - start);
-        readFinish.set(true);
-      }).start();
-    }
+  private static List<AccountAssetIssue.Frozen> getFrozen(List<Account.Frozen> frozenSupplyList) {
+    return Optional.ofNullable(frozenSupplyList)
+            .orElseGet(ArrayList::new)
+            .stream()
+            .map(frozen -> AccountAssetIssue.Frozen.newBuilder()
+                    .setExpireTime(frozen.getExpireTime())
+                    .setFrozenBalance(frozen.getFrozenBalance())
+                    .build())
+            .collect(Collectors.toList());
   }
 
-  public class AccountConvertQueue {
-
-    private BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue;
-
-    private AccountAssetIssueStore accountAssetIssueStore;
-
-    private AccountStore accountStore;
-
-    private ExecutorService writeExecutor;
-
-    public AccountConvertQueue(BlockingQueue<Map.Entry<byte[], byte[]>> convertQueue,
-                               AccountAssetIssueStore accountAssetIssueStore,
-                               AccountStore accountStore) {
-      this.convertQueue = convertQueue;
-      this.accountAssetIssueStore = accountAssetIssueStore;
-      this.accountStore = accountStore;
-    }
-
-    public void convert() {
-      writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
-      writeCost.set(System.currentTimeMillis());
-      for (int i = 0; i < ThreadPoolUtil.getMaxPoolSize(); i++) {
-        Future<?> future = writeExecutor.submit(() -> {
-          try {
-            while (true) {
-              Map.Entry<byte[], byte[]> accountEntry = convertQueue.poll();
-              if (readFinish.get() && accountEntry == null) {
-                break;
-              }
-
-              if (accountEntry == null) {
-                TimeUnit.MILLISECONDS.sleep(5);
-                continue;
-              }
-
-              if (accountAssetIssueStore.has(accountEntry.getKey())) {
-                continue;
-              }
-
-              AccountCapsule accountCapsule = new AccountCapsule(accountEntry.getValue());
-              byte[] address = accountCapsule.getAddress().toByteArray();
-              AccountAssetIssue accountAssetIssue = AccountAssetIssue.newBuilder()
-                  .setAddress(accountCapsule.getAddress())
-                  .setAssetIssuedID(accountCapsule.getAssetIssuedID())
-                  .setAssetIssuedName(accountCapsule.getAssetIssuedName())
-                  .putAllAsset(accountCapsule.getAssetMap())
-                  .putAllAssetV2(accountCapsule.getAssetMapV2())
-                  .putAllFreeAssetNetUsage(accountCapsule.getAllFreeAssetNetUsage())
-                  .putAllFreeAssetNetUsageV2(accountCapsule.getAllFreeAssetNetUsageV2())
-                  .putAllLatestAssetOperationTime(accountCapsule.getLatestAssetOperationTimeMap())
-                  .putAllLatestAssetOperationTimeV2(
-                      accountCapsule.getLatestAssetOperationTimeMapV2())
-                  .build();
-
-              accountAssetIssueStore.put(address,
-                  new AccountAssetIssueCapsule(accountAssetIssue));
-              Account account = accountCapsule.getInstance().toBuilder()
-                  .clearAssetIssuedID()
-                  .clearAssetIssuedName()
-                  .clearAsset()
-                  .clearAssetV2()
-                  .clearFreeAssetNetUsage()
-                  .clearFreeAssetNetUsageV2()
-                  .clearLatestAssetOperationTime()
-                  .clearLatestAssetOperationTimeV2()
-                  .build();
-              accountCapsule.setInstance(account);
-              //set VotePower
-              accountCapsule.setVotePower413(accountCapsule.getTronPower());
-
-              accountStore.put(address, accountCapsule);
-              writeCount.incrementAndGet();
-            }
-          } catch (InterruptedException e) {
-            logger.error("account convert asset exception: {}", e.getMessage(), e);
-            Thread.currentThread().interrupt();
-          }
-        });
-        writeFutures.add(future);
-      }
-    }
-
-    public void waitUtilConvertFinish() {
-      for (Future<?> future : writeFutures) {
-        try {
-          future.get();
-        } catch (InterruptedException | ExecutionException e) {
-          logger.error(e.getMessage(), e);
-          Thread.currentThread().interrupt();
-        }
-      }
-      writeCost.set(System.currentTimeMillis() - writeCost.get());
-    }
-
-    public void convertAccountAssetIssueToAccount() {
-      writeCost.set(System.currentTimeMillis());
-      ExecutorService writeExecutor = Executors.newFixedThreadPool(ThreadPoolUtil.getMaxPoolSize());
-      for (int i = 0; i < ThreadPoolUtil.getMaxPoolSize(); i++) {
-        Future<?> future = writeExecutor.submit(() -> {
-          try {
-            while (true) {
-              Map.Entry<byte[], byte[]> accountAssetIssue = convertQueue.poll();
-              if (readFinish.get() && accountAssetIssue == null) {
-                break;
-              }
-
-              if (accountAssetIssue == null) {
-                TimeUnit.MILLISECONDS.sleep(5);
-                continue;
-              }
-
-              AccountAssetIssueCapsule accountAssetIssueCapsule =
-                  new AccountAssetIssueCapsule(accountAssetIssue.getValue());
-              byte[] address = accountAssetIssueCapsule.getAddress().toByteArray();
-              AccountCapsule accountCapsule = accountStore.get(address);
-              Account account = accountCapsule.getInstance()
-                  .toBuilder()
-                  .setAddress(accountAssetIssueCapsule.getAddress())
-                  .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
-                  .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
-                  .putAllAsset(accountAssetIssueCapsule.getAssetMap())
-                  .putAllAssetV2(accountAssetIssueCapsule.getAssetMapV2())
-                  .putAllFreeAssetNetUsage(accountAssetIssueCapsule.getAllFreeAssetNetUsage())
-                  .putAllFreeAssetNetUsageV2(accountAssetIssueCapsule.getAllFreeAssetNetUsageV2())
-                  .putAllLatestAssetOperationTime(
-                      accountAssetIssueCapsule.getLatestAssetOperationTimeMap())
-                  .putAllLatestAssetOperationTimeV2(
-                      accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
-                  .build();
-              accountCapsule.setInstance(account);
-              accountStore.put(address, accountCapsule);
-              writeCount.incrementAndGet();
-            }
-          } catch (InterruptedException e) {
-            logger.error("convert account asset assue to account exception: {}", e.getMessage(), e);
-            Thread.currentThread().interrupt();
-          }
-        });
-        writeFutures.add(future);
-      }
-      waitUtilConvertFinish();
-    }
-
-    public void shutdownExecutor() {
-      writeExecutor.shutdown();
-    }
-  }
-
-  @Slf4j(topic = "DB")
-  public static class TimerUtil {
-
-    public static Timer countDown(String message,
-                                  AtomicLong readCount, AtomicLong writeCount) {
-      Timer timer = new Timer();
-      AtomicInteger count = new AtomicInteger();
-      timer.schedule(new TimerTask() {
-        public void run() {
-          int second = count.incrementAndGet();
-          if (second % 5 == 0) {
-            long completed = writeCount.get() * 100 / ACCOUNT_ESTIMATED_COUNT;
-            if (completed > 99) {
-              completed = 99;
-            }
-
-            logger.info(message + ": {}s, r({})/w({}), Completed {}%",
-                second, readCount, writeCount, completed);
-          }
-        }
-      }, 0, 1000);
-      return timer;
-    }
-
-    public static void cancel (Timer timer) {
-      if (null != timer) {
-        timer.cancel();
-      }
-    }
-  }
-
-  private void removeDB(String outputDirectory) {
-    String accountAssetIssueDB = outputDirectory + File.separator
-            + "database" + File.separator + "account-asset-issue";
-    if (FileUtil.deleteDir(new File(accountAssetIssueDB))) {
-      logger.info("remove account-asset-issue DB, success");
-    } else {
-      logger.info("remove account-asset-issue DB, fail");
-    }
+  public static Account buildAccount(AccountCapsule accountCapsule) {
+    return accountCapsule.getInstance().toBuilder()
+            .clearAssetIssuedID()
+            .clearAssetIssuedName()
+            .clearAsset()
+            .clearAssetV2()
+            .clearFreeAssetNetUsage()
+            .clearFreeAssetNetUsageV2()
+            .clearLatestAssetOperationTime()
+            .clearLatestAssetOperationTimeV2()
+            .clearFrozenSupply()
+            .setImportAsset(true)
+            .build();
   }
 }
