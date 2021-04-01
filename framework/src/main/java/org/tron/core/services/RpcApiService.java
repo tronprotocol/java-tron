@@ -2678,10 +2678,10 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getCrossChainVoteSummaryList(PaginatedMessage request,
-                                      StreamObserver<GrpcAPI.CrossChainVoteSummaryList> responseObserver) {
+    public void getCrossChainVoteSummaryList(GrpcAPI.CrossChainVoteSummaryPaginated request,
+                                             StreamObserver<GrpcAPI.CrossChainVoteSummaryList> responseObserver) {
       GrpcAPI.CrossChainVoteSummaryList crossTotalVoteList =
-              wallet.getCrossChainTotalVoteList(request.getOffset(), request.getLimit());
+              wallet.getCrossChainTotalVoteList(request.getOffset(), request.getLimit(),request.getRound());
       responseObserver.onNext(crossTotalVoteList);
     }
 
@@ -2689,7 +2689,7 @@ public class RpcApiService implements Service {
     public void getCrossChainVoteDetailList(GrpcAPI.CrossChainVotePaginated request,
                                        StreamObserver<GrpcAPI.CrossChainVoteDetailList> responseObserver) {
       GrpcAPI.CrossChainVoteDetailList voteCrossList = wallet.getCrossChainVoteDetailList(request.getOffset(),
-              request.getLimit(), request.getChainId().toString());
+              request.getLimit(), request.getChainId().toString(), request.getRound());
       responseObserver.onNext(voteCrossList);
     }
   }

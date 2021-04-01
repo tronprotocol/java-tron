@@ -3749,10 +3749,10 @@ public class Wallet {
     return builder.build();
   }
 
-  public GrpcAPI.CrossChainVoteDetailList getCrossChainVoteDetailList(long offset, long limit, String chainId) {
+  public GrpcAPI.CrossChainVoteDetailList getCrossChainVoteDetailList(long offset, long limit, String chainId,int round) {
     GrpcAPI.CrossChainVoteDetailList.Builder builder = GrpcAPI.CrossChainVoteDetailList.newBuilder();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    List<byte[]> chainVoteList = crossRevokingStore.getCrossChainVoteDetailList(offset, limit, chainId);
+    List<byte[]> chainVoteList = crossRevokingStore.getCrossChainVoteDetailList(offset, limit, chainId,round);
     if (CollectionUtils.isEmpty(chainVoteList)) {
       return null;
     }
@@ -3766,10 +3766,10 @@ public class Wallet {
     return builder.build();
   }
 
-  public GrpcAPI.CrossChainVoteSummaryList getCrossChainTotalVoteList(long offset, long limit) {
+  public GrpcAPI.CrossChainVoteSummaryList getCrossChainTotalVoteList(long offset, long limit, int round) {
     GrpcAPI.CrossChainVoteSummaryList.Builder builder = GrpcAPI.CrossChainVoteSummaryList.newBuilder();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    List<org.tron.common.utils.Pair<String, Long>> chainVoteList = crossRevokingStore.getCrossChainTotalVoteList(offset, limit);
+    List<org.tron.common.utils.Pair<String, Long>> chainVoteList = crossRevokingStore.getCrossChainTotalVoteList(offset, limit, round);
     if (CollectionUtils.isEmpty(chainVoteList)) {
       return null;
     }

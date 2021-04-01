@@ -20,7 +20,8 @@ public class GetCrossChainVoteDetailListServlet extends RateLimiterServlet {
       long offset = Long.parseLong(request.getParameter("offset"));
       long limit = Long.parseLong(request.getParameter("limit"));
       String chainId = request.getParameter("chainId");
-      GrpcAPI.CrossChainVoteDetailList reply = wallet.getCrossChainVoteDetailList(offset, limit, chainId);
+      int round =Integer.parseInt(request.getParameter("round"));
+      GrpcAPI.CrossChainVoteDetailList reply = wallet.getCrossChainVoteDetailList(offset, limit, chainId, round);
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
@@ -39,7 +40,7 @@ public class GetCrossChainVoteDetailListServlet extends RateLimiterServlet {
       GrpcAPI.CrossChainVotePaginated.Builder build = GrpcAPI.CrossChainVotePaginated.newBuilder();
       JsonFormat.merge(input, build, visible);
       GrpcAPI.CrossChainVoteDetailList reply =
-              wallet.getCrossChainVoteDetailList(build.getOffset(), build.getLimit(), build.getChainId().toString());
+              wallet.getCrossChainVoteDetailList(build.getOffset(), build.getLimit(), build.getChainId().toString(),build.getRound());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {

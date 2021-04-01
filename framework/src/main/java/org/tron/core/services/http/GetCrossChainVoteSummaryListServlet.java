@@ -19,7 +19,8 @@ public class GetCrossChainVoteSummaryListServlet extends RateLimiterServlet {
       boolean visible = Util.getVisible(request);
       long offset = Long.parseLong(request.getParameter("offset"));
       long limit = Long.parseLong(request.getParameter("limit"));
-      GrpcAPI.CrossChainVoteSummaryList reply = wallet.getCrossChainTotalVoteList(offset, limit);
+      int round = Integer.parseInt(request.getParameter("round"));
+      GrpcAPI.CrossChainVoteSummaryList reply = wallet.getCrossChainTotalVoteList(offset, limit, round);
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
@@ -35,9 +36,9 @@ public class GetCrossChainVoteSummaryListServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       String input = params.getParams();
       boolean visible = params.isVisible();
-      GrpcAPI.PaginatedMessage.Builder build = GrpcAPI.PaginatedMessage.newBuilder();
+      GrpcAPI.CrossChainVoteSummaryPaginated.Builder build = GrpcAPI.CrossChainVoteSummaryPaginated.newBuilder();
       JsonFormat.merge(input, build, visible);
-      GrpcAPI.CrossChainVoteSummaryList reply = wallet.getCrossChainTotalVoteList(build.getOffset(), build.getLimit());
+      GrpcAPI.CrossChainVoteSummaryList reply = wallet.getCrossChainTotalVoteList(build.getOffset(), build.getLimit(),build.getRound());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {

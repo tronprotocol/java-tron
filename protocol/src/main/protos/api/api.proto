@@ -800,7 +800,7 @@ service Wallet {
   rpc UnvoteCrossChain (UnvoteCrossChainContract) returns (TransactionExtention) {
   };
 
-  rpc GetCrossChainVoteSummaryList (PaginatedMessage) returns (CrossChainVoteSummaryList) {
+  rpc GetCrossChainVoteSummaryList (CrossChainVoteSummaryPaginated) returns (CrossChainVoteSummaryList) {
   };
 
   rpc GetCrossChainVoteDetailList (CrossChainVotePaginated) returns (CrossChainVoteDetailList) {
@@ -1550,17 +1550,25 @@ message RegisterCrossChainList {
 
 message CrossChainVoteSummary {
   bytes chain_id = 1;
-  int64 amount = 2;
+  int32 round = 2;
+  int64 amount = 3;
 }
 
 message CrossChainVoteSummaryList {
   repeated CrossChainVoteSummary crossChainVoteSummary = 1;
 }
 
-message CrossChainVotePaginated {
-  bytes chain_id = 1;
+message CrossChainVoteSummaryPaginated {
+  int32 round = 1;
   int64 offset = 2;
   int64 limit = 3;
+}
+
+message CrossChainVotePaginated {
+  bytes chain_id = 1;
+  int32 round = 2;
+  int64 offset = 3;
+  int64 limit = 4;
 }
 
 message CrossChainVoteDetailList {
