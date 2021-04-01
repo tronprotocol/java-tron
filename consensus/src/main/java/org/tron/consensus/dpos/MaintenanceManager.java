@@ -17,6 +17,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.AuctionConfigParser;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
 import org.tron.consensus.ConsensusDelegate;
@@ -163,12 +164,12 @@ public class MaintenanceManager {
 
     // update parachains
     long currentBlockHeaderTimestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    // todo get auction
-    List<CrossChain.AuctionRoundContract> auctionRoundContractList = new LinkedList<>();
-    auctionRoundContractList.forEach(roundInfo -> {
+    List<Long> auctionRoundList = dynamicPropertiesStore.listAuctionConfigs();
+    auctionRoundList.forEach(value -> {
+      CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
       if (roundInfo.getEndTime() < currentBlockHeaderTimestamp) {
         CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
-        if (currentBlockHeaderTimestamp < roundInfo.getEndTime() + roundInfo.getDuration()) {
+        if (currentBlockHeaderTimestamp < roundInfo.getEndTime() + roundInfo.getDuration() * 86400) {
           if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
             // set parachains
             List<Pair<String, Long>> eligibleChainLists =

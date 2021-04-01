@@ -13,6 +13,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.AuctionConfigParser;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
@@ -408,8 +409,9 @@ public class ChainBaseManager {
     }
 
     boolean result = false;
-    List<CrossChain.AuctionRoundContract> auctionRoundContractList = new LinkedList<>();
-    for (CrossChain.AuctionRoundContract roundInfo : auctionRoundContractList) {
+    List<Long> auctionRoundList = getDynamicPropertiesStore().listAuctionConfigs();
+    for (Long value : auctionRoundList) {
+      CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
       if (getCrossRevokingStore().getParaChainList(roundInfo.getRound()).contains(chainId.toString())) {
         result = true;
         break;
