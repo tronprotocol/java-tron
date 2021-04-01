@@ -806,7 +806,7 @@ service Wallet {
   rpc GetCrossChainVoteDetailList (CrossChainVotePaginated) returns (CrossChainVoteDetailList) {
   };
 
-  rpc GetCrossChainAuctinConfigDetailList (PaginatedMessage) returns (CrossChainAuctinConfigDetailList) {
+  rpc GetCrossChainAuctinConfigDetailList (EmptyMessage) returns (CrossChainAuctinConfigDetailList) {
   };
 
 };
