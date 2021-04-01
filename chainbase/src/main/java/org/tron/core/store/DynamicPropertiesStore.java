@@ -153,7 +153,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
-  
+  private static final byte[] ALLOW_RECEIPTS_MERKLE_ROOT = "ALLOW_RECEIPTS_MERKLE_ROOT".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -729,6 +730,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
     }
 
+    try {
+      this.getAllowReceiptsMerkleRoot();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowReceiptsMerkleRoot(0L);
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -2165,6 +2171,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_BLACKHOLE_OPTIMIZATION"));
+  }
+
+  public void saveAllowReceiptsMerkleRoot(long value) {
+    this.put(ALLOW_RECEIPTS_MERKLE_ROOT, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowReceiptsMerkleRoot() {
+    return Optional.ofNullable(getUnchecked(ALLOW_RECEIPTS_MERKLE_ROOT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ALLOW_RECEIPTS_MERKLE_ROOT")
+            );
+  }
+
+  public boolean allowReceiptsMerkleRoot() {
+    return getAllowReceiptsMerkleRoot() == 1L;
   }
 
   private static class DynamicResourceProperties {

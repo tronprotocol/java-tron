@@ -433,8 +433,17 @@ public class ProposalUtil {
         }
         break;
       }
-
-
+      case ALLOW_RECEIPTS_MERKLE_ROOT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_RECEIPTS_MERKLE_ROOT]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_RECEIPTS_MERKLE_ROOT] is only allowed to be 1 or 0");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -487,7 +496,8 @@ public class ProposalUtil {
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
     MAX_FEE_LIMIT(47), // [0, 10_000_000_000]
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
-    ALLOW_BLACKHOLE_OPTIMIZATION(49);// 0,1
+    ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
+    ALLOW_RECEIPTS_MERKLE_ROOT(50);// 0,1
 
     private long code;
 
