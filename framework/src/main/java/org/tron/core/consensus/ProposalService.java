@@ -242,6 +242,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowBlackHoleOptimization(entry.getValue());
           break;
         }
+        case ALLOW_RECEIPTS_MERKLE_ROOT: {
+          manager.getDynamicPropertiesStore().saveAllowReceiptsMerkleRoot(entry.getValue());
+          break;
+        }
         case ALLOW_NEW_RESOURCE_MODEL: {
           manager.getDynamicPropertiesStore().saveAllowNewResourceModel(entry.getValue());
           break;
