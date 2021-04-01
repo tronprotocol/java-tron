@@ -3,6 +3,8 @@ package org.tron.core;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
+
+import java.util.LinkedList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -66,6 +68,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.protos.contract.CrossChain;
 
 @Slf4j(topic = "DB")
 @Component
@@ -400,12 +403,23 @@ public class ChainBaseManager {
   }
 
   public boolean chainIsSelected(ByteString chainId) {
-    if (CommonParameter.getInstance().isShouldRegister() && !getCrossRevokingStore()
-        .getParaChainList().contains(chainId.toString())) {
-      logger.error("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
-      return false;
+    if (!CommonParameter.getInstance().isShouldRegister()) {
+      return true;
     }
-    return true;
+
+    boolean result = false;
+    List<CrossChain.AuctionRoundContract> auctionRoundContractList = new LinkedList<>();
+    for (CrossChain.AuctionRoundContract roundInfo : auctionRoundContractList) {
+      if (getCrossRevokingStore().getParaChainList(roundInfo.getRound()).contains(chainId.toString())) {
+        result = true;
+        break;
+      }
+    }
+
+    if (!result) {
+      logger.warn("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
+    }
+    return result;
   }
 
 }

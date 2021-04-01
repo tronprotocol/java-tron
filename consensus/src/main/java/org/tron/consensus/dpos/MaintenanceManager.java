@@ -6,10 +6,8 @@ import static org.tron.core.Constant.ONE_YEAR_MS;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -36,6 +34,7 @@ import org.tron.protos.Protocol.PBFTCommitResult;
 import org.tron.protos.Protocol.PBFTMessage;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
 import org.tron.protos.contract.BalanceContract.CrossChainInfo;
+import org.tron.protos.contract.CrossChain;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -164,18 +163,28 @@ public class MaintenanceManager {
 
     // update parachains
     long currentBlockHeaderTimestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    if (dynamicPropertiesStore.getAuctionEndTime() < currentBlockHeaderTimestamp) {
-      // 1. update parachains
-      CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
-      List<Pair<String, Long>> eligibleChainLists = crossRevokingStore.getEligibleChainLists();
-      List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
-          .collect(Collectors.toList());
-      crossRevokingStore.updateParaChains(chainIds);
-      //
-      setChainInfo(chainIds);
-      // 2. set next auction time, default: 1 years later
-      dynamicPropertiesStore.saveAuctionEndTime(currentBlockHeaderTimestamp + ONE_YEAR_MS);
-    }
+    // todo get auction
+    List<CrossChain.AuctionRoundContract> auctionRoundContractList = new LinkedList<>();
+    auctionRoundContractList.forEach(roundInfo -> {
+      if (roundInfo.getEndTime() < currentBlockHeaderTimestamp) {
+        CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
+        if (currentBlockHeaderTimestamp < roundInfo.getEndTime() + roundInfo.getDuration()) {
+          if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
+            // set parachains
+            List<Pair<String, Long>> eligibleChainLists =
+                    crossRevokingStore.getEligibleChainLists(roundInfo.getRound(), roundInfo.getSlotCount());
+            List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
+                    .collect(Collectors.toList());
+            crossRevokingStore.updateParaChains(roundInfo.getRound(), chainIds);
+
+            setChainInfo(chainIds);
+          }
+        } else {
+          crossRevokingStore.deleteParaChains(roundInfo.getRound());
+        }
+      }
+    });
+
   }
 
   private void setChainInfo(List<String> chainIds) {

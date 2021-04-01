@@ -41,8 +41,9 @@ public class VoteCrossChainActuator extends AbstractActuator {
       String chainId = voteCrossContract.getChainId().toString();
       long amount = voteCrossContract.getAmount();
       byte[] address = voteCrossContract.getOwnerAddress().toByteArray();
+      int round = voteCrossContract.getRound();
 
-      byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(chainId, ByteArray.toHexString(address));
+      byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(round, chainId, ByteArray.toHexString(address));
       if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
         VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
         VoteCrossChainContract.Builder builder = voteCrossContract.toBuilder();
@@ -51,8 +52,8 @@ public class VoteCrossChainActuator extends AbstractActuator {
       }
 
       Commons.adjustBalance(accountStore, address, -amount);
-      crossRevokingStore.putChainVote(chainId, ByteArray.toHexString(address), voteCrossContract.toByteArray());
-      crossRevokingStore.updateTotalChainVote(chainId, amount);
+      crossRevokingStore.putChainVote(round, chainId, ByteArray.toHexString(address), voteCrossContract.toByteArray());
+      crossRevokingStore.updateTotalChainVote(round, chainId, amount);
 
       Commons.adjustBalance(accountStore, address, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
@@ -91,6 +92,7 @@ public class VoteCrossChainActuator extends AbstractActuator {
     String chainId = contract.getChainId().toString();
     long amount = contract.getAmount();
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    int round = contract.getRound();
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
@@ -101,7 +103,7 @@ public class VoteCrossChainActuator extends AbstractActuator {
     }
 
     String readableOwnerAddress = ByteArray.toHexString(ownerAddress);
-    byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(chainId, readableOwnerAddress);
+    byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(round, chainId, readableOwnerAddress);
     if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
       try {
         VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
