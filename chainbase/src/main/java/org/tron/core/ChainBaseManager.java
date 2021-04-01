@@ -3,8 +3,6 @@ package org.tron.core;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
-
-import java.util.LinkedList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
