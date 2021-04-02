@@ -126,11 +126,12 @@ public class VoteWitnessActuator extends AbstractActuator {
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
 
-      long tronPower = accountCapsule.getTronPower();
-
+      long tronPower;
       DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
       if (dynamicStore.supportAllowNewResourceModel()) {
         tronPower = accountCapsule.getAllTronPower();
+      } else {
+        tronPower = accountCapsule.getTronPower();
       }
 
       sum = LongMath
