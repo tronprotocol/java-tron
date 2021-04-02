@@ -76,8 +76,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     long unfreezeBalance = 0L;
 
     if (dynamicStore.supportAllowNewResourceModel() && accountCapsule
-        .oldVotePowerIsNotInitialized()) {
-      accountCapsule.InitializeOldVotePower();
+        .oldTronPowerIsNotInitialized()) {
+      accountCapsule.InitializeOldTronPower();
     }
 
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
@@ -201,11 +201,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               .setBalance(oldBalance + unfreezeBalance)
               .setAccountResource(newAccountResource).build());
           break;
-        case VOTE_POWER:
-          unfreezeBalance = accountCapsule.getVotePowerFrozenBalance();
+        case TRON_POWER:
+          unfreezeBalance = accountCapsule.getTronPowerFrozenBalance();
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
-              .clearVotePower().build());
+              .clearTronPower().build());
           break;
         default:
           //this should never happen
@@ -223,9 +223,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         dynamicStore
             .addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
         break;
-      case VOTE_POWER:
+      case TRON_POWER:
         dynamicStore
-            .addTotalVotePowerWeight(-unfreezeBalance / TRX_PRECISION);
+            .addTotalTronPowerWeight(-unfreezeBalance / TRX_PRECISION);
         break;
       default:
         //this should never happen
@@ -234,7 +234,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     boolean needToClearVote = true;
     if (dynamicStore.supportAllowNewResourceModel() &&
-        accountCapsule.oldVotePowerIsInvalid()) {
+        accountCapsule.oldTronPowerIsInvalid()) {
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
         case ENERGY:
@@ -259,8 +259,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
 
     if (dynamicStore.supportAllowNewResourceModel() && !accountCapsule
-        .oldVotePowerIsInvalid()) {
-      accountCapsule.InvalidateOldVotePower();
+        .oldTronPowerIsInvalid()) {
+      accountCapsule.InvalidateOldTronPower();
     }
 
     accountStore.put(ownerAddress, accountCapsule);
@@ -430,14 +430,14 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           }
 
           break;
-        case VOTE_POWER:
+        case TRON_POWER:
           if (dynamicStore.supportAllowNewResourceModel()) {
-            Frozen frozenBalanceForVotePower = accountCapsule.getInstance().getVotePower();
-            if (frozenBalanceForVotePower.getFrozenBalance() <= 0) {
-              throw new ContractValidateException("no frozenBalance(VotePower)");
+            Frozen frozenBalanceForTronPower = accountCapsule.getInstance().getTronPower();
+            if (frozenBalanceForTronPower.getFrozenBalance() <= 0) {
+              throw new ContractValidateException("no frozenBalance(TronPower)");
             }
-            if (frozenBalanceForVotePower.getExpireTime() > now) {
-              throw new ContractValidateException("It's not time to unfreeze(VotePower).");
+            if (frozenBalanceForTronPower.getExpireTime() > now) {
+              throw new ContractValidateException("It's not time to unfreeze(TronPower).");
             }
           } else {
             throw new ContractValidateException(
@@ -447,7 +447,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         default:
           if (dynamicStore.supportAllowNewResourceModel()) {
             throw new ContractValidateException(
-                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、VOTE_POWER]");
+                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、TRON_POWER]");
           } else {
             throw new ContractValidateException(
                 "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");

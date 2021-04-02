@@ -58,8 +58,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
         .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
     if (dynamicStore.supportAllowNewResourceModel() && accountCapsule
-        .oldVotePowerIsNotInitialized()) {
-      accountCapsule.InitializeOldVotePower();
+        .oldTronPowerIsNotInitialized()) {
+      accountCapsule.InitializeOldTronPower();
     }
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
@@ -103,13 +103,13 @@ public class FreezeBalanceActuator extends AbstractActuator {
         dynamicStore
             .addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
         break;
-      case VOTE_POWER:
-        long newFrozenBalanceForVotePower =
-            frozenBalance + accountCapsule.getVotePowerFrozenBalance();
-        accountCapsule.setFrozenForVotePower(newFrozenBalanceForVotePower, expireTime);
+      case TRON_POWER:
+        long newFrozenBalanceForTronPower =
+            frozenBalance + accountCapsule.getTronPowerFrozenBalance();
+        accountCapsule.setFrozenForTronPower(newFrozenBalanceForTronPower, expireTime);
 
         dynamicStore
-            .addTotalVotePowerWeight(frozenBalance / TRX_PRECISION);
+            .addTotalTronPowerWeight(frozenBalance / TRX_PRECISION);
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -197,7 +197,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       case BANDWIDTH:
       case ENERGY:
         break;
-      case VOTE_POWER:
+      case TRON_POWER:
         if (dynamicStore.supportAllowNewResourceModel()) {
           byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
           if (!ArrayUtils.isEmpty(receiverAddress)) {
@@ -212,7 +212,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       default:
         if (dynamicStore.supportAllowNewResourceModel()) {
           throw new ContractValidateException(
-              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY、VOTE_POWER]");
+              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
         } else {
           throw new ContractValidateException(
               "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");

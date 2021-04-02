@@ -470,12 +470,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getAllTronPower() {
-    if (account.getOldVotePower() == -1) {
-      return getVotePowerFrozenBalance();
-    } else if (account.getOldVotePower() == 0) {
-      return getTronPower() + getVotePowerFrozenBalance();
+    if (account.getOldTronPower() == -1) {
+      return getTronPowerFrozenBalance();
+    } else if (account.getOldTronPower() == 0) {
+      return getTronPower() + getTronPowerFrozenBalance();
     } else {
-      return account.getOldVotePower() + getVotePowerFrozenBalance();
+      return account.getOldTronPower() + getTronPowerFrozenBalance();
     }
   }
 
@@ -846,43 +846,43 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
   }
 
-  public boolean oldVotePowerIsNotInitialized() {
-    return this.account.getOldVotePower() == 0;
+  public boolean oldTronPowerIsNotInitialized() {
+    return this.account.getOldTronPower() == 0;
   }
 
-  public boolean oldVotePowerIsInvalid() {
-    return this.account.getOldVotePower() == -1;
+  public boolean oldTronPowerIsInvalid() {
+    return this.account.getOldTronPower() == -1;
   }
 
-  public void InitializeOldVotePower() {
+  public void InitializeOldTronPower() {
     long value = getTronPower();
     if (value == 0) {
       value = -1;
     }
     setInstance(getInstance().toBuilder()
-        .setOldVotePower(value)
+        .setOldTronPower(value)
         .build());
   }
 
-  public void InvalidateOldVotePower() {
+  public void InvalidateOldTronPower() {
     setInstance(getInstance().toBuilder()
-        .setOldVotePower(-1)
+        .setOldTronPower(-1)
         .build());
   }
 
-  public void setFrozenForVotePower(long frozenBalance, long expireTime) {
+  public void setFrozenForTronPower(long frozenBalance, long expireTime) {
     Frozen newFrozen = Frozen.newBuilder()
         .setFrozenBalance(frozenBalance)
         .setExpireTime(expireTime)
         .build();
 
     setInstance(getInstance().toBuilder()
-        .setVotePower(newFrozen)
+        .setTronPower(newFrozen)
         .build());
   }
 
-  public long getVotePowerFrozenBalance() {
-    return this.account.getVotePower().getFrozenBalance();
+  public long getTronPowerFrozenBalance() {
+    return this.account.getTronPower().getFrozenBalance();
   }
 
   public long getEnergyUsage() {

@@ -343,9 +343,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getTotalVotePowerWeight();
+      this.getTotalTronPowerWeight();
     } catch (IllegalArgumentException e) {
-      this.saveTotalVotePowerWeight(0L);
+      this.saveTotalTronPowerWeight(0L);
     }
 
 
@@ -1053,17 +1053,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
 
-  public void saveTotalVotePowerWeight(long totalEnergyWeight) {
-    this.put(DynamicResourceProperties.TOTAL_VOTE_POWER_WEIGHT,
+  public void saveTotalTronPowerWeight(long totalEnergyWeight) {
+    this.put(DynamicResourceProperties.TOTAL_TRON_POWER_WEIGHT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
-  public long getTotalVotePowerWeight() {
-    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_VOTE_POWER_WEIGHT))
+  public long getTotalTronPowerWeight() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_TRON_POWER_WEIGHT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_VOTE_POWER_WEIGHT"));
+            () -> new IllegalArgumentException("not found TOTAL_TRON_POWER_WEIGHT"));
   }
 
   public void saveTotalNetLimit(long totalNetLimit) {
@@ -2040,10 +2040,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   //The unit is trx
-  public void addTotalVotePowerWeight(long amount) {
-    long totalWeight = getTotalVotePowerWeight();
+  public void addTotalTronPowerWeight(long amount) {
+    long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
-    saveTotalVotePowerWeight(totalWeight);
+    saveTotalTronPowerWeight(totalWeight);
   }
 
   public void addTotalCreateAccountCost(long fee) {
@@ -2260,7 +2260,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .getBytes();
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
-    private static final byte[] TOTAL_VOTE_POWER_WEIGHT = "TOTAL_VOTE_POWER_WEIGHT".getBytes();
+    private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER =
