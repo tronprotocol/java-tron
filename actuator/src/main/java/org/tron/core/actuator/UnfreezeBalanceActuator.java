@@ -75,9 +75,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     long unfreezeBalance = 0L;
 
-    if (dynamicStore.supportAllowNewResourceModel() && !accountCapsule
-        .oldVotePowerIsInvalid()) {
-      accountCapsule.InvalidateOldVotePower();
+    if (dynamicStore.supportAllowNewResourceModel() && accountCapsule
+        .oldVotePowerIsNotInitialized()) {
+      accountCapsule.InitializeOldVotePower();
     }
 
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
@@ -232,19 +232,38 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         break;
     }
 
-    VotesCapsule votesCapsule;
-    if (!votesStore.has(ownerAddress)) {
-      votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
-          accountCapsule.getVotesList());
-    } else {
-      votesCapsule = votesStore.get(ownerAddress);
+    boolean needToClearVote = true;
+    if (dynamicStore.supportAllowNewResourceModel() &&
+        accountCapsule.oldVotePowerIsInvalid()) {
+      switch (unfreezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+        case ENERGY:
+          needToClearVote = false;
+          break;
+        default:
+          break;
+      }
     }
-    accountCapsule.clearVotes();
-    votesCapsule.clearNewVotes();
+
+    if (needToClearVote) {
+      VotesCapsule votesCapsule;
+      if (!votesStore.has(ownerAddress)) {
+        votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
+            accountCapsule.getVotesList());
+      } else {
+        votesCapsule = votesStore.get(ownerAddress);
+      }
+      accountCapsule.clearVotes();
+      votesCapsule.clearNewVotes();
+      votesStore.put(ownerAddress, votesCapsule);
+    }
+
+    if (dynamicStore.supportAllowNewResourceModel() && !accountCapsule
+        .oldVotePowerIsInvalid()) {
+      accountCapsule.InvalidateOldVotePower();
+    }
 
     accountStore.put(ownerAddress, accountCapsule);
-
-    votesStore.put(ownerAddress, votesCapsule);
 
     ret.setUnfreezeAmount(unfreezeBalance);
     ret.setStatus(fee, code.SUCESS);
