@@ -877,14 +877,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
 
     setInstance(getInstance().toBuilder()
-        .setNewVotePower(newFrozen)
+        .setVotePower(newFrozen)
         .build());
   }
 
   public long getVotePowerFrozenBalance() {
-    return this.account.getNewVotePower().getFrozenBalance();
+    return this.account.getVotePower().getFrozenBalance();
   }
-
 
   public long getEnergyUsage() {
     return this.account.getAccountResource().getEnergyUsage();

@@ -205,7 +205,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           unfreezeBalance = accountCapsule.getVotePowerFrozenBalance();
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
-              .clearNewVotePower().build());
+              .clearVotePower().build());
           break;
         default:
           //this should never happen
@@ -225,7 +225,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         break;
       case VOTE_POWER:
         dynamicStore
-            .addTotalNewVotePowerWeight(-unfreezeBalance / TRX_PRECISION);
+            .addTotalVotePowerWeight(-unfreezeBalance / TRX_PRECISION);
         break;
       default:
         //this should never happen
@@ -432,7 +432,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           break;
         case VOTE_POWER:
           if (dynamicStore.supportAllowNewResourceModel()) {
-            Frozen frozenBalanceForVotePower = accountCapsule.getInstance().getNewVotePower();
+            Frozen frozenBalanceForVotePower = accountCapsule.getInstance().getVotePower();
             if (frozenBalanceForVotePower.getFrozenBalance() <= 0) {
               throw new ContractValidateException("no frozenBalance(VotePower)");
             }
