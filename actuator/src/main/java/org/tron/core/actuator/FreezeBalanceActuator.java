@@ -202,7 +202,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
           byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
           if (!ArrayUtils.isEmpty(receiverAddress)) {
             throw new ContractValidateException(
-                "Vote power is not allowed to delegate to other accounts.");
+                "TRON_POWER is not allowed to delegate to other accounts.");
           }
         } else {
           throw new ContractValidateException(

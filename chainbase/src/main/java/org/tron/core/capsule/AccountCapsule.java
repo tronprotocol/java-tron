@@ -870,6 +870,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build());
   }
 
+
+  public void setOldTronPower(long value) {
+    setInstance(getInstance().toBuilder()
+        .setOldTronPower(value)
+        .build());
+  }
+
   public void setFrozenForTronPower(long frozenBalance, long expireTime) {
     Frozen newFrozen = Frozen.newBuilder()
         .setFrozenBalance(frozenBalance)

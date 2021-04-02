@@ -578,4 +578,34 @@ public class VoteWitnessActuatorTest {
     actuatorTest.nullDBManger();
   }
 
+
+  @Test
+  public void voteWitnessAfterNewResourceModel() {
+
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
+    AccountCapsule owner =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setFrozenForEnergy(2000000L,0L);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS),owner);
+
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(2000000L, owner.getInstance().getOldTronPower());
+    } catch (ContractValidateException e) {
+      e.printStackTrace();
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
 }
