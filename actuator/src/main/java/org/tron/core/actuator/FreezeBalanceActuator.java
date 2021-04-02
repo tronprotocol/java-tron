@@ -57,8 +57,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore
         .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
-    if (dynamicStore.supportAllowNewResourceModel() && accountCapsule
-        .oldTronPowerIsNotInitialized()) {
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
       accountCapsule.InitializeOldTronPower();
     }
 
