@@ -75,8 +75,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     long unfreezeBalance = 0L;
 
-    if (dynamicStore.supportAllowNewResourceModel() && accountCapsule
-        .oldTronPowerIsNotInitialized()) {
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
       accountCapsule.InitializeOldTronPower();
     }
 
@@ -233,8 +233,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
 
     boolean needToClearVote = true;
-    if (dynamicStore.supportAllowNewResourceModel() &&
-        accountCapsule.oldTronPowerIsInvalid()) {
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsInvalid()) {
       switch (unfreezeBalanceContract.getResource()) {
         case BANDWIDTH:
         case ENERGY:
@@ -258,8 +258,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       votesStore.put(ownerAddress, votesCapsule);
     }
 
-    if (dynamicStore.supportAllowNewResourceModel() && !accountCapsule
-        .oldTronPowerIsInvalid()) {
+    if (dynamicStore.supportAllowNewResourceModel()
+        && !accountCapsule.oldTronPowerIsInvalid()) {
       accountCapsule.InvalidateOldTronPower();
     }
 
