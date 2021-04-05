@@ -139,4 +139,8 @@ public interface Repository {
   void saveTotalNetWeight(long totalNetWeight);
 
   long getTotalNetWeight();
+
+  boolean checkTokenBalance(byte[] address);
+
+  boolean checkTokenBalance(byte[] owner, byte[] to);
 }

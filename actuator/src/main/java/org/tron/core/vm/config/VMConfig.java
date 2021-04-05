@@ -51,6 +51,8 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_ASSET_ISSUE = false;
 
+  private static boolean ALLOW_ACCOUNT_ASSET_OPTIMIZATION = false;
+
   private VMConfig() {
   }
 
@@ -102,6 +104,10 @@ public class VMConfig {
     ALLOW_TVM_ASSET_ISSUE = allow == 1;
   }
 
+  public static void initAllowAccountAssetOptimization(long allow) {
+    ALLOW_TVM_ASSET_ISSUE = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -139,5 +145,9 @@ public class VMConfig {
   private static class SystemPropertiesInstance {
 
     private static final VMConfig INSTANCE = new VMConfig();
+  }
+
+  public static boolean allowAccountAssetOptimization() {
+    return ALLOW_ACCOUNT_ASSET_OPTIMIZATION;
   }
 }

@@ -23,6 +23,8 @@ public class MUtil {
   }
 
   public static void transferAllToken(Repository deposit, byte[] fromAddress, byte[] toAddress) {
+    //TODO TOKEN 提案
+    deposit.checkTokenBalance(fromAddress, toAddress);
     AccountAssetIssueCapsule fromAccountCap = deposit.getAccountAssetIssue(fromAddress);
     Protocol.AccountAssetIssue.Builder fromBuilder = fromAccountCap.getInstance().toBuilder();
     AccountAssetIssueCapsule toAccountCap = deposit.getAccountAssetIssue(toAddress);

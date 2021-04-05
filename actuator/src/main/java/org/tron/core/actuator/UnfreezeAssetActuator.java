@@ -20,7 +20,7 @@ import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.AccountAssetIssue.Frozen;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
@@ -54,7 +54,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
       long unfreezeAsset = 0L;
       List<Frozen> frozenList = Lists.newArrayList();
-      frozenList.addAll(accountCapsule.getFrozenSupplyList());
+      frozenList.addAll(accountAssetIssueCapsule.getFrozenSupplyList());
       Iterator<Frozen> iterator = frozenList.iterator();
       long now = dynamicStore.getLatestBlockHeaderTimestamp();
       while (iterator.hasNext()) {
@@ -75,7 +75,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
                 dynamicStore, assetIssueStore);
       }
 
-      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+      accountAssetIssueCapsule.setInstance(accountAssetIssueCapsule.getInstance().toBuilder()
           .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
 
       accountStore.put(ownerAddress, accountCapsule);
@@ -101,7 +101,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
 
-      DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(UnfreezeAssetContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [UnfreezeAssetContract], real type[" + any

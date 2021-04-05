@@ -9,6 +9,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountAssetIssue;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j(topic = "capsule")
@@ -352,6 +353,12 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
         }
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
+
+
+  public List<AccountAssetIssue.Frozen> getFrozenSupplyList() {
+    return getInstance().getFrozenSupplyList();
+  }
+
 
     @Override
     public String toString() {

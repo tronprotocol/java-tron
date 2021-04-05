@@ -393,4 +393,13 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.createAccountAssetIssue(address);
   }
 
+  @Override
+  public boolean checkTokenBalance(byte[] address) {
+    return repository.checkTokenBalance(address);
+  }
+
+  @Override
+  public boolean checkTokenBalance(byte[] owner, byte[] to) {
+    return repository.checkTokenBalance(owner, to);
+  }
 }

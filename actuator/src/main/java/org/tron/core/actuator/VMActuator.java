@@ -396,6 +396,8 @@ public class VMActuator implements Actuator2 {
     if (!VMConfig.allowTvmConstantinople()) {
       repository.saveCode(contractAddress, ProgramPrecompile.getCode(code));
     }
+    //TODO TOKEN
+    repository.checkTokenBalance(callerAddress, contractAddress);
     // transfer from callerAddress to contractAddress according to callValue
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
@@ -502,7 +504,11 @@ public class VMActuator implements Actuator2 {
 
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
-
+    //TODO TOKEN
+    //先拆
+    repository.checkTokenBalance(callerAddress, contractAddress);
+    if (VMConfig.allowAccountAssetOptimization()) {
+    }
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
     }

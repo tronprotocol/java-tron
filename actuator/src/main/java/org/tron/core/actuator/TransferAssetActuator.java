@@ -78,7 +78,8 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       if (toAccountAssetIssueCapsule == null) {
         toAccountAssetIssueCapsule = new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress));
-        accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
+        accountAssetIssueStore.convertAccountAssetIssue(toAccountCapsule);
+//        accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
       }
 
       ByteString assetName = transferAssetContract.getAssetName();

@@ -531,12 +531,14 @@ public class Program {
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
       if (VMConfig.allowTvmTransferTrc10()) {
         getContractState().addBalance(blackHoleAddress, balance);
+        //TODO TOKEN
         MUtil.transferAllToken(getContractState(), owner, blackHoleAddress);
       }
     } else {
       createAccountIfNotExist(getContractState(), obtainer);
       try {
         MUtil.transfer(getContractState(), owner, obtainer, balance);
+        //TODO TOKEN
         if (VMConfig.allowTvmTransferTrc10()) {
           MUtil.transferAllToken(getContractState(), owner, obtainer);
         }
@@ -930,6 +932,8 @@ public class Program {
     } else {
       // transfer trc10 token validation
       tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
+      //TODO TOKEN
+//      deposit.checkTokenBalance(senderAddress);
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();
@@ -1541,7 +1545,9 @@ public class Program {
           throw new BytecodeExecutionException("transfer failure");
         }
       } else {
+        //TODO TOKEN
         try {
+          deposit.checkTokenBalance(senderAddress, contextAddress);
           VMUtils
               .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {

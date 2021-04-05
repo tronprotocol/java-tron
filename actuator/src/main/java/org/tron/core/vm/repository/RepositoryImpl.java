@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -242,11 +243,6 @@ public class RepositoryImpl implements Repository {
 
     if (accountAssetIssueCapsule != null) {
       accountAssetIssueCache.put(key, Value.create(accountAssetIssueCapsule.getData()));
-    } else {
-      accountAssetIssueCapsule = accountAssetIssueStore.getAndImport(address, accountStore);
-      if (accountAssetIssueCapsule != null) {
-        accountAssetIssueCache.put(key, Value.create(accountAssetIssueCapsule.getData()));
-      }
     }
     return accountAssetIssueCapsule;
   }
@@ -720,8 +716,10 @@ public class RepositoryImpl implements Repository {
     return accountAssetIssueCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 
+  //TODO TOKEN
   @Override
   public long getTokenBalance(byte[] address, byte[] tokenId) {
+    checkTokenBalance(address);
     AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
     if (accountAssetIssueCapsule == null) {
       return 0;
@@ -968,5 +966,23 @@ public class RepositoryImpl implements Repository {
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
+  }
+
+  @Override
+  public boolean checkTokenBalance(byte[] address) {
+    AccountCapsule account = getAccount(address);
+    if (MapUtils.isNotEmpty(account.getAssetMap()) ||
+            MapUtils.isNotEmpty(account.getAssetMapV2())) {
+      AccountCapsule accountCapsule = accountAssetIssueStore.convertAccountAssetIssue(account);
+      updateAccount(address, accountCapsule);
+    }
+    return true;
+  }
+
+  @Override
+  public boolean checkTokenBalance(byte[] owner, byte[] to) {
+    checkTokenBalance(owner);
+    checkTokenBalance(to);
+    return true;
   }
 }

@@ -215,9 +215,14 @@ public final class VMUtils {
       throw new ContractValidateException("Cannot transfer asset to yourself.");
     }
 
-    AccountAssetIssueCapsule ownerAccount = deposit.getAccountAssetIssue(ownerAddress);
+    AccountCapsule ownerAccount = deposit.getAccount(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("No owner account!");
+    }
+
+    AccountAssetIssueCapsule ownerAssetIssue = deposit.getAccountAssetIssue(ownerAddress);
+    if (ownerAssetIssue == null) {
+      throw new ContractValidateException("Owner no asset!");
     }
 
     if (deposit.getAssetIssue(tokenIdWithoutLeadingZero) == null) {
@@ -231,9 +236,9 @@ public final class VMUtils {
 
     Map<String, Long> asset;
     if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      asset = ownerAccount.getAssetMap();
+      asset = ownerAssetIssue.getAssetMap();
     } else {
-      asset = ownerAccount.getAssetMapV2();
+      asset = ownerAssetIssue.getAssetMapV2();
     }
     if (asset.isEmpty()) {
       throw new ContractValidateException("Owner no asset!");
@@ -247,24 +252,28 @@ public final class VMUtils {
       throw new ContractValidateException("assetBalance is not sufficient.");
     }
 
-    AccountAssetIssueCapsule toAccountAssetIssueCapsule = deposit.getAccountAssetIssue(toAddress);
-    if (toAccountAssetIssueCapsule != null) {
-      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-        assetBalance = toAccountAssetIssueCapsule.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
-      } else {
-        assetBalance = toAccountAssetIssueCapsule.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
-      }
-      if (assetBalance != null) {
-        try {
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
-        } catch (Exception e) {
-          logger.debug(e.getMessage(), e);
-          throw new ContractValidateException(e.getMessage());
-        }
-      }
-    } else {
+    AccountCapsule toAccount = deposit.getAccount(toAddress);
+    if (toAccount == null) {
       throw new ContractValidateException(
-          "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+              "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+    }
+    AccountAssetIssueCapsule toAccountAssetIssue = deposit.getAccountAssetIssue(toAddress);
+    if (null == toAccountAssetIssue) {
+      throw new ContractValidateException("to account no asset!");
+    }
+
+    if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      assetBalance = toAccountAssetIssue.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+    } else {
+      assetBalance = toAccountAssetIssue.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+    }
+    if (assetBalance != null) {
+      try {
+        assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+      } catch (Exception e) {
+        logger.debug(e.getMessage(), e);
+        throw new ContractValidateException(e.getMessage());
+      }
     }
 
     return true;

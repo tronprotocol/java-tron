@@ -469,6 +469,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return tp;
   }
 
+
+  public long getVotePower413(){
+    return this.account.getVotePower413();
+  }
+
+  public void setVotePower413(long amount){
+    this.account = this.account.toBuilder()
+      .setVotePower413(amount)
+      .build();
+  }
   /**
    * asset balance enough
    */
@@ -712,13 +722,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getInstance().getFrozenSupplyList();
   }
 
-  public long getFrozenSupplyBalance() {
-    List<Frozen> frozenSupplyList = getFrozenSupplyList();
-    final long[] frozenSupplyBalance = {0};
-    frozenSupplyList.forEach(frozen -> frozenSupplyBalance[0] = Long.sum(frozenSupplyBalance[0],
-        frozen.getFrozenBalance()));
-    return frozenSupplyBalance[0];
-  }
+//  public long getFrozenSupplyBalance() {
+//    List<Frozen> frozenSupplyList = getFrozenSupplyList();
+//    final long[] frozenSupplyBalance = {0};
+//    frozenSupplyList.forEach(frozen -> frozenSupplyBalance[0] = Long.sum(frozenSupplyBalance[0],
+//        frozen.getFrozenBalance()));
+//    return frozenSupplyBalance[0];
+//  }
 
   public ByteString getAssetIssuedName() {
     return getInstance().getAssetIssuedName();
@@ -1009,7 +1019,4 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
-  public boolean getImportAsset() {
-    return account.getImportAsset();
-  }
 }

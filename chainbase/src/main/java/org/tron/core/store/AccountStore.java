@@ -7,18 +7,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
-import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
 
@@ -38,9 +40,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private AccountTraceStore accountTraceStore;
 
   @Autowired
-  private AccountAssetIssueStore accountAssetIssueStore;
-
-  @Autowired
   private AccountStore(@Value("account") String dbName) {
     super(dbName);
   }
@@ -58,18 +57,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    AccountCapsule accountCapsule = new AccountCapsule(value);
-    logger.info("pushBlock account get: {} , address: {}", accountCapsule.toString(),
-            StringUtil.encode58Check(accountCapsule.createDbKey()));
-    if (!accountCapsule.getImportAsset()) {
-      accountCapsule = accountAssetIssueStore.convertAccountAssetIssue(accountCapsule);
-      this.put(key, accountCapsule);
-      logger.info("key: {} -- account.key： {}", StringUtil.encode58Check(key), StringUtil.encode58Check(accountCapsule.getAddress().toByteArray()));
-    }
-    return accountCapsule;
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   @Override
@@ -174,5 +162,14 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public void close() {
     super.close();
+  }
+
+  public void checkAsset(AccountCapsule accountCapsule,
+                            AccountAssetIssueStore accountAssetIssueStore) {
+    if (MapUtils.isNotEmpty(accountCapsule.getAssetMap()) ||
+            MapUtils.isNotEmpty(accountCapsule.getAssetMapV2())) {
+      accountCapsule = accountAssetIssueStore.convertAccountAssetIssue(accountCapsule);
+      this.put(accountCapsule.createDbKey(), accountCapsule);
+    }
   }
 }

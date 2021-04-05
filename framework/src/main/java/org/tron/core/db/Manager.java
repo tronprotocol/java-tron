@@ -1152,6 +1152,7 @@ public class Manager {
       throw new ValidateSignatureException("transaction signature validate failed");
     }
 
+    validateAssetIssue(trxCap);
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
@@ -1850,4 +1851,30 @@ public class Manager {
         + getPoppedTransactions().size();
     return value;
   }
+
+  private void validateAssetIssue(TransactionCapsule trxCap) {
+    List<Contract> contracts = trxCap.getInstance().getRawData().getContractList();
+
+    Optional.ofNullable(contracts)
+            .orElseGet(ArrayList::new)
+            .stream()
+            .peek(contract -> {
+              byte[] ownerAddress = TransactionCapsule.getOwner(contract);
+              AccountStore accountStore = getAccountStore();
+              AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+              if (ownerAccount != null) {
+                accountStore.checkAsset(ownerAccount, chainBaseManager.getAccountAssetIssueStore());
+              }
+            })
+            .peek(contract -> {
+              byte[] toAddress = TransactionCapsule.getToAddress(contract);
+              AccountStore accountStore = getAccountStore();
+              AccountCapsule toAccount = accountStore.get(toAddress);
+              if (toAccount != null) {
+                accountStore.checkAsset(toAccount, chainBaseManager.getAccountAssetIssueStore());
+              }
+            })
+            .collect(Collectors.toList());
+  }
+
 }

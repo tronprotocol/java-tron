@@ -154,7 +154,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
   //This value is only allowed to be 0, 1
-  private static final byte[] ALLOW_ASSET_IMPORT = "ALLOW_ASSET_IMPORT".getBytes();
+  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
 
 
   @Autowired
@@ -733,9 +733,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowAssetImport();
+      this.getAllowAccountAssetOptimization();
     } catch (IllegalArgumentException e) {
-      this.setAllowAssetImport(true);
+      this.setAllowAccountAssetOptimization(0L);
     }
 
   }
@@ -2177,15 +2177,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   // 0: disable 1: enable
-  public boolean getAllowAssetImport() {
-    return Optional.ofNullable(getUnchecked(ALLOW_ASSET_IMPORT))
+  public long getAllowAccountAssetOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
             .map(BytesCapsule::getData)
             .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ASSET_IMPORT")) != 0;
+            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
   }
 
-  public void setAllowAssetImport(boolean importFlag) {
-    this.put(ALLOW_ASSET_IMPORT, new BytesCapsule(ByteArray.fromLong(importFlag?1:0)));
+  public void setAllowAccountAssetOptimization(long value) {
+    this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {
