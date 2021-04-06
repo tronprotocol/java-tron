@@ -1129,6 +1129,7 @@ public class Wallet {
     long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long totalTronPowerWeight = chainBaseManager.getDynamicPropertiesStore().getTotalTronPowerWeight();
     long energyLimit = energyProcessor
         .calculateGlobalEnergyLimit(accountCapsule);
     long totalEnergyLimit =
@@ -1138,6 +1139,7 @@ public class Wallet {
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+    long allTronPower = accountCapsule.getAllTronPower();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
@@ -1148,8 +1150,10 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
+        .setTotalTronPowerWeight(totalTronPowerWeight)
         .setEnergyLimit(energyLimit)
         .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTronPower(allTronPower)
         .setTotalEnergyLimit(totalEnergyLimit)
         .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
