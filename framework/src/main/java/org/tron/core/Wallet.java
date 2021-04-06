@@ -889,7 +889,7 @@ public class Wallet {
         .setKey("getAllowTvmSolidity059")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
-    
+
     // ALLOW_TVM_ISTANBUL
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmIstanbul")
@@ -1129,7 +1129,8 @@ public class Wallet {
     long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long totalTronPowerWeight = chainBaseManager.getDynamicPropertiesStore().getTotalTronPowerWeight();
+    long totalTronPowerWeight = chainBaseManager.getDynamicPropertiesStore()
+        .getTotalTronPowerWeight();
     long energyLimit = energyProcessor
         .calculateGlobalEnergyLimit(accountCapsule);
     long totalEnergyLimit =
