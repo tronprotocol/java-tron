@@ -274,25 +274,6 @@ public class ContractTrcToken067 {
     Assert.assertEquals(tokenValue, msgTokenValue);
     Assert.assertEquals(callValue, msgCallValue);
 
-//    accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-//    long devEnergyLimitAfter = accountResource.getEnergyLimit();
-//    long devEnergyUsageAfter = accountResource.getEnergyUsed();
-//    long devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
-//
-//    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
-//    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
-//    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
-//
-//    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-//    long userEnergyLimitAfter = accountResource.getEnergyLimit();
-//    long userEnergyUsageAfter = accountResource.getEnergyUsed();
-//    long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
-//        .getBalance();
-
-//    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
-//    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
-//    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
-
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
         assetAccountId, blockingStubFull);
     logger.info("after trigger, transferTokenContractAddress has AssetId "
@@ -315,23 +296,6 @@ public class ContractTrcToken067 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-        blockingStubFull);
-    long devEnergyLimitBefore = accountResource.getEnergyLimit();
-    long devEnergyUsageBefore = accountResource.getEnergyUsed();
-    long devBalanceBefore = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
-    logger.info("before trigger, dev energy limit is " + Long.toString(devEnergyLimitBefore));
-    logger.info("before trigger, dev energy usage is " + Long.toString(devEnergyUsageBefore));
-    logger.info("before trigger, dev balance is " + Long.toString(devBalanceBefore));
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitBefore = accountResource.getEnergyLimit();
-    long userEnergyUsageBefore = accountResource.getEnergyUsed();
-    long userBalanceBefore = PublicMethed.queryAccount(user001Address,
-        blockingStubFull).getBalance();
-    logger.info("before trigger, user energy limit is " + Long.toString(userEnergyLimitBefore));
-    logger.info("before trigger, user energy usage is " + Long.toString(userEnergyUsageBefore));
-    logger.info("before trigger, user balance is " + Long.toString(userBalanceBefore));
-
     String param = "\"" + Base58.encode58Check(resultContractAddress) + "\",\""
         + assetAccountId.toStringUtf8() + "\"";
 
@@ -349,30 +313,6 @@ public class ContractTrcToken067 {
       Assert.fail("transaction failed with message: " + infoById.get().getResMessage());
     }
 
-    accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    long devEnergyLimitAfter = accountResource.getEnergyLimit();
-    long devEnergyUsageAfter = accountResource.getEnergyUsed();
-    long devBalanceAfter = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
-
-    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
-    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
-    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitAfter = accountResource.getEnergyLimit();
-    long userEnergyUsageAfter = accountResource.getEnergyUsed();
-    long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
-    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
-    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
-
-    infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
-
-    if (infoById.get().getResultValue() != 0) {
-      Assert.fail("transaction failed with message: " + infoById.get().getResMessage());
-    }
     logger.info("the receivercontract token: " + ByteArray
         .toLong(infoById.get().getContractResult(0).toByteArray()));
     Long assetIssueCount = PublicMethed.getAssetIssueValue(resultContractAddress, assetAccountId,
@@ -382,13 +322,6 @@ public class ContractTrcToken067 {
         .toLong(ByteArray.fromHexString(
             ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()))));
 
-    // unfreeze resource
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        user001Address, blockingStubFull);
   }
 
   /**
@@ -398,8 +331,9 @@ public class ContractTrcToken067 {
   public void shutdown() throws InterruptedException {
     PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
     PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1, dev001Address, blockingStubFull);
     PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1, user001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
