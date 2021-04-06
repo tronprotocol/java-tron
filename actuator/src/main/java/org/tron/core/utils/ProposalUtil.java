@@ -543,7 +543,7 @@ public class ProposalUtil {
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     ALLOW_RECEIPTS_MERKLE_ROOT(50),// 0,1
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
-    ALLOW_TVM_FREEZE(50); // 0, 1
+    ALLOW_TVM_FREEZE(52); // 0, 1
 
     private long code;
 
