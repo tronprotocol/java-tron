@@ -1462,13 +1462,16 @@ public class VM {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
+          if (VMConfig.allowTvmFreeze() && !program.canSuicide()) {
+            program.getResult().setRevert();
+          } else {
+            DataWord address = program.stackPop();
+            program.suicide(address);
+            program.getResult().addTouchAccount(address.getLast20Bytes());
 
-          DataWord address = program.stackPop();
-          program.suicide(address);
-          program.getResult().addTouchAccount(address.getLast20Bytes());
-
-          if (logger.isDebugEnabled()) {
-            hint = ADDRESS_LOG + Hex.toHexString(program.getContractAddress().getLast20Bytes());
+            if (logger.isDebugEnabled()) {
+              hint = ADDRESS_LOG + Hex.toHexString(program.getContractAddress().getLast20Bytes());
+            }
           }
 
           program.stop();
