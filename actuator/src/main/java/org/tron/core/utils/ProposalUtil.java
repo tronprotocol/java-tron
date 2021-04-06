@@ -444,6 +444,20 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_NEW_RESOURCE_MODEL: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_NEW_RESOURCE_MODEL]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_NEW_RESOURCE_MODEL] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+
+
+
       default:
         break;
     }
@@ -497,7 +511,8 @@ public class ProposalUtil {
     MAX_FEE_LIMIT(47), // [0, 10_000_000_000]
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
-    ALLOW_RECEIPTS_MERKLE_ROOT(50);// 0,1
+    ALLOW_RECEIPTS_MERKLE_ROOT(50),// 0,1
+    ALLOW_NEW_RESOURCE_MODEL(51);// 0,1
 
     private long code;
 
