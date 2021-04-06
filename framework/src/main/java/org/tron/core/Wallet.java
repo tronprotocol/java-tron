@@ -1139,6 +1139,7 @@ public class Wallet {
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+    long allTronPowerUsage = accountCapsule.getVotesUsage();
     long allTronPower = accountCapsule.getAllTronPower();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
@@ -1153,7 +1154,8 @@ public class Wallet {
         .setTotalTronPowerWeight(totalTronPowerWeight)
         .setEnergyLimit(energyLimit)
         .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
-        .setTronPower(allTronPower)
+        .setTronPowerUsed(allTronPowerUsage)
+        .setTronPowerLimit(allTronPower)
         .setTotalEnergyLimit(totalEnergyLimit)
         .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
