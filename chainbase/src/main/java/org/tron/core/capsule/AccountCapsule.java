@@ -854,7 +854,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getOldTronPower() == -1;
   }
 
-  public void InitializeOldTronPower() {
+  public void initializeOldTronPower() {
     long value = getTronPower();
     if (value == 0) {
       value = -1;
@@ -864,7 +864,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build());
   }
 
-  public void InvalidateOldTronPower() {
+  public void invalidateOldTronPower() {
     setInstance(getInstance().toBuilder()
         .setOldTronPower(-1)
         .build());

@@ -77,7 +77,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
-      accountCapsule.InitializeOldTronPower();
+      accountCapsule.initializeOldTronPower();
     }
 
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
@@ -260,7 +260,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     if (dynamicStore.supportAllowNewResourceModel()
         && !accountCapsule.oldTronPowerIsInvalid()) {
-      accountCapsule.InvalidateOldTronPower();
+      accountCapsule.invalidateOldTronPower();
     }
 
     accountStore.put(ownerAddress, accountCapsule);

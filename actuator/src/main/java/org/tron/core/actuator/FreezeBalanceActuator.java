@@ -59,7 +59,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
-      accountCapsule.InitializeOldTronPower();
+      accountCapsule.initializeOldTronPower();
     }
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();

@@ -165,7 +165,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
-      accountCapsule.InitializeOldTronPower();
+      accountCapsule.initializeOldTronPower();
     }
 
     if (!votesStore.has(ownerAddress)) {
