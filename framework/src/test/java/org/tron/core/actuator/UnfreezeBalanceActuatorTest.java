@@ -111,6 +111,12 @@ public class UnfreezeBalanceActuatorTest {
         .setResource(ResourceCode.ENERGY).build());
   }
 
+  private Any getContractForTronPower(String ownerAddress) {
+    return Any.pack(UnfreezeBalanceContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+        .setResource(ResourceCode.TRON_POWER).build());
+  }
+
   private Any getDelegatedContractForBandwidth(String ownerAddress, String receiverAddress) {
     return Any.pack(UnfreezeBalanceContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -1026,7 +1032,7 @@ public class UnfreezeBalanceActuatorTest {
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setFrozenForEnergy(frozenBalance, now);
     accountCapsule.setOldTronPower(frozenBalance);
-    accountCapsule.addVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),100L);
+    accountCapsule.addVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 100L);
     Assert.assertEquals(accountCapsule.getAllFrozenBalanceForEnergy(), frozenBalance);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1062,7 +1068,7 @@ public class UnfreezeBalanceActuatorTest {
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setFrozenForEnergy(frozenBalance, now);
     accountCapsule.setOldTronPower(-1L);
-    accountCapsule.addVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),100L);
+    accountCapsule.addVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 100L);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
@@ -1097,12 +1103,12 @@ public class UnfreezeBalanceActuatorTest {
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setFrozenForEnergy(frozenBalance, now);
     accountCapsule.setFrozenForTronPower(frozenBalance, now);
-    accountCapsule.addVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),100L);
+    accountCapsule.addVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 100L);
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContractForCpu(OWNER_ADDRESS));
+        .setAny(getContractForTronPower(OWNER_ADDRESS));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1120,5 +1126,33 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void testUnfreezeBalanceForTronPowerWithOldTronPowerAfterNewResourceModelError() {
+    long now = System.currentTimeMillis();
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setFrozenForEnergy(frozenBalance, now);
+    accountCapsule.setFrozenForTronPower(frozenBalance, now + 100000000L);
+    accountCapsule.addVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 100L);
+
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractForTronPower(OWNER_ADDRESS));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+    }
+  }
+
 }
 
