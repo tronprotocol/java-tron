@@ -1271,10 +1271,10 @@ public class RpcApiService implements Service {
 
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
-      if(dbManager.getDynamicPropertiesStore().supportAllowNewResourceModel()){
+      if (dbManager.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
         Preconditions.checkArgument(account.getAllTronPower() < votesCount,
             "tron power[" + account.getAllTronPower() + "] <  VotesCount[" + votesCount + "]");
-      }else {
+      } else {
         Preconditions.checkArgument(account.getTronPower() < votesCount,
             "tron power[" + account.getTronPower() + "] <  VotesCount[" + votesCount + "]");
       }
