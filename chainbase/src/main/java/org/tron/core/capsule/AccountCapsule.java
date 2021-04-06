@@ -456,7 +456,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  public long getVotesUsage() {
+  public long getTronPowerUsage() {
     if (this.account.getVotesList() != null) {
       return this.account.getVotesList().stream().mapToLong(Vote::getVoteCount).sum();
     } else {
