@@ -599,6 +599,7 @@ public class VoteWitnessActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
     }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
 
   @Test
@@ -628,6 +629,7 @@ public class VoteWitnessActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
 
 
@@ -652,7 +654,7 @@ public class VoteWitnessActuatorTest {
 
       owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(2000000L, owner.getAllTronPower());
+      Assert.assertEquals(3000000L, owner.getAllTronPower());
       Assert.assertEquals(2000000L, owner.getInstance().getOldTronPower());
       Assert.assertEquals(1000000L, owner.getInstance().getTronPower().getFrozenBalance());
     } catch (ContractValidateException e) {
@@ -661,11 +663,12 @@ public class VoteWitnessActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
 
 
   @Test
-  public void voteWitnessWithoutEnoughtOldAndNewTronPowerAfterNewResourceModel() {
+  public void voteWitnessWithoutEnoughOldAndNewTronPowerAfterNewResourceModel() {
 
     dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
 
@@ -677,7 +680,7 @@ public class VoteWitnessActuatorTest {
 
     VoteWitnessActuator actuator = new VoteWitnessActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L));
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 4000000L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -685,6 +688,7 @@ public class VoteWitnessActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
     }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
 
 }
