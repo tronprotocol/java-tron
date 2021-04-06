@@ -206,16 +206,16 @@ public class FreezeBalanceActuator extends AbstractActuator {
           }
         } else {
           throw new ContractValidateException(
-              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
         }
         break;
       default:
         if (dynamicStore.supportAllowNewResourceModel()) {
           throw new ContractValidateException(
-              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
         } else {
           throw new ContractValidateException(
-              "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
         }
     }
 
