@@ -99,7 +99,8 @@ public class VM {
           || (!VMConfig.allowTvmConstantinople()
               && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH))
           || (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT)
-          || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID))
+          || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)
+          || (!VMConfig.allowTvmFreeze() && (op == FREEZE || op == UNFREEZE || op == FREEZEEXPIRETIME)))
           ) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
@@ -154,6 +155,19 @@ public class VM {
         case BALANCE:
         case ISCONTRACT:
           energyCost = energyCosts.getBALANCE();
+          break;
+        case FREEZE:
+          energyCost = energyCosts.getFREEZE();
+          DataWord receiverAddressWord = stack.get(stack.size() - 3);
+          if (isDeadAccount(program, receiverAddressWord)) {
+            energyCost += energyCosts.getNEW_ACCT_CALL();
+          }
+          break;
+        case UNFREEZE:
+          energyCost = energyCosts.getUNFREEZE();
+          break;
+        case FREEZEEXPIRETIME:
+          energyCost = energyCosts.getFREEZE_EXPIRE_TIME();
           break;
 
         // These all operate on memory and therefore potentially expand it:
@@ -1394,6 +1408,34 @@ public class VM {
           program.step();
           break;
         }
+        case FREEZE: {
+          DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
+          DataWord frozenBalance = program.stackPop();
+          DataWord receiverAddress = program.stackPop();
+          boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
+          program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+
+          program.step();
+          break;
+        }
+        case UNFREEZE: {
+          DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
+          DataWord receiverAddress = program.stackPop();
+          boolean result = program.unfreeze(receiverAddress, resourceType);
+          program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+
+          program.step();
+          break;
+        }
+        case FREEZEEXPIRETIME: {
+          DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
+          DataWord targetAddress = program.stackPop();
+          long expireTime = program.freezeExpireTime(targetAddress, resourceType);
+          program.stackPush(new DataWord(expireTime / 1000));
+
+          program.step();
+          break;
+        }
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
@@ -1420,13 +1462,16 @@ public class VM {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
+          if (VMConfig.allowTvmFreeze() && !program.canSuicide()) {
+            program.getResult().setRevert();
+          } else {
+            DataWord address = program.stackPop();
+            program.suicide(address);
+            program.getResult().addTouchAccount(address.getLast20Bytes());
 
-          DataWord address = program.stackPop();
-          program.suicide(address);
-          program.getResult().addTouchAccount(address.getLast20Bytes());
-
-          if (logger.isDebugEnabled()) {
-            hint = ADDRESS_LOG + Hex.toHexString(program.getContractAddress().getLast20Bytes());
+            if (logger.isDebugEnabled()) {
+              hint = ADDRESS_LOG + Hex.toHexString(program.getContractAddress().getLast20Bytes());
+            }
           }
 
           program.stop();

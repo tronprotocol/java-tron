@@ -586,6 +586,15 @@ public enum OpCode {
 
   ISCONTRACT(0xd4, 1, 1, OpCode.Tier.ExtTier),
 
+  FREEZE(0xd5, 3, 1, OpCode.Tier.ExtTier),
+
+  UNFREEZE(0xd6, 2, 1, OpCode.Tier.ExtTier),
+
+  /**
+   * (0xd6) Get the expire time of freeze in seconds
+   */
+  FREEZEEXPIRETIME(0xd7, 2, 1, OpCode.Tier.ExtTier),
+
   /**
    * (0xf0) Create a new account with associated code
    */

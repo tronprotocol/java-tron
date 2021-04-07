@@ -155,6 +155,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
   private static final byte[] ALLOW_RECEIPTS_MERKLE_ROOT = "ALLOW_RECEIPTS_MERKLE_ROOT".getBytes();
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
+  private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -750,6 +751,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowReceiptsMerkleRoot(0L);
     }
+
+    try {
+      this.getAllowTvmFreeze();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmFreeze(
+          CommonParameter.getInstance().getAllowTvmFreeze());
+    }
+
   }
 
   public String intArrayToString(int[] a) {
@@ -2239,6 +2248,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowReceiptsMerkleRoot() {
     return getAllowReceiptsMerkleRoot() == 1L;
+  }
+
+  public void saveAllowTvmFreeze(long allowTvmFreeze) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_FREEZE,
+        new BytesCapsule(ByteArray.fromLong(allowTvmFreeze)));
+  }
+
+  public long getAllowTvmFreeze() {
+    String msg = "not found ALLOW_TVM_FREEZE";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_FREEZE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
   }
 
   private static class DynamicResourceProperties {
