@@ -1,8 +1,22 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+
 import com.google.protobuf.ByteString;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.function.Consumer;
+
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
@@ -11,15 +25,17 @@ import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.*;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
@@ -34,21 +50,69 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
-import java.io.File;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.function.Consumer;
-
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
-
 @Slf4j
 public class FreezeTest {
 
-  private static final String CONTRACT_CODE = "608060405261037e806100136000396000f3fe608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100655760003560e01c8062f55d9d1461006a57806330e1e4e5146100ae5780637b46b80b1461011a578063e7aa4e0b1461017c575b600080fd5b6100ac6004803603602081101561008057600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101de565b005b610104600480360360608110156100c457600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190803590602001909291905050506101f7565b6040518082815260200191505060405180910390f35b6101666004803603604081101561013057600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102f0565b6040518082815260200191505060405180910390f35b6101c86004803603604081101561019257600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190505050610327565b6040518082815260200191505060405180910390f35b8073ffffffffffffffffffffffffffffffffffffffff16ff5b60008373ffffffffffffffffffffffffffffffffffffffff168383d5158015610224573d6000803e3d6000fd5b50423073ffffffffffffffffffffffffffffffffffffffff1663e7aa4e0b86856040518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060206040518083038186803b1580156102ab57600080fd5b505afa1580156102bf573d6000803e3d6000fd5b505050506040513d60208110156102d557600080fd5b81019080805190602001909291905050500390509392505050565b60008273ffffffffffffffffffffffffffffffffffffffff1682d615801561031c573d6000803e3d6000fd5b506001905092915050565b60008273ffffffffffffffffffffffffffffffffffffffff1682d790509291505056fea26474726f6e58200fd975eab4a8c8afe73bf3841efe4da7832d5a0d09f07115bb695c7260ea642164736f6c63430005100031";
-  private static final String FACTORY_CODE = "6080604052610640806100136000396000f3fe608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100505760003560e01c806341aa901414610055578063bb63e785146100c3575b600080fd5b6100816004803603602081101561006b57600080fd5b8101908080359060200190929190505050610131565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6100ef600480360360208110156100d957600080fd5b810190808035906020019092919050505061017d565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6000806060604051806020016101469061026e565b6020820181038252601f19601f820116604052509050838151602083016000f59150813b61017357600080fd5b8192505050919050565b60008060a060f81b3084604051806020016101979061026e565b6020820181038252601f19601f820116604052508051906020012060405160200180857effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191681526001018473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1660601b81526014018381526020018281526020019450505050506040516020818303038152906040528051906020012060001c905080915050919050565b6103918061027c8339019056fe608060405261037e806100136000396000f3fe608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100655760003560e01c8062f55d9d1461006a57806330e1e4e5146100ae5780637b46b80b1461011a578063e7aa4e0b1461017c575b600080fd5b6100ac6004803603602081101561008057600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101de565b005b610104600480360360608110156100c457600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190803590602001909291905050506101f7565b6040518082815260200191505060405180910390f35b6101666004803603604081101561013057600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102f0565b6040518082815260200191505060405180910390f35b6101c86004803603604081101561019257600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190505050610327565b6040518082815260200191505060405180910390f35b8073ffffffffffffffffffffffffffffffffffffffff16ff5b60008373ffffffffffffffffffffffffffffffffffffffff168383d5158015610224573d6000803e3d6000fd5b50423073ffffffffffffffffffffffffffffffffffffffff1663e7aa4e0b86856040518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019250505060206040518083038186803b1580156102ab57600080fd5b505afa1580156102bf573d6000803e3d6000fd5b505050506040513d60208110156102d557600080fd5b81019080805190602001909291905050500390509392505050565b60008273ffffffffffffffffffffffffffffffffffffffff1682d615801561031c573d6000803e3d6000fd5b506001905092915050565b60008273ffffffffffffffffffffffffffffffffffffffff1682d790509291505056fea26474726f6e58200fd975eab4a8c8afe73bf3841efe4da7832d5a0d09f07115bb695c7260ea642164736f6c63430005100031a26474726f6e5820403c4e856a1ab2fe0eeaf6b157c29c07fef7a9e9bdc6f0faac870d2d8873159d64736f6c63430005100031";
+  private static final String CONTRACT_CODE = "608060405261037e806100136000396000f3fe6080604052"
+      + "34801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506004361061"
+      + "00655760003560e01c8062f55d9d1461006a57806330e1e4e5146100ae5780637b46b80b1461011a578063e7"
+      + "aa4e0b1461017c575b600080fd5b6100ac6004803603602081101561008057600080fd5b81019080803573ff"
+      + "ffffffffffffffffffffffffffffffffffffff1690602001909291905050506101de565b005b610104600480"
+      + "360360608110156100c457600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16"
+      + "906020019092919080359060200190929190803590602001909291905050506101f7565b6040518082815260"
+      + "200191505060405180910390f35b6101666004803603604081101561013057600080fd5b81019080803573ff"
+      + "ffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102f0"
+      + "565b6040518082815260200191505060405180910390f35b6101c86004803603604081101561019257600080"
+      + "fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001"
+      + "90929190505050610327565b6040518082815260200191505060405180910390f35b8073ffffffffffffffff"
+      + "ffffffffffffffffffffffff16ff5b60008373ffffffffffffffffffffffffffffffffffffffff168383d515"
+      + "8015610224573d6000803e3d6000fd5b50423073ffffffffffffffffffffffffffffffffffffffff1663e7aa"
+      + "4e0b86856040518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffff"
+      + "ff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001925050506020604051"
+      + "8083038186803b1580156102ab57600080fd5b505afa1580156102bf573d6000803e3d6000fd5b5050505060"
+      + "40513d60208110156102d557600080fd5b81019080805190602001909291905050500390509392505050565b"
+      + "60008273ffffffffffffffffffffffffffffffffffffffff1682d615801561031c573d6000803e3d6000fd5b"
+      + "506001905092915050565b60008273ffffffffffffffffffffffffffffffffffffffff1682d7905092915050"
+      + "56fea26474726f6e58200fd975eab4a8c8afe73bf3841efe4da7832d5a0d09f07115bb695c7260ea64216473"
+      + "6f6c63430005100031";
+  private static final String FACTORY_CODE = "6080604052610640806100136000396000f3fe60806040523"
+      + "4801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b5060043610610"
+      + "0505760003560e01c806341aa901414610055578063bb63e785146100c3575b600080fd5b610081600480360"
+      + "3602081101561006b57600080fd5b8101908080359060200190929190505050610131565b604051808273fff"
+      + "fffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526"
+      + "0200191505060405180910390f35b6100ef600480360360208110156100d957600080fd5b810190808035906"
+      + "020019092919050505061017d565b604051808273ffffffffffffffffffffffffffffffffffffffff1673fff"
+      + "fffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b600080606060405"
+      + "1806020016101469061026e565b6020820181038252601f19601f82011660405250905083815160208301600"
+      + "0f59150813b61017357600080fd5b8192505050919050565b60008060a060f81b30846040518060200161019"
+      + "79061026e565b6020820181038252601f19601f820116604052508051906020012060405160200180857efff"
+      + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167efffffffffffffffffffffff"
+      + "fffffffffffffffffffffffffffffffffffffff191681526001018473fffffffffffffffffffffffffffffff"
+      + "fffffffff1673ffffffffffffffffffffffffffffffffffffffff1660601b815260140183815260200182815"
+      + "26020019450505050506040516020818303038152906040528051906020012060001c9050809150509190505"
+      + "65b6103918061027c8339019056fe608060405261037e806100136000396000f3fe608060405234801561001"
+      + "057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100655760003"
+      + "560e01c8062f55d9d1461006a57806330e1e4e5146100ae5780637b46b80b1461011a578063e7aa4e0b14610"
+      + "17c575b600080fd5b6100ac6004803603602081101561008057600080fd5b81019080803573fffffffffffff"
+      + "fffffffffffffffffffffffffff1690602001909291905050506101de565b005b61010460048036036060811"
+      + "0156100c457600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909"
+      + "2919080359060200190929190803590602001909291905050506101f7565b604051808281526020019150506"
+      + "0405180910390f35b6101666004803603604081101561013057600080fd5b81019080803573fffffffffffff"
+      + "fffffffffffffffffffffffffff169060200190929190803590602001909291905050506102f0565b6040518"
+      + "082815260200191505060405180910390f35b6101c86004803603604081101561019257600080fd5b8101908"
+      + "0803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190505"
+      + "050610327565b6040518082815260200191505060405180910390f35b8073fffffffffffffffffffffffffff"
+      + "fffffffffffff16ff5b60008373ffffffffffffffffffffffffffffffffffffffff168383d51580156102245"
+      + "73d6000803e3d6000fd5b50423073ffffffffffffffffffffffffffffffffffffffff1663e7aa4e0b8685604"
+      + "0518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffffff1673fffff"
+      + "fffffffffffffffffffffffffffffffffff16815260200182815260200192505050602060405180830381868"
+      + "03b1580156102ab57600080fd5b505afa1580156102bf573d6000803e3d6000fd5b505050506040513d60208"
+      + "110156102d557600080fd5b81019080805190602001909291905050500390509392505050565b60008273fff"
+      + "fffffffffffffffffffffffffffffffffffff1682d615801561031c573d6000803e3d6000fd5b50600190509"
+      + "2915050565b60008273ffffffffffffffffffffffffffffffffffffffff1682d790509291505056fea264747"
+      + "26f6e58200fd975eab4a8c8afe73bf3841efe4da7832d5a0d09f07115bb695c7260ea642164736f6c6343000"
+      + "5100031a26474726f6e5820403c4e856a1ab2fe0eeaf6b157c29c07fef7a9e9bdc6f0faac870d2d8873159d6"
+      + "4736f6c63430005100031";
 
   private static final long value = 100_000_000_000_000_000L;
   private static final long fee = 1_000_000_000;
@@ -62,14 +126,8 @@ public class FreezeTest {
   private static String dbPath;
   private static TronApplicationContext context;
   private static Manager manager;
-  private static String ownerStr;
   private static byte[] owner;
-  private static byte[] blackHole;
   private static Deposit rootDeposit;
-
-  private enum OpType {
-    FREEZE, UNFREEZE
-  }
 
   @Before
   public void init() throws Exception {
@@ -77,9 +135,8 @@ public class FreezeTest {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
-    blackHole = manager.getAccountStore().getBlackholeAddress();
-    owner = Hex.decode(Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc");
-    ownerStr = StringUtil.encode58Check(owner);
+    owner = Hex.decode(Wallet.getAddressPreFixString()
+        + "abd4b9367799eaa3197fecb144eb71de1e049abc");
     rootDeposit = DepositImpl.createRoot(manager);
     rootDeposit.createAccount(owner, Protocol.AccountType.Normal);
     rootDeposit.addBalance(owner, 900_000_000_000_000_000L);
@@ -100,8 +157,11 @@ public class FreezeTest {
     return deployContract(owner, contractName, code, 0, 100_000);
   }
 
-  private byte[] deployContract(byte[] deployer, String contractName, String code,
-                                long consumeUserResourcePercent, long originEnergyLimit) throws Exception {
+  private byte[] deployContract(byte[] deployer,
+                                String contractName,
+                                String code,
+                                long consumeUserResourcePercent,
+                                long originEnergyLimit) throws Exception {
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, deployer, "[]", code, value, fee, consumeUserResourcePercent,
         null, originEnergyLimit);
@@ -114,8 +174,12 @@ public class FreezeTest {
     return contractAddr;
   }
 
-  private TVMTestResult triggerContract(byte[] callerAddr, byte[] contractAddr, long feeLimit,
-                                        contractResult expectedResult, Consumer<byte[]> check, String method,
+  private TVMTestResult triggerContract(byte[] callerAddr,
+                                        byte[] contractAddr,
+                                        long feeLimit,
+                                        contractResult expectedResult,
+                                        Consumer<byte[]> check,
+                                        String method,
                                         Object... args) throws Exception {
     String hexInput = AbiUtil.parseMethod(method, Arrays.asList(args));
     TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
@@ -127,29 +191,43 @@ public class FreezeTest {
     return result;
   }
 
-  private TVMTestResult triggerFreeze(byte[] callerAddr, byte[] contractAddr, byte[] receiverAddr,
-                                      long frozenBalance, long res,
-                                      contractResult expectedResult, Consumer<byte[]> check) throws Exception {
+  private TVMTestResult triggerFreeze(byte[] callerAddr,
+                                      byte[] contractAddr,
+                                      byte[] receiverAddr,
+                                      long frozenBalance,
+                                      long res,
+                                      contractResult expectedResult,
+                                      Consumer<byte[]> check) throws Exception {
     return triggerContract(callerAddr, contractAddr, fee, expectedResult, check,
-        "freeze(address,uint256,uint256)", StringUtil.encode58Check(receiverAddr), frozenBalance, res);
+        "freeze(address,uint256,uint256)", StringUtil.encode58Check(receiverAddr), frozenBalance,
+        res);
   }
 
-  private TVMTestResult triggerUnfreeze(byte[] callerAddr, byte[] contractAddr, byte[] receiverAddr, long res,
-                                        contractResult expectedResult, Consumer<byte[]> check) throws Exception {
+  private TVMTestResult triggerUnfreeze(byte[] callerAddr,
+                                        byte[] contractAddr,
+                                        byte[] receiverAddr,
+                                        long res,
+                                        contractResult expectedResult,
+                                        Consumer<byte[]> check) throws Exception {
     return triggerContract(callerAddr, contractAddr, fee, expectedResult, check,
         "unfreeze(address,uint256)", StringUtil.encode58Check(receiverAddr), res);
   }
 
-  private TVMTestResult triggerSuicide(byte[] callerAddr, byte[] contractAddr, byte[] inheritorAddr,
-                                        contractResult expectedResult, Consumer<byte[]> check) throws Exception {
+  private TVMTestResult triggerSuicide(byte[] callerAddr,
+                                       byte[] contractAddr,
+                                       byte[] inheritorAddr,
+                                       contractResult expectedResult,
+                                       Consumer<byte[]> check) throws Exception {
     return triggerContract(callerAddr, contractAddr, fee, expectedResult, check,
         "destroy(address)", StringUtil.encode58Check(inheritorAddr));
   }
 
-  private void setBalance(byte[] accountAddr, long balance) {
+  private void setBalance(byte[] accountAddr,
+                          long balance) {
     AccountCapsule accountCapsule = manager.getAccountStore().get(accountAddr);
     if (accountCapsule == null) {
-      accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr), Protocol.AccountType.Normal);
+      accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr),
+          Protocol.AccountType.Normal);
     }
     accountCapsule.setBalance(balance);
     manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -158,13 +236,15 @@ public class FreezeTest {
   private void setFrozenForEnergy(byte[] accountAddr, long frozenBalance) {
     AccountCapsule accountCapsule = manager.getAccountStore().get(accountAddr);
     if (accountCapsule == null) {
-      accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr), Protocol.AccountType.Normal);
+      accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr),
+          Protocol.AccountType.Normal);
     }
     accountCapsule.setFrozenForEnergy(frozenBalance, 0);
     manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
-  private byte[] getCreate2Addr(byte[] factoryAddr, long salt) throws Exception {
+  private byte[] getCreate2Addr(byte[] factoryAddr,
+                                long salt) throws Exception {
     String methodByAddr = "getCreate2Addr(uint256)";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
     TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
@@ -174,7 +254,8 @@ public class FreezeTest {
         new DataWord(result.getRuntime().getResult().getHReturn()).getLast20Bytes());
   }
 
-  private byte[] deployCreate2Contract(byte[] factoryAddr, long salt) throws Exception {
+  private byte[] deployCreate2Contract(byte[] factoryAddr,
+                                       long salt) throws Exception {
     String methodByAddr = "deployCreate2Contract(uint256)";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
     TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
@@ -242,33 +323,26 @@ public class FreezeTest {
     unfreezeForSelfWithException(contract, 0);
     unfreezeForSelfWithException(contract, 1);
 
-    // trigger freezeForOther(address,uint256,uint256) to delegate bandwidth with creating a new account
     long energyWithCreatingAccountA = freezeForOther(contract, userA, frozenBalance, 0)
         .getReceipt().getEnergyUsageTotal();
 
-    // trigger freezeForOther(address,uint256,uint256) to delegate bandwidth without creating a new account
     long energyWithoutCreatingAccountA = freezeForOther(contract, userA, frozenBalance, 0)
         .getReceipt().getEnergyUsageTotal();
     Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getInstance().getNEW_ACCT_CALL(),
         energyWithoutCreatingAccountA);
 
-    // trigger freezeForOther(address,uint256,uint256) to delegate energy
     freezeForOther(contract, userA, frozenBalance, 1);
 
-    // trigger freezeForOther(address,uint256,uint256) to delegate energy with creating a new account
     long energyWithCreatingAccountB = freezeForOther(contract, userB, frozenBalance, 1)
         .getReceipt().getEnergyUsageTotal();
 
-    // trigger freezeForOther(address,uint256,uint256) to delegate energy without creating a new account
     long energyWithoutCreatingAccountB = freezeForOther(contract, userB, frozenBalance, 1)
         .getReceipt().getEnergyUsageTotal();
     Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getInstance().getNEW_ACCT_CALL(),
         energyWithoutCreatingAccountB);
 
-    // trigger freezeForOther(address,uint256,uint256) to delegate bandwidth
     freezeForOther(contract, userB, frozenBalance, 0);
 
-    // tests of freezeForSelf(uint256,uint256) with invalid args
     freezeForOtherWithException(contract, userC, frozenBalance, 2);
     freezeForOtherWithException(contract, userC, 0, 0);
     freezeForOtherWithException(contract, userB, -frozenBalance, 0);
@@ -412,7 +486,8 @@ public class FreezeTest {
   @Test
   public void testCreate2SuicideToBlackHole() throws Exception {
     byte[] factory = deployContract("FactoryContract", FACTORY_CODE);
-    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);long frozenBalance = 1_000_000;
+    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
+    long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
     long salt = 1;
@@ -441,7 +516,8 @@ public class FreezeTest {
   @Test
   public void testCreate2SuicideToAccount() throws Exception {
     byte[] factory = deployContract("FactoryContract", FACTORY_CODE);
-    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);long frozenBalance = 1_000_000;
+    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
+    long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
     long salt = 1;
@@ -473,7 +549,7 @@ public class FreezeTest {
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
-    setBalance(userA,  100_000_000);
+    setBalance(userA, 100_000_000);
     setFrozenForEnergy(owner, frozenBalance);
     AccountCapsule caller = manager.getAccountStore().get(userA);
     AccountCapsule deployer = manager.getAccountStore().get(owner);
@@ -482,16 +558,50 @@ public class FreezeTest {
   }
 
   @Test
-  public void testFreezeToDeployer() throws Exception {
+  public void testFreezeEnergyToDeployer() throws Exception {
     byte[] contract = deployContract(owner, "TestFreeze", CONTRACT_CODE, 50, 10_000);
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
-    setBalance(userA,  100_000_000);
+    setBalance(userA, 100_000_000);
     setFrozenForEnergy(owner, frozenBalance);
     AccountCapsule caller = manager.getAccountStore().get(userA);
     AccountCapsule deployer = manager.getAccountStore().get(owner);
     TVMTestResult result = freezeForOther(userA, contract, owner, frozenBalance, 1);
+    checkReceipt(result, caller, deployer);
+  }
+
+  @Test
+  public void testUnfreezeEnergyToCaller() throws Exception {
+    byte[] contract = deployContract(owner, "TestFreeze", CONTRACT_CODE, 50, 10_000);
+    long frozenBalance = 1_000_000;
+    freezeForSelf(contract, frozenBalance, 0);
+    freezeForSelf(contract, frozenBalance, 1);
+    setBalance(userA, 100_000_000);
+    //setFrozenForEnergy(owner, frozenBalance);
+    freezeForOther(contract, userA, frozenBalance, 1);
+    freezeForOther(contract, owner, frozenBalance, 1);
+    clearDelegatedExpireTime(contract, userA);
+    AccountCapsule caller = manager.getAccountStore().get(userA);
+    AccountCapsule deployer = manager.getAccountStore().get(owner);
+    TVMTestResult result = unfreezeForOther(userA, contract, userA, 1);
+    checkReceipt(result, caller, deployer);
+  }
+
+  @Test
+  public void testUnfreezeEnergyToDeployer() throws Exception {
+    byte[] contract = deployContract(owner, "TestFreeze", CONTRACT_CODE, 50, 10_000);
+    long frozenBalance = 1_000_000;
+    freezeForSelf(contract, frozenBalance, 0);
+    freezeForSelf(contract, frozenBalance, 1);
+    setBalance(userA, 100_000_000);
+    //setFrozenForEnergy(owner, frozenBalance);
+    freezeForOther(contract, userA, frozenBalance, 1);
+    freezeForOther(contract, owner, frozenBalance, 1);
+    clearDelegatedExpireTime(contract, owner);
+    AccountCapsule caller = manager.getAccountStore().get(userA);
+    AccountCapsule deployer = manager.getAccountStore().get(owner);
+    TVMTestResult result = unfreezeForOther(userA, contract, owner, 1);
     checkReceipt(result, caller, deployer);
   }
 
@@ -503,7 +613,8 @@ public class FreezeTest {
     manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
-  private void clearDelegatedExpireTime(byte[] owner, byte[] receiver) {
+  private void clearDelegatedExpireTime(byte[] owner,
+                                        byte[] receiver) {
     byte[] key = DelegatedResourceCapsule.createDbKey(owner, receiver);
     DelegatedResourceCapsule delegatedResource = manager.getDelegatedResourceStore().get(key);
     long now = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
@@ -512,12 +623,16 @@ public class FreezeTest {
     manager.getDelegatedResourceStore().put(key, delegatedResource);
   }
 
-  private TVMTestResult freezeForSelf(byte[] contractAddr, long frozenBalance, long res) throws Exception {
+  private TVMTestResult freezeForSelf(byte[] contractAddr,
+                                      long frozenBalance,
+                                      long res) throws Exception {
     return freezeForSelf(owner, contractAddr, frozenBalance, res);
   }
 
-  private TVMTestResult freezeForSelf(byte[] callerAddr, byte[] contractAddr,
-                                      long frozenBalance, long res) throws Exception {
+  private TVMTestResult freezeForSelf(byte[] callerAddr,
+                                      byte[] contractAddr,
+                                      long frozenBalance,
+                                      long res) throws Exception {
     DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
@@ -525,7 +640,8 @@ public class FreezeTest {
     AccountStore accountStore = manager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
 
-    TVMTestResult result = triggerFreeze(callerAddr, contractAddr, contractAddr, frozenBalance, res, SUCCESS,
+    TVMTestResult result = triggerFreeze(callerAddr, contractAddr, contractAddr, frozenBalance, res,
+        SUCCESS,
         returnValue -> Assert.assertEquals(dynamicStore.getMinFrozenTime() * FROZEN_PERIOD,
             new DataWord(returnValue).longValue() * 1000));
 
@@ -541,7 +657,8 @@ public class FreezeTest {
       oldOwner.setFrozenForBandwidth(0, 0);
       newOwner.setFrozenForBandwidth(0, 0);
     } else {
-      Assert.assertEquals(oldOwner.getEnergyFrozenBalance() + frozenBalance, newOwner.getEnergyFrozenBalance());
+      Assert.assertEquals(oldOwner.getEnergyFrozenBalance() + frozenBalance,
+          newOwner.getEnergyFrozenBalance());
       Assert.assertEquals(oldTotalNetWeight, dynamicStore.getTotalNetWeight());
       Assert.assertEquals(oldTotalEnergyWeight + frozenBalance / TRX_PRECISION,
           dynamicStore.getTotalEnergyWeight());
@@ -553,15 +670,20 @@ public class FreezeTest {
     return result;
   }
 
-  private TVMTestResult freezeForSelfWithException(byte[] contractAddr, long frozenBalance, long res) throws Exception {
+  private TVMTestResult freezeForSelfWithException(byte[] contractAddr,
+                                                   long frozenBalance,
+                                                   long res) throws Exception {
     return triggerFreeze(owner, contractAddr, contractAddr, frozenBalance, res, REVERT, null);
   }
 
-  private TVMTestResult unfreezeForSelf(byte[] contractAddr, long res) throws Exception {
+  private TVMTestResult unfreezeForSelf(byte[] contractAddr,
+                                        long res) throws Exception {
     return unfreezeForSelf(owner, contractAddr, res);
   }
 
-  private TVMTestResult unfreezeForSelf(byte[] callerAddr, byte[] contractAddr, long res) throws Exception {
+  private TVMTestResult unfreezeForSelf(byte[] callerAddr,
+                                        byte[] contractAddr,
+                                        long res) throws Exception {
     DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
@@ -571,9 +693,10 @@ public class FreezeTest {
     long frozenBalance = res == 0 ? oldOwner.getFrozenBalance() : oldOwner.getEnergyFrozenBalance();
     Assert.assertTrue(frozenBalance > 0);
 
-    TVMTestResult result = triggerUnfreeze(callerAddr, contractAddr, contractAddr, res, SUCCESS, returnValue ->
-        Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
-            Hex.toHexString(returnValue)));
+    TVMTestResult result = triggerUnfreeze(callerAddr, contractAddr, contractAddr, res, SUCCESS,
+        returnValue ->
+            Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
+                Hex.toHexString(returnValue)));
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
     Assert.assertEquals(oldOwner.getBalance() + frozenBalance, newOwner.getBalance());
@@ -599,17 +722,24 @@ public class FreezeTest {
     return result;
   }
 
-  private TVMTestResult unfreezeForSelfWithException(byte[] contractAddr, long res) throws Exception {
+  private TVMTestResult unfreezeForSelfWithException(byte[] contractAddr,
+                                                     long res) throws Exception {
     return triggerUnfreeze(owner, contractAddr, contractAddr, res, REVERT, null);
   }
 
   private TVMTestResult freezeForOther(
-      byte[] contractAddr, byte[] receiverAddr, long frozenBalance, long res) throws Exception {
+      byte[] contractAddr,
+      byte[] receiverAddr,
+      long frozenBalance,
+      long res) throws Exception {
     return freezeForOther(owner, contractAddr, receiverAddr, frozenBalance, res);
   }
 
-  private TVMTestResult freezeForOther(byte[] callerAddr, byte[] contractAddr,
-                                       byte[] receiverAddr, long frozenBalance, long res) throws Exception {
+  private TVMTestResult freezeForOther(byte[] callerAddr,
+                                       byte[] contractAddr,
+                                       byte[] receiverAddr,
+                                       long frozenBalance,
+                                       long res) throws Exception {
     DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
@@ -640,10 +770,12 @@ public class FreezeTest {
     }
     DelegatedResourceAccountIndexCapsule oldReceiverIndex = indexStore.get(receiverAddr);
     if (oldReceiverIndex == null) {
-      oldReceiverIndex = new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(receiverAddr));
+      oldReceiverIndex = new DelegatedResourceAccountIndexCapsule(
+          ByteString.copyFrom(receiverAddr));
     }
 
-    TVMTestResult result = triggerFreeze(callerAddr, contractAddr, receiverAddr, frozenBalance, res, SUCCESS,
+    TVMTestResult result = triggerFreeze(callerAddr, contractAddr, receiverAddr, frozenBalance, res,
+        SUCCESS,
         returnValue -> Assert.assertEquals(dynamicStore.getMinFrozenTime() * FROZEN_PERIOD,
             new DataWord(returnValue).longValue() * 1000));
 
@@ -699,14 +831,16 @@ public class FreezeTest {
 
     DelegatedResourceAccountIndexCapsule newOwnerIndex = indexStore.get(contractAddr);
     Assert.assertNotNull(newOwnerIndex);
-    Assert.assertTrue(newOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
+    Assert.assertTrue(
+        newOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
     oldOwnerIndex.removeToAccount(ByteString.copyFrom(receiverAddr));
     newOwnerIndex.removeToAccount(ByteString.copyFrom(receiverAddr));
     Assert.assertArrayEquals(oldOwnerIndex.getData(), newOwnerIndex.getData());
 
     DelegatedResourceAccountIndexCapsule newReceiverIndex = indexStore.get(receiverAddr);
     Assert.assertNotNull(newReceiverIndex);
-    Assert.assertTrue(newReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
+    Assert.assertTrue(
+        newReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
     oldReceiverIndex.removeFromAccount(ByteString.copyFrom(contractAddr));
     newReceiverIndex.removeFromAccount(ByteString.copyFrom(contractAddr));
     Assert.assertArrayEquals(oldReceiverIndex.getData(), newReceiverIndex.getData());
@@ -725,16 +859,23 @@ public class FreezeTest {
   }
 
   private TVMTestResult freezeForOtherWithException(
-      byte[] contractAddr, byte[] receiverAddr, long frozenBalance, long res) throws Exception {
+      byte[] contractAddr,
+      byte[] receiverAddr,
+      long frozenBalance,
+      long res) throws Exception {
     return triggerFreeze(owner, contractAddr, receiverAddr, frozenBalance, res, REVERT, null);
   }
 
-  private TVMTestResult unfreezeForOther(byte[] contractAddr, byte[] receiverAddr, long res) throws Exception {
+  private TVMTestResult unfreezeForOther(byte[] contractAddr,
+                                         byte[] receiverAddr,
+                                         long res) throws Exception {
     return unfreezeForOther(owner, contractAddr, receiverAddr, res);
   }
 
-  private TVMTestResult unfreezeForOther(byte[] callerAddr, byte[] contractAddr,
-                                         byte[] receiverAddr, long res) throws Exception {
+  private TVMTestResult unfreezeForOther(byte[] callerAddr,
+                                         byte[] contractAddr,
+                                         byte[] receiverAddr,
+                                         long res) throws Exception {
     DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
@@ -762,13 +903,16 @@ public class FreezeTest {
 
     DelegatedResourceAccountIndexStore indexStore = manager.getDelegatedResourceAccountIndexStore();
     DelegatedResourceAccountIndexCapsule oldOwnerIndex = indexStore.get(contractAddr);
-    Assert.assertTrue(oldOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
+    Assert.assertTrue(
+        oldOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
     DelegatedResourceAccountIndexCapsule oldReceiverIndex = indexStore.get(receiverAddr);
-    Assert.assertTrue(oldReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
+    Assert.assertTrue(
+        oldReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
 
-    TVMTestResult result = triggerUnfreeze(callerAddr, contractAddr, receiverAddr, res, SUCCESS, returnValue ->
-        Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
-            Hex.toHexString(returnValue)));
+    TVMTestResult result = triggerUnfreeze(callerAddr, contractAddr, receiverAddr, res, SUCCESS,
+        returnValue ->
+            Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001",
+                Hex.toHexString(returnValue)));
 
     // check owner account
     AccountCapsule newOwner = accountStore.get(contractAddr);
@@ -777,7 +921,8 @@ public class FreezeTest {
     if (res == 0) {
       Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForBandwidth() - delegatedFrozenBalance,
           newOwner.getDelegatedFrozenBalanceForBandwidth());
-      newOwner.setDelegatedFrozenBalanceForBandwidth(oldOwner.getDelegatedFrozenBalanceForBandwidth());
+      newOwner.setDelegatedFrozenBalanceForBandwidth(
+          oldOwner.getDelegatedFrozenBalanceForBandwidth());
     } else {
       Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForEnergy() - delegatedFrozenBalance,
           newOwner.getDelegatedFrozenBalanceForEnergy());
@@ -789,14 +934,14 @@ public class FreezeTest {
     AccountCapsule newReceiver = accountStore.get(receiverAddr);
     if (oldReceiver != null) {
       Assert.assertNotNull(newReceiver);
-      long newAcquiredBalance = res == 0 ? newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth() :
-          newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
-      Assert.assertTrue(newAcquiredBalance == 0 || acquiredBalance - newAcquiredBalance == delegatedFrozenBalance);
+      long newAcquiredBalance = res == 0
+          ? newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth()
+          : newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
+      Assert.assertTrue(newAcquiredBalance == 0
+          || acquiredBalance - newAcquiredBalance == delegatedFrozenBalance);
       newReceiver.setBalance(oldReceiver.getBalance());
       newReceiver.setEnergyUsage(0);
       oldReceiver.setEnergyUsage(0);
-//      newReceiver.setNetUsage(oldReceiver.getNetUsage());
-//      newReceiver.setEnergyUsage(oldReceiver.getEnergyUsage());
       if (res == 0) {
         oldReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
         newReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
@@ -826,18 +971,20 @@ public class FreezeTest {
     // check account index store
     DelegatedResourceAccountIndexCapsule newOwnerIndex = indexStore.get(contractAddr);
     Assert.assertNotNull(newOwnerIndex);
-    if (newDelegatedResource.getFrozenBalanceForBandwidth() == 0 &&
-        newDelegatedResource.getFrozenBalanceForEnergy() == 0) {
-      Assert.assertFalse(newOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
+    if (newDelegatedResource.getFrozenBalanceForBandwidth() == 0
+        && newDelegatedResource.getFrozenBalanceForEnergy() == 0) {
+      Assert.assertFalse(
+          newOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
       oldOwnerIndex.removeToAccount(ByteString.copyFrom(receiverAddr));
     }
     Assert.assertArrayEquals(oldOwnerIndex.getData(), newOwnerIndex.getData());
 
     DelegatedResourceAccountIndexCapsule newReceiverIndex = indexStore.get(receiverAddr);
     Assert.assertNotNull(newReceiverIndex);
-    if (newDelegatedResource.getFrozenBalanceForBandwidth() == 0 &&
-        newDelegatedResource.getFrozenBalanceForEnergy() == 0) {
-      Assert.assertFalse(newReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
+    if (newDelegatedResource.getFrozenBalanceForBandwidth() == 0
+        && newDelegatedResource.getFrozenBalanceForEnergy() == 0) {
+      Assert.assertFalse(
+          newReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
       oldReceiverIndex.removeFromAccount(ByteString.copyFrom(contractAddr));
     }
     Assert.assertArrayEquals(oldReceiverIndex.getData(), newReceiverIndex.getData());
@@ -856,19 +1003,24 @@ public class FreezeTest {
     return result;
   }
 
-  private TVMTestResult unfreezeForOtherWithException(byte[] contractAddr, byte[] receiverAddr, long res) throws Exception {
+  private TVMTestResult unfreezeForOtherWithException(byte[] contractAddr,
+                                                      byte[] receiverAddr,
+                                                      long res) throws Exception {
     return triggerUnfreeze(owner, contractAddr, receiverAddr, res, REVERT, null);
   }
 
-  private TVMTestResult suicideWithException(byte[] contractAddr, byte[] inheritorAddr) throws Exception {
+  private TVMTestResult suicideWithException(byte[] contractAddr,
+                                             byte[] inheritorAddr) throws Exception {
     return triggerSuicide(owner, contractAddr, inheritorAddr, REVERT, null);
   }
 
-  private TVMTestResult suicideToAccount(byte[] contractAddr, byte[] inheritorAddr) throws Exception {
+  private TVMTestResult suicideToAccount(byte[] contractAddr,
+                                         byte[] inheritorAddr) throws Exception {
     return suicideToAccount(owner, contractAddr, inheritorAddr);
   }
 
-  private TVMTestResult suicideToAccount(byte[] callerAddr, byte[] contractAddr,
+  private TVMTestResult suicideToAccount(byte[] callerAddr,
+                                         byte[] contractAddr,
                                          byte[] inheritorAddr) throws Exception {
     if (FastByteComparisons.isEqual(contractAddr, inheritorAddr)) {
       inheritorAddr = manager.getAccountStore().getBlackholeAddress();
@@ -890,7 +1042,8 @@ public class FreezeTest {
     Assert.assertNull(accountStore.get(contractAddr));
     AccountCapsule newInheritor = accountStore.get(inheritorAddr);
     Assert.assertNotNull(newInheritor);
-    if (FastByteComparisons.isEqual(inheritorAddr, manager.getAccountStore().getBlackholeAddress())) {
+    if (FastByteComparisons.isEqual(inheritorAddr,
+        manager.getAccountStore().getBlackholeAddress())) {
       Assert.assertEquals(contract.getBalance() + contract.getTronPower(),
           newInheritor.getBalance() - oldBalanceOfInheritor - result.getReceipt().getEnergyFee());
     } else {
@@ -902,9 +1055,9 @@ public class FreezeTest {
     Assert.assertEquals(0, contract.getDelegatedFrozenBalanceForEnergy());
     DelegatedResourceAccountIndexStore indexStore = manager.getDelegatedResourceAccountIndexStore();
     DelegatedResourceAccountIndexCapsule indexCapsule = indexStore.get(contractAddr);
-    Assert.assertTrue(indexCapsule == null ||
-        indexCapsule.getToAccountsList() == null ||
-        indexCapsule.getToAccountsList().isEmpty());
+    Assert.assertTrue(indexCapsule == null
+        || indexCapsule.getToAccountsList() == null
+        || indexCapsule.getToAccountsList().isEmpty());
 
     long newTotalNetWeight = dynamicStore.getTotalNetWeight();
     long newTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
@@ -916,7 +1069,9 @@ public class FreezeTest {
     return result;
   }
 
-  private void checkReceipt(TVMTestResult result, AccountCapsule caller, AccountCapsule deployer) {
+  private void checkReceipt(TVMTestResult result,
+                            AccountCapsule caller,
+                            AccountCapsule deployer) {
     AccountStore accountStore = manager.getAccountStore();
     long callerEnergyUsage = result.getReceipt().getEnergyUsage();
     long deployerEnergyUsage = result.getReceipt().getOriginEnergyUsage();
