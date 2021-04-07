@@ -112,6 +112,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   private Type type;
 
+  @Getter
+  @Setter
+  private byte[] callerAddress; // the real caller when this transaction is a cross-chain smartcontract
+
   /**
    * constructor TransactionCapsule.
    */

@@ -231,7 +231,12 @@ public class TransactionTrace {
         ContractCapsule contractCapsule =
             contractStore.get(callContract.getContractAddress().toByteArray());
 
-        callerAccount = callContract.getOwnerAddress().toByteArray();
+        if (trx.getCallerAddress().length > 0) {
+          // this transaction is a cross-chain smartcontract
+          callerAccount = trx.getCallerAddress();
+        } else {
+          callerAccount = callContract.getOwnerAddress().toByteArray();
+        }
         originAccount = contractCapsule.getOriginAddress();
         percent = Math
             .max(Constant.ONE_HUNDRED - contractCapsule.getConsumeUserResourcePercent(), 0);

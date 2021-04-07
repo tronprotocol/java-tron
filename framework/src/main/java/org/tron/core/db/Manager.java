@@ -102,6 +102,7 @@ import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.CrossContractConstructException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -1708,7 +1709,26 @@ public class Manager {
             throw new ValidateSignatureException(
                 "trigger source owner address not equals sign address");
           }
+
+          TriggerSmartContract source = contractTrigger.getSource();
+          TriggerSmartContract dest = contractTrigger.getDest();
+          // check source and dest contract data
+          if (!Arrays.equals(source.getData().toByteArray(), dest.getData().toByteArray())) {
+            throw new CrossContractConstructException("dest data must equal with source data");
+          }
+
+          // todo: check proxy account
+
           TransactionCapsule crossTriggerTx;
+          if (transactionCapsule.isSource()) {
+            crossTriggerTx = new TransactionCapsule(source, ContractType.TriggerSmartContract);
+          } else {
+            crossTriggerTx = new TransactionCapsule(dest, ContractType.TriggerSmartContract);
+            // set the fee payer when transaction is dest
+            crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
+          }
+
+          /*TransactionCapsule crossTriggerTx;
           if (transactionCapsule.isSource()) {
             crossTriggerTx = new TransactionCapsule(contractTrigger.getSource(),
                 ContractType.TriggerSmartContract);
@@ -1722,7 +1742,9 @@ public class Manager {
                 .build();
             crossTriggerTx = new TransactionCapsule(dest,
                 ContractType.TriggerSmartContract);
-          }
+            // set the fee payer when transaction is dest
+            crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
+          }*/
           setTransaction(crossTriggerTx, transactionCapsule);
           TransactionInfo middleResult = processTransaction(crossTriggerTx, block);
           //
@@ -1741,7 +1763,7 @@ public class Manager {
 
   private byte[] buildDestData(TriggerSmartContract source, TriggerSmartContract dest,
       Result.contractResult sourceResult) {
-    byte[] sourceData = source.getData().toByteArray();
+    /*byte[] sourceData = source.getData().toByteArray();
     byte[] destData = dest.getData().toByteArray();
     byte[] result = new byte[destData.length + sourceData.length + 64 + 64];
     //set contract data
@@ -1751,7 +1773,8 @@ public class Manager {
     byte[] txResult = Hex.decode(sourceResult.name());
     System.arraycopy(txResult, 0, destData, sourceData.length + contractAddress.length,
         txResult.length);
-    return result;
+    return result;*/
+    return source.getData().toByteArray();
   }
 
   private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx) {
