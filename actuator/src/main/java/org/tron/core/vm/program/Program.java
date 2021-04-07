@@ -532,6 +532,11 @@ public class Program {
       }
     } else {
       createAccountIfNotExist(getContractState(), obtainer);
+      AccountCapsule accountCapsule = getContractState().getAccount(obtainer);
+      if (getContractState().getDynamicPropertiesStore().supportAllowNewResourceModel()
+          && accountCapsule.oldTronPowerIsNotInitialized()) {
+        accountCapsule.initializeOldTronPower();
+      }
       try {
         MUtil.transfer(getContractState(), owner, obtainer, balance);
         if (VMConfig.allowTvmTransferTrc10()) {
