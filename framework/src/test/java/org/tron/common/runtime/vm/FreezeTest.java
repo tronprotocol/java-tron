@@ -143,7 +143,6 @@ public class FreezeTest {
     rootDeposit.commit();
 
     ConfigLoader.disable = true;
-    CommonParameter.getInstance().setBlockNumForEnergyLimit(0);
     manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
     VMConfig.initVmHardFork(true);
     VMConfig.initAllowTvmTransferTrc10(1);
@@ -1087,6 +1086,7 @@ public class FreezeTest {
 
   @After
   public void destroy() {
+    ConfigLoader.disable = false;
     Args.clearParam();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
