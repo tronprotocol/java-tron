@@ -449,9 +449,9 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_NEW_RESOURCE_MODEL]");
         }
-        if (value != 1 && value != 0) {
+        if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_NEW_RESOURCE_MODEL] is only allowed to be 1 or 0");
+              "This value[ALLOW_NEW_RESOURCE_MODEL] is only allowed to be 1");
         }
         break;
       }
