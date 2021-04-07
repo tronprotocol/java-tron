@@ -1,32 +1,27 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.DecodeUtil;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-
 public class UnfreezeBalanceProcessor {
 
-  public void validate(UnfreezeBalanceParam param, Repository repo) throws ContractValidateException {
+  public void validate(UnfreezeBalanceParam param, Repository repo)
+      throws ContractValidateException {
     if (repo == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
@@ -68,7 +63,8 @@ public class UnfreezeBalanceProcessor {
           }
           break;
         default:
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException("ResourceCode error."
+              + "valid ResourceCode[BANDWIDTH、Energy]");
       }
     } else {
       switch (param.getResourceType()) {
@@ -97,7 +93,8 @@ public class UnfreezeBalanceProcessor {
           }
           break;
         default:
-          throw new ContractValidateException("ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException("ResourceCode error."
+              + "valid ResourceCode[BANDWIDTH、Energy]");
       }
     }
   }
@@ -183,7 +180,8 @@ public class UnfreezeBalanceProcessor {
         case ENERGY:
           unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForEnergy()
               .getFrozenBalance();
-          Protocol.Account.AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
+          Protocol.Account.AccountResource newAccountResource =
+              accountCapsule.getAccountResource().toBuilder()
               .clearFrozenBalanceForEnergy().build();
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
@@ -215,11 +213,12 @@ public class UnfreezeBalanceProcessor {
 
   private void removeDelegatedAccountIndex(byte[] ownerAddr, byte[] removedAddr,
                                         boolean isToList, Repository repo) {
-    DelegatedResourceAccountIndexCapsule indexCapsule = repo.getDelegatedResourceAccountIndex(ownerAddr);
+    DelegatedResourceAccountIndexCapsule indexCapsule =
+        repo.getDelegatedResourceAccountIndex(ownerAddr);
     if (indexCapsule != null) {
-      List<ByteString> accountsList = new ArrayList<>(isToList ?
-          indexCapsule.getToAccountsList() :
-          indexCapsule.getFromAccountsList());
+      List<ByteString> accountsList = new ArrayList<>(isToList
+          ? indexCapsule.getToAccountsList()
+          : indexCapsule.getFromAccountsList());
       accountsList.remove(ByteString.copyFrom(removedAddr));
       if (isToList) {
         indexCapsule.setAllToAccounts(accountsList);

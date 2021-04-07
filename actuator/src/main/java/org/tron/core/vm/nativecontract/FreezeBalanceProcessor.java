@@ -1,12 +1,12 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.ByteString;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
@@ -17,12 +17,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 @Slf4j(topic = "Processor")
 public class FreezeBalanceProcessor {
@@ -189,9 +183,9 @@ public class FreezeBalanceProcessor {
     if (indexCapsule == null) {
       indexCapsule = new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(ownerAddr));
     }
-    List<ByteString> accountsList = isToList ?
-        indexCapsule.getToAccountsList() :
-        indexCapsule.getFromAccountsList();
+    List<ByteString> accountsList = isToList
+        ? indexCapsule.getToAccountsList()
+        : indexCapsule.getFromAccountsList();
     if (!accountsList.contains(ByteString.copyFrom(addedAddr))) {
       if (isToList) {
         indexCapsule.addToAccount(ByteString.copyFrom(addedAddr));
