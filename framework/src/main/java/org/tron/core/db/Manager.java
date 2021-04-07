@@ -403,9 +403,7 @@ public class Manager {
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
     //int account asset issue import
-//    chainBaseManager.getAccountAssetIssueStore().convertAccountAssert();
     initCacheTxs();
-//    chainBaseManager.getAccountAssetIssueStore().waitUtilConvertAccountFinish();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());

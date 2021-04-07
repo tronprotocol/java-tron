@@ -527,11 +527,6 @@ public class DepositImpl implements Deposit {
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
-//
-//    AccountAssetIssueCapsule accountAssetIssue = getAccountAssetIssue(address);
-//    if (accountAssetIssue == null) {
-//      accountAssetIssue = createAccountAssetIssue(address);
-//    }
 
     long balance = accountCapsule.getBalance();
     if (value == 0) {
