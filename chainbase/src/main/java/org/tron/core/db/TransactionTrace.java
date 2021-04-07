@@ -231,7 +231,7 @@ public class TransactionTrace {
         ContractCapsule contractCapsule =
             contractStore.get(callContract.getContractAddress().toByteArray());
 
-        if (trx.getCallerAddress().length > 0) {
+        if (trx.getCallerAddress() != null && trx.getCallerAddress().length > 0) {
           // this transaction is a cross-chain smartcontract
           callerAccount = trx.getCallerAddress();
         } else {
