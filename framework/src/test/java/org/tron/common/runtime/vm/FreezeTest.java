@@ -140,9 +140,27 @@ public class FreezeTest {
         "unfreeze(address,uint256)", StringUtil.encode58Check(receiverAddr), res);
   }
 
+  private TVMTestResult triggerSuicide(byte[] callerAddr, byte[] contractAddr, byte[] inheritorAddr,
+                                        contractResult expectedResult, Consumer<byte[]> check) throws Exception {
+    return triggerContract(callerAddr, contractAddr, fee, expectedResult, check,
+        "destroy(address)", StringUtil.encode58Check(inheritorAddr));
+  }
+
   private void setBalance(byte[] accountAddr, long balance) {
     AccountCapsule accountCapsule = manager.getAccountStore().get(accountAddr);
+    if (accountCapsule == null) {
+      accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr), Protocol.AccountType.Normal);
+    }
     accountCapsule.setBalance(balance);
+    manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+  }
+
+  private void setFrozenForEnergy(byte[] accountAddr, long frozenBalance) {
+    AccountCapsule accountCapsule = manager.getAccountStore().get(accountAddr);
+    if (accountCapsule == null) {
+      accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr), Protocol.AccountType.Normal);
+    }
+    accountCapsule.setFrozenForEnergy(frozenBalance, 0);
     manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
@@ -316,7 +334,7 @@ public class FreezeTest {
   }
 
   @Test
-  public void testContractSuicideToBlackHoleWithFreeze() throws Exception {
+  public void testContractSuicideToBlackHole() throws Exception {
     byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
@@ -325,39 +343,49 @@ public class FreezeTest {
     freezeForOther(contract, userA, frozenBalance, 1);
     freezeForOther(contract, userB, frozenBalance, 0);
     freezeForOther(contract, userB, frozenBalance, 1);
-    suicideToAccount(contract, blackHole);
+    suicideWithException(contract, contract);
+    clearDelegatedExpireTime(contract, userA);
+    unfreezeForOther(contract, userA, 0);
+    unfreezeForOther(contract, userA, 1);
+    suicideWithException(contract, contract);
+    clearDelegatedExpireTime(contract, userB);
+    unfreezeForOther(contract, userB, 0);
+    unfreezeForOther(contract, userB, 1);
+    suicideToAccount(contract, contract);
   }
 
   @Test
-  public void testContractSuicideToNonExistAccountWithFreeze() throws Exception {
+  public void testContractSuicideToNonExistAccount() throws Exception {
     byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
     freezeForOther(contract, userA, frozenBalance, 0);
     freezeForOther(contract, userA, frozenBalance, 1);
-    freezeForOther(contract, userB, frozenBalance, 0);
-    freezeForOther(contract, userB, frozenBalance, 1);
-    suicideToAccount(contract, userC);
-    clearExpireTime(userC);
-
+    suicideWithException(contract, userB);
+    clearDelegatedExpireTime(contract, userA);
+    unfreezeForOther(contract, userA, 0);
+    unfreezeForOther(contract, userA, 1);
+    suicideToAccount(contract, userB);
   }
 
   @Test
-  public void testContractSuicideToExistNormalAccountWithFreeze() throws Exception {
+  public void testContractSuicideToExistNormalAccount() throws Exception {
     byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
     freezeForOther(contract, userA, frozenBalance, 0);
     freezeForOther(contract, userA, frozenBalance, 1);
-    freezeForOther(contract, userB, frozenBalance, 0);
-    freezeForOther(contract, userB, frozenBalance, 1);
+    suicideWithException(contract, userA);
+    clearDelegatedExpireTime(contract, userA);
+    unfreezeForOther(contract, userA, 0);
+    unfreezeForOther(contract, userA, 1);
     suicideToAccount(contract, userA);
   }
 
   @Test
-  public void testContractSuicideToExistContractAccountWithFreeze() throws Exception {
+  public void testContractSuicideToExistContractAccount() throws Exception {
     byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
     byte[] otherContract = deployContract("OtherTestFreeze", CONTRACT_CODE);
     long frozenBalance = 1_000_000;
@@ -365,13 +393,24 @@ public class FreezeTest {
     freezeForSelf(contract, frozenBalance, 1);
     freezeForOther(contract, userA, frozenBalance, 0);
     freezeForOther(contract, userA, frozenBalance, 1);
-    freezeForOther(contract, userB, frozenBalance, 0);
-    freezeForOther(contract, userB, frozenBalance, 1);
+    suicideWithException(contract, otherContract);
+    clearDelegatedExpireTime(contract, userA);
+    unfreezeForOther(contract, userA, 0);
+    unfreezeForOther(contract, userA, 1);
+    freezeForSelf(otherContract, frozenBalance, 0);
+    freezeForSelf(otherContract, frozenBalance, 1);
+    freezeForOther(otherContract, userA, frozenBalance, 0);
+    freezeForOther(otherContract, userA, frozenBalance, 1);
     suicideToAccount(contract, otherContract);
+    suicideWithException(otherContract, contract);
+    clearDelegatedExpireTime(otherContract, userA);
+    unfreezeForOther(otherContract, userA, 0);
+    unfreezeForOther(otherContract, userA, 1);
+    suicideToAccount(otherContract, contract);
   }
 
   @Test
-  public void testCreate2SuicideToBlackHoleWithFreeze() throws Exception {
+  public void testCreate2SuicideToBlackHole() throws Exception {
     byte[] factory = deployContract("FactoryContract", FACTORY_CODE);
     byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
@@ -380,72 +419,80 @@ public class FreezeTest {
     byte[] predictedAddr = getCreate2Addr(factory, salt);
     freezeForOther(contract, predictedAddr, frozenBalance, 0);
     freezeForOther(contract, predictedAddr, frozenBalance, 1);
-    freezeForOther(contract, userA, frozenBalance, 0);
-    freezeForOther(contract, userA, frozenBalance, 1);
     Assert.assertArrayEquals(predictedAddr, deployCreate2Contract(factory, salt));
     setBalance(predictedAddr, 100_000_000);
     freezeForSelf(predictedAddr, frozenBalance, 0);
     freezeForSelf(predictedAddr, frozenBalance, 1);
+    freezeForOther(predictedAddr, userA, frozenBalance, 0);
     freezeForOther(predictedAddr, userA, frozenBalance, 1);
-    freezeForOther(predictedAddr, userA, frozenBalance, 1);
-    suicideToAccount(predictedAddr, blackHole);
+    suicideWithException(predictedAddr, predictedAddr);
+    clearDelegatedExpireTime(predictedAddr, userA);
+    unfreezeForOther(predictedAddr, userA, 0);
+    unfreezeForOther(predictedAddr, userA, 1);
+    suicideToAccount(predictedAddr, predictedAddr);
+
+    unfreezeForOtherWithException(contract, predictedAddr, 0);
+    unfreezeForOtherWithException(contract, predictedAddr, 1);
     clearDelegatedExpireTime(contract, predictedAddr);
     unfreezeForOther(contract, predictedAddr, 0);
     unfreezeForOther(contract, predictedAddr, 1);
   }
 
   @Test
-  public void testCreate2SuicideToAccountWithFreeze() throws Exception {
+  public void testCreate2SuicideToAccount() throws Exception {
     byte[] factory = deployContract("FactoryContract", FACTORY_CODE);
-    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
-    long frozenBalance = 1_000_000;
+    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
     long salt = 1;
     byte[] predictedAddr = getCreate2Addr(factory, salt);
     freezeForOther(contract, predictedAddr, frozenBalance, 0);
     freezeForOther(contract, predictedAddr, frozenBalance, 1);
-    freezeForOther(contract, userA, frozenBalance, 0);
-    freezeForOther(contract, userA, frozenBalance, 1);
     Assert.assertArrayEquals(predictedAddr, deployCreate2Contract(factory, salt));
     setBalance(predictedAddr, 100_000_000);
     freezeForSelf(predictedAddr, frozenBalance, 0);
     freezeForSelf(predictedAddr, frozenBalance, 1);
+    freezeForOther(predictedAddr, userA, frozenBalance, 0);
     freezeForOther(predictedAddr, userA, frozenBalance, 1);
-    freezeForOther(predictedAddr, userA, frozenBalance, 1);
-    suicideToAccount(predictedAddr, userA);
-    clearDelegatedExpireTime(contract, predictedAddr);
+    suicideWithException(predictedAddr, contract);
+    clearDelegatedExpireTime(predictedAddr, userA);
+    unfreezeForOther(predictedAddr, userA, 0);
+    unfreezeForOther(predictedAddr, userA, 1);
+    suicideToAccount(predictedAddr, contract);
+
     unfreezeForOtherWithException(contract, predictedAddr, 0);
     unfreezeForOtherWithException(contract, predictedAddr, 1);
-    clearDelegatedExpireTime(contract, userA);
-    unfreezeForOther(contract, userA, 0);
-    unfreezeForOther(contract, userA, 1);
+    clearDelegatedExpireTime(contract, predictedAddr);
+    unfreezeForOther(contract, predictedAddr, 0);
+    unfreezeForOther(contract, predictedAddr, 1);
   }
 
   @Test
-  public void testSuicideToMsgSender() throws Exception {
-    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
+  public void testFreezeEnergyToCaller() throws Exception {
+    byte[] contract = deployContract(owner, "TestFreeze", CONTRACT_CODE, 50, 10_000);
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
-    freezeForOther(contract, userA, frozenBalance, 0);
-    freezeForOther(contract, userA, frozenBalance, 1);
     setBalance(userA,  100_000_000);
+    setFrozenForEnergy(owner, frozenBalance);
     AccountCapsule caller = manager.getAccountStore().get(userA);
     AccountCapsule deployer = manager.getAccountStore().get(owner);
-    TVMTestResult result = suicideToAccount(userA, contract, owner);
+    TVMTestResult result = freezeForOther(userA, contract, userA, frozenBalance, 1);
     checkReceipt(result, caller, deployer);
   }
 
   @Test
-  public void testSuicideWithException() throws Exception {
-    byte[] contract = deployContract("TestFreeze", CONTRACT_CODE);
+  public void testFreezeToDeployer() throws Exception {
+    byte[] contract = deployContract(owner, "TestFreeze", CONTRACT_CODE, 50, 10_000);
     long frozenBalance = 1_000_000;
-    freezeForOther(contract, userA, frozenBalance, 0);
-    suicideWithException(contract, contract);
-    clearDelegatedExpireTime(contract, userA);
-    unfreezeForOther(contract, userA, 0);
-    suicideToAccount(contract, contract);
+    freezeForSelf(contract, frozenBalance, 0);
+    freezeForSelf(contract, frozenBalance, 1);
+    setBalance(userA,  100_000_000);
+    setFrozenForEnergy(owner, frozenBalance);
+    AccountCapsule caller = manager.getAccountStore().get(userA);
+    AccountCapsule deployer = manager.getAccountStore().get(owner);
+    TVMTestResult result = freezeForOther(userA, contract, owner, frozenBalance, 1);
+    checkReceipt(result, caller, deployer);
   }
 
   private void clearExpireTime(byte[] owner) {
@@ -484,9 +531,7 @@ public class FreezeTest {
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
     Assert.assertEquals(oldOwner.getBalance() - frozenBalance, newOwner.getBalance());
-    Assert.assertEquals(oldOwner.getOldVotePower() + frozenBalance, newOwner.getOldVotePower());
     newOwner.setBalance(oldOwner.getBalance());
-    newOwner.setOldVotePower(oldOwner.getOldVotePower());
     if (res == 0) {
       Assert.assertEquals(1, newOwner.getFrozenCount());
       Assert.assertEquals(oldOwner.getFrozenBalance() + frozenBalance, newOwner.getFrozenBalance());
@@ -532,9 +577,7 @@ public class FreezeTest {
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
     Assert.assertEquals(oldOwner.getBalance() + frozenBalance, newOwner.getBalance());
-    Assert.assertEquals(oldOwner.getOldVotePower() - frozenBalance, newOwner.getOldVotePower());
     oldOwner.setBalance(newOwner.getBalance());
-    oldOwner.setOldVotePower(newOwner.getOldVotePower());
     if (res == 0) {
       Assert.assertEquals(0, newOwner.getFrozenCount());
       Assert.assertEquals(0, newOwner.getFrozenBalance());
@@ -606,9 +649,7 @@ public class FreezeTest {
 
     AccountCapsule newOwner = accountStore.get(contractAddr);
     Assert.assertEquals(oldOwner.getBalance() - frozenBalance, newOwner.getBalance());
-    Assert.assertEquals(oldOwner.getOldVotePower() + frozenBalance, newOwner.getOldVotePower());
     newOwner.setBalance(oldOwner.getBalance());
-    newOwner.setOldVotePower(oldOwner.getOldVotePower());
     if (res == 0) {
       Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForBandwidth() + frozenBalance,
           newOwner.getDelegatedFrozenBalanceForBandwidth());
@@ -628,6 +669,7 @@ public class FreezeTest {
         res == 0 ? newReceiver.getAcquiredDelegatedFrozenBalanceForBandwidth() :
             newReceiver.getAcquiredDelegatedFrozenBalanceForEnergy());
     if (oldReceiver != null) {
+      newReceiver.setBalance(oldReceiver.getBalance());
       oldReceiver.setEnergyUsage(0);
       newReceiver.setEnergyUsage(0);
       if (res == 0) {
@@ -731,9 +773,7 @@ public class FreezeTest {
     // check owner account
     AccountCapsule newOwner = accountStore.get(contractAddr);
     Assert.assertEquals(oldOwner.getBalance() + delegatedFrozenBalance, newOwner.getBalance());
-    Assert.assertEquals(oldOwner.getOldVotePower() - delegatedFrozenBalance, newOwner.getOldVotePower());
     newOwner.setBalance(oldOwner.getBalance());
-    newOwner.setOldVotePower(oldOwner.getOldVotePower());
     if (res == 0) {
       Assert.assertEquals(oldOwner.getDelegatedFrozenBalanceForBandwidth() - delegatedFrozenBalance,
           newOwner.getDelegatedFrozenBalanceForBandwidth());
@@ -821,13 +861,7 @@ public class FreezeTest {
   }
 
   private TVMTestResult suicideWithException(byte[] contractAddr, byte[] inheritorAddr) throws Exception {
-    String methodByAddr = "destroy(address)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr,
-        Collections.singletonList(StringUtil.encode58Check(contractAddr)));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        owner, contractAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(REVERT, result.getReceipt().getResult());
-    return result;
+    return triggerSuicide(owner, contractAddr, inheritorAddr, REVERT, null);
   }
 
   private TVMTestResult suicideToAccount(byte[] contractAddr, byte[] inheritorAddr) throws Exception {
@@ -846,19 +880,23 @@ public class FreezeTest {
     AccountStore accountStore = manager.getAccountStore();
     AccountCapsule contract = accountStore.get(contractAddr);
     AccountCapsule oldInheritor = accountStore.get(inheritorAddr);
+    long oldBalanceOfInheritor = 0;
+    if (oldInheritor != null) {
+      oldBalanceOfInheritor = oldInheritor.getBalance();
+    }
 
-    String methodByAddr = "destroy(address)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr,
-        Collections.singletonList(StringUtil.encode58Check(contractAddr)));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        callerAddr, contractAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(SUCCESS, result.getReceipt().getResult());
+    TVMTestResult result = triggerSuicide(callerAddr, contractAddr, inheritorAddr, SUCCESS, null);
 
     Assert.assertNull(accountStore.get(contractAddr));
     AccountCapsule newInheritor = accountStore.get(inheritorAddr);
     Assert.assertNotNull(newInheritor);
-    Assert.assertEquals(contract.getBalance() + contract.getTronPower(),
-        newInheritor.getBalance() - oldInheritor.getBalance() - 25500);
+    if (FastByteComparisons.isEqual(inheritorAddr, manager.getAccountStore().getBlackholeAddress())) {
+      Assert.assertEquals(contract.getBalance() + contract.getTronPower(),
+          newInheritor.getBalance() - oldBalanceOfInheritor - result.getReceipt().getEnergyFee());
+    } else {
+      Assert.assertEquals(contract.getBalance() + contract.getTronPower(),
+          newInheritor.getBalance() - oldBalanceOfInheritor);
+    }
 
     Assert.assertEquals(0, contract.getDelegatedFrozenBalanceForBandwidth());
     Assert.assertEquals(0, contract.getDelegatedFrozenBalanceForEnergy());
