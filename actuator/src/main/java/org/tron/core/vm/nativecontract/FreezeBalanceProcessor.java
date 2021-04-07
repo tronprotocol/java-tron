@@ -140,8 +140,6 @@ public class FreezeBalanceProcessor {
     // deduce balance of owner account
     long newBalance = accountCapsule.getBalance() - frozenBalance;
     accountCapsule.setBalance(newBalance);
-    // add old vote power
-    accountCapsule.setOldVotePower(accountCapsule.getOldVotePower() + frozenBalance);
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
   }
 

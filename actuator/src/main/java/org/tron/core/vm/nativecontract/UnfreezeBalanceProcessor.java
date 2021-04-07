@@ -210,7 +210,6 @@ public class UnfreezeBalanceProcessor {
     }
 
     // notice: clear vote code is removed
-    accountCapsule.setOldVotePower(accountCapsule.getOldVotePower() - unfreezeBalance);
     repo.updateAccount(ownerAddress, accountCapsule);
   }
 
