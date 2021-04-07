@@ -4,7 +4,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.*;
 import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
-import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol;
 
 public interface Repository {
 
@@ -20,17 +20,21 @@ public interface Repository {
 
   WitnessStore getWitnessStore();
 
-  AccountCapsule createAccount(byte[] address, AccountType type);
+  AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
   AccountAssetIssueCapsule createAccountAssetIssue(byte[] address);
 
-  AccountCapsule createAccount(byte[] address, String accountName, AccountType type);
+  AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
 
   AccountCapsule getAccount(byte[] address);
 
   AccountAssetIssueCapsule getAccountAssetIssue(byte[] address);
 
   BytesCapsule getDynamic(byte[] bytesKey);
+
+  DelegatedResourceCapsule getDelegatedResource(byte[] key);
+
+  DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address);
 
   VotesCapsule getVotesCapsule(byte[] address);
 
@@ -55,6 +59,10 @@ public interface Repository {
   void updateAccountAssetIssue(byte[] address, AccountAssetIssueCapsule accountAssetIssueCapsule);
 
   void updateDynamic(byte[] word, BytesCapsule bytesCapsule);
+
+  void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule);
+
+  void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule);
 
   void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule);
 
@@ -108,6 +116,10 @@ public interface Repository {
 
   void putAssetIssue(Key key, Value value);
 
+  void putDelegatedResource(Key key, Value value);
+
+  void putDelegatedResourceAccountIndex(Key key, Value value);
+
   void putVotesCapsule(Key key, Value value);
 
   void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule);
@@ -136,9 +148,15 @@ public interface Repository {
 
   void addTotalNetWeight(long amount);
 
+  void addTotalEnergyWeight(long amount);
+
   void saveTotalNetWeight(long totalNetWeight);
 
+  void saveTotalEnergyWeight(long totalEnergyWeight);
+
   long getTotalNetWeight();
+
+  long getTotalEnergyWeight();
 
   boolean checkTokenBalance(byte[] address);
 

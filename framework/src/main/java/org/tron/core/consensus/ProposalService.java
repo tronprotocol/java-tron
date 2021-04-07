@@ -250,6 +250,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowNewResourceModel(entry.getValue());
           break;
         }
+        case ALLOW_TVM_FREEZE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
+          break;
+        }
 
         case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());

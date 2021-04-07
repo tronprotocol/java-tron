@@ -460,6 +460,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowTvmFreeze;
+
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter

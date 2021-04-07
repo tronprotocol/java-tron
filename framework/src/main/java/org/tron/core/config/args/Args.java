@@ -717,6 +717,11 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmAssetIssue =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
+
+    PARAMETER.allowTvmFreeze =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
             .getInstance().getStorage().getDbEngine().toUpperCase())) {

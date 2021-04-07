@@ -178,6 +178,33 @@ public class TransactionTrace {
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
     /*  VM execute  */
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+      byte[] originAccount;
+      byte[] callerAccount;
+      switch (trxType) {
+        case TRX_CONTRACT_CREATION_TYPE:
+          callerAccount = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
+          originAccount = callerAccount;
+          receipt.setOriginEnergyLeft(
+              energyProcessor.getAccountLeftEnergyFromFreeze(accountStore.get(originAccount)));
+          receipt.setCallerEnergyLeft(
+              energyProcessor.getAccountLeftEnergyFromFreeze(accountStore.get(callerAccount)));
+          break;
+        case TRX_CONTRACT_CALL_TYPE:
+          TriggerSmartContract callContract = ContractCapsule
+              .getTriggerContractFromTransaction(trx.getInstance());
+          ContractCapsule contractCapsule =
+              contractStore.get(callContract.getContractAddress().toByteArray());
+          callerAccount = callContract.getOwnerAddress().toByteArray();
+          originAccount = contractCapsule.getOriginAddress();
+          receipt.setOriginEnergyLeft(
+              energyProcessor.getAccountLeftEnergyFromFreeze(accountStore.get(originAccount)));
+          receipt.setCallerEnergyLeft(
+              energyProcessor.getAccountLeftEnergyFromFreeze(accountStore.get(callerAccount)));
+          break;
+        default:
+      }
+    }
     runtime.execute(transactionContext);
     setBill(transactionContext.getProgramResult().getEnergyUsed());
 

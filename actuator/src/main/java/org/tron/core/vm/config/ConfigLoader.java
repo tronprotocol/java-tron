@@ -29,6 +29,7 @@ public class ConfigLoader {
         VMConfig.initAllowTvmStake(ds.getAllowTvmStake());
         VMConfig.initAllowTvmAssetIssue(ds.getAllowTvmAssetIssue());
         VMConfig.initAllowAccountAssetOptimization(ds.getAllowAccountAssetOptimization());
+        VMConfig.initAllowTvmFreeze(ds.getAllowTvmFreeze());
       }
     }
   }

@@ -267,6 +267,8 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION = "committee.allowBlackHoleOptimization";
   public static final String COMMITTEE_ALLOW_NEW_RESOURCE_MODEL = "committee.allowNewResourceModel";
 
+  public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
+
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
