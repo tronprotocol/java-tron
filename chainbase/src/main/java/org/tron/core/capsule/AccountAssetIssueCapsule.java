@@ -8,6 +8,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountAssetIssue;
+import org.tron.protos.Protocol.AccountAssetIssue.Frozen;
 
 import java.util.List;
 import java.util.Map;
@@ -355,10 +356,13 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
   }
 
 
-  public List<AccountAssetIssue.Frozen> getFrozenSupplyList() {
+  public List<Frozen> getFrozenSupplyList() {
     return getInstance().getFrozenSupplyList();
   }
 
+  public int getFrozenSupplyCount() {
+    return getInstance().getFrozenSupplyCount();
+  }
 
     @Override
     public String toString() {

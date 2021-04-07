@@ -105,7 +105,7 @@ public class VMConfig {
   }
 
   public static void initAllowAccountAssetOptimization(long allow) {
-    ALLOW_TVM_ASSET_ISSUE = allow == 1;
+    ALLOW_ACCOUNT_ASSET_OPTIMIZATION = allow == 1;
   }
 
   public static boolean getEnergyLimitHardFork() {

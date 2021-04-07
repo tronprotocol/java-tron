@@ -348,9 +348,11 @@ public class Wallet {
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
 
     Account instance = accountCapsule.getInstance();
-    AccountAssetIssue accountAssetIssue = getAccountAssetIssueById(instance);
-
-    return Util.convertAccount(instance, accountAssetIssue);
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      AccountAssetIssue accountAssetIssue = getAccountAssetIssueById(instance);
+      return Util.convertAccount(instance, accountAssetIssue);
+    }
+    return account;
   }
 
   public Account getAccountById(Account account) {
@@ -380,9 +382,12 @@ public class Wallet {
     accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
 
-    Account instance = accountCapsule.getInstance();
-    AccountAssetIssue accountAssetIssue = getAccountAssetIssueById(instance);
-    return Util.convertAccount(instance, accountAssetIssue);
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      Account instance = accountCapsule.getInstance();
+      AccountAssetIssue accountAssetIssue = getAccountAssetIssueById(instance);
+      return Util.convertAccount(instance, accountAssetIssue);
+    }
+    return accountCapsule.getInstance();
   }
 
   public AccountAssetIssue getAccountAssetIssueById(Account account) {
@@ -1065,7 +1070,27 @@ public class Wallet {
   }
 
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
-                                             AccountCapsule accountCapsule,
+                                             AccountCapsule accountCapsule) {
+    Map<String, Long> allFreeAssetNetUsage;
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+                .put(asset, chainBaseManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+                .put(asset, chainBaseManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
+    return allFreeAssetNetUsage;
+  }
+
+  private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
                                              AccountAssetIssueCapsule accountAssetIssueCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
@@ -1111,8 +1136,13 @@ public class Wallet {
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage =
-            setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
+    Map<String, Long> allFreeAssetNetUsage = null;
+    if (chainBaseManager.getDynamicPropertiesStore()
+            .getAllowAccountAssetOptimization() == 1) {
+      allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountAssetIssueCapsule);
+    } else {
+      allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
+    }
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -1161,8 +1191,13 @@ public class Wallet {
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage =
-            setAssetNetLimit(assetNetLimitMap, accountCapsule, accountAssetIssueCapsule);
+    Map<String, Long> allFreeAssetNetUsage = null;
+    if (chainBaseManager.getDynamicPropertiesStore()
+            .getAllowAccountAssetOptimization() == 1) {
+      allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountAssetIssueCapsule);
+    } else {
+      allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
+    }
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)

@@ -17,7 +17,9 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountAssetIssue;
 
@@ -54,14 +56,46 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     return getUnchecked(assertsAddress.get("Blackhole"));
   }
 
-  public AccountCapsule convertAccountAssetIssue(AccountCapsule accountCapsule) {
+  public AccountCapsule convertAccountAssetIssuePut(AccountCapsule accountCapsule) {
     AccountAssetIssue accountAssetIssue = buildAccountAssetIssue(accountCapsule);
     AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule(accountAssetIssue);
-    this.put(accountCapsule.createDbKey(),
-            accountAssetIssueCapsule);
+    this.put(accountCapsule.createDbKey(), accountAssetIssueCapsule);
     Account account = clearAccountAsset(accountCapsule);
     accountCapsule.setInstance(account);
     return accountCapsule;
+  }
+
+  public AccountAssetIssueCapsule convertAccountAssetIssue(AccountCapsule accountCapsule) {
+    if (null != accountCapsule) {
+      AccountAssetIssue accountAssetIssue = buildAccountAssetIssue(accountCapsule);
+      AccountAssetIssueCapsule accountAssetIssueCapsule = new AccountAssetIssueCapsule(accountAssetIssue);
+      Account account = clearAccountAsset(accountCapsule);
+      accountCapsule.setInstance(account);
+      return accountAssetIssueCapsule;
+    }
+    return null;
+  }
+
+  public void validateAssetIssue(TransactionCapsule trxCap, AccountStore accountStore) {
+    List<Protocol.Transaction.Contract> contracts = trxCap.getInstance().getRawData().getContractList();
+    Optional.ofNullable(contracts)
+            .orElseGet(ArrayList::new)
+            .stream()
+            .peek(contract -> {
+              byte[] ownerAddress = TransactionCapsule.getOwner(contract);
+              AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+              if (ownerAccount != null) {
+                accountStore.checkAsset(ownerAccount, this);
+              }
+            })
+            .peek(contract -> {
+              byte[] toAddress = TransactionCapsule.getToAddress(contract);
+              AccountCapsule toAccount = accountStore.get(toAddress);
+              if (toAccount != null) {
+                accountStore.checkAsset(toAccount, this);
+              }
+            })
+            .collect(Collectors.toList());
   }
 
   public static AccountAssetIssue buildAccountAssetIssue (AccountCapsule accountCapsule) {

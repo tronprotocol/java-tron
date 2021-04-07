@@ -37,6 +37,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
 
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -50,22 +51,32 @@ public class UpdateAssetActuator extends AbstractActuator {
       byte[] ownerAddress = updateAssetContract.getOwnerAddress().toByteArray();
       ByteString newUrl = updateAssetContract.getUrl();
       ByteString newDescription = updateAssetContract.getDescription();
-
-      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
-
+      AccountCapsule accountCapsule = null;
+      AccountAssetIssueCapsule accountAssetIssueCapsule = null;
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+      } else {
+        accountCapsule = accountStore.get(ownerAddress);
+      }
       AssetIssueCapsule assetIssueCapsule;
       AssetIssueCapsule assetIssueCapsuleV2;
-
       AssetIssueStore assetIssueStoreV2 = assetIssueV2Store;
-      assetIssueCapsuleV2 = assetIssueStoreV2.get(accountAssetIssueCapsule.getAssetIssuedID().toByteArray());
-
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        assetIssueCapsuleV2 = assetIssueStoreV2.get(accountAssetIssueCapsule.getAssetIssuedID().toByteArray());
+      } else {
+        assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
+      }
       assetIssueCapsuleV2.setFreeAssetNetLimit(newLimit);
       assetIssueCapsuleV2.setPublicFreeAssetNetLimit(newPublicLimit);
       assetIssueCapsuleV2.setUrl(newUrl);
       assetIssueCapsuleV2.setDescription(newDescription);
 
       if (dynamicStore.getAllowSameTokenName() == 0) {
-        assetIssueCapsule = assetIssueStore.get(accountAssetIssueCapsule.getAssetIssuedName().toByteArray());
+        if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+          assetIssueCapsule = assetIssueStore.get(accountAssetIssueCapsule.getAssetIssuedName().toByteArray());
+        } else {
+          assetIssueCapsule = assetIssueStore.get(accountCapsule.getAssetIssuedName().toByteArray());
+        }
         assetIssueCapsule.setFreeAssetNetLimit(newLimit);
         assetIssueCapsule.setPublicFreeAssetNetLimit(newPublicLimit);
         assetIssueCapsule.setUrl(newUrl);
@@ -134,22 +145,42 @@ public class UpdateAssetActuator extends AbstractActuator {
 
     AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
     if (dynamicStore.getAllowSameTokenName() == 0) {
-      if (accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
-        throw new ContractValidateException("Account has not issued any asset");
-      }
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        if (accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
+          throw new ContractValidateException("Account has not issued any asset");
+        }
 
-      if (assetIssueStore.get(accountAssetIssueCapsule.getAssetIssuedName().toByteArray())
-          == null) {
-        throw new ContractValidateException("Asset is not existed in AssetIssueStore");
+        if (assetIssueStore.get(accountAssetIssueCapsule.getAssetIssuedName().toByteArray())
+                == null) {
+          throw new ContractValidateException("Asset is not existed in AssetIssueStore");
+        }
+      } else {
+        if (account.getAssetIssuedName().isEmpty()) {
+          throw new ContractValidateException("Account has not issued any asset");
+        }
+
+        if (assetIssueStore.get(account.getAssetIssuedName().toByteArray())
+                == null) {
+          throw new ContractValidateException("Asset is not existed in AssetIssueStore");
+        }
       }
     } else {
-      if (accountAssetIssueCapsule.getAssetIssuedID().isEmpty()) {
-        throw new ContractValidateException("Account has not issued any asset");
-      }
-
-      if (assetIssueV2Store.get(accountAssetIssueCapsule.getAssetIssuedID().toByteArray())
-          == null) {
-        throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        if (accountAssetIssueCapsule.getAssetIssuedID().isEmpty()) {
+          throw new ContractValidateException("Account has not issued any asset");
+        }
+        if (assetIssueV2Store.get(accountAssetIssueCapsule.getAssetIssuedID().toByteArray())
+                == null) {
+          throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
+        }
+      } else {
+        if (account.getAssetIssuedID().isEmpty()) {
+          throw new ContractValidateException("Account has not issued any asset");
+        }
+        if (assetIssueV2Store.get(account.getAssetIssuedID().toByteArray())
+                == null) {
+          throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
+        }
       }
     }
 

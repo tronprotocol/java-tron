@@ -20,7 +20,9 @@ import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Protocol.AccountAssetIssue.Frozen;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.AccountAssetIssue;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
@@ -48,38 +50,45 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     try {
       final UnfreezeAssetContract unfreezeAssetContract = any.unpack(UnfreezeAssetContract.class);
       byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
-
-      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
-
       long unfreezeAsset = 0L;
-      List<Frozen> frozenList = Lists.newArrayList();
-      frozenList.addAll(accountAssetIssueCapsule.getFrozenSupplyList());
-      Iterator<Frozen> iterator = frozenList.iterator();
-      long now = dynamicStore.getLatestBlockHeaderTimestamp();
-      while (iterator.hasNext()) {
-        Frozen next = iterator.next();
-        if (next.getExpireTime() <= now) {
-          unfreezeAsset += next.getFrozenBalance();
-          iterator.remove();
+
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+        List<AccountAssetIssue.Frozen> frozenList = Lists.newArrayList();
+        frozenList.addAll(accountAssetIssueCapsule.getFrozenSupplyList());
+        unfreezeAsset = getAccountAssetIssueFrozenList(frozenList, dynamicStore, unfreezeAsset);
+
+        if (dynamicStore.getAllowSameTokenName() == 0) {
+          accountAssetIssueCapsule
+                  .addAssetAmountV2(accountAssetIssueCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset,
+                          dynamicStore, assetIssueStore);
+        } else {
+          accountAssetIssueCapsule
+                  .addAssetAmountV2(accountAssetIssueCapsule.getAssetIssuedID().toByteArray(), unfreezeAsset,
+                          dynamicStore, assetIssueStore);
         }
-      }
-
-      if (dynamicStore.getAllowSameTokenName() == 0) {
-        accountAssetIssueCapsule
-            .addAssetAmountV2(accountAssetIssueCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset,
-                dynamicStore, assetIssueStore);
+        accountAssetIssueCapsule.setInstance(accountAssetIssueCapsule.getInstance().toBuilder()
+                .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
+        accountAssetIssueStore.put(ownerAddress, accountAssetIssueCapsule);
       } else {
-        accountAssetIssueCapsule
-            .addAssetAmountV2(accountAssetIssueCapsule.getAssetIssuedID().toByteArray(), unfreezeAsset,
-                dynamicStore, assetIssueStore);
+        AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+        List<Account.Frozen> frozenList = Lists.newArrayList();
+        frozenList.addAll(accountCapsule.getFrozenSupplyList());
+        unfreezeAsset = getAccountFrozenList(frozenList, dynamicStore, unfreezeAsset);
+
+        if (dynamicStore.getAllowSameTokenName() == 0) {
+          accountCapsule
+                  .addAssetAmountV2(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset,
+                          dynamicStore, assetIssueStore);
+        } else {
+          accountCapsule
+                  .addAssetAmountV2(accountCapsule.getAssetIssuedID().toByteArray(), unfreezeAsset,
+                          dynamicStore, assetIssueStore);
+        }
+        accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+                .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
+        accountStore.put(ownerAddress, accountCapsule);
       }
-
-      accountAssetIssueCapsule.setInstance(accountAssetIssueCapsule.getInstance().toBuilder()
-          .clearFrozenSupply().addAllFrozenSupply(frozenList).build());
-
-      accountStore.put(ownerAddress, accountCapsule);
-      accountAssetIssueStore.put(ownerAddress, accountAssetIssueCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -126,29 +135,46 @@ public class UnfreezeAssetActuator extends AbstractActuator {
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
-    if (accountCapsule.getFrozenSupplyCount() <= 0) {
-      throw new ContractValidateException("no frozen supply balance");
-    }
-
-    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
-
-    if (dynamicStore.getAllowSameTokenName() == 0) {
-      if (accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
-        throw new ContractValidateException("this account has not issued any asset");
+    if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+      if (accountAssetIssueCapsule.getFrozenSupplyCount() <= 0) {
+        throw new ContractValidateException("no frozen supply balance");
+      }
+      if (dynamicStore.getAllowSameTokenName() == 0) {
+        if (accountAssetIssueCapsule.getAssetIssuedName().isEmpty()) {
+          throw new ContractValidateException("this account has not issued any asset");
+        }
+      } else {
+        if (accountAssetIssueCapsule.getAssetIssuedID().isEmpty()) {
+          throw new ContractValidateException("this account has not issued any asset");
+        }
+      }
+      long now = dynamicStore.getLatestBlockHeaderTimestamp();
+      long allowedUnfreezeCount = accountAssetIssueCapsule.getFrozenSupplyList().stream()
+              .filter(frozen -> frozen.getExpireTime() <= now).count();
+      if (allowedUnfreezeCount <= 0) {
+        throw new ContractValidateException("It's not time to unfreeze asset supply");
       }
     } else {
-      if (accountAssetIssueCapsule.getAssetIssuedID().isEmpty()) {
-        throw new ContractValidateException("this account has not issued any asset");
+      if (accountCapsule.getFrozenSupplyCount() <= 0) {
+        throw new ContractValidateException("no frozen supply balance");
+      }
+      if (dynamicStore.getAllowSameTokenName() == 0) {
+        if (accountCapsule.getAssetIssuedName().isEmpty()) {
+          throw new ContractValidateException("this account has not issued any asset");
+        }
+      } else {
+        if (accountCapsule.getAssetIssuedID().isEmpty()) {
+          throw new ContractValidateException("this account has not issued any asset");
+        }
+      }
+      long now = dynamicStore.getLatestBlockHeaderTimestamp();
+      long allowedUnfreezeCount = accountCapsule.getFrozenSupplyList().stream()
+              .filter(frozen -> frozen.getExpireTime() <= now).count();
+      if (allowedUnfreezeCount <= 0) {
+        throw new ContractValidateException("It's not time to unfreeze asset supply");
       }
     }
-
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    long allowedUnfreezeCount = accountCapsule.getFrozenSupplyList().stream()
-        .filter(frozen -> frozen.getExpireTime() <= now).count();
-    if (allowedUnfreezeCount <= 0) {
-      throw new ContractValidateException("It's not time to unfreeze asset supply");
-    }
-
     return true;
   }
 
@@ -160,6 +186,32 @@ public class UnfreezeAssetActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     return 0;
+  }
+
+  public long getAccountAssetIssueFrozenList(List<AccountAssetIssue.Frozen> frozenList, DynamicPropertiesStore dynamicStore, long unfreezeAsset) {
+    Iterator<AccountAssetIssue.Frozen> iterator = frozenList.iterator();
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    while (iterator.hasNext()) {
+      AccountAssetIssue.Frozen next = iterator.next();
+      if (next.getExpireTime() <= now) {
+        unfreezeAsset += next.getFrozenBalance();
+        iterator.remove();
+      }
+    }
+    return unfreezeAsset;
+  }
+
+  public long getAccountFrozenList(List<Account.Frozen> frozenList, DynamicPropertiesStore dynamicStore, long unfreezeAsset) {
+    Iterator<Account.Frozen> iterator = frozenList.iterator();
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    while (iterator.hasNext()) {
+      Frozen next = iterator.next();
+      if (next.getExpireTime() <= now) {
+        unfreezeAsset += next.getFrozenBalance();
+        iterator.remove();
+      }
+    }
+    return unfreezeAsset;
   }
 
 }

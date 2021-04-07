@@ -331,6 +331,24 @@ public class MarketUtils {
     orderCapsule.setSellTokenQuantityRemain(0L);
   }
 
+  // for taker
+  public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
+                                           AccountCapsule accountCapsule,
+                                           DynamicPropertiesStore dynamicStore,
+                                           AssetIssueStore assetIssueStore) {
+    byte[] sellTokenId = orderCapsule.getSellTokenId();
+    long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
+    if (Arrays.equals(sellTokenId, "_".getBytes())) {
+      accountCapsule.setBalance(Math.addExact(
+              accountCapsule.getBalance(), sellTokenQuantityRemain));
+    } else {
+      accountCapsule
+              .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
+
+    }
+    orderCapsule.setSellTokenQuantityRemain(0L);
+  }
+
   public static int comparePriceKey(byte[] o1, byte[] o2) {
     //compare pair
     byte[] pair1 = new byte[TOKEN_ID_LENGTH * 2];

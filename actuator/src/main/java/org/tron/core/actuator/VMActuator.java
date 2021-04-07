@@ -389,15 +389,17 @@ public class VMActuator implements Actuator2 {
 
     repository.createAccount(contractAddress, newSmartContract.getName(),
         Protocol.AccountType.Contract);
-
-    repository.createAccountAssetIssue(contractAddress);
+    if (repository.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      repository.createAccountAssetIssue(contractAddress);
+    }
     repository.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
     if (!VMConfig.allowTvmConstantinople()) {
       repository.saveCode(contractAddress, ProgramPrecompile.getCode(code));
     }
-    //TODO TOKEN
-    repository.checkTokenBalance(callerAddress, contractAddress);
+    if (VMConfig.allowAccountAssetOptimization()) {
+      repository.checkTokenBalance(callerAddress, contractAddress);
+    }
     // transfer from callerAddress to contractAddress according to callValue
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
@@ -504,10 +506,8 @@ public class VMActuator implements Actuator2 {
 
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
-    //TODO TOKEN
-    //先拆
-    repository.checkTokenBalance(callerAddress, contractAddress);
     if (VMConfig.allowAccountAssetOptimization()) {
+      repository.checkTokenBalance(callerAddress, contractAddress);
     }
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);

@@ -73,7 +73,6 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.actuator.ActuatorCreator;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -1151,8 +1150,10 @@ public class Manager {
         chainBaseManager.getDynamicPropertiesStore())) {
       throw new ValidateSignatureException("transaction signature validate failed");
     }
-
-    validateAssetIssue(trxCap);
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      chainBaseManager.getAccountAssetIssueStore()
+              .validateAssetIssue(trxCap, chainBaseManager.getAccountStore());
+    }
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
@@ -1850,31 +1851,6 @@ public class Manager {
     long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
-  }
-
-  private void validateAssetIssue(TransactionCapsule trxCap) {
-    List<Contract> contracts = trxCap.getInstance().getRawData().getContractList();
-
-    Optional.ofNullable(contracts)
-            .orElseGet(ArrayList::new)
-            .stream()
-            .peek(contract -> {
-              byte[] ownerAddress = TransactionCapsule.getOwner(contract);
-              AccountStore accountStore = getAccountStore();
-              AccountCapsule ownerAccount = accountStore.get(ownerAddress);
-              if (ownerAccount != null) {
-                accountStore.checkAsset(ownerAccount, chainBaseManager.getAccountAssetIssueStore());
-              }
-            })
-            .peek(contract -> {
-              byte[] toAddress = TransactionCapsule.getToAddress(contract);
-              AccountStore accountStore = getAccountStore();
-              AccountCapsule toAccount = accountStore.get(toAddress);
-              if (toAccount != null) {
-                accountStore.checkAsset(toAccount, chainBaseManager.getAccountAssetIssueStore());
-              }
-            })
-            .collect(Collectors.toList());
   }
 
 }

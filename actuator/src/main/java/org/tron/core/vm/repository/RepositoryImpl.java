@@ -5,6 +5,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -556,13 +557,16 @@ public class RepositoryImpl implements Repository {
   @Override
   public long addBalance(byte[] address, long value) {
     AccountCapsule accountCapsule = getAccount(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = null;
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
 
-    AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
-    if (accountAssetIssueCapsule == null) {
-      accountAssetIssueCapsule = createAccountAssetIssue(address);
+    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+      accountAssetIssueCapsule = getAccountAssetIssue(address);
+      if (accountAssetIssueCapsule == null) {
+        accountAssetIssueCapsule = createAccountAssetIssue(address);
+      }
     }
 
     long balance = accountCapsule.getBalance();
@@ -581,9 +585,11 @@ public class RepositoryImpl implements Repository {
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
 
-    Value V2 = Value.create(accountAssetIssueCapsule.getData(),
-            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
-    accountAssetIssueCache.put(key, V2);
+    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+      Value V2 = Value.create(accountAssetIssueCapsule.getData(),
+              Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+      accountAssetIssueCache.put(key, V2);
+    }
     return accountCapsule.getBalance();
   }
 
@@ -677,20 +683,28 @@ public class RepositoryImpl implements Repository {
   @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
+    long balance = 0;
     AccountCapsule accountCapsule = getAccount(address);
-    if (accountCapsule == null) {
-      accountCapsule = createAccount(address, Protocol.AccountType.Normal);
-    }
-
-    AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
-    if (accountAssetIssueCapsule == null) {
-      accountAssetIssueCapsule = createAccountAssetIssue(address);
-    }
-
-    long balance = accountAssetIssueCapsule.getAssetMapV2()
-        .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
-    if (value == 0) {
-      return balance;
+    AccountAssetIssueCapsule accountAssetIssueCapsule = null;
+    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+      accountAssetIssueCapsule = getAccountAssetIssue(address);
+      if (accountAssetIssueCapsule == null) {
+        accountAssetIssueCapsule = createAccountAssetIssue(address);
+      }
+      balance = accountAssetIssueCapsule.getAssetMapV2()
+              .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
+      if (value == 0) {
+        return balance;
+      }
+    } else {
+      if (accountCapsule == null) {
+        accountCapsule = createAccount(address, Protocol.AccountType.Normal);
+      }
+      balance = accountCapsule.getAssetMapV2()
+              .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
+      if (value == 0) {
+        return balance;
+      }
     }
 
     if (value < 0 && balance < -value) {
@@ -698,34 +712,61 @@ public class RepositoryImpl implements Repository {
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }
-    if (value >= 0) {
-      accountAssetIssueCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, getDynamicPropertiesStore(),
-          getAssetIssueStore());
+
+    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+      if (value >= 0) {
+        accountAssetIssueCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, getDynamicPropertiesStore(),
+                getAssetIssueStore());
+      } else {
+        accountAssetIssueCapsule
+                .reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, getDynamicPropertiesStore(),
+                        getAssetIssueStore());
+      }
     } else {
-      accountAssetIssueCapsule
-          .reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, getDynamicPropertiesStore(),
-              getAssetIssueStore());
+      if (value >= 0) {
+        accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, getDynamicPropertiesStore(),
+                getAssetIssueStore());
+      } else {
+        accountCapsule
+                .reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, getDynamicPropertiesStore(),
+                        getAssetIssueStore());
+      }
     }
+
+    Map<String, Long> assetMapV2 = null;
     Key key = Key.create(address);
-    Value V = Value.create(accountCapsule.getData(),
-        Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
-    accountCache.put(key, V);
-    Value V2 = Value.create(accountAssetIssueCapsule.getData(),
-            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
-    accountAssetIssueCache.put(key, V2);
-    return accountAssetIssueCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
+
+    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+      Value V2 = Value.create(accountAssetIssueCapsule.getData(),
+              Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+      accountAssetIssueCache.put(key, V2);
+      assetMapV2 = accountAssetIssueCapsule.getAssetMapV2();
+    } else {
+      Value V = Value.create(accountCapsule.getData(),
+              Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
+      accountCache.put(key, V);
+      assetMapV2 = accountCapsule.getAssetMapV2();
+    }
+    return assetMapV2.get(new String(tokenIdWithoutLeadingZero));
   }
 
-  //TODO TOKEN
   @Override
   public long getTokenBalance(byte[] address, byte[] tokenId) {
-    checkTokenBalance(address);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
-    if (accountAssetIssueCapsule == null) {
+    AccountCapsule accountCapsule  = getAccount(address);
+    if (accountCapsule == null) {
       return 0;
     }
+    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+      AccountAssetIssueCapsule accountAssetIssueCapsule = getAccountAssetIssue(address);
+      if (accountAssetIssueCapsule == null) {
+        return 0;
+      }
+      checkTokenBalance(accountCapsule);
+      String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
+      return accountAssetIssueCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
+    }
     String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
-    return accountAssetIssueCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
+    return accountCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
   }
 
   @Override
@@ -968,13 +1009,27 @@ public class RepositoryImpl implements Repository {
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
   }
 
+  public boolean checkTokenBalance(AccountCapsule account) {
+    if (MapUtils.isNotEmpty(account.getAssetMap()) ||
+            MapUtils.isNotEmpty(account.getAssetMapV2())) {
+      byte[] address = account.createDbKey();
+      AccountCapsule accountCapsule = accountAssetIssueStore.convertAccountAssetIssuePut(account);
+      updateAccount(address, accountCapsule);
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
+      updateAccountAssetIssue(address, accountAssetIssueCapsule);
+    }
+    return true;
+  }
+
   @Override
   public boolean checkTokenBalance(byte[] address) {
     AccountCapsule account = getAccount(address);
     if (MapUtils.isNotEmpty(account.getAssetMap()) ||
             MapUtils.isNotEmpty(account.getAssetMapV2())) {
-      AccountCapsule accountCapsule = accountAssetIssueStore.convertAccountAssetIssue(account);
+      AccountCapsule accountCapsule = accountAssetIssueStore.convertAccountAssetIssuePut(account);
       updateAccount(address, accountCapsule);
+      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
+      updateAccountAssetIssue(address, accountAssetIssueCapsule);
     }
     return true;
   }

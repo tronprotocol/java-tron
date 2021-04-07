@@ -68,7 +68,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       //subtract from owner address
       byte[] ownerAddress = participateAssetIssueContract.getOwnerAddress().toByteArray();
       AccountCapsule ownerAccount = accountStore.get(ownerAddress);
-      AccountAssetIssueCapsule ownerAccountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+      AccountAssetIssueCapsule ownerAccountAssetIssueCapsule = null;
 
       long balance = Math.subtractExact(ownerAccount.getBalance(), cost);
       balance = Math.subtractExact(balance, fee);
@@ -82,23 +82,34 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
       exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
-      ownerAccountAssetIssueCapsule.addAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore);
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        ownerAccountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+        ownerAccountAssetIssueCapsule.addAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore);
+      } else {
+        ownerAccount.addAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore);
+      }
 
       //add to to_address
       byte[] toAddress = participateAssetIssueContract.getToAddress().toByteArray();
       AccountCapsule toAccount = accountStore.get(toAddress);
-      AccountAssetIssueCapsule toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
       toAccount.setBalance(Math.addExact(toAccount.getBalance(), cost));
-      if (!toAccountAssetIssueCapsule.reduceAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore)) {
-        throw new ContractExeException("reduceAssetAmount failed !");
+
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        AccountAssetIssueCapsule toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
+        if (!toAccountAssetIssueCapsule.reduceAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore)) {
+          throw new ContractExeException("reduceAssetAmount failed !");
+        }
+        accountAssetIssueStore.put(ownerAddress, ownerAccountAssetIssueCapsule);
+        accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
+      } else {
+        if (!toAccount.reduceAssetAmountV2(key, exchangeAmount, dynamicStore, assetIssueStore)) {
+          throw new ContractExeException("reduceAssetAmount failed !");
+        }
       }
 
       //write to db
       accountStore.put(ownerAddress, ownerAccount);
       accountStore.put(toAddress, toAccount);
-      accountAssetIssueStore.put(ownerAddress, ownerAccountAssetIssueCapsule);
-      accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
-
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
     } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -199,14 +210,21 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       }
 
       AccountCapsule toAccount = accountStore.get(toAddress);
-      AccountAssetIssueCapsule toAccountAssetIssue = accountAssetIssueStore.get(toAddress);
       if (toAccount == null) {
         throw new ContractValidateException("To account does not exist!");
       }
 
-      if (!toAccountAssetIssue.assetBalanceEnoughV2(assetName, exchangeAmount,
-          dynamicStore)) {
-        throw new ContractValidateException("Asset balance is not enough !");
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        AccountAssetIssueCapsule toAccountAssetIssue = accountAssetIssueStore.get(toAddress);
+        if (!toAccountAssetIssue.assetBalanceEnoughV2(assetName, exchangeAmount,
+                dynamicStore)) {
+          throw new ContractValidateException("Asset balance is not enough !");
+        }
+      } else {
+        if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
+                dynamicStore)) {
+          throw new ContractValidateException("Asset balance is not enough !");
+        }
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);

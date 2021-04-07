@@ -219,10 +219,16 @@ public final class VMUtils {
     if (ownerAccount == null) {
       throw new ContractValidateException("No owner account!");
     }
-
-    AccountAssetIssueCapsule ownerAssetIssue = deposit.getAccountAssetIssue(ownerAddress);
-    if (ownerAssetIssue == null) {
-      throw new ContractValidateException("Owner no asset!");
+    AccountAssetIssueCapsule ownerAssetIssue = null;
+    if (deposit.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      ownerAssetIssue = deposit.getAccountAssetIssue(ownerAddress);
+      if (ownerAssetIssue == null) {
+        throw new ContractValidateException("Owner no asset!");
+      }
+    } else {
+      if (ownerAccount == null) {
+        throw new ContractValidateException("Owner no asset!");
+      }
     }
 
     if (deposit.getAssetIssue(tokenIdWithoutLeadingZero) == null) {
@@ -235,11 +241,21 @@ public final class VMUtils {
     }
 
     Map<String, Long> asset;
-    if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      asset = ownerAssetIssue.getAssetMap();
+
+    if (deposit.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        asset = ownerAssetIssue.getAssetMap();
+      } else {
+        asset = ownerAssetIssue.getAssetMapV2();
+      }
     } else {
-      asset = ownerAssetIssue.getAssetMapV2();
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        asset = ownerAccount.getAssetMap();
+      } else {
+        asset = ownerAccount.getAssetMapV2();
+      }
     }
+
     if (asset.isEmpty()) {
       throw new ContractValidateException("Owner no asset!");
     }
@@ -249,7 +265,7 @@ public final class VMUtils {
       throw new ContractValidateException("assetBalance must greater than 0.");
     }
     if (amount > assetBalance) {
-      throw new ContractValidateException("assetBalance is not sufficient.");
+     throw new ContractValidateException("assetBalance is not sufficient.");
     }
 
     AccountCapsule toAccount = deposit.getAccount(toAddress);
@@ -257,16 +273,29 @@ public final class VMUtils {
       throw new ContractValidateException(
               "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
     }
-    AccountAssetIssueCapsule toAccountAssetIssue = deposit.getAccountAssetIssue(toAddress);
-    if (null == toAccountAssetIssue) {
-      throw new ContractValidateException("to account no asset!");
+
+    AccountAssetIssueCapsule toAccountAssetIssue = null;
+    if (deposit.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      toAccountAssetIssue = deposit.getAccountAssetIssue(toAddress);
+      if (null == toAccountAssetIssue) {
+        throw new ContractValidateException("to account no asset!");
+      }
     }
 
-    if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      assetBalance = toAccountAssetIssue.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+    if (deposit.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetBalance = toAccountAssetIssue.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      } else {
+        assetBalance = toAccountAssetIssue.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      }
     } else {
-      assetBalance = toAccountAssetIssue.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      } else {
+        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      }
     }
+
     if (assetBalance != null) {
       try {
         assetBalance = Math.addExact(assetBalance, amount); //check if overflow
@@ -275,7 +304,6 @@ public final class VMUtils {
         throw new ContractValidateException(e.getMessage());
       }
     }
-
     return true;
   }
 }

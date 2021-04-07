@@ -5,6 +5,8 @@ import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
@@ -461,18 +463,24 @@ public class DepositImpl implements Deposit {
   public synchronized long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
     AccountCapsule accountCapsule = getAccount(address);
-
+    AccountAssetIssueCapsule accountAssetIssue = null;
+    long balance = 0;
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
     }
 
-    AccountAssetIssueCapsule accountAssetIssue = getAccountAssetIssue(address);
-    if (accountAssetIssue == null) {
-      accountAssetIssue = createAccountAssetIssue(address);
+    if (getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      accountAssetIssue = getAccountAssetIssue(address);
+      if (accountAssetIssue == null) {
+        accountAssetIssue = createAccountAssetIssue(address);
+      }
+      balance = accountAssetIssue.getAssetMapV2()
+              .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
+    } else {
+      balance = accountCapsule.getAssetMapV2()
+              .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
     }
 
-    long balance = accountAssetIssue.getAssetMapV2()
-        .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
     if (value == 0) {
       return balance;
     }
@@ -482,24 +490,35 @@ public class DepositImpl implements Deposit {
           StringUtil.createReadableString(accountCapsule.createDbKey())
               + " insufficient balance");
     }
-    if (value >= 0) {
-      accountAssetIssue.addAssetAmountV2(tokenIdWithoutLeadingZero, value,
-          this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
-    } else {
-      accountAssetIssue.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
-          this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
-    }
-
     Key key = Key.create(address);
-    Value V = Value.create(accountCapsule.getData(),
-        Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
-    accountCache.put(key, V);
+    Map<String, Long> assetMapV2;
+    if (getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      if (value >= 0) {
+        accountAssetIssue.addAssetAmountV2(tokenIdWithoutLeadingZero, value,
+                this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
+      } else {
+        accountAssetIssue.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
+                this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
+      }
+      Value V2 = Value.create(accountAssetIssue.getData(),
+              Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+      assetMapV2 = accountAssetIssue.getAssetMapV2();
+      accountAssetIssueCache.put(key, V2);
+    } else {
+      if (value >= 0) {
+        accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value,
+                this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
+      } else {
+        accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
+                this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
+      }
 
-    Value V2 = Value.create(accountAssetIssue.getData(),
-            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
-    accountAssetIssueCache.put(key, V2);
-
-    return accountAssetIssue.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
+      Value V = Value.create(accountCapsule.getData(),
+              Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
+      assetMapV2 = accountCapsule.getAssetMapV2();
+      accountCache.put(key, V);
+    }
+    return assetMapV2.get(new String(tokenIdWithoutLeadingZero));
   }
 
   @Override
@@ -508,11 +527,11 @@ public class DepositImpl implements Deposit {
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
-
-    AccountAssetIssueCapsule accountAssetIssue = getAccountAssetIssue(address);
-    if (accountAssetIssue == null) {
-      accountAssetIssue = createAccountAssetIssue(address);
-    }
+//
+//    AccountAssetIssueCapsule accountAssetIssue = getAccountAssetIssue(address);
+//    if (accountAssetIssue == null) {
+//      accountAssetIssue = createAccountAssetIssue(address);
+//    }
 
     long balance = accountCapsule.getBalance();
     if (value == 0) {
@@ -529,10 +548,10 @@ public class DepositImpl implements Deposit {
     Value val = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
-
-    Value V2 = Value.create(accountAssetIssue.getData(),
-            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
-    accountAssetIssueCache.put(key, V2);
+//
+//    Value V2 = Value.create(accountAssetIssue.getData(),
+//            Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+//    accountAssetIssueCache.put(key, V2);
 
     return accountCapsule.getBalance();
   }
@@ -726,15 +745,17 @@ public class DepositImpl implements Deposit {
   }
 
   private void commitAccountAssetIssueCache(Deposit deposit) {
-    accountAssetIssueCache.forEach((key, value) -> {
-      if (value.getType().isCreate() || value.getType().isDirty()) {
-        if (deposit != null) {
-          deposit.putAccountAssetIssue(key, value);
-        } else {
-          getAccountAssetIssueStore().put(key.getData(), value.getAccountAssetIssue());
+    if (getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      accountAssetIssueCache.forEach((key, value) -> {
+        if (value.getType().isCreate() || value.getType().isDirty()) {
+          if (deposit != null) {
+            deposit.putAccountAssetIssue(key, value);
+          } else {
+            getAccountAssetIssueStore().put(key.getData(), value.getAccountAssetIssue());
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   private void commitTransactionCache(Deposit deposit) {

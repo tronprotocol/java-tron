@@ -65,7 +65,6 @@ public class TransferAssetActuator extends AbstractActuator {
       byte[] ownerAddress = transferAssetContract.getOwnerAddress().toByteArray();
       byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
       AccountCapsule toAccountCapsule = accountStore.get(toAddress);
-      AccountAssetIssueCapsule toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
 
       if (toAccountCapsule == null) {
         boolean withDefaultPermission =
@@ -76,31 +75,41 @@ public class TransferAssetActuator extends AbstractActuator {
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
-      if (toAccountAssetIssueCapsule == null) {
-        toAccountAssetIssueCapsule = new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress));
-        accountAssetIssueStore.convertAccountAssetIssue(toAccountCapsule);
-//        accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
-      }
 
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
-
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
-      AccountAssetIssueCapsule ownerAccountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        AccountAssetIssueCapsule toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
+        if (toAccountAssetIssueCapsule == null) {
+          toAccountAssetIssueCapsule = accountAssetIssueStore
+                  .convertAccountAssetIssue(toAccountCapsule);
+          accountStore.put(toAddress, toAccountCapsule);
+        }
+        AccountAssetIssueCapsule ownerAccountAssetIssueCapsule =
+                accountAssetIssueStore.get(ownerAddress);
 
-      if (!ownerAccountAssetIssueCapsule
-          .reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
-        throw new ContractExeException("reduceAssetAmount failed !");
+        if (!ownerAccountAssetIssueCapsule
+                .reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
+          throw new ContractExeException("reduceAssetAmount failed !");
+        }
+        accountAssetIssueStore.put(ownerAddress, ownerAccountAssetIssueCapsule);
+        toAccountAssetIssueCapsule
+                .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
+        accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
+      } else {
+        if (!ownerAccountCapsule
+                .reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
+          throw new ContractExeException("reduceAssetAmount failed !");
+        }
+        accountStore.put(ownerAddress, ownerAccountCapsule);
+        toAccountCapsule
+                .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
+        accountStore.put(ownerAddress, ownerAccountCapsule);
+        accountStore.put(toAddress, toAccountCapsule);
       }
-      accountStore.put(ownerAddress, ownerAccountCapsule);
-      accountAssetIssueStore.put(ownerAddress, ownerAccountAssetIssueCapsule);
-
-      toAccountAssetIssueCapsule
-          .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
-      accountStore.put(toAddress, toAccountCapsule);
-      accountAssetIssueStore.put(toAddress, toAccountAssetIssueCapsule);
-
       Commons.adjustBalance(accountStore, ownerAccountCapsule, -fee);
+
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
@@ -175,17 +184,29 @@ public class TransferAssetActuator extends AbstractActuator {
         .has(assetName)) {
       throw new ContractValidateException("No asset!");
     }
-    AccountAssetIssueCapsule ownerAccountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
-    if (ownerAccountAssetIssueCapsule == null) {
-      throw new ContractValidateException("No owner account asset issue!");
-    }
 
     Map<String, Long> asset;
-    if (dynamicStore.getAllowSameTokenName() == 0) {
-      asset = ownerAccountAssetIssueCapsule.getAssetMap();
+
+
+    if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+      AccountAssetIssueCapsule ownerAccountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+      if (ownerAccountAssetIssueCapsule == null) {
+        throw new ContractValidateException("No owner account asset issue!");
+      }
+
+      if (dynamicStore.getAllowSameTokenName() == 0) {
+        asset = ownerAccountAssetIssueCapsule.getAssetMap();
+      } else {
+        asset = ownerAccountAssetIssueCapsule.getAssetMapV2();
+      }
     } else {
-      asset = ownerAccountAssetIssueCapsule.getAssetMapV2();
+      if (dynamicStore.getAllowSameTokenName() == 0) {
+        asset = ownerAccount.getAssetMap();
+      } else {
+        asset = ownerAccount.getAssetMapV2();
+      }
     }
+
     if (asset.isEmpty()) {
       throw new ContractValidateException("Owner has no asset!");
     }
@@ -199,19 +220,35 @@ public class TransferAssetActuator extends AbstractActuator {
     }
 
     AccountCapsule toAccount = accountStore.get(toAddress);
-    AccountAssetIssueCapsule toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
+    AccountAssetIssueCapsule toAccountAssetIssueCapsule = null;
 
-    if (toAccount != null && toAccountAssetIssueCapsule != null) {
+    boolean isNotEmpty;
+    if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+      toAccountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
+      isNotEmpty = (toAccount != null) && (toAccountAssetIssueCapsule != null);
+    } else {
+      isNotEmpty = toAccount != null;
+    }
+
+    if (isNotEmpty) {
       //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
       if (dynamicStore.getForbidTransferToContract() == 1
           && toAccount.getType() == AccountType.Contract) {
         throw new ContractValidateException("Cannot transfer asset to smartContract.");
       }
 
-      if (dynamicStore.getAllowSameTokenName() == 0) {
-        assetBalance = toAccountAssetIssueCapsule.getAssetMap().get(ByteArray.toStr(assetName));
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        if (dynamicStore.getAllowSameTokenName() == 0) {
+          assetBalance = toAccountAssetIssueCapsule.getAssetMap().get(ByteArray.toStr(assetName));
+        } else {
+          assetBalance = toAccountAssetIssueCapsule.getAssetMapV2().get(ByteArray.toStr(assetName));
+        }
       } else {
-        assetBalance = toAccountAssetIssueCapsule.getAssetMapV2().get(ByteArray.toStr(assetName));
+        if (dynamicStore.getAllowSameTokenName() == 0) {
+          assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
+        } else {
+          assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(assetName));
+        }
       }
       if (assetBalance != null) {
         try {
