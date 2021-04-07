@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import org.tron.core.db.ByteArrayWrapper;
 
@@ -154,6 +155,9 @@ public class ByteArrayMap<V> implements Map<byte[], V> {
 
         @Override
         public Entry<byte[], V> next() {
+          if (!hasNext()) {
+            throw new NoSuchElementException();
+          }
           Entry<ByteArrayWrapper, V> next = it.next();
           if (next != null) {
             return Maps.immutableEntry(next.getKey().getData(), next.getValue());

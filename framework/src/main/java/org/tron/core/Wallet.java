@@ -913,7 +913,7 @@ public class Wallet {
         .setKey("getAllowTvmSolidity059")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
-    
+
     // ALLOW_TVM_ISTANBUL
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmIstanbul")
@@ -1019,6 +1019,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowOptimizeBlackHole")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowBlackHoleOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowNewResourceModel")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
         .build());
 
     return builder.build();
@@ -1180,6 +1185,8 @@ public class Wallet {
     long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long totalTronPowerWeight = chainBaseManager.getDynamicPropertiesStore()
+        .getTotalTronPowerWeight();
     long energyLimit = energyProcessor
         .calculateGlobalEnergyLimit(accountCapsule);
     long totalEnergyLimit =
@@ -1189,6 +1196,8 @@ public class Wallet {
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+    long allTronPowerUsage = accountCapsule.getTronPowerUsage();
+    long allTronPower = accountCapsule.getAllTronPower();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     Map<String, Long> allFreeAssetNetUsage = null;
@@ -1205,8 +1214,11 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
+        .setTotalTronPowerWeight(totalTronPowerWeight)
         .setEnergyLimit(energyLimit)
         .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTronPowerUsed(allTronPowerUsage)
+        .setTronPowerLimit(allTronPower)
         .setTotalEnergyLimit(totalEnergyLimit)
         .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)

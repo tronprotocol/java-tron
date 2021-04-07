@@ -153,6 +153,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_RECEIPTS_MERKLE_ROOT = "ALLOW_RECEIPTS_MERKLE_ROOT".getBytes();
+  private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
+
   //This value is only allowed to be 0, 1
   private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
 
@@ -342,6 +345,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyWeight(0L);
     }
+
+    try {
+      this.getTotalTronPowerWeight();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalTronPowerWeight(0L);
+    }
+
 
     try {
       this.getAllowAdaptiveEnergy();
@@ -733,6 +743,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowNewResourceModel();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowNewResourceModel(CommonParameter.getInstance().getAllowNewResourceModel());
+    }
+
+
+    try {
+      this.getAllowReceiptsMerkleRoot();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowReceiptsMerkleRoot(0L);
+    }
+    try {
       this.getAllowAccountAssetOptimization();
     } catch (IllegalArgumentException e) {
       this.setAllowAccountAssetOptimization(0L);
@@ -1039,6 +1061,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
+  }
+
+  public void saveTotalTronPowerWeight(long totalEnergyWeight) {
+    this.put(DynamicResourceProperties.TOTAL_TRON_POWER_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+  }
+
+  public long getTotalTronPowerWeight() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_TRON_POWER_WEIGHT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_TRON_POWER_WEIGHT"));
   }
 
   public void saveTotalNetLimit(long totalNetLimit) {
@@ -2014,6 +2049,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveTotalEnergyWeight(totalEnergyWeight);
   }
 
+  //The unit is trx
+  public void addTotalTronPowerWeight(long amount) {
+    long totalWeight = getTotalTronPowerWeight();
+    totalWeight += amount;
+    saveTotalTronPowerWeight(totalWeight);
+  }
+
   public void addTotalCreateAccountCost(long fee) {
     long newValue = getTotalCreateAccountCost() + fee;
     saveTotalCreateAccountFee(newValue);
@@ -2176,6 +2218,39 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_BLACKHOLE_OPTIMIZATION"));
   }
 
+  public boolean supportAllowNewResourceModel() {
+    return getAllowNewResourceModel() == 1L;
+  }
+
+  public void saveAllowNewResourceModel(long value) {
+    this.put(ALLOW_NEW_RESOURCE_MODEL, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowNewResourceModel() {
+    return Optional.ofNullable(getUnchecked(ALLOW_NEW_RESOURCE_MODEL))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_NEW_RESOURCE_MODEL"));
+  }
+
+  public void saveAllowReceiptsMerkleRoot(long value) {
+    this.put(ALLOW_RECEIPTS_MERKLE_ROOT, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowReceiptsMerkleRoot() {
+    return Optional.ofNullable(getUnchecked(ALLOW_RECEIPTS_MERKLE_ROOT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ALLOW_RECEIPTS_MERKLE_ROOT")
+            );
+  }
+
+  public boolean allowReceiptsMerkleRoot() {
+    return getAllowReceiptsMerkleRoot() == 1L;
+  }
+
   // 0: disable 1: enable
   public long getAllowAccountAssetOptimization() {
     return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
@@ -2207,6 +2282,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .getBytes();
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+    private static final byte[] TOTAL_TRON_POWER_WEIGHT = "TOTAL_TRON_POWER_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER =
