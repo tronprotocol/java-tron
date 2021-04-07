@@ -1089,7 +1089,8 @@ public class Wallet {
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-                .put(asset, chainBaseManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+                .put(asset, chainBaseManager.getAssetIssueV2Store()
+                        .get(key).getFreeAssetNetLimit());
       });
     }
     return allFreeAssetNetUsage;

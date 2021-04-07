@@ -140,6 +140,7 @@ public class ParticipateAssetIssueActuatorTest {
     chainBaseManager.getAccountAssetIssueStore()
             .put(toAccountAssetIssueCapsule2
                     .getAddress().toByteArray(), toAccountAssetIssueCapsule2);
+    chainBaseManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private boolean isNullOrZero(Long value) {

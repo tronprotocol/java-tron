@@ -128,6 +128,7 @@ public class ShieldedTransferActuatorTest {
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
 
     AssetIssueContract assetIssueContract =
         AssetIssueContract.newBuilder()
@@ -174,6 +175,14 @@ public class ShieldedTransferActuatorTest {
                     ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO)));
     dbManager.getAccountAssetIssueStore()
             .put(toAccountAssetIssue.getAddress().toByteArray(), toAccountAssetIssue);
+    initBlockHole();
+  }
+
+
+  private static void initBlockHole() {
+    AccountCapsule blackhole = dbManager.getAccountStore().getBlackhole();
+    dbManager.getAccountAssetIssueStore()
+            .convertAccountAssetIssuePut(blackhole);
   }
 
   private TransactionCapsule getPublicToShieldedTransaction() throws Exception {
@@ -212,11 +221,11 @@ public class ShieldedTransferActuatorTest {
     }
   }
 
-  private long getAssertBalance(AccountAssetIssueCapsule accountCapsule) {
+  private long getAssertBalance(AccountAssetIssueCapsule accountAssetIssueCapsule) {
     String token = String.valueOf(tokenId);
-    if (accountCapsule != null && accountCapsule
+    if (accountAssetIssueCapsule != null && accountAssetIssueCapsule
             .getAssetMapV2().containsKey(token)) {
-      return accountCapsule.getAssetMapV2().get(token);
+      return accountAssetIssueCapsule.getAssetMapV2().get(token);
     } else {
       return 0;
     }

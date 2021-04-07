@@ -94,6 +94,7 @@ public class AssetIssueActuatorTest {
    */
   @Before
   public void createCapsule() {
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
         dbManager.getDynamicPropertiesStore().getAssetIssueFee());

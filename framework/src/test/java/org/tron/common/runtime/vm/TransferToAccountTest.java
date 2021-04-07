@@ -109,6 +109,7 @@ public class TransferToAccountTest {
     chainBaseManager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     chainBaseManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
     chainBaseManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+    chainBaseManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
 
     long id = chainBaseManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     chainBaseManager.getDynamicPropertiesStore().saveTokenIdNum(id);

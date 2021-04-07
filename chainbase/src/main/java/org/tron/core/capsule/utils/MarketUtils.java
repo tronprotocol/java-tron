@@ -318,33 +318,21 @@ public class MarketUtils {
   public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
                                            AccountCapsule accountCapsule,
                                            DynamicPropertiesStore dynamicStore,
-                                           AssetIssueStore assetIssueStore, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+                                           AssetIssueStore assetIssueStore,
+                                           AccountAssetIssueCapsule accountAssetIssueCapsule) {
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
       accountCapsule.setBalance(Math.addExact(
           accountCapsule.getBalance(), sellTokenQuantityRemain));
     } else {
-      accountAssetIssueCapsule
-          .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
-    }
-    orderCapsule.setSellTokenQuantityRemain(0L);
-  }
-
-  // for taker
-  public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
-                                           AccountCapsule accountCapsule,
-                                           DynamicPropertiesStore dynamicStore,
-                                           AssetIssueStore assetIssueStore) {
-    byte[] sellTokenId = orderCapsule.getSellTokenId();
-    long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
-    if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      accountCapsule.setBalance(Math.addExact(
-              accountCapsule.getBalance(), sellTokenQuantityRemain));
-    } else {
-      accountCapsule
-              .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
-
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        accountAssetIssueCapsule
+                .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
+      } else {
+        accountCapsule
+                .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
+      }
     }
     orderCapsule.setSellTokenQuantityRemain(0L);
   }

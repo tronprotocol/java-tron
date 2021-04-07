@@ -133,6 +133,7 @@ public class TransferAssetActuatorTest {
             );
     dbManager.getAccountAssetIssueStore()
             .put(accountAssetIssueCapsule.getAddress().toByteArray(), accountAssetIssueCapsule);
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private boolean isNullOrZero(Long value) {

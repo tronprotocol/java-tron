@@ -107,7 +107,7 @@ public class MarketSellAssetActuatorTest {
   public void initTest() {
     byte[] ownerAddressFirstBytes = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     byte[] ownerAddressSecondBytes = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
-
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
@@ -1736,7 +1736,6 @@ public class MarketSellAssetActuatorTest {
     actuator.execute(ret);
 
     //check balance and token
-    accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountAssetIssueCapsule = dbManager.getAccountAssetIssueStore().get(ownerAddress);
     Assert.assertEquals(0L, (long) accountAssetIssueCapsule.getAssetMapV2().get(sellTokenId));
     Assert.assertEquals(250L, (long) accountAssetIssueCapsule.getAssetMapV2().get(buyTokenId));

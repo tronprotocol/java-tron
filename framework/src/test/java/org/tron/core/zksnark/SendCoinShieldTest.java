@@ -150,6 +150,7 @@ public class SendCoinShieldTest {
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1);
 
     AssetIssueContract assetIssueContract = AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE)))
@@ -161,7 +162,15 @@ public class SendCoinShieldTest {
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL))).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+    initBlockHole();
   }
+
+  private static void initBlockHole() {
+    AccountCapsule blackhole = dbManager.getAccountStore().getBlackhole();
+    dbManager.getAccountAssetIssueStore()
+            .convertAccountAssetIssuePut(blackhole);
+  }
+
 
   private void createAccountAssetIssueCapsule() {
     AccountAssetIssueCapsule ownerCapsule =
@@ -170,6 +179,7 @@ public class SendCoinShieldTest {
                     ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE))
             );
     dbManager.getAccountAssetIssueStore().put(ownerCapsule.createDbKey(), ownerCapsule);
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private void addZeroValueOutputNote(ZenTransactionBuilder builder) throws ZksnarkException {
@@ -1029,6 +1039,7 @@ public class SendCoinShieldTest {
   public void testValueBalance() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+
     //case 1， a public input, no input cm,  an output cm, no public output
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);

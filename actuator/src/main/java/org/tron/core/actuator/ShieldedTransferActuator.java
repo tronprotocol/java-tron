@@ -62,7 +62,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
-//    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -79,9 +79,16 @@ public class ShieldedTransferActuator extends AbstractActuator {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
             shieldedTransferContract.getFromAmount(), ret, fee);
       }
-      Commons.adjustAssetBalanceV2(accountAssetIssueStore.getBlackhole(),
-          CommonParameter.getInstance().getZenTokenId(), fee,
-              accountAssetIssueStore, assetIssueStore, dynamicStore);
+      
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        Commons.adjustAssetBalanceV2(accountAssetIssueStore.getBlackhole(),
+                CommonParameter.getInstance().getZenTokenId(), fee,
+                accountAssetIssueStore, assetIssueStore, dynamicStore); 
+      } else {
+        Commons.adjustAssetBalanceV2(accountStore.getBlackhole(),
+                CommonParameter.getInstance().getZenTokenId(), fee,
+                accountStore, assetIssueStore, dynamicStore); 
+      }
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(0, code.FAILED);
@@ -117,13 +124,20 @@ public class ShieldedTransferActuator extends AbstractActuator {
   private void executeTransparentFrom(byte[] ownerAddress, long amount,
       TransactionResultCapsule ret, long fee)
       throws ContractExeException {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
-      Commons.adjustAssetBalanceV2(ownerAddress, CommonParameter.getInstance()
-              .getZenTokenId(), -amount, accountAssetIssueStore, assetIssueStore,
-          dynamicStore);
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        Commons.adjustAssetBalanceV2(ownerAddress, CommonParameter.getInstance()
+                        .getZenTokenId(), -amount, accountAssetIssueStore, assetIssueStore,
+                dynamicStore); 
+      } else {
+        Commons.adjustAssetBalanceV2(ownerAddress, CommonParameter.getInstance()
+                        .getZenTokenId(), -amount, accountStore, assetIssueStore,
+                dynamicStore); 
+      }
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
       ret.setShieldedTransactionFee(fee);
@@ -148,14 +162,20 @@ public class ShieldedTransferActuator extends AbstractActuator {
         accountStore.put(toAddress, toAccount);
       }
 
-      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
-      if (accountAssetIssueCapsule == null) {
-        accountAssetIssueStore.put(toAddress, new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress)));
-      }
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(toAddress);
+        if (accountAssetIssueCapsule == null) {
+          accountAssetIssueStore.put(toAddress, new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress)));
+        }
 
-      Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
-          amount, accountAssetIssueStore, assetIssueStore,
-          dynamicStore);
+        Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
+                amount, accountAssetIssueStore, assetIssueStore,
+                dynamicStore);
+      } else {
+        Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
+                amount, accountStore, assetIssueStore,
+                dynamicStore); 
+      }
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
       ret.setShieldedTransactionFee(fee);
@@ -410,6 +430,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     hasTransparentFrom = (ownerAddress.length > 0);
     hasTransparentTo = (toAddress.length > 0);
     AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     long fromAmount = shieldedTransferContract.getFromAmount();
     long toAmount = shieldedTransferContract.getToAmount();
     if (fromAmount < 0) {
@@ -441,7 +462,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
         throw new ContractValidateException("Validate ShieldedTransferContract error, "
             + "no OwnerAccount");
       }
-      long balance = getZenBalance(ownerAddress);
+      long balance; 
+      if (chainBaseManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+        balance = getZenBalance(ownerAddress); 
+      } else {
+        balance = getZenBalance(ownerAccount);
+      }
+      
       if (fromAmount <= 0) {
         throw new ContractValidateException("from_amount must be greater than 0");
       }
@@ -459,26 +486,49 @@ public class ShieldedTransferActuator extends AbstractActuator {
       if (toAmount <= 0) {
         throw new ContractValidateException("to_amount must be greater than 0");
       }
-      AccountCapsule toAccount = accountStore.get(toAddress);
-      if (toAccount != null) {
-        try {
-          Math.addExact(getZenBalance(toAddress), toAmount);
-        } catch (ArithmeticException e) {
-          logger.debug(e.getMessage(), e);
-          throw new ContractValidateException(e.getMessage());
+      if (chainBaseManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+        AccountAssetIssueCapsule toAccountIssue = accountAssetIssueStore.get(toAddress);
+        if (toAccountIssue != null) {
+          try {
+            Math.addExact(getZenBalance(toAddress), toAmount);
+          } catch (ArithmeticException e) {
+            logger.debug(e.getMessage(), e);
+            throw new ContractValidateException(e.getMessage());
+          }
+        }
+      } else {
+        AccountCapsule toAccount = accountStore.get(toAddress);
+        if (toAccount != null) {
+          try {
+            Math.addExact(getZenBalance(toAccount), toAmount);
+          } catch (ArithmeticException e) {
+            logger.debug(e.getMessage(), e);
+            throw new ContractValidateException(e.getMessage());
+          }
         }
       }
     }
   }
 
+  private long getZenBalance(AccountCapsule account) {
+    if (account.getAssetMapV2().get(CommonParameter
+        .getInstance().getZenTokenId()) == null) {
+      return 0L;
+    } else {
+      return account.getAssetMapV2().get(CommonParameter
+              .getInstance().getZenTokenId());
+    }
+  }
+  
   private long getZenBalance(byte[] address) {
-    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager.getAccountAssetIssueStore().get(address);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = chainBaseManager
+            .getAccountAssetIssueStore().get(address);
     if (accountAssetIssueCapsule.getAssetMapV2().get(CommonParameter
-            .getInstance().getZenTokenId()) == null) {
+        .getInstance().getZenTokenId()) == null) {
       return 0L;
     } else {
       return accountAssetIssueCapsule.getAssetMapV2().get(CommonParameter
-              .getInstance().getZenTokenId());
+          .getInstance().getZenTokenId());
     }
   }
 

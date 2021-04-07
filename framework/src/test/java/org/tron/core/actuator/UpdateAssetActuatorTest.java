@@ -108,6 +108,7 @@ public class UpdateAssetActuatorTest {
     // address does not exist in accountStore
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
     dbManager.getAccountAssetIssueStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private Any getContract(

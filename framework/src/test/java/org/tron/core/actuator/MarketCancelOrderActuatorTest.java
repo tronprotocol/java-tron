@@ -150,6 +150,7 @@ public class MarketCancelOrderActuatorTest {
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     chainBaseManager.getMarketAccountStore().delete(ownerAddressFirstBytes);
     chainBaseManager.getMarketAccountStore().delete(ownerAddressSecondBytes);
+    chainBaseManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private void cleanMarketOrderByAccount(byte[] accountAddress) {

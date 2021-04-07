@@ -153,6 +153,15 @@ public class ShieldedReceiveTest extends BlockGenerate {
     //give a big value for pool, avoid for
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
     // Args.getInstance().setAllowShieldedTransaction(1);
+    chainBaseManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
+
+    initBlockHole();
+  }
+
+  private static void initBlockHole() {
+    AccountCapsule blackhole = chainBaseManager.getAccountStore().getBlackhole();
+    chainBaseManager.getAccountAssetIssueStore()
+            .convertAccountAssetIssuePut(blackhole);
   }
 
   /**
@@ -245,7 +254,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     AccountAssetIssueCapsule blackhole =
             chainBaseManager.getAccountAssetIssueStore().getBlackhole();
     AccountCapsule blackhole1 = chainBaseManager.getAccountStore().getBlackhole();
-    blackhole.getAssetIssuedName();
+    blackhole1.getAssetIssuedName();
     blackhole1.getBalance();
   }
 
