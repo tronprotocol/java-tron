@@ -1087,6 +1087,7 @@ public class FreezeTest {
   @After
   public void destroy() {
     ConfigLoader.disable = false;
+    VMConfig.initVmHardFork(false);
     Args.clearParam();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
