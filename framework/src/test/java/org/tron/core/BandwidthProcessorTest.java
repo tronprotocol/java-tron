@@ -192,7 +192,7 @@ public class BandwidthProcessorTest {
             .put(assetCapsule.getAddress().toByteArray(), assetCapsule);
     chainBaseManager.getAccountStore()
             .put(assetCapsule2.getAddress().toByteArray(), assetCapsule2);
-
+    chainBaseManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private TransferAssetContract getTransferAssetContract() {

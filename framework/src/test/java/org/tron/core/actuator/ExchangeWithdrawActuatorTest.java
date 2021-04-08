@@ -133,6 +133,7 @@ public class ExchangeWithdrawActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private Any getContract(String address, long exchangeId, String tokenId, long quant) {

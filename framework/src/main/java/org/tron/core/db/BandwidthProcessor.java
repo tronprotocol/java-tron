@@ -44,7 +44,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
     AccountAssetIssueCapsule accountAssetIssueCapsule = null;
     if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
-      accountAssetIssueCapsule = accountAssetIssueStore.get(accountCapsule.getAddress().toByteArray());
+      accountAssetIssueCapsule = accountAssetIssueStore
+              .get(accountCapsule.getAddress().toByteArray());
     }
 
     long oldNetUsage = accountCapsule.getNetUsage();

@@ -126,6 +126,7 @@ public class ExchangeCreateActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
     dbManager.getDynamicPropertiesStore().saveLatestExchangeNum(0);
+    dbManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
   }
 
   private Any getContract(String address, String firstTokenId, long firstTokenBalance,
