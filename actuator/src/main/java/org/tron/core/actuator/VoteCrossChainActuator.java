@@ -2,12 +2,12 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -16,14 +16,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.CrossChain.UnvoteCrossContract;
+import org.tron.protos.contract.CrossChain.VoteCrossChainContract;
 
 @Slf4j(topic = "actuator")
-public class UnvoteCrossActuator extends AbstractActuator {
+public class VoteCrossChainActuator extends AbstractActuator {
 
 
-  public UnvoteCrossActuator() {
-    super(ContractType.UnvoteCrossContract, UnvoteCrossContract.class);
+  public VoteCrossChainActuator() {
+    super(ContractType.VoteCrossChainContract, VoteCrossChainContract.class);
   }
 
   @Override
@@ -35,15 +35,25 @@ public class UnvoteCrossActuator extends AbstractActuator {
 
     long fee = calcFee();
     try {
-      UnvoteCrossContract voteCrossContract = any.unpack(UnvoteCrossContract.class);
+      VoteCrossChainContract voteCrossContract = any.unpack(VoteCrossChainContract.class);
       AccountStore accountStore = chainBaseManager.getAccountStore();
       CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
       String chainId = voteCrossContract.getChainId().toString();
+      long amount = voteCrossContract.getAmount();
       byte[] address = voteCrossContract.getOwnerAddress().toByteArray();
-      long voted = crossRevokingStore.getChainVote(chainId, ByteArray.toHexString(address));
-      Commons.adjustBalance(accountStore, address, voted);
-      crossRevokingStore.deleteChainVote(chainId, ByteArray.toHexString(address));
-      crossRevokingStore.updateTotalChainVote(chainId, -voted);
+      int round = voteCrossContract.getRound();
+
+      byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(round, chainId, ByteArray.toHexString(address));
+      if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
+        VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
+        VoteCrossChainContract.Builder builder = voteCrossContract.toBuilder();
+        builder.setAmount(voteCrossInfo.getAmount() + amount);
+        voteCrossContract = builder.build();
+      }
+
+      Commons.adjustBalance(accountStore, address, -amount);
+      crossRevokingStore.putChainVote(round, chainId, ByteArray.toHexString(address), voteCrossContract.toByteArray());
+      crossRevokingStore.updateTotalChainVote(round, chainId, amount);
 
       Commons.adjustBalance(accountStore, address, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
@@ -64,38 +74,49 @@ public class UnvoteCrossActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    if (!this.any.is(UnvoteCrossContract.class)) {
+    if (!this.any.is(VoteCrossChainContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [VoteCrossContract], real type[" + any
               .getClass() + "]");
     }
-    final UnvoteCrossContract contract;
+    final VoteCrossChainContract contract;
     try {
-      contract = this.any.unpack(UnvoteCrossContract.class);
+      contract = this.any.unpack(VoteCrossChainContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
     String chainId = contract.getChainId().toString();
+    long amount = contract.getAmount();
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    int round = contract.getRound();
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
-
-    String readableOwnerAddress = ByteArray.toHexString(ownerAddress);
-    long voteCountBefore = crossRevokingStore.getChainVote(chainId, readableOwnerAddress);
-
-    if (voteCountBefore == 0) {
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    if (accountCapsule.getBalance() - amount < 0) {
       throw new ContractValidateException(
-          "this address has not voted for this chain.");
+              "Validate VoteCrossContract error, balance is not sufficient.");
     }
 
-    List<String> paraChainList = crossRevokingStore.getParaChainList();
-    if (paraChainList.contains(chainId)) {
-      throw new ContractValidateException(
-              "can not unvote from a parachain");
+    String readableOwnerAddress = ByteArray.toHexString(ownerAddress);
+    byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(round, chainId, readableOwnerAddress);
+    if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
+      try {
+        VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
+        long voteCountBefore = voteCrossInfo.getAmount();
+
+        if (voteCountBefore + amount < 0) {
+          throw new ContractValidateException(
+                  "the amount for revoke is larger than the vote count.");
+        }
+      } catch (InvalidProtocolBufferException e) {
+        logger.debug(e.getMessage(), e);
+        throw new ContractValidateException(e.getMessage());
+      }
     }
 
     return true;
@@ -103,7 +124,7 @@ public class UnvoteCrossActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(UnvoteCrossContract.class).getOwnerAddress();
+    return any.unpack(VoteCrossChainContract.class).getOwnerAddress();
   }
 
   @Override

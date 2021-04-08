@@ -19,6 +19,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.AuctionConfigParser;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
 import org.tron.consensus.ConsensusDelegate;
@@ -36,6 +37,7 @@ import org.tron.protos.Protocol.PBFTCommitResult;
 import org.tron.protos.Protocol.PBFTMessage;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
 import org.tron.protos.contract.BalanceContract.CrossChainInfo;
+import org.tron.protos.contract.CrossChain;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -164,18 +166,28 @@ public class MaintenanceManager {
 
     // update parachains
     long currentBlockHeaderTimestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    if (dynamicPropertiesStore.getAuctionEndTime() < currentBlockHeaderTimestamp) {
-      // 1. update parachains
-      CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
-      List<Pair<String, Long>> eligibleChainLists = crossRevokingStore.getEligibleChainLists();
-      List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
-          .collect(Collectors.toList());
-      crossRevokingStore.updateParaChains(chainIds);
-      //
-      setChainInfo(chainIds);
-      // 2. set next auction time, default: 1 years later
-      dynamicPropertiesStore.saveAuctionEndTime(currentBlockHeaderTimestamp + ONE_YEAR_MS);
-    }
+    List<Long> auctionRoundList = dynamicPropertiesStore.listAuctionConfigs();
+    auctionRoundList.forEach(value -> {
+      CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
+      if (roundInfo.getEndTime() < currentBlockHeaderTimestamp) {
+        CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
+        if (currentBlockHeaderTimestamp < roundInfo.getEndTime() + roundInfo.getDuration() * 86400) {
+          if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
+            // set parachains
+            List<Pair<String, Long>> eligibleChainLists =
+                    crossRevokingStore.getEligibleChainLists(roundInfo.getRound(), roundInfo.getSlotCount());
+            List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
+                    .collect(Collectors.toList());
+            crossRevokingStore.updateParaChains(roundInfo.getRound(), chainIds);
+
+            setChainInfo(chainIds);
+          }
+        } else {
+          crossRevokingStore.deleteParaChains(roundInfo.getRound());
+        }
+      }
+    });
+
   }
 
   private void setChainInfo(List<String> chainIds) {

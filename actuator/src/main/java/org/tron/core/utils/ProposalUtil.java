@@ -1,10 +1,12 @@
 package org.tron.core.utils;
 
+import org.tron.common.utils.AuctionConfigParser;
 import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.contract.CrossChain;
 
 public class ProposalUtil {
 
@@ -444,18 +446,19 @@ public class ProposalUtil {
         break;
       }
 
-      case AUCTION_END_TIME: {
+      case AUCTION_CONFIG: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
-          throw new ContractValidateException("Bad chain parameter id [AUCTION_END_TIME]");
+          throw new ContractValidateException("Bad chain parameter id [AUCTION_CONFIG]");
         }
         if (!dynamicPropertiesStore.allowCrossChain()) {
           throw new ContractValidateException(
-              "CrossChain is not activated, can not set auction end time");
+              "CrossChain is not activated, can not set auction config");
         }
-        // check value is a Timestamp and make sure the timestamp is greater than now()
-        if (value < System.currentTimeMillis()) {
+        // check end_time value is a Timestamp and make sure the timestamp is greater than now()
+        Long endTime = AuctionConfigParser.getAuctionEndTime(value);
+        if (endTime < System.currentTimeMillis()) {
           throw new ContractValidateException(
-              "Bad AUCTION_END_TIME parameter value, value must greater than current timestamp.");
+              "Bad AUCTION_CONFIG parameter value, value must greater than current timestamp.");
         }
 //        if (value > MAX_TIMESTAMP) {
 //          throw new ContractValidateException(
@@ -517,7 +520,7 @@ public class ProposalUtil {
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     CROSS_CHAIN(50),
-    AUCTION_END_TIME(51); // timestamp
+    AUCTION_CONFIG(51); // timestamp
 
     private long code;
 

@@ -7,13 +7,22 @@ option java_package = "org.tron.protos.contract"; //Specify the name of the pack
 option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 
-message VoteCrossContract {
+message VoteCrossChainContract {
     bytes owner_address = 1;
     bytes chain_id = 2;
     int64 amount = 3;
+    int32 round = 4;
 }
 
-message UnvoteCrossContract {
+message UnvoteCrossChainContract {
     bytes owner_address = 1;
     bytes chain_id = 2;
+    int32 round = 3;
+}
+
+message AuctionRoundContract {
+    int32 round = 1;
+    int32 slot_count = 2;
+    int64 end_time = 3;
+    int64 duration = 4;
 }

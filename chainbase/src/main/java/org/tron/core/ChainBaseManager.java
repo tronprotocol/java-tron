@@ -11,6 +11,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.AuctionConfigParser;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
@@ -66,6 +67,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.protos.contract.CrossChain;
 
 @Slf4j(topic = "DB")
 @Component
@@ -400,12 +402,24 @@ public class ChainBaseManager {
   }
 
   public boolean chainIsSelected(ByteString chainId) {
-    if (CommonParameter.getInstance().isShouldRegister() && !getCrossRevokingStore()
-        .getParaChainList().contains(chainId.toString())) {
-      logger.error("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
-      return false;
+    if (!CommonParameter.getInstance().isShouldRegister()) {
+      return true;
     }
-    return true;
+
+    boolean result = false;
+    List<Long> auctionRoundList = getDynamicPropertiesStore().listAuctionConfigs();
+    for (Long value : auctionRoundList) {
+      CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
+      if (getCrossRevokingStore().getParaChainList(roundInfo.getRound()).contains(chainId.toString())) {
+        result = true;
+        break;
+      }
+    }
+
+    if (!result) {
+      logger.warn("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
+    }
+    return result;
   }
 
 }

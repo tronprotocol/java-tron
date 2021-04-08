@@ -785,21 +785,30 @@ service Wallet {
   rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
   };
 
-  rpc RegisterCross (CrossChainInfo) returns (TransactionExtention) {
+  rpc RegisterCrossChain (CrossChainInfo) returns (TransactionExtention) {
   };
 
-  rpc GetRegisterCrossList (EmptyMessage) returns (RegisterCrossList) {
+  rpc UpdateCrossChain (CrossChainInfo) returns (TransactionExtention) {
   };
 
-  rpc VoteCross (VoteCrossContract) returns (TransactionExtention) {
+  rpc GetRegisterCrossChainList (PaginatedMessage) returns (RegisterCrossChainList) {
   };
 
-  rpc UnvoteCross (UnvoteCrossContract) returns (TransactionExtention) {
+  rpc VoteCrossChain (VoteCrossChainContract) returns (TransactionExtention) {
   };
 
-  // TODO: the data structure of PARAM and RETURN need to be discussed
-  rpc GetVoteCrossList (BytesMessage) returns (VoteCrossList) {
+  rpc UnvoteCrossChain (UnvoteCrossChainContract) returns (TransactionExtention) {
   };
+
+  rpc GetCrossChainVoteSummaryList (CrossChainVoteSummaryPaginated) returns (CrossChainVoteSummaryList) {
+  };
+
+  rpc GetCrossChainVoteDetailList (CrossChainVotePaginated) returns (CrossChainVoteDetailList) {
+  };
+
+  rpc GetCrossChainAuctinConfigDetailList (EmptyMessage) returns (CrossChainAuctinConfigDetailList) {
+  };
+
 };
 
 service WalletSolidity {
@@ -1535,10 +1544,37 @@ message ShieldedTRC20TriggerContractParameters {
   bytes transparent_to_address = 4;
 }
 
-message RegisterCrossList {
+message RegisterCrossChainList {
   repeated CrossChainInfo crossChainInfo = 1;
 }
 
-message VoteCrossList {
-  repeated VoteCrossContract voteCrossContract = 1;
+message CrossChainVoteSummary {
+  bytes chain_id = 1;
+  int32 round = 2;
+  int64 amount = 3;
+}
+
+message CrossChainVoteSummaryList {
+  repeated CrossChainVoteSummary crossChainVoteSummary = 1;
+}
+
+message CrossChainVoteSummaryPaginated {
+  int32 round = 1;
+  int64 offset = 2;
+  int64 limit = 3;
+}
+
+message CrossChainVotePaginated {
+  bytes chain_id = 1;
+  int32 round = 2;
+  int64 offset = 3;
+  int64 limit = 4;
+}
+
+message CrossChainVoteDetailList {
+  repeated VoteCrossChainContract voteCrossChainContract = 1;
+}
+
+message CrossChainAuctinConfigDetailList {
+  repeated AuctionRoundContract auctionConfigDetail = 1;
 }

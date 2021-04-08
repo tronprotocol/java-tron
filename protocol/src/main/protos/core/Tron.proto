@@ -343,10 +343,10 @@ message Transaction {
       MarketSellAssetContract = 52;
       MarketCancelOrderContract = 53;
       CrossContract = 54;
-      RegisterCrossContract = 55;
-      UpdateCrossContract = 56;
-      VoteCrossContract = 57;
-      UnvoteCrossContract = 58;
+      RegisterCrossChainContract = 55;
+      UpdateCrossChainContract = 56;
+      VoteCrossChainContract = 57;
+      UnvoteCrossChainContract = 58;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
