@@ -158,6 +158,9 @@ message Account {
   //Freeze and provide balances to other accounts
   int64 delegated_frozen_balance_for_bandwidth = 42;
 
+  int64 old_tron_power = 46;
+  Frozen tron_power = 47;
+
   // this account create time
   int64 create_time = 0x09;
   // this last operation time, including transfer, voting and so on. //FIXME fix grammar
@@ -476,6 +479,7 @@ message BlockHeader {
     bytes witness_address = 9;
     int32 version = 10;
     bytes accountStateRoot = 11;
+    bytes receiptsRoot = 12;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
