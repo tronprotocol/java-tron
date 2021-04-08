@@ -352,7 +352,7 @@ public class Wallet {
       AccountAssetIssue accountAssetIssue = getAccountAssetIssueById(instance);
       return Util.convertAccount(instance, accountAssetIssue);
     }
-    return account;
+    return instance;
   }
 
   public Account getAccountById(Account account) {

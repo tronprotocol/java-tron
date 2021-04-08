@@ -58,10 +58,11 @@ public class TransferActuator extends AbstractActuator {
 
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
-      if (accountAssetIssueStore.get(toAddress) == null) {
-        accountAssetIssueStore.put(toAddress, new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress)));
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1
+              && accountAssetIssueStore.get(toAddress) == null) {
+        accountAssetIssueStore.put(toAddress,
+                new AccountAssetIssueCapsule(ByteString.copyFrom(toAddress)));
       }
-
       Commons.adjustBalance(accountStore, ownerAddress, -(Math.addExact(fee, amount)));
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);

@@ -60,8 +60,10 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       AccountCapsule accountCapsule = accountStore
           .get(address);
 
-      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
-
+      AccountAssetIssueCapsule accountAssetIssueCapsule = null;
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+         accountAssetIssueCapsule = accountAssetIssueStore.get(address);
+      }
       ExchangeCapsule exchangeCapsule = Commons
           .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
               get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
@@ -103,19 +105,30 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance + tokenQuant);
       } else {
-        accountAssetIssueCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+          accountAssetIssueCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        } else {
+          accountCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        }
       }
 
       if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
-        accountAssetIssueCapsule
-            .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
+        if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+          accountAssetIssueCapsule
+                  .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
+        } else {
+         accountCapsule
+                  .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
+        }
       }
 
       byte[] accountAddress = accountCapsule.createDbKey();
       accountStore.put(accountAddress, accountCapsule);
-      accountAssetIssueStore.put(accountAddress, accountAssetIssueCapsule);
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        accountAssetIssueStore.put(accountAddress, accountAssetIssueCapsule);
+      }
       Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store,
           assetIssueStore);
 

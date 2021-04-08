@@ -57,7 +57,10 @@ public class ExchangeInjectActuator extends AbstractActuator {
       byte[] address = exchangeInjectContract.getOwnerAddress().toByteArray();
       AccountCapsule accountCapsule = accountStore
           .get(address);
-      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
+      AccountAssetIssueCapsule accountAssetIssueCapsule = null;
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        accountAssetIssueCapsule = accountAssetIssueStore.get(address);
+      }
 
       ExchangeCapsule exchangeCapsule;
       exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
@@ -93,7 +96,11 @@ public class ExchangeInjectActuator extends AbstractActuator {
       if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance - tokenQuant);
       } else {
-        accountAssetIssueCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+          accountAssetIssueCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        } else {
+          accountCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
+        }
       }
 
       if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
@@ -154,7 +161,10 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
-    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+    AccountAssetIssueCapsule accountAssetIssueCapsule = null;
+    if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+      accountAssetIssueCapsule = accountAssetIssueStore.get(ownerAddress);
+    }
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for exchange inject fee!");
     }
@@ -237,8 +247,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountAssetIssueCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dynamicStore)) {
-        throw new ContractValidateException("token balance is not enough");
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        if (!accountAssetIssueCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dynamicStore)) {
+          throw new ContractValidateException("token balance is not enough");
+        }
+      } else {
+        if (!accountCapsule.assetBalanceEnoughV2(tokenID, tokenQuant, dynamicStore)) {
+          throw new ContractValidateException("token balance is not enough");
+        }
       }
     }
 
@@ -247,8 +263,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountAssetIssueCapsule.assetBalanceEnoughV2(anotherTokenID, anotherTokenQuant, dynamicStore)) {
-        throw new ContractValidateException("another token balance is not enough");
+      if (dynamicStore.getAllowAccountAssetOptimization() == 1) {
+        if (!accountAssetIssueCapsule.assetBalanceEnoughV2(anotherTokenID, anotherTokenQuant, dynamicStore)) {
+          throw new ContractValidateException("another token balance is not enough");
+        }
+      } else {
+        if (!accountCapsule.assetBalanceEnoughV2(anotherTokenID, anotherTokenQuant, dynamicStore)) {
+          throw new ContractValidateException("another token balance is not enough");
+        }
       }
     }
 
