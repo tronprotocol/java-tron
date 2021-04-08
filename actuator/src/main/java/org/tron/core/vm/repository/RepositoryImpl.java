@@ -930,15 +930,17 @@ public class RepositoryImpl implements Repository {
   }
 
   private void commitAccountAssetIssueCache(Repository deposit) {
-    accountAssetIssueCache.forEach((key, value) -> {
-      if (value.getType().isCreate() || value.getType().isDirty()) {
-        if (deposit != null) {
-          deposit.putAccountAssetIssue(key, value);
-        } else {
-          getAccountAssetIssueStore().put(key.getData(), value.getAccountAssetIssue());
+    if (getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+      accountAssetIssueCache.forEach((key, value) -> {
+        if (value.getType().isCreate() || value.getType().isDirty()) {
+          if (deposit != null) {
+            deposit.putAccountAssetIssue(key, value);
+          } else {
+            getAccountAssetIssueStore().put(key.getData(), value.getAccountAssetIssue());
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   private void commitCodeCache(Repository deposit) {
