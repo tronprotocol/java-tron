@@ -80,20 +80,21 @@ public class ContractTrcToken041 {
 
   @Test(enabled = true, description = "Trigger contract msg.tokenId add 1,msg.tokenValue add 1")
   public void deployTransferTokenContract() {
-
+    PublicMethed.printAddress(dev001Key);
+    PublicMethed.printAddress(user001Key);
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000,
             fromAddress, testKey002, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L,
             fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+//    System.exit(0);
     // freeze balance
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
-        0, 1, dev001Key, blockingStubFull));
+    PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
+        0, 1, dev001Key, blockingStubFull);
 
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
-        0, 1, user001Key, blockingStubFull));
+    PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
+        0, 1, user001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;

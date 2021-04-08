@@ -415,23 +415,6 @@ public class ContractTrcToken043 {
             blockingStubFull), 0, 1,
         ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
 
-    // tokenId is 0, account does not have trx
-    param = "\"" + Base58.encode58Check(dev001Address)
-        + "\",\"" + tokenValue + "\"," + tokenId;
-
-    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
-        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
-        blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() != 0);
-    Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("REVERT opcode executed",
-        infoById.get().getResMessage().toStringUtf8());
-
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
             blockingStubFull), 0, 1,
@@ -444,34 +427,6 @@ public class ContractTrcToken043 {
     Assert.assertTrue(PublicMethed
         .sendcoin(user002Address, 5000000, fromAddress, testKey002,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    // tokenId is 0, transfer contract has trx, transfer to a contract
-    tokenId = Long.toString(0);
-    tokenValue = Long.valueOf(1);
-    callValue = Long.valueOf(1);
-
-    param = "\"" + Base58.encode58Check(resultContractAddress)
-        + "\",\"" + tokenValue + "\"," + tokenId;
-
-    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
-        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user002Address, user002Key,
-        blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() != 0);
-    Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("REVERT opcode executed",
-        infoById.get().getResMessage().toStringUtf8());
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //tokenId is 0, transfer contract has trx, transfer to normal account
@@ -524,21 +479,6 @@ public class ContractTrcToken043 {
             blockingStubFull), 0, 1,
         ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    // tokenid bigger than long.max, trigger to a normal account
-    param = "\"" + Base58.encode58Check(dev001Address) + "\"";
-
-    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
-        "transferTokenTestIDOverBigInteger(address)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user002Address, user002Key,
-        blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() != 0);
-    Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("REVERT opcode executed",
-        infoById.get().getResMessage().toStringUtf8());
 
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
         assetAccountId, blockingStubFull);
