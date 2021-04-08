@@ -23,6 +23,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.StoreFactory;
@@ -38,13 +39,16 @@ public class Trc10InsTest {
 
   private String dbPath;
   private TronApplicationContext context;
-
+  private static Manager dbManager;
   @Before
   public void init() {
     dbPath = "output_" + this.getClass().getName();
     FileUtil.deleteDir(new File(dbPath));
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
+    dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore()
+            .setAllowAccountAssetOptimization(1L);
   }
 
   // TODO: 2020/11/26
