@@ -121,6 +121,8 @@ public class TransferTokenTest {
             .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+
+    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     ownerAccountAssetIssueCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
@@ -193,7 +195,6 @@ public class TransferTokenTest {
     changeAssetIssue.addAssetAmountV2(String.valueOf(id2).getBytes(), 99,
             dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountAssetIssueStore().put(contractAddress, changeAssetIssue);
-
 
     String selectorStr2 = "suicide(address)";
     //TRANSFER_TO
