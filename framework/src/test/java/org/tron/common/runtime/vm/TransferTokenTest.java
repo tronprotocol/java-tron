@@ -5,6 +5,7 @@ import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
@@ -76,6 +77,12 @@ public class TransferTokenTest {
             new AccountAssetIssueCapsule(
                ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))
             );
+  }
+
+  @Before
+  public void init() {
+    dbManager.getDynamicPropertiesStore()
+            .setAllowAccountAssetOptimization(1L);
   }
 
   /**
