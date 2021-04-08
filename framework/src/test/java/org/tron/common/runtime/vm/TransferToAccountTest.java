@@ -130,7 +130,8 @@ public class TransferToAccountTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     chainBaseManager.getAssetIssueV2Store()
         .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-    chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(),
+            ownerCapsule);
 
     ownerAccountAssetIssueCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     dbManager.getAccountAssetIssueStore()

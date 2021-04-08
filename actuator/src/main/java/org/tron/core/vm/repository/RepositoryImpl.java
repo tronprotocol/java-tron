@@ -1140,8 +1140,8 @@ public class RepositoryImpl implements Repository {
   @Override
   public boolean checkTokenBalance(byte[] address) {
     AccountCapsule account = getAccount(address);
-    if (MapUtils.isNotEmpty(account.getAssetMap()) ||
-            MapUtils.isNotEmpty(account.getAssetMapV2())) {
+    if (account != null && (MapUtils.isNotEmpty(account.getAssetMap()) ||
+            MapUtils.isNotEmpty(account.getAssetMapV2()))) {
       AccountCapsule accountCapsule = accountAssetIssueStore.convertAccountAssetIssuePut(account);
       updateAccount(address, accountCapsule);
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(address);
