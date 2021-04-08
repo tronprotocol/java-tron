@@ -161,11 +161,6 @@ public class ContractTrcToken005 {
     logger.info("after AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfter: "
         + devAssetCountAfter);
 
-    Assert.assertFalse(PublicMethed
-        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100L,
-            dev001Address, dev001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     Long contractAssetCount = PublicMethed
         .getAssetIssueValue(transferTokenContractAddress, assetAccountId, blockingStubFull);
     logger.info("Contract has AssetId: " + assetAccountId.toStringUtf8() + ", Count: "

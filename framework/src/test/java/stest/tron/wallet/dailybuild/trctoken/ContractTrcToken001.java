@@ -162,10 +162,6 @@ public class ContractTrcToken001 {
         .getContract(transferTokenContractAddress, blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    Assert.assertFalse(PublicMethed
-        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100L,
-            dev001Address, dev001Key, blockingStubFull));
-
     Long contractAssetCount = PublicMethed
         .getAssetIssueValue(transferTokenContractAddress, assetAccountId, blockingStubFull);
     logger.info("Contract has AssetId: " + assetAccountId.toStringUtf8() + ", Count: "

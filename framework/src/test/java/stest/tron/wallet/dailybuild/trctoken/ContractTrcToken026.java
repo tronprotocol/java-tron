@@ -137,8 +137,7 @@ public class ContractTrcToken026 {
             100, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertFalse(PublicMethed.sendcoin(transferTokenContractAddress,
-            1000000000L, fromAddress, testKey002, blockingStubFull));
+
   }
 
   @Test(enabled = true, description = "Multistage call transferToken use right tokenID")

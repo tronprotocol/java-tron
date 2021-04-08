@@ -110,8 +110,6 @@ public class ContractTrcToken030 {
             100, null, dev001Key, dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Assert.assertFalse(PublicMethed.sendcoin(transferTokenContractAddress,
-            1000000000L, fromAddress, testKey002, blockingStubFull));
   }
 
   /**
