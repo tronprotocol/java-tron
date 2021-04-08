@@ -839,7 +839,6 @@ public class RepositoryImpl implements Repository {
       if (accountAssetIssueCapsule == null) {
         return 0;
       }
-      checkTokenBalance(accountCapsule);
       String tokenStr = new String(ByteUtil.stripLeadingZeroes(tokenId));
       return accountAssetIssueCapsule.getAssetMapV2().getOrDefault(tokenStr, 0L);
     }

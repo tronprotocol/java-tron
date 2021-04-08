@@ -863,6 +863,9 @@ public class Program {
     } else {
       // transfer trc10 token validation
       tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
+      if (deposit.getDynamicPropertiesStore().getAllowAccountAssetOptimization() == 1) {
+        deposit.checkTokenBalance(senderAddress, contextAddress);
+      }
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();

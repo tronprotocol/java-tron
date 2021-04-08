@@ -40,6 +40,7 @@ public class Trc10InsTest {
   private String dbPath;
   private TronApplicationContext context;
   private static Manager dbManager;
+
   @Before
   public void init() {
     dbPath = "output_" + this.getClass().getName();
