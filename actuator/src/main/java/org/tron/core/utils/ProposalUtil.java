@@ -440,7 +440,7 @@ public class ProposalUtil {
         }
         if (value != 1) {
           throw new ContractValidateException(
-                  "This value[ALLOW_RECEIPTS_MERKLE_ROOT] is only allowed to be 1 or 0");
+                  "This value[ALLOW_RECEIPTS_MERKLE_ROOT] is only allowed to be 1");
         }
         break;
       }
