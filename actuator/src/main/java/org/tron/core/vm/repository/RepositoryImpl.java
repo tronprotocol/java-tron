@@ -628,12 +628,12 @@ public class RepositoryImpl implements Repository {
       accountCapsule = createAccount(address, Protocol.AccountType.Normal);
     }
 
-    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
-      accountAssetIssueCapsule = getAccountAssetIssue(address);
-      if (accountAssetIssueCapsule == null) {
-        accountAssetIssueCapsule = createAccountAssetIssue(address);
-      }
-    }
+//    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+//      accountAssetIssueCapsule = getAccountAssetIssue(address);
+//      if (accountAssetIssueCapsule == null) {
+//        accountAssetIssueCapsule = createAccountAssetIssue(address);
+//      }
+//    }
 
     long balance = accountCapsule.getBalance();
     if (value == 0) {
@@ -651,11 +651,11 @@ public class RepositoryImpl implements Repository {
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
 
-    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
-      Value V2 = Value.create(accountAssetIssueCapsule.getData(),
-              Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
-      accountAssetIssueCache.put(key, V2);
-    }
+//    if (dynamicPropertiesStore.getAllowAccountAssetOptimization() == 1) {
+//      Value V2 = Value.create(accountAssetIssueCapsule.getData(),
+//              Type.VALUE_TYPE_DIRTY | accountAssetIssueCache.get(key).getType().getType());
+//      accountAssetIssueCache.put(key, V2);
+//    }
     return accountCapsule.getBalance();
   }
 
