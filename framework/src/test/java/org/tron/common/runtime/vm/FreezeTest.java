@@ -144,7 +144,7 @@ public class FreezeTest {
 
     ConfigLoader.disable = true;
     manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
-    VMConfig.initVmHardFork(false);
+    VMConfig.initVmHardFork(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
