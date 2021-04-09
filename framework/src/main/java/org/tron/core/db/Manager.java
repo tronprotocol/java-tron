@@ -1285,7 +1285,8 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(
+          final TransactionCapsule trxCap, BlockCapsule blockCap, boolean save)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1349,7 +1350,9 @@ public class Manager {
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
-    chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+    if (save) {
+      chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+    }
 
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1376,8 +1379,8 @@ public class Manager {
   }
 
   private boolean isCrossChainTx(TransactionCapsule trxCap) {
-    ContractType contractType = trxCap.getInstance().getRawData().getContract(0).getType();
-    return contractType == ContractType.CrossContract && !trxCap.isSource();
+    //ContractType contractType = trxCap.getInstance().getRawData().getContract(0).getType();
+    return !trxCap.isSource();
   }
 
   /**
@@ -1515,8 +1518,8 @@ public class Manager {
     session.reset();
 
     logger.info(
-        "Generate block success, pendingCount: {}," +
-            " repushCount: {}, postponedCount: {}, crossCount: {}",
+        "Generate block success, pendingCount: {},"
+                + " repushCount: {}, postponedCount: {}, crossCount: {}",
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount,
         crossTxQueue.size());
 
@@ -1692,10 +1695,14 @@ public class Manager {
     pbftBlockListener.addCallBackTx(chainBaseManager, block.getNum(), transactionCapsule);
   }
 
-  private TransactionInfo preProcessTransaction(TransactionCapsule transactionCapsule,
-      BlockCapsule block)
-      throws ValidateSignatureException, ContractValidateException, TooBigTransactionException, TransactionExpirationException, TooBigTransactionResultException, ReceiptCheckErrException, TaposException, VMIllegalException, DupTransactionException, ContractExeException, AccountResourceInsufficientException {
-    TransactionInfo result = processTransaction(transactionCapsule, block);
+  private TransactionInfo preProcessTransaction(
+          TransactionCapsule transactionCapsule, BlockCapsule block) throws
+          ValidateSignatureException, ContractValidateException,
+          TooBigTransactionException, TransactionExpirationException,
+          TooBigTransactionResultException, ReceiptCheckErrException,
+          TaposException, VMIllegalException, DupTransactionException,
+          ContractExeException, AccountResourceInsufficientException {
+    TransactionInfo result = processTransaction(transactionCapsule, block, true);
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (contract.getType() == ContractType.CrossContract) {
       try {
@@ -1746,7 +1753,7 @@ public class Manager {
             crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
           }*/
           setTransaction(crossTriggerTx, transactionCapsule);
-          TransactionInfo middleResult = processTransaction(crossTriggerTx, block);
+          TransactionInfo middleResult = processTransaction(crossTriggerTx, block, false);
           //
           result = middleResult.toBuilder().setId(result.getId()).build();
           if (crossTriggerTx.getContractResult() != null) {
