@@ -1005,6 +1005,9 @@ public class HttpMethed {
       if (resourceCode == 1) {
         userBaseObj2.addProperty("resource", "ENERGY");
       }
+      if (resourceCode == 2) {
+        userBaseObj2.addProperty("resource", "TRON_POWER");
+      }
       if (receiverAddress != null) {
         userBaseObj2.addProperty("receiver_address", ByteArray.toHexString(receiverAddress));
       }
@@ -1042,6 +1045,9 @@ public class HttpMethed {
       }
       if (resourceCode == 1) {
         userBaseObj2.addProperty("resource", "ENERGY");
+      }
+      if (resourceCode == 2) {
+        userBaseObj2.addProperty("resource", "TRON_POWER");
       }
       if (receiverAddress != null) {
         userBaseObj2.addProperty("receiver_address", ByteArray.toHexString(receiverAddress));

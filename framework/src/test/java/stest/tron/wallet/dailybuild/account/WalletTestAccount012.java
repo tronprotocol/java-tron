@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.dailybuild.account;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -56,11 +56,12 @@ public class WalletTestAccount012 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Freeze balance to get tron power")
   public void test01FreezeBalanceGetTronPower() {
     AccountResourceMessage accountResource = PublicMethed
         .getAccountResource(foundationAddress, blockingStubFull);
     final Long beforeTotalTronPowerWeight = accountResource.getTotalTronPowerWeight();
+    final Long beforeTronPowerLimit = accountResource.getTronPowerLimit();
 
     final Long beforeFrozenTime = System.currentTimeMillis();
     Assert.assertTrue(PublicMethed.sendcoin(frozenAddress, sendAmount,
@@ -82,14 +83,24 @@ public class WalletTestAccount012 {
     accountResource = PublicMethed
         .getAccountResource(frozenAddress, blockingStubFull);
     Long afterTotalTronPowerWeight = accountResource.getTotalTronPowerWeight();
+    Long afterTronPowerLimit = accountResource.getTronPowerLimit();
+    Long afterTronPowerUsed = accountResource.getTronPowerUsed();
     Assert.assertEquals(afterTotalTronPowerWeight - beforeTotalTronPowerWeight,
         frozenAmountForTronPower / 1000000L);
+
+    Assert.assertEquals(afterTronPowerLimit - beforeTronPowerLimit,
+        frozenAmountForTronPower);
 
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Vote witness by tron power")
   public void test02VotePowerOnlyComeFromTronPower() {
+    AccountResourceMessage accountResource = PublicMethed
+        .getAccountResource(foundationAddress, blockingStubFull);
+    final Long beforeTronPowerUsed = accountResource.getTronPowerUsed();
+
+
     HashMap<byte[],Long> witnessMap = new HashMap<>();
     witnessMap.put(witnessAddress,frozenAmountForNet / 1000000L);
     Assert.assertFalse(PublicMethed.voteWitness(frozenAddress,frozenKey,witnessMap,
@@ -97,10 +108,30 @@ public class WalletTestAccount012 {
     witnessMap.put(witnessAddress,frozenAmountForTronPower / 1000000L);
     Assert.assertTrue(PublicMethed.voteWitness(frozenAddress,frozenKey,witnessMap,
         blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    accountResource = PublicMethed
+        .getAccountResource(frozenAddress, blockingStubFull);
+    Long afterTronPowerUsed = accountResource.getTronPowerUsed();
+    Assert.assertEquals(afterTronPowerUsed - beforeTronPowerUsed,
+        frozenAmountForTronPower / 1000000L);
+
+    final Long secondBeforeTronPowerUsed = afterTronPowerUsed;
+    witnessMap.put(witnessAddress,(frozenAmountForTronPower / 1000000L) - 1);
+    Assert.assertTrue(PublicMethed.voteWitness(frozenAddress,frozenKey,witnessMap,
+        blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    accountResource = PublicMethed
+        .getAccountResource(frozenAddress, blockingStubFull);
+    afterTronPowerUsed = accountResource.getTronPowerUsed();
+    Assert.assertEquals(secondBeforeTronPowerUsed - afterTronPowerUsed,
+        1);
+
+
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Unfreeze balance for tron power")
   public void test03UnfreezeBalanceForTronPower() {
     AccountResourceMessage accountResource = PublicMethed
         .getAccountResource(foundationAddress, blockingStubFull);
@@ -131,6 +162,11 @@ public class WalletTestAccount012 {
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
+    PublicMethed.unFreezeBalance(frozenAddress, frozenKey, 2, null,
+        blockingStubFull);
+    PublicMethed.unFreezeBalance(frozenAddress, frozenKey, 0, null,
+        blockingStubFull);
+    PublicMethed.freedResource(frozenAddress, frozenKey, foundationAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
