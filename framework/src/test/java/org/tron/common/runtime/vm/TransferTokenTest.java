@@ -62,6 +62,8 @@ public class TransferTokenTest {
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
+    deposit.getDbManager().getDynamicPropertiesStore()
+            .setAllowAccountAssetOptimization(1L);
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.createAccountAssetIssue(Hex.decode(TRANSFER_TO));
     deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
