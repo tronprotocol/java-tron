@@ -47,7 +47,7 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_ISTANBUL = false;
 
-  private static boolean ALLOW_TVM_STAKE = false;
+  private static boolean ALLOW_TVM_FREEZE = false;
 
   private static boolean ALLOW_TVM_ASSET_ISSUE = false;
 
@@ -94,8 +94,10 @@ public class VMConfig {
     ALLOW_TVM_ISTANBUL = allow == 1;
   }
 
-  public static void initAllowTvmStake(long allow) {
-    ALLOW_TVM_STAKE = allow == 1;
+  public static void initAllowTvmStake(long value) {}
+
+  public static void initAllowTvmFreeze(long allow) {
+    ALLOW_TVM_FREEZE = allow == 1;
   }
 
   public static void initAllowTvmAssetIssue(long allow) {
@@ -128,8 +130,8 @@ public class VMConfig {
 
   public static boolean allowTvmIstanbul() {return ALLOW_TVM_ISTANBUL; }
 
-  public static boolean allowTvmStake() {
-    return ALLOW_TVM_STAKE;
+  public static boolean allowTvmFreeze() {
+    return ALLOW_TVM_FREEZE;
   }
 
   public static boolean allowTvmAssetIssue() {

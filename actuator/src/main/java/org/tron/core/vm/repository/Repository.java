@@ -28,6 +28,10 @@ public interface Repository {
 
     BytesCapsule getDynamic(byte[] bytesKey);
 
+  DelegatedResourceCapsule getDelegatedResource(byte[] key);
+
+  DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address);
+
   VotesCapsule getVotesCapsule(byte[] address);
 
   long getBeginCycle(byte[] address);
@@ -49,6 +53,10 @@ public interface Repository {
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
   void updateDynamic(byte[] word, BytesCapsule bytesCapsule);
+
+  void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule);
+
+  void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule);
 
   void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule);
 
@@ -98,6 +106,10 @@ public interface Repository {
 
   void putAssetIssue(Key key, Value value);
 
+  void putDelegatedResource(Key key, Value value);
+
+  void putDelegatedResourceAccountIndex(Key key, Value value);
+
   void putVotesCapsule(Key key, Value value);
 
   void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule);
@@ -126,7 +138,13 @@ public interface Repository {
 
   void addTotalNetWeight(long amount);
 
+  void addTotalEnergyWeight(long amount);
+
   void saveTotalNetWeight(long totalNetWeight);
 
+  void saveTotalEnergyWeight(long totalEnergyWeight);
+
   long getTotalNetWeight();
+
+  long getTotalEnergyWeight();
 }

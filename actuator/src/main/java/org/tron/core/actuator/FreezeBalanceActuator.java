@@ -57,6 +57,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore
         .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
+
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     long duration = freezeBalanceContract.getFrozenDuration() * FROZEN_PERIOD;
 
@@ -97,6 +102,14 @@ public class FreezeBalanceActuator extends AbstractActuator {
         }
         dynamicStore
             .addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
+        break;
+      case TRON_POWER:
+        long newFrozenBalanceForTronPower =
+            frozenBalance + accountCapsule.getTronPowerFrozenBalance();
+        accountCapsule.setFrozenForTronPower(newFrozenBalanceForTronPower, expireTime);
+
+        dynamicStore
+            .addTotalTronPowerWeight(frozenBalance / TRX_PRECISION);
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -182,12 +195,28 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
-        break;
       case ENERGY:
         break;
+      case TRON_POWER:
+        if (dynamicStore.supportAllowNewResourceModel()) {
+          byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
+          if (!ArrayUtils.isEmpty(receiverAddress)) {
+            throw new ContractValidateException(
+                "TRON_POWER is not allowed to delegate to other accounts.");
+          }
+        } else {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
+        }
+        break;
       default:
-        throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+        if (dynamicStore.supportAllowNewResourceModel()) {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
+        } else {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
+        }
     }
 
     //todo：need version control and config for delegating resource

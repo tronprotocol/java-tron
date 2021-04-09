@@ -309,6 +309,11 @@ public class CommonParameter {
   @Setter
   public long allowBlackHoleOptimization;
 
+  @Getter
+  @Setter
+  public long allowNewResourceModel;
+
+
   // @Getter
   // @Setter
   // public long allowShieldedTransaction; //committee parameter
@@ -447,6 +452,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowTvmAssetIssue;
+
+  @Getter
+  @Setter
+  public long allowTvmFreeze;
 
   @Getter
   @Setter

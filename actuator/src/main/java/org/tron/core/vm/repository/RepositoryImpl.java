@@ -35,17 +35,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.service.MortgageService;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DelegationStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StorageRowStore;
-import org.tron.core.store.StoreFactory;
-import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessStore;
+import org.tron.core.store.*;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Storage;
@@ -60,6 +50,8 @@ public class RepositoryImpl implements Repository {
   private long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
       BLOCK_PRODUCED_INTERVAL;
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
+  private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
+  private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
 
   private StoreFactory storeFactory;
   @Getter
@@ -85,6 +77,10 @@ public class RepositoryImpl implements Repository {
   @Getter
   private WitnessStore witnessStore;
   @Getter
+  private DelegatedResourceStore delegatedResourceStore;
+  @Getter
+  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  @Getter
   private VotesStore votesStore;
   @Getter
   private MortgageService mortgageService;
@@ -100,6 +96,8 @@ public class RepositoryImpl implements Repository {
   private HashMap<Key, Storage> storageCache = new HashMap<>();
 
   private HashMap<Key, Value> assetIssueCache = new HashMap<>();
+  private HashMap<Key, Value> delegatedResourceCache = new HashMap<>();
+  private HashMap<Key, Value> delegatedResourceAccountIndexCache = new HashMap<>();
   private HashMap<Key, Value> votesCache = new HashMap<>();
   private HashMap<Key, Value> delegationCache = new HashMap<>();
 
@@ -126,6 +124,8 @@ public class RepositoryImpl implements Repository {
       khaosDb = manager.getKhaosDb();
       blockIndexStore = manager.getBlockIndexStore();
       witnessStore = manager.getWitnessStore();
+      delegatedResourceStore = manager.getDelegatedResourceStore();
+      delegatedResourceAccountIndexStore = manager.getDelegatedResourceAccountIndexStore();
       votesStore = manager.getVotesStore();
       mortgageService = manager.getMortgageService();
       delegationStore = manager.getDelegationStore();
@@ -236,6 +236,46 @@ public class RepositoryImpl implements Repository {
       dynamicPropertiesCache.put(key, Value.create(bytesCapsule.getData()));
     }
     return bytesCapsule;
+  }
+
+  @Override
+  public DelegatedResourceCapsule getDelegatedResource(byte[] key) {
+    Key cacheKey = new Key(key);
+    if (delegatedResourceCache.containsKey(cacheKey)) {
+      return delegatedResourceCache.get(cacheKey).getDelegatedResource();
+    }
+
+    DelegatedResourceCapsule delegatedResourceCapsule;
+    if (parent != null) {
+      delegatedResourceCapsule = parent.getDelegatedResource(key);
+    } else {
+      delegatedResourceCapsule = getDelegatedResourceStore().get(key);
+    }
+
+    if (delegatedResourceCapsule != null) {
+      delegatedResourceCache.put(cacheKey, Value.create(delegatedResourceCapsule.getData()));
+    }
+    return delegatedResourceCapsule;
+  }
+
+  @Override
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address) {
+    Key cacheKey = new Key(address);
+    if (delegatedResourceAccountIndexCache.containsKey(cacheKey)) {
+      return delegatedResourceAccountIndexCache.get(cacheKey).getDelegatedResourceAccountIndex();
+    }
+
+    DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule;
+    if (parent != null) {
+      delegatedResourceAccountIndexCapsule = parent.getDelegatedResourceAccountIndex(address);
+    } else {
+      delegatedResourceAccountIndexCapsule = getDelegatedResourceAccountIndexStore().get(address);
+    }
+
+    if (delegatedResourceAccountIndexCapsule != null) {
+      delegatedResourceAccountIndexCache.put(cacheKey, Value.create(delegatedResourceAccountIndexCapsule.getData()));
+    }
+    return delegatedResourceAccountIndexCapsule;
   }
 
   @Override
@@ -361,6 +401,20 @@ public class RepositoryImpl implements Repository {
     Key key = Key.create(word);
     Value value = Value.create(bytesCapsule.getData(), Type.VALUE_TYPE_DIRTY);
     dynamicPropertiesCache.put(key, value);
+  }
+
+  @Override
+  public void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule) {
+    Key key = Key.create(word);
+    Value value = Value.create(delegatedResourceCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    delegatedResourceCache.put(key, value);
+  }
+
+  @Override
+  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+    Key key = Key.create(word);
+    Value value = Value.create(delegatedResourceAccountIndexCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    delegatedResourceAccountIndexCache.put(key, value);
   }
 
   @Override
@@ -553,6 +607,8 @@ public class RepositoryImpl implements Repository {
     commitContractCache(repository);
     commitStorageCache(repository);
     commitDynamicCache(repository);
+    commitDelegatedResourceCache(repository);
+    commitDelegatedResourceAccountIndexCache(repository);
     commitVotesCache(repository);
     commitAssetIssue(repository);
     commitDelegationCache(repository);
@@ -592,6 +648,16 @@ public class RepositoryImpl implements Repository {
   @Override
   public void putAssetIssue(Key key, Value value) {
     assetIssueCache.put(key, value);
+  }
+
+  @Override
+  public void putDelegatedResource(Key key, Value value) {
+    delegatedResourceCache.put(key, value);
+  }
+
+  @Override
+  public void putDelegatedResourceAccountIndex(Key key, Value value) {
+    delegatedResourceAccountIndexCache.put(key, value);
   }
 
   @Override
@@ -786,6 +852,30 @@ public class RepositoryImpl implements Repository {
     }));
   }
 
+  private void commitDelegatedResourceCache(Repository deposit) {
+    delegatedResourceCache.forEach(((key, value) -> {
+      if (value.getType().isDirty() || value.getType().isCreate()) {
+        if (deposit != null) {
+          deposit.putDelegatedResource(key, value);
+        } else {
+          getDelegatedResourceStore().put(key.getData(), value.getDelegatedResource());
+        }
+      }
+    }));
+  }
+
+  private void commitDelegatedResourceAccountIndexCache(Repository deposit) {
+    delegatedResourceAccountIndexCache.forEach(((key, value) -> {
+      if (value.getType().isDirty() || value.getType().isCreate()) {
+        if (deposit != null) {
+          deposit.putDelegatedResourceAccountIndex(key, value);
+        } else {
+          getDelegatedResourceAccountIndexStore().put(key.getData(), value.getDelegatedResourceAccountIndex());
+        }
+      }
+    }));
+  }
+
   private void commitVotesCache(Repository deposit) {
     votesCache.forEach(((key, value) -> {
       if (value.getType().isDirty() || value.getType().isCreate()) {
@@ -869,9 +959,22 @@ public class RepositoryImpl implements Repository {
     saveTotalNetWeight(totalNetWeight);
   }
 
+  //The unit is trx
+  @Override
+  public void addTotalEnergyWeight(long amount) {
+    long totalEnergyWeight = getTotalEnergyWeight();
+    totalEnergyWeight += amount;
+    saveTotalEnergyWeight(totalEnergyWeight);
+  }
+
   @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     updateDynamic(TOTAL_NET_WEIGHT, new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+  }
+
+  @Override
+  public void saveTotalEnergyWeight(long totalEnergyWeight) {
+    updateDynamic(TOTAL_ENERGY_WEIGHT, new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
   @Override
@@ -881,5 +984,14 @@ public class RepositoryImpl implements Repository {
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_NET_WEIGHT"));
+  }
+
+  @Override
+  public long getTotalEnergyWeight() {
+    return Optional.ofNullable(getDynamic(TOTAL_ENERGY_WEIGHT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
 }
