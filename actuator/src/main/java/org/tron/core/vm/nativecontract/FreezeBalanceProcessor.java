@@ -62,7 +62,7 @@ public class FreezeBalanceProcessor {
       // check if receiver account exists. if not, then create a new account
       AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
       if (receiverCapsule == null) {
-        receiverCapsule = repo.createAccount(receiverAddress, Protocol.AccountType.Normal);
+        receiverCapsule = repo.createNormalAccount(receiverAddress);
       }
 
       // forbid delegating resource to contract account
