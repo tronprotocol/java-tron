@@ -1001,6 +1001,11 @@ public class Wallet {
         .setKey("getAllowNewResourceModel")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
         .build());
+    
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowReceiptsMerkleRoot")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowReceiptsMerkleRoot())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmFreeze")
