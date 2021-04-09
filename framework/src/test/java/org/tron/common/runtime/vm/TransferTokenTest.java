@@ -28,6 +28,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -83,6 +84,7 @@ public class TransferTokenTest {
 
   @Before
   public void init() {
+    VMConfig.initVmHardFork(true);
     dbManager.getDynamicPropertiesStore()
             .saveAllowTvmTransferTrc10(1L);
     dbManager.getDynamicPropertiesStore()
