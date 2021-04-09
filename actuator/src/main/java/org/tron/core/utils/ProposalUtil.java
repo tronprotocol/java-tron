@@ -460,7 +460,7 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_TVM_FREEZE]");
         }
-        if (value != 1 && value != 0) {
+        if (value != 1) {
           throw new ContractValidateException(
               PRE_VALUE_NOT_ONE_ERROR + "ALLOW_TVM_FREEZE" + VALUE_NOT_ONE_ERROR);
         }
