@@ -1002,6 +1002,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmFreeze")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
+        .build());
+
     return builder.build();
   }
 
