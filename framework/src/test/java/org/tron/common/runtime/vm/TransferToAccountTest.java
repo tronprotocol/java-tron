@@ -74,6 +74,7 @@ public class TransferToAccountTest {
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     dbManager = context.getBean(Manager.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
+    chainBaseManager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(1L);
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.createAccountAssetIssue(Hex.decode(TRANSFER_TO));
