@@ -84,6 +84,8 @@ public class TransferTokenTest {
   @Before
   public void init() {
     dbManager.getDynamicPropertiesStore()
+            .saveAllowTvmTransferTrc10(1L);
+    dbManager.getDynamicPropertiesStore()
             .setAllowAccountAssetOptimization(1L);
   }
 
