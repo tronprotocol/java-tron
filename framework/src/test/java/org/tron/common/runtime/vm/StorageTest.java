@@ -189,7 +189,7 @@ public class StorageTest extends VMTestBase {
     Arrays.fill(stats, (byte) 1);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-    VMConfig.initVmHardFork(true);
+    VMConfig.initVmHardFork(false);
     byte[] address = Hex.decode(OWNER_ADDRESS);
     DataWord storageKey1 = new DataWord("key1".getBytes());
     DataWord storageVal1 = new DataWord("val1".getBytes());

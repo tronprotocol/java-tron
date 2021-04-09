@@ -84,9 +84,6 @@ public class TransferTokenTest {
 
   @Before
   public void init() {
-    VMConfig.initVmHardFork(true);
-    dbManager.getDynamicPropertiesStore()
-            .saveAllowTvmTransferTrc10(1L);
     dbManager.getDynamicPropertiesStore()
             .setAllowAccountAssetOptimization(1L);
   }
