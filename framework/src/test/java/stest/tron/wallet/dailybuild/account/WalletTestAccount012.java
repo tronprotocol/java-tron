@@ -160,6 +160,8 @@ public class WalletTestAccount012 {
     Assert.assertEquals(beforeTotalTronPowerWeight - afterTotalTronPowerWeight,
         frozenAmountForTronPower / 1000000L);
 
+    Assert.assertEquals(accountResource.getTronPowerLimit(),0L);
+    Assert.assertEquals(accountResource.getTronPowerUsed(),0L);
 
     Account account = PublicMethed.queryAccount(frozenAddress,blockingStubFull);
     Assert.assertEquals(account.getTronPower().getFrozenBalance(),0);
