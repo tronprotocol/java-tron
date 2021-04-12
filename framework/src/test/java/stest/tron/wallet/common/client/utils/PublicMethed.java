@@ -2299,10 +2299,10 @@ public class PublicMethed {
    */
 
   public static Boolean freezeBalanceGetTronPower(byte[] addRess, long freezeBalance,
-      long freezeDuration, int resourceCode, String priKey,
+      long freezeDuration, int resourceCode, ByteString receiverAddress,String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    return freezeBalanceGetEnergy(addRess,freezeBalance,freezeDuration,resourceCode,priKey,
-        blockingStubFull);
+    return freezeBalanceForReceiver(addRess,freezeBalance,
+        freezeDuration,resourceCode,receiverAddress,priKey,blockingStubFull);
   }
 
   /**
@@ -4333,7 +4333,9 @@ public class PublicMethed {
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
-    builder.setReceiverAddress(receiverAddressBytes);
+    if(receiverAddressBytes != null) {
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
     FreezeBalanceContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
 
