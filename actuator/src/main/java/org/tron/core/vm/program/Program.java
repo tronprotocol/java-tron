@@ -1677,7 +1677,10 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     param.setOwnerAddress(owner);
     param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
-    param.setFrozenDuration(repository.getDynamicPropertiesStore().getMinFrozenTime());
+    boolean needCheckFrozenTime = CommonParameter.getInstance()
+        .getCheckFrozenTime() == 1;//for test
+    param.setFrozenDuration(needCheckFrozenTime ?
+        repository.getDynamicPropertiesStore().getMinFrozenTime() : 0);
     param.setResourceType(parseResourceCode(resourceType));
     try {
       param.setFrozenBalance(frozenBalance.sValue().longValueExact());

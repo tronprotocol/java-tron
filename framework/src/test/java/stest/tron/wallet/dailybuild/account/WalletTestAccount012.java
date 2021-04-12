@@ -1,5 +1,6 @@
 package stest.tron.wallet.dailybuild.account;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -58,20 +59,24 @@ public class WalletTestAccount012 {
 
   @Test(enabled = true, description = "Freeze balance to get tron power")
   public void test01FreezeBalanceGetTronPower() {
-    AccountResourceMessage accountResource = PublicMethed
-        .getAccountResource(foundationAddress, blockingStubFull);
-    final Long beforeTotalTronPowerWeight = accountResource.getTotalTronPowerWeight();
-    final Long beforeTronPowerLimit = accountResource.getTronPowerLimit();
+
 
     final Long beforeFrozenTime = System.currentTimeMillis();
     Assert.assertTrue(PublicMethed.sendcoin(frozenAddress, sendAmount,
         foundationAddress, foundationKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+
+    AccountResourceMessage accountResource = PublicMethed
+        .getAccountResource(frozenAddress, blockingStubFull);
+    final Long beforeTotalTronPowerWeight = accountResource.getTotalTronPowerWeight();
+    final Long beforeTronPowerLimit = accountResource.getTronPowerLimit();
+
+
     Assert.assertTrue(PublicMethed.freezeBalanceGetTronPower(frozenAddress,frozenAmountForTronPower,
-        0,2,frozenKey,blockingStubFull));
+        0,2,null,frozenKey,blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetTronPower(frozenAddress,frozenAmountForNet,
-        0,0,frozenKey,blockingStubFull));
+        0,0,null,frozenKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long afterFrozenTime = System.currentTimeMillis();
@@ -130,9 +135,16 @@ public class WalletTestAccount012 {
 
   }
 
+  @Test(enabled = true,description = "Tron power is not allow to others")
+  public void test03TronPowerIsNotAllowToOthers() {
+    Assert.assertFalse(PublicMethed.freezeBalanceGetTronPower(frozenAddress,
+        frozenAmountForTronPower, 0,2,
+        ByteString.copyFrom(foundationAddress),frozenKey,blockingStubFull));
+  }
+
 
   @Test(enabled = true,description = "Unfreeze balance for tron power")
-  public void test03UnfreezeBalanceForTronPower() {
+  public void test04UnfreezeBalanceForTronPower() {
     AccountResourceMessage accountResource = PublicMethed
         .getAccountResource(foundationAddress, blockingStubFull);
     final Long beforeTotalTronPowerWeight = accountResource.getTotalTronPowerWeight();
@@ -148,6 +160,8 @@ public class WalletTestAccount012 {
     Assert.assertEquals(beforeTotalTronPowerWeight - afterTotalTronPowerWeight,
         frozenAmountForTronPower / 1000000L);
 
+    Assert.assertEquals(accountResource.getTronPowerLimit(),0L);
+    Assert.assertEquals(accountResource.getTronPowerUsed(),0L);
 
     Account account = PublicMethed.queryAccount(frozenAddress,blockingStubFull);
     Assert.assertEquals(account.getTronPower().getFrozenBalance(),0);
