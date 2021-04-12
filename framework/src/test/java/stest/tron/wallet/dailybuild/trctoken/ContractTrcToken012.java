@@ -353,7 +353,7 @@ public class ContractTrcToken012 {
         .getAssetIssueValue(dev001Address, assetAccountId, blockingStubFull);
 
     logger.info("the receivercontract token(getaccount): " + assetIssueCount);
-    Assert.assertTrue(assetIssueCount == assetAccountCount);
+    Assert.assertEquals(assetIssueCount, assetAccountCount);
 
   }
 
