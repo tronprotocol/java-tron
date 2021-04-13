@@ -16,7 +16,7 @@ public class AuctionConfigParser {
 		try {
 			String auctionConfigStr = String.valueOf(auctionConfig);
 			int configLength = auctionConfigStr.length();
-			if (!(configLength == 16 || configLength == 17)) {
+			if (!(configLength == 15 ||configLength == 16 || configLength == 17)) {
 				throw new RuntimeException("invalid auction config");
 			}
 			//  eg:01 08 1617162101 023 or 11 08 1617162101 023
