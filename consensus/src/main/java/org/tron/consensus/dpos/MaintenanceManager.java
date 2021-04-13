@@ -167,6 +167,7 @@ public class MaintenanceManager {
     // update parachains
     long currentBlockHeaderTimestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     List<Long> auctionRoundList = dynamicPropertiesStore.listAuctionConfigs();
+    long minAuctionVoteCount = dynamicPropertiesStore.getMinAuctionVoteCount();
     auctionRoundList.forEach(value -> {
       CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
       if (roundInfo != null && roundInfo.getRound() > 0 && roundInfo.getEndTime() < currentBlockHeaderTimestamp) {
@@ -175,7 +176,8 @@ public class MaintenanceManager {
           if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
             // set parachains
             List<Pair<String, Long>> eligibleChainLists =
-                    crossRevokingStore.getEligibleChainLists(roundInfo.getRound(), roundInfo.getSlotCount());
+                    crossRevokingStore.getEligibleChainLists(roundInfo.getRound(),
+                            roundInfo.getSlotCount(), minAuctionVoteCount);
             List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
                     .collect(Collectors.toList());
             crossRevokingStore.updateParaChains(roundInfo.getRound(), chainIds);

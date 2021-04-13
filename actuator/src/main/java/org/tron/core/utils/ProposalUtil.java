@@ -466,6 +466,20 @@ public class ProposalUtil {
 //        }
         break;
       }
+      case MIN_AUCTION_VOTE_COUNT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException("Bad chain parameter id [MIN_AUCTION_VOTE_COUNT]");
+        }
+        if (!dynamicPropertiesStore.allowCrossChain()) {
+          throw new ContractValidateException(
+                  "CrossChain is not activated, can not set Min Auction Vote Count");
+        }
+        if (value < 0 || value > 100_000_000L) {
+          throw new ContractValidateException(
+                  "Bad MIN_AUCTION_VOTE_COUNT parameter value, valid range is [0,100_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -520,7 +534,8 @@ public class ProposalUtil {
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     CROSS_CHAIN(50),
-    AUCTION_CONFIG(51); // timestamp
+    AUCTION_CONFIG(51), // timestamp
+    MIN_AUCTION_VOTE_COUNT(52); // 0, [0, 100000000]
 
     private long code;
 

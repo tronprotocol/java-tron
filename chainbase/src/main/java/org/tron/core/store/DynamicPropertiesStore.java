@@ -171,6 +171,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .getBytes();
 
   private static final String AUCTION_CONFIG_ROUND = "AUCTION_CONFIG_ROUND";
+  private static final byte[] MIN_AUCTION_VOTE_COUNT = "MIN_AUCTION_VOTE_COUNT".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -2261,6 +2262,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             .collect(Collectors.toList());
   }
 
+  public void saveMinAuctionVoteCount(long value) {
+    this.put(MIN_AUCTION_VOTE_COUNT, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getMinAuctionVoteCount() {
+    return Optional.ofNullable(getUnchecked(MIN_AUCTION_VOTE_COUNT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElse(0L);
+  }
 
   public long getSrListCurrentCycle() {
     return Optional.ofNullable(getUnchecked(SR_LIST_CURRENT_CYCLE))

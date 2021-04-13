@@ -256,6 +256,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAuctionConfig(entry.getValue());
           break;
         }
+        case MIN_AUCTION_VOTE_COUNT: {
+          manager.getDynamicPropertiesStore().saveMinAuctionVoteCount(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

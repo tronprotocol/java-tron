@@ -126,8 +126,11 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
                 .collect(Collectors.toList());
     }
 
-    public List<Pair<String, Long>> getEligibleChainLists(int round, int slotCount) {
+    public List<Pair<String, Long>> getEligibleChainLists(int round, int slotCount, long minAuctionVoteCount) {
         List<Pair<String, Long>> chainVoteCountList = getChainVoteCountList(round);
+        chainVoteCountList = chainVoteCountList.stream()
+                .filter(entry -> entry.getValue() >= minAuctionVoteCount)
+                .collect(Collectors.toList());
         if (chainVoteCountList.size() < slotCount) {
             return chainVoteCountList;
         } else {
