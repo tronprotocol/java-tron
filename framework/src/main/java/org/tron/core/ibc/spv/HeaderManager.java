@@ -106,9 +106,6 @@ public class HeaderManager {
             latestHeaderNum);
         return;
       }
-//      if (blockHeaderStore.getUnchecked(chainId, header.getParentBlockId()) == null) {
-//        throw new BadBlockException("not exist parent");
-//      }
       if (!latestHeaderHash.equals(header.getParentBlockId().toString())) {
         throw new BadBlockException("not exist parent");
       }

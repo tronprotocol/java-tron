@@ -545,7 +545,8 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getblockbalance");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/wallet/getburntrx");
 
-      context.addServlet(new ServletHolder(registerCrossChainServlet), "/wallet/registercrosschain");
+      context.addServlet(new ServletHolder(registerCrossChainServlet),
+          "/wallet/registercrosschain");
       context.addServlet(new ServletHolder(updateCrossChainServlet), "/wallet/updatecrosschain");
       context.addServlet(new ServletHolder(getRegisterCrossChainListServlet),
               "/wallet/getregistercrosschainlist");
