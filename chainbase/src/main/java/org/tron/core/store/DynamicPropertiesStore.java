@@ -772,11 +772,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveBurnedForRegisterCross();
     }
 
-//    try {
-//      this.getAuctionConfig();
-//    } catch (IllegalArgumentException e) {
-//      this.saveAuctionConfig(0L);
-//    }
+    try {
+      this.listAuctionConfigs();
+    } catch (IllegalArgumentException e) {
+      this.saveAuctionConfig(81617162101023L);
+    }
 
   }
 
