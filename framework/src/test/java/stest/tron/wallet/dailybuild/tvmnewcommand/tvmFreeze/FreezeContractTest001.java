@@ -16,7 +16,10 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.code;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -417,6 +420,10 @@ public class FreezeContractTest001 {
 
     info = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get();
     testAccount001 = PublicMethed.getAccountResource(testAddress001,blockingStubFull);
+
+    Assert.assertEquals(code.SUCESS,info.getResult());
+    Assert.assertEquals(contractResult.SUCCESS,info.getReceipt().getResult());
+
 
     Assert.assertEquals(0, info.getReceipt().getEnergyFee());
     Assert.assertEquals(0, testAccount001.getEnergyLimit());

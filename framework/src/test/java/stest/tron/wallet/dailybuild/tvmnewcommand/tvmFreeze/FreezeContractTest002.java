@@ -261,7 +261,7 @@ public class FreezeContractTest002 {
     logger.info("ExpireTime2: " + ExpireTime2);
 
     // Test
-    Assert.assertEquals(ExpireTime2 * 1000, info.getBlockTimeStamp());
+    Assert.assertEquals((ExpireTime2 + 3) * 1000, info.getBlockTimeStamp());
     // Online
     // Assert.assertEquals((ExpireTime2.longValue() + 10800) * 1000, info.getBlockTimeStamp());
 
