@@ -410,6 +410,9 @@ public class ChainBaseManager {
     List<Long> auctionRoundList = getDynamicPropertiesStore().listAuctionConfigs();
     for (Long value : auctionRoundList) {
       CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
+      if (roundInfo == null || roundInfo.getRound() <= 0) {
+        continue;
+      }
       if (getCrossRevokingStore().getParaChainList(roundInfo.getRound()).contains(chainId.toString())) {
         result = true;
         break;
