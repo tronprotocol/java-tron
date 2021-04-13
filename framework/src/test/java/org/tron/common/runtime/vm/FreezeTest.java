@@ -21,6 +21,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
@@ -35,6 +36,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -43,6 +45,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
@@ -166,7 +169,14 @@ public class FreezeTest {
         null, originEnergyLimit);
     byte[] contractAddr = WalletUtil.generateContractAddress(trx);
     //String contractAddrStr = StringUtil.encode58Check(contractAddr);
-    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl());
+    trxCap.setTrxTrace(trace);
+    trace.init(null);
+    trace.exec();
+    trace.finalization();
+    Runtime runtime = trace.getRuntime();
     Assert.assertEquals(SUCCESS, runtime.getResult().getResultCode());
     Assert.assertEquals(value, manager.getAccountStore().get(contractAddr).getBalance());
 
@@ -181,8 +191,17 @@ public class FreezeTest {
                                         String method,
                                         Object... args) throws Exception {
     String hexInput = AbiUtil.parseMethod(method, Arrays.asList(args));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        callerAddr, contractAddr, Hex.decode(hexInput), 0, feeLimit, manager, null);
+    TransactionCapsule trxCap = new TransactionCapsule(
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+            callerAddr, contractAddr, Hex.decode(hexInput), 0, feeLimit));
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl());
+    trxCap.setTrxTrace(trace);
+    trace.init(null);
+    trace.exec();
+    trace.finalization();
+    trace.setResult();
+    TVMTestResult result = new TVMTestResult(trace.getRuntime(), trace.getReceipt(), null);
     Assert.assertEquals(expectedResult, result.getReceipt().getResult());
     if (check != null) {
       check.accept(result.getRuntime().getResult().getHReturn());
@@ -244,22 +263,16 @@ public class FreezeTest {
 
   private byte[] getCreate2Addr(byte[] factoryAddr,
                                 long salt) throws Exception {
-    String methodByAddr = "getCreate2Addr(uint256)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        owner, factoryAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(SUCCESS, result.getReceipt().getResult());
+    TVMTestResult result = triggerContract(
+        owner, factoryAddr, fee, SUCCESS, null, "getCreate2Addr(uint256)", salt);
     return TransactionTrace.convertToTronAddress(
         new DataWord(result.getRuntime().getResult().getHReturn()).getLast20Bytes());
   }
 
   private byte[] deployCreate2Contract(byte[] factoryAddr,
                                        long salt) throws Exception {
-    String methodByAddr = "deployCreate2Contract(uint256)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        owner, factoryAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(SUCCESS, result.getReceipt().getResult());
+    TVMTestResult result = triggerContract(
+        owner, factoryAddr, fee, SUCCESS, null, "deployCreate2Contract(uint256)", salt);
     return TransactionTrace.convertToTronAddress(
         new DataWord(result.getRuntime().getResult().getHReturn()).getLast20Bytes());
   }
