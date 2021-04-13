@@ -33,6 +33,9 @@ public class Param {
   private BlockHandle blockHandle;
   @Getter
   @Setter
+  private int maxActiveWitnessNum;
+  @Getter
+  @Setter
   private int agreeNodeCount;
   @Getter
   @Setter

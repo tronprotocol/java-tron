@@ -5,8 +5,7 @@ import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.Constant.NODE_CROSS_CHAIN_CONNECT;
 import static org.tron.core.Constant.NODE_CROSS_CHAIN_PORT;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.config.Parameter.ChainConstant.*;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
@@ -177,6 +176,7 @@ public class Args extends CommonParameter {
     PARAMETER.solidityNodeHttpEnable = true;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
+    PARAMETER.maxActiveWitnessNum = MAX_ACTIVE_WITNESS_NUM;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
@@ -701,10 +701,13 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
             .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
 
+    PARAMETER.maxActiveWitnessNum = config.hasPath(Constant.MAX_ACTIVE_WITNESS_NUM) ? config
+            .getInt(Constant.MAX_ACTIVE_WITNESS_NUM) : MAX_ACTIVE_WITNESS_NUM;
+
     PARAMETER.agreeNodeCount = config.hasPath(Constant.NODE_AGREE_NODE_COUNT) ? config
-        .getInt(Constant.NODE_AGREE_NODE_COUNT) : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
-        ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
+        .getInt(Constant.NODE_AGREE_NODE_COUNT) : PARAMETER.maxActiveWitnessNum * 2 / 3 + 1;
+    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > PARAMETER.maxActiveWitnessNum
+        ? PARAMETER.maxActiveWitnessNum : PARAMETER.agreeNodeCount;
     if (PARAMETER.isWitness()) {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }

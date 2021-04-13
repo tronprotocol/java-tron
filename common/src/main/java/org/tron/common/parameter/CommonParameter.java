@@ -421,6 +421,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public int maxActiveWitnessNum;
+
+  @Getter
+  @Setter
   public int agreeNodeCount;
 
   @Getter

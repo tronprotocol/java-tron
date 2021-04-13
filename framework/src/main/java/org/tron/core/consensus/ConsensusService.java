@@ -43,6 +43,7 @@ public class ConsensusService {
     param.setMinParticipationRate(parameter.getMinParticipationRate());
     param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
     param.setNeedSyncCheck(parameter.isNeedSyncCheck());
+    param.setMaxActiveWitnessNum(parameter.getMaxActiveWitnessNum());
     param.setAgreeNodeCount(parameter.getAgreeNodeCount());
     List<Miner> miners = new ArrayList<>();
     List<String> privateKeys = Args.getLocalWitnesses().getPrivateKeys();

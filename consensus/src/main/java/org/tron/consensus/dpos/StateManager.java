@@ -1,7 +1,6 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.google.protobuf.ByteString;
 import java.util.Random;
@@ -32,8 +31,6 @@ public class StateManager {
   private AtomicInteger dupBlockCount = new AtomicInteger(0);
 
   private AtomicLong dupBlockTime = new AtomicLong(0);
-
-  private long blockCycle = BLOCK_PRODUCED_INTERVAL * MAX_ACTIVE_WITNESS_NUM;
 
 
   public State getState() {
@@ -105,6 +102,7 @@ public class StateManager {
     if (dupBlockCount.get() == 0) {
       return false;
     }
+    long blockCycle = BLOCK_PRODUCED_INTERVAL * dposService.getMaxActiveWitnessNum();
     if (System.currentTimeMillis() - dupBlockTime.get() > dupBlockCount.get() * blockCycle) {
       dupBlockCount.set(0);
       return false;

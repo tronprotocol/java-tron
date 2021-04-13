@@ -1,6 +1,5 @@
 package org.tron.consensus.dpos;
 
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 
 import com.google.protobuf.ByteString;
@@ -73,6 +72,8 @@ public class DposService implements ConsensusInterface {
   private GenesisBlock genesisBlock;
   @Getter
   private Map<ByteString, Miner> miners = new HashMap<>();
+  @Getter
+  private int maxActiveWitnessNum;
 
   @Override
   public void start(Param param) {
@@ -83,6 +84,7 @@ public class DposService implements ConsensusInterface {
     this.blockHandle = param.getBlockHandle();
     this.genesisBlock = param.getGenesisBlock();
     this.genesisBlockTime = Long.parseLong(param.getGenesisBlock().getTimestamp());
+    this.maxActiveWitnessNum = param.getMaxActiveWitnessNum();
     param.getMiners().forEach(miner -> miners.put(miner.getWitnessAddress(), miner));
     pbftInterface = param.getPbftInterface();
 
@@ -182,9 +184,9 @@ public class DposService implements ConsensusInterface {
         .reversed()
         .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
 
-    if (list.size() > MAX_ACTIVE_WITNESS_NUM) {
+    if (list.size() > maxActiveWitnessNum) {
       consensusDelegate
-          .saveActiveWitnesses(list.subList(0, MAX_ACTIVE_WITNESS_NUM));
+          .saveActiveWitnesses(list.subList(0, maxActiveWitnessNum));
     } else {
       consensusDelegate.saveActiveWitnesses(list);
     }
