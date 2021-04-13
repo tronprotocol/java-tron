@@ -1,15 +1,14 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.CrossChain;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.stream.Collectors;
 
 @Component
 public class UnvoteCrossChainServlet extends RateLimiterServlet {
@@ -27,7 +26,8 @@ public class UnvoteCrossChainServlet extends RateLimiterServlet {
               .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       boolean visible = Util.getVisiblePost(contract);
-      CrossChain.UnvoteCrossChainContract.Builder build = CrossChain.UnvoteCrossChainContract.newBuilder();
+      CrossChain.UnvoteCrossChainContract.Builder build =
+              CrossChain.UnvoteCrossChainContract.newBuilder();
       JsonFormat.merge(contract, build, visible);
       Protocol.Transaction tx = wallet.createTransactionCapsule(build.build(),
               Protocol.Transaction.Contract.ContractType.UnvoteCrossChainContract).getInstance();
