@@ -259,22 +259,16 @@ public class FreezeTest {
 
   private byte[] getCreate2Addr(byte[] factoryAddr,
                                 long salt) throws Exception {
-    String methodByAddr = "getCreate2Addr(uint256)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        owner, factoryAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(SUCCESS, result.getReceipt().getResult());
+    TVMTestResult result = triggerContract(
+        owner, factoryAddr, fee, SUCCESS, null, "getCreate2Addr(uint256)", salt);
     return TransactionTrace.convertToTronAddress(
         new DataWord(result.getRuntime().getResult().getHReturn()).getLast20Bytes());
   }
 
   private byte[] deployCreate2Contract(byte[] factoryAddr,
                                        long salt) throws Exception {
-    String methodByAddr = "deployCreate2Contract(uint256)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        owner, factoryAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(SUCCESS, result.getReceipt().getResult());
+    TVMTestResult result = triggerContract(
+        owner, factoryAddr, fee, SUCCESS, null, "deployCreate2Contract(uint256)", salt);
     return TransactionTrace.convertToTronAddress(
         new DataWord(result.getRuntime().getResult().getHReturn()).getLast20Bytes());
   }
