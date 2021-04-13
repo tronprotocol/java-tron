@@ -249,6 +249,31 @@ public class NewFeatureForSolidity062 {
 
   }
 
+  @Test(enabled = true, description = "call external function like "
+          + "c.f{gas: 0, value: > balance}()")
+  public void test10CallWith0GasAndBigValue() {
+    String txid = PublicMethed.triggerContract(gasValueContract,
+            "callWithGasAndValue(uint256,uint256)", "0,9223372036854775800", false,
+            0, maxFeeLimit, "0",0,contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<Protocol.TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("txid: "+txid+"\n"+infoById.toString());
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+  }
+
+  @Test(enabled = true, description = "call external function like "
+          + "c.f{gas: 9223372036854775800, value: 0}()")
+  public void test11CallWithBigGasAnd0Value() {
+    String txid = PublicMethed.triggerContract(gasValueContract,
+            "callWithGasAndValue(uint256,uint256)", "9223372036854775800,0", false,
+            0, maxFeeLimit, "0",0,contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<Protocol.TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("txid: "+txid+"\n"+infoById.toString());
+    Assert.assertEquals(SUCESS, infoById.get().getResult());
+
+  }
+
 
 
 
