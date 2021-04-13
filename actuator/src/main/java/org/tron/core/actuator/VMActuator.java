@@ -113,7 +113,7 @@ public class VMActuator implements Actuator2 {
     ConfigLoader.load(context.getStoreFactory());
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
-    if (context.getTrxCap().getTrxTrace() != null) {
+    if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {
       receipt = context.getTrxCap().getTrxTrace().getReceipt();
     }
     //Route Type
@@ -522,7 +522,7 @@ public class VMActuator implements Actuator2 {
     }
 
     long leftFrozenEnergy = repository.getAccountLeftEnergyFromFreeze(account);
-    if (VMConfig.allowTvmFreeze() && receipt != null) {
+    if (VMConfig.allowTvmFreeze()) {
       receipt.setCallerEnergyLeft(leftFrozenEnergy);
     }
 
@@ -655,7 +655,7 @@ public class VMActuator implements Actuator2 {
     long originEnergyLeft = 0;
     if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
       originEnergyLeft = repository.getAccountLeftEnergyFromFreeze(creator);
-      if (VMConfig.allowTvmFreeze() && receipt != null) {
+      if (VMConfig.allowTvmFreeze()) {
         receipt.setOriginEnergyLeft(originEnergyLeft);
       }
     }

@@ -106,7 +106,6 @@ public class TransactionTrace {
 
     this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
     this.delegationStore = storeFactory.getChainBaseManager().getDelegationStore();
-    this.trx.setTrxTrace(this);
   }
 
   public TransactionCapsule getTrx() {
