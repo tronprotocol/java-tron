@@ -2,10 +2,6 @@ package org.tron.core.store;
 
 import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +9,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
+import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
-import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.AccountAssetIssue;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
 
 @Slf4j(topic = "DB")
 @Component
@@ -35,6 +38,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Autowired
   private AccountTraceStore accountTraceStore;
+
+  @Autowired
+  private AccountAssetIssueStore accountAssetIssueStore;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -54,7 +60,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+     return null;
+    }
+    AccountCapsule accountCapsule = new AccountCapsule(value);
+    AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
+    return accountCapsule;
   }
 
   @Override
@@ -76,6 +87,16 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
           accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), item.getBalance());
         }
       }
+    }
+
+    Account account = item.getInstance();
+    if (checkAssetMapNotNull(account.getAssetMap()) ||
+            checkAssetMapNotNull(account.getAssetV2Map())) {
+      AccountAssetIssue accountAssetIssue = accountAssetIssueStore
+              .buildAccountAssetIssue(item);
+      accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));
+      account = accountAssetIssueStore.clearAccountAsset(item);
+      item.setInstance(account);
     }
 
     super.put(key, item);
@@ -154,6 +175,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         .addOperation(operation)
         .build();
     balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
+  }
+
+  public boolean checkAssetMapNotNull(Map<String, Long> assetMap) {
+    return assetMap != null && assetMap.size() > 0;
   }
 
   @Override
