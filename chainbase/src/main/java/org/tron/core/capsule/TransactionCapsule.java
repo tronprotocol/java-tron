@@ -102,6 +102,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private long time;
+  @Getter
+  @Setter
+  private long order;
 
   /**
    * constructor TransactionCapsule.
@@ -519,6 +522,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     byte[] transBytes = this.transaction.toByteArray();
     return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
         transBytes);
+  }
+
+  public Sha256Hash getReceiptsMerkleHash() {
+    if (this.transaction.getRetCount() <= 0) {
+      return Sha256Hash.ZERO_HASH;
+    }
+    byte[] transBytes = this.transaction.getRet(0).toByteArray();
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transBytes);
   }
 
   private Sha256Hash getRawHash() {

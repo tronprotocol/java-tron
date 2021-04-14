@@ -181,10 +181,13 @@ public class Args extends CommonParameter {
     PARAMETER.allowMarketTransaction = 0;
     PARAMETER.allowTransactionFeePool = 0;
     PARAMETER.allowBlackHoleOptimization = 0;
+    PARAMETER.allowNewResourceModel = 0;
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
     PARAMETER.historyBalanceLookup = false;
+    PARAMETER.openPrintLog = true;
+    PARAMETER.openTransactionSort = false;
   }
 
   /**
@@ -637,6 +640,14 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) : 0;
 
+    PARAMETER.allowNewResourceModel =
+        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) : 0;
+
+    PARAMETER.allowReceiptsMerkleRoot =
+            config.hasPath(Constant.COMMITTEE_ALLOW_RECEIPTS_MERKLE_ROOT) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_RECEIPTS_MERKLE_ROOT) : 0;
+
     PARAMETER.allowTvmIstanbul =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) : 0;
@@ -708,6 +719,11 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmAssetIssue =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
+
+    PARAMETER.allowTvmFreeze =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
             .getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -743,6 +759,11 @@ public class Args extends CommonParameter {
 
     PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
         .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
+
+    PARAMETER.openPrintLog = config.hasPath(Constant.OPEN_PRINT_LOG) && config
+        .getBoolean(Constant.OPEN_PRINT_LOG);
+    PARAMETER.openTransactionSort = config.hasPath(Constant.OPEN_TRANSACTION_SORT) && config
+        .getBoolean(Constant.OPEN_TRANSACTION_SORT);
 
     logConfig();
   }

@@ -181,16 +181,24 @@ public class TransactionTrace {
     runtime.execute(transactionContext);
     setBill(transactionContext.getProgramResult().getEnergyUsed());
 
-    if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {
-      if (contractResult.OUT_OF_TIME
-          .equals(receipt.getResult())) {
-        setTimeResultType(TimeResultType.OUT_OF_TIME);
-      } else if (System.currentTimeMillis() - txStartTimeInMs
-          > CommonParameter.getInstance()
-          .getLongRunningTime()) {
-        setTimeResultType(TimeResultType.LONG_RUNNING);
-      }
-    }
+//    if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {
+//      if (contractResult.OUT_OF_TIME
+//          .equals(receipt.getResult())) {
+//        setTimeResultType(TimeResultType.OUT_OF_TIME);
+//      } else if (System.currentTimeMillis() - txStartTimeInMs
+//          > CommonParameter.getInstance()
+//          .getLongRunningTime()) {
+//        setTimeResultType(TimeResultType.LONG_RUNNING);
+//      }
+//    }
+  }
+
+  public void saveEnergyLeftOfOrigin(long energyLeft) {
+    receipt.setOriginEnergyLeft(energyLeft);
+  }
+
+  public void saveEnergyLeftOfCaller(long energyLeft) {
+    receipt.setCallerEnergyLeft(energyLeft);
   }
 
   public void finalization() throws ContractExeException {
