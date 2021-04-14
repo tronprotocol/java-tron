@@ -24,54 +24,55 @@ import org.tron.protos.Protocol.Proposal;
 
 public class ProposalServiceTest {
 
-	private TronApplicationContext context;
-	private Manager manager;
-	private String dbPath = "output_proposal_test";
+  private TronApplicationContext context;
+  private Manager manager;
+  private String dbPath = "output_proposal_test";
 
-	@Before
-	public void init() {
-		Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-		context = new TronApplicationContext(DefaultConfig.class);
-		manager = context.getBean(Manager.class);
-		manager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
-	}
+  @Before
+  public void init() {
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+    manager = context.getBean(Manager.class);
+    manager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
+  }
 
-	@Test
-	public void test() {
-		Set<Long> set = new HashSet<>();
-		for (ProposalType proposalType : ProposalType.values()) {
-			Assert.assertTrue(set.add(proposalType.getCode()));
-		}
+  @Test
+  public void test() {
+    Set<Long> set = new HashSet<>();
+    for (ProposalType proposalType : ProposalType.values()) {
+      Assert.assertTrue(set.add(proposalType.getCode()));
+    }
 
-		Proposal proposal = Proposal.newBuilder().putParameters(1, 1).build();
-		ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
-		boolean result = ProposalService.process(manager, proposalCapsule);
-		Assert.assertTrue(result);
-		//
-		proposal = Proposal.newBuilder().putParameters(1000, 1).build();
-		proposalCapsule = new ProposalCapsule(proposal);
-		result = ProposalService.process(manager, proposalCapsule);
-		Assert.assertFalse(result);
-		//
-		for (ProposalType proposalType : ProposalType.values()) {
-			if (proposalType == WITNESS_127_PAY_PER_BLOCK) {
-				proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 16160).build();
-			} else if (proposalType == AUCTION_CONFIG) {
-				proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 11081617162101023L).build();
-			} else {
-				proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1).build();
-			}
-			proposalCapsule = new ProposalCapsule(proposal);
-			result = ProposalService.process(manager, proposalCapsule);
-			Assert.assertTrue(result);
-		}
-	}
+    Proposal proposal = Proposal.newBuilder().putParameters(1, 1).build();
+    ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
+    boolean result = ProposalService.process(manager, proposalCapsule);
+    Assert.assertTrue(result);
+    //
+    proposal = Proposal.newBuilder().putParameters(1000, 1).build();
+    proposalCapsule = new ProposalCapsule(proposal);
+    result = ProposalService.process(manager, proposalCapsule);
+    Assert.assertFalse(result);
+    //
+    for (ProposalType proposalType : ProposalType.values()) {
+      if (proposalType == WITNESS_127_PAY_PER_BLOCK) {
+        proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 16160).build();
+      } else if (proposalType == AUCTION_CONFIG) {
+        proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 11081617162101023L)
+            .build();
+      } else {
+        proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1).build();
+      }
+      proposalCapsule = new ProposalCapsule(proposal);
+      result = ProposalService.process(manager, proposalCapsule);
+      Assert.assertTrue(result);
+    }
+  }
 
 
-	@After
-	public void removeDb() {
-		Args.clearParam();
-		context.destroy();
-		FileUtil.deleteDir(new File(dbPath));
-	}
+  @After
+  public void removeDb() {
+    Args.clearParam();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
 }
