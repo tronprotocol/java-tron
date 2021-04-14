@@ -49,6 +49,7 @@ public class WalletTestAccount012 {
    */
   @BeforeClass(enabled = true)
   public void beforeClass() {
+    fullnode = "39.107.120.53:50051";
     PublicMethed.printAddress(frozenKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -102,7 +103,7 @@ public class WalletTestAccount012 {
   @Test(enabled = true,description = "Vote witness by tron power")
   public void test02VotePowerOnlyComeFromTronPower() {
     AccountResourceMessage accountResource = PublicMethed
-        .getAccountResource(foundationAddress, blockingStubFull);
+        .getAccountResource(frozenAddress, blockingStubFull);
     final Long beforeTronPowerUsed = accountResource.getTronPowerUsed();
 
 
