@@ -65,7 +65,7 @@ public class OverridePrivateFunction {
   }
 
 
-  @Test(enabled = true, description = "test override private function")
+  @Test(enabled = false, description = "test override private function")
   public void test01OverridePrivateFunction() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
