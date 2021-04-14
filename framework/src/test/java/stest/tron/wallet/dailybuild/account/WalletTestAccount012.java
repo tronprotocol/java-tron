@@ -49,7 +49,6 @@ public class WalletTestAccount012 {
    */
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    fullnode = "39.107.120.53:50051";
     PublicMethed.printAddress(frozenKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
