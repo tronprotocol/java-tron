@@ -266,8 +266,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
       long balance, long expireTime) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
-    DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
-        .getDelegatedResourceAccountIndexStore();
     byte[] key = DelegatedResourceCapsule.createDbKey(ownerAddress, receiverAddress);
     //modify DelegatedResourceStore
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
@@ -290,38 +288,6 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     }
     delegatedResourceStore.put(key, delegatedResourceCapsule);
-
-    //modify DelegatedResourceAccountIndexStore
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-          .get(ownerAddress);
-      if (delegatedResourceAccountIndexCapsule == null) {
-        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
-            ByteString.copyFrom(ownerAddress));
-      }
-      List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
-      if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
-        delegatedResourceAccountIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
-      }
-      delegatedResourceAccountIndexStore
-          .put(ownerAddress, delegatedResourceAccountIndexCapsule);
-    }
-
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-          .get(receiverAddress);
-      if (delegatedResourceAccountIndexCapsule == null) {
-        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
-            ByteString.copyFrom(receiverAddress));
-      }
-      List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
-          .getFromAccountsList();
-      if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
-        delegatedResourceAccountIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
-      }
-      delegatedResourceAccountIndexStore
-          .put(receiverAddress, delegatedResourceAccountIndexCapsule);
-    }
 
     //modify AccountStore
     AccountCapsule receiverCapsule = accountStore.get(receiverAddress);

@@ -54,8 +54,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
-    DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
-        .getDelegatedResourceAccountIndexStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
     MortgageService mortgageService = chainBaseManager.getMortgageService();
     try {
@@ -139,34 +137,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
         delegatedResourceStore.delete(key);
-
-        //modify DelegatedResourceAccountIndexStore
-        {
-          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-              .get(ownerAddress);
-          if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> toAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
-                .getToAccountsList());
-            toAccountsList.remove(ByteString.copyFrom(receiverAddress));
-            delegatedResourceAccountIndexCapsule.setAllToAccounts(toAccountsList);
-            delegatedResourceAccountIndexStore
-                .put(ownerAddress, delegatedResourceAccountIndexCapsule);
-          }
-        }
-
-        {
-          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-              .get(receiverAddress);
-          if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> fromAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
-                .getFromAccountsList());
-            fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
-            delegatedResourceAccountIndexCapsule.setAllFromAccounts(fromAccountsList);
-            delegatedResourceAccountIndexStore
-                .put(receiverAddress, delegatedResourceAccountIndexCapsule);
-          }
-        }
-
       } else {
         delegatedResourceStore.put(key, delegatedResourceCapsule);
       }
