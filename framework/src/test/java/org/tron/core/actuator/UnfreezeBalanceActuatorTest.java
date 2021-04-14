@@ -19,7 +19,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
@@ -243,26 +242,6 @@ public class UnfreezeBalanceActuatorTest {
         .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
             ByteArray.fromHexString(RECEIVER_ADDRESS)), delegatedResourceCapsule);
 
-    //init DelegatedResourceAccountIndex
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(
-              owner.getAddress());
-      delegatedResourceAccountIndex
-          .addToAccount(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(OWNER_ADDRESS), delegatedResourceAccountIndex);
-    }
-
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(
-              receiver.getAddress());
-      delegatedResourceAccountIndex
-          .addFromAccount(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(RECEIVER_ADDRESS), delegatedResourceAccountIndex);
-    }
 
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -284,20 +263,6 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(0L, ownerResult.getDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(0L, receiverResult.getAllFrozenBalanceForBandwidth());
 
-      //check DelegatedResourceAccountIndex
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
-
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -332,26 +297,6 @@ public class UnfreezeBalanceActuatorTest {
         .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
             ByteArray.fromHexString(RECEIVER_ADDRESS)), delegatedResourceCapsule);
 
-    //init DelegatedResourceAccountIndex
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(
-              owner.getAddress());
-      delegatedResourceAccountIndex
-          .addToAccount(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(OWNER_ADDRESS), delegatedResourceAccountIndex);
-    }
-
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(
-              receiver.getAddress());
-      delegatedResourceAccountIndex
-          .addFromAccount(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(RECEIVER_ADDRESS), delegatedResourceAccountIndex);
-    }
 
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -383,21 +328,6 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(0L, ownerResult.getTronPower());
       Assert.assertEquals(0L, ownerResult.getDelegatedFrozenBalanceForBandwidth());
 
-      //check DelegatedResourceAccountIndex
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert
-          .assertEquals(0,
-              delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
-
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
 
     } catch (ContractValidateException e) {
       logger.error("", e);
@@ -440,24 +370,6 @@ public class UnfreezeBalanceActuatorTest {
         .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
             ByteArray.fromHexString(RECEIVER_ADDRESS)), delegatedResourceCapsule);
 
-    //init DelegatedResourceAccountIndex
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(owner.getAddress());
-      delegatedResourceAccountIndex
-          .addToAccount(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(OWNER_ADDRESS), delegatedResourceAccountIndex);
-    }
-
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(receiver.getAddress());
-      delegatedResourceAccountIndex
-          .addFromAccount(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(RECEIVER_ADDRESS), delegatedResourceAccountIndex);
-    }
 
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -497,20 +409,6 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(0L, ownerResult.getTronPower());
       Assert.assertEquals(0L, ownerResult.getDelegatedFrozenBalanceForBandwidth());
 
-      //check DelegatedResourceAccountIndex
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
-
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
-      Assert.assertEquals(0,
-          delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
 
       receiver = dbManager.getAccountStore().get(receiver.createDbKey());
       Assert.assertEquals(0, receiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
@@ -553,26 +451,6 @@ public class UnfreezeBalanceActuatorTest {
         .createDbKey(ByteArray.fromHexString(OWNER_ADDRESS),
             ByteArray.fromHexString(RECEIVER_ADDRESS)), delegatedResourceCapsule);
 
-    //init DelegatedResourceAccountIndex
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(
-              owner.getAddress());
-      delegatedResourceAccountIndex
-          .addToAccount(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(OWNER_ADDRESS), delegatedResourceAccountIndex);
-    }
-
-    {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
-          new DelegatedResourceAccountIndexCapsule(
-              receiver.getAddress());
-      delegatedResourceAccountIndex
-          .addFromAccount(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
-      dbManager.getDelegatedResourceAccountIndexStore()
-          .put(ByteArray.fromHexString(RECEIVER_ADDRESS), delegatedResourceAccountIndex);
-    }
 
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
