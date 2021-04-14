@@ -4,12 +4,10 @@ import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -160,12 +158,6 @@ public class FreezeBalanceProcessor {
     }
     repo.updateDelegatedResource(key, delegatedResourceCapsule);
 
-    // insert DelegatedResourceAccountIndex for toList of owner
-    addDelegatedAccountIndex(ownerAddress, receiverAddress, true, repo);
-
-    // insert DelegatedResourceAccountIndex for fromList of receiver
-    addDelegatedAccountIndex(receiverAddress, ownerAddress, false, repo);
-
     // do delegating resource to receiver account
     AccountCapsule receiverCapsule = repo.getAccount(receiverAddress);
     if (isBandwidth) {
@@ -174,25 +166,5 @@ public class FreezeBalanceProcessor {
       receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(frozenBalance);
     }
     repo.updateAccount(receiverCapsule.createDbKey(), receiverCapsule);
-  }
-
-  private void addDelegatedAccountIndex(byte[] ownerAddr, byte[] addedAddr,
-                                        boolean isToList, Repository repo) {
-    DelegatedResourceAccountIndexCapsule indexCapsule = repo
-        .getDelegatedResourceAccountIndex(ownerAddr);
-    if (indexCapsule == null) {
-      indexCapsule = new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(ownerAddr));
-    }
-    List<ByteString> accountsList = isToList
-        ? indexCapsule.getToAccountsList()
-        : indexCapsule.getFromAccountsList();
-    if (!accountsList.contains(ByteString.copyFrom(addedAddr))) {
-      if (isToList) {
-        indexCapsule.addToAccount(ByteString.copyFrom(addedAddr));
-      } else {
-        indexCapsule.addFromAccount(ByteString.copyFrom(addedAddr));
-      }
-    }
-    repo.updateDelegatedResourceAccountIndex(ownerAddr, indexCapsule);
   }
 }

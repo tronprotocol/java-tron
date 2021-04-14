@@ -595,11 +595,9 @@ public class Program {
 
   public boolean canSuicide() {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    DelegatedResourceAccountIndexCapsule indexCapsule =
-        getContractState().getDelegatedResourceAccountIndex(owner);
-    return indexCapsule == null ||
-        indexCapsule.getToAccountsList() == null ||
-        indexCapsule.getToAccountsList().isEmpty();
+    AccountCapsule accountCapsule = getContractState().getAccount(owner);
+    return accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
+        && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
