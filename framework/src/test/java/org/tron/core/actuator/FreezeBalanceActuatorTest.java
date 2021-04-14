@@ -19,7 +19,6 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -284,27 +283,6 @@ public class FreezeBalanceActuatorTest {
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
       Assert.assertEquals(totalNetWeightBefore + frozenBalance / 1000_000L, totalNetWeightAfter);
 
-      //check DelegatedResourceAccountIndex
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(1, delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
-      Assert.assertEquals(true,
-          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList()
-              .contains(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS))));
-
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
-      Assert
-          .assertEquals(1,
-              delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
-      Assert.assertEquals(true,
-          delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList()
-              .contains(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))));
-
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -356,26 +334,6 @@ public class FreezeBalanceActuatorTest {
       Assert.assertEquals(totalEnergyWeightBefore + frozenBalance / 1000_000L,
           totalEnergyWeightAfter);
 
-      //check DelegatedResourceAccountIndex
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(1, delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
-      Assert.assertEquals(true,
-          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList()
-              .contains(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS))));
-
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
-      Assert
-          .assertEquals(1,
-              delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
-      Assert.assertEquals(true,
-          delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList()
-              .contains(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))));
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
