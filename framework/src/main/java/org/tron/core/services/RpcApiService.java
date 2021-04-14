@@ -591,14 +591,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getDelegatedResourceAccountIndex(BytesMessage request,
-        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      responseObserver
-          .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void getExchangeById(BytesMessage request,
         StreamObserver<Exchange> responseObserver) {
       ByteString exchangeId = request.getValue();
@@ -1967,12 +1959,6 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    public void getDelegatedResourceAccountIndex(BytesMessage request,
-        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      responseObserver
-          .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
-      responseObserver.onCompleted();
-    }
 
     @Override
     public void getPaginatedProposalList(PaginatedMessage request,

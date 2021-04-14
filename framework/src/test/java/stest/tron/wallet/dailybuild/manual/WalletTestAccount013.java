@@ -279,29 +279,11 @@ public class WalletTestAccount013 {
     //FrozenBalanceForEnergy > 0
     Assert.assertTrue(afterFreezeEnergy > 0);
 
-    //check DelegatedResourceAccountIndex for Account4
-    Optional<Protocol.DelegatedResourceAccountIndex> delegatedResourceIndexResult1 = PublicMethed
-        .getDelegatedResourceAccountIndex(account4DelegatedResourceAddress, blockingStubFull);
-    //result of From list, first Address is same as account013 address
-    Assert.assertTrue(new String(account013Address)
-        .equals(new String(delegatedResourceIndexResult1.get().getFromAccounts(0).toByteArray())));
-    //result of To list, first Address is same as Account5 address
-    Assert.assertTrue(new String(account5DelegatedResourceAddress)
-        .equals(new String(delegatedResourceIndexResult1.get().getToAccounts(0).toByteArray())));
 
     //unfreezebalance of bandwidth from Account013 to Account4
     Assert.assertTrue(PublicMethed.unFreezeBalance(account013Address, testKeyForAccount013, 0,
         account4DelegatedResourceAddress, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    //check DelegatedResourceAccountIndex of Account4
-    Optional<Protocol.DelegatedResourceAccountIndex> delegatedResourceIndexResult1AfterUnfreeze =
-        PublicMethed
-            .getDelegatedResourceAccountIndex(account4DelegatedResourceAddress, blockingStubFull);
-    //result of From list is empty
-    Assert.assertTrue(
-        delegatedResourceIndexResult1AfterUnfreeze.get().getFromAccountsList().isEmpty());
-    Assert.assertFalse(
-        delegatedResourceIndexResult1AfterUnfreeze.get().getToAccountsList().isEmpty());
     //Balance of Account013 after unfreezeBalance
     // (013 -> receiver(bandwidth), 013 -> receiver(Energy), 013 -> Account4(bandwidth))
     Assert.assertTrue(PublicMethed.queryAccount(account013Address, blockingStubFull).getBalance()
@@ -477,23 +459,6 @@ public class WalletTestAccount013 {
     Assert.assertTrue(delegateResource.get().getDelegatedResource(0)
         .getFrozenBalanceForBandwidth() == 10000000);
   }
-
-  @Test(enabled = true, description = "Get delegate resource index from solidity")
-  public void test8GetDelegateResourceIndexFromSolidity() {
-    Optional<Protocol.DelegatedResourceAccountIndex> delegateResourceIndex = PublicMethed
-        .getDelegatedResourceAccountIndexFromSolidity(account013Address,
-            blockingStubSolidity);
-    Assert.assertTrue(delegateResourceIndex.get().getToAccountsCount() == 2);
-  }
-
-  @Test(enabled = true, description = "Get delegate resource index from PBFT")
-  public void test9GetDelegateResourceIndexFromPbft() {
-    Optional<Protocol.DelegatedResourceAccountIndex> delegateResourceIndex = PublicMethed
-        .getDelegatedResourceAccountIndexFromSolidity(account013Address,
-            blockingStubSolidity);
-    Assert.assertTrue(delegateResourceIndex.get().getToAccountsCount() == 2);
-  }
-
 
   /**
    * constructor.

@@ -299,13 +299,6 @@ public class RpcApiServiceOnSolidity implements Service {
     }
 
     @Override
-    public void getDelegatedResourceAccountIndex(BytesMessage request,
-        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
-          .getDelegatedResourceAccountIndex(request, responseObserver));
-    }
-
-    @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()

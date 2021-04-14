@@ -4386,42 +4386,6 @@ public class PublicMethed {
    * constructor.
    */
 
-  public static Optional<DelegatedResourceAccountIndex> getDelegatedResourceAccountIndex(
-      byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-
-    ByteString addressBs = ByteString.copyFrom(address);
-
-    BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(addressBs).build();
-
-    DelegatedResourceAccountIndex accountIndex = blockingStubFull
-        .getDelegatedResourceAccountIndex(bytesMessage);
-    return Optional.ofNullable(accountIndex);
-  }
-
-
-  /**
-   * constructor.
-   */
-  public static Optional<DelegatedResourceAccountIndex>
-      getDelegatedResourceAccountIndexFromSolidity(byte[] address,
-      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-
-    ByteString addressBs = ByteString.copyFrom(address);
-
-    BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(addressBs).build();
-
-    DelegatedResourceAccountIndex accountIndex = blockingStubFull
-        .getDelegatedResourceAccountIndex(bytesMessage);
-    return Optional.ofNullable(accountIndex);
-  }
-
-
-  /**
-   * constructor.
-   */
-
   public static AssetIssueContract getAssetIssueByName(String assetName,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
