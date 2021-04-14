@@ -737,15 +737,32 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMap() {
+    if (this.account.getLatestAssetOperationTimeMap() == null
+            && accountAssetIssue.getLatestAssetOperationTimeMap() != null) {
+      accountAssetIssue.getLatestAssetOperationTimeMap();
+      this.account = account.toBuilder()
+              .putAllLatestAssetOperationTime(
+                      accountAssetIssue.getLatestAssetOperationTimeMap())
+              .build();
+    }
     return this.account.getLatestAssetOperationTimeMap();
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMapV2() {
+    if (this.account.getLatestAssetOperationTimeV2Map() == null
+            && accountAssetIssue.getLatestAssetOperationTimeV2Map() != null) {
+      accountAssetIssue.getLatestAssetOperationTimeV2Map();
+      this.account = account.toBuilder()
+              .putAllLatestAssetOperationTime(
+                      accountAssetIssue.getLatestAssetOperationTimeV2Map())
+              .build();
+    }
     return this.account.getLatestAssetOperationTimeV2Map();
   }
 
   public long getLatestAssetOperationTime(String assetName) {
-    long latestAssetOperationTime = accountAssetIssue.getLatestAssetOperationTimeOrDefault(assetName, 0);
+    long latestAssetOperationTime = accountAssetIssue
+            .getLatestAssetOperationTimeOrDefault(assetName, 0);
     if (accountAssetIssue != null && latestAssetOperationTime != 0) {
       account = account.toBuilder()
               .putLatestAssetOperationTime(assetName, latestAssetOperationTime)
@@ -1213,18 +1230,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
             .putAllLatestAssetOperationTimeV2(
                     accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
             .build();
-  }
-
-
-  private List<Account.Frozen> getAssetIssueFrozen(List<AccountAssetIssue.Frozen> frozenSupplyList) {
-    return Optional.ofNullable(frozenSupplyList)
-            .orElseGet(ArrayList::new)
-            .stream()
-            .map(frozen -> Account.Frozen.newBuilder()
-                    .setExpireTime(frozen.getExpireTime())
-                    .setFrozenBalance(frozen.getFrozenBalance())
-                    .build())
-            .collect(Collectors.toList());
   }
 
 }
