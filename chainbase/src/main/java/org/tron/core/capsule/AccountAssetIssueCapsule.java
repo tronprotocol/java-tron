@@ -40,7 +40,6 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
     return this.accountAssetIssue;
   }
 
-
   public ByteString getAddress() {
     return this.accountAssetIssue.getAddress();
   }
@@ -54,11 +53,7 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
   }
 
   public Map<String, Long> getAssetMap() {
-    Map<String, Long> assetMap = this.accountAssetIssue.getAssetMap();
-    if (assetMap.isEmpty()) {
-      assetMap = Maps.newHashMap();
-    }
-    return assetMap;
+    return this.accountAssetIssue.getAssetMap();
   }
 
   public ByteString getAssetIssuedID() {
@@ -78,12 +73,7 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
   }
 
   public Map<String, Long> getAssetMapV2() {
-    Map<String, Long> assetMap = this.accountAssetIssue.getAssetV2Map();
-    if (assetMap.isEmpty()) {
-      assetMap = Maps.newHashMap();
-    }
-
-    return assetMap;
+    return this.accountAssetIssue.getAssetV2Map();
   }
 
   public Map<String, Long> getAllFreeAssetNetUsageV2() {

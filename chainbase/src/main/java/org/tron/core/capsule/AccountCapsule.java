@@ -527,7 +527,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * asset balance enough
    */
   public boolean assetBalanceEnough(byte[] key, long amount) {
-    Map<String, Long> assetMap = getAssetMapByAccountAssetIssue();
+    Map<String, Long> assetMap = getAccountAssetIssueMap();
     String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
 
@@ -540,12 +540,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     String nameKey;
     Long currentAmount;
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
-      assetMap = getAssetMapByAccountAssetIssue();
+      assetMap = getAccountAssetIssueMap();
       nameKey = ByteArray.toStr(key);
       currentAmount = assetMap.get(nameKey);
     } else {
       String tokenID = ByteArray.toStr(key);
-      assetMap = getAssetMapByAccountAssetIssueV2();
+      assetMap = getAccountAssetIssueMapV2();
       currentAmount = assetMap.get(tokenID);
     }
 
@@ -556,7 +556,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * reduce asset amount.
    */
   public boolean reduceAssetAmount(byte[] key, long amount) {
-    Map<String, Long> assetMap = getAssetMapByAccountAssetIssue();
+    Map<String, Long> assetMap = getAccountAssetIssueMap();
     String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (amount > 0 && null != currentAmount && amount <= currentAmount) {
@@ -575,7 +575,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
-      Map<String, Long> assetMap = getAssetMapByAccountAssetIssue();
+      Map<String, Long> assetMap = getAccountAssetIssueMap();
       AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
       String tokenID = assetIssueCapsule.getId();
       String nameKey = ByteArray.toStr(key);
@@ -591,7 +591,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     //key is token id
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
       String tokenID = ByteArray.toStr(key);
-      Map<String, Long> assetMapV2 = getAssetMapByAccountAssetIssueV2();
+      Map<String, Long> assetMapV2 = getAccountAssetIssueMapV2();
       Long currentAmount = assetMapV2.get(tokenID);
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
         this.account = this.account.toBuilder()
@@ -608,7 +608,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * add asset amount.
    */
   public boolean addAssetAmount(byte[] key, long amount) {
-    Map<String, Long> assetMap = getAssetMapByAccountAssetIssue();
+    Map<String, Long> assetMap = getAccountAssetIssueMap();
     String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (currentAmount == null) {
@@ -626,7 +626,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
-      Map<String, Long> assetMap = getAssetMapByAccountAssetIssue();
+      Map<String, Long> assetMap = getAccountAssetIssueMap();
       AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
       String tokenID = assetIssueCapsule.getId();
       String nameKey = ByteArray.toStr(key);
@@ -642,7 +642,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     //key is token id
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
       String tokenIDStr = ByteArray.toStr(key);
-      Map<String, Long> assetMapV2 = getAssetMapByAccountAssetIssueV2();
+      Map<String, Long> assetMapV2 = getAccountAssetIssueMapV2();
       Long currentAmount = assetMapV2.get(tokenIDStr);
       if (currentAmount == null) {
         currentAmount = 0L;
@@ -658,7 +658,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * add asset.
    */
   public boolean addAsset(byte[] key, long value) {
-    Map<String, Long> assetMap = getAssetMapByAccountAssetIssue();
+    Map<String, Long> assetMap = getAccountAssetIssueMap();
     String nameKey = ByteArray.toStr(key);
     if (!assetMap.isEmpty() && assetMap.containsKey(nameKey)) {
       return false;
@@ -669,7 +669,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public boolean addAssetV2(byte[] key, long value) {
     String tokenID = ByteArray.toStr(key);
-    Map<String, Long> assetV2Map = getAssetMapByAccountAssetIssueV2();
+    Map<String, Long> assetV2Map = getAccountAssetIssueMapV2();
     if (!assetV2Map.isEmpty() && assetV2Map.containsKey(tokenID)) {
       return false;
     }
@@ -688,7 +688,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return true;
   }
 
-  private Map<String, Long> getAssetMapByAccountAssetIssue() {
+  private Map<String, Long> getAccountAssetIssueMap() {
     if (checkAssetMapNotNull(account.getAssetMap())) {
       return this.account.getAssetMap();
     }
@@ -703,7 +703,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return account.getAssetMap();
   }
 
-  private Map<String, Long> getAssetMapByAccountAssetIssueV2() {
+  private Map<String, Long> getAccountAssetIssueMapV2() {
     if (checkAssetMapNotNull(account.getAssetV2Map())) {
       return this.account.getAssetV2Map();
     }
@@ -719,7 +719,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public Map<String, Long> getAssetMap() {
-    Map<String, Long> assetMap = getAssetMapByAccountAssetIssue();
+    Map<String, Long> assetMap = getAccountAssetIssueMap();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
     }
@@ -728,7 +728,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public Map<String, Long> getAssetMapV2() {
-    Map<String, Long> assetMap = getAssetMapByAccountAssetIssueV2();
+    Map<String, Long> assetMap = getAccountAssetIssueMapV2();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
     }
