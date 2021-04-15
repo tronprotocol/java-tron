@@ -42,12 +42,12 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             .putAllLatestAssetOperationTime(account.getLatestAssetOperationTimeMap())
             .putAllLatestAssetOperationTimeV2(
                     account.getLatestAssetOperationTimeV2Map())
-            .addAllFrozenSupply(getFrozen(account.getFrozenSupplyList()))
             .build();
   }
 
-  public AccountAssetIssue toBuildAccountAssetIssue(Account account, AccountAssetIssue accountAssetIssue) {
-    return accountAssetIssue.toBuilder()
+  public AccountAssetIssue toBuildAccountAssetIssue(Account account,
+                                                    AccountAssetIssue accountAssetIssue) {
+    AccountAssetIssue.Builder accountAssetIssueBuilder = accountAssetIssue.toBuilder()
             .setAddress(account.getAddress())
             .setAssetIssuedID(account.getAssetIssuedID())
             .setAssetIssuedName(account.getAssetIssuedName())
@@ -57,14 +57,17 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             .putAllFreeAssetNetUsageV2(account.getFreeAssetNetUsageV2Map())
             .putAllLatestAssetOperationTime(account.getLatestAssetOperationTimeMap())
             .putAllLatestAssetOperationTimeV2(
-                    account.getLatestAssetOperationTimeV2Map())
-            .addAllFrozenSupply(getFrozen(account.getFrozenSupplyList()))
-            .build();
+                    account.getLatestAssetOperationTimeV2Map());
+    List<Account.Frozen> frozenSupplyList = account.getFrozenSupplyList();
+    if (frozenSupplyList != null && frozenSupplyList.size() > 0) {
+      accountAssetIssueBuilder.clearFrozenSupply();
+      accountAssetIssueBuilder.addAllFrozenSupply(getFrozen(frozenSupplyList));
+     }
+    return accountAssetIssueBuilder.build();
   }
 
   private List<AccountAssetIssue.Frozen> getFrozen(List<Account.Frozen> frozenSupplyList) {
-    return Optional.ofNullable(frozenSupplyList)
-            .orElseGet(ArrayList::new)
+    return frozenSupplyList
             .stream()
             .map(frozen -> AccountAssetIssue.Frozen.newBuilder()
                     .setExpireTime(frozen.getExpireTime())
@@ -72,5 +75,4 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
                     .build())
             .collect(Collectors.toList());
   }
-
 }
