@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -78,6 +79,7 @@ public class CrossChainUpdateActuator extends AbstractActuator {
 
     byte[] chainId = crossChainInfo.getChainId().toByteArray();
     byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
+    byte[] proxyAddress = crossChainInfo.getProxyAddress().toByteArray();
 
     byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(ByteArray.toStr(chainId));
     BalanceContract.CrossChainInfo crossChainInfoOld = null;
@@ -87,7 +89,7 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     }
 
     if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())) {
-      throw new ContractValidateException("ChainId has not been registered!");
+      throw new ContractValidateException("ChainId has been selected!");
     }
 
     try {
@@ -114,6 +116,12 @@ public class CrossChainUpdateActuator extends AbstractActuator {
 
     if (balance <= calcFee()) {
       throw new ContractValidateException("Validate UpdateCrossContract error, balance is not sufficient.");
+    }
+
+    HashSet<String> paraChainsHistory = (HashSet<String>) crossRevokingStore.getParaChainsHistory();
+    if (paraChainsHistory.contains(ByteArray.toStr(chainId))
+            && !Arrays.equals(crossChainInfoOld.getProxyAddress().toByteArray(), proxyAddress)) {
+      throw new ContractValidateException("elected parallel chains can no longer modify the proxy address!");
     }
 
     // todo: whether check all params?

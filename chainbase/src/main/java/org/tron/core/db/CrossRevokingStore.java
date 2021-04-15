@@ -3,11 +3,7 @@ package org.tron.core.db;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Streams;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -167,7 +163,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
         }
     }
 
-    public Set<String> getParaChainsHistory() {
+    public Collection<String> getParaChainsHistory() {
         BytesCapsule data = getUnchecked("parachain_history".getBytes());
         if (data != null) {
             return JsonUtil.json2Obj(ByteArray.toStr(data.getData()),
