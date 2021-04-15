@@ -2075,6 +2075,7 @@ public class HttpMethed {
       accountBalanceObj.add("account_identifier", addressObj);
       accountBalanceObj.add("block_identifier", blockObj);
       accountBalanceObj.addProperty("visible", true);
+      logger.info(accountBalanceObj.toString());
       response = createConnect(requestUrl, accountBalanceObj);
     } catch (Exception e) {
       e.printStackTrace();
