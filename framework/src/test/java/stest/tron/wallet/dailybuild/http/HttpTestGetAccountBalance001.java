@@ -181,6 +181,7 @@ public class HttpTestGetAccountBalance001 {
     HttpMethed.sendCoin(httpnode, assetOwnerAddress, receiverAddress, amount - 103000L,
             "", assetOwnerKey);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     Long afterBurnTrxAmount = HttpMethed.getBurnTrx(httpnode);
     logger.info(afterBurnTrxAmount + "  :   " + beforeBurnTrxAmount);
     Assert.assertTrue(afterBurnTrxAmount - beforeBurnTrxAmount == 100000L);
