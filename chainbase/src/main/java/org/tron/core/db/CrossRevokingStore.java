@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Streams;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -144,6 +146,36 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
 
     public void deleteParaChains(int round) {
         delete(buildParaChainsKey(round));
+    }
+
+    public void updateParaChainsHistory(List<String> chainIds) {
+        BytesCapsule data = getUnchecked("parachain_history".getBytes());
+        HashSet<String> paraChains;
+        if (data == null) {
+            paraChains = new HashSet<>(chainIds);
+        } else {
+            paraChains = JsonUtil.json2Obj(ByteArray.toStr(data.getData()),
+                    new TypeReference<HashSet<String>>() {
+                    });
+            if (paraChains != null) {
+                paraChains.addAll(chainIds);
+            }
+        }
+
+        if (paraChains != null) {
+            put("parachain_history".getBytes(), new BytesCapsule(JsonUtil.obj2Json(paraChains).getBytes()));
+        }
+    }
+
+    public Set<String> getParaChainsHistory() {
+        BytesCapsule data = getUnchecked("parachain_history".getBytes());
+        if (data != null) {
+            return JsonUtil.json2Obj(ByteArray.toStr(data.getData()),
+                    new TypeReference<HashSet<String>>() {
+                    });
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     public List<String> getParaChainList(int round) {

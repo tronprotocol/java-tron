@@ -86,6 +86,10 @@ public class CrossChainUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("ChainId has not been registered!");
     }
 
+    if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())) {
+      throw new ContractValidateException("ChainId has not been registered!");
+    }
+
     try {
       crossChainInfoOld = BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
     } catch (InvalidProtocolBufferException e) {

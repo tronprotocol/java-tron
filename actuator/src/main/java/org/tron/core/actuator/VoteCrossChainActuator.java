@@ -96,6 +96,9 @@ public class VoteCrossChainActuator extends AbstractActuator {
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
+    if (amount <= 0L) {
+      throw new ContractValidateException("the amount of votes must be greater than 0");
+    }
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule.getBalance() - amount < 0) {
       throw new ContractValidateException(
