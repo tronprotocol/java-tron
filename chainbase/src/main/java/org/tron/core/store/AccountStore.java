@@ -90,12 +90,8 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     Account account = item.getInstance();
-    if (checkAssetMapNotNull(account.getAssetMap()) ||
-            checkAssetMapNotNull(account.getAssetV2Map())) {
-      AccountAssetIssue accountAssetIssue = accountAssetIssueStore
-              .buildAccountAssetIssue(item);
-      accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));
-      account = accountAssetIssueStore.clearAccountAsset(item);
+    if (checkAssetField(account)) {
+      account = recombine(key, item.getInstance());
       item.setInstance(account);
     }
 
@@ -177,8 +173,68 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
   }
 
-  public boolean checkAssetMapNotNull(Map<String, Long> assetMap) {
+  private boolean checkAssetMapNotNull(Map<String, Long> assetMap) {
     return assetMap != null && assetMap.size() > 0;
+  }
+
+  private boolean checkAssetField(Account account) {
+    if (checkAssetMapNotNull(account.getAssetMap()) ||
+            checkAssetMapNotNull(account.getAssetV2Map())) {
+      return true;
+    }
+    ByteString assetIssuedName = account.getAssetIssuedName();
+    if (assetIssuedName != null && !assetIssuedName.isEmpty()) {
+      return true;
+    }
+    ByteString assetIssuedID = account.getAssetIssuedID();
+    if (assetIssuedID != null && !assetIssuedID.isEmpty()) {
+      return true;
+    }
+    if (checkAssetMapNotNull(account.getLatestAssetOperationTimeMap()) ||
+            checkAssetMapNotNull(account.getLatestAssetOperationTimeV2Map())) {
+      return true;
+    }
+    if (checkAssetMapNotNull(account.getFreeAssetNetUsageMap())) {
+      return true;
+    }
+    if (checkAssetMapNotNull(account.getFreeAssetNetUsageV2Map())) {
+      return true;
+    }
+    if (account.getFrozenSupplyList() != null &&
+            account.getFrozenSupplyList().size() > 0) {
+      return true;
+    }
+    return false;
+  }
+
+  private Account recombine(byte[] key, Account account) {
+    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore
+            .get(key);
+    if (accountAssetIssueCapsule == null) {
+      AccountAssetIssue accountAssetIssue = accountAssetIssueStore
+              .buildAccountAssetIssue(account);
+      accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));
+    } else {
+      AccountAssetIssue accountAssetIssue = accountAssetIssueStore.toBuildAccountAssetIssue(account,
+              accountAssetIssueCapsule.getInstance());
+      accountAssetIssueCapsule.setInstance(accountAssetIssue);
+      accountAssetIssueStore.put(key, accountAssetIssueCapsule);
+    }
+    return clearAccountAsset(account);
+  }
+
+  private Account clearAccountAsset(Account account) {
+    return account.toBuilder()
+            .clearAssetIssuedID()
+            .clearAssetIssuedName()
+            .clearAsset()
+            .clearAssetV2()
+            .clearFreeAssetNetUsage()
+            .clearFreeAssetNetUsageV2()
+            .clearLatestAssetOperationTime()
+            .clearLatestAssetOperationTimeV2()
+            .clearFrozenSupply()
+            .build();
   }
 
   @Override

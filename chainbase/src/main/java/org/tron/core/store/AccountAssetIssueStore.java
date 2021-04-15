@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountAssetIssue;
@@ -31,9 +30,24 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
     return ArrayUtils.isEmpty(value) ? null : new AccountAssetIssueCapsule(value);
   }
 
-  public AccountAssetIssue buildAccountAssetIssue(AccountCapsule accountCapsule) {
-    Account account = accountCapsule.getInstance();
+  public AccountAssetIssue buildAccountAssetIssue(Account account) {
     return AccountAssetIssue.newBuilder()
+            .setAddress(account.getAddress())
+            .setAssetIssuedID(account.getAssetIssuedID())
+            .setAssetIssuedName(account.getAssetIssuedName())
+            .putAllAsset(account.getAssetMap())
+            .putAllAssetV2(account.getAssetV2Map())
+            .putAllFreeAssetNetUsage(account.getFreeAssetNetUsageMap())
+            .putAllFreeAssetNetUsageV2(account.getFreeAssetNetUsageV2Map())
+            .putAllLatestAssetOperationTime(account.getLatestAssetOperationTimeMap())
+            .putAllLatestAssetOperationTimeV2(
+                    account.getLatestAssetOperationTimeV2Map())
+            .addAllFrozenSupply(getFrozen(account.getFrozenSupplyList()))
+            .build();
+  }
+
+  public AccountAssetIssue toBuildAccountAssetIssue(Account account, AccountAssetIssue accountAssetIssue) {
+    return accountAssetIssue.toBuilder()
             .setAddress(account.getAddress())
             .setAssetIssuedID(account.getAssetIssuedID())
             .setAssetIssuedName(account.getAssetIssuedName())
@@ -59,17 +73,4 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             .collect(Collectors.toList());
   }
 
-  public Account clearAccountAsset(AccountCapsule accountCapsule) {
-    return accountCapsule.getInstance().toBuilder()
-            .clearAssetIssuedID()
-            .clearAssetIssuedName()
-            .clearAsset()
-            .clearAssetV2()
-            .clearFreeAssetNetUsage()
-            .clearFreeAssetNetUsageV2()
-            .clearLatestAssetOperationTime()
-            .clearLatestAssetOperationTimeV2()
-            .clearFrozenSupply()
-            .build();
-  }
 }
