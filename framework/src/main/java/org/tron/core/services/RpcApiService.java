@@ -2648,7 +2648,8 @@ public class RpcApiService implements Service {
     @Override
     public void registerCrossChain(BalanceContract.CrossChainInfo request,
                               StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.RegisterCrossChainContract, responseObserver);
+      createTransactionExtention(request, ContractType.RegisterCrossChainContract,
+          responseObserver);
     }
 
     @Override
@@ -2659,7 +2660,8 @@ public class RpcApiService implements Service {
 
     @Override
     public void getRegisterCrossChainList(PaginatedMessage request,
-                                     StreamObserver<GrpcAPI.RegisterCrossChainList> responseObserver) {
+                                     StreamObserver<GrpcAPI.RegisterCrossChainList>
+                                         responseObserver) {
       GrpcAPI.RegisterCrossChainList registerCrossList =
               wallet.getRegisterCrossList(request.getOffset(), request.getLimit());
       responseObserver.onNext(registerCrossList);
@@ -2679,16 +2681,20 @@ public class RpcApiService implements Service {
 
     @Override
     public void getCrossChainVoteSummaryList(GrpcAPI.CrossChainVoteSummaryPaginated request,
-                                             StreamObserver<GrpcAPI.CrossChainVoteSummaryList> responseObserver) {
+                                             StreamObserver<GrpcAPI.CrossChainVoteSummaryList>
+                                                 responseObserver) {
       GrpcAPI.CrossChainVoteSummaryList crossTotalVoteList =
-              wallet.getCrossChainTotalVoteList(request.getOffset(), request.getLimit(),request.getRound());
+              wallet.getCrossChainTotalVoteList(request.getOffset(), request.getLimit(),
+                  request.getRound());
       responseObserver.onNext(crossTotalVoteList);
     }
 
     @Override
     public void getCrossChainVoteDetailList(GrpcAPI.CrossChainVotePaginated request,
-                                       StreamObserver<GrpcAPI.CrossChainVoteDetailList> responseObserver) {
-      GrpcAPI.CrossChainVoteDetailList voteCrossList = wallet.getCrossChainVoteDetailList(request.getOffset(),
+                                       StreamObserver<GrpcAPI.CrossChainVoteDetailList>
+                                           responseObserver) {
+      GrpcAPI.CrossChainVoteDetailList voteCrossList = wallet.getCrossChainVoteDetailList(
+          request.getOffset(),
               request.getLimit(), request.getChainId().toString(), request.getRound());
       responseObserver.onNext(voteCrossList);
     }

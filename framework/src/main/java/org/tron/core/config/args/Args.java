@@ -5,7 +5,8 @@ import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.Constant.NODE_CROSS_CHAIN_CONNECT;
 import static org.tron.core.Constant.NODE_CROSS_CHAIN_PORT;
-import static org.tron.core.config.Parameter.ChainConstant.*;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
