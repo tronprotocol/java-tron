@@ -51,6 +51,7 @@ public class FreezeSuicideTest001 {
   private long freezeEnergyUseage;
   private long callValue;
   private byte[] create2Address;
+  private final Long freezeCount = 1000_000000L;
 
 
   @BeforeSuite
@@ -72,7 +73,7 @@ public class FreezeSuicideTest001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(testAddress001,2000_000000L,
         testFoundationAddress,testFoundationKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(testAddress002,10_000000L,
+    Assert.assertTrue(PublicMethed.sendcoin(testAddress002,200_0000_000000L,
         testFoundationAddress,testFoundationKey,blockingStubFull));
 
     String filePath = "src/test/resources/soliditycode/freezeContract001.sol";
@@ -80,7 +81,7 @@ public class FreezeSuicideTest001 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    callValue = 100_000000L;
+    callValue = 50000_000000L;
     contractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit, callValue,
             100, null, testFoundationKey,
@@ -88,7 +89,7 @@ public class FreezeSuicideTest001 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(testAddress002,
-        1000000L,1,0,testKey002,blockingStubFull));
+        100_0000_000000L,0,0,testKey002,blockingStubFull));
   }
 
   @Test(enabled = true, description = "when delegate freeze, cannot suicide")
@@ -97,7 +98,6 @@ public class FreezeSuicideTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testAddress002) + "\"," + freezeCount + "," + "1";
     String txid = PublicMethed.triggerContract(contractAddress,methedStr,argsStr,
@@ -138,7 +138,6 @@ public class FreezeSuicideTest001 {
         .getAccountResource(testAddress002,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"," + freezeCount + "," + "0";
     String txid = PublicMethed.triggerContract(contractAddress,methedStr,argsStr,
@@ -182,7 +181,7 @@ public class FreezeSuicideTest001 {
 
   }
 
-  @Test(enabled = true ,description = "suicide、freeze、unfreeze、getExpireTime "
+  @Test(enabled = true, description = "suicide、freeze、unfreeze、getExpireTime "
       + "with suicided create2 address")
   public void FreezeSuicideTest003() {
 
@@ -191,7 +190,7 @@ public class FreezeSuicideTest001 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String bytecode = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    callValue = 100_000000L;
+    callValue = 10000_000000L;
     contractAddress = PublicMethed
         .deployContract(contractName, abi, bytecode, "", maxFeeLimit, callValue,
             100, null, testFoundationKey,
@@ -213,7 +212,6 @@ public class FreezeSuicideTest001 {
     logger.info("create2Address: " + Base58.encode58Check(create2Address));
 
     // freeze to create2 Address, active create2 address
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(create2Address) + "\"," + freezeCount + "," + "1";
     logger.info("argsStr: " + argsStr);

@@ -2,6 +2,8 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.newGrammar;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -10,7 +12,6 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
-import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -18,14 +19,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
 
 
 @Slf4j
@@ -81,18 +75,18 @@ public class OverridePrivateFunction {
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    GrpcAPI.TransactionExtention transactionExtention = PublicMethed.triggerConstantContractForExtention(gasValueContract,
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(gasValueContract,
             "testOverridePrivate()", "#", true,
-            0, maxFeeLimit, "0",0, contractExcAddress, contractExcKey, blockingStubFull);
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Protocol.Transaction transaction = transactionExtention.getTransaction();
     int truerRes = ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray());
     logger.info("truerRes: " + truerRes + "   message:" + transaction.getRet(0).getRet());
-    logger.info("transactionExtention: " + transactionExtention );
+    logger.info("transactionExtention: " + transactionExtention);
     Assert.assertEquals(2, truerRes);
 
 
   }
-
 
 
   /**
@@ -100,7 +94,8 @@ public class OverridePrivateFunction {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    PublicMethed.freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+    PublicMethed.freedResource(contractExcAddress, contractExcKey,
+        testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

@@ -356,7 +356,6 @@ public class ContractTrcToken005 {
     Assert.assertEquals("contract validate error : tokenId must be > 1000000",
         response.getMessage().toStringUtf8());
 
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     tokenId = Long.toString(-1);
     tokenValue = 0;
@@ -371,7 +370,6 @@ public class ContractTrcToken005 {
     Assert.assertEquals("contract validate error : tokenId must be > 1000000",
         response.getMessage().toStringUtf8());
 
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     tokenId = Long.toString(100_0000L);
     tokenValue = 0;

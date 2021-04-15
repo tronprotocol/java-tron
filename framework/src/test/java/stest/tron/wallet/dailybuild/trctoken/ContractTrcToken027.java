@@ -88,7 +88,7 @@ public class ContractTrcToken027 {
     PublicMethed.printAddress(dev001Key);
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L,
             fromAddress, testKey002, blockingStubFull));
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
 
     // freeze balance
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
@@ -117,7 +117,6 @@ public class ContractTrcToken027 {
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
             100, null, dev001Key, dev001Address, blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName1 = "C";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
@@ -128,7 +127,7 @@ public class ContractTrcToken027 {
             0L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
             100, null, dev001Key, dev001Address,
             blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
 
     String contractName2 = "token";
     HashMap retMap2 = PublicMethed.getBycodeAbi(filePath, contractName2);

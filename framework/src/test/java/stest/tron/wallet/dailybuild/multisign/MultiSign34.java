@@ -24,8 +24,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
-import javax.swing.plaf.synth.SynthEditorPaneUI;
-
 @Slf4j
 public class MultiSign34 {
 

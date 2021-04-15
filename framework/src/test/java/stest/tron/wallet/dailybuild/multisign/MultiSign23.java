@@ -176,12 +176,12 @@ public class MultiSign23 {
     logger.info("TransactionSignWeight info : " + txWeight);
 
     Transaction transaction3 = PublicMethedForMutiSign
-            .sendcoin2(fromAddress, 1000_000, ownerAddress, ownerKey, blockingStubFull);
+        .sendcoin2(fromAddress, 1000_000, ownerAddress, ownerKey, blockingStubFull);
 
     Transaction transaction4 = PublicMethedForMutiSign.addTransactionSignWithPermissionId(
-            transaction, tmpKey02, 2, blockingStubFull);
-    Assert.assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction3, blockingStubFull));
-    Assert.assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction4, blockingStubFull));
+        transaction, tmpKey02, 2, blockingStubFull);
+    Assert.assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction3,blockingStubFull));
+    Assert.assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction4,blockingStubFull));
 
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -284,7 +284,8 @@ public class MultiSign23 {
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
-  @Test(enabled = true, description = "Add sign for single sign normal transaction,get approve list")
+  @Test(enabled = true, description = ""
+      + "Add sign for single sign normal transaction,get approve list")
   public void test03SingleSignNormalTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     ownerAddress = ecKey1.getAddress();
@@ -358,14 +359,14 @@ public class MultiSign23 {
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin + 1000000);
 
     GrpcAPI.TransactionApprovedList transactionApprovedList = PublicMethed
-            .getTransactionApprovedList(transaction1, blockingStubFull);
+        .getTransactionApprovedList(transaction1, blockingStubFull);
 
     logger.info("transactionApprovedList:" + transactionApprovedList);
     Assert.assertEquals(Base58.encode58Check(tmpAddr02), Base58
-            .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
+        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
     Assert.assertEquals(2,
-            transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
-                    .getPermissionId());
+        transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
+            .getPermissionId());
     Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
 
   }
@@ -531,17 +532,17 @@ public class MultiSign23 {
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
 
     GrpcAPI.TransactionApprovedList transactionApprovedList = PublicMethed
-            .getTransactionApprovedList(transaction1, blockingStubFull);
+        .getTransactionApprovedList(transaction1, blockingStubFull);
 
     logger.info("transactionApprovedList:" + transactionApprovedList);
     logger.info("Base58.encode58Check(test001Address)1:" + Base58
-            .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
+        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
     Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
     Assert.assertEquals(Base58.encode58Check(tmpAddr02), Base58
-            .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
+        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
     Assert.assertEquals(2,
-            transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
-                    .getPermissionId());
+        transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
+            .getPermissionId());
 
   }
 
@@ -584,16 +585,17 @@ public class MultiSign23 {
     Assert.assertEquals(balanceBefore, balanceAfter);
     logger.info("transaction hex string is " + ByteArray.toHexString(transaction.toByteArray()));
     GrpcAPI.TransactionApprovedList transactionApprovedList = PublicMethed
-            .getTransactionApprovedList(transaction, blockingStubFull);
+        .getTransactionApprovedList(transaction, blockingStubFull);
     logger.info("Before broadcast transactionApprovedList info :\n" + transactionApprovedList);
     Assert.assertEquals("class java.lang.IndexOutOfBoundsException : Index: 0",
-            transactionApprovedList.getResult().getMessage());
-    Assert.assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+        transactionApprovedList.getResult().getMessage());
+    Assert.assertFalse(PublicMethedForMutiSign
+        .broadcastTransaction(transaction1, blockingStubFull));
     logger.info("transaction hex string is " + ByteArray.toHexString(transaction1.toByteArray()));
     transactionApprovedList = PublicMethed
-            .getTransactionApprovedList(transaction1, blockingStubFull);
+        .getTransactionApprovedList(transaction1, blockingStubFull);
     Assert.assertEquals("class java.lang.IndexOutOfBoundsException : Index: 0",
-            transactionApprovedList.getResult().getMessage());
+        transactionApprovedList.getResult().getMessage());
   }
 
   @Test(enabled = true, description = "Add sign for fake transaction,get approve list")
@@ -670,14 +672,14 @@ public class MultiSign23 {
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
-     GrpcAPI.TransactionApprovedList transactionApprovedList = PublicMethed
+    GrpcAPI.TransactionApprovedList transactionApprovedList = PublicMethed
         .getTransactionApprovedList(transaction1, blockingStubFull);
     Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
     Assert.assertEquals(Base58.encode58Check(tmpAddr02), Base58
-            .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
+        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
     Assert.assertEquals(2,
-            transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
-                    .getPermissionId());
+        transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
+            .getPermissionId());
   }
 
   @Test(enabled = true, description = "Add sign transaction with mix order")

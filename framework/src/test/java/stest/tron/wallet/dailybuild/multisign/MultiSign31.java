@@ -180,7 +180,8 @@ public class MultiSign31 {
 
 
   @Test(enabled = true, description =
-      "Sendcoin,use active address sign,not meet the requirements broadcastTransaction.Then use the same"
+      "Sendcoin,use active address sign,"
+          + "not meet the requirements broadcastTransaction.Then use the same"
           + " permissionID active address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_35() {
     ECKey ecKey = new ECKey(Utils.getRandom());
@@ -368,8 +369,9 @@ public class MultiSign31 {
   }
 
   @Test(enabled = true, description =
-      "Sendcoin permission id 3,use active address in permission id 2 sign,Then use active address" +
-              " in permission id 3 to sign, meet all requirements.broadcastTransaction.")
+      "Sendcoin permission id 3,use active address in permission id 2 sign,"
+          + "Then use active address"
+          + " in permission id 3 to sign, meet all requirements.broadcastTransaction.")
   public void testMultiUpdatepermissions_37() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -472,8 +474,8 @@ public class MultiSign31 {
   }
 
   @Test(enabled = true, description =
-      "Sendcoin,use active address sign meet all requirements,broadcast,Then use active address" +
-              "in wrong permission id to sign,not meet the requirements.broadcast.")
+      "Sendcoin,use active address sign meet all requirements,broadcast,Then use active address"
+          + "in wrong permission id to sign,not meet the requirements.broadcast.")
   public void testMultiUpdatepermissions_38() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();

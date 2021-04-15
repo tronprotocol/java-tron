@@ -84,13 +84,11 @@ public class ContractTrcToken002 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 300_000_000L, fromAddress,
         testKey002, blockingStubFull));
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 70000L,
             blockingStubFull), 0, 1,
         ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
         0, 0, ByteString.copyFrom(dev001Address),
         testKey002, blockingStubFull));
@@ -182,7 +180,6 @@ public class ContractTrcToken002 {
             blockingStubFull), 0, 1,
         ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
 
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed.transferAsset(user001Address,
         assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));

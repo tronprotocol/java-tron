@@ -50,6 +50,7 @@ public class FreezeContractTest001 {
   String testKey002 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private long freezeEnergyUseage;
   private byte[] create2Address;
+  private final long freezeCount = 1000_123456L;
 
 
   @BeforeSuite
@@ -80,7 +81,7 @@ public class FreezeContractTest001 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit, 100_000000L,
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 10000_000000L,
             100, null, testFoundationKey,
             testFoundationAddress, blockingStubFull);
 
@@ -96,7 +97,6 @@ public class FreezeContractTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testAddress002) + "\"," + freezeCount + "," + "1";
     String txid = PublicMethed.triggerContract(contractAddress,methedStr,argsStr,
@@ -130,7 +130,6 @@ public class FreezeContractTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"," + freezeCount + "," + "1";
     String txid = PublicMethed.triggerContract(contractAddress,methedStr,argsStr,
@@ -170,7 +169,6 @@ public class FreezeContractTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(newContract) + "\"," + freezeCount + "," + "1";
     String txid = PublicMethed.triggerContract(contractAddress,methedStr,argsStr,
@@ -205,7 +203,6 @@ public class FreezeContractTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testAddress) + "\"," + freezeCount + "," + "1";
     logger.info("argsStr: " + argsStr);
@@ -260,7 +257,6 @@ public class FreezeContractTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(create2Address) + "\"," + freezeCount + "," + "1";
     logger.info("argsStr: " + argsStr);
@@ -326,7 +322,6 @@ public class FreezeContractTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "getExpireTime(address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testAddress002) + "\"" + ",1";
     TransactionExtention extention = PublicMethed
@@ -364,7 +359,6 @@ public class FreezeContractTest001 {
     Account contractAccount_before = PublicMethed.queryAccount(contractAddress,blockingStubFull);
 
     // freeze(address payable receiver, uint amount, uint res)
-    Long freezeCount = 1_000000L;
     String methedStr = "getExpireTime(address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + ",1";
     TransactionExtention extention = PublicMethed
@@ -396,7 +390,6 @@ public class FreezeContractTest001 {
   @Test(enabled = true, description = "energy caulate after transaction end")
   public void freezeEnergyCaulate() {
 
-    Long freezeCount = 1_000000L;
     String methedStr = "freeze(address,uint256,uint256)";
     String argsStr = "\"" + Base58.encode58Check(testAddress001) + "\"," + freezeCount + "," + "1";
     String txid = PublicMethed.triggerContract(contractAddress,methedStr,argsStr,

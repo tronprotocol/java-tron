@@ -261,7 +261,8 @@ public class MultiSign28 {
 
   }
 
-  @Test(enabled = true, description = "Sendcoin permission id 2,use active address in permission id 3 sign."
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use active address in permission id 3 sign."
       + "Then use active address in permission id 2to sign.broadcastTransaction.")
   public void testMultiUpdatepermissions_12() {
     ECKey ecKey = new ECKey(Utils.getRandom());
@@ -774,7 +775,8 @@ public class MultiSign28 {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Sendcoin permission id 2,use active address sign, meet all requirements."
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use active address sign, meet all requirements."
       + "Then use owner address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_18() {
     ECKey ecKey = new ECKey(Utils.getRandom());
@@ -857,7 +859,8 @@ public class MultiSign28 {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Sendcoin permission id 2,use active address sign, meet all requirements."
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use active address sign, meet all requirements."
       + "Then use owner address to sign with permission id 0,broadcastTransaction.")
   public void testMultiUpdatepermissions_19() {
     ECKey ecKey = new ECKey(Utils.getRandom());
@@ -1025,7 +1028,8 @@ public class MultiSign28 {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Sendcoin permission id 2,use not in permissionlist address sign."
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use not in permissionlist address sign."
       + "Then use owner address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_21() {
     ECKey ecKey = new ECKey(Utils.getRandom());

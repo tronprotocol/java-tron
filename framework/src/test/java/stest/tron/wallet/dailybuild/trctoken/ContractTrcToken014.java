@@ -90,26 +90,12 @@ public class ContractTrcToken014 {
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
-        0, 0, ByteString.copyFrom(dev001Address),
-        testKey002, blockingStubFull));
-
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
     //dev Create a new AssetIssue success.
     Assert.assertTrue(PublicMethed.createAssetIssue(dev001Address, tokenName, TotalSupply,
         1, 10000, start, end, 1, description, url, 100000L,
         100000L, 1L, 1L, dev001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    assetAccountId = PublicMethed.queryAccount(
-        dev001Address, blockingStubFull).getAssetIssuedID();
-    logger.info("The assetAccountId token name: " + tokenName);
-    logger.info("The assetAccountId token ID: " + assetAccountId.toStringUtf8());
 
     start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
@@ -118,11 +104,16 @@ public class ContractTrcToken014 {
         1, 10000, start, end, 1, description, url, 100000L,
         100000L, 1L, 1L, user001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     assetAccountUser = PublicMethed.queryAccount(
         user001Address, blockingStubFull).getAssetIssuedID();
     logger.info("The assetAccountUser token name: " + tokenName);
     logger.info("The assetAccountUser token ID: " + assetAccountUser.toStringUtf8());
 
+    assetAccountId = PublicMethed.queryAccount(
+        dev001Address, blockingStubFull).getAssetIssuedID();
+    logger.info("The assetAccountId token name: " + tokenName);
+    logger.info("The assetAccountId token ID: " + assetAccountId.toStringUtf8());
     //before deploy, check account resource
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -165,8 +156,6 @@ public class ContractTrcToken014 {
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
@@ -192,11 +181,6 @@ public class ContractTrcToken014 {
   @Test(enabled = true, description = "TransferToken with tokenId in exception condition,"
       + " deploy receiver contract")
   public void test02DeployRevContract() {
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // before deploy, check account resource
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
@@ -305,12 +289,6 @@ public class ContractTrcToken014 {
     logger.info("before trigger, dev001Address has AssetId "
         + assetAccountId.toStringUtf8() + ", Count is " + devAssetBefore);
 
-    // transfer to smart contract
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // transfer a not exist TokenId, to a contract
     String tokenId = assetAccountUser.toStringUtf8();
@@ -334,12 +312,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     // transfer a not exist TokenId, to a normal account
     tokenId = assetAccountUser.toStringUtf8();
     tokenValue = Long.valueOf(1);
@@ -361,12 +333,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     // tokenValue is not enough
     tokenId = assetAccountId.toStringUtf8();
     tokenValue = transferAssetBefore + 100;
@@ -387,11 +353,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // tokenValue is not enough, transfer to a normal account
     tokenId = assetAccountId.toStringUtf8();
@@ -412,12 +373,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     // TokenId is long.max, to a contract
     String fackTokenId = Long.toString(Long.MAX_VALUE);
     Long fakeValue = 1L;
@@ -437,11 +392,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // TokenId is not exist, to a contract
     fackTokenId = Long.toString(Long.valueOf(assetAccountId.toStringUtf8()) + 10000);
@@ -461,12 +411,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     // TokenId is long.max, to a normal account
     fackTokenId = Long.toString(Long.MAX_VALUE);
     fakeValue = 1L;
@@ -485,11 +429,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // TokenId is not exist, to a normal account
     fackTokenId = Long.toString(Long.valueOf(assetAccountId.toStringUtf8()) + 10000);
@@ -508,12 +447,6 @@ public class ContractTrcToken014 {
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // tokenValue is long.min, transfer to a contract
     tokenId = assetAccountId.toStringUtf8();
@@ -534,12 +467,6 @@ public class ContractTrcToken014 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("endowment out of long range",
         infoById.get().getResMessage().toStringUtf8());
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // tokenValue is long.min, transfer to a normal account
     param = "\"" + Base58.encode58Check(dev001Address)

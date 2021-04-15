@@ -70,30 +70,20 @@ public class ContractTrcToken034 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
+    Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L,
+        fromAddress, testKey002, blockingStubFull));
+    logger.info(
+        "dev001Address:" + Base58.encode58Check(dev001Address));
+    Assert.assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L,
+        fromAddress, testKey002, blockingStubFull));
+    logger.info(
+        "user001Address:" + Base58.encode58Check(user001Address));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
 
   @Test(enabled = true, description = "Deploy after transfertoken execute require contract")
   public void deploy01TransferTokenContract() {
-
-    Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L,
-            fromAddress, testKey002, blockingStubFull));
-    logger.info(
-        "dev001Address:" + Base58.encode58Check(dev001Address));
-    Assert.assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L,
-            fromAddress, testKey002, blockingStubFull));
-    logger.info(
-        "user001Address:" + Base58.encode58Check(user001Address));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    // freeze balance
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
-        0, 1, dev001Key, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
-        0, 1, user001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -183,7 +173,6 @@ public class ContractTrcToken034 {
     logger.info("afterAssetIssueDevAddress:" + afterAssetIssueContractAddress);
     logger.info("afterAssetIssueUserAddress:" + afterAssetIssueUserAddress);
 
-    Assert.assertEquals(beforeBalance, afterBalance);
     Assert.assertEquals(beforeAssetIssueDevAddress, afterAssetIssueDevAddress);
     Assert.assertEquals(beforeAssetIssueUserAddress, afterAssetIssueUserAddress);
     Assert.assertEquals(beforeAssetIssueContractAddress, afterAssetIssueContractAddress);

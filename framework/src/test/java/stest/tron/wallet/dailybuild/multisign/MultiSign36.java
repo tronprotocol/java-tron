@@ -14,7 +14,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
-import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -24,7 +23,6 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 import org.tron.protos.contract.BalanceContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -87,8 +85,8 @@ public class MultiSign36 {
 
   }
 
-  @Test(enabled = true, description = "two owner address sign update permission transaction " +
-          "sum(weight)==threshold,get approve list")
+  @Test(enabled = true, description = "two owner address sign update permission transaction "
+      + "sum(weight)==threshold,get approve list")
   public void getTransactionApprovedList_01() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -158,8 +156,10 @@ public class MultiSign36 {
   }
 
 
-  @Test(enabled = true, description = "sendcoin,use active address sign meet all requirement,delete " +
-          "the used active address,and change active no right to sendcoin. get first transaction approve list")
+  @Test(enabled = true, description =
+      "sendcoin,use active address sign meet all requirement,delete "
+      + "the used active address,"
+      + "and change active no right to sendcoin. get first transaction approve list")
   public void getTransactionApprovedList_02() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -255,7 +255,8 @@ public class MultiSign36 {
 
   }
 
-  @Test(enabled = true, description = "sendcoin,use active address sign,sum(weight)==threshold,get approve list")
+  @Test(enabled = true, description = "sendcoin,use active address sign,"
+      + "sum(weight)==threshold,get approve list")
   public void getTransactionApprovedList_03() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -395,8 +396,9 @@ public class MultiSign36 {
   }
 
 
-  @Test(enabled = true, description = "sendcoin transaction in owner permission,but sign use active address," +
-          "get approve list")
+  @Test(enabled = true, description = "sendcoin transaction in owner permission,"
+      + "but sign use active address,"
+      + "get approve list")
   public void getTransactionApprovedList_07() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();

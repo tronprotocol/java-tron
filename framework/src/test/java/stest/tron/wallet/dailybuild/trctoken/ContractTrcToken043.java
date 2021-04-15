@@ -95,13 +95,6 @@ public class ContractTrcToken043 {
     Assert.assertTrue(PublicMethed.sendcoin(user002Address, 5048_000_000L, fromAddress,
         testKey002, blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
-        0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
@@ -184,11 +177,6 @@ public class ContractTrcToken043 {
 
   @Test(enabled = true, description = "TransferToken with invalid tokenId, deploy receive contract")
   public void test02DeployRevContract() {
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // before deploy, check account resource
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
@@ -263,7 +251,6 @@ public class ContractTrcToken043 {
 
     Assert.assertTrue(PublicMethed.transferAsset(user001Address,
         assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed.transferAsset(user002Address,
         assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));
@@ -323,17 +310,6 @@ public class ContractTrcToken043 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     // tokenId is -1
     tokenId = Long.toString(-1);
     tokenValue = Long.valueOf(1);
@@ -355,12 +331,6 @@ public class ContractTrcToken043 {
     //Assert.assertEquals("validateForSmartContract failure, not valid token id",
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // tokenId is long.min
     tokenId = Long.toString(Long.MIN_VALUE);
@@ -410,17 +380,6 @@ public class ContractTrcToken043 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     Assert.assertFalse(PublicMethed
         .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002,
             blockingStubFull));
@@ -450,12 +409,6 @@ public class ContractTrcToken043 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     // tokenid bigger than long.max, trigger to a contract
     callValue = Long.valueOf(0);
 
@@ -474,11 +427,6 @@ public class ContractTrcToken043 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
         assetAccountId, blockingStubFull);

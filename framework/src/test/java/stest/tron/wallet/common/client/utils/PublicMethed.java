@@ -4333,7 +4333,7 @@ public class PublicMethed {
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
-    if(receiverAddressBytes != null) {
+    if (receiverAddressBytes != null) {
       builder.setReceiverAddress(receiverAddressBytes);
     }
     FreezeBalanceContract contract = builder.build();

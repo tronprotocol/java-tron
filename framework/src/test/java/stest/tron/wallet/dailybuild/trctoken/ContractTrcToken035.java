@@ -88,14 +88,6 @@ public class ContractTrcToken035 {
         "user001Address:" + Base58.encode58Check(user001Address));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    // freeze balance
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
-        0, 1, dev001Key, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
-        0, 1, user001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
     //Create a new AssetIssue success.
@@ -182,7 +174,6 @@ public class ContractTrcToken035 {
     logger.info("afterAssetIssueDevAddress:" + afterAssetIssueContractAddress);
     logger.info("afterAssetIssueUserAddress:" + afterAssetIssueUserAddress);
 
-    Assert.assertEquals(beforeBalance, afterBalance);
     Assert.assertEquals(beforeAssetIssueDevAddress, afterAssetIssueDevAddress);
     Assert.assertEquals(beforeAssetIssueUserAddress, afterAssetIssueUserAddress);
     Assert.assertEquals(beforeAssetIssueContractAddress, afterAssetIssueContractAddress);

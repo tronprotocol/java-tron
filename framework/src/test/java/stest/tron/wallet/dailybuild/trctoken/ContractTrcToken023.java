@@ -118,7 +118,6 @@ public class ContractTrcToken023 {
             1000000000L, 0, originEnergyLimit, "0",
             0, null, dev001Key, dev001Address,
             blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "B";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath2, contractName);
     String code = retMap.get("byteCode").toString();
