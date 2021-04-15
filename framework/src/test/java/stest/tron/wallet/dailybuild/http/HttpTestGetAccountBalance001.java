@@ -174,7 +174,7 @@ public class HttpTestGetAccountBalance001 {
     String assetOwnerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
     HttpMethed.sendCoin(httpnode, fromAddress, assetOwnerAddress, amount, "", testKey002);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    Long beforeBurnTrxAmount = HttpMethed.getBurnTrx(httpnode);
+    final Long beforeBurnTrxAmount = HttpMethed.getBurnTrx(httpnode);
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     byte[] receiverAddress = ecKey3.getAddress();
 
@@ -189,6 +189,23 @@ public class HttpTestGetAccountBalance001 {
     Assert.assertEquals(afterBurnTrxAmount, HttpMethed.getBurnTrxFromSolidity(httpSolidityNode));
     Assert.assertEquals(afterBurnTrxAmount, HttpMethed.getBurnTrxFromPbft(httpPbftNode));
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get receipt root  by http")
+  public void test04GetReceiptRootByHttp() {
+    response = HttpMethed.getBlockByNum(httpnode,sendcoinBlockNumber);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    String receiptsRoot = responseContent.getJSONObject("block_header").getJSONObject("raw_data")
+        .getString("receiptsRoot");
+    Assert.assertNotEquals(receiptsRoot,
+        "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertFalse(receiptsRoot.isEmpty());
+
+  }
+
 
   /**
    * constructor.
