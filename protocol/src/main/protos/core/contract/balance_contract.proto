@@ -7,6 +7,7 @@ option java_package = "org.tron.protos.contract"; //Specify the name of the pack
 option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 import "core/contract/common.proto";
+import "core/contract/smart_contract.proto";
 
 message FreezeBalanceContract {
   bytes owner_address = 1;
@@ -49,7 +50,6 @@ message TransactionBalanceTrace {
 }
 
 
-
 message BlockBalanceTrace {
   message BlockIdentifier {
     bytes hash = 1;
@@ -59,7 +59,7 @@ message BlockBalanceTrace {
   BlockIdentifier block_identifier = 1;
   int64 timestamp = 2;
   repeated TransactionBalanceTrace transaction_balance_trace = 3;
-//  BlockIdentifier parent_block_identifier = 4;
+  //  BlockIdentifier parent_block_identifier = 4;
 }
 
 message AccountTrace {
@@ -91,6 +91,7 @@ message CrossContract {
   CrossDataType type = 6;
   enum CrossDataType {
     TOKEN = 0;
+    CONTRACT = 1;
   }
 }
 
@@ -102,12 +103,18 @@ message CrossToken {
   bytes chain_id = 5;
 }
 
+message ContractTrigger {
+  TriggerSmartContract source = 1;
+  TriggerSmartContract dest = 2;
+}
+
 message CrossChainInfo {
   bytes owner_address = 1;
-  bytes chain_id = 2;
-  bytes sr_list = 3;
-  int64 begin_sync_height = 4;
-  int64 maintenance_time_interval = 5;
-  bytes parent_block_hash = 6;
-  int64 block_time = 7;
+  bytes proxy_address = 2;
+  bytes chain_id = 3;
+  bytes sr_list = 4;
+  int64 begin_sync_height = 5;
+  int64 maintenance_time_interval = 6;
+  bytes parent_block_hash = 7;
+  int64 block_time = 8;
 }

@@ -2,9 +2,7 @@ package org.tron.program;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
-
 import java.io.File;
-
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -24,7 +22,7 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 
 @Slf4j(topic = "app")
 public class FullNode {
-
+  
   public static final int dbVersion = 2;
 
   public static void load(String path) {
@@ -48,11 +46,10 @@ public class FullNode {
    */
   public static void main(String[] args) {
     logger.info("Full node running.");
-    Args.setParam(args, "config-localtest.conf");
+    Args.setParam(args, Constant.TESTNET_CONF);
 
     CommonParameter parameter = Args.getInstance();
     load(parameter.getLogbackPath());
-    parameter.setWitness(true);
     if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;

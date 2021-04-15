@@ -102,6 +102,7 @@ import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.CrossContractConstructException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -151,8 +152,13 @@ import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.CrossContract;
+import org.tron.protos.contract.BalanceContract.CrossContract.CrossDataType;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
 @Slf4j(topic = "DB")
@@ -837,7 +843,7 @@ public class Manager {
         }
 
         try (ISession tmpSession = revokingStore.buildSession()) {
-          processTransaction(trx, null);
+          preProcessTransaction(trx, null);
           pendingTransactions.add(trx);
           tmpSession.merge();
         }
@@ -1279,7 +1285,8 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(
+          final TransactionCapsule trxCap, BlockCapsule blockCap, boolean save)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1313,7 +1320,7 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
-    if (!isCrossChainTx(trxCap)) {
+    if (trxCap.isSource()) {
       consumeBandwidth(trxCap, trace);
       consumeMultiSignFee(trxCap, trace);
     }
@@ -1343,7 +1350,9 @@ public class Manager {
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
-    chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+    if (save) {
+      chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+    }
 
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1370,8 +1379,8 @@ public class Manager {
   }
 
   private boolean isCrossChainTx(TransactionCapsule trxCap) {
-    ContractType contractType = trxCap.getInstance().getRawData().getContract(0).getType();
-    return contractType == ContractType.CrossContract && !trxCap.isSource();
+    //ContractType contractType = trxCap.getInstance().getRawData().getContract(0).getType();
+    return !trxCap.isSource();
   }
 
   /**
@@ -1426,19 +1435,27 @@ public class Manager {
         fromPending = true;
         trx = iterator.next();
       } else if (crossTxQueue.size() > 0) {
-        //process cross tx
-        crossMessage = crossTxQueue.poll();
-        //todo:a->o->b
-        if (crossMessage.getType() == Type.TIME_OUT || crossMessage.getType() == Type.ACK
-            || (crossMessage.getType() == Type.DATA
-            && crossMessage.getTimeOutBlockHeight() > chainBaseManager.getHeadBlockNum())) {
-          trx = new TransactionCapsule(crossMessage.getTransaction());
-          trx.setSource(false);
-          trx.setType(crossMessage.getType());
-        } else {
-          logger.warn("{} cross tx time out, timeOutHeight:{}, now block height:{}",
-              crossMessage.getType(), crossMessage.getTimeOutBlockHeight(),
-              chainBaseManager.getHeadBlockNum());
+        try {
+          //process cross tx
+          crossMessage = crossTxQueue.poll();
+          CrossContract crossContract = crossMessage.getTransaction().getRawData().getContract(0)
+              .getParameter().unpack(CrossContract.class);
+          //todo:a->o->b
+          if (crossMessage.getType() == Type.TIME_OUT || crossMessage.getType() == Type.ACK
+              || crossContract.getType() == CrossDataType.CONTRACT
+              || (crossMessage.getType() == Type.DATA
+              && crossMessage.getTimeOutBlockHeight() > chainBaseManager.getHeadBlockNum())) {
+            trx = new TransactionCapsule(crossMessage.getTransaction());
+            trx.setSource(false);
+            trx.setType(crossMessage.getType());
+          } else {
+            logger.warn("{} cross tx time out, timeOutHeight:{}, now block height:{}",
+                crossMessage.getType(), crossMessage.getTimeOutBlockHeight(),
+                chainBaseManager.getHeadBlockNum());
+            continue;
+          }
+        } catch (Exception e) {
+          logger.error("", e);
           continue;
         }
       } else {
@@ -1478,7 +1495,7 @@ public class Manager {
       // apply transaction
       try (ISession tmpSession = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(trx, blockCapsule);
+        TransactionInfo result = preProcessTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
         if (trx.isSource()) {
@@ -1670,12 +1687,113 @@ public class Manager {
       transactionCapsule.setVerified(true);
     }
     accountStateCallBack.preExeTrans();
-    TransactionInfo result = processTransaction(transactionCapsule, block);
+    TransactionInfo result = preProcessTransaction(transactionCapsule, block);
     accountStateCallBack.exeTransFinish();
     if (Objects.nonNull(result)) {
       transationRetCapsule.addTransactionInfo(result);
     }
     pbftBlockListener.addCallBackTx(chainBaseManager, block.getNum(), transactionCapsule);
+  }
+
+  private TransactionInfo preProcessTransaction(
+          TransactionCapsule transactionCapsule, BlockCapsule block) throws
+          ValidateSignatureException, ContractValidateException,
+          TooBigTransactionException, TransactionExpirationException,
+          TooBigTransactionResultException, ReceiptCheckErrException,
+          TaposException, VMIllegalException, DupTransactionException,
+          ContractExeException, AccountResourceInsufficientException {
+    TransactionInfo result = processTransaction(transactionCapsule, block, true);
+    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+    if (contract.getType() == ContractType.CrossContract) {
+      try {
+        CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+        if (crossContract.getType() == CrossDataType.CONTRACT) {
+          BalanceContract.ContractTrigger contractTrigger = BalanceContract.ContractTrigger
+              .parseFrom(crossContract.getData());
+          if (transactionCapsule.isSource() && !Arrays
+              .equals(contractTrigger.getSource().getOwnerAddress().toByteArray(),
+                  TransactionCapsule.getOwner(contract))) {
+            throw new ValidateSignatureException(
+                "trigger source owner address not equals sign address");
+          }
+
+          TriggerSmartContract source = contractTrigger.getSource();
+          TriggerSmartContract dest = contractTrigger.getDest();
+          // check source and dest contract data
+          if (!Arrays.equals(source.getData().toByteArray(), dest.getData().toByteArray())) {
+            throw new CrossContractConstructException("dest data must equal with source data");
+          }
+
+          // todo: check proxy account
+
+          TransactionCapsule crossTriggerTx;
+          if (transactionCapsule.isSource()) {
+            crossTriggerTx = new TransactionCapsule(source, ContractType.TriggerSmartContract);
+          } else {
+            crossTriggerTx = new TransactionCapsule(dest, ContractType.TriggerSmartContract);
+            // set the fee payer when transaction is dest
+            crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
+          }
+
+          /*TransactionCapsule crossTriggerTx;
+          if (transactionCapsule.isSource()) {
+            crossTriggerTx = new TransactionCapsule(contractTrigger.getSource(),
+                ContractType.TriggerSmartContract);
+          } else {
+            TriggerSmartContract source = contractTrigger.getSource();
+            crossContract.getOwnerChainId();
+            TriggerSmartContract dest = contractTrigger.getDest();
+            //todo: setOwnerAddress and data
+            byte[] destData = buildDestData(source, dest, transactionCapsule.getContractResult());
+            dest = dest.toBuilder().setData(ByteString.copyFrom(destData))//.setOwnerAddress()
+                .build();
+            crossTriggerTx = new TransactionCapsule(dest,
+                ContractType.TriggerSmartContract);
+            // set the fee payer when transaction is dest
+            crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
+          }*/
+          setTransaction(crossTriggerTx, transactionCapsule);
+          TransactionInfo middleResult = processTransaction(crossTriggerTx, block, false);
+          //
+          result = middleResult.toBuilder().setId(result.getId()).build();
+          if (crossTriggerTx.getContractResult() != null) {
+            transactionCapsule.setResultCode(crossTriggerTx.getContractResult());
+          }
+        }
+      } catch (Exception e) {
+        logger.error("", e);
+        throw new ContractValidateException("invalid protobuf");
+      }
+    }
+    return result;
+  }
+
+  private byte[] buildDestData(TriggerSmartContract source, TriggerSmartContract dest,
+      Result.contractResult sourceResult) {
+    /*byte[] sourceData = source.getData().toByteArray();
+    byte[] destData = dest.getData().toByteArray();
+    byte[] result = new byte[destData.length + sourceData.length + 64 + 64];
+    //set contract data
+    System.arraycopy(sourceData, 0, destData, 0, sourceData.length);
+    byte[] contractAddress = source.getContractAddress().toByteArray();
+    System.arraycopy(contractAddress, 0, destData, sourceData.length, contractAddress.length);
+    byte[] txResult = Hex.decode(sourceResult.name());
+    System.arraycopy(txResult, 0, destData, sourceData.length + contractAddress.length,
+        txResult.length);
+    return result;*/
+    return source.getData().toByteArray();
+  }
+
+  private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx) {
+    raw raw = crossTrx.getInstance().getRawData();
+    trx.setReference(raw.getRefBlockHash(), raw.getRefBlockBytes());
+    trx.setExpiration(crossTrx.getExpiration());
+    trx.setTimestamp();
+    trx.setVerified(true);
+    trx.setSource(crossTrx.isSource());
+    if (crossTrx.getContractResult() != null) {
+      trx.setResultCode(crossTrx.getContractResult());
+    }
   }
 
   private void payReward(BlockCapsule block) {

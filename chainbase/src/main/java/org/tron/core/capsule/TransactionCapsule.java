@@ -112,6 +112,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   private Type type;
 
+  @Getter
+  @Setter
+  private byte[] callerAddress; // the real caller when this transaction is a cross-chain smartcontract
+
   /**
    * constructor TransactionCapsule.
    */
@@ -482,6 +486,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .setRefBlockHash(ByteString.copyFrom(ByteArray.subArray(blockHash, 8, 16)))
         .setRefBlockBytes(ByteString.copyFrom(ByteArray.subArray(refBlockNum, 6, 8)))
         .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public void setReference(ByteString refBlockHash, ByteString blockBytes) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setRefBlockHash(refBlockHash).setRefBlockBytes(blockBytes).build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
