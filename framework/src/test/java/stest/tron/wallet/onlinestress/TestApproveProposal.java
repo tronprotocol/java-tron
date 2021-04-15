@@ -1,7 +1,5 @@
 package stest.tron.wallet.onlinestress;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -21,7 +19,6 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.ChainParameters;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 
@@ -90,7 +87,7 @@ public class TestApproveProposal {
   public void testApproveProposal() {
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     //proposalMap.put(25L, 1L);
-    proposalMap.put(27L, 0L);
+    proposalMap.put(13L, 50L);
     //proposalMap.put(28L, 1L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
         proposalMap, blockingStubFull));
@@ -111,9 +108,33 @@ public class TestApproveProposal {
     //logger.info(Integer.toString(listProposals.get().getProposals(0).getApprovalsCount()));
 
     String[] witnessKey = {
-
-        "369F095838EB6EED45D4F6312AF962D5B9DE52927DA9F04174EE49F9AF54BC77",
-        "9FD8E129DE181EA44C6129F727A6871440169568ADE002943EAD0E7A16D8EDAC",
+        "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb8",
+        "f33101ea976d90491dcb9669be568db8bbc1ad23d90be4dede094976b67d550e",
+        "1bb32958909299db452d3c9bbfd15fd745160d63e4985357874ee57708435a00",
+        "29c91bd8b27c807d8dc2d2991aa0fbeafe7f54f4de9fac1e1684aa57242e3922",
+        "97317d4d68a0c5ce14e74ad04dfc7521f142f5c0f247b632c8f94c755bdbe669",
+        "ff5d867c4434ac17d264afc6696e15365832d5e8000f75733ebb336d66df148d",
+        "1fe1d91bbe3ac4ac5dc9866c157ef7615ec248e3fd4f7d2b49b0428da5e046b2",
+        "7c37ef485e186e07952bcc8e30cd911a6cd9f2a847736c89132762fb67a42329",
+        "bcc142d57d872cd2cc1235bca454f2efd5a87f612856c979cc5b45a7399272a8",
+        "6054824dc03546f903a06da1f405e72409379b83395d0bbb3d4563f56e828d52",
+        "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04",
+        "dbc78781ad27f3751358333412d5edc85b13e5eee129a1a77f7232baadafae0e",
+        "a79a37a3d868e66456d76b233cb894d664b75fd91861340f3843db05ab3a8c66",
+        "a8107ea1c97c90cd4d84e79cd79d327def6362cc6fd498fc3d3766a6a71924f6",
+        "b5076206430b2ca069ae2f4dc6f20dd0d74551559878990d1df12a723c228039",
+        "87cc8832b1b4860c3c69994bbfcdae9b520e6ce40cbe2a90566e707a7e04fc70",
+        "553c7b0dee17d3f5b334925f5a90fe99fb0b93d47073d69ec33eead8459d171e",
+        "541a2d585fcea7e9b1803df4eb49af0eb09f1fa2ce06aa5b8ed60ac95655d66d",
+        "7d5a7396d6430edb7f66aa5736ef388f2bea862c9259de8ad8c2cfe080f6f5a0",
+        "7c4977817417495f4ca0c35ab3d5a25e247355d68f89f593f3fea2ab62c8644f",
+        "4521c13f65cc9f5c1daa56923b8598d4015801ad28379675c64106f5f6afec30",
+        "442513e2e801bc42d14d33b8148851dae756d08eeb48881a44e1b2002b3fb700",
+        "2925e186bb1e88988855f11ebf20ea3a6e19ed92328b0ffb576122e769d45b68",
+        "c96c92c8a5f68ffba2ced3f7cd4baa6b784838a366f62914efdc79c6c18cd7d0",
+        "d29e34899a21dc801c2be88184bed29a66246b5d85f26e8c77922ee2403a1934",
+        "dc51f31e4de187c1c2530d65fb8f2958dff4c37f8cea430ce98d254baae37564",
+        "ff43b371d67439bb8b6fa6c4ff615c954682008343d4cb2583b19f50adbac90f"
 
     };
     byte[] witnessAddress;

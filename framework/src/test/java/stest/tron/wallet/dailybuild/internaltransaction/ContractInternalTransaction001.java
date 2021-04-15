@@ -73,24 +73,26 @@ public class ContractInternalTransaction001 {
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
-        .getBalance()));
+//    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
+//        .getBalance()));
   }
 
   @Test(enabled = true, description = "Create->call.Two-level nesting")
   public void testInternalTransaction001() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-        .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    Assert.assertTrue(PublicMethed
+//        .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
+//            blockingStubFull));
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/"
-        + "contractInternalTransaction001testInternalTransaction001.sol";
-    String contractName = "A";
+        + "WBTT.sol";
+    String contractName = "WBTT";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+    System.out.println("abi: "+abi);
+    System.out.println("code: "+code);
+    /*contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -136,7 +138,7 @@ public class ContractInternalTransaction001 {
     dupInternalTrsansactionHash(infoById1.get().getInternalTransactionsList());
     for (int i = 0; i < transactionsCount1; i++) {
       Assert.assertFalse(infoById1.get().getInternalTransactions(i).getRejected());
-    }
+    }*/
   }
 
   @Test(enabled = true, description = "There is one internalTransaction.Only call")
