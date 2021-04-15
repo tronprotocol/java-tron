@@ -25,8 +25,8 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAccount012 {
   private static final long sendAmount = 10000000000L;
-  private static final long frozenAmountForTronPower = 3000000L;
-  private static final long frozenAmountForNet = 4000000L;
+  private static final long frozenAmountForTronPower = 3456789L;
+  private static final long frozenAmountForNet = 7000000L;
   private final String foundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] foundationAddress = PublicMethed.getFinalAddress(foundationKey);
@@ -94,7 +94,21 @@ public class WalletTestAccount012 {
         frozenAmountForTronPower / 1000000L);
 
     Assert.assertEquals(afterTronPowerLimit - beforeTronPowerLimit,
-        frozenAmountForTronPower);
+        frozenAmountForTronPower / 1000000L);
+
+
+
+    Assert.assertTrue(PublicMethed.freezeBalanceGetTronPower(frozenAddress,
+        6000000 - frozenAmountForTronPower,
+        0,2,null,frozenKey,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    accountResource = PublicMethed
+        .getAccountResource(frozenAddress, blockingStubFull);
+    afterTronPowerLimit = accountResource.getTronPowerLimit();
+
+    Assert.assertEquals(afterTronPowerLimit - beforeTronPowerLimit,
+        6);
+
 
   }
 
@@ -158,7 +172,7 @@ public class WalletTestAccount012 {
         .getAccountResource(frozenAddress, blockingStubFull);
     Long afterTotalTronPowerWeight = accountResource.getTotalTronPowerWeight();
     Assert.assertEquals(beforeTotalTronPowerWeight - afterTotalTronPowerWeight,
-        frozenAmountForTronPower / 1000000L);
+        6);
 
     Assert.assertEquals(accountResource.getTronPowerLimit(),0L);
     Assert.assertEquals(accountResource.getTronPowerUsed(),0L);
