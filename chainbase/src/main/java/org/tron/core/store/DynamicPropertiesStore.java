@@ -749,7 +749,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowReceiptsMerkleRoot();
     } catch (IllegalArgumentException e) {
-      this.saveAllowReceiptsMerkleRoot(0L);
+      this.saveAllowReceiptsMerkleRoot(CommonParameter.getInstance().getAllowReceiptsMerkleRoot());
     }
 
     try {

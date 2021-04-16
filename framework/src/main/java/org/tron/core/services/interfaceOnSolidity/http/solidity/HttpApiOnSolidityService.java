@@ -185,8 +185,6 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceOnSolidityServlet),
           "/walletsolidity/getdelegatedresource");
-      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnSolidityServlet),
-          "/walletsolidity/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(getExchangeByIdOnSolidityServlet),
           "/walletsolidity/getexchangebyid");
       context.addServlet(new ServletHolder(listExchangesOnSolidityServlet),

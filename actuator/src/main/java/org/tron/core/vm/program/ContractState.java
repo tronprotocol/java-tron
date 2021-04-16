@@ -95,11 +95,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address) {
-    return repository.getDelegatedResourceAccountIndex(address);
-  }
-
-  @Override
   public WitnessCapsule getWitnessCapsule(byte[] address) {
     return repository.getWitnessCapsule(address);
   }
@@ -224,11 +219,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void putDelegatedResourceAccountIndex(Key key, Value value) {
-    repository.putDelegatedResourceAccountIndex(key, value);
-  }
-
-  @Override
   public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
     repository.putAssetIssueValue(tokenId, assetIssueCapsule);
   }
@@ -331,11 +321,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule) {
     repository.updateDelegatedResource(word, delegatedResourceCapsule);
-  }
-
-  @Override
-  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
-    repository.updateDelegatedResourceAccountIndex(word, delegatedResourceAccountIndexCapsule);
   }
 
   @Override
