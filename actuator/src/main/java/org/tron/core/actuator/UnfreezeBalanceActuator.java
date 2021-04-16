@@ -6,7 +6,6 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -16,7 +15,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
@@ -24,7 +22,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
-import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
@@ -54,8 +51,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
-    DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
-        .getDelegatedResourceAccountIndexStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
     MortgageService mortgageService = chainBaseManager.getMortgageService();
     try {
@@ -139,34 +134,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
         delegatedResourceStore.delete(key);
-
-        //modify DelegatedResourceAccountIndexStore
-        {
-          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-              .get(ownerAddress);
-          if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> toAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
-                .getToAccountsList());
-            toAccountsList.remove(ByteString.copyFrom(receiverAddress));
-            delegatedResourceAccountIndexCapsule.setAllToAccounts(toAccountsList);
-            delegatedResourceAccountIndexStore
-                .put(ownerAddress, delegatedResourceAccountIndexCapsule);
-          }
-        }
-
-        {
-          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
-              .get(receiverAddress);
-          if (delegatedResourceAccountIndexCapsule != null) {
-            List<ByteString> fromAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
-                .getFromAccountsList());
-            fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
-            delegatedResourceAccountIndexCapsule.setAllFromAccounts(fromAccountsList);
-            delegatedResourceAccountIndexStore
-                .put(receiverAddress, delegatedResourceAccountIndexCapsule);
-          }
-        }
-
       } else {
         delegatedResourceStore.put(key, delegatedResourceCapsule);
       }

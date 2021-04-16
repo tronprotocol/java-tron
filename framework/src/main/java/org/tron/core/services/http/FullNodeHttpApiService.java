@@ -442,9 +442,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/wallet/updateenergylimit");
       context.addServlet(new ServletHolder(getDelegatedResourceServlet),
           "/wallet/getdelegatedresource");
-      context.addServlet(
-          new ServletHolder(getDelegatedResourceAccountIndexServlet),
-          "/wallet/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(setAccountServlet), "/wallet/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/wallet/getaccountbyid");
       context

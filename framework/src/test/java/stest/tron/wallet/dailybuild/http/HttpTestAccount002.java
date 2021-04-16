@@ -192,7 +192,7 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get Delegated Resource Account Index by http")
+  @Test(enabled = false, description = "Get Delegated Resource Account Index by http")
   public void test009GetDelegatedResourceAccountIndex() {
     response = HttpMethed.getDelegatedResourceAccountIndex(httpnode, freezeBalanceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -205,7 +205,7 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get Delegated Resource Account Index from solidity by http")
+  @Test(enabled = false, description = "Get Delegated Resource Account Index from solidity by http")
   public void test010GetDelegatedResourceAccountIndexFromSolidity() {
     response = HttpMethed
         .getDelegatedResourceAccountIndexFromSolidity(httpSoliditynode, freezeBalanceAddress);
@@ -219,7 +219,7 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get Delegated Resource Account Index from PBFT by http")
+  @Test(enabled = false, description = "Get Delegated Resource Account Index from PBFT by http")
   public void test011GetDelegatedResourceAccountIndexFromPbft() {
     response = HttpMethed
         .getDelegatedResourceAccountIndexFromPbft(httpPbftNode, freezeBalanceAddress);
@@ -286,6 +286,43 @@ public class HttpTestAccount002 {
     afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
     Assert.assertTrue(afterBalance - berforeBalance == frozenBalance);
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "FreezeBlance for tron power by http")
+  public void test015FreezeTronPower() {
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
+
+    response = HttpMethed
+        .freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0, 2, null,
+            freezeBalanceKey);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
+    Assert.assertTrue(berforeBalance - afterBalance == frozenBalance);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "UnFreezeBalance for tron power by http")
+  public void test016UnFreezeBalanceForTronPower() {
+    berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
+
+    //UnFreeze balance with energy for others
+    response = HttpMethed
+        .unFreezeBalance(httpnode, freezeBalanceAddress, 2, null,
+            freezeBalanceKey);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
+    Assert.assertTrue(afterBalance - berforeBalance == frozenBalance);
+  }
+
+
+
 
   /**
    * constructor.

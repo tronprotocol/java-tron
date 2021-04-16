@@ -79,8 +79,6 @@ public class RepositoryImpl implements Repository {
   @Getter
   private DelegatedResourceStore delegatedResourceStore;
   @Getter
-  private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
-  @Getter
   private VotesStore votesStore;
   @Getter
   private MortgageService mortgageService;
@@ -97,7 +95,6 @@ public class RepositoryImpl implements Repository {
 
   private HashMap<Key, Value> assetIssueCache = new HashMap<>();
   private HashMap<Key, Value> delegatedResourceCache = new HashMap<>();
-  private HashMap<Key, Value> delegatedResourceAccountIndexCache = new HashMap<>();
   private HashMap<Key, Value> votesCache = new HashMap<>();
   private HashMap<Key, Value> delegationCache = new HashMap<>();
 
@@ -125,7 +122,6 @@ public class RepositoryImpl implements Repository {
       blockIndexStore = manager.getBlockIndexStore();
       witnessStore = manager.getWitnessStore();
       delegatedResourceStore = manager.getDelegatedResourceStore();
-      delegatedResourceAccountIndexStore = manager.getDelegatedResourceAccountIndexStore();
       votesStore = manager.getVotesStore();
       mortgageService = manager.getMortgageService();
       delegationStore = manager.getDelegationStore();
@@ -259,26 +255,6 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] address) {
-    Key cacheKey = new Key(address);
-    if (delegatedResourceAccountIndexCache.containsKey(cacheKey)) {
-      return delegatedResourceAccountIndexCache.get(cacheKey).getDelegatedResourceAccountIndex();
-    }
-
-    DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule;
-    if (parent != null) {
-      delegatedResourceAccountIndexCapsule = parent.getDelegatedResourceAccountIndex(address);
-    } else {
-      delegatedResourceAccountIndexCapsule = getDelegatedResourceAccountIndexStore().get(address);
-    }
-
-    if (delegatedResourceAccountIndexCapsule != null) {
-      delegatedResourceAccountIndexCache.put(cacheKey, Value.create(delegatedResourceAccountIndexCapsule.getData()));
-    }
-    return delegatedResourceAccountIndexCapsule;
-  }
-
-  @Override
   public VotesCapsule getVotesCapsule(byte[] address) {
     Key cacheKey = new Key(address);
     if (votesCache.containsKey(cacheKey)) {
@@ -408,13 +384,6 @@ public class RepositoryImpl implements Repository {
     Key key = Key.create(word);
     Value value = Value.create(delegatedResourceCapsule.getData(), Type.VALUE_TYPE_DIRTY);
     delegatedResourceCache.put(key, value);
-  }
-
-  @Override
-  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
-    Key key = Key.create(word);
-    Value value = Value.create(delegatedResourceAccountIndexCapsule.getData(), Type.VALUE_TYPE_DIRTY);
-    delegatedResourceAccountIndexCache.put(key, value);
   }
 
   @Override
@@ -608,7 +577,6 @@ public class RepositoryImpl implements Repository {
     commitStorageCache(repository);
     commitDynamicCache(repository);
     commitDelegatedResourceCache(repository);
-    commitDelegatedResourceAccountIndexCache(repository);
     commitVotesCache(repository);
     commitAssetIssue(repository);
     commitDelegationCache(repository);
@@ -653,11 +621,6 @@ public class RepositoryImpl implements Repository {
   @Override
   public void putDelegatedResource(Key key, Value value) {
     delegatedResourceCache.put(key, value);
-  }
-
-  @Override
-  public void putDelegatedResourceAccountIndex(Key key, Value value) {
-    delegatedResourceAccountIndexCache.put(key, value);
   }
 
   @Override
@@ -859,18 +822,6 @@ public class RepositoryImpl implements Repository {
           deposit.putDelegatedResource(key, value);
         } else {
           getDelegatedResourceStore().put(key.getData(), value.getDelegatedResource());
-        }
-      }
-    }));
-  }
-
-  private void commitDelegatedResourceAccountIndexCache(Repository deposit) {
-    delegatedResourceAccountIndexCache.forEach(((key, value) -> {
-      if (value.getType().isDirty() || value.getType().isCreate()) {
-        if (deposit != null) {
-          deposit.putDelegatedResourceAccountIndex(key, value);
-        } else {
-          getDelegatedResourceAccountIndexStore().put(key.getData(), value.getDelegatedResourceAccountIndex());
         }
       }
     }));
