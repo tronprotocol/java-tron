@@ -10,9 +10,7 @@ import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountAssetIssue;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j(topic = "DB")
@@ -42,28 +40,8 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
             .putAllLatestAssetOperationTime(account.getLatestAssetOperationTimeMap())
             .putAllLatestAssetOperationTimeV2(
                     account.getLatestAssetOperationTimeV2Map())
+            .addAllFrozenSupply(getFrozen(account.getFrozenSupplyList()))
             .build();
-  }
-
-  public AccountAssetIssue toBuildAccountAssetIssue(Account account,
-                                                    AccountAssetIssue accountAssetIssue) {
-    AccountAssetIssue.Builder accountAssetIssueBuilder = accountAssetIssue.toBuilder()
-            .setAddress(account.getAddress())
-            .setAssetIssuedID(account.getAssetIssuedID())
-            .setAssetIssuedName(account.getAssetIssuedName())
-            .putAllAsset(account.getAssetMap())
-            .putAllAssetV2(account.getAssetV2Map())
-            .putAllFreeAssetNetUsage(account.getFreeAssetNetUsageMap())
-            .putAllFreeAssetNetUsageV2(account.getFreeAssetNetUsageV2Map())
-            .putAllLatestAssetOperationTime(account.getLatestAssetOperationTimeMap())
-            .putAllLatestAssetOperationTimeV2(
-                    account.getLatestAssetOperationTimeV2Map());
-    List<Account.Frozen> frozenSupplyList = account.getFrozenSupplyList();
-    if (frozenSupplyList != null && frozenSupplyList.size() > 0) {
-      accountAssetIssueBuilder.clearFrozenSupply();
-      accountAssetIssueBuilder.addAllFrozenSupply(getFrozen(frozenSupplyList));
-     }
-    return accountAssetIssueBuilder.build();
   }
 
   private List<AccountAssetIssue.Frozen> getFrozen(List<Account.Frozen> frozenSupplyList) {

@@ -91,7 +91,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
     Account account = item.getInstance();
     if (checkAssetField(account)) {
-      account = recombine(key, item.getInstance());
+      account = recombine(key, item);
       item.setInstance(account);
     }
 
@@ -200,26 +200,15 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     if (checkAssetMapNotNull(account.getFreeAssetNetUsageV2Map())) {
       return true;
     }
-    if (account.getFrozenSupplyList() != null &&
-            account.getFrozenSupplyList().size() > 0) {
-      return true;
-    }
     return false;
   }
 
-  private Account recombine(byte[] key, Account account) {
-    AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore
-            .get(key);
-    if (accountAssetIssueCapsule == null) {
-      AccountAssetIssue accountAssetIssue = accountAssetIssueStore
-              .buildAccountAssetIssue(account);
-      accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));
-    } else {
-      AccountAssetIssue accountAssetIssue = accountAssetIssueStore.toBuildAccountAssetIssue(account,
-              accountAssetIssueCapsule.getInstance());
-      accountAssetIssueCapsule.setInstance(accountAssetIssue);
-      accountAssetIssueStore.put(key, accountAssetIssueCapsule);
-    }
+  private Account recombine(byte[] key, AccountCapsule accountCapsule) {
+    Account account = accountCapsule.getInstance();
+    AccountAssetIssue accountAssetIssue = accountAssetIssueStore
+            .buildAccountAssetIssue(account);
+    accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));
+
     return clearAccountAsset(account);
   }
 
