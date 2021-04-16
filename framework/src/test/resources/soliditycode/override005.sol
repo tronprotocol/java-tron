@@ -1,4 +1,4 @@
-pragma solidity 0.6.0;
+pragma solidity >= 0.6.0;
 
 contract Base {
     enum ActionChoices { GoLeft, GoRight, GoStraight, SitStill }

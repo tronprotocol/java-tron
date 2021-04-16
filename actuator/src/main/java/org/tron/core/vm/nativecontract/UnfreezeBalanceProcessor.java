@@ -3,14 +3,11 @@ package org.tron.core.vm.nativecontract;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -148,17 +145,6 @@ public class UnfreezeBalanceProcessor {
 
       // increase balance of owner
       accountCapsule.setBalance(oldBalance + unfreezeBalance);
-
-      // remove DelegatedResourceAccountIndex record
-      if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
-          && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
-
-        // remove record in toList of owner
-        removeDelegatedAccountIndex(ownerAddress, receiverAddress, true, repo);
-
-        // remove record in fromList of receiver
-        removeDelegatedAccountIndex(receiverAddress, ownerAddress, false, repo);
-      }
     } else {
       switch (param.getResourceType()) {
         case BANDWIDTH:
@@ -209,23 +195,5 @@ public class UnfreezeBalanceProcessor {
 
     // notice: clear vote code is removed
     repo.updateAccount(ownerAddress, accountCapsule);
-  }
-
-  private void removeDelegatedAccountIndex(byte[] ownerAddr, byte[] removedAddr,
-                                        boolean isToList, Repository repo) {
-    DelegatedResourceAccountIndexCapsule indexCapsule =
-        repo.getDelegatedResourceAccountIndex(ownerAddr);
-    if (indexCapsule != null) {
-      List<ByteString> accountsList = new ArrayList<>(isToList
-          ? indexCapsule.getToAccountsList()
-          : indexCapsule.getFromAccountsList());
-      accountsList.remove(ByteString.copyFrom(removedAddr));
-      if (isToList) {
-        indexCapsule.setAllToAccounts(accountsList);
-      } else {
-        indexCapsule.setAllFromAccounts(accountsList);
-      }
-      repo.updateDelegatedResourceAccountIndex(ownerAddr, indexCapsule);
-    }
   }
 }

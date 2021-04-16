@@ -595,11 +595,9 @@ public class Program {
 
   public boolean canSuicide() {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    DelegatedResourceAccountIndexCapsule indexCapsule =
-        getContractState().getDelegatedResourceAccountIndex(owner);
-    return indexCapsule == null ||
-        indexCapsule.getToAccountsList() == null ||
-        indexCapsule.getToAccountsList().isEmpty();
+    AccountCapsule accountCapsule = getContractState().getAccount(owner);
+    return accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
+        && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1677,7 +1675,10 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     param.setOwnerAddress(owner);
     param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
-    param.setFrozenDuration(repository.getDynamicPropertiesStore().getMinFrozenTime());
+    boolean needCheckFrozenTime = CommonParameter.getInstance()
+        .getCheckFrozenTime() == 1;//for test
+    param.setFrozenDuration(needCheckFrozenTime ?
+        repository.getDynamicPropertiesStore().getMinFrozenTime() : 0);
     param.setResourceType(parseResourceCode(resourceType));
     try {
       param.setFrozenBalance(frozenBalance.sValue().longValueExact());

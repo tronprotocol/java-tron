@@ -9,7 +9,6 @@ import com.google.protobuf.ByteString;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +18,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
@@ -33,16 +32,16 @@ import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.store.AccountStore;
-import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
@@ -166,7 +165,14 @@ public class FreezeTest {
         null, originEnergyLimit);
     byte[] contractAddr = WalletUtil.generateContractAddress(trx);
     //String contractAddrStr = StringUtil.encode58Check(contractAddr);
-    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    TransactionCapsule trxCap = new TransactionCapsule(trx);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl());
+    trxCap.setTrxTrace(trace);
+    trace.init(null);
+    trace.exec();
+    trace.finalization();
+    Runtime runtime = trace.getRuntime();
     Assert.assertEquals(SUCCESS, runtime.getResult().getResultCode());
     Assert.assertEquals(value, manager.getAccountStore().get(contractAddr).getBalance());
 
@@ -181,8 +187,17 @@ public class FreezeTest {
                                         String method,
                                         Object... args) throws Exception {
     String hexInput = AbiUtil.parseMethod(method, Arrays.asList(args));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        callerAddr, contractAddr, Hex.decode(hexInput), 0, feeLimit, manager, null);
+    TransactionCapsule trxCap = new TransactionCapsule(
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+            callerAddr, contractAddr, Hex.decode(hexInput), 0, feeLimit));
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl());
+    trxCap.setTrxTrace(trace);
+    trace.init(null);
+    trace.exec();
+    trace.finalization();
+    trace.setResult();
+    TVMTestResult result = new TVMTestResult(trace.getRuntime(), trace.getReceipt(), null);
     Assert.assertEquals(expectedResult, result.getReceipt().getResult());
     if (check != null) {
       check.accept(result.getRuntime().getResult().getHReturn());
@@ -244,22 +259,16 @@ public class FreezeTest {
 
   private byte[] getCreate2Addr(byte[] factoryAddr,
                                 long salt) throws Exception {
-    String methodByAddr = "getCreate2Addr(uint256)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        owner, factoryAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(SUCCESS, result.getReceipt().getResult());
+    TVMTestResult result = triggerContract(
+        owner, factoryAddr, fee, SUCCESS, null, "getCreate2Addr(uint256)", salt);
     return TransactionTrace.convertToTronAddress(
         new DataWord(result.getRuntime().getResult().getHReturn()).getLast20Bytes());
   }
 
   private byte[] deployCreate2Contract(byte[] factoryAddr,
                                        long salt) throws Exception {
-    String methodByAddr = "deployCreate2Contract(uint256)";
-    String hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(salt));
-    TVMTestResult result = TvmTestUtils.triggerContractAndReturnTvmTestResult(
-        owner, factoryAddr, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertEquals(SUCCESS, result.getReceipt().getResult());
+    TVMTestResult result = triggerContract(
+        owner, factoryAddr, fee, SUCCESS, null, "deployCreate2Contract(uint256)", salt);
     return TransactionTrace.convertToTronAddress(
         new DataWord(result.getRuntime().getResult().getHReturn()).getLast20Bytes());
   }
@@ -762,17 +771,6 @@ public class FreezeTest {
           ByteString.copyFrom(receiverAddr));
     }
 
-    DelegatedResourceAccountIndexStore indexStore = manager.getDelegatedResourceAccountIndexStore();
-    DelegatedResourceAccountIndexCapsule oldOwnerIndex = indexStore.get(contractAddr);
-    if (oldOwnerIndex == null) {
-      oldOwnerIndex = new DelegatedResourceAccountIndexCapsule(ByteString.copyFrom(contractAddr));
-    }
-    DelegatedResourceAccountIndexCapsule oldReceiverIndex = indexStore.get(receiverAddr);
-    if (oldReceiverIndex == null) {
-      oldReceiverIndex = new DelegatedResourceAccountIndexCapsule(
-          ByteString.copyFrom(receiverAddr));
-    }
-
     TVMTestResult result = triggerFreeze(callerAddr, contractAddr, receiverAddr, frozenBalance, res,
         SUCCESS,
         returnValue -> Assert.assertEquals(dynamicStore.getMinFrozenTime() * FROZEN_PERIOD,
@@ -827,22 +825,6 @@ public class FreezeTest {
       Assert.assertEquals(frozenBalance + oldDelegatedResource.getFrozenBalanceForEnergy(),
           newDelegatedResource.getFrozenBalanceForEnergy());
     }
-
-    DelegatedResourceAccountIndexCapsule newOwnerIndex = indexStore.get(contractAddr);
-    Assert.assertNotNull(newOwnerIndex);
-    Assert.assertTrue(
-        newOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
-    oldOwnerIndex.removeToAccount(ByteString.copyFrom(receiverAddr));
-    newOwnerIndex.removeToAccount(ByteString.copyFrom(receiverAddr));
-    Assert.assertArrayEquals(oldOwnerIndex.getData(), newOwnerIndex.getData());
-
-    DelegatedResourceAccountIndexCapsule newReceiverIndex = indexStore.get(receiverAddr);
-    Assert.assertNotNull(newReceiverIndex);
-    Assert.assertTrue(
-        newReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
-    oldReceiverIndex.removeFromAccount(ByteString.copyFrom(contractAddr));
-    newReceiverIndex.removeFromAccount(ByteString.copyFrom(contractAddr));
-    Assert.assertArrayEquals(oldReceiverIndex.getData(), newReceiverIndex.getData());
 
     if (res == 0) {
       Assert.assertEquals(oldTotalNetWeight + frozenBalance / TRX_PRECISION,
@@ -899,14 +881,6 @@ public class FreezeTest {
         oldDelegatedResource.getFrozenBalanceForEnergy();
     Assert.assertTrue(delegatedFrozenBalance > 0);
     Assert.assertTrue(delegatedFrozenBalance <= delegatedBalance);
-
-    DelegatedResourceAccountIndexStore indexStore = manager.getDelegatedResourceAccountIndexStore();
-    DelegatedResourceAccountIndexCapsule oldOwnerIndex = indexStore.get(contractAddr);
-    Assert.assertTrue(
-        oldOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
-    DelegatedResourceAccountIndexCapsule oldReceiverIndex = indexStore.get(receiverAddr);
-    Assert.assertTrue(
-        oldReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
 
     TVMTestResult result = triggerUnfreeze(callerAddr, contractAddr, receiverAddr, res, SUCCESS,
         returnValue ->
@@ -966,27 +940,6 @@ public class FreezeTest {
           newDelegatedResource.getFrozenBalanceForBandwidth());
       Assert.assertEquals(0, newDelegatedResource.getFrozenBalanceForEnergy());
     }
-
-    // check account index store
-    DelegatedResourceAccountIndexCapsule newOwnerIndex = indexStore.get(contractAddr);
-    Assert.assertNotNull(newOwnerIndex);
-    if (newDelegatedResource.getFrozenBalanceForBandwidth() == 0
-        && newDelegatedResource.getFrozenBalanceForEnergy() == 0) {
-      Assert.assertFalse(
-          newOwnerIndex.getToAccountsList().contains(ByteString.copyFrom(receiverAddr)));
-      oldOwnerIndex.removeToAccount(ByteString.copyFrom(receiverAddr));
-    }
-    Assert.assertArrayEquals(oldOwnerIndex.getData(), newOwnerIndex.getData());
-
-    DelegatedResourceAccountIndexCapsule newReceiverIndex = indexStore.get(receiverAddr);
-    Assert.assertNotNull(newReceiverIndex);
-    if (newDelegatedResource.getFrozenBalanceForBandwidth() == 0
-        && newDelegatedResource.getFrozenBalanceForEnergy() == 0) {
-      Assert.assertFalse(
-          newReceiverIndex.getFromAccountsList().contains(ByteString.copyFrom(contractAddr)));
-      oldReceiverIndex.removeFromAccount(ByteString.copyFrom(contractAddr));
-    }
-    Assert.assertArrayEquals(oldReceiverIndex.getData(), newReceiverIndex.getData());
 
     // check total weight
     if (res == 0) {
@@ -1052,11 +1005,6 @@ public class FreezeTest {
 
     Assert.assertEquals(0, contract.getDelegatedFrozenBalanceForBandwidth());
     Assert.assertEquals(0, contract.getDelegatedFrozenBalanceForEnergy());
-    DelegatedResourceAccountIndexStore indexStore = manager.getDelegatedResourceAccountIndexStore();
-    DelegatedResourceAccountIndexCapsule indexCapsule = indexStore.get(contractAddr);
-    Assert.assertTrue(indexCapsule == null
-        || indexCapsule.getToAccountsList() == null
-        || indexCapsule.getToAccountsList().isEmpty());
 
     long newTotalNetWeight = dynamicStore.getTotalNetWeight();
     long newTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
