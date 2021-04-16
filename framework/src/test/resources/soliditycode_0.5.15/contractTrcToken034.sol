@@ -2,6 +2,8 @@
 
  contract token{
 
+     constructor() public payable {}
+
      // 2. 异常测试
      // 1）revert, 金额回退
      function failTransferTokenRevert(address payable toAddress,uint256 amount, trcToken id) public payable{
