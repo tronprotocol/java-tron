@@ -174,6 +174,8 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/walletsolidity/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceServlet),
           "/walletsolidity/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet),
+          "/walletsolidity/getdelegatedresourceaccountindex");
       context
           .addServlet(new ServletHolder(getExchangeByIdServlet),
               "/walletsolidity/getexchangebyid");
