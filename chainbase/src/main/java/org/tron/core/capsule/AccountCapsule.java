@@ -1139,11 +1139,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
-  public static void setAccountAssetIssueStore(AccountAssetIssueStore accountAssetIssueStore) {
+  public static void setAccountAssetIssueStore(
+          AccountAssetIssueStore accountAssetIssueStore) {
     AccountCapsule.accountAssetIssueStore = accountAssetIssueStore;
   }
 
-  public Account importAssetAccount(Account account, AccountAssetIssueCapsule accountAssetIssueCapsule) {
+  public Account importAssetAccount(Account account,
+                                    AccountAssetIssueCapsule accountAssetIssueCapsule) {
     return account.toBuilder()
             .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
             .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
@@ -1170,7 +1172,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   private void checkAssetSplit() {
-    if (!this.isAssetSplit && checkAccountAsset(account)) {
+    if (!this.isAssetSplit && checkAccountNotAsset(account)) {
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(createDbKey());
       if (null != accountAssetIssueCapsule) {
         this.account = importAssetAccount(account, accountAssetIssueCapsule);
@@ -1179,7 +1181,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  private boolean checkAccountAsset(Account account) {
+  private boolean checkAccountNotAsset(Account account) {
     return account.getAssetMap().size() == 0 &&
             account.getAssetV2Map().size() == 0;
   }

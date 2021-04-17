@@ -60,12 +60,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-     return null;
-    }
-    AccountCapsule accountCapsule = new AccountCapsule(value);
-    AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
-    return accountCapsule;
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   @Override
@@ -91,7 +86,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
     Account account = item.getInstance();
     if (checkAssetField(account)) {
-      account = recombine(key, item);
+      account = recombine(key, account);
       item.setInstance(account);
     }
 
@@ -203,8 +198,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     return false;
   }
 
-  private Account recombine(byte[] key, AccountCapsule accountCapsule) {
-    Account account = accountCapsule.getInstance();
+  private Account recombine(byte[] key, Account account) {
     AccountAssetIssue accountAssetIssue = accountAssetIssueStore
             .buildAccountAssetIssue(account);
     accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));

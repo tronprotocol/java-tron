@@ -17,6 +17,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
@@ -150,9 +151,10 @@ public class AssetUpdateHelper {
 
     Iterator<Entry<byte[], AccountCapsule>> iterator =
         chainBaseManager.getAccountStore().iterator();
+    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
+    AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
     while (iterator.hasNext()) {
       AccountCapsule accountCapsule = iterator.next().getValue();
-
       accountCapsule.clearAssetV2();
       if (accountCapsule.getAssetMap().size() != 0) {
         HashMap<String, Long> map = new HashMap<>();
