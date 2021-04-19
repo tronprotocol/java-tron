@@ -60,7 +60,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+      return null;
+    }
+    AccountCapsule accountCapsule = new AccountCapsule(value);
+    AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
+    return accountCapsule;
   }
 
   @Override
@@ -85,7 +90,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     Account account = item.getInstance();
-    if (checkAssetField(account)) {
+    if (item.checkAccountAsset(account)) {
       account = recombine(key, account);
       item.setInstance(account);
     }
@@ -168,35 +173,31 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
   }
 
-  private boolean checkAssetMapNotNull(Map<String, Long> assetMap) {
-    return assetMap != null && assetMap.size() > 0;
-  }
-
-  private boolean checkAssetField(Account account) {
-    if (checkAssetMapNotNull(account.getAssetMap()) ||
-            checkAssetMapNotNull(account.getAssetV2Map())) {
-      return true;
-    }
-    ByteString assetIssuedName = account.getAssetIssuedName();
-    if (assetIssuedName != null && !assetIssuedName.isEmpty()) {
-      return true;
-    }
-    ByteString assetIssuedID = account.getAssetIssuedID();
-    if (assetIssuedID != null && !assetIssuedID.isEmpty()) {
-      return true;
-    }
-    if (checkAssetMapNotNull(account.getLatestAssetOperationTimeMap()) ||
-            checkAssetMapNotNull(account.getLatestAssetOperationTimeV2Map())) {
-      return true;
-    }
-    if (checkAssetMapNotNull(account.getFreeAssetNetUsageMap())) {
-      return true;
-    }
-    if (checkAssetMapNotNull(account.getFreeAssetNetUsageV2Map())) {
-      return true;
-    }
-    return false;
-  }
+//  private boolean checkAssetField(Account account) {
+//    if (MapUtils.isNotEmpty(account.getAssetMap()) ||
+//            MapUtils.isNotEmpty(account.getAssetV2Map())) {
+//      return true;
+//    }
+//    ByteString assetIssuedName = account.getAssetIssuedName();
+//    if (assetIssuedName != null && !assetIssuedName.isEmpty()) {
+//      return true;
+//    }
+//    ByteString assetIssuedID = account.getAssetIssuedID();
+//    if (assetIssuedID != null && !assetIssuedID.isEmpty()) {
+//      return true;
+//    }
+//    if (MapUtils.isNotEmpty(account.getLatestAssetOperationTimeMap()) ||
+//            MapUtils.isNotEmpty(account.getLatestAssetOperationTimeV2Map())) {
+//      return true;
+//    }
+//    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageMap())) {
+//      return true;
+//    }
+//    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageV2Map())) {
+//      return true;
+//    }
+//    return false;
+//  }
 
   private Account recombine(byte[] key, Account account) {
     AccountAssetIssue accountAssetIssue = accountAssetIssueStore
