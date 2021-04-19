@@ -193,6 +193,14 @@ public class TransactionTrace {
 //    }
   }
 
+  public void saveEnergyLeftOfOrigin(long energyLeft) {
+    receipt.setOriginEnergyLeft(energyLeft);
+  }
+
+  public void saveEnergyLeftOfCaller(long energyLeft) {
+    receipt.setCallerEnergyLeft(energyLeft);
+  }
+
   public void finalization() throws ContractExeException {
     try {
       pay();

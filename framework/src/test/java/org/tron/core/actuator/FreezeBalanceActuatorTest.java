@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -118,6 +119,17 @@ public class FreezeBalanceActuatorTest {
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)
             .setResource(ResourceCode.ENERGY)
+            .build());
+  }
+
+
+  private Any getContractForTronPower(String ownerAddress, long frozenBalance, long duration) {
+    return Any.pack(
+        FreezeBalanceContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+            .setFrozenBalance(frozenBalance)
+            .setFrozenDuration(duration)
+            .setResource(ResourceCode.TRON_POWER)
             .build());
   }
 
@@ -651,6 +663,99 @@ public class FreezeBalanceActuatorTest {
 
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
+  }
+
+
+  @Test
+  public void testFreezeBalanceForEnergyWithoutOldTronPowerAfterNewResourceModel() {
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    chainBaseManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+    actuator.setChainBaseManager(chainBaseManager)
+        .setAny(getContractForCpu(OWNER_ADDRESS, frozenBalance, duration));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+
+      Assert.assertEquals(-1L, owner.getInstance().getOldTronPower());
+      Assert.assertEquals(0L, owner.getAllTronPower());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
+  @Test
+  public void testFreezeBalanceForEnergyWithOldTronPowerAfterNewResourceModel() {
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    chainBaseManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+    actuator.setChainBaseManager(chainBaseManager)
+        .setAny(getContractForCpu(OWNER_ADDRESS, frozenBalance, duration));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    AccountCapsule owner =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setFrozenForEnergy(100L,0L);
+    chainBaseManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS),owner);
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+
+      Assert.assertEquals(100L, owner.getInstance().getOldTronPower());
+      Assert.assertEquals(100L, owner.getAllTronPower());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
+  @Test
+  public void testFreezeBalanceForTronPowerWithOldTronPowerAfterNewResourceModel() {
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    chainBaseManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+    actuator.setChainBaseManager(chainBaseManager)
+        .setAny(getContractForTronPower(OWNER_ADDRESS, frozenBalance, duration));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    AccountCapsule owner =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setFrozenForEnergy(100L,0L);
+    chainBaseManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS),owner);
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+
+      Assert.assertEquals(100L, owner.getInstance().getOldTronPower());
+      Assert.assertEquals(frozenBalance + 100L, owner.getAllTronPower());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
   }
 
 

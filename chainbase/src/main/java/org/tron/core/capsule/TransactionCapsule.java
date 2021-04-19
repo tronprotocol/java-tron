@@ -524,6 +524,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         transBytes);
   }
 
+  public Sha256Hash getReceiptsMerkleHash() {
+    if (this.transaction.getRetCount() <= 0) {
+      return Sha256Hash.ZERO_HASH;
+    }
+    byte[] transBytes = this.transaction.getRet(0).toByteArray();
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transBytes);
+  }
+
   private Sha256Hash getRawHash() {
     return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
         this.transaction.getRawData().toByteArray());
