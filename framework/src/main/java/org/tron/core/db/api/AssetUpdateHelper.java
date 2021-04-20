@@ -151,8 +151,7 @@ public class AssetUpdateHelper {
 
     Iterator<Entry<byte[], AccountCapsule>> iterator =
         chainBaseManager.getAccountStore().iterator();
-    AccountAssetIssueStore accountAssetIssueStore = chainBaseManager.getAccountAssetIssueStore();
-    AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
+
     while (iterator.hasNext()) {
       AccountCapsule accountCapsule = iterator.next().getValue();
       accountCapsule.clearAssetV2();

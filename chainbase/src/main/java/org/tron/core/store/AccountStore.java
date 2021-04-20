@@ -60,12 +60,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    AccountCapsule accountCapsule = new AccountCapsule(value);
-    AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
-    return accountCapsule;
+    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
 
   @Override
