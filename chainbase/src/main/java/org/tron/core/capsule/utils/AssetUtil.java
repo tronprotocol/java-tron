@@ -50,21 +50,22 @@ public class AssetUtil {
       return account;
     }
     AccountAssetCapsule accountAssetCapsule = accountAssetStore.get(account.getAddress().toByteArray());
-    if (accountAssetCapsule != null) {
-      return account.toBuilder()
-              .setAssetIssuedID(accountAssetCapsule.getAssetIssuedID())
-              .setAssetIssuedName(accountAssetCapsule.getAssetIssuedName())
-              .putAllAsset(accountAssetCapsule.getAssetMap())
-              .putAllAssetV2(accountAssetCapsule.getAssetMapV2())
-              .putAllFreeAssetNetUsage(accountAssetCapsule.getAllFreeAssetNetUsage())
-              .putAllFreeAssetNetUsageV2(accountAssetCapsule.getAllFreeAssetNetUsageV2())
-              .putAllLatestAssetOperationTime(accountAssetCapsule.getLatestAssetOperationTimeMap())
-              .putAllLatestAssetOperationTimeV2(
-                      accountAssetCapsule.getLatestAssetOperationTimeMapV2())
-              .addAllFrozenSupply(getAccountFrozenSupplyList(accountAssetCapsule.getFrozenSupplyList()))
-              .build();
+    if (accountAssetCapsule == null) {
+      return account;
     }
-    return account;
+
+    return account.toBuilder()
+            .setAssetIssuedID(accountAssetCapsule.getAssetIssuedID())
+            .setAssetIssuedName(accountAssetCapsule.getAssetIssuedName())
+            .putAllAsset(accountAssetCapsule.getAssetMap())
+            .putAllAssetV2(accountAssetCapsule.getAssetMapV2())
+            .putAllFreeAssetNetUsage(accountAssetCapsule.getAllFreeAssetNetUsage())
+            .putAllFreeAssetNetUsageV2(accountAssetCapsule.getAllFreeAssetNetUsageV2())
+            .putAllLatestAssetOperationTime(accountAssetCapsule.getLatestAssetOperationTimeMap())
+            .putAllLatestAssetOperationTimeV2(
+                    accountAssetCapsule.getLatestAssetOperationTimeMapV2())
+            .addAllFrozenSupply(getAccountFrozenSupplyList(accountAssetCapsule.getFrozenSupplyList()))
+            .build();
   }
 
   private static List<Protocol.Account.Frozen> getAccountFrozenSupplyList(List<Protocol.AccountAsset.Frozen> frozenSupplyList) {
