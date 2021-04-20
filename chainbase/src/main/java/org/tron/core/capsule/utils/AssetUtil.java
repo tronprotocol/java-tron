@@ -3,7 +3,6 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import org.apache.commons.collections4.MapUtils;
 import org.tron.core.capsule.AccountAssetCapsule;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.protos.Protocol;
 
@@ -50,8 +49,7 @@ public class AssetUtil {
     if (AssetUtil.hasAsset(account)) {
       return account;
     }
-    AccountAssetCapsule accountAssetCapsule = AssetUtil
-            .getAssetByStore(account.getAddress().toByteArray());
+    AccountAssetCapsule accountAssetCapsule = accountAssetStore.get(account.getAddress().toByteArray());
     if (accountAssetCapsule != null) {
       return account.toBuilder()
               .setAssetIssuedID(accountAssetCapsule.getAssetIssuedID())
@@ -124,10 +122,6 @@ public class AssetUtil {
   public static void setAccountAssetStore(
           AccountAssetStore accountAssetStore) {
     AssetUtil.accountAssetStore = accountAssetStore;
-  }
-
-  public static AccountAssetCapsule getAssetByStore(byte[] key) {
-    return accountAssetStore.get(key);
   }
 
 }
