@@ -25,14 +25,12 @@ import java.util.Map;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.AccountAssetIssue;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Builder;
 import org.tron.protos.Protocol.Account.Frozen;
@@ -1146,7 +1144,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   private void importAsset() {
-    if (!this.isAssetImport && !checkAccountAsset(account)) {
+    if (!this.isAssetImport && !AssetUtil.hasAsset(account)) {
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(createDbKey());
       if (null != accountAssetIssueCapsule) {
         this.account = AssetUtil.importAsset(account, accountAssetIssueCapsule);
@@ -1155,31 +1153,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  public boolean checkAccountAsset(Account account) {
-    if (MapUtils.isNotEmpty(account.getAssetMap()) ||
-            MapUtils.isNotEmpty(account.getAssetV2Map())) {
-      return true;
-    }
-    ByteString assetIssuedName = account.getAssetIssuedName();
-    if (assetIssuedName != null && !assetIssuedName.isEmpty()) {
-      return true;
-    }
-    ByteString assetIssuedID = account.getAssetIssuedID();
-    if (assetIssuedID != null && !assetIssuedID.isEmpty()) {
-      return true;
-    }
-    if (MapUtils.isNotEmpty(account.getLatestAssetOperationTimeMap()) ||
-            MapUtils.isNotEmpty(account.getLatestAssetOperationTimeV2Map())) {
-      return true;
-    }
-    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageMap())) {
-      return true;
-    }
-    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageV2Map())) {
-      return true;
-    }
-    return false;
-  }
 
 
 }

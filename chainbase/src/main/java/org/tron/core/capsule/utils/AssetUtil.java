@@ -1,5 +1,7 @@
 package org.tron.core.capsule.utils;
 
+import com.google.protobuf.ByteString;
+import org.apache.commons.collections4.MapUtils;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.protos.Protocol;
 
@@ -10,7 +12,10 @@ import java.util.stream.Collectors;
 
 public class AssetUtil {
 
-  public static Protocol.AccountAssetIssue buildAccountAssetIssue(Protocol.Account account) {
+  public static Protocol.AccountAssetIssue getAsset(Protocol.Account account) {
+    if (!hasAsset(account)) {
+      return null;
+    }
     return Protocol.AccountAssetIssue.newBuilder()
             .setAddress(account.getAddress())
             .setAssetIssuedID(account.getAssetIssuedID())
@@ -77,4 +82,32 @@ public class AssetUtil {
             .clearFrozenSupply()
             .build();
   }
+
+
+  public static boolean hasAsset(Protocol.Account account) {
+    if (MapUtils.isNotEmpty(account.getAssetMap()) ||
+            MapUtils.isNotEmpty(account.getAssetV2Map())) {
+      return true;
+    }
+    ByteString assetIssuedName = account.getAssetIssuedName();
+    if (assetIssuedName != null && !assetIssuedName.isEmpty()) {
+      return true;
+    }
+    ByteString assetIssuedID = account.getAssetIssuedID();
+    if (assetIssuedID != null && !assetIssuedID.isEmpty()) {
+      return true;
+    }
+    if (MapUtils.isNotEmpty(account.getLatestAssetOperationTimeMap()) ||
+            MapUtils.isNotEmpty(account.getLatestAssetOperationTimeV2Map())) {
+      return true;
+    }
+    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageMap())) {
+      return true;
+    }
+    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageV2Map())) {
+      return true;
+    }
+    return false;
+  }
+
 }

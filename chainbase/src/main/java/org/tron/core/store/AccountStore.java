@@ -86,9 +86,11 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     Account account = item.getInstance();
-    if (item.checkAccountAsset(account)) {
-      account = recombine(key, account);
-      item.setInstance(account);
+    AccountAssetIssue accountAssetIssue = AssetUtil.getAsset(account);
+    if (null != accountAssetIssue) {
+      accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(
+              AssetUtil.getAsset(account)));
+      AssetUtil.clearAccountAsset(account);
     }
 
     super.put(key, item);
@@ -167,12 +169,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         .addOperation(operation)
         .build();
     balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
-  }
-
-  private Account recombine(byte[] key, Account account) {
-    AccountAssetIssue accountAssetIssue = AssetUtil.buildAccountAssetIssue(account);
-    accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));
-    return AssetUtil.clearAccountAsset(account);
   }
 
   @Override
