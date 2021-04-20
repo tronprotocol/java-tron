@@ -27,7 +27,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
-import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
@@ -46,8 +45,6 @@ import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
 
   private Account account;
-
-  private static AccountAssetIssueStore accountAssetIssueStore;
 
   @Getter
   private boolean isAssetImport = false;
@@ -1136,20 +1133,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
-  public static void setAccountAssetIssueStore(
-          AccountAssetIssueStore accountAssetIssueStore) {
-    if (AccountCapsule.accountAssetIssueStore == null) {
-      AccountCapsule.accountAssetIssueStore = accountAssetIssueStore;
-    }
-  }
 
   private void importAsset() {
-    if (!this.isAssetImport && !AssetUtil.hasAsset(account)) {
-      AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(createDbKey());
-      if (null != accountAssetIssueCapsule) {
-        this.account = AssetUtil.importAsset(account, accountAssetIssueCapsule);
-        this.isAssetImport = true;
-      }
+//    if (!this.isAssetImport && !AssetUtil.hasAsset(account)) {
+//      AccountAssetIssueCapsule accountAssetIssueCapsule = AssetUtil.getAssetByStore(createDbKey());
+//      if (null != accountAssetIssueCapsule) {
+//        this.account = AssetUtil.importAsset(account, accountAssetIssueCapsule);
+//        this.isAssetImport = true;
+//      }
+//    }
+    if (!this.isAssetImport) {
+      this.account = AssetUtil.importAsset(account);
+      this.isAssetImport = true;
     }
   }
 

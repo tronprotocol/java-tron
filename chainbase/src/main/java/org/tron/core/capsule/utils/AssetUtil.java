@@ -3,6 +3,7 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import org.apache.commons.collections4.MapUtils;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol;
 
 import java.util.ArrayList;
@@ -11,6 +12,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AssetUtil {
+
+  private static AccountAssetIssueStore accountAssetIssueStore;
+
 
   public static Protocol.AccountAssetIssue getAsset(Protocol.Account account) {
     if (!hasAsset(account)) {
@@ -42,8 +46,12 @@ public class AssetUtil {
   }
 
 
-  public static Protocol.Account importAsset(Protocol.Account account,
-                                      AccountAssetIssueCapsule accountAssetIssueCapsule) {
+  public static Protocol.Account importAsset(Protocol.Account account) {
+    if (AssetUtil.hasAsset(account)) {
+      return account;
+    }
+    AccountAssetIssueCapsule accountAssetIssueCapsule = AssetUtil
+            .getAssetByStore(account.getAddress().toByteArray());
     return account.toBuilder()
             .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
             .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
@@ -110,4 +118,14 @@ public class AssetUtil {
     return false;
   }
 
+  public static void setAccountAssetIssueStore(
+          AccountAssetIssueStore accountAssetIssueStore) {
+    if (AssetUtil.accountAssetIssueStore == null) {
+      AssetUtil.accountAssetIssueStore = accountAssetIssueStore;
+    }
+  }
+
+  public static AccountAssetIssueCapsule getAssetByStore(byte[] key) {
+    return accountAssetIssueStore.get(key);
+  }
 }

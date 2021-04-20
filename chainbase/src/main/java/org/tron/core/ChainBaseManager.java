@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -378,6 +378,6 @@ public class ChainBaseManager {
   }
 
   public void init() {
-    AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
+    AssetUtil.setAccountAssetIssueStore(accountAssetIssueStore);
   }
 }
