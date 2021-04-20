@@ -377,7 +377,7 @@ public class ChainBaseManager {
     return getBlockById(getBlockIdByNum(num));
   }
 
-  public void setAccountCapsule() {
+  public void init() {
     AccountCapsule.setAccountAssetIssueStore(accountAssetIssueStore);
   }
 }

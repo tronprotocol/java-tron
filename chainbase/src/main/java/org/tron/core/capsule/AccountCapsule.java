@@ -20,16 +20,14 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -54,7 +52,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   private static AccountAssetIssueStore accountAssetIssueStore;
 
   @Getter
-  private boolean isAssetSplit = false;
+  private boolean isAssetImport = false;
 
   /**
    * get account from bytes data.
@@ -1147,39 +1145,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
-  public Account importAsset(Account account,
-                             AccountAssetIssueCapsule accountAssetIssueCapsule) {
-    return account.toBuilder()
-            .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
-            .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
-            .putAllAsset(accountAssetIssueCapsule.getAssetMap())
-            .putAllAssetV2(accountAssetIssueCapsule.getAssetMapV2())
-            .putAllFreeAssetNetUsage(accountAssetIssueCapsule.getAllFreeAssetNetUsage())
-            .putAllFreeAssetNetUsageV2(accountAssetIssueCapsule.getAllFreeAssetNetUsageV2())
-            .putAllLatestAssetOperationTime(accountAssetIssueCapsule.getLatestAssetOperationTimeMap())
-            .putAllLatestAssetOperationTimeV2(
-                    accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
-            .addAllFrozenSupply(getAccountFrozenSupplyList(accountAssetIssueCapsule.getFrozenSupplyList()))
-            .build();
-  }
-
-  private List<Account.Frozen> getAccountFrozenSupplyList(List<AccountAssetIssue.Frozen> frozenSupplyList) {
-    return Optional.ofNullable(frozenSupplyList)
-            .orElseGet(ArrayList::new)
-            .stream()
-            .map(frozen -> Account.Frozen.newBuilder()
-                    .setExpireTime(frozen.getExpireTime())
-                    .setFrozenBalance(frozen.getFrozenBalance())
-                    .build())
-            .collect(Collectors.toList());
-  }
-
   private void importAsset() {
-    if (!this.isAssetSplit && !checkAccountAsset(account)) {
+    if (!this.isAssetImport && !checkAccountAsset(account)) {
       AccountAssetIssueCapsule accountAssetIssueCapsule = accountAssetIssueStore.get(createDbKey());
       if (null != accountAssetIssueCapsule) {
-        this.account = importAsset(account, accountAssetIssueCapsule);
-        this.isAssetSplit = true;
+        this.account = AssetUtil.importAsset(account, accountAssetIssueCapsule);
+        this.isAssetImport = true;
       }
     }
   }

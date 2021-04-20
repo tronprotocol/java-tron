@@ -12,6 +12,7 @@ import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountAssetIssueCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.protos.Protocol.Account;
@@ -169,25 +170,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   private Account recombine(byte[] key, Account account) {
-    AccountAssetIssue accountAssetIssue = accountAssetIssueStore
-            .buildAccountAssetIssue(account);
+    AccountAssetIssue accountAssetIssue = AssetUtil.buildAccountAssetIssue(account);
     accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(accountAssetIssue));
-
-    return clearAccountAsset(account);
-  }
-
-  private Account clearAccountAsset(Account account) {
-    return account.toBuilder()
-            .clearAssetIssuedID()
-            .clearAssetIssuedName()
-            .clearAsset()
-            .clearAssetV2()
-            .clearFreeAssetNetUsage()
-            .clearFreeAssetNetUsageV2()
-            .clearLatestAssetOperationTime()
-            .clearLatestAssetOperationTimeV2()
-            .clearFrozenSupply()
-            .build();
+    return AssetUtil.clearAccountAsset(account);
   }
 
   @Override
