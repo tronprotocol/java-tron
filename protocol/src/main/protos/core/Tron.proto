@@ -214,8 +214,8 @@ message Account {
   repeated Permission active_permission = 33;
 }
 
-/* AccountAssetIssue */
-message AccountAssetIssue {
+/* AccountAsset */
+message AccountAsset {
 
   /* frozen balance */
   message Frozen {

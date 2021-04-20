@@ -2,7 +2,7 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import org.apache.commons.collections4.MapUtils;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.store.AccountAssetIssueStore;
 import org.tron.protos.Protocol;
 
@@ -17,11 +17,11 @@ public class AssetUtil {
 
   private static boolean isAssetImport = false;
 
-  public static Protocol.AccountAssetIssue getAsset(Protocol.Account account) {
+  public static Protocol.AccountAsset getAsset(Protocol.Account account) {
     if (!hasAsset(account)) {
       return null;
     }
-    return Protocol.AccountAssetIssue.newBuilder()
+    return Protocol.AccountAsset.newBuilder()
             .setAddress(account.getAddress())
             .setAssetIssuedID(account.getAssetIssuedID())
             .setAssetIssuedName(account.getAssetIssuedName())
@@ -36,10 +36,10 @@ public class AssetUtil {
             .build();
   }
 
-  private static List<Protocol.AccountAssetIssue.Frozen> getFrozen(List<Protocol.Account.Frozen> frozenSupplyList) {
+  private static List<Protocol.AccountAsset.Frozen> getFrozen(List<Protocol.Account.Frozen> frozenSupplyList) {
     return frozenSupplyList
             .stream()
-            .map(frozen -> Protocol.AccountAssetIssue.Frozen.newBuilder()
+            .map(frozen -> Protocol.AccountAsset.Frozen.newBuilder()
                     .setExpireTime(frozen.getExpireTime())
                     .setFrozenBalance(frozen.getFrozenBalance())
                     .build())
@@ -52,27 +52,27 @@ public class AssetUtil {
       isAssetImport = false;
       return account;
     }
-    AccountAssetIssueCapsule accountAssetIssueCapsule = AssetUtil
+    AccountAssetCapsule accountAssetCapsule = AssetUtil
             .getAssetByStore(account.getAddress().toByteArray());
-    if (accountAssetIssueCapsule != null) {
+    if (accountAssetCapsule != null) {
       isAssetImport = true;
       return account.toBuilder()
-              .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
-              .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
-              .putAllAsset(accountAssetIssueCapsule.getAssetMap())
-              .putAllAssetV2(accountAssetIssueCapsule.getAssetMapV2())
-              .putAllFreeAssetNetUsage(accountAssetIssueCapsule.getAllFreeAssetNetUsage())
-              .putAllFreeAssetNetUsageV2(accountAssetIssueCapsule.getAllFreeAssetNetUsageV2())
-              .putAllLatestAssetOperationTime(accountAssetIssueCapsule.getLatestAssetOperationTimeMap())
+              .setAssetIssuedID(accountAssetCapsule.getAssetIssuedID())
+              .setAssetIssuedName(accountAssetCapsule.getAssetIssuedName())
+              .putAllAsset(accountAssetCapsule.getAssetMap())
+              .putAllAssetV2(accountAssetCapsule.getAssetMapV2())
+              .putAllFreeAssetNetUsage(accountAssetCapsule.getAllFreeAssetNetUsage())
+              .putAllFreeAssetNetUsageV2(accountAssetCapsule.getAllFreeAssetNetUsageV2())
+              .putAllLatestAssetOperationTime(accountAssetCapsule.getLatestAssetOperationTimeMap())
               .putAllLatestAssetOperationTimeV2(
-                      accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
-              .addAllFrozenSupply(getAccountFrozenSupplyList(accountAssetIssueCapsule.getFrozenSupplyList()))
+                      accountAssetCapsule.getLatestAssetOperationTimeMapV2())
+              .addAllFrozenSupply(getAccountFrozenSupplyList(accountAssetCapsule.getFrozenSupplyList()))
               .build();
     }
     return account;
   }
 
-  private static List<Protocol.Account.Frozen> getAccountFrozenSupplyList(List<Protocol.AccountAssetIssue.Frozen> frozenSupplyList) {
+  private static List<Protocol.Account.Frozen> getAccountFrozenSupplyList(List<Protocol.AccountAsset.Frozen> frozenSupplyList) {
     return Optional.ofNullable(frozenSupplyList)
             .orElseGet(ArrayList::new)
             .stream()
@@ -129,7 +129,7 @@ public class AssetUtil {
     AssetUtil.accountAssetIssueStore = accountAssetIssueStore;
   }
 
-  public static AccountAssetIssueCapsule getAssetByStore(byte[] key) {
+  public static AccountAssetCapsule getAssetByStore(byte[] key) {
     return accountAssetIssueStore.get(key);
   }
 

@@ -1,59 +1,58 @@
 package org.tron.core.capsule;
 
-import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.protos.Protocol.AccountAssetIssue;
-import org.tron.protos.Protocol.AccountAssetIssue.Frozen;
+import org.tron.protos.Protocol.AccountAsset;
+import org.tron.protos.Protocol.AccountAsset.Frozen;
 
 import java.util.List;
 import java.util.Map;
 
 @Slf4j(topic = "capsule")
-public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue> {
+public class AccountAssetCapsule implements ProtoCapsule<AccountAsset> {
 
-  private AccountAssetIssue accountAssetIssue;
+  private AccountAsset accountAsset;
 
   /**
    * get accountAssetIssue from bytes data.
    */
-  public AccountAssetIssueCapsule(byte[] data) {
+  public AccountAssetCapsule(byte[] data) {
     try {
-      this.accountAssetIssue = AccountAssetIssue.parseFrom(data);
+      this.accountAsset = AccountAsset.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
   }
 
-  public AccountAssetIssueCapsule(AccountAssetIssue accountAssetIssue) {
-    this.accountAssetIssue = accountAssetIssue;
+  public AccountAssetCapsule(AccountAsset accountAsset) {
+    this.accountAsset = accountAsset;
   }
 
   @Override
   public byte[] getData() {
-    return this.accountAssetIssue.toByteArray();
+    return this.accountAsset.toByteArray();
   }
 
   @Override
-  public AccountAssetIssue getInstance() {
-    return this.accountAssetIssue;
+  public AccountAsset getInstance() {
+    return this.accountAsset;
   }
 
   public ByteString getAddress() {
-    return this.accountAssetIssue.getAddress();
+    return this.accountAsset.getAddress();
   }
 
   public byte[] createDbKey() {
     return getAddress().toByteArray();
   }
 
-  public void setInstance(AccountAssetIssue accountAssetIssue) {
-    this.accountAssetIssue = accountAssetIssue;
+  public void setInstance(AccountAsset accountAsset) {
+    this.accountAsset = accountAsset;
   }
 
   public Map<String, Long> getAssetMap() {
-    return this.accountAssetIssue.getAssetMap();
+    return this.accountAsset.getAssetMap();
   }
 
   public ByteString getAssetIssuedID() {
@@ -65,23 +64,23 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
   }
 
   public Map<String, Long> getAllFreeAssetNetUsage() {
-    return this.accountAssetIssue.getFreeAssetNetUsageMap();
+    return this.accountAsset.getFreeAssetNetUsageMap();
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMap() {
-    return this.accountAssetIssue.getLatestAssetOperationTimeMap();
+    return this.accountAsset.getLatestAssetOperationTimeMap();
   }
 
   public Map<String, Long> getAssetMapV2() {
-    return this.accountAssetIssue.getAssetV2Map();
+    return this.accountAsset.getAssetV2Map();
   }
 
   public Map<String, Long> getAllFreeAssetNetUsageV2() {
-    return this.accountAssetIssue.getFreeAssetNetUsageV2Map();
+    return this.accountAsset.getFreeAssetNetUsageV2Map();
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMapV2() {
-    return this.accountAssetIssue.getLatestAssetOperationTimeV2Map();
+    return this.accountAsset.getLatestAssetOperationTimeV2Map();
   }
 
   public List<Frozen> getFrozenSupplyList() {
@@ -90,7 +89,7 @@ public class AccountAssetIssueCapsule implements ProtoCapsule<AccountAssetIssue>
 
   @Override
   public String toString() {
-    return this.accountAssetIssue.toString();
+    return this.accountAsset.toString();
   }
 
 }

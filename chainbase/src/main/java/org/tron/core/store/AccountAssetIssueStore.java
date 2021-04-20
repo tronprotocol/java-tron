@@ -5,12 +5,12 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
 @Slf4j(topic = "DB")
 @Component
-public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIssueCapsule> {
+public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetCapsule> {
 
   @Autowired
   protected AccountAssetIssueStore(@Value("account-asset-issue") String dbName) {
@@ -18,8 +18,8 @@ public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetIs
   }
 
   @Override
-  public AccountAssetIssueCapsule get(byte[] key) {
+  public AccountAssetCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountAssetIssueCapsule(value);
+    return ArrayUtils.isEmpty(value) ? null : new AccountAssetCapsule(value);
   }
 }

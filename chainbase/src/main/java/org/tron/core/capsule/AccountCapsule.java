@@ -1135,15 +1135,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
 
   private void importAsset() {
-//    if (!this.isAssetImport && !AssetUtil.hasAsset(account)) {
-//      AccountAssetIssueCapsule accountAssetIssueCapsule = AssetUtil.getAssetByStore(createDbKey());
-//      if (null != accountAssetIssueCapsule) {
-//        this.account = AssetUtil.importAsset(account, accountAssetIssueCapsule);
-//        this.isAssetImport = true;
-//      }
-//    }
     if (!this.isAssetImport) {
-      //属性不包含数据，才需要转换
       this.account = AssetUtil.importAsset(account);
       this.isAssetImport = AssetUtil.isIsAssetImport();
     }

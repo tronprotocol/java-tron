@@ -9,14 +9,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
-import org.tron.core.capsule.AccountAssetIssueCapsule;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.AccountAssetIssue;
+import org.tron.protos.Protocol.AccountAsset;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
 
@@ -86,9 +86,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     Account account = item.getInstance();
-    AccountAssetIssue accountAssetIssue = AssetUtil.getAsset(account);
-    if (null != accountAssetIssue) {
-      accountAssetIssueStore.put(key, new AccountAssetIssueCapsule(
+    AccountAsset accountAsset = AssetUtil.getAsset(account);
+    if (null != accountAsset) {
+      accountAssetIssueStore.put(key, new AccountAssetCapsule(
               AssetUtil.getAsset(account)));
       AssetUtil.clearAccountAsset(account);
     }
