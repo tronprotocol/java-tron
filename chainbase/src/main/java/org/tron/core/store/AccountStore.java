@@ -173,32 +173,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
   }
 
-//  private boolean checkAssetField(Account account) {
-//    if (MapUtils.isNotEmpty(account.getAssetMap()) ||
-//            MapUtils.isNotEmpty(account.getAssetV2Map())) {
-//      return true;
-//    }
-//    ByteString assetIssuedName = account.getAssetIssuedName();
-//    if (assetIssuedName != null && !assetIssuedName.isEmpty()) {
-//      return true;
-//    }
-//    ByteString assetIssuedID = account.getAssetIssuedID();
-//    if (assetIssuedID != null && !assetIssuedID.isEmpty()) {
-//      return true;
-//    }
-//    if (MapUtils.isNotEmpty(account.getLatestAssetOperationTimeMap()) ||
-//            MapUtils.isNotEmpty(account.getLatestAssetOperationTimeV2Map())) {
-//      return true;
-//    }
-//    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageMap())) {
-//      return true;
-//    }
-//    if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageV2Map())) {
-//      return true;
-//    }
-//    return false;
-//  }
-
   private Account recombine(byte[] key, Account account) {
     AccountAssetIssue accountAssetIssue = accountAssetIssueStore
             .buildAccountAssetIssue(account);
