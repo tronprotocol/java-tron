@@ -15,6 +15,7 @@ public class AssetUtil {
 
   private static AccountAssetIssueStore accountAssetIssueStore;
 
+  private static boolean isAssetImport = false;
 
   public static Protocol.AccountAssetIssue getAsset(Protocol.Account account) {
     if (!hasAsset(account)) {
@@ -48,22 +49,27 @@ public class AssetUtil {
 
   public static Protocol.Account importAsset(Protocol.Account account) {
     if (AssetUtil.hasAsset(account)) {
+      isAssetImport = false;
       return account;
     }
     AccountAssetIssueCapsule accountAssetIssueCapsule = AssetUtil
             .getAssetByStore(account.getAddress().toByteArray());
-    return account.toBuilder()
-            .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
-            .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
-            .putAllAsset(accountAssetIssueCapsule.getAssetMap())
-            .putAllAssetV2(accountAssetIssueCapsule.getAssetMapV2())
-            .putAllFreeAssetNetUsage(accountAssetIssueCapsule.getAllFreeAssetNetUsage())
-            .putAllFreeAssetNetUsageV2(accountAssetIssueCapsule.getAllFreeAssetNetUsageV2())
-            .putAllLatestAssetOperationTime(accountAssetIssueCapsule.getLatestAssetOperationTimeMap())
-            .putAllLatestAssetOperationTimeV2(
-                    accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
-            .addAllFrozenSupply(getAccountFrozenSupplyList(accountAssetIssueCapsule.getFrozenSupplyList()))
-            .build();
+    if (accountAssetIssueCapsule != null) {
+      isAssetImport = true;
+      return account.toBuilder()
+              .setAssetIssuedID(accountAssetIssueCapsule.getAssetIssuedID())
+              .setAssetIssuedName(accountAssetIssueCapsule.getAssetIssuedName())
+              .putAllAsset(accountAssetIssueCapsule.getAssetMap())
+              .putAllAssetV2(accountAssetIssueCapsule.getAssetMapV2())
+              .putAllFreeAssetNetUsage(accountAssetIssueCapsule.getAllFreeAssetNetUsage())
+              .putAllFreeAssetNetUsageV2(accountAssetIssueCapsule.getAllFreeAssetNetUsageV2())
+              .putAllLatestAssetOperationTime(accountAssetIssueCapsule.getLatestAssetOperationTimeMap())
+              .putAllLatestAssetOperationTimeV2(
+                      accountAssetIssueCapsule.getLatestAssetOperationTimeMapV2())
+              .addAllFrozenSupply(getAccountFrozenSupplyList(accountAssetIssueCapsule.getFrozenSupplyList()))
+              .build();
+    }
+    return account;
   }
 
   private static List<Protocol.Account.Frozen> getAccountFrozenSupplyList(List<Protocol.AccountAssetIssue.Frozen> frozenSupplyList) {
@@ -120,12 +126,14 @@ public class AssetUtil {
 
   public static void setAccountAssetIssueStore(
           AccountAssetIssueStore accountAssetIssueStore) {
-    if (AssetUtil.accountAssetIssueStore == null) {
-      AssetUtil.accountAssetIssueStore = accountAssetIssueStore;
-    }
+    AssetUtil.accountAssetIssueStore = accountAssetIssueStore;
   }
 
   public static AccountAssetIssueCapsule getAssetByStore(byte[] key) {
     return accountAssetIssueStore.get(key);
+  }
+
+  public static boolean isIsAssetImport() {
+    return isAssetImport;
   }
 }

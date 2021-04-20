@@ -1143,8 +1143,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 //      }
 //    }
     if (!this.isAssetImport) {
+      //属性不包含数据，才需要转换
       this.account = AssetUtil.importAsset(account);
-      this.isAssetImport = true;
+      this.isAssetImport = AssetUtil.isIsAssetImport();
     }
   }
 
