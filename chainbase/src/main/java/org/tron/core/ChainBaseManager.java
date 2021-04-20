@@ -31,7 +31,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
-import org.tron.core.store.AccountAssetIssueStore;
+import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -73,7 +73,7 @@ public class ChainBaseManager {
   private AccountStore accountStore;
   @Autowired
   @Getter
-  private AccountAssetIssueStore accountAssetIssueStore;
+  private AccountAssetStore accountAssetStore;
   @Autowired
   @Getter
   private BlockStore blockStore;
@@ -378,6 +378,6 @@ public class ChainBaseManager {
   }
 
   public void init() {
-    AssetUtil.setAccountAssetIssueStore(accountAssetIssueStore);
+    AssetUtil.setAccountAssetStore(accountAssetStore);
   }
 }

@@ -10,10 +10,10 @@ import org.tron.core.db.TronStoreWithRevoking;
 
 @Slf4j(topic = "DB")
 @Component
-public class AccountAssetIssueStore extends TronStoreWithRevoking<AccountAssetCapsule> {
+public class AccountAssetStore extends TronStoreWithRevoking<AccountAssetCapsule> {
 
   @Autowired
-  protected AccountAssetIssueStore(@Value("account-asset-issue") String dbName) {
+  protected AccountAssetStore(@Value("account-asset-issue") String dbName) {
     super(dbName);
   }
 

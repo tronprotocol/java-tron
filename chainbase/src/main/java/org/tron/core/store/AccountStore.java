@@ -41,7 +41,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private AccountTraceStore accountTraceStore;
 
   @Autowired
-  private AccountAssetIssueStore accountAssetIssueStore;
+  private AccountAssetStore accountAssetStore;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -88,7 +88,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     Account account = item.getInstance();
     AccountAsset accountAsset = AssetUtil.getAsset(account);
     if (null != accountAsset) {
-      accountAssetIssueStore.put(key, new AccountAssetCapsule(
+      accountAssetStore.put(key, new AccountAssetCapsule(
               AssetUtil.getAsset(account)));
       AssetUtil.clearAccountAsset(account);
     }

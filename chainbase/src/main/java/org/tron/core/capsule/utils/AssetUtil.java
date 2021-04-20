@@ -3,7 +3,7 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import org.apache.commons.collections4.MapUtils;
 import org.tron.core.capsule.AccountAssetCapsule;
-import org.tron.core.store.AccountAssetIssueStore;
+import org.tron.core.store.AccountAssetStore;
 import org.tron.protos.Protocol;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class AssetUtil {
 
-  private static AccountAssetIssueStore accountAssetIssueStore;
+  private static AccountAssetStore accountAssetStore;
 
   private static boolean isAssetImport = false;
 
@@ -124,13 +124,13 @@ public class AssetUtil {
     return false;
   }
 
-  public static void setAccountAssetIssueStore(
-          AccountAssetIssueStore accountAssetIssueStore) {
-    AssetUtil.accountAssetIssueStore = accountAssetIssueStore;
+  public static void setAccountAssetStore(
+          AccountAssetStore accountAssetStore) {
+    AssetUtil.accountAssetStore = accountAssetStore;
   }
 
   public static AccountAssetCapsule getAssetByStore(byte[] key) {
-    return accountAssetIssueStore.get(key);
+    return accountAssetStore.get(key);
   }
 
   public static boolean isIsAssetImport() {
