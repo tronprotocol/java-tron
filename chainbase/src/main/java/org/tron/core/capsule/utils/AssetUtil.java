@@ -3,6 +3,7 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import org.apache.commons.collections4.MapUtils;
 import org.tron.core.capsule.AccountAssetCapsule;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.protos.Protocol;
 
@@ -14,8 +15,6 @@ import java.util.stream.Collectors;
 public class AssetUtil {
 
   private static AccountAssetStore accountAssetStore;
-
-  private static boolean isAssetImport = false;
 
   public static Protocol.AccountAsset getAsset(Protocol.Account account) {
     if (!hasAsset(account)) {
@@ -49,13 +48,11 @@ public class AssetUtil {
 
   public static Protocol.Account importAsset(Protocol.Account account) {
     if (AssetUtil.hasAsset(account)) {
-      isAssetImport = false;
       return account;
     }
     AccountAssetCapsule accountAssetCapsule = AssetUtil
             .getAssetByStore(account.getAddress().toByteArray());
     if (accountAssetCapsule != null) {
-      isAssetImport = true;
       return account.toBuilder()
               .setAssetIssuedID(accountAssetCapsule.getAssetIssuedID())
               .setAssetIssuedName(accountAssetCapsule.getAssetIssuedName())
@@ -133,7 +130,4 @@ public class AssetUtil {
     return accountAssetStore.get(key);
   }
 
-  public static boolean isIsAssetImport() {
-    return isAssetImport;
-  }
 }
