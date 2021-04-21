@@ -40,7 +40,7 @@ public class CrossChainRegisterActuator extends AbstractActuator {
     try {
       CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
-      String chainId = crossChainInfo.getChainId().toString();
+      String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
       long burn = dynamicStore.getBurnedForRegisterCross();
       Commons.adjustBalance(accountStore, ownerAddress, -burn);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), burn);
@@ -82,7 +82,7 @@ public class CrossChainRegisterActuator extends AbstractActuator {
     byte[] ownerAddress = CrossChainInfo.getOwnerAddress().toByteArray();
 
     // check chain_id is exist
-    if (crossRevokingStore.getChainInfo(ByteArray.toStr(chainId)) != null) {
+    if (crossRevokingStore.getChainInfo(ByteArray.toHexString(chainId)) != null) {
       throw new ContractValidateException("ChainId has already been registered!");
     }
 

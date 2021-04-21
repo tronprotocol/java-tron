@@ -779,6 +779,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAuctionConfig(81617162101023L);
     }
 
+    try {
+      this.getMinAuctionVoteCount();
+    } catch (IllegalArgumentException e) {
+      this.saveMinAuctionVoteCount(0L);
+    }
+
   }
 
   public String intArrayToString(int[] a) {
@@ -2270,7 +2276,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(MIN_AUCTION_VOTE_COUNT))
             .map(BytesCapsule::getData)
             .map(ByteArray::toLong)
-            .orElse(0L);
+            .orElseThrow(() -> new IllegalArgumentException("not found MIN_AUCTION_VOTE_COUNT"));
   }
 
   public long getSrListCurrentCycle() {

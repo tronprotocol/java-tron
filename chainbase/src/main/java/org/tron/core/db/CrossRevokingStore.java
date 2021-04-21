@@ -114,11 +114,12 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
 
     public List<Pair<String, Long>> getChainVoteCountList(int round) {
+        String startStr = "voted_" + round + "_";
         return Streams.stream(iterator())
-                .filter(
-                        entry -> ("voted_" + round + "_").startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+                .filter(entry -> Objects.requireNonNull(ByteArray.toStr(entry.getKey())).
+                        startsWith(startStr))
                 .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey()).
-                        substring(("voted_" + round + "_").length()),
+                        substring((startStr).length()),
                         ByteArray.toLong(entry.getValue().getData())))
                 .sorted((v1, v2) -> Long.compare(v2.getValue(), v1.getValue()))
                 .collect(Collectors.toList());
@@ -190,7 +191,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
             return null;
         }
         return Streams.stream(iterator())
-                .filter(entry -> "register_".startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+                .filter(entry -> Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith("register_"))
                 .map(entry -> entry.getValue().getData())
                 .skip(offset)
                 .limit(limit)
@@ -203,7 +204,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
         }
         String startStr = "vote_" + round + "_" + chainId;
         return Streams.stream(iterator())
-                .filter(entry -> startStr.startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+                .filter(entry -> Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith(startStr))
                 .map(entry -> entry.getValue().getData())
                 .skip(offset)
                 .limit(limit)
@@ -216,7 +217,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
         }
         String startStr = "voted_"+round+"_";
         return Streams.stream(iterator())
-                .filter(entry -> startStr.startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+                .filter(entry -> Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith(startStr))
                 .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey()).substring(startStr.length()),
                         ByteArray.toLong(entry.getValue().getData())))
                 .skip(offset)

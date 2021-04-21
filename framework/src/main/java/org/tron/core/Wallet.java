@@ -1011,6 +1011,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getCrossChain())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getMinAuctionVoteCount")
+            .setValue(dbManager.getDynamicPropertiesStore().getMinAuctionVoteCount())
+            .build());
+
     return builder.build();
   }
 
