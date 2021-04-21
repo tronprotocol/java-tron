@@ -211,12 +211,6 @@ public class TransactionTrace {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
       }
-      for (DataWord address : transactionContext.getProgramResult().getDeleteVotes()) {
-        votesStore.delete(convertToTronAddress((address.getLast20Bytes())));
-      }
-      for (DataWord address : transactionContext.getProgramResult().getDeleteDelegation()) {
-        deleteDelegationByAddress(convertToTronAddress((address.getLast20Bytes())));
-      }
     }
   }
 
