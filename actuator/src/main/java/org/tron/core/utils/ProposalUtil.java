@@ -456,7 +456,7 @@ public class ProposalUtil {
         }
         // check end_time value is a Timestamp and make sure the timestamp is greater than now()
         Long endTime = AuctionConfigParser.getAuctionEndTime(value);
-        if (endTime < System.currentTimeMillis()) {
+        if (endTime * 1000 < System.currentTimeMillis()) {
           throw new ContractValidateException(
               "Bad AUCTION_CONFIG parameter value, value must greater than current timestamp.");
         }
@@ -467,7 +467,7 @@ public class ProposalUtil {
         break;
       }
       case MIN_AUCTION_VOTE_COUNT: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_5_0)) {
           throw new ContractValidateException("Bad chain parameter id [MIN_AUCTION_VOTE_COUNT]");
         }
         if (!dynamicPropertiesStore.allowCrossChain()) {
