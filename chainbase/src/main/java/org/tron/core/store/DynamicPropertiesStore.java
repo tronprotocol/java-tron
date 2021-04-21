@@ -2262,7 +2262,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public List<Long> listAuctionConfigs() {
     String startStr = "AUCTION_CONFIG_";
     return  Streams.stream(iterator())
-            .filter(entry -> startStr.startsWith(Objects.requireNonNull(ByteArray.toStr(entry.getKey()))))
+            .filter(entry -> Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith(startStr))
             .map(entry -> entry.getValue().getData())
             .map(entry -> ByteArray.toLong(entry))
             .collect(Collectors.toList());
