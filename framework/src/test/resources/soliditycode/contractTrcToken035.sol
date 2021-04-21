@@ -1,6 +1,7 @@
 
 
  contract token{
+     constructor() public payable {}
 
      // 2. 异常测试
      // 1）revert, 金额回退
