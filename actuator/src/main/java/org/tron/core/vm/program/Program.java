@@ -532,11 +532,6 @@ public class Program {
       }
     } else {
       createAccountIfNotExist(getContractState(), obtainer);
-      AccountCapsule accountCapsule = getContractState().getAccount(obtainer);
-      if (getContractState().getDynamicPropertiesStore().supportAllowNewResourceModel()
-          && accountCapsule.oldTronPowerIsNotInitialized()) {
-        accountCapsule.initializeOldTronPower();
-      }
       try {
         MUtil.transfer(getContractState(), owner, obtainer, balance);
         if (VMConfig.allowTvmTransferTrc10()) {
@@ -557,7 +552,6 @@ public class Program {
       } else {
         transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
       }
-      getResult().addDeleteDelegation(this.getContractAddress());
     }
     getResult().addDeleteAccount(this.getContractAddress());
   }
@@ -1721,8 +1715,7 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] target = TransactionTrace.convertToTronAddress(targetAddress.getLast20Bytes());
     int resourceCode = resourceType.intValue();
-    // when targetAddress is all-zero or owner, lookup freeze expire time for owner
-    if (targetAddress.isZero() || FastByteComparisons.isEqual(owner, target)) {
+    if (FastByteComparisons.isEqual(owner, target)) {
       AccountCapsule ownerCapsule = getContractState().getAccount(owner);
       if (resourceCode == 0) { //  for bandwidth
         if (ownerCapsule.getFrozenCount() != 0

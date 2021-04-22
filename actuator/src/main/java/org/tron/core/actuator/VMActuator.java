@@ -212,8 +212,6 @@ public class VMActuator implements Actuator2 {
           result.getLogInfoList().clear();
           result.resetFutureRefund();
           result.rejectInternalTransactions();
-          result.getDeleteVotes().clear();
-          result.getDeleteDelegation().clear();
 
           if (result.getException() != null) {
             if (!(result.getException() instanceof TransferException)) {
