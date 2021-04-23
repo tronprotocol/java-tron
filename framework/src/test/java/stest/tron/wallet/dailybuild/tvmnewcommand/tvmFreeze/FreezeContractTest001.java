@@ -436,7 +436,7 @@ public class FreezeContractTest001 {
       dependsOnMethods = "FreezeContractTest002")
   public void getZeroExpireTimeTest() {
     String ExpireTimeMethedStr = "getExpireTime(address,uint256)";
-    String ExpireTimeArgsStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"" + ",1";
+    String ExpireTimeArgsStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"" + ",0";
     TransactionExtention extention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,ExpireTimeMethedStr,ExpireTimeArgsStr,
             false,0,maxFeeLimit,"#",0, testAddress001,testKey001,blockingStubFull);
@@ -444,13 +444,32 @@ public class FreezeContractTest001 {
     logger.info("ExpireTime1: " + ExpireTime1);
     Assert.assertEquals(0,ExpireTime1.longValue());
 
-    ExpireTimeArgsStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"" + ",0";
+    ExpireTimeArgsStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"" + ",1";
     extention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,ExpireTimeMethedStr,ExpireTimeArgsStr,
             false,0,maxFeeLimit,"#",0, testAddress001,testKey001,blockingStubFull);
     Long ExpireTime2 = ByteArray.toLong(extention.getConstantResult(0).toByteArray());
-    logger.info("ExpireTime1: " + ExpireTime1);
-    Assert.assertEquals(0,ExpireTime1.longValue());
+    logger.info("ExpireTime2: " + ExpireTime2);
+    Assert.assertEquals(0,ExpireTime2.longValue());
+
+    // freeze(address payable receiver, uint amount, uint res)
+    String methedStr = "freeze(address,uint256,uint256)";
+    String argsStr = "\"" + "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb" + "\"," + freezeCount + "," + "1";
+    String txid = PublicMethed.triggerContract(contractAddress,methedStr,argsStr,
+        false,0,maxFeeLimit,testAddress001,testKey001,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    TransactionInfo info = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get();
+    Assert.assertEquals(code.SUCESS,info.getResult());
+    Assert.assertEquals(contractResult.SUCCESS,info.getReceipt().getResult());
+
+    extention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,ExpireTimeMethedStr,ExpireTimeArgsStr,
+            false,0,maxFeeLimit,"#",0, testAddress001,testKey001,blockingStubFull);
+    Long ExpireTime = ByteArray.toLong(extention.getConstantResult(0).toByteArray());
+    logger.info("ExpireTime: " + ExpireTime);
+    Assert.assertEquals((ExpireTime + 3) * 1000, info.getBlockTimeStamp());
+
 
   }
 
