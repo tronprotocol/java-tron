@@ -48,6 +48,11 @@ public class FreezeContractTest001 {
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] testAddress002 = ecKey2.getAddress();
   String testKey002 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] testAddress003 = ecKey3.getAddress();
+  String testKey003 = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
   private long freezeEnergyUseage;
   private byte[] create2Address;
   private final long freezeCount = 1000_123456L;
@@ -59,6 +64,8 @@ public class FreezeContractTest001 {
     Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     PublicMethed.printAddress(testKey001);
     PublicMethed.printAddress(testKey002);
+
+    PublicMethed.printAddress(testFoundationKey);
   }
 
   /**
@@ -73,6 +80,8 @@ public class FreezeContractTest001 {
     Assert.assertTrue(PublicMethed.sendcoin(testAddress001,2000_000000L,
         testFoundationAddress,testFoundationKey,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(testAddress002,10_000000L,
+        testFoundationAddress,testFoundationKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(testAddress003,12000_000000L,
         testFoundationAddress,testFoundationKey,blockingStubFull));
 
     String filePath = "src/test/resources/soliditycode/freezeContract001.sol";
@@ -89,7 +98,7 @@ public class FreezeContractTest001 {
   }
 
 
-  @Test(enabled = true, description = "contract freeze to account")
+  @Test(description = "contract freeze to account")
   void FreezeContractTest001() {
 
     AccountResourceMessage account002_before = PublicMethed
@@ -123,7 +132,7 @@ public class FreezeContractTest001 {
 
   }
 
-  @Test(enabled = true, description = "contract freeze to self")
+  @Test(description = "contract freeze to self")
   void FreezeContractTest002() {
     AccountResourceMessage contractResource_before = PublicMethed
         .getAccountResource(contractAddress,blockingStubFull);
@@ -151,7 +160,7 @@ public class FreezeContractTest001 {
 
   }
 
-  @Test(enabled = true, description = "contract freeze to other contract")
+  @Test(description = "contract freeze to other contract")
   void FreezeContractTest003() {
     String filePath = "src/test/resources/soliditycode/freezeContract001.sol";
     String contractName = "TestFreeze";
@@ -192,7 +201,7 @@ public class FreezeContractTest001 {
 
   }
 
-  @Test(enabled = true,description = "contract freeze to unactive account",
+  @Test(description = "contract freeze to unactive account",
       dependsOnMethods = "FreezeContractTest001")
   void FreezeContractTest004() {
 
@@ -237,7 +246,7 @@ public class FreezeContractTest001 {
 
   }
 
-  @Test(enabled = true, description = "contract freeze to pre create2 address, and UnFreeze",
+  @Test(description = "contract freeze to pre create2 address, and UnFreeze",
       dependsOnMethods = "FreezeContractTest001")
   void FreezeContractTest005() {
     String create2ArgsStr = "1";
@@ -313,7 +322,7 @@ public class FreezeContractTest001 {
 
   }
 
-  @Test(enabled = true, description = "Unfreeze when freeze to account",
+  @Test(description = "Unfreeze when freeze to account",
       dependsOnMethods = "FreezeContractTest001")
   void UnFreezeContractTest001() {
 
@@ -352,7 +361,7 @@ public class FreezeContractTest001 {
 
   }
 
-  @Test(enabled = true, description = "Unfreeze when freeze to contract self",
+  @Test(description = "Unfreeze when freeze to contract self",
       dependsOnMethods = "FreezeContractTest002")
   void UnFreezeContractTest002() {
 
@@ -387,7 +396,7 @@ public class FreezeContractTest001 {
 
   }
 
-  @Test(enabled = true, description = "energy caulate after transaction end")
+  @Test(description = "energy caulate after transaction end")
   public void freezeEnergyCaulate() {
 
     String methedStr = "freeze(address,uint256,uint256)";
@@ -421,6 +430,58 @@ public class FreezeContractTest001 {
     Assert.assertEquals(0, info.getReceipt().getEnergyFee());
     Assert.assertEquals(0, testAccount001.getEnergyLimit());
     Assert.assertTrue(testAccount001.getEnergyUsed() > 0);
+  }
+
+  @Test(description = "get Zero Address ExpirTime,used to be that freeze to contract self",
+      dependsOnMethods = "FreezeContractTest002")
+  public void getZeroExpireTimeTest() {
+    String ExpireTimeMethedStr = "getExpireTime(address,uint256)";
+    String ExpireTimeArgsStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"" + ",1";
+    TransactionExtention extention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,ExpireTimeMethedStr,ExpireTimeArgsStr,
+            false,0,maxFeeLimit,"#",0, testAddress001,testKey001,blockingStubFull);
+    Long ExpireTime1 = ByteArray.toLong(extention.getConstantResult(0).toByteArray());
+    logger.info("ExpireTime1: " + ExpireTime1);
+    Assert.assertEquals(0,ExpireTime1.longValue());
+
+    ExpireTimeArgsStr = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"" + ",0";
+    extention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,ExpireTimeMethedStr,ExpireTimeArgsStr,
+            false,0,maxFeeLimit,"#",0, testAddress001,testKey001,blockingStubFull);
+    Long ExpireTime2 = ByteArray.toLong(extention.getConstantResult(0).toByteArray());
+    logger.info("ExpireTime1: " + ExpireTime1);
+    Assert.assertEquals(0,ExpireTime1.longValue());
+
+  }
+
+  @Test(description = "freeze in constructor")
+  public void FreezeContractTest006() {
+
+    AccountResourceMessage account003_before = PublicMethed
+        .getAccountResource(testAddress003,blockingStubFull);
+
+    String filePath = "src/test/resources/soliditycode/freezeContract001.sol";
+    String contractName = "D";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    long callValue = 10000_000000L;
+    byte[] contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, callValue,
+            100, null, testKey003,
+            testAddress003, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    AccountResourceMessage account003_after = PublicMethed
+        .getAccountResource(testAddress003,blockingStubFull);
+    Account contractAccount_after = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+
+    logger.info("account002_before.getEnergyLimit : " + account003_before.getEnergyLimit());
+    logger.info("account002_after.getEnergyLimit : " + account003_after.getEnergyLimit());
+    Assert.assertTrue(account003_before.getEnergyLimit() < account003_after.getEnergyLimit());
+    Assert.assertEquals(callValue,
+        contractAccount_after.getAccountResource().getDelegatedFrozenBalanceForEnergy());
+    Assert.assertEquals(0, contractAccount_after.getBalance());
   }
 
 }
