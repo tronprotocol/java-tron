@@ -413,7 +413,8 @@ public class ChainBaseManager {
       if (roundInfo == null || roundInfo.getRound() <= 0) {
         continue;
       }
-      if (getCrossRevokingStore().getParaChainList(roundInfo.getRound()).contains(chainId.toString())) {
+      if (getCrossRevokingStore().getParaChainList(roundInfo.getRound())
+              .contains(ByteArray.toHexString(chainId.toByteArray()))) {
         result = true;
         break;
       }

@@ -170,7 +170,8 @@ public class MaintenanceManager {
     long minAuctionVoteCount = dynamicPropertiesStore.getMinAuctionVoteCount();
     auctionRoundList.forEach(value -> {
       CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
-      if (roundInfo != null && roundInfo.getRound() > 0 && roundInfo.getEndTime() < currentBlockHeaderTimestamp) {
+      if (roundInfo != null && roundInfo.getRound() > 0
+              && (roundInfo.getEndTime() * 1000) < currentBlockHeaderTimestamp) {
         CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
         if (currentBlockHeaderTimestamp < (roundInfo.getEndTime() + roundInfo.getDuration() * 86400) * 1000) {
           if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
