@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
 @Component
@@ -39,8 +40,9 @@ public class GetCrossChainVoteDetailListServlet extends RateLimiterServlet {
       boolean visible = params.isVisible();
       GrpcAPI.CrossChainVotePaginated.Builder build = GrpcAPI.CrossChainVotePaginated.newBuilder();
       JsonFormat.merge(input, build, visible);
+      String chainId = ByteArray.toStr(build.getChainId().toByteArray());
       GrpcAPI.CrossChainVoteDetailList reply = wallet.getCrossChainVoteDetailList(
-              build.getOffset(), build.getLimit(), build.getChainId().toString(),build.getRound());
+              build.getOffset(), build.getLimit(), chainId,build.getRound());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {

@@ -284,4 +284,6 @@ public class Constant {
   public static final String NODE_CROSS_CHAIN_CONNECT = "node.crossChain.ip";
   public static final String NODE_CROSS_CHAIN_PORT = "node.crossChain.port";
   public static final String NODE_CROSS_CHAIN_SHOULD_REGISTER = "node.crossChain.shouldRegister";
+  public static final String CROSS_CHAIN_WHITE_LIST_REFRESH = "crossChain.refresh";
+  public static final String CROSS_CHAIN_WHITE_LIST = "crossChain.whiteList";
 }

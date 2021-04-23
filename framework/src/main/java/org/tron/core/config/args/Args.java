@@ -3,12 +3,15 @@ package org.tron.core.config.args;
 import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.CROSS_CHAIN_WHITE_LIST;
+import static org.tron.core.Constant.CROSS_CHAIN_WHITE_LIST_REFRESH;
 import static org.tron.core.Constant.NODE_CROSS_CHAIN_CONNECT;
 import static org.tron.core.Constant.NODE_CROSS_CHAIN_PORT;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
+import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -67,6 +70,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
+import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 @Slf4j(topic = "app")
 @NoArgsConstructor
@@ -192,6 +196,8 @@ public class Args extends CommonParameter {
     PARAMETER.crossChainConnect = Collections.emptyList();
     PARAMETER.crossChain = 0;
     PARAMETER.shouldRegister = true;
+    PARAMETER.crossChainWhiteListRefresh = false;
+    PARAMETER.crossChainWhiteList = Collections.emptyList();
   }
 
   /**
@@ -762,6 +768,11 @@ public class Args extends CommonParameter {
     PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
         .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
 
+
+    PARAMETER.crossChainWhiteListRefresh = config.hasPath(Constant.CROSS_CHAIN_WHITE_LIST_REFRESH)
+            && config.getBoolean(CROSS_CHAIN_WHITE_LIST_REFRESH);
+    PARAMETER.crossChainWhiteList = getCrossChainWhiteList(config);
+
     logConfig();
   }
 
@@ -1153,6 +1164,35 @@ public class Args extends CommonParameter {
         logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
       }
     }
+  }
+
+  private static List<CrossChainInfo> getCrossChainWhiteList(Config config) {
+    if (config.hasPath(Constant.CROSS_CHAIN_WHITE_LIST)) {
+      return config.getObjectList(Constant.CROSS_CHAIN_WHITE_LIST).stream()
+              .map(Args::createCrossChainInfo)
+              .collect(Collectors.toCollection(ArrayList::new));
+    } else {
+      return new ArrayList<>();
+    }
+  }
+
+  private static CrossChainInfo createCrossChainInfo(final ConfigObject configObject) {
+    final CrossChainInfo.Builder crossChainInfo = CrossChainInfo.newBuilder();
+    crossChainInfo.setOwnerAddress(
+            ByteString.copyFrom(configObject.get("ownerAddress").unwrapped().toString().getBytes()));
+    crossChainInfo.setProxyAddress(
+            ByteString.copyFrom(configObject.get("proxyAddress").unwrapped().toString().getBytes()));
+    crossChainInfo.setChainId(
+            ByteString.copyFrom(configObject.get("chainId").unwrapped().toString().getBytes()));
+    crossChainInfo.setSrList(
+            ByteString.copyFrom(configObject.get("srList").unwrapped().toString().getBytes()));
+    crossChainInfo.setBeginSyncHeight(configObject.toConfig().getLong("beginSyncHeight"));
+    crossChainInfo.setMaintenanceTimeInterval(
+            configObject.toConfig().getLong("maintenanceTimeInterval"));
+    crossChainInfo.setParentBlockHash(
+            ByteString.copyFrom(configObject.get("parentBlockHash").unwrapped().toString().getBytes()));
+    crossChainInfo.setBlockTime(configObject.toConfig().getLong("blockTime"));
+    return crossChainInfo.build();
   }
 }
 

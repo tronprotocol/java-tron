@@ -17,6 +17,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
+import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 public class CommonParameter {
 
@@ -484,6 +485,14 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean shouldRegister;
+
+  @Getter
+  @Setter
+  public boolean crossChainWhiteListRefresh;
+
+  @Getter
+  @Setter
+  public List<CrossChainInfo> crossChainWhiteList;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
