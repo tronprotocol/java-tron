@@ -644,10 +644,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) ? config
             .getInt(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) : 0;
 
-    PARAMETER.allowReceiptsMerkleRoot =
-            config.hasPath(Constant.COMMITTEE_ALLOW_RECEIPTS_MERKLE_ROOT) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_RECEIPTS_MERKLE_ROOT) : 0;
-
     PARAMETER.allowTvmIstanbul =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) : 0;
