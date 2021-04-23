@@ -224,30 +224,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
-  public Sha256Hash calcReceiptsRoot() {
-    List<Transaction> transactionsList = this.block.getTransactionsList();
-
-    if (CollectionUtils.isEmpty(transactionsList)) {
-      return Sha256Hash.ZERO_HASH;
-    }
-
-    ArrayList<Sha256Hash> ids = transactionsList.stream()
-            .map(TransactionCapsule::new)
-            .map(TransactionCapsule::getReceiptsMerkleHash)
-            .collect(Collectors.toCollection(ArrayList::new));
-
-    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
-  }
-
-  public void setReceiptsRoot() {
-    BlockHeader.raw blockHeaderRaw =
-            this.block.getBlockHeader().getRawData().toBuilder()
-                    .setReceiptsRoot(calcReceiptsRoot().getByteString()).build();
-
-    this.block = this.block.toBuilder().setBlockHeader(
-            this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
-  }
-
   public void setAccountStateRoot(byte[] root) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder()
@@ -269,11 +245,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public Sha256Hash getMerkleRoot() {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
-  }
-  public Sha256Hash getReceiptsRoot() {
-    if (this.block.getBlockHeader().getRawData().getReceiptsRoot().isEmpty())
-      return Sha256Hash.ZERO_HASH;
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getReceiptsRoot());
   }
 
   public Sha256Hash getAccountRoot() {
@@ -338,7 +309,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     toStringBuff.append("account root=").append(getAccountRoot()).append("\n");
     if (!getTransactions().isEmpty()) {
       toStringBuff.append("merkle root=").append(getMerkleRoot()).append("\n");
-      toStringBuff.append("receipt root=").append(getReceiptsRoot()).append("\n");
       toStringBuff.append("txs size=").append(getTransactions().size()).append("\n");
     } else {
       toStringBuff.append("txs are empty\n");
