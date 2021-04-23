@@ -23,6 +23,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
@@ -45,6 +47,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   private Account account;
 
+  @Getter
+  @Setter
   private Boolean isAssetImport = false;
 
   /**
@@ -451,7 +455,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void clearAsset() {
+    AssetUtil.clearAccountAssetMap(account);
+    this.account = this.account.toBuilder()
+            .clearAsset()
+            .build();
+  }
+
   public void clearAssetV2() {
+    AssetUtil.clearAccountAssetMapV2(account);
     this.account = this.account.toBuilder()
         .clearAssetV2()
         .build();
@@ -1131,10 +1143,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
-  private void importAsset() {
+  public void importAsset() {
     if (!this.isAssetImport) {
-      this.account = AssetUtil.importAsset(account);
-      this.isAssetImport = true;
+      Account account = AssetUtil.importAsset(this.account);
+      if (null != account) {
+        this.isAssetImport = true;
+        this.account = account;
+      }
     }
   }
 

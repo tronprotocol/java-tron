@@ -92,12 +92,13 @@ public class BandwidthProcessor extends ResourceProcessor {
       logger.debug("trxId {}, bandwidth cost: {}", trx.getTransactionId(), bytesSize);
       trace.setNetBill(bytesSize, 0);
       byte[] address = TransactionCapsule.getOwner(contract);
+      //owner 账号
       AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
       if (accountCapsule == null) {
         throw new ContractValidateException("account does not exist");
       }
       long now = chainBaseManager.getHeadSlot();
-
+      //to 账号
       if (contractCreateNewAccount(contract)) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;

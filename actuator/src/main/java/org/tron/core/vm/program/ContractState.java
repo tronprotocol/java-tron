@@ -398,4 +398,8 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getTotalEnergyWeight();
   }
 
+  @Override
+  public AccountCapsule getAccountByStore(byte[] address) {
+    return repository.getAccountByStore(address);
+  }
 }

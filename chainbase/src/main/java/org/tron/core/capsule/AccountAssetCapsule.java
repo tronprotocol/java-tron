@@ -3,6 +3,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountAsset;
 import org.tron.protos.Protocol.AccountAsset.Frozen;
 
@@ -23,6 +24,12 @@ public class AccountAssetCapsule implements ProtoCapsule<AccountAsset> {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
+  }
+
+  public AccountAssetCapsule(ByteString address) {
+    this.accountAsset = AccountAsset.newBuilder()
+            .setAddress(address)
+            .build();
   }
 
   public AccountAssetCapsule(AccountAsset accountAsset) {

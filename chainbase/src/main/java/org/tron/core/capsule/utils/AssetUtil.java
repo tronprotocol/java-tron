@@ -1,10 +1,12 @@
 package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.store.AccountAssetStore;
-import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.AccountAsset;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,11 +17,11 @@ public class AssetUtil {
 
   private static AccountAssetStore accountAssetStore;
 
-  public static Protocol.AccountAsset getAsset(Protocol.Account account) {
+  public static AccountAsset getAsset(Account account) {
     if (!hasAsset(account)) {
       return null;
     }
-    return Protocol.AccountAsset.newBuilder()
+    return AccountAsset.newBuilder()
             .setAddress(account.getAddress())
             .setAssetIssuedID(account.getAssetIssuedID())
             .setAssetIssuedName(account.getAssetIssuedName())
@@ -34,10 +36,10 @@ public class AssetUtil {
             .build();
   }
 
-  private static List<Protocol.AccountAsset.Frozen> getFrozen(List<Protocol.Account.Frozen> frozenSupplyList) {
+  private static List<AccountAsset.Frozen> getFrozen(List<Account.Frozen> frozenSupplyList) {
     return frozenSupplyList
             .stream()
-            .map(frozen -> Protocol.AccountAsset.Frozen.newBuilder()
+            .map(frozen -> AccountAsset.Frozen.newBuilder()
                     .setExpireTime(frozen.getExpireTime())
                     .setFrozenBalance(frozen.getFrozenBalance())
                     .build())
@@ -45,13 +47,13 @@ public class AssetUtil {
   }
 
 
-  public static Protocol.Account importAsset(Protocol.Account account) {
+  public static Account importAsset(Account account) {
     if (AssetUtil.hasAsset(account)) {
-      return account;
+      return null;
     }
     AccountAssetCapsule accountAssetCapsule = accountAssetStore.get(account.getAddress().toByteArray());
     if (accountAssetCapsule == null) {
-      return account;
+      return null;
     }
 
     return account.toBuilder()
@@ -68,18 +70,18 @@ public class AssetUtil {
             .build();
   }
 
-  private static List<Protocol.Account.Frozen> getAccountFrozenSupplyList(List<Protocol.AccountAsset.Frozen> frozenSupplyList) {
+  private static List<Account.Frozen> getAccountFrozenSupplyList(List<AccountAsset.Frozen> frozenSupplyList) {
     return Optional.ofNullable(frozenSupplyList)
             .orElseGet(ArrayList::new)
             .stream()
-            .map(frozen -> Protocol.Account.Frozen.newBuilder()
+            .map(frozen -> Account.Frozen.newBuilder()
                     .setExpireTime(frozen.getExpireTime())
                     .setFrozenBalance(frozen.getFrozenBalance())
                     .build())
             .collect(Collectors.toList());
   }
 
-  public static Protocol.Account clearAccountAsset(Protocol.Account account) {
+  public static Account clearAsset(Account account) {
     return account.toBuilder()
             .clearAssetIssuedID()
             .clearAssetIssuedName()
@@ -93,8 +95,7 @@ public class AssetUtil {
             .build();
   }
 
-
-  public static boolean hasAsset(Protocol.Account account) {
+  public static boolean hasAsset(Account account) {
     if (MapUtils.isNotEmpty(account.getAssetMap()) ||
             MapUtils.isNotEmpty(account.getAssetV2Map())) {
       return true;
@@ -117,6 +118,12 @@ public class AssetUtil {
     if (MapUtils.isNotEmpty(account.getFreeAssetNetUsageV2Map())) {
       return true;
     }
+    List<Account.Frozen> frozenSupplyList =
+            account.getFrozenSupplyList();
+    if (CollectionUtils.isNotEmpty(frozenSupplyList)
+            && frozenSupplyList.size() > 0) {
+      return true;
+    }
     return false;
   }
 
@@ -125,4 +132,26 @@ public class AssetUtil {
     AssetUtil.accountAssetStore = accountAssetStore;
   }
 
+
+  public static void clearAccountAssetMap(Account account) {
+    byte[] address = account.getAddress().toByteArray();
+    AccountAssetCapsule accountAssetCapsule = accountAssetStore.get(address);
+    if (null != accountAssetCapsule) {
+      AccountAsset accountAsset = accountAssetCapsule.getInstance();
+      AccountAsset build = accountAsset.toBuilder().clearAsset().build();
+      accountAssetCapsule.setInstance(build);
+      accountAssetStore.put(address, accountAssetCapsule);
+    }
+  }
+
+  public static void clearAccountAssetMapV2(Account account) {
+    byte[] address = account.getAddress().toByteArray();
+    AccountAssetCapsule accountAssetCapsule = accountAssetStore.get(address);
+    if (null != accountAssetCapsule) {
+      AccountAsset accountAsset = accountAssetCapsule.getInstance();
+      AccountAsset build = accountAsset.toBuilder().clearAssetV2().build();
+      accountAssetCapsule.setInstance(build);
+      accountAssetStore.put(address, accountAssetCapsule);
+    }
+  }
 }

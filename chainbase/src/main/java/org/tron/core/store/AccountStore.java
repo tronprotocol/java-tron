@@ -90,7 +90,8 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     if (null != accountAsset) {
       accountAssetStore.put(key, new AccountAssetCapsule(
               accountAsset));
-       account = AssetUtil.clearAccountAsset(account);
+       account = AssetUtil.clearAsset(account);
+       item.setIsAssetImport(false);
        item.setInstance(account);
     }
 
