@@ -142,5 +142,4 @@ public interface Repository {
 
   long getTotalEnergyWeight();
 
-  AccountCapsule getAccountByStore(byte[] address);
 }

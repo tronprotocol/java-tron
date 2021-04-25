@@ -946,7 +946,4 @@ public class RepositoryImpl implements Repository {
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
 
-  public AccountCapsule getAccountByStore(byte[] address) {
-    return accountStore.get(address);
-  }
 }
