@@ -24,6 +24,7 @@ public class MUtil {
 
   public static void transferAllToken(Repository deposit, byte[] fromAddress, byte[] toAddress) {
     AccountCapsule fromAccountCap = deposit.getAccount(fromAddress);
+    fromAccountCap.importAsset();
     Protocol.Account.Builder fromBuilder = fromAccountCap.getInstance().toBuilder();
     AccountCapsule toAccountCap = deposit.getAccount(toAddress);
     toAccountCap.importAsset();
@@ -32,6 +33,10 @@ public class MUtil {
       toBuilder.putAssetV2(tokenId, toBuilder.getAssetV2Map().getOrDefault(tokenId, 0L) + amount);
       fromBuilder.putAssetV2(tokenId, 0L);
     });
+
+    fromAccountCap.setInstance(fromBuilder.build());
+    toAccountCap.setInstance(toBuilder.build());
+
     deposit.putAccountValue(fromAddress, new AccountCapsule(fromBuilder.build()));
     deposit.putAccountValue(toAddress, new AccountCapsule(toBuilder.build()));
   }
