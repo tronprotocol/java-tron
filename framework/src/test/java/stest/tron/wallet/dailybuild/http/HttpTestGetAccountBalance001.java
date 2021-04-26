@@ -193,7 +193,7 @@ public class HttpTestGetAccountBalance001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get receipt root by http")
+  @Test(enabled = false, description = "Get receipt root by http")
   public void test04GetReceiptRootByHttp() {
     response = HttpMethed.getBlockByNum(httpnode,sendcoinBlockNumber);
     responseContent = HttpMethed.parseResponseContent(response);

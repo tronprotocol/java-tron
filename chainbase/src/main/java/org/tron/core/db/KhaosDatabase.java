@@ -31,84 +31,6 @@ import org.tron.core.exception.UnLinkedBlockException;
 @Slf4j(topic = "DB")
 public class KhaosDatabase extends TronDatabase {
 
-  public static class Log {
-    Object blk_begin;
-    Object blk_prev;
-    Object head_begin;
-    Object head_prev;
-    Object mini_store_begin;
-    Object mini_store_prev;
-    Object maxCapcity_begin;
-    Object maxCapcity_prev;
-    Object numKblkMap_begin;
-    Object numKblkMap_prev;
-    Object hashKblkMap_begin;
-    Object hashKblkMap_prev;
-    Object head_num_begin;
-    Object head_num_prev;
-
-    public void setBlk_begin(Object blk_begin) {
-      this.blk_prev = this.blk_begin;
-      this.blk_begin = blk_begin;
-    }
-
-    public void setHead_begin(Object head_begin) {
-      this.head_prev = this.head_begin;
-      this.head_begin = head_begin;
-    }
-
-    public void setMini_store_begin(Object mini_store_begin) {
-      this.mini_store_prev = this.mini_store_begin;
-      this.mini_store_begin = mini_store_begin;
-    }
-
-    public void setMaxCapcity_begin(Object maxCapcity_begin) {
-      this.maxCapcity_prev = this.maxCapcity_begin;
-      this.maxCapcity_begin = maxCapcity_begin;
-    }
-
-    public void setNumKblkMap_begin(Object numKblkMap_begin) {
-      this.numKblkMap_prev = this.numKblkMap_begin;
-      this.numKblkMap_begin = numKblkMap_begin;
-    }
-
-    public void setHashKblkMap_begin(Object hashKblkMap_begin) {
-      this.hashKblkMap_prev = this.hashKblkMap_begin;
-      this.hashKblkMap_begin = hashKblkMap_begin;
-    }
-
-    public void setHead_num_begin(Object head_num_begin) {
-      this.head_num_prev = this.head_num_begin;
-      this.head_num_begin = head_num_begin;
-    }
-
-    public void print() {
-      logger.info("********************** " + this.toString());
-    }
-
-    @Override
-    public String toString() {
-      return "Log{" +
-          "blk_begin=" + blk_begin +
-          ", blk_prev=" + blk_prev +
-          ", head_begin=" + head_begin +
-          ", head_prev=" + head_prev +
-          ", mini_store_begin=" + mini_store_begin +
-          ", mini_store_prev=" + mini_store_prev +
-          ", maxCapcity_begin=" + maxCapcity_begin +
-          ", maxCapcity_prev=" + maxCapcity_prev +
-          ", numKblkMap_begin=" + numKblkMap_begin +
-          ", numKblkMap_prev=" + numKblkMap_prev +
-          ", hashKblkMap_begin=" + hashKblkMap_begin +
-          ", hashKblkMap_prev=" + hashKblkMap_prev +
-          ", head_num_begin=" + head_num_begin +
-          ", head_num_prev=" + head_num_prev +
-          '}';
-    }
-  }
-
-  public static Log log = new Log();
-
   private KhaosBlock head;
   @Getter
   private KhaosStore miniStore = new KhaosStore();
@@ -182,9 +104,6 @@ public class KhaosDatabase extends TronDatabase {
    */
   public BlockCapsule push(BlockCapsule blk)
       throws UnLinkedBlockException, BadNumberBlockException {
-    log.setBlk_begin(blk);
-    log.setHead_begin(blk);
-    log.setMini_store_begin(miniStore);
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
@@ -195,7 +114,6 @@ public class KhaosDatabase extends TronDatabase {
         }
         block.setParent(kblock);
       } else {
-        log.print();
         miniUnlinkedStore.insert(block);
         logger.error("blk:{}, head:{}, miniStore:{}, miniUnlinkedStore:{}",
             blk,
