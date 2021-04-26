@@ -171,9 +171,9 @@ public class MaintenanceManager {
     auctionRoundList.forEach(value -> {
       CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
       if (roundInfo != null && roundInfo.getRound() > 0
-              && (roundInfo.getEndTime() * 1000) < currentBlockHeaderTimestamp) {
+              && (roundInfo.getEndTime() * 1000) <= currentBlockHeaderTimestamp) {
         CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
-        if (currentBlockHeaderTimestamp < (roundInfo.getEndTime() + roundInfo.getDuration() * 86400) * 1000) {
+        if (currentBlockHeaderTimestamp <= (roundInfo.getEndTime() + roundInfo.getDuration() * 86400) * 1000) {
           if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
             // set parachains
             List<Pair<String, Long>> eligibleChainLists =
