@@ -414,7 +414,7 @@ public class ChainBaseManager {
         continue;
       }
       List<String> paraList = getCrossRevokingStore().getParaChainList(roundInfo.getRound());
-      String chainIdStr = ByteArray.toStr(chainId.toByteArray());
+      String chainIdStr = ByteArray.toHexString(chainId.toByteArray());
       if (paraList.contains(chainIdStr)) {
         result = true;
         break;
