@@ -2194,8 +2194,8 @@ public class Manager {
             epoch = epoch - crossChainInfo.getMaintenanceTimeInterval();
             epoch = epoch < 0 ? 0 : epoch;
           }
-          Protocol.PBFTMessage.Raw pbftMsgRaw = Protocol.PBFTMessage.Raw.newBuilder().setData(crossChainInfo.getSrList())
-                  .setEpoch(epoch).build();
+          Protocol.PBFTMessage.Raw pbftMsgRaw = Protocol.PBFTMessage.Raw.newBuilder()
+                  .setData(crossChainInfo.getSrList()).setEpoch(epoch).build();
           Protocol.PBFTCommitResult.Builder builder = Protocol.PBFTCommitResult.newBuilder();
           builder.setData(pbftMsgRaw.toByteString());
           commonDataBase.saveSRL(chainId, epoch, builder.build());
