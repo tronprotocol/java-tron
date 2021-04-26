@@ -293,7 +293,6 @@ public class ProposalUtil {
 //      }
       case FORBID_TRANSFER_TO_CONTRACT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
-
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1) {
