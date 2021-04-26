@@ -456,26 +456,28 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void clearAsset() {
-    AssetUtil.clearAccountAssetMap(account);
+    importAsset();
     this.account = this.account.toBuilder()
             .clearAsset()
             .build();
   }
 
   public void clearAssetV2() {
-    AssetUtil.clearAccountAssetMapV2(account);
+    importAsset();
     this.account = this.account.toBuilder()
         .clearAssetV2()
         .build();
   }
 
   public void clearLatestAssetOperationTimeV2() {
+    importAsset();
     this.account = this.account.toBuilder()
         .clearLatestAssetOperationTimeV2()
         .build();
   }
 
   public void clearFreeAssetNetUsageV2() {
+    importAsset();
     this.account = this.account.toBuilder()
         .clearFreeAssetNetUsageV2()
         .build();

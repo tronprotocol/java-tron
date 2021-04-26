@@ -143,25 +143,4 @@ public class AssetUtil {
     return dynamicPropertiesStore.supportAllowAccountAssetOptimization();
   }
 
-  public static void clearAccountAssetMap(Account account) {
-    byte[] address = account.getAddress().toByteArray();
-    AccountAssetCapsule accountAssetCapsule = accountAssetStore.get(address);
-    if (null != accountAssetCapsule) {
-      AccountAsset accountAsset = accountAssetCapsule.getInstance();
-      AccountAsset build = accountAsset.toBuilder().clearAsset().build();
-      accountAssetCapsule.setInstance(build);
-      accountAssetStore.put(address, accountAssetCapsule);
-    }
-  }
-
-  public static void clearAccountAssetMapV2(Account account) {
-    byte[] address = account.getAddress().toByteArray();
-    AccountAssetCapsule accountAssetCapsule = accountAssetStore.get(address);
-    if (null != accountAssetCapsule) {
-      AccountAsset accountAsset = accountAssetCapsule.getInstance();
-      AccountAsset build = accountAsset.toBuilder().clearAssetV2().build();
-      accountAssetCapsule.setInstance(build);
-      accountAssetStore.put(address, accountAssetCapsule);
-    }
-  }
 }
