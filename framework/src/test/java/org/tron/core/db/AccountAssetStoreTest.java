@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -14,7 +15,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.AccountAssetStore;
 
-import java.io.File;
 
 public class AccountAssetStoreTest {
 
@@ -29,9 +29,9 @@ public class AccountAssetStoreTest {
   static {
     Args.setParam(
             new String[]{
-                    "--output-directory", dbPath,
-                    "--storage-db-directory", dbDirectory,
-                    "--storage-index-directory", indexDirectory
+                  "--output-directory", dbPath,
+                  "--storage-db-directory", dbDirectory,
+                  "--storage-index-directory", indexDirectory
             },
             Constant.TEST_CONF
     );

@@ -455,13 +455,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public void clearAsset() {
-    importAsset();
-    this.account = this.account.toBuilder()
-            .clearAsset()
-            .build();
-  }
-
   public void clearAssetV2() {
     importAsset();
     this.account = this.account.toBuilder()

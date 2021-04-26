@@ -500,7 +500,8 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseOwnerNoAssetTest() {
     createAssertBeforSameTokenNameActive();
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-    owner.clearAsset();
+    owner.importAsset();
+    owner.setInstance(owner.getInstance().toBuilder().clearAsset().build());
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
     TransferAssetActuator actuator = new TransferAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
