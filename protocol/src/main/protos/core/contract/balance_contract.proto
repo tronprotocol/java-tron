@@ -112,7 +112,7 @@ message CrossChainInfo {
   bytes owner_address = 1;
   bytes proxy_address = 2;
   bytes chain_id = 3;
-  bytes sr_list = 4;
+  repeated bytes sr_list = 4;
   int64 begin_sync_height = 5;
   int64 maintenance_time_interval = 6;
   bytes parent_block_hash = 7;

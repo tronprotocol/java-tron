@@ -33,6 +33,7 @@ import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.PBFTCommitResult;
 import org.tron.protos.Protocol.PBFTMessage;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
@@ -217,7 +218,9 @@ public class MaintenanceManager {
           epoch = epoch - crossChainInfo.getMaintenanceTimeInterval();
           epoch = epoch < 0 ? 0 : epoch;
         }
-        PBFTMessage.Raw pbftMsgRaw = Raw.newBuilder().setData(crossChainInfo.getSrList())
+        Protocol.SRL.Builder srlBuilder = Protocol.SRL.newBuilder();
+        srlBuilder.addAllSrAddress(crossChainInfo.getSrListList());
+        PBFTMessage.Raw pbftMsgRaw = Raw.newBuilder().setData(srlBuilder.build().toByteString())
             .setEpoch(epoch).build();
         PBFTCommitResult.Builder builder = PBFTCommitResult.newBuilder();
         builder.setData(pbftMsgRaw.toByteString());

@@ -70,6 +70,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 
 @Slf4j(topic = "app")
@@ -1184,8 +1185,11 @@ public class Args extends CommonParameter {
             configObject.get("proxyAddress").unwrapped().toString().getBytes()));
     crossChainInfo.setChainId(ByteString.copyFrom(
             configObject.get("chainId").unwrapped().toString().getBytes()));
-    crossChainInfo.setSrList(ByteString.copyFrom(
-            configObject.get("srList").unwrapped().toString().getBytes()));
+    List<String> srList = configObject.get("srList").atKey("srList").getStringList("srList");
+    int index = 0;
+    for (String sr : srList) {
+      crossChainInfo.addSrList(ByteString.copyFrom(sr.getBytes()));
+    }
     crossChainInfo.setBeginSyncHeight(configObject.toConfig().getLong("beginSyncHeight"));
     crossChainInfo.setMaintenanceTimeInterval(
             configObject.toConfig().getLong("maintenanceTimeInterval"));
