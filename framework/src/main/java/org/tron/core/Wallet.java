@@ -1013,6 +1013,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
+        .build());
+
     return builder.build();
   }
 
