@@ -41,7 +41,7 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     try {
       CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
-      String chainId = ByteArray.toStr(crossChainInfo.getChainId().toByteArray());
+      String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
       crossRevokingStore.putChainInfo(chainId, crossChainInfo.toByteArray());
@@ -81,7 +81,7 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
     byte[] proxyAddress = crossChainInfo.getProxyAddress().toByteArray();
 
-    byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(ByteArray.toStr(chainId));
+    byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(ByteArray.toHexString(chainId));
     BalanceContract.CrossChainInfo crossChainInfoOld = null;
 
     if (crossChainInfoBytes == null) {
@@ -119,7 +119,7 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     }
 
     HashSet<String> paraChainsHistory = (HashSet<String>) crossRevokingStore.getParaChainsHistory();
-    if (paraChainsHistory != null && paraChainsHistory.contains(ByteArray.toStr(chainId))
+    if (paraChainsHistory != null && paraChainsHistory.contains(ByteArray.toHexString(chainId))
             && !Arrays.equals(crossChainInfoOld.getProxyAddress().toByteArray(), proxyAddress)) {
       throw new ContractValidateException("elected parallel chains can no longer modify the proxy address!");
     }

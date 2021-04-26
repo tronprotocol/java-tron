@@ -38,7 +38,7 @@ public class VoteCrossChainActuator extends AbstractActuator {
       VoteCrossChainContract voteCrossContract = any.unpack(VoteCrossChainContract.class);
       AccountStore accountStore = chainBaseManager.getAccountStore();
       CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-      String chainId = ByteArray.toStr(voteCrossContract.getChainId().toByteArray());
+      String chainId = ByteArray.toHexString(voteCrossContract.getChainId().toByteArray());
       long amount = voteCrossContract.getAmount();
       byte[] address = voteCrossContract.getOwnerAddress().toByteArray();
       int round = voteCrossContract.getRound();
@@ -89,7 +89,7 @@ public class VoteCrossChainActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    String chainId = ByteArray.toStr(contract.getChainId().toByteArray());
+    String chainId = ByteArray.toHexString(contract.getChainId().toByteArray());
     long amount = contract.getAmount();
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     int round = contract.getRound();

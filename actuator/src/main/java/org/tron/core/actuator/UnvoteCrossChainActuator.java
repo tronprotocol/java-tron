@@ -39,7 +39,7 @@ public class UnvoteCrossChainActuator extends AbstractActuator {
       UnvoteCrossChainContract VoteCrossChainContract = any.unpack(UnvoteCrossChainContract.class);
       AccountStore accountStore = chainBaseManager.getAccountStore();
       CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-      String chainId = ByteArray.toStr(VoteCrossChainContract.getChainId().toByteArray());
+      String chainId = ByteArray.toHexString(VoteCrossChainContract.getChainId().toByteArray());
       byte[] address = VoteCrossChainContract.getOwnerAddress().toByteArray();
       int round = VoteCrossChainContract.getRound();
       byte[] crossVoteInfoBytes = crossRevokingStore.getChainVote(round, chainId, ByteArray.toHexString(address));
@@ -85,7 +85,7 @@ public class UnvoteCrossChainActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    String chainId = ByteArray.toStr(contract.getChainId().toByteArray());
+    String chainId = ByteArray.toHexString(contract.getChainId().toByteArray());
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");

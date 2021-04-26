@@ -40,9 +40,9 @@ public class GetCrossChainVoteDetailListServlet extends RateLimiterServlet {
       boolean visible = params.isVisible();
       GrpcAPI.CrossChainVotePaginated.Builder build = GrpcAPI.CrossChainVotePaginated.newBuilder();
       JsonFormat.merge(input, build, visible);
-      String chainId = ByteArray.toStr(build.getChainId().toByteArray());
+      String chainId = ByteArray.toHexString(build.getChainId().toByteArray());
       GrpcAPI.CrossChainVoteDetailList reply = wallet.getCrossChainVoteDetailList(
-              build.getOffset(), build.getLimit(), chainId,build.getRound());
+              build.getOffset(), build.getLimit(), chainId, build.getRound());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
