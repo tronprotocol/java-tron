@@ -486,8 +486,13 @@ public class ProposalUtil {
         }
         break;
       }
-
-
+      case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_REMOVE_BLACKHOLE] is only allowed to be 1 or 0");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -543,7 +548,8 @@ public class ProposalUtil {
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     ALLOW_RECEIPTS_MERKLE_ROOT(50),// 0,1
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
-    ALLOW_TVM_FREEZE(52); // 0, 1
+    ALLOW_TVM_FREEZE(52), // 0, 1
+    ALLOW_ACCOUNT_ASSET_OPTIMIZATION(53); // 0, 1
 
     private long code;
 

@@ -379,5 +379,6 @@ public class ChainBaseManager {
 
   public void init() {
     AssetUtil.setAccountAssetStore(accountAssetStore);
+    AssetUtil.setDynamicPropertiesStore(dynamicPropertiesStore);
   }
 }

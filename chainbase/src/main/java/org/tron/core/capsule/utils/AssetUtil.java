@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.store.AccountAssetStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.AccountAsset;
 
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 public class AssetUtil {
 
   private static AccountAssetStore accountAssetStore;
+
+  private static DynamicPropertiesStore dynamicPropertiesStore;
 
   public static AccountAsset getAsset(Account account) {
     if (!hasAsset(account)) {
@@ -132,6 +135,13 @@ public class AssetUtil {
     AssetUtil.accountAssetStore = accountAssetStore;
   }
 
+  public static void setDynamicPropertiesStore(DynamicPropertiesStore dynamicPropertiesStore) {
+    AssetUtil.dynamicPropertiesStore = dynamicPropertiesStore;
+  }
+
+  public static boolean isAllowAssetOptimization() {
+    return dynamicPropertiesStore.supportAllowAccountAssetOptimization();
+  }
 
   public static void clearAccountAssetMap(Account account) {
     byte[] address = account.getAddress().toByteArray();

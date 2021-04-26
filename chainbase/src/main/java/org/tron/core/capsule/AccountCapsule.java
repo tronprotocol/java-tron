@@ -1144,6 +1144,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void importAsset() {
+    if (!AssetUtil.isAllowAssetOptimization()) {
+      return;
+    }
     if (!this.isAssetImport) {
       Account account = AssetUtil.importAsset(this.account);
       if (null != account) {

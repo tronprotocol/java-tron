@@ -44,6 +44,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private AccountAssetStore accountAssetStore;
 
   @Autowired
+  private DynamicPropertiesStore dynamicPropertiesStore;
+
+  @Autowired
   private AccountStore(@Value("account") String dbName) {
     super(dbName);
   }
@@ -85,16 +88,17 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       }
     }
 
-    Account account = item.getInstance();
-    AccountAsset accountAsset = AssetUtil.getAsset(account);
-    if (null != accountAsset) {
-      accountAssetStore.put(key, new AccountAssetCapsule(
-              accountAsset));
-       account = AssetUtil.clearAsset(account);
-       item.setIsAssetImport(false);
-       item.setInstance(account);
+    if (dynamicPropertiesStore.supportAllowAccountAssetOptimization()) {
+      Account account = item.getInstance();
+      AccountAsset accountAsset = AssetUtil.getAsset(account);
+      if (null != accountAsset) {
+        accountAssetStore.put(key, new AccountAssetCapsule(
+                accountAsset));
+        account = AssetUtil.clearAsset(account);
+        item.setIsAssetImport(false);
+        item.setInstance(account);
+      }
     }
-
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
   }
