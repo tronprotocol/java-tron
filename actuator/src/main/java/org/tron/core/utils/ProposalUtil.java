@@ -487,6 +487,10 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
+        }
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
                   "This value[ALLOW_REMOVE_BLACKHOLE] is only allowed to be 1 or 0");
