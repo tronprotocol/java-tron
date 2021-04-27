@@ -199,27 +199,6 @@ public class MultiSign03 {
     Assert.assertEquals("contract validate error : permission's parent should be owner",
         response.getMessage().toStringUtf8());
 
-    // parent_id = 123
-    accountPermissionJson =
-        "{\"owner_permission\":{\"parent_id\":123,\"type\":0,"
-            + "\"permission_name\":\"\",\"threshold\":2,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
-            + "\",\"weight\":3}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\","
-            + "\"threshold\":1,"
-            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
-    Assert.assertFalse(response.getResult());
-    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : permission's parent should be owner",
-        response.getMessage().toStringUtf8());
-
     // parent_id = "abc"
     accountPermissionJson =
         "{\"owner_permission\":{\"parent_id\":\"abc\",\"type\":0,"

@@ -15,6 +15,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.WalletGrpc;
@@ -26,6 +27,7 @@ import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import stest.tron.wallet.common.client.Configuration;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
@@ -88,7 +90,7 @@ public class MultiSign37 {
 
 
   @Test(enabled = true, description =
-      "Sendcoin,use owner address sign,  not meet all requirements.Then use  "
+      "Sendcoin with permission id 0,use owner address sign, weight<threshold.Then use  "
           + " active address to sign, meet all requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_47() {
     ECKey ecKey = new ECKey(Utils.getRandom());
@@ -238,19 +240,16 @@ public class MultiSign37 {
     TransactionSignWeight transactionSignWeight = PublicMethedForMutiSign
         .getTransactionSignWeight(transaction1, blockingStubFull);
     logger.info("transactionSignWeight:" + transactionSignWeight);
-    Assert
-        .assertThat(transactionSignWeight.getResult().getCode().toString(),
+    Assert.assertThat(transactionSignWeight.getResult().getCode().toString(),
             containsString("NOT_ENOUGH_PERMISSION"));
     Transaction transaction2 = PublicMethedForMutiSign
         .addTransactionSignWithPermissionId(transaction1, sendAccountKey3, 2, blockingStubFull);
     TransactionSignWeight transactionSignWeight1 = PublicMethedForMutiSign
         .getTransactionSignWeight(transaction2, blockingStubFull);
     logger.info("transaction1:" + transactionSignWeight1);
-    Assert
-        .assertThat(transactionSignWeight1.getResult().getCode().toString(),
+    Assert.assertThat(transactionSignWeight1.getResult().getCode().toString(),
             containsString("PERMISSION_ERROR"));
-    Assert
-        .assertThat(transactionSignWeight1.getResult().getMessage(),
+    Assert.assertThat(transactionSignWeight1.getResult().getMessage(),
             containsString("Permission denied"));
     Return returnResult2 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction2, blockingStubFull);
@@ -259,16 +258,13 @@ public class MultiSign37 {
         .assertThat(returnResult2.getCode().toString(), containsString("SIGERROR"));
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
-    Assert
-        .assertThat(returnResult2.getMessage().toStringUtf8(),
-            containsString(
-                "Permission denied"));
+    Assert.assertThat(returnResult2.getMessage().toStringUtf8(),
+            containsString("Permission denied"));
     Assert.assertEquals(balance1, balance3);
   }
 
   @Test(enabled = true, description =
-      "Sendcoin,use owner address sign,  not meet all requirements.Then use  "
-          + " owner address to sign,  meet all requirements,broadcastTransaction.")
+      "Sendcoin,use two owner address sign,sum(weight)==threshold,broadcastTransaction.")
   public void testMultiUpdatepermissions_49() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();

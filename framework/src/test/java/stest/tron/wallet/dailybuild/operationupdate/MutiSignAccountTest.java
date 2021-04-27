@@ -34,7 +34,7 @@ public class MutiSignAccountTest {
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey001);
-  private final String operations = Configuration.getByPath("testng.conf")
+  private String operations = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.operations");
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
@@ -85,6 +85,7 @@ public class MutiSignAccountTest {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
+    //operations = "77ff1fc0037e0100000000000000000000000000000000000000000000000000";
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -168,21 +169,30 @@ public class MutiSignAccountTest {
     Assert.assertEquals(fee, energyFee + netFee + updateAccountPermissionFee);
 
     balanceBefore = balanceAfter;
-    byte[] accountName = "11z2122328".getBytes();
+    byte[] accountName = String.valueOf(System.currentTimeMillis()).getBytes();
     Assert.assertTrue(PublicMethedForMutiSign.createAccount1(
         ownerAddress, newAddress, ownerKey, blockingStubFull, 0, ownerKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(
         PublicMethedForMutiSign.setAccountId1(accountName,
             ownerAddress, ownerKey, 0, blockingStubFull, ownerKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
         newAddress, 100L, ownerAddress, 0, ownerKey, blockingStubFull, ownerKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
         ownerAddress, 1000000L, 0, 0, ownerKey, blockingStubFull, ownerKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergyWithPermissionId(
         ownerAddress, 1000000L, 0, 1, ownerKey, blockingStubFull, 0, ownerKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergyWithPermissionId(
+        ownerAddress, 1000000L, 0, 2, ownerKey, blockingStubFull, 0, ownerKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiverWithPermissionId(
         ownerAddress, 1000000L, 0, 0, ByteString.copyFrom(newAddress),
         ownerKey, blockingStubFull, 0, ownerKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalanceWithPermissionId(
         ownerAddress, ownerKey, 0, null, 0, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalanceWithPermissionId(
@@ -200,7 +210,7 @@ public class MutiSignAccountTest {
 
     balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
-    Assert.assertEquals(balanceBefore - balanceAfter, multiSignFee * 10 + 1000000 + 100);
+    Assert.assertEquals(balanceBefore - balanceAfter, multiSignFee * 11 + 2000000 + 100);
 
     Assert.assertTrue(
         PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));

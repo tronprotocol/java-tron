@@ -2,6 +2,8 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -58,6 +60,14 @@ public class DelegatedResourceAccountIndexCapsule implements
         .build();
   }
 
+  public void removeFromAccount(ByteString fromAccount) {
+    if (getFromAccountsList().contains(fromAccount)) {
+      List<ByteString> fromList = new ArrayList<>(getFromAccountsList());
+      fromList.remove(fromAccount);
+      setAllFromAccounts(fromList);
+    }
+  }
+
   public List<ByteString> getToAccountsList() {
     return this.delegatedResourceAccountIndex.getToAccountsList();
   }
@@ -75,11 +85,13 @@ public class DelegatedResourceAccountIndexCapsule implements
         .build();
   }
 
-//  public void removeToAccount(ByteString toAccount) {
-//    this.delegatedResourceAccountIndex = this.delegatedResourceAccountIndex.toBuilder()
-//        . (toAccount)
-//        .build();
-//  }
+  public void removeToAccount(ByteString toAccount) {
+    if (getToAccountsList().contains(toAccount)) {
+      List<ByteString> toList = new ArrayList<>(getToAccountsList());
+      toList.remove(toAccount);
+      setAllToAccounts(toList);
+    }
+  }
 
 
   public byte[] createDbKey() {
