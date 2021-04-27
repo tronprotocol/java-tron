@@ -212,6 +212,8 @@ public class MaintenanceManager {
         commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
             ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
+        commonDataBase.saveChainMaintenanceTimeInterval(chainId,
+                crossChainInfo.getMaintenanceTimeInterval());
         long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
         long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
         if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {

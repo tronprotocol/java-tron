@@ -29,6 +29,8 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   private static final byte[] CURRENT_EPOCH = "CURRENT_EPOCH".getBytes();
   private static final byte[] CHAIN_MAINTENANCE_KEY = "MAINTENANCE".getBytes();
   private static final byte[] HEADER_HASH_KEY = "HEADER_HASH".getBytes();
+  private static final byte[] CHAIN_MAINTENANCE_TIME_INTERVAL =
+          "CHAIN_MAINTENANCE_TIME_INTERVAL".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -247,6 +249,17 @@ public class CommonDataBase extends TronDatabase<byte[]> {
         chainId, new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );
+  }
+
+  public long getChainMaintenanceTimeInterval(String chainId) {
+    return Optional.ofNullable(get(buildKey(CHAIN_MAINTENANCE_TIME_INTERVAL, chainId)))
+            .map(ByteArray::toLong)
+            .orElse(300000L);
+  }
+
+  public void saveChainMaintenanceTimeInterval(String chainId, long chainMaintenanceTimeInterval) {
+    this.put(buildKey(CHAIN_MAINTENANCE_TIME_INTERVAL, chainId),
+            ByteArray.fromLong(chainMaintenanceTimeInterval));
   }
 
 }

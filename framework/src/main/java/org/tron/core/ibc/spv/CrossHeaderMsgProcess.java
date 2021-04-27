@@ -26,6 +26,7 @@ import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.db.Manager;
@@ -160,6 +161,7 @@ public class CrossHeaderMsgProcess {
     byte[] chainId = requestMessage.getChainId().toByteArray();
     String chainIdString = ByteArray.toHexString(chainId);
     long blockHeight = requestMessage.getBlockHeight();
+    long latestMaintenanceTime = requestMessage.getLatestMaintenanceTime();
     long currentBlockheight = chainBaseManager.getCommonDataBase().getLatestPbftBlockNum();
     if (!chainBaseManager.chainIsSelected(requestMessage.getChainId())) {
       return;
@@ -169,6 +171,7 @@ public class CrossHeaderMsgProcess {
     List<SignedBlockHeader> blockHeaders = new ArrayList<>();
     if (currentBlockheight > blockHeight) {
       long height = blockHeight + 1;
+      boolean isMaintenanceTimeUpdated = false;
       for (int i = 1; i <= SYNC_NUMBER && height < currentBlockheight; i++) {
         height = blockHeight + i;
         BlockHeaderCapsule blockHeaderCapsule = new BlockHeaderCapsule(
@@ -180,16 +183,22 @@ public class CrossHeaderMsgProcess {
         if (pbftSignCapsule != null) {
           builder.addAllSrsSignature(pbftSignCapsule.getInstance().getSignatureList());
         }
-        //
-        setSrList(builder, chainIdString, blockHeaderCapsule.getTimeStamp());
+        // set sr list
+        isMaintenanceTimeUpdated = setSrList(builder, chainIdString,
+                blockHeaderCapsule.getTimeStamp(), latestMaintenanceTime,
+                isMaintenanceTimeUpdated);
         blockHeaders.add(builder.build());
       }
+      latestMaintenanceTimeMap.put(chainIdString, 0L);
     } else {
       //todo
     }
-    BlockHeaderInventoryMesasge inventoryMesasge =
-        new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);
-    peer.sendMessage(inventoryMesasge);
+
+    String genesisBlockIdStr = ByteArray.toHexString(
+            chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
+    BlockHeaderInventoryMesasge inventoryMessage =
+        new BlockHeaderInventoryMesasge(genesisBlockIdStr, currentBlockheight, blockHeaders);
+    peer.sendMessage(inventoryMessage);
   }
 
   public void handleInventory(PeerConnection peer, TronMessage msg) {
@@ -228,22 +237,25 @@ public class CrossHeaderMsgProcess {
     logger.info("next sync header num:{}", syncBlockHeaderMap.get(chainIdStr));
   }
 
-  protected void setSrList(Builder builder, String chainIdString, long blockTime) {
+  protected boolean setSrList(Builder builder, String chainIdString,
+                              long blockTime, long latestMaintenanceTime,
+                              boolean isMaintenanceTimeUpdated) {
     //
     long round = blockTime / CommonParameter.getInstance().getMaintenanceTimeInterval();
     long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
-    Long latestMaintenanceTime = latestMaintenanceTimeMap.get(chainIdString);
-    latestMaintenanceTime = latestMaintenanceTime == null ? 0 : latestMaintenanceTime;
+    // Long latestMaintenanceTimeTmp = latestMaintenanceTimeMap.get(chainIdString);
+    // latestMaintenanceTimeTmp = latestMaintenanceTimeTmp == null ? 0 : latestMaintenanceTimeTmp;
     logger.debug("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
         latestMaintenanceTime);
-    if (maintenanceTime > latestMaintenanceTime) {
+    if (maintenanceTime > latestMaintenanceTime && !isMaintenanceTimeUpdated) {
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
           .getSrSignData(maintenanceTime);
       if (srSignCapsule != null) {
-        latestMaintenanceTimeMap.put(chainIdString, maintenanceTime);
+        // latestMaintenanceTimeMap.put(chainIdString, maintenanceTime);
         builder.setSrList(srSignCapsule.getInstance());
       }
     }
+    return isMaintenanceTimeUpdated;
   }
 
   private void sendRequest() {
@@ -301,11 +313,16 @@ public class CrossHeaderMsgProcess {
       }
 
       PeerConnection peer = selectPeer(peerConnectionList);
+      String genesisBlockId = ByteArray.toHexString(
+              chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
       if (peer == null) {
         syncFailPeerSet.clear();
         peer = selectPeer(peerConnectionList);
+        genesisBlockId = chainId;
       }
-      peer.sendMessage(new BlockHeaderRequestMessage(chainId, syncHeaderNum, SYNC_NUMBER));
+      long nextMain = chainBaseManager.getCommonDataBase().getCrossNextMaintenanceTime(chainId);
+      peer.sendMessage(new BlockHeaderRequestMessage(
+              genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
       logger.info("begin send request to:{}, header num:{}", chainId, syncHeaderNum);
     }
 
