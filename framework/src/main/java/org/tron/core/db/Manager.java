@@ -1306,6 +1306,8 @@ public class Manager {
     if (!isCrossChainTx(trxCap)) {
       validateTapos(trxCap);
       validateCommon(trxCap);
+    } else {
+      logger.info("process cross tx: {}", trxCap.getTransactionId().toString());
     }
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {

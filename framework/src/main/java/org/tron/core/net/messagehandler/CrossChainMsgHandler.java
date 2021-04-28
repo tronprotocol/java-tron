@@ -1,6 +1,7 @@
 package org.tron.core.net.messagehandler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
@@ -16,6 +17,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.ReasonCode;
 
+@Slf4j(topic = "CROSS")
 @Component
 public class CrossChainMsgHandler implements TronMsgHandler {
 
@@ -53,6 +55,7 @@ public class CrossChainMsgHandler implements TronMsgHandler {
     //todo:timeout message how to do,save or not
     crossStore.saveReceiveCrossMsg(txId, crossChainMessage.getCrossMessage());
     manager.addCrossTx(crossChainMessage.getCrossMessage());
+    logger.info("receive a cross tx: {}", crossChainMessage.getMessageId());
     communicateService.broadcastCrossMessage(crossChainMessage.getCrossMessage());
   }
 }
