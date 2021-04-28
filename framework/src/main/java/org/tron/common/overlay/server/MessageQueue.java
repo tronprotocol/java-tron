@@ -19,6 +19,7 @@ import org.tron.common.overlay.message.PongMessage;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -148,6 +149,11 @@ public class MessageQueue {
   }
 
   private boolean needToLog(Message msg) {
+    // todo: debug, to be delete
+    if (msg instanceof CrossChainMessage) {
+      return true;
+    }
+
     if (msg instanceof PingMessage
         || msg instanceof PongMessage
         || msg instanceof TransactionsMessage
