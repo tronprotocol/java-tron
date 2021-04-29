@@ -1211,6 +1211,7 @@ public class Manager {
               trace.getRuntimeResult().getResultCode().name());
       chainBaseManager.getBalanceTraceStore().resetCurrentTransactionTrace();
     }
+    trxCap.setTrxTrace(null);
     //set the sort order
     trxCap.setOrder(transactionInfo.getFee());
     return transactionInfo.getInstance();
