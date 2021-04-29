@@ -129,6 +129,8 @@ public class CommunicateService implements Communicate {
         crossMessage = crossMessage.toBuilder().addAllProof(proofList)
             .setRootHeight(blockNum).build();
         //send data
+        // todo: debug, to be delete
+        logger.info("send cross tx, tx: {}", crossMessage.getTransaction());
         sendData(crossMessage);
       } catch (Exception e) {
         //wait the time out or auto rollback
