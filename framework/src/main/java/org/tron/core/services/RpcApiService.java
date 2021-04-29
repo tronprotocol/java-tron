@@ -2698,6 +2698,13 @@ public class RpcApiService implements Service {
               request.getLimit(), request.getChainId().toString(), request.getRound());
       responseObserver.onNext(voteCrossList);
     }
+
+    @Override
+    public void getParaChainList(GrpcAPI.RoundMessage request,
+                                 StreamObserver<GrpcAPI.ParaChainList> responseObserver) {
+      GrpcAPI.ParaChainList paraChainList = wallet.getParaChainList(request.getRound());
+      responseObserver.onNext(paraChainList);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
