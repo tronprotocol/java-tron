@@ -162,7 +162,7 @@ public class WalletTestMutiSign003 {
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
         ownerAddress, 1000000L, 0, 0, ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(
-        ownerAddress, 1000000L, 0, 1, ownerKey, blockingStubFull, ownerKeyString));
+        ownerAddress, 1000000L, 0, 2, ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(
         ownerAddress, 1000000L, 0, 0, ByteString.copyFrom(newAddress),
         ownerKey, blockingStubFull, ownerKeyString));

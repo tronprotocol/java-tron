@@ -90,6 +90,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public DelegatedResourceCapsule getDelegatedResource(byte[] key) {
+    return repository.getDelegatedResource(key);
+  }
+
+  @Override
   public WitnessCapsule getWitnessCapsule(byte[] address) {
     return repository.getWitnessCapsule(address);
   }
@@ -209,6 +214,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putDelegatedResource(Key key, Value value) {
+    repository.putDelegatedResource(key, value);
+  }
+
+  @Override
   public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
     repository.putAssetIssueValue(tokenId, assetIssueCapsule);
   }
@@ -309,6 +319,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule) {
+    repository.updateDelegatedResource(word, delegatedResourceCapsule);
+  }
+
+  @Override
   public void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule) {
     repository.updateVotesCapsule(word, votesCapsule);
   }
@@ -359,12 +374,28 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void addTotalEnergyWeight(long amount) {
+    repository.addTotalEnergyWeight(amount);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
+  }
+
+  @Override
+  public void saveTotalEnergyWeight(long totalEnergyWeight) {
+    repository.saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
   }
+
+  @Override
+  public long getTotalEnergyWeight() {
+    return repository.getTotalEnergyWeight();
+  }
+
 }

@@ -108,7 +108,7 @@ public class WalletTestAccount009 {
     Assert.assertFalse(PublicMethed.freezeBalanceGetEnergy(account009InvalidAddress, 1000000L,
         3, -1, account009InvalidKey, blockingStubFull));
     Assert.assertFalse(PublicMethed.freezeBalanceGetEnergy(account009InvalidAddress, 1000000L,
-        3, 2, account009InvalidKey, blockingStubFull));
+        3, 3, account009InvalidKey, blockingStubFull));
 
   }
 

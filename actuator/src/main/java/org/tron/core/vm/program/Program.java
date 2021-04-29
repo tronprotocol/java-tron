@@ -53,6 +53,7 @@ import org.tron.core.vm.trace.ProgramTraceListener;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
@@ -65,7 +66,7 @@ import static java.lang.StrictMath.min;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ArrayUtils.*;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 /**
  * @author Roman Mandeleil
@@ -508,10 +509,6 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
 
-    if (VMConfig.allowTvmStake()) {
-      withdrawRewardToBalance(owner, getContractState());
-    }
-
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -548,10 +545,13 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
-    if (VMConfig.allowTvmStake()) {
-      suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
-      //delete delegationStore
-      getResult().addDeleteDelegation(this.getContractAddress());
+    if (VMConfig.allowTvmFreeze()) {
+      byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
+      if (FastByteComparisons.isEqual(owner, obtainer)) {
+        transferDelegatedResourceToInheritor(owner, blackHoleAddress, getContractState());
+      } else {
+        transferDelegatedResourceToInheritor(owner, obtainer, getContractState());
+      }
     }
     getResult().addDeleteAccount(this.getContractAddress());
   }
@@ -560,119 +560,38 @@ public class Program {
     return this.contractState;
   }
 
-  private void withdrawRewardToBalance(byte[] owner, Repository repository) {
-    ContractService contractService = ContractService.getInstance();
-    contractService.withdrawReward(owner, getContractState());
-    AccountCapsule accountCapsule = repository.getAccount(owner);
-    long oldBalance = accountCapsule.getBalance();
-    long allowance = accountCapsule.getAllowance();
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-            .setBalance(oldBalance + allowance)
-            .setAllowance(0L)
-            .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
-            .build());
-    // todo internal tx
-    repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
-    if (logger.isDebugEnabled()) {
-      logger.debug("Transfer withdraw allowance to balance {}", allowance);
+  private void transferDelegatedResourceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
+
+    // delegated resource from sender to owner, just abandon
+    // in order to making that sender can unfreeze their balance in future
+    // nothing will be deleted
+
+    // delegated resource from owner to receiver
+    // there cannot be any resource when suicide
+
+    AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
+
+    // transfer owner`s frozen balance for bandwidth to inheritor
+    long frozenBalanceForBandwidthOfOwner = 0;
+    // check if frozen for bandwidth exists
+    if (ownerCapsule.getFrozenCount() != 0) {
+      frozenBalanceForBandwidthOfOwner = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
     }
+    repo.addTotalNetWeight(-frozenBalanceForBandwidthOfOwner / TRX_PRECISION);
+
+    long frozenBalanceForEnergyOfOwner =
+        ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
+    repo.addTotalEnergyWeight(-frozenBalanceForEnergyOfOwner / TRX_PRECISION);
+
+    // transfer all kinds of frozen balance to BlackHole
+    repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
   }
 
-  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository) {
-    AccountCapsule ownerCapsule = repository.getAccount(owner);
-    if (ownerCapsule.getFrozenCount() == 0) {
-      return;
-    }
-
-    //process owner frozen for self
-    if (FastByteComparisons.compareTo(obtainer, 0, 20,
-            TransactionTrace.convertToTronAddress(new byte[20]), 0, 20) == 0
-            || FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0
-            || FastByteComparisons.compareTo(obtainer, 0, 20,
-            repository.getBlackHoleAddress(), 0, 20) == 0) {
-      // if obtainer equal zero or black hole or owner
-      byte[] realObtain = obtainer;
-      if(FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
-        realObtain = repository.getBlackHoleAddress();
-      }
-      long unfreezeBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
-      AccountCapsule realObtainCapsule = repository.getAccount(realObtain);
-      realObtainCapsule.setBalance(realObtainCapsule.getBalance() + unfreezeBalance);
-      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-              .removeFrozen(0).build());
-      repository.updateAccount(realObtain, realObtainCapsule);
-      repository
-              .addTotalNetWeight(-unfreezeBalance / Parameter.ChainConstant.TRX_PRECISION);
-    } else {
-      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
-      long now = getTimestamp().longValue() * 1000;
-      long ownerBandwidthBalance = ownerCapsule.getFrozenList().get(0).getFrozenBalance();
-      long ownerBandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
-      long newBandwidthExpire = ownerBandwidthExpire;
-      long newFrozenBalanceForBandwidth = ownerBandwidthBalance;
-      if (obtainCapsule.getFrozenCount() > 0) {
-        long obtainBandwidthBalance = obtainCapsule.getFrozenList().get(0).getFrozenBalance();
-        long obtainBandwidthExpire = obtainCapsule.getFrozenList().get(0).getExpireTime();
-        long maxExpire = repository.getDynamicPropertiesStore().getMinFrozenTime() * Parameter.ChainConstant.FROZEN_PERIOD;
-        newBandwidthExpire = now
-                + BigInteger.valueOf(Long.max(0, Long.min(ownerBandwidthExpire - now, maxExpire)))
-                .multiply(BigInteger.valueOf(ownerBandwidthBalance))
-                .add(BigInteger.valueOf(Long.max(0, Long.min(obtainBandwidthExpire - now, maxExpire)))
-                        .multiply(BigInteger.valueOf(obtainBandwidthBalance)))
-                .divide(BigInteger.valueOf(
-                        Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance)))
-                .longValue();
-        newFrozenBalanceForBandwidth = Math.addExact(ownerBandwidthBalance, obtainBandwidthBalance);
-      }
-      obtainCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, newBandwidthExpire);
-      repository.updateAccount(obtainer, obtainCapsule);
-      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-              .removeFrozen(0).build());
-    }
-    //vote
-    {
-      VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
-
-      //get owner oldVotes
-      List<Protocol.Vote> oldVotes;
-      if (ownerVotesCapsule == null) {
-        oldVotes = ownerCapsule.getVotesList();
-      } else {
-        oldVotes = ownerVotesCapsule.getOldVotes();
-        //delete ownerVotesCapsule
-        getResult().addDeleteVotes(this.getContractAddress());
-      }
-      // merge oldVotes to address(zero)
-      if (!oldVotes.isEmpty()) {
-        ownerCapsule.clearVotes();
-        //merge oldVotes to zero
-        byte[] zeroAddress = TransactionTrace.convertToTronAddress(new byte[20]);
-        VotesCapsule zeroVotesCapsule = repository.getVotesCapsule(zeroAddress);
-        if (zeroVotesCapsule == null) {
-          zeroVotesCapsule = new VotesCapsule(ByteString.copyFrom(zeroAddress), oldVotes);
-        } else {
-          int zeroOldVoteSize = zeroVotesCapsule.getOldVotes().size();
-          Map<ByteString, Integer> zeroOldVotesIndex = new HashMap<>(zeroOldVoteSize);
-          for(int i = 0; i < zeroOldVoteSize; i++){
-            zeroOldVotesIndex.put(zeroVotesCapsule.getOldVotes().get(i).getVoteAddress(), i);
-          }
-          for (Protocol.Vote vote : oldVotes) {
-            if (zeroOldVotesIndex.containsKey(vote.getVoteAddress())) {
-              int index = zeroOldVotesIndex.get(vote.getVoteAddress());
-              long newOldVoteCount = vote.getVoteCount() + zeroVotesCapsule.getOldVotes().get(index).getVoteCount();
-              zeroVotesCapsule.setOldVote(index, Protocol.Vote.newBuilder()
-                      .setVoteAddress(vote.getVoteAddress())
-                      .setVoteCount(newOldVoteCount).build());
-            } else {
-              zeroVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount());
-            }
-          }
-        }
-        repository.updateVotesCapsule(zeroAddress, zeroVotesCapsule);
-      }
-    }
-
-    repository.updateAccount(owner, ownerCapsule);
+  public boolean canSuicide() {
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    AccountCapsule accountCapsule = getContractState().getAccount(owner);
+    return accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
+        && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1740,6 +1659,100 @@ public class Program {
     public boolean next() {
       pc += 1 + getCurOpcodeArg().length;
       return pc < code.length;
+    }
+  }
+
+  public boolean freeze(DataWord receiverAddress, DataWord frozenBalance, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    FreezeBalanceProcessor processor = new FreezeBalanceProcessor();
+    FreezeBalanceParam param = new FreezeBalanceParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    param.setOwnerAddress(owner);
+    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    boolean needCheckFrozenTime = CommonParameter.getInstance()
+        .getCheckFrozenTime() == 1;//for test
+    param.setFrozenDuration(needCheckFrozenTime ?
+        repository.getDynamicPropertiesStore().getMinFrozenTime() : 0);
+    param.setResourceType(parseResourceCode(resourceType));
+    try {
+      param.setFrozenBalance(frozenBalance.sValue().longValueExact());
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForFreeze failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForFreeze failure:{}", e.getMessage());
+    } catch (ArithmeticException e) {
+      logger.error("frozenBalance out of long range");
+    }
+    return false;
+  }
+
+  public boolean unfreeze(DataWord receiverAddress, DataWord resourceType) {
+    Repository repository = getContractState().newRepositoryChild();
+    UnfreezeBalanceProcessor processor = new UnfreezeBalanceProcessor();
+    UnfreezeBalanceParam param = new UnfreezeBalanceParam();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    param.setOwnerAddress(owner);
+    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    param.setResourceType(parseResourceCode(resourceType));
+    try {
+      processor.validate(param, repository);
+      processor.execute(param, repository);
+      repository.commit();
+      return true;
+    } catch (ContractValidateException e) {
+      logger.error("validateForUnfreeze failure:{}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("executeForUnfreeze failure:{}", e.getMessage());
+    }
+    return false;
+  }
+
+  public long freezeExpireTime(DataWord targetAddress, DataWord resourceType) {
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] target = TransactionTrace.convertToTronAddress(targetAddress.getLast20Bytes());
+    int resourceCode = resourceType.intValue();
+    if (FastByteComparisons.isEqual(owner, target)) {
+      AccountCapsule ownerCapsule = getContractState().getAccount(owner);
+      if (resourceCode == 0) { //  for bandwidth
+        if (ownerCapsule.getFrozenCount() != 0
+            && ownerCapsule.getFrozenList().get(0).getFrozenBalance() != 0) {
+          return ownerCapsule.getFrozenList().get(0).getExpireTime();
+        }
+      } else if (resourceCode == 1) { // for energy
+        if (ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance() != 0) {
+          return ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getExpireTime();
+        }
+      }
+    } else {
+      byte[] key = DelegatedResourceCapsule.createDbKey(owner, target);
+      DelegatedResourceCapsule delegatedResourceCapsule = getContractState().getDelegatedResource(key);
+      if (delegatedResourceCapsule != null) {
+        if (resourceCode == 0) {
+          if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() != 0) {
+            return delegatedResourceCapsule.getExpireTimeForBandwidth();
+          }
+        } else if (resourceCode == 1) {
+          if (delegatedResourceCapsule.getFrozenBalanceForEnergy() != 0) {
+            return delegatedResourceCapsule.getExpireTimeForEnergy();
+          }
+        }
+      }
+    }
+    return 0;
+  }
+
+  private Common.ResourceCode parseResourceCode(DataWord resourceType) {
+    switch (resourceType.intValue()) {
+      case 0:
+        return Common.ResourceCode.BANDWIDTH;
+      case 1:
+        return Common.ResourceCode.ENERGY;
+      default:
+        return Common.ResourceCode.UNRECOGNIZED;
     }
   }
 

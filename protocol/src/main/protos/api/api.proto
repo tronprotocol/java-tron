@@ -1161,6 +1161,9 @@ message AccountResourceMessage {
   map<string, int64> assetNetLimit = 6;
   int64 TotalNetLimit = 7;
   int64 TotalNetWeight = 8;
+  int64 TotalTronPowerWeight = 9;
+  int64 tronPowerUsed = 10;
+  int64 tronPowerLimit = 11;
 
   int64 EnergyUsed = 13;
   int64 EnergyLimit = 14;

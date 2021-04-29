@@ -225,8 +225,8 @@ public class WalletTestAccount013 {
     logger.info("After receiver net limit is " + receiverResource.getNetLimit());
   }
 
-  @Test(enabled = true, description = "Get delegate resource  index")
-  public void test2getDelegatedResourceAndDelegateResourceAccountIndex() {
+  @Test(enabled = true, description = "Get delegate resource")
+  public void test2getDelegatedResource() {
     //Create Account4
     ECKey ecKey4 = new ECKey(Utils.getRandom());
     account4DelegatedResourceAddress = ecKey4.getAddress();

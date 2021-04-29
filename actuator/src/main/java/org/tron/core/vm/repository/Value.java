@@ -220,6 +220,13 @@ public class Value {
     return new BytesCapsule(any);
   }
 
+  public DelegatedResourceCapsule getDelegatedResource() {
+    if (ArrayUtils.isEmpty(any)) {
+      return null;
+    }
+    return new DelegatedResourceCapsule(any);
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

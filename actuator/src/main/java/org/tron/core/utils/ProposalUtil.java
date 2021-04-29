@@ -340,7 +340,7 @@ public class ProposalUtil {
         }
         break;
       }
-//      case ALLOW_TVM_STAKE: {
+//            case ALLOW_TVM_STAKE: {
 //          if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
 //          throw new ContractValidateException(
 //              "Bad chain parameter id [ALLOW_TVM_STAKE]");
@@ -433,6 +433,48 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_NEW_RESOURCE_MODEL: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_NEW_RESOURCE_MODEL]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_NEW_RESOURCE_MODEL] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_TVM_FREEZE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_FREEZE]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              PRE_VALUE_NOT_ONE_ERROR + "ALLOW_TVM_FREEZE" + VALUE_NOT_ONE_ERROR);
+        }
+        if (dynamicPropertiesStore.getAllowDelegateResource() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_DELEGATE_RESOURCE] proposal must be approved "
+                  + "before [ALLOW_TVM_FREEZE] can be proposed");
+        }
+        if (dynamicPropertiesStore.getAllowMultiSign() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_MULTI_SIGN] proposal must be approved "
+                  + "before [ALLOW_TVM_FREEZE] can be proposed");
+        }
+        if (dynamicPropertiesStore.getAllowTvmConstantinople() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_CONSTANTINOPLE] proposal must be approved "
+                  + "before [ALLOW_TVM_FREEZE] can be proposed");
+        }
+        if (dynamicPropertiesStore.getAllowTvmSolidity059() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_SOLIDITY_059] proposal must be approved "
+                  + "before [ALLOW_TVM_FREEZE] can be proposed");
+        }
+        break;
+      }
 
 
       default:
@@ -487,7 +529,9 @@ public class ProposalUtil {
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
     MAX_FEE_LIMIT(47), // [0, 10_000_000_000]
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
-    ALLOW_BLACKHOLE_OPTIMIZATION(49);// 0,1
+    ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
+    ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
+    ALLOW_TVM_FREEZE(52); // 0, 1
 
     private long code;
 
