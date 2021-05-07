@@ -3807,7 +3807,7 @@ public class Wallet {
     chainVoteList.forEach(voteInfo -> {
       GrpcAPI.CrossChainVoteSummary.Builder totalVoteBuilder = GrpcAPI.CrossChainVoteSummary
           .newBuilder();
-      totalVoteBuilder.setChainId(ByteString.copyFrom(voteInfo.getKey().getBytes()));
+      totalVoteBuilder.setChainId(ByteString.copyFrom(ByteArray.fromHexString(voteInfo.getKey())));
       totalVoteBuilder.setAmount(voteInfo.getValue());
       builder.addCrossChainVoteSummary(totalVoteBuilder.build());
     });
@@ -3832,6 +3832,19 @@ public class Wallet {
                 .setSlotCount(AuctionConfigParser.getSlotCount(value))
                 .build();
       builder.addAuctionConfigDetail(auctionRoundContract);
+    });
+    return builder.build();
+  }
+
+  public GrpcAPI.ParaChainList getParaChainList(int round) {
+    GrpcAPI.ParaChainList.Builder builder = GrpcAPI.ParaChainList.newBuilder();
+    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    List<String> paraChainList = crossRevokingStore.getParaChainList(round);
+    if (CollectionUtils.isEmpty(paraChainList)) {
+      return null;
+    }
+    paraChainList.forEach(value -> {
+      builder.addParaChainIds(ByteString.copyFrom(ByteArray.fromHexString(value)));
     });
     return builder.build();
   }

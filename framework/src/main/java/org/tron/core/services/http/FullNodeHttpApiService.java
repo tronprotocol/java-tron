@@ -302,6 +302,9 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetCrossChainVoteSummaryListServlet getCrossChainVoteSummaryListServlet;
 
+  @Autowired
+  private GetParaChainListServlet getParaChainListServlet;
+
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
@@ -556,6 +559,8 @@ public class FullNodeHttpApiService implements Service {
               "/wallet/getcrosschainvotedetaillist");
       context.addServlet(new ServletHolder(getCrossChainVoteSummaryListServlet),
               "/wallet/getcrosschainvotesummarylist");
+      context.addServlet(new ServletHolder(getParaChainListServlet),
+              "/wallet/getparachainlist");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

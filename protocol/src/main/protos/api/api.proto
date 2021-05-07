@@ -809,6 +809,9 @@ service Wallet {
   rpc GetCrossChainAuctinConfigDetailList (EmptyMessage) returns (CrossChainAuctinConfigDetailList) {
   };
 
+  rpc GetParaChainList (RoundMessage) returns (ParaChainList) {
+  };
+
 };
 
 service WalletSolidity {
@@ -1577,4 +1580,12 @@ message CrossChainVoteDetailList {
 
 message CrossChainAuctinConfigDetailList {
   repeated AuctionRoundContract auctionConfigDetail = 1;
+}
+
+message RoundMessage {
+  int32 round = 1;
+}
+
+message ParaChainList {
+  repeated bytes paraChainIds = 1;
 }
