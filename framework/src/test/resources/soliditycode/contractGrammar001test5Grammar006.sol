@@ -1,11 +1,14 @@
 contract InfoFeed {
-function d1(uint x) public{
+function d1(uint x1) public{
+
         assembly{
             function f(x) -> y { switch x case 0 { y := 1 } default { y := mul(x, f(sub(x, 1))) } }
         }
     }
-    function d2(uint x) public{
-        assembly { x := mul(1, add(2, 3))}
+    function d2(uint x1) public{
+        assembly {
+            let x:=1
+            x := mul(1, add(2, 3))}
     }
     function f(uint x) public{
         assembly { x := sub(x, 1) }
@@ -27,14 +30,14 @@ function d1(uint x) public{
         x = x;
         //}
     }
-    function d5(uint x) public{
+    function d5(uint x1) public{
         assembly{
             function f(x) -> y { switch x case 0 { y := mul(x, 2) } default { y := 0 } }
 
         }
      }
 
-     function d6(uint x) public{
+     function d6(uint x1) public{
         assembly{
             function f(x) -> y { for { let i := 0 } lt(i, x) { i := add(i, 1) } { y := mul(2, y) } }
         }
