@@ -3,7 +3,9 @@ package org.tron.core.ibc.communicate;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -28,10 +30,12 @@ import org.tron.core.db.BlockHeaderIndexStore;
 import org.tron.core.db.BlockHeaderStore;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.CrossStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.P2pException;
 import org.tron.core.ibc.common.CrossUtils;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.net.message.CrossChainMessage;
@@ -82,7 +86,12 @@ public class CommunicateService implements Communicate {
     executorService
         .scheduleWithFixedDelay(() -> receiveCrossMsgCache.asMap().forEach((hash, crossMessage) -> {
           try {
-            if (validProof(crossMessage)) {
+            // skip check when the block header has not been synced.
+            if (crossMessage.getRootHeight() > getHeight(crossMessage.getFromChainId())) {
+              return;
+            }
+            if (broadcastCheck(crossMessage)) {
+              manager.addCrossTx(crossMessage);
               broadcastCrossMessage(crossMessage);
               receiveCrossMsgCache.invalidate(hash);
             } else {
@@ -164,7 +173,6 @@ public class CommunicateService implements Communicate {
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
         Sha256Hash.of(true, proof.getHash().toByteArray()),
         proof.getLeftOrRight())).collect(Collectors.toList());
-    logger.debug("root:{}, tx:{}", root, txHash);
     return merkleTree.validProof(root, proofLeafList, txHash);
   }
 
@@ -183,6 +191,27 @@ public class CommunicateService implements Communicate {
       logger.error("{}", e.getMessage());
     }
     return false;
+  }
+
+  public boolean broadcastCheck(CrossMessage crossMessage) {
+    CrossStore crossStore = chainBaseManager.getCrossStore();
+    if (!isSyncFinish()) {
+      return false;
+    }
+    if (crossMessage.getType() != Type.TIME_OUT
+            && !validProof(crossMessage)) {
+      //todo: define a new reason code
+      //peer.disconnect(ReasonCode.BAD_TX);
+      return false;
+    }
+    Sha256Hash txId = Sha256Hash
+            .of(true, crossMessage.getTransaction().getRawData().toByteArray());
+    if (crossStore.getReceiveCrossMsgUnEx(txId) != null) {
+      return false;
+    }
+    //todo:timeout message how to do,save or not
+    crossStore.saveReceiveCrossMsg(txId, crossMessage);
+    return true;
   }
 
   @Override

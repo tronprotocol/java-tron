@@ -1433,14 +1433,11 @@ public class Manager {
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     CrossMessage crossMessage;
-    while (iterator.hasNext() || crossTxQueue.size() > 0 || rePushTransactions.size() > 0) {
+    while (crossTxQueue.size() > 0 || iterator.hasNext() || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       crossMessage = null;
       TransactionCapsule trx;
-      if (iterator.hasNext()) {
-        fromPending = true;
-        trx = iterator.next();
-      } else if (crossTxQueue.size() > 0) {
+       if (crossTxQueue.size() > 0) {
         try {
           //process cross tx
           crossMessage = crossTxQueue.poll();
@@ -1465,7 +1462,19 @@ public class Manager {
           continue;
         }
       } else {
-        trx = rePushTransactions.poll();
+        if (iterator.hasNext()) {
+         fromPending = true;
+         trx = iterator.next();
+        } else {
+         trx = rePushTransactions.poll();
+        }
+        if (trx.getInstance().getRawData().getContract(0).getType()
+               == ContractType.CrossContract) {
+         crossMessage = CrossMessage.newBuilder()
+                 .setType(Type.DATA)
+                 .setTransaction(trx.getInstance())
+                 .build();
+        }
       }
 
       if (System.currentTimeMillis() > timeout) {
@@ -1504,10 +1513,11 @@ public class Manager {
         TransactionInfo result = preProcessTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
-        if (trx.isSource()) {
+        if (crossMessage == null) {
           blockCapsule.addTransaction(trx);
+        } else {
+          blockCapsule.addCrossMessage(crossMessage);
         }
-        blockCapsule.addCrossMessage(crossMessage);
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
         }
@@ -1615,28 +1625,32 @@ public class Manager {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
       for (CrossMessage crossMessage : block.getCrossMessageList()) {
-        if (communicateService.isSyncFinish() && crossMessage.getType() != Type.TIME_OUT
-            && !communicateService.validProof(crossMessage)) {
-          throw new ValidateSignatureException("valid proof fail");
-        }
-        if (crossMessage.getType() == Type.DATA
-            && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
-          throw new ValidateSignatureException("cross chain tx was time out");
-        }
-        if (communicateService.isSyncFinish() && crossMessage.getType() == Type.TIME_OUT) {
-          Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
-          //todo:getSendCrossMsgUnEx not safe
-          CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
-          if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
-              source.getToChainId(), source.getTransaction())) {
-            //todo:if block head sync fail,then the time out will be valid fail!
-            throw new ValidateSignatureException(
-                "valid time out tx fail,sourceTxId: " + sourceTxId);
-          }
-        }
         TransactionCapsule transactionCapsule = new TransactionCapsule(
-            crossMessage.getTransaction());
-        transactionCapsule.setSource(false);
+                crossMessage.getTransaction());
+        // check logic when tx source is false
+        if (!(crossMessage.getFromChainId().isEmpty()
+                || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
+          if (communicateService.isSyncFinish() && crossMessage.getType() != Type.TIME_OUT
+                  && !communicateService.validProof(crossMessage)) {
+            throw new ValidateSignatureException("valid proof fail");
+          }
+          if (crossMessage.getType() == Type.DATA
+                  && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
+            throw new ValidateSignatureException("cross chain tx was time out");
+          }
+          if (communicateService.isSyncFinish() && crossMessage.getType() == Type.TIME_OUT) {
+            Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
+            //todo:getSendCrossMsgUnEx not safe
+            CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
+            if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
+                    source.getToChainId(), source.getTransaction())) {
+              //todo:if block head sync fail,then the time out will be valid fail!
+              throw new ValidateSignatureException(
+                      "valid time out tx fail,sourceTxId: " + sourceTxId);
+            }
+          }
+          transactionCapsule.setSource(false);
+        }
         transactionCapsule.setType(crossMessage.getType());
         processTx(block, transactionRetCapsule, transactionCapsule);
       }
@@ -2164,6 +2178,7 @@ public class Manager {
   }
 
   public boolean addCrossTx(CrossMessage crossMessage) {
+    logger.info("crossTxQueue add {}", crossMessage);
     return crossTxQueue.add(crossMessage);
   }
 

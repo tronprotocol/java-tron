@@ -22,9 +22,6 @@ import org.tron.protos.Protocol.ReasonCode;
 public class CrossChainMsgHandler implements TronMsgHandler {
 
   @Autowired
-  private ChainBaseManager chainBaseManager;
-
-  @Autowired
   private CommunicateService communicateService;
 
   @Autowired
@@ -33,29 +30,11 @@ public class CrossChainMsgHandler implements TronMsgHandler {
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     CrossChainMessage crossChainMessage = (CrossChainMessage) msg;
-    CrossStore crossStore = chainBaseManager.getCrossStore();
-    if (!communicateService.isSyncFinish()) {
+    if (!communicateService.broadcastCheck(crossChainMessage.getCrossMessage())) {
       return;
     }
-    if (crossChainMessage.getCrossMessage().getType() != Type.TIME_OUT
-        && !communicateService.validProof(crossChainMessage.getCrossMessage())) {
-      //todo: define a new reason code
-      //peer.disconnect(ReasonCode.BAD_TX);
-      return;
-    }
-    Sha256Hash txId = Sha256Hash
-        .of(true, crossChainMessage.getCrossMessage().getTransaction().getRawData().toByteArray());
-    try {
-      if (crossStore.getReceiveCrossMsg(txId) != null) {
-        return;
-      }
-    } catch (InvalidProtocolBufferException e) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "not a cross message");
-    }
-    //todo:timeout message how to do,save or not
-    crossStore.saveReceiveCrossMsg(txId, crossChainMessage.getCrossMessage());
-    manager.addCrossTx(crossChainMessage.getCrossMessage());
     logger.info("receive a cross tx: {}", crossChainMessage.getMessageId());
+    manager.addCrossTx(crossChainMessage.getCrossMessage());
     communicateService.broadcastCrossMessage(crossChainMessage.getCrossMessage());
   }
 }

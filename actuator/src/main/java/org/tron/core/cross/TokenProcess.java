@@ -75,7 +75,7 @@ public class TokenProcess {
       AccountCapsule accountCapsule = accountStore.get(toAddress);
       accountCapsule.addAssetAmountV2(ByteArray.fromString(tokenId),
           amount, dynamicStore, assetIssueStore);
-      accountStore.put(ownerAddress, accountCapsule);
+      accountStore.put(toAddress, accountCapsule);
       assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
     } else {
       String destTokenId = crossRevokingStore
@@ -87,7 +87,7 @@ public class TokenProcess {
         AccountCapsule accountCapsule = accountStore.get(toAddress);
         accountCapsule.addAssetAmountV2(ByteArray.fromString(destTokenId),
             amount, dynamicStore, assetIssueStore);
-        accountStore.put(ownerAddress, accountCapsule);
+        accountStore.put(toAddress, accountCapsule);
         assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
       } else {
         //create the asset
