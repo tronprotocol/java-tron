@@ -16,6 +16,7 @@ import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -30,6 +31,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
+import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -69,6 +71,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private AccountStore accountStore;
+  @Autowired
+  @Getter
+  private AccountAssetStore accountAssetStore;
   @Autowired
   @Getter
   private BlockStore blockStore;
@@ -372,4 +377,8 @@ public class ChainBaseManager {
     return getBlockById(getBlockIdByNum(num));
   }
 
+  public void init() {
+    AssetUtil.setAccountAssetStore(accountAssetStore);
+    AssetUtil.setDynamicPropertiesStore(dynamicPropertiesStore);
+  }
 }

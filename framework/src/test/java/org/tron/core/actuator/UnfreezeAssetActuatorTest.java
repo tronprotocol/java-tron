@@ -15,6 +15,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -105,6 +106,11 @@ public class UnfreezeAssetActuatorTest {
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
+    AccountAssetCapsule ownerAddressAsset =
+            new AccountAssetCapsule(StringUtil.hexString2ByteString(OWNER_ADDRESS));
+    dbManager.getAccountAssetStore().put(ownerAddressAsset.getAddress().toByteArray(),
+            ownerAddressAsset);
+
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("owner"),
@@ -126,6 +132,11 @@ public class UnfreezeAssetActuatorTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(builder.build());
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
+    AccountAssetCapsule ownerAddressAsset =
+            new AccountAssetCapsule(StringUtil.hexString2ByteString(OWNER_ADDRESS));
+    dbManager.getAccountAssetStore().put(ownerAddressAsset.getAddress().toByteArray(),
+            ownerAddressAsset);
+
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("owner"),
@@ -146,8 +157,10 @@ public class UnfreezeAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
-
-    Account account = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS))
+    AccountCapsule ownerAccount = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerAccount.importAsset();
+    Account account = ownerAccount
         .getInstance();
     Frozen newFrozen0 = Frozen.newBuilder()
         .setFrozenBalance(frozenBalance)
@@ -194,8 +207,10 @@ public class UnfreezeAssetActuatorTest {
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
-    Account account = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS))
-        .getInstance();
+    AccountCapsule ownerAccount = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerAccount.importAsset();
+    Account account = ownerAccount.getInstance();
     Frozen newFrozen0 = Frozen.newBuilder()
         .setFrozenBalance(frozenBalance)
         .setExpireTime(now)
@@ -242,8 +257,11 @@ public class UnfreezeAssetActuatorTest {
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
-    Account account = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS))
-        .getInstance();
+    AccountCapsule ownerAccount = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerAccount.importAsset();
+    Account account = ownerAccount
+            .getInstance();
     Frozen newFrozen0 = Frozen.newBuilder()
         .setFrozenBalance(frozenBalance)
         .setExpireTime(now)
@@ -379,8 +397,11 @@ public class UnfreezeAssetActuatorTest {
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
-    Account account = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS))
-        .getInstance();
+    AccountCapsule ownerAccount = dbManager.getAccountStore()
+            .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    ownerAccount.importAsset();
+
+    Account account = ownerAccount.getInstance();
     Frozen newFrozen = Frozen.newBuilder()
         .setFrozenBalance(frozenBalance)
         .setExpireTime(now + 60000)

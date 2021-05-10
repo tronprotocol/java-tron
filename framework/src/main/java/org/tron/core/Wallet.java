@@ -1008,6 +1008,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
+        .build());
+
     return builder.build();
   }
 
@@ -1320,18 +1325,18 @@ public class Wallet {
     }
     TransactionInfoCapsule transactionInfoCapsule;
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-          .get(transactionId.toByteArray());
-    } catch (StoreException e) {
+      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
+          .getTransactionInfo(transactionId.toByteArray());
+    } catch (BadItemException e) {
       return null;
     }
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-          .getTransactionInfo(transactionId.toByteArray());
-    } catch (BadItemException e) {
+      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
+          .get(transactionId.toByteArray());
+    } catch (StoreException e) {
       return null;
     }
 

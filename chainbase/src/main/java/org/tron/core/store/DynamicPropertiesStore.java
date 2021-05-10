@@ -156,6 +156,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
 
+  //This value is only allowed to be 0, 1
+  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -749,6 +753,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmFreeze(
           CommonParameter.getInstance().getAllowTvmFreeze());
+    }
+
+    try {
+      this.getAllowAccountAssetOptimization();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAccountAssetOptimization(0L);
     }
 
   }
@@ -2213,6 +2223,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowNewResourceModel() == 1L;
   }
 
+  public boolean supportAllowAccountAssetOptimization() {
+    return getAllowAccountAssetOptimization() == 1L;
+  }
+
   public void saveAllowNewResourceModel(long value) {
     this.put(ALLOW_NEW_RESOURCE_MODEL, new BytesCapsule(ByteArray.fromLong(value)));
   }
@@ -2237,6 +2251,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  // 0: disable 1: enable
+  public long getAllowAccountAssetOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
+  }
+
+  public void setAllowAccountAssetOptimization(long value) {
+    this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {

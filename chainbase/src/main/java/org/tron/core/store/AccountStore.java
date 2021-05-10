@@ -2,10 +2,6 @@ package org.tron.core.store;
 
 import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +9,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
-import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.AccountAsset;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
 
 @Slf4j(topic = "DB")
 @Component
@@ -35,6 +39,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Autowired
   private AccountTraceStore accountTraceStore;
+
+  @Autowired
+  private AccountAssetStore accountAssetStore;
+
+  @Autowired
+  private DynamicPropertiesStore dynamicPropertiesStore;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -78,6 +88,17 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       }
     }
 
+    if (dynamicPropertiesStore.supportAllowAccountAssetOptimization()) {
+      Account account = item.getInstance();
+      AccountAsset accountAsset = AssetUtil.getAsset(account);
+      if (null != accountAsset) {
+        accountAssetStore.put(key, new AccountAssetCapsule(
+                accountAsset));
+        account = AssetUtil.clearAsset(account);
+        item.setIsAssetImport(false);
+        item.setInstance(account);
+      }
+    }
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
   }

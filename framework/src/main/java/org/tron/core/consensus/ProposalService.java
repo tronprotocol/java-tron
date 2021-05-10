@@ -250,7 +250,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
           break;
         }
-
+        case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;
