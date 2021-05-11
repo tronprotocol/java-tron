@@ -209,6 +209,8 @@ public class MaintenanceManager {
             .getLatestHeaderBlockNum(chainId)) {
           return;
         }
+        commonDataBase.saveProxyAddress(chainId,
+                ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
         commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
             ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
