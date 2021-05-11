@@ -109,6 +109,7 @@ import org.tron.core.exception.CrossContractConstructException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -1772,13 +1773,24 @@ public class Manager {
             throw new CrossContractConstructException("dest data must equal with source data");
           }
 
-          // todo: check proxy account
-
-          // todo: check source tx sign
+          // check proxy account
+          String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
+                  ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
+          String realProxyAccount = ByteArray.toHexString(destTrigger.getOwnerAddress().toByteArray());
+          if (proxyAccount.equals(realProxyAccount)) {
+            throw new PermissionException(String.format(
+                    "cross transaction proxy account is not right, require: %s, actually: %s",
+                    proxyAccount, realProxyAccount));
+          }
 
           TransactionCapsule crossTriggerTx;
           if (transactionCapsule.isSource()) {
             crossTriggerTx = new TransactionCapsule(source);
+            // check source tx sign
+            if (crossTriggerTx.validateSignature(chainBaseManager.getAccountStore(),
+                    chainBaseManager.getDynamicPropertiesStore())) {
+              throw new ValidateSignatureException("cross transaction signature validate failed");
+            }
           } else {
             crossTriggerTx = new TransactionCapsule(dest);
             // set the fee payer when transaction is dest
