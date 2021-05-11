@@ -31,6 +31,7 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   private static final byte[] HEADER_HASH_KEY = "HEADER_HASH".getBytes();
   private static final byte[] CHAIN_MAINTENANCE_TIME_INTERVAL =
           "CHAIN_MAINTENANCE_TIME_INTERVAL".getBytes();
+  private static final byte[] CHAIN_PROXY_ADDRESS = "CHAIN_PROXY_ADDRESS".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -260,6 +261,16 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   public void saveChainMaintenanceTimeInterval(String chainId, long chainMaintenanceTimeInterval) {
     this.put(buildKey(CHAIN_MAINTENANCE_TIME_INTERVAL, chainId),
             ByteArray.fromLong(chainMaintenanceTimeInterval));
+  }
+
+  public void saveProxyAddress(String chainId, String proxyAddress) {
+    this.put(buildKey(CHAIN_PROXY_ADDRESS, chainId), proxyAddress.getBytes());
+  }
+
+  public String getProxyAddress(String chainId) {
+    return Optional.ofNullable(get(buildKey(CHAIN_PROXY_ADDRESS, chainId)))
+            .map(String::new)
+            .orElse(null);
   }
 
 }
