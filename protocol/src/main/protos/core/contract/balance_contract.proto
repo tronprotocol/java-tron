@@ -8,6 +8,7 @@ option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 import "core/contract/common.proto";
 import "core/contract/smart_contract.proto";
+import "core/Tron.proto";
 
 message FreezeBalanceContract {
   bytes owner_address = 1;
@@ -104,8 +105,8 @@ message CrossToken {
 }
 
 message ContractTrigger {
-  TriggerSmartContract source = 1;
-  TriggerSmartContract dest = 2;
+  Transaction source = 1;
+  Transaction dest = 2;
 }
 
 message CrossChainInfo {

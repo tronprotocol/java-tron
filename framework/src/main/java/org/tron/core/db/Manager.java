@@ -1,4 +1,4 @@
-package org.tron.core.db;
+ package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
@@ -1730,27 +1730,33 @@ public class Manager {
         if (crossContract.getType() == CrossDataType.CONTRACT) {
           BalanceContract.ContractTrigger contractTrigger = BalanceContract.ContractTrigger
               .parseFrom(crossContract.getData());
+
+          Transaction source = contractTrigger.getSource();
+          Transaction dest = contractTrigger.getDest();
+
+          TriggerSmartContract sourceTrigger = source.getRawData().getContract(0).getParameter().unpack(TriggerSmartContract.class);
+          TriggerSmartContract destTrigger = dest.getRawData().getContract(0).getParameter().unpack(TriggerSmartContract.class);
+
           if (transactionCapsule.isSource() && !Arrays
-              .equals(contractTrigger.getSource().getOwnerAddress().toByteArray(),
-                  TransactionCapsule.getOwner(contract))) {
+              .equals(sourceTrigger.getOwnerAddress().toByteArray(), TransactionCapsule.getOwner(contract))) {
             throw new ValidateSignatureException(
                 "trigger source owner address not equals sign address");
           }
 
-          TriggerSmartContract source = contractTrigger.getSource();
-          TriggerSmartContract dest = contractTrigger.getDest();
           // check source and dest contract data
-          if (!Arrays.equals(source.getData().toByteArray(), dest.getData().toByteArray())) {
+          if (!Arrays.equals(source.getRawData().getData().toByteArray(), dest.getRawData().getData().toByteArray())) {
             throw new CrossContractConstructException("dest data must equal with source data");
           }
 
           // todo: check proxy account
 
+          // todo: check source tx sign
+
           TransactionCapsule crossTriggerTx;
           if (transactionCapsule.isSource()) {
-            crossTriggerTx = new TransactionCapsule(source, ContractType.TriggerSmartContract);
+            crossTriggerTx = new TransactionCapsule(source);
           } else {
-            crossTriggerTx = new TransactionCapsule(dest, ContractType.TriggerSmartContract);
+            crossTriggerTx = new TransactionCapsule(dest);
             // set the fee payer when transaction is dest
             crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
           }
