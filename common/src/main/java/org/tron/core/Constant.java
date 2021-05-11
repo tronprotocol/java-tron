@@ -271,6 +271,10 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TRANSACTION_FEE_POOL = "committee.allowTransactionFeePool";
   public static final String COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION = "committee.allowBlackHoleOptimization";
+  public static final String COMMITTEE_ALLOW_NEW_RESOURCE_MODEL = "committee.allowNewResourceModel";
+  public static final String COMMITTEE_ALLOW_RECEIPTS_MERKLE_ROOT = "committee.allowReceiptsMerkleRoot";
+
+  public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
@@ -279,6 +283,8 @@ public class Constant {
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
 
   public static final String HISTORY_BALANCE_LOOKUP = "storage.balance.history.lookup";
+  public static final String OPEN_PRINT_LOG = "node.openPrintLog";
+  public static final String OPEN_TRANSACTION_SORT = "node.openTransactionSort";
 
   public static final String LOCAL_HOST = "127.0.0.1";
   public static final String NODE_CROSS_CHAIN_CONNECT = "node.crossChain.ip";

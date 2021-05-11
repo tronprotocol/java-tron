@@ -64,10 +64,6 @@ public class TransactionTrace {
 
   private ForkController forkController;
 
-  private VotesStore votesStore;
-
-  private DelegationStore delegationStore;
-
   @Getter
   private TransactionContext transactionContext;
   @Getter
@@ -103,9 +99,6 @@ public class TransactionTrace {
     this.runtime = runtime;
     this.forkController = new ForkController();
     forkController.init(storeFactory.getChainBaseManager());
-
-    this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
-    this.delegationStore = storeFactory.getChainBaseManager().getDelegationStore();
   }
 
   public TransactionCapsule getTrx() {
@@ -181,16 +174,24 @@ public class TransactionTrace {
     runtime.execute(transactionContext);
     setBill(transactionContext.getProgramResult().getEnergyUsed());
 
-    if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {
-      if (contractResult.OUT_OF_TIME
-          .equals(receipt.getResult())) {
-        setTimeResultType(TimeResultType.OUT_OF_TIME);
-      } else if (System.currentTimeMillis() - txStartTimeInMs
-          > CommonParameter.getInstance()
-          .getLongRunningTime()) {
-        setTimeResultType(TimeResultType.LONG_RUNNING);
-      }
-    }
+//    if (TrxType.TRX_PRECOMPILED_TYPE != trxType) {
+//      if (contractResult.OUT_OF_TIME
+//          .equals(receipt.getResult())) {
+//        setTimeResultType(TimeResultType.OUT_OF_TIME);
+//      } else if (System.currentTimeMillis() - txStartTimeInMs
+//          > CommonParameter.getInstance()
+//          .getLongRunningTime()) {
+//        setTimeResultType(TimeResultType.LONG_RUNNING);
+//      }
+//    }
+  }
+
+  public void saveEnergyLeftOfOrigin(long energyLeft) {
+    receipt.setOriginEnergyLeft(energyLeft);
+  }
+
+  public void saveEnergyLeftOfCaller(long energyLeft) {
+    receipt.setCallerEnergyLeft(energyLeft);
   }
 
   public void finalization() throws ContractExeException {
@@ -202,12 +203,6 @@ public class TransactionTrace {
     if (StringUtils.isEmpty(transactionContext.getProgramResult().getRuntimeError())) {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
-      }
-      for (DataWord address : transactionContext.getProgramResult().getDeleteVotes()) {
-        votesStore.delete(convertToTronAddress((address.getLast20Bytes())));
-      }
-      for (DataWord address : transactionContext.getProgramResult().getDeleteDelegation()) {
-        deleteDelegationByAddress(convertToTronAddress((address.getLast20Bytes())));
       }
     }
   }
@@ -322,13 +317,6 @@ public class TransactionTrace {
     }
     return address;
   }
-
-  public void deleteDelegationByAddress(byte[] address){
-    delegationStore.delete(address); //begin Cycle
-    delegationStore.delete(("lastWithdraw-" + Hex.toHexString(address)).getBytes()); //last Withdraw cycle
-    delegationStore.delete(("end-" + Hex.toHexString(address)).getBytes()); //end cycle
-  }
-
 
   public enum TimeResultType {
     NORMAL,

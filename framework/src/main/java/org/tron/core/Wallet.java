@@ -22,6 +22,7 @@ import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
@@ -1016,6 +1017,16 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getMinAuctionVoteCount())
             .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowNewResourceModel")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmFreeze")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
+        .build());
+
     return builder.build();
   }
 
@@ -1143,6 +1154,8 @@ public class Wallet {
     long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long totalTronPowerWeight = chainBaseManager.getDynamicPropertiesStore()
+        .getTotalTronPowerWeight();
     long energyLimit = energyProcessor
         .calculateGlobalEnergyLimit(accountCapsule);
     long totalEnergyLimit =
@@ -1152,6 +1165,8 @@ public class Wallet {
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+    long allTronPowerUsage = accountCapsule.getTronPowerUsage();
+    long allTronPower = accountCapsule.getAllTronPower() / TRX_PRECISION;
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
@@ -1162,8 +1177,11 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
+        .setTotalTronPowerWeight(totalTronPowerWeight)
         .setEnergyLimit(energyLimit)
         .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTronPowerUsed(allTronPowerUsage)
+        .setTronPowerLimit(allTronPower)
         .setTotalEnergyLimit(totalEnergyLimit)
         .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
