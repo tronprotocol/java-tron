@@ -2229,7 +2229,7 @@ public class Manager {
           builder.setData(pbftMsgRaw.toByteString());
           commonDataBase.saveSRL(chainId, epoch, builder.build());
         } catch (Exception e) {
-          logger.error("chain {} get the info fail!", chainId, e);
+          logger.error("chain {} get the whitelist information failed!", chainId, e);
         }
       });
     }
