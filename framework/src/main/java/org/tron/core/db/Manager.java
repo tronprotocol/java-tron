@@ -1627,6 +1627,9 @@ public class Manager {
       for (CrossMessage crossMessage : block.getCrossMessageList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(
                 crossMessage.getTransaction());
+        if (crossMessage.getType() == Type.TIME_OUT) {
+          transactionCapsule.setSource(false);
+        }
         // check logic when tx source is false
         if (!(crossMessage.getFromChainId().isEmpty()
                 || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
