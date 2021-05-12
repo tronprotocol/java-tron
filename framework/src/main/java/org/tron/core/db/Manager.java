@@ -2207,7 +2207,7 @@ public class Manager {
       Args.getInstance().getCrossChainWhiteList().forEach(crossChainInfo -> {
         String chainId = ByteArray.toStr(crossChainInfo.getChainId().toByteArray());
         try {
-          if (crossChainInfo.getBeginSyncHeight() - 1 <= commonDataBase
+          if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
                   .getLatestHeaderBlockNum(chainId)) {
             return;
           }
