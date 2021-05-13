@@ -6,7 +6,6 @@ import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.contract.CrossChain;
 
 public class ProposalUtil {
 
@@ -331,7 +330,7 @@ public class ProposalUtil {
         }
         break;
       }
-      case CROSS_CHAIN: {
+      case ALLOW_CROSS_CHAIN: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
@@ -578,9 +577,9 @@ public class ProposalUtil {
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
     ALLOW_TVM_FREEZE(52), // 0, 1
 
-    CROSS_CHAIN(54),
-    AUCTION_CONFIG(55), // timestamp
-    MIN_AUCTION_VOTE_COUNT(56); // 0, [0, 100000000]
+    ALLOW_CROSS_CHAIN(54), // 0, 1
+    AUCTION_CONFIG(55), //
+    MIN_AUCTION_VOTE_COUNT(56); // 0, [0, 10_000_000_000_000]
 
     private long code;
 

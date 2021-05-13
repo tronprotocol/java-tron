@@ -243,7 +243,7 @@ public class ProposalService extends ProposalUtil {
           break;
         }
 
-        case CROSS_CHAIN: {
+        case ALLOW_CROSS_CHAIN: {
           manager.getDynamicPropertiesStore().saveCrossChain(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(54);
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(55);
