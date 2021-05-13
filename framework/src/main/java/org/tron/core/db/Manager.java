@@ -2212,10 +2212,10 @@ public class Manager {
             return;
           }
           commonDataBase.saveProxyAddress(chainId,
-                  ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
+                  ByteArray.toStr(crossChainInfo.getProxyAddress().toByteArray()));
           commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
           commonDataBase.saveLatestBlockHeaderHash(chainId,
-                  ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
+                  ByteArray.toStr(crossChainInfo.getParentBlockHash().toByteArray()));
           commonDataBase.saveChainMaintenanceTimeInterval(chainId,
                   crossChainInfo.getMaintenanceTimeInterval());
           long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
