@@ -2,6 +2,8 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -62,8 +64,13 @@ public class CrossChainRegisterActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
-    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (!dynamicStore.allowCrossChain()) {
+      throw new ContractValidateException("not support cross chain!");
+    }
+
+    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
     if (!this.any.is(CrossChainInfo.class)) {
       throw new ContractValidateException(
@@ -80,8 +87,15 @@ public class CrossChainRegisterActuator extends AbstractActuator {
 
     String chainId = ByteArray.toHexString(CrossChainInfo.getChainId().toByteArray());
     byte[] ownerAddress = CrossChainInfo.getOwnerAddress().toByteArray();
+    byte[] proxyAddress = CrossChainInfo.getProxyAddress().toByteArray();
 
     // check chain_id is exist
+    if (chainId.isEmpty()) {
+      throw new ContractValidateException("No chainId!");
+    }
+    if (CrossChainInfo.getChainId().toByteArray().length != ActuatorConstant.CHAIN_ID_LENGTH) {
+      throw new ContractValidateException("Invalid chainId!");
+    }
     if (crossRevokingStore.getChainInfo(chainId) != null) {
       throw new ContractValidateException("ChainId has already been registered!");
     }
@@ -102,7 +116,38 @@ public class CrossChainRegisterActuator extends AbstractActuator {
       throw new ContractValidateException("OwnerAccount balance must be greater than BURNED_FOR_REGISTER_CROSS.");
     }
 
-    // todo: whether check all params?
+    if (!DecodeUtil.addressValid(proxyAddress)) {
+      throw new ContractValidateException("Invalid proxyAddress!");
+    }
+
+    // check sr list
+    List<ByteString> srList = CrossChainInfo.getSrListList();
+    if (srList.isEmpty()) {
+      throw new ContractValidateException("Invalid srList!");
+    }
+
+    // check other params
+    long maintenanceTimeInterval = CrossChainInfo.getMaintenanceTimeInterval();
+    if (maintenanceTimeInterval <= 0) {
+      throw new ContractValidateException("Invalid maintenanceTimeInterval!");
+    }
+    long blockTime = CrossChainInfo.getBlockTime();
+    if (blockTime <= 0) {
+      throw new ContractValidateException("Invalid blockTime!");
+    }
+    long beginSyncHeight = CrossChainInfo.getBeginSyncHeight();
+    if (beginSyncHeight <= 0) {
+      throw new ContractValidateException("Invalid beginSyncHeight!");
+    }
+    String parentBlockHash =
+            ByteArray.toHexString(CrossChainInfo.getParentBlockHash().toByteArray());
+    if (parentBlockHash.isEmpty()) {
+      throw new ContractValidateException("No parentBlockHash!");
+    }
+    if (CrossChainInfo.getParentBlockHash().toByteArray().length !=
+            ActuatorConstant.CHAIN_ID_LENGTH) {
+      throw new ContractValidateException("Invalid parentBlockHash!");
+    }
 
     return true;
   }
