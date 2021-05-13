@@ -1180,11 +1180,11 @@ public class Args extends CommonParameter {
   private static CrossChainInfo createCrossChainInfo(final ConfigObject configObject) {
     final CrossChainInfo.Builder crossChainInfo = CrossChainInfo.newBuilder();
     crossChainInfo.setOwnerAddress(ByteString.copyFrom(
-            configObject.get("ownerAddress").unwrapped().toString().getBytes()));
+            ByteArray.fromHexString(configObject.get("ownerAddress").unwrapped().toString())));
     crossChainInfo.setProxyAddress(ByteString.copyFrom(
-            configObject.get("proxyAddress").unwrapped().toString().getBytes()));
+            ByteArray.fromHexString(configObject.get("proxyAddress").unwrapped().toString())));
     crossChainInfo.setChainId(ByteString.copyFrom(
-            configObject.get("chainId").unwrapped().toString().getBytes()));
+            ByteArray.fromHexString(configObject.get("chainId").unwrapped().toString())));
     List<String> srList = configObject.get("srList").atKey("srList").getStringList("srList");
     int index = 0;
     for (String sr : srList) {
@@ -1194,7 +1194,7 @@ public class Args extends CommonParameter {
     crossChainInfo.setMaintenanceTimeInterval(
             configObject.toConfig().getLong("maintenanceTimeInterval"));
     crossChainInfo.setParentBlockHash(ByteString.copyFrom(
-            configObject.get("parentBlockHash").unwrapped().toString().getBytes()));
+            ByteArray.fromHexString(configObject.get("parentBlockHash").unwrapped().toString())));
     crossChainInfo.setBlockTime(configObject.toConfig().getLong("blockTime"));
     return crossChainInfo.build();
   }
