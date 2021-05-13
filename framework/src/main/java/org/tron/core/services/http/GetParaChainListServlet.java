@@ -1,15 +1,13 @@
 package org.tron.core.services.http;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.JsonUtil;
 import org.tron.core.Wallet;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 @Component
 public class GetParaChainListServlet extends RateLimiterServlet {
