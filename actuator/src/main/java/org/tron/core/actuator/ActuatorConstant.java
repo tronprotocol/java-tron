@@ -11,5 +11,6 @@ public class ActuatorConstant {
   public static final String STORE_NOT_EXIST = "No account store or dynamic store!";
   public static final int ONE_HUNDRED = 100;
   public static final int PRECISION_DECIMAL = 6;
+  public static final int CHAIN_ID_LENGTH = 32;
 
 }

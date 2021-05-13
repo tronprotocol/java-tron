@@ -14,6 +14,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.CrossChain;
@@ -71,6 +72,12 @@ public class UnvoteCrossChainActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
+
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (!dynamicStore.allowCrossChain()) {
+      throw new ContractValidateException("not support cross chain!");
+    }
+
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     if (!this.any.is(UnvoteCrossChainContract.class)) {
       throw new ContractValidateException(
@@ -90,9 +97,19 @@ public class UnvoteCrossChainActuator extends AbstractActuator {
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
+    if (chainId.isEmpty()) {
+      throw new ContractValidateException("No chainId");
+    }
+
+    if (contract.getChainId().toByteArray().length != ActuatorConstant.CHAIN_ID_LENGTH) {
+      throw new ContractValidateException("Invalid chainId!");
+    }
 
     String readableOwnerAddress = ByteArray.toHexString(ownerAddress);
     int round = contract.getRound();
+    if (round <= 0) {
+      throw new ContractValidateException("Invalid round");
+    }
     byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(round, chainId, readableOwnerAddress);
     if (ByteArray.isEmpty(voteCrossInfoBytes)) {
       throw new ContractValidateException(
@@ -111,8 +128,6 @@ public class UnvoteCrossChainActuator extends AbstractActuator {
         throw new ContractValidateException(e.getMessage());
       }
     }
-
-
 
     List<String> paraChainList = crossRevokingStore.getParaChainList(round);
     if (paraChainList.contains(chainId)) {

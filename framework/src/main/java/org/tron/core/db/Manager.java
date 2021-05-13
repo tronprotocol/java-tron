@@ -1652,6 +1652,9 @@ public class Manager {
       for (CrossMessage crossMessage : block.getCrossMessageList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(
                 crossMessage.getTransaction());
+        if (crossMessage.getType() == Type.TIME_OUT) {
+          transactionCapsule.setSource(false);
+        }
         // check logic when tx source is false
         if (!(crossMessage.getFromChainId().isEmpty()
                 || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
@@ -2240,15 +2243,15 @@ public class Manager {
       Args.getInstance().getCrossChainWhiteList().forEach(crossChainInfo -> {
         String chainId = ByteArray.toStr(crossChainInfo.getChainId().toByteArray());
         try {
-          if (crossChainInfo.getBeginSyncHeight() - 1 <= commonDataBase
+          if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
                   .getLatestHeaderBlockNum(chainId)) {
             return;
           }
           commonDataBase.saveProxyAddress(chainId,
-                  ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
+                  ByteArray.toStr(crossChainInfo.getProxyAddress().toByteArray()));
           commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
           commonDataBase.saveLatestBlockHeaderHash(chainId,
-                  ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
+                  ByteArray.toStr(crossChainInfo.getParentBlockHash().toByteArray()));
           commonDataBase.saveChainMaintenanceTimeInterval(chainId,
                   crossChainInfo.getMaintenanceTimeInterval());
           long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
@@ -2265,7 +2268,7 @@ public class Manager {
           builder.setData(pbftMsgRaw.toByteString());
           commonDataBase.saveSRL(chainId, epoch, builder.build());
         } catch (Exception e) {
-          logger.error("chain {} get the info fail!", chainId, e);
+          logger.error("chain {} get the whitelist information failed!", chainId, e);
         }
       });
     }
