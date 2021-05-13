@@ -1188,7 +1188,7 @@ public class Args extends CommonParameter {
     List<String> srList = configObject.get("srList").atKey("srList").getStringList("srList");
     int index = 0;
     for (String sr : srList) {
-      crossChainInfo.addSrList(ByteString.copyFrom(sr.getBytes()));
+      crossChainInfo.addSrList(ByteString.copyFrom(ByteArray.fromHexString(sr)));
     }
     crossChainInfo.setBeginSyncHeight(configObject.toConfig().getLong("beginSyncHeight"));
     crossChainInfo.setMaintenanceTimeInterval(

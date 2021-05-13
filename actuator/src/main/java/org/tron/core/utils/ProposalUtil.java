@@ -474,9 +474,9 @@ public class ProposalUtil {
           throw new ContractValidateException(
                   "CrossChain is not activated, can not set Min Auction Vote Count");
         }
-        if (value < 0 || value > 100_000_000_000_000L) {
+        if (value < 0 || value > 10_000_000_000_000_000L) {
           throw new ContractValidateException(
-                  "Bad MIN_AUCTION_VOTE_COUNT parameter value, valid range is [0,100_000_000L]");
+                  "Bad MIN_AUCTION_VOTE_COUNT parameter value, valid range is [0,10_000_000_000_000_000L]");
         }
         break;
       }
