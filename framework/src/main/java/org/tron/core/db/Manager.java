@@ -1780,7 +1780,8 @@ public class Manager {
           String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
                   ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
           String realProxyAccount = ByteArray.toHexString(destTrigger.getOwnerAddress().toByteArray());
-          if (proxyAccount.equals(realProxyAccount)) {
+          ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
+          if (localChainId.equals(crossContract.getOwnerChainId()) && !proxyAccount.equals(realProxyAccount)) {
             throw new PermissionException(String.format(
                     "cross transaction proxy account is not right, require: %s, actually: %s",
                     proxyAccount, realProxyAccount));
@@ -1790,7 +1791,7 @@ public class Manager {
           if (transactionCapsule.isSource()) {
             crossTriggerTx = new TransactionCapsule(source);
             // check source tx sign
-            if (crossTriggerTx.validateSignature(chainBaseManager.getAccountStore(),
+            if (!crossTriggerTx.validateSignature(chainBaseManager.getAccountStore(),
                     chainBaseManager.getDynamicPropertiesStore())) {
               throw new ValidateSignatureException("cross transaction signature validate failed");
             }
