@@ -229,6 +229,7 @@ public class MaintenanceManager {
         PBFTCommitResult.Builder builder = PBFTCommitResult.newBuilder();
         builder.setData(pbftMsgRaw.toByteString());
         commonDataBase.saveSRL(chainId, epoch, builder.build());
+        commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
       } catch (InvalidProtocolBufferException e) {
         logger.error("chain {} get the info fail!", chainId, e);
       }
