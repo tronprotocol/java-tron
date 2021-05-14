@@ -22,6 +22,8 @@ import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.DatabaseConstants.CROSS_CHAIN_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
@@ -3760,6 +3762,7 @@ public class Wallet {
   public GrpcAPI.RegisterCrossChainList getRegisterCrossList(long offset, long limit) {
     GrpcAPI.RegisterCrossChainList.Builder builder = GrpcAPI.RegisterCrossChainList.newBuilder();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    limit = limit > CROSS_CHAIN_COUNT_LIMIT_MAX ? CROSS_CHAIN_COUNT_LIMIT_MAX : limit;
     List<byte[]> chainList = crossRevokingStore.getRegisterChainList(offset, limit);
     if (CollectionUtils.isEmpty(chainList)) {
       return null;
@@ -3779,6 +3782,7 @@ public class Wallet {
     GrpcAPI.CrossChainVoteDetailList.Builder builder = GrpcAPI.CrossChainVoteDetailList
         .newBuilder();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    limit = limit > CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX ? CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX : limit;
     List<byte[]> chainVoteList = crossRevokingStore.getCrossChainVoteDetailList(offset, limit,
         chainId, round);
     if (CollectionUtils.isEmpty(chainVoteList)) {
@@ -3799,6 +3803,7 @@ public class Wallet {
     GrpcAPI.CrossChainVoteSummaryList.Builder builder = GrpcAPI.CrossChainVoteSummaryList
         .newBuilder();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    limit = limit > CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX ? CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX : limit;
     List<org.tron.common.utils.Pair<String, Long>> chainVoteList = crossRevokingStore
         .getCrossChainTotalVoteList(offset, limit, round);
     if (CollectionUtils.isEmpty(chainVoteList)) {

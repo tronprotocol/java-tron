@@ -14,6 +14,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.CrossChain.VoteCrossChainContract;
@@ -74,6 +75,12 @@ public class VoteCrossChainActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
+
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (!dynamicStore.allowCrossChain()) {
+      throw new ContractValidateException("not support cross chain!");
+    }
+
     AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     if (!this.any.is(VoteCrossChainContract.class)) {
@@ -105,21 +112,16 @@ public class VoteCrossChainActuator extends AbstractActuator {
               "Validate VoteCrossContract error, balance is not sufficient.");
     }
 
-    String readableOwnerAddress = ByteArray.toHexString(ownerAddress);
-    byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(round, chainId, readableOwnerAddress);
-    if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
-      try {
-        VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
-        long voteCountBefore = voteCrossInfo.getAmount();
+    if (chainId.isEmpty()) {
+      throw new ContractValidateException("No chainId");
+    }
 
-        if (voteCountBefore + amount < 0) {
-          throw new ContractValidateException(
-                  "the amount for revoke is larger than the vote count.");
-        }
-      } catch (InvalidProtocolBufferException e) {
-        logger.debug(e.getMessage(), e);
-        throw new ContractValidateException(e.getMessage());
-      }
+    if (contract.getChainId().toByteArray().length != ActuatorConstant.CHAIN_ID_LENGTH) {
+      throw new ContractValidateException("Invalid chainId!");
+    }
+
+    if (round <= 0) {
+      throw new ContractValidateException("Invalid round");
     }
 
     return true;

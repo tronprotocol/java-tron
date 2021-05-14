@@ -782,7 +782,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMinAuctionVoteCount();
     } catch (IllegalArgumentException e) {
-      this.saveMinAuctionVoteCount(0L);
+      this.saveMinAuctionVoteCount(10_000_000_000_000L);
     }
 
   }

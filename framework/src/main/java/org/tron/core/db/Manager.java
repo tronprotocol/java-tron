@@ -62,6 +62,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
@@ -70,6 +71,7 @@ import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -1627,6 +1629,9 @@ public class Manager {
       for (CrossMessage crossMessage : block.getCrossMessageList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(
                 crossMessage.getTransaction());
+        if (crossMessage.getType() == Type.TIME_OUT) {
+          transactionCapsule.setSource(false);
+        }
         // check logic when tx source is false
         if (!(crossMessage.getFromChainId().isEmpty()
                 || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
@@ -2190,46 +2195,115 @@ public class Manager {
 
   private void initCrossChainWhiteList() {
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    CommonDataBase commonDataBase = chainBaseManager.getCommonDataBase();
     if (crossRevokingStore.getParaChainList(0).isEmpty()
             || Args.getInstance().isCrossChainWhiteListRefresh()) {
+      if (!checkCrossChainWhiteList()) {
+        System.exit(1);
+      }
       chainBaseManager.getDynamicPropertiesStore().saveAuctionConfig(181617162101023L);
       List<String> chainIds = Args.getInstance().getCrossChainWhiteList().stream()
-              .map(entry -> ByteArray.toStr(entry.getChainId().toByteArray()))
+              .map(entry -> ByteArray.toHexString(entry.getChainId().toByteArray()))
               .collect(Collectors.toList());
 
       crossRevokingStore.updateParaChains(0, chainIds);
       crossRevokingStore.updateParaChainsHistory(chainIds);
 
-      Args.getInstance().getCrossChainWhiteList().forEach(crossChainInfo -> {
-        String chainId = ByteArray.toStr(crossChainInfo.getChainId().toByteArray());
-        try {
-          if (crossChainInfo.getBeginSyncHeight() - 1 <= commonDataBase
-                  .getLatestHeaderBlockNum(chainId)) {
-            return;
-          }
-          commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
-          commonDataBase.saveLatestBlockHeaderHash(chainId,
-                  ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
-          commonDataBase.saveChainMaintenanceTimeInterval(chainId,
-                  crossChainInfo.getMaintenanceTimeInterval());
-          long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
-          long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
-          if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {
-            epoch = epoch - crossChainInfo.getMaintenanceTimeInterval();
-            epoch = epoch < 0 ? 0 : epoch;
-          }
-          Protocol.SRL.Builder srlBuilder = Protocol.SRL.newBuilder();
-          srlBuilder.addAllSrAddress(crossChainInfo.getSrListList());
-          Protocol.PBFTMessage.Raw pbftMsgRaw = Protocol.PBFTMessage.Raw.newBuilder()
-                  .setData(srlBuilder.build().toByteString()).setEpoch(epoch).build();
-          Protocol.PBFTCommitResult.Builder builder = Protocol.PBFTCommitResult.newBuilder();
-          builder.setData(pbftMsgRaw.toByteString());
-          commonDataBase.saveSRL(chainId, epoch, builder.build());
-        } catch (Exception e) {
-          logger.error("chain {} get the info fail!", chainId, e);
-        }
-      });
+      setCrossChainInfo();
     }
+  }
+
+  private boolean checkCrossChainWhiteList() {
+    for (BalanceContract.CrossChainInfo crossChainInfo :
+            Args.getInstance().getCrossChainWhiteList()) {
+      String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
+      byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
+      byte[] proxyAddress = crossChainInfo.getProxyAddress().toByteArray();
+      try {
+        if (chainId.isEmpty()) {
+          throw new Exception("No chainId!");
+        }
+        if (crossChainInfo.getChainId().toByteArray().length != ActuatorConstant.CHAIN_ID_LENGTH) {
+          throw new Exception("Invalid chainId!");
+        }
+
+        if (!DecodeUtil.addressValid(ownerAddress)) {
+          throw new Exception("Invalid ownerAddress!");
+        }
+
+        if (!DecodeUtil.addressValid(proxyAddress)) {
+          throw new Exception("Invalid proxyAddress!");
+        }
+
+        // check sr list
+        List<ByteString> srList = crossChainInfo.getSrListList();
+        if (srList.isEmpty()) {
+          throw new Exception("Invalid srList!");
+        }
+
+        // check other params
+        long maintenanceTimeInterval = crossChainInfo.getMaintenanceTimeInterval();
+        if (maintenanceTimeInterval <= 0) {
+          throw new Exception("Invalid maintenanceTimeInterval!");
+        }
+        long blockTime = crossChainInfo.getBlockTime();
+        if (blockTime <= 0) {
+          throw new Exception("Invalid blockTime!");
+        }
+        long beginSyncHeight = crossChainInfo.getBeginSyncHeight();
+        if (beginSyncHeight <= 0) {
+          throw new Exception("Invalid beginSyncHeight!");
+        }
+        String parentBlockHash =
+                ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray());
+        if (parentBlockHash.isEmpty()) {
+          throw new Exception("No parentBlockHash!");
+        }
+        if (crossChainInfo.getParentBlockHash().toByteArray().length !=
+                ActuatorConstant.CHAIN_ID_LENGTH) {
+          throw new Exception("Invalid parentBlockHash!");
+        }
+      } catch (Exception e) {
+        logger.error("chain {} get the whitelist information failed! message:{}",
+                chainId, e.getMessage());
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private void setCrossChainInfo() {
+    CommonDataBase commonDataBase = chainBaseManager.getCommonDataBase();
+    Args.getInstance().getCrossChainWhiteList().forEach(crossChainInfo -> {
+      String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
+      try {
+        if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
+                .getLatestHeaderBlockNum(chainId)) {
+          return;
+        }
+        commonDataBase.saveProxyAddress(chainId,
+                ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
+        commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
+        commonDataBase.saveLatestBlockHeaderHash(chainId,
+                ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
+        commonDataBase.saveChainMaintenanceTimeInterval(chainId,
+                crossChainInfo.getMaintenanceTimeInterval());
+        long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
+        long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
+        if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {
+          epoch = epoch - crossChainInfo.getMaintenanceTimeInterval();
+          epoch = epoch < 0 ? 0 : epoch;
+        }
+        Protocol.SRL.Builder srlBuilder = Protocol.SRL.newBuilder();
+        srlBuilder.addAllSrAddress(crossChainInfo.getSrListList());
+        Protocol.PBFTMessage.Raw pbftMsgRaw = Protocol.PBFTMessage.Raw.newBuilder()
+                .setData(srlBuilder.build().toByteString()).setEpoch(epoch).build();
+        Protocol.PBFTCommitResult.Builder builder = Protocol.PBFTCommitResult.newBuilder();
+        builder.setData(pbftMsgRaw.toByteString());
+        commonDataBase.saveSRL(chainId, epoch, builder.build());
+      } catch (Exception e) {
+        logger.error("chain {} get the whitelist information failed!", chainId, e);
+      }
+    });
   }
 }
