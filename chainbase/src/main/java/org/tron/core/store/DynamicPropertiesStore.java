@@ -791,7 +791,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMinAuctionVoteCount();
     } catch (IllegalArgumentException e) {
-      this.saveMinAuctionVoteCount(0L);
+      this.saveMinAuctionVoteCount(10_000_000_000_000L);
     }
 
     try {
@@ -2294,6 +2294,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveAuctionConfig(long value) {
+    logger.info("save auction config info = {}", value);
     int round =AuctionConfigParser.getAuctionRound(value);
     //AUCTION_CONFIG_ROUND_1 : 1
     String key = AUCTION_CONFIG_ROUND+"_"+round;

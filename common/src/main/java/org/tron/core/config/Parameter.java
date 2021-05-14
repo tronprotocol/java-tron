@@ -94,6 +94,8 @@ public class Parameter {
     public static final int PROPOSAL_COUNT_LIMIT_MAX = 1000;
     public static final int EXCHANGE_COUNT_LIMIT_MAX = 1000;
     public static final int MARKET_COUNT_LIMIT_MAX = 1000;
+    public static final int CROSS_CHAIN_COUNT_LIMIT_MAX = 100;
+    public static final int CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX = 100;
   }
 
   public class AdaptiveResourceLimitConstants {
