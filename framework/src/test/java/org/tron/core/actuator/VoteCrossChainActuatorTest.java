@@ -76,6 +76,7 @@ public class VoteCrossChainActuatorTest {
   public void initTest() {
     dbManager.getDynamicPropertiesStore().saveBurnedForRegisterCross();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveCrossChain(1);
   }
 
 
