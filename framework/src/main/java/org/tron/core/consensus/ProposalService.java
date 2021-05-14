@@ -253,7 +253,13 @@ public class ProposalService extends ProposalUtil {
           break;
         }
         case AUCTION_CONFIG: {
-          manager.getDynamicPropertiesStore().saveAuctionConfig(entry.getValue());
+          //check duplicate round config
+          boolean duplicateConfig = manager.getChainBaseManager().checkAuctionConfigExist(entry.getValue());
+          if (!duplicateConfig){
+            manager.getDynamicPropertiesStore().saveAuctionConfig(entry.getValue());
+          }else {
+            logger.error("duplicated auction config");
+          }
           break;
         }
         case MIN_AUCTION_VOTE_COUNT: {

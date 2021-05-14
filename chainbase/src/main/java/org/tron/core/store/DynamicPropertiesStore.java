@@ -2252,6 +2252,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveAuctionConfig(long value) {
+    logger.info("save auction config info = {}", value);
     int round =AuctionConfigParser.getAuctionRound(value);
     //AUCTION_CONFIG_ROUND_1 : 1
     String key = AUCTION_CONFIG_ROUND+"_"+round;

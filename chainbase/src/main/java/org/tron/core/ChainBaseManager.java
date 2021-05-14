@@ -427,4 +427,24 @@ public class ChainBaseManager {
     return result;
   }
 
+
+  public  boolean checkAuctionConfigExist(Long auctionConfig){
+    boolean result =false;
+    List<Long> auctionRoundList =getDynamicPropertiesStore().listAuctionConfigs();
+    CrossChain.AuctionRoundContract newAuctionInfo = AuctionConfigParser.parseAuctionConfig(auctionConfig);
+    for (Long value : auctionRoundList) {
+      CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
+      if (roundInfo == null || roundInfo.getRound() < 0) {
+        continue;
+      }
+      //exsit same round auction config
+      if (roundInfo.getRound()==newAuctionInfo.getRound()&&
+          roundInfo.getEndTime()*1000>=System.currentTimeMillis()) {
+        result = true;
+        break;
+      }
+    }
+    return result;
+  }
+
 }

@@ -2,6 +2,7 @@ package org.tron.common.utils;
 
 import org.tron.protos.contract.CrossChain;
 
+
 public class AuctionConfigParser {
   private static Integer ROUND_LENGH = 2;//round
 
@@ -43,6 +44,8 @@ public class AuctionConfigParser {
       return CrossChain.AuctionRoundContract.newBuilder().build();
     }
   }
+
+
 
   public static Long getAuctionEndTime(long value) {
     return parseAuctionConfig(value).getEndTime();
