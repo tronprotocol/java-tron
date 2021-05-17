@@ -1,7 +1,7 @@
 package org.tron.core.metrics.blockchain;
 
-import lombok.Data;
 import java.util.List;
+import lombok.Data;
 import org.tron.core.metrics.net.RateInfo;
 
 @Data
