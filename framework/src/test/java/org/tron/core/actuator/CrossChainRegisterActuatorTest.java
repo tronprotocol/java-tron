@@ -76,6 +76,7 @@ public class CrossChainRegisterActuatorTest {
   public void initTest() {
     dbManager.getDynamicPropertiesStore().saveBurnedForRegisterCross();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveCrossChain(1);
   }
 
 
@@ -90,7 +91,7 @@ public class CrossChainRegisterActuatorTest {
             .addSrList(ByteString.copyFromUtf8("sr address 1"))
             .setBeginSyncHeight(1L)
             .setMaintenanceTimeInterval(3600L)
-            .setParentBlockHash(ByteString.copyFromUtf8("000000000000000029b59068c6058ff466ccf59f2c08a0df1c330b9b7e8dcc4c"))
+            .setParentBlockHash(ByteString.copyFromUtf8("000000000000000029b59068c6058ff4"))
             .setBlockTime(100000000000L)
             .build());
   }

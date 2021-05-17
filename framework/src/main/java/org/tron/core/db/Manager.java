@@ -2345,6 +2345,7 @@ public class Manager {
         Protocol.PBFTCommitResult.Builder builder = Protocol.PBFTCommitResult.newBuilder();
         builder.setData(pbftMsgRaw.toByteString());
         commonDataBase.saveSRL(chainId, epoch, builder.build());
+        commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
       } catch (Exception e) {
         logger.error("chain {} get the whitelist information failed!", chainId, e);
       }

@@ -177,7 +177,7 @@ public class CrossHeaderMsgProcess {
     List<SignedBlockHeader> blockHeaders = new ArrayList<>();
     if (currentBlockheight > blockHeight) {
       long height = blockHeight + 1;
-      boolean isMaintenanceTimeUpdated = false;
+      long currentMaintenanceTime = 0;
       for (int i = 1; i <= SYNC_NUMBER && height < currentBlockheight; i++) {
         height = blockHeight + i;
         BlockHeaderCapsule blockHeaderCapsule = new BlockHeaderCapsule(
@@ -190,9 +190,9 @@ public class CrossHeaderMsgProcess {
           builder.addAllSrsSignature(pbftSignCapsule.getInstance().getSignatureList());
         }
         // set sr list
-        isMaintenanceTimeUpdated = setSrList(builder, chainIdString,
+        currentMaintenanceTime = setSrList(builder, chainIdString,
                 blockHeaderCapsule.getTimeStamp(), latestMaintenanceTime,
-                isMaintenanceTimeUpdated);
+                currentMaintenanceTime);
         blockHeaders.add(builder.build());
       }
       latestMaintenanceTimeMap.put(chainIdString, 0L);
@@ -243,9 +243,9 @@ public class CrossHeaderMsgProcess {
     logger.info("next sync header num:{}", syncBlockHeaderMap.get(chainIdStr));
   }
 
-  protected boolean setSrList(Builder builder, String chainIdString,
+  protected long setSrList(Builder builder, String chainIdString,
                               long blockTime, long latestMaintenanceTime,
-                              boolean isMaintenanceTimeUpdated) {
+                              long currentMaintenanceTime) {
     //
     long round = blockTime / CommonParameter.getInstance().getMaintenanceTimeInterval();
     long maintenanceTime = (round + 1) * CommonParameter.getInstance().getMaintenanceTimeInterval();
@@ -253,15 +253,16 @@ public class CrossHeaderMsgProcess {
     // latestMaintenanceTimeTmp = latestMaintenanceTimeTmp == null ? 0 : latestMaintenanceTimeTmp;
     logger.debug("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
         latestMaintenanceTime);
-    if (maintenanceTime > latestMaintenanceTime && !isMaintenanceTimeUpdated) {
+    if (maintenanceTime > latestMaintenanceTime && maintenanceTime != currentMaintenanceTime) {
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
           .getSrSignData(maintenanceTime);
       if (srSignCapsule != null) {
         // latestMaintenanceTimeMap.put(chainIdString, maintenanceTime);
         builder.setSrList(srSignCapsule.getInstance());
+        currentMaintenanceTime = maintenanceTime;
       }
     }
-    return isMaintenanceTimeUpdated;
+    return currentMaintenanceTime;
   }
 
   private void sendRequest() {
@@ -288,7 +289,7 @@ public class CrossHeaderMsgProcess {
             }
           });
           if (sleep.get()) {
-            Thread.sleep(50);
+            Thread.sleep(200);
           }
         }
       } catch (Exception e) {
@@ -329,7 +330,8 @@ public class CrossHeaderMsgProcess {
       long nextMain = chainBaseManager.getCommonDataBase().getCrossNextMaintenanceTime(chainId);
       peer.sendMessage(new BlockHeaderRequestMessage(
               genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
-      logger.info("begin send request to:{}, header num:{}", chainId, syncHeaderNum);
+      logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}",
+              chainId, syncHeaderNum, nextMain);
     }
 
     private PeerConnection selectPeer(List<PeerConnection> peerConnectionList) {
