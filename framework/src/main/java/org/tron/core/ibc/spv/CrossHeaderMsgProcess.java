@@ -294,6 +294,7 @@ public class CrossHeaderMsgProcess {
         }
       } catch (InterruptedException e) {
         logger.error("sendRequest error!", e);
+        Thread.currentThread().interrupt();
       }
     }
   }
