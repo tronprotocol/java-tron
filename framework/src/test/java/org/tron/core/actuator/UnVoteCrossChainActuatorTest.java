@@ -2,9 +2,13 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -20,10 +24,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.CrossChain;
 
-import java.io.File;
 
 @Slf4j
 public class UnVoteCrossChainActuatorTest {
@@ -92,7 +94,7 @@ public class UnVoteCrossChainActuatorTest {
 
 
   /**
-   * unvote cross chain test
+   * unvote cross chain test.
    */
   @Test
   public void unvoteCrossChainTest() {
@@ -107,15 +109,15 @@ public class UnVoteCrossChainActuatorTest {
               300_000_000L);
       ownerAccountCapsule.addAssetAmount("1000001".getBytes(), 1000L);
       dbManager.getAccountStore().put(ownerAddress, ownerAccountCapsule);
-      CrossChain.VoteCrossChainContract voteCrossInfo = CrossChain.VoteCrossChainContract.newBuilder()
-          .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-          .setChainId(Sha256Hash.wrap(ByteArray
-              .fromHexString(CHAINID))
-              .getByteString())
-          .setAmount(1000L)
-          .setRound(1)
-          .build();
-      dbManager.getChainBaseManager().getCrossRevokingStore().putChainVote(1, CHAINID, OWNER_ADDRESS, voteCrossInfo.toByteArray());
+      CrossChain.VoteCrossChainContract voteCrossInfo =
+              CrossChain.VoteCrossChainContract.newBuilder()
+                      .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                      .setChainId(Sha256Hash.wrap(ByteArray.fromHexString(CHAINID)).getByteString())
+                      .setAmount(1000L)
+                      .setRound(1)
+                      .build();
+      dbManager.getChainBaseManager().getCrossRevokingStore()
+              .putChainVote(1, CHAINID, OWNER_ADDRESS, voteCrossInfo.toByteArray());
 
       //2.run test
       UnvoteCrossChainActuator actuator = new UnvoteCrossChainActuator();
@@ -127,10 +129,8 @@ public class UnVoteCrossChainActuatorTest {
       actuator.execute(ret);
 
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail();
     }
   }
 

@@ -2,29 +2,31 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 public class CrossChainRegisterActuatorTest {
@@ -98,7 +100,7 @@ public class CrossChainRegisterActuatorTest {
 
 
   /**
-   * register cross chain test
+   * register cross chain test.
    */
   @Test
   public void crossChainRegisterTest() {
@@ -128,11 +130,10 @@ public class CrossChainRegisterActuatorTest {
       actuator.execute(ret);
 
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      Assert.assertNotNull(dbManager.getChainBaseManager().getCrossRevokingStore().getChainInfo(CHAINID));
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      Assert.assertNotNull(dbManager.getChainBaseManager()
+              .getCrossRevokingStore().getChainInfo(CHAINID));
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail();
     }
   }
 

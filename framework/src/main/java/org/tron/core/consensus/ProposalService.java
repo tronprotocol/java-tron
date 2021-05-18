@@ -254,10 +254,11 @@ public class ProposalService extends ProposalUtil {
         }
         case AUCTION_CONFIG: {
           //check duplicate round config
-          boolean duplicateConfig = manager.getChainBaseManager().checkAuctionConfigExist(entry.getValue());
-          if (!duplicateConfig){
+          boolean duplicateConfig = manager.getChainBaseManager()
+                  .checkAuctionConfigExist(entry.getValue());
+          if (!duplicateConfig) {
             manager.getDynamicPropertiesStore().saveAuctionConfig(entry.getValue());
-          }else {
+          } else {
             logger.error("duplicated auction config");
           }
           break;

@@ -2302,8 +2302,8 @@ public class Manager {
         if (parentBlockHash.isEmpty()) {
           throw new Exception("No parentBlockHash!");
         }
-        if (crossChainInfo.getParentBlockHash().toByteArray().length !=
-                ActuatorConstant.CHAIN_ID_LENGTH) {
+        if (crossChainInfo.getParentBlockHash().toByteArray().length
+                != ActuatorConstant.CHAIN_ID_LENGTH) {
           throw new Exception("Invalid parentBlockHash!");
         }
       } catch (Exception e) {
