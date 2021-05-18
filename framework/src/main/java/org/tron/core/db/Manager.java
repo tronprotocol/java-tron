@@ -1857,7 +1857,7 @@ public class Manager {
 //        txResult.length);
 //    return result;*/
 //    return source.getData().toByteArray();
-//  }
+//    }
 
   private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx) {
     raw raw = crossTrx.getInstance().getRawData();
