@@ -51,7 +51,7 @@ public class CrossHeaderMsgProcess {
   public static final int SYNC_NUMBER = 200;
   private static final int MAX_HEADER_NUMBER = 10000;
 
-  private static boolean go = true;
+  private boolean go = true;
 
   private static Set<PeerConnection> syncFailPeerSet = new HashSet<>();
 
@@ -292,7 +292,7 @@ public class CrossHeaderMsgProcess {
             Thread.sleep(200);
           }
         }
-      } catch (Exception e) {
+      } catch (InterruptedException e) {
         logger.error("sendRequest error!", e);
       }
     }
@@ -328,10 +328,15 @@ public class CrossHeaderMsgProcess {
         genesisBlockId = chainId;
       }
       long nextMain = chainBaseManager.getCommonDataBase().getCrossNextMaintenanceTime(chainId);
-      peer.sendMessage(new BlockHeaderRequestMessage(
-              genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
-      logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}",
-              chainId, syncHeaderNum, nextMain);
+      if (peer != null) {
+        peer.sendMessage(new BlockHeaderRequestMessage(
+                genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
+        logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}",
+                chainId, syncHeaderNum, nextMain);
+      } else {
+        logger.warn("send block header request failed, selectPeer is null, chainID: {},"
+                + " syncHeaderNum: {}, nextMain: {}", chainId, syncHeaderNum, nextMain);
+      }
     }
 
     private PeerConnection selectPeer(List<PeerConnection> peerConnectionList) {

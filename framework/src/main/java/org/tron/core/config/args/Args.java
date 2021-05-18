@@ -769,8 +769,8 @@ public class Args extends CommonParameter {
     PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
             .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
 
-    PARAMETER.shouldRegister = config.hasPath(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) ? config
-        .getBoolean(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) : true;
+    PARAMETER.shouldRegister = !config.hasPath(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) || config
+            .getBoolean(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER);
 
     // lite fullnode params
     PARAMETER.setLiteFullNode(checkIsLiteFullNode());
@@ -1194,6 +1194,7 @@ public class Args extends CommonParameter {
   }
 
   private static CrossChainInfo createCrossChainInfo(final ConfigObject configObject) {
+    String srListStr = "srList";
     final CrossChainInfo.Builder crossChainInfo = CrossChainInfo.newBuilder();
     crossChainInfo.setOwnerAddress(ByteString.copyFrom(
             ByteArray.fromHexString(configObject.get("ownerAddress").unwrapped().toString())));
@@ -1201,8 +1202,7 @@ public class Args extends CommonParameter {
             ByteArray.fromHexString(configObject.get("proxyAddress").unwrapped().toString())));
     crossChainInfo.setChainId(ByteString.copyFrom(
             ByteArray.fromHexString(configObject.get("chainId").unwrapped().toString())));
-    List<String> srList = configObject.get("srList").atKey("srList").getStringList("srList");
-    int index = 0;
+    List<String> srList = configObject.get(srListStr).atKey(srListStr).getStringList(srListStr);
     for (String sr : srList) {
       crossChainInfo.addSrList(ByteString.copyFrom(ByteArray.fromHexString(sr)));
     }

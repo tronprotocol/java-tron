@@ -82,7 +82,6 @@ public class VoteCrossChainActuator extends AbstractActuator {
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
-    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     if (!this.any.is(VoteCrossChainContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [VoteCrossContract], real type[" + any
