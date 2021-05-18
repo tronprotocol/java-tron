@@ -1,4 +1,4 @@
- package org.tron.core.db;
+package org.tron.core.db;
 
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
@@ -1439,7 +1439,7 @@ public class Manager {
       boolean fromPending = false;
       crossMessage = null;
       TransactionCapsule trx;
-       if (crossTxQueue.size() > 0) {
+      if (crossTxQueue.size() > 0) {
         try {
           //process cross tx
           crossMessage = crossTxQueue.poll();
@@ -1465,14 +1465,14 @@ public class Manager {
         }
       } else {
         if (iterator.hasNext()) {
-         fromPending = true;
-         trx = iterator.next();
+          fromPending = true;
+          trx = iterator.next();
         } else {
-         trx = rePushTransactions.poll();
+          trx = rePushTransactions.poll();
         }
         if (trx.getInstance().getRawData().getContract(0).getType()
                == ContractType.CrossContract) {
-         crossMessage = CrossMessage.newBuilder()
+          crossMessage = CrossMessage.newBuilder()
                  .setType(Type.DATA)
                  .setTransaction(trx.getInstance())
                  .build();
@@ -1739,17 +1739,21 @@ public class Manager {
           Transaction source = contractTrigger.getSource();
           Transaction dest = contractTrigger.getDest();
 
-          TriggerSmartContract sourceTrigger = source.getRawData().getContract(0).getParameter().unpack(TriggerSmartContract.class);
-          TriggerSmartContract destTrigger = dest.getRawData().getContract(0).getParameter().unpack(TriggerSmartContract.class);
+          TriggerSmartContract sourceTrigger = source.getRawData().getContract(0).getParameter()
+              .unpack(TriggerSmartContract.class);
+          TriggerSmartContract destTrigger = dest.getRawData().getContract(0).getParameter()
+              .unpack(TriggerSmartContract.class);
 
           if (transactionCapsule.isSource() && !Arrays
-              .equals(sourceTrigger.getOwnerAddress().toByteArray(), TransactionCapsule.getOwner(contract))) {
+              .equals(sourceTrigger.getOwnerAddress().toByteArray(), TransactionCapsule
+                  .getOwner(contract))) {
             throw new ValidateSignatureException(
                 "trigger source owner address not equals sign address");
           }
 
           // check source and dest contract data
-          if (!Arrays.equals(source.getRawData().getData().toByteArray(), dest.getRawData().getData().toByteArray())) {
+          if (!Arrays.equals(source.getRawData().getData().toByteArray(),
+              dest.getRawData().getData().toByteArray())) {
             throw new CrossContractConstructException("dest data must equal with source data");
           }
 
@@ -2258,8 +2262,8 @@ public class Manager {
         if (parentBlockHash.isEmpty()) {
           throw new Exception("No parentBlockHash!");
         }
-        if (crossChainInfo.getParentBlockHash().toByteArray().length !=
-                ActuatorConstant.CHAIN_ID_LENGTH) {
+        if (crossChainInfo.getParentBlockHash().toByteArray().length != ActuatorConstant
+            .CHAIN_ID_LENGTH) {
           throw new Exception("Invalid parentBlockHash!");
         }
       } catch (Exception e) {

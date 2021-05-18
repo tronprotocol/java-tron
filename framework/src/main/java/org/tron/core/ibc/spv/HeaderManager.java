@@ -82,8 +82,8 @@ public class HeaderManager {
     }
     if (signedBlockHeader.getSrList() != PBFTCommitResult.getDefaultInstance()) {
       PBFTMessage.Raw raw = Raw.parseFrom(signedBlockHeader.getSrList().getData().toByteArray());
-      long epoch = raw.getEpoch() -
-              chainBaseManager.getCommonDataBase().getChainMaintenanceTimeInterval(chainId);
+      long epoch = raw.getEpoch() - chainBaseManager.getCommonDataBase()
+          .getChainMaintenanceTimeInterval(chainId);
       epoch = epoch < 0 ? 0 : epoch;
       SRL srl = chainBaseManager.getCommonDataBase().getSRL(chainId, epoch);
       if (srl != null && !validSrList(signedBlockHeader.getSrList(),
