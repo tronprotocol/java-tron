@@ -168,6 +168,7 @@ import org.tron.protos.contract.BalanceContract.CrossContract.CrossDataType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
+@SuppressWarnings("checkstyle:CommentsIndentation")
 @Slf4j(topic = "DB")
 @Component
 public class Manager {
@@ -1842,22 +1843,6 @@ public class Manager {
     }
     return result;
   }
-
-//  private byte[] buildDestData(TriggerSmartContract source, TriggerSmartContract dest,
-//      Result.contractResult sourceResult) {
-//    /*byte[] sourceData = source.getData().toByteArray();
-//    byte[] destData = dest.getData().toByteArray();
-//    byte[] result = new byte[destData.length + sourceData.length + 64 + 64];
-//    //set contract data
-//    System.arraycopy(sourceData, 0, destData, 0, sourceData.length);
-//    byte[] contractAddress = source.getContractAddress().toByteArray();
-//    System.arraycopy(contractAddress, 0, destData, sourceData.length, contractAddress.length);
-//    byte[] txResult = Hex.decode(sourceResult.name());
-//    System.arraycopy(txResult, 0, destData, sourceData.length + contractAddress.length,
-//        txResult.length);
-//    return result;*/
-//    return source.getData().toByteArray();
-//    }
 
   private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx) {
     raw raw = crossTrx.getInstance().getRawData();
