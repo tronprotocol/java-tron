@@ -143,15 +143,9 @@ public class CrossHeaderMsgProcess {
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
       missBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
-
-      BlockHeaderCapsule blockHeaderCapsule =
-              new BlockHeaderCapsule(noticeMessage.getSignedBlockHeader().getBlockHeader());
-      peer.setBlockBothHave(blockHeaderCapsule.getBlockId());
-      peer.setNeedSyncFromPeer(false);
     } else {
       //sync
       syncDisabledMap.put(chainIdStr, false);
-      peer.setNeedSyncFromPeer(true);
     }
     //notice local node
     syncPool.getActivePeers().forEach(peerConnection -> {
