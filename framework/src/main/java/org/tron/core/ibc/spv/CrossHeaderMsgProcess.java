@@ -307,20 +307,21 @@ public class CrossHeaderMsgProcess {
     public void run() {
       ByteString chainIdBS = ByteString.copyFrom(ByteArray.fromHexString(chainId));
       List<PeerConnection> peerConnectionList = crossChainConnectPool.getPeerConnect(chainIdBS);
+
+      String genesisBlockId = ByteArray.toHexString(
+              chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
       if (CollectionUtils.isEmpty(peerConnectionList)) {
         peerConnectionList = syncPool.getActivePeers();
+        genesisBlockId = chainId;
       }
       if (peerConnectionList.size() == 0) {
         return;
       }
 
       PeerConnection peer = selectPeer(peerConnectionList);
-      String genesisBlockId = ByteArray.toHexString(
-              chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
       if (peer == null) {
         syncFailPeerSet.clear();
         peer = selectPeer(peerConnectionList);
-        genesisBlockId = chainId;
       }
       long nextMain = chainBaseManager.getCommonDataBase().getCrossNextMaintenanceTime(chainId);
       if (peer != null) {
