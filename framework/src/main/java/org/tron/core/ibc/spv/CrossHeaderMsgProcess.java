@@ -326,8 +326,8 @@ public class CrossHeaderMsgProcess {
       if (peer != null) {
         peer.sendMessage(new BlockHeaderRequestMessage(
                 genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
-        logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}",
-                chainId, syncHeaderNum, nextMain);
+        logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}, peer:{}",
+                chainId, syncHeaderNum, nextMain, peer);
       } else {
         logger.warn("send block header request failed, selectPeer is null, chainID: {},"
                 + " syncHeaderNum: {}, nextMain: {}", chainId, syncHeaderNum, nextMain);
