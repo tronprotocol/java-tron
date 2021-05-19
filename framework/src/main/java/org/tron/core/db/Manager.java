@@ -2331,6 +2331,8 @@ public class Manager {
         builder.setData(pbftMsgRaw.toByteString());
         commonDataBase.saveSRL(chainId, epoch, builder.build());
         commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
+        int agreeNodeCount = crossChainInfo.getSrListList().size() * 2 / 3 + 1;
+        commonDataBase.saveAgreeNodeCount(chainId, agreeNodeCount);
       } catch (Exception e) {
         logger.error("chain {} get the whitelist information failed!", chainId, e);
       }

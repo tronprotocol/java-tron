@@ -87,7 +87,7 @@ public class HeaderManager {
       epoch = epoch < 0 ? 0 : epoch;
       SRL srl = chainBaseManager.getCommonDataBase().getSRL(chainId, epoch);
       if (srl != null && !validSrList(signedBlockHeader.getSrList(),
-          Sets.newHashSet(srl.getSrAddressList()))) {
+          Sets.newHashSet(srl.getSrAddressList()), chainId)) {
         throw new ValidateSignatureException("valid sr list fail!");
       }
       chainBaseManager.getCommonDataBase()
@@ -166,9 +166,10 @@ public class HeaderManager {
     if (srSignList.size() != 0) {
       Set<ByteString> srSignSet = new ConcurrentSet();
       srSignSet.addAll(srSignList);
-      if (srSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
+      int agreeNodeCount = chainBaseManager.getCommonDataBase().getAgreeNodeCount(chainId);
+      if (srSignSet.size() < agreeNodeCount) {
         logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", srSignSet.size(),
-            Param.getInstance().getAgreeNodeCount());
+                agreeNodeCount);
         return false;
       }
       byte[] dataHash = getBlockPbftData(header, chainId);
@@ -251,16 +252,17 @@ public class HeaderManager {
     }
   }
 
-  public boolean validSrList(PBFTCommitResult dataSign, Set<ByteString> preSRL)
+  public boolean validSrList(PBFTCommitResult dataSign, Set<ByteString> preSRL, String chainId)
       throws InvalidProtocolBufferException {
     //valid sr list
     PBFTMessage.Raw raw = Raw.parseFrom(dataSign.getData().toByteArray());
     List<ByteString> preCycleSrSignList = dataSign.getSignatureList();
     Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
     preCycleSrSignSet.addAll(preCycleSrSignList);
-    if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
+    int agreeNodeCount = chainBaseManager.getCommonDataBase().getAgreeNodeCount(chainId);
+    if (preCycleSrSignSet.size() < agreeNodeCount) {
       logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", preCycleSrSignSet.size(),
-          Param.getInstance().getAgreeNodeCount());
+              agreeNodeCount);
       return false;
     }
     byte[] dataHash = getSrPbftData(raw);
