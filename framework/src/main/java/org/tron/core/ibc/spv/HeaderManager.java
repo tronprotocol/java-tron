@@ -75,14 +75,15 @@ public class HeaderManager {
     if (CollectionUtils.isEmpty(currentSrList) || CollectionUtils.isEmpty(srsignlist)) {
       logger.warn("valid block pbft sign; currentSrList:{}, srsignlist:{}", currentSrList,
           srsignlist.size());
-    } else if (!validBlockPbftSign(header.getInstance(), srsignlist, currentSrList)) {
+    } else if (!validBlockPbftSign(header.getInstance(), srsignlist, currentSrList, chainId)) {
       throw new ValidateSignatureException("valid block pbft signature fail!");
     } else {
       validBlock = true;
     }
     if (signedBlockHeader.getSrList() != PBFTCommitResult.getDefaultInstance()) {
       PBFTMessage.Raw raw = Raw.parseFrom(signedBlockHeader.getSrList().getData().toByteArray());
-      long epoch = raw.getEpoch() - CommonParameter.getInstance().getMaintenanceTimeInterval();
+      long epoch = raw.getEpoch() - chainBaseManager.getCommonDataBase()
+          .getChainMaintenanceTimeInterval(chainId);
       epoch = epoch < 0 ? 0 : epoch;
       SRL srl = chainBaseManager.getCommonDataBase().getSRL(chainId, epoch);
       if (srl != null && !validSrList(signedBlockHeader.getSrList(),
@@ -145,7 +146,8 @@ public class HeaderManager {
   }
 
   private List<ByteString> getCurrentSrList(BlockHeader header, String chainId) {
-    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+    long maintenanceTimeInterval =
+            chainBaseManager.getCommonDataBase().getChainMaintenanceTimeInterval(chainId);
     long round = header.getRawData().getTimestamp() / maintenanceTimeInterval;
     long maintenanceTime = (round + 1) * maintenanceTimeInterval;
     if (header.getRawData().getTimestamp() % maintenanceTimeInterval == 0) {
@@ -157,7 +159,7 @@ public class HeaderManager {
   }
 
   public boolean validBlockPbftSign(BlockHeader header, List<ByteString> srSignList,
-      List<ByteString> currentSrList)
+      List<ByteString> currentSrList, String chainId)
       throws BadBlockException {
     //valid sr list
     long startTime = System.currentTimeMillis();
@@ -169,7 +171,7 @@ public class HeaderManager {
             Param.getInstance().getAgreeNodeCount());
         return false;
       }
-      byte[] dataHash = getBlockPbftData(header);
+      byte[] dataHash = getBlockPbftData(header, chainId);
       Set<ByteString> srSet = Sets.newHashSet(currentSrList);
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : srSignList) {
@@ -194,8 +196,9 @@ public class HeaderManager {
     return true;
   }
 
-  private byte[] getBlockPbftData(BlockHeader header) {
-    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+  private byte[] getBlockPbftData(BlockHeader header, String chainId) {
+    long maintenanceTimeInterval =
+            chainBaseManager.getCommonDataBase().getChainMaintenanceTimeInterval(chainId);
     long round = header.getRawData().getTimestamp() / maintenanceTimeInterval;
     long maintenanceTime = (round + 1) * maintenanceTimeInterval;
     if (header.getRawData().getTimestamp() % maintenanceTimeInterval == 0) {
