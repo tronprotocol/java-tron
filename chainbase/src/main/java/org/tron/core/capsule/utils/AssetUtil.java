@@ -140,8 +140,7 @@ public class AssetUtil {
   }
 
   public static boolean isAllowAssetOptimization() {
-//    return dynamicPropertiesStore.supportAllowAccountAssetOptimization();
-    return true;
+    return dynamicPropertiesStore.supportAllowAccountAssetOptimization();
   }
 
 }
