@@ -208,11 +208,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveLatestBlockHeaderHash(ByteString.copyFrom(ByteArray.fromHexString("00")));
     }
 
-    try {
-      this.getLatestBlockCapsule();
-    } catch (IllegalArgumentException e) {
-      this.saveLatestBlockCapsule(null);
-    }
+//    try {
+//      this.getLatestBlockCapsule();
+//    } catch (IllegalArgumentException e) {
+//      this.saveLatestBlockCapsule(null);
+//    }
 
     try {
       this.getStateFlag();
