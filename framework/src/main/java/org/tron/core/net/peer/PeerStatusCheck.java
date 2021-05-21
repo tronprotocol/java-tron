@@ -27,7 +27,7 @@ public class PeerStatusCheck {
       try {
         statusCheck();
       } catch (Exception e) {
-        logger.error("Unhandled exception", e);
+        logger.error("", e);
       }
     }, 5, 2, TimeUnit.SECONDS);
   }
