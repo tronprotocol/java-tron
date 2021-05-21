@@ -400,7 +400,8 @@ public class Manager {
   }
 
   private boolean checkInSameFork(BlockCapsule newblock) {
-    if (CommonParameter.getInstance().isDebug() || !getDynamicPropertiesStore().allowCrossChain()) {
+    if (CommonParameter.getInstance().isDebug() || !getDynamicPropertiesStore().allowCrossChain()
+            || Objects.isNull(newblock)) {
       return true;
     }
 
@@ -408,7 +409,7 @@ public class Manager {
       return true;
     }
     Sha256Hash blockHash = chainBaseManager.getCommonDataBase().getLatestPbftBlockHash();
-    if (Objects.isNull(blockHash) || Objects.isNull(newblock)) {
+    if (Objects.isNull(blockHash)) {
       return true;
     }
     BlockCapsule tmp = newblock;
