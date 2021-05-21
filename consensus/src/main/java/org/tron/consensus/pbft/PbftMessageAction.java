@@ -54,8 +54,11 @@ public class PbftMessageAction {
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockHash(raw.getData().toByteArray());
         logger.info("commit msg block num is:{}", blockNum);
 
-        eventBusService.postEvent(
-            new PbftBlockCommitEvent(blockNum, message.getPbftMessage().getRawData().getData()));
+        if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+          eventBusService.postEvent(
+                  new PbftBlockCommitEvent(blockNum,
+                          message.getPbftMessage().getRawData().getData()));
+        }
       }
       break;
       case SRL: {
