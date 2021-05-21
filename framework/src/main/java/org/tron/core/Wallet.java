@@ -1320,8 +1320,8 @@ public class Wallet {
     }
     TransactionInfoCapsule transactionInfoCapsule;
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-          .get(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
+              .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1329,8 +1329,8 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-          .getTransactionInfo(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
+              .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
