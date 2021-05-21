@@ -32,6 +32,7 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   private static final byte[] CHAIN_MAINTENANCE_TIME_INTERVAL =
           "CHAIN_MAINTENANCE_TIME_INTERVAL".getBytes();
   private static final byte[] CHAIN_PROXY_ADDRESS = "CHAIN_PROXY_ADDRESS".getBytes();
+  private static final byte[] CHAIN_AGREE_NODE_COUNT = "CHAIN_AGREE_NODE_COUNT".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -238,7 +239,7 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   }
 
   public void updateCrossNextMaintenanceTime(String chainId, long blockTime) {
-    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();//todo
+    long maintenanceTimeInterval = getChainMaintenanceTimeInterval(chainId);
 
     long currentMaintenanceTime = getCrossNextMaintenanceTime(chainId);
     long round = (blockTime - currentMaintenanceTime) / maintenanceTimeInterval;
@@ -271,6 +272,16 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     return Optional.ofNullable(get(buildKey(CHAIN_PROXY_ADDRESS, chainId)))
             .map(String::new)
             .orElse(null);
+  }
+
+  public void saveAgreeNodeCount(String chainId, int count) {
+    this.put(buildKey(CHAIN_AGREE_NODE_COUNT, chainId), ByteArray.fromInt(count));
+  }
+
+  public int getAgreeNodeCount(String chainId) {
+    return Optional.ofNullable(get(buildKey(CHAIN_AGREE_NODE_COUNT, chainId)))
+            .map(ByteArray::toInt)
+            .orElse(0);
   }
 
 }

@@ -75,18 +75,19 @@ public class HeaderManager {
     if (CollectionUtils.isEmpty(currentSrList) || CollectionUtils.isEmpty(srsignlist)) {
       logger.warn("valid block pbft sign; currentSrList:{}, srsignlist:{}", currentSrList,
           srsignlist.size());
-    } else if (!validBlockPbftSign(header.getInstance(), srsignlist, currentSrList)) {
+    } else if (!validBlockPbftSign(header.getInstance(), srsignlist, currentSrList, chainId)) {
       throw new ValidateSignatureException("valid block pbft signature fail!");
     } else {
       validBlock = true;
     }
     if (signedBlockHeader.getSrList() != PBFTCommitResult.getDefaultInstance()) {
       PBFTMessage.Raw raw = Raw.parseFrom(signedBlockHeader.getSrList().getData().toByteArray());
-      long epoch = raw.getEpoch() - CommonParameter.getInstance().getMaintenanceTimeInterval();
+      long epoch = raw.getEpoch() - chainBaseManager.getCommonDataBase()
+          .getChainMaintenanceTimeInterval(chainId);
       epoch = epoch < 0 ? 0 : epoch;
       SRL srl = chainBaseManager.getCommonDataBase().getSRL(chainId, epoch);
       if (srl != null && !validSrList(signedBlockHeader.getSrList(),
-          Sets.newHashSet(srl.getSrAddressList()))) {
+          Sets.newHashSet(srl.getSrAddressList()), chainId)) {
         throw new ValidateSignatureException("valid sr list fail!");
       }
       chainBaseManager.getCommonDataBase()
@@ -145,7 +146,8 @@ public class HeaderManager {
   }
 
   private List<ByteString> getCurrentSrList(BlockHeader header, String chainId) {
-    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+    long maintenanceTimeInterval =
+            chainBaseManager.getCommonDataBase().getChainMaintenanceTimeInterval(chainId);
     long round = header.getRawData().getTimestamp() / maintenanceTimeInterval;
     long maintenanceTime = (round + 1) * maintenanceTimeInterval;
     if (header.getRawData().getTimestamp() % maintenanceTimeInterval == 0) {
@@ -157,19 +159,20 @@ public class HeaderManager {
   }
 
   public boolean validBlockPbftSign(BlockHeader header, List<ByteString> srSignList,
-      List<ByteString> currentSrList)
+      List<ByteString> currentSrList, String chainId)
       throws BadBlockException {
     //valid sr list
     long startTime = System.currentTimeMillis();
     if (srSignList.size() != 0) {
       Set<ByteString> srSignSet = new ConcurrentSet();
       srSignSet.addAll(srSignList);
-      if (srSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
+      int agreeNodeCount = chainBaseManager.getCommonDataBase().getAgreeNodeCount(chainId);
+      if (srSignSet.size() < agreeNodeCount) {
         logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", srSignSet.size(),
-            Param.getInstance().getAgreeNodeCount());
+                agreeNodeCount);
         return false;
       }
-      byte[] dataHash = getBlockPbftData(header);
+      byte[] dataHash = getBlockPbftData(header, chainId);
       Set<ByteString> srSet = Sets.newHashSet(currentSrList);
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : srSignList) {
@@ -194,8 +197,9 @@ public class HeaderManager {
     return true;
   }
 
-  private byte[] getBlockPbftData(BlockHeader header) {
-    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+  private byte[] getBlockPbftData(BlockHeader header, String chainId) {
+    long maintenanceTimeInterval =
+            chainBaseManager.getCommonDataBase().getChainMaintenanceTimeInterval(chainId);
     long round = header.getRawData().getTimestamp() / maintenanceTimeInterval;
     long maintenanceTime = (round + 1) * maintenanceTimeInterval;
     if (header.getRawData().getTimestamp() % maintenanceTimeInterval == 0) {
@@ -248,16 +252,17 @@ public class HeaderManager {
     }
   }
 
-  public boolean validSrList(PBFTCommitResult dataSign, Set<ByteString> preSRL)
+  public boolean validSrList(PBFTCommitResult dataSign, Set<ByteString> preSRL, String chainId)
       throws InvalidProtocolBufferException {
     //valid sr list
     PBFTMessage.Raw raw = Raw.parseFrom(dataSign.getData().toByteArray());
     List<ByteString> preCycleSrSignList = dataSign.getSignatureList();
     Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
     preCycleSrSignSet.addAll(preCycleSrSignList);
-    if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
+    int agreeNodeCount = chainBaseManager.getCommonDataBase().getAgreeNodeCount(chainId);
+    if (preCycleSrSignSet.size() < agreeNodeCount) {
       logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", preCycleSrSignSet.size(),
-          Param.getInstance().getAgreeNodeCount());
+              agreeNodeCount);
       return false;
     }
     byte[] dataHash = getSrPbftData(raw);

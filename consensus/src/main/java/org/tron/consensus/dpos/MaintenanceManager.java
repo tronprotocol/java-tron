@@ -230,6 +230,8 @@ public class MaintenanceManager {
         builder.setData(pbftMsgRaw.toByteString());
         commonDataBase.saveSRL(chainId, epoch, builder.build());
         commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
+        int agreeNodeCount = crossChainInfo.getSrListList().size() * 2 / 3 + 1;
+        commonDataBase.saveAgreeNodeCount(chainId, agreeNodeCount);
       } catch (InvalidProtocolBufferException e) {
         logger.error("chain {} get the info fail!", chainId, e);
       }

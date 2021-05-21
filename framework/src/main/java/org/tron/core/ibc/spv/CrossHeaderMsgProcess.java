@@ -53,7 +53,7 @@ public class CrossHeaderMsgProcess {
 
   private boolean go = true;
 
-  private static Set<PeerConnection> syncFailPeerSet = new HashSet<>();
+  private static Map<String, Set<PeerConnection>> syncFailPeerMap = new ConcurrentHashMap<>();
 
   private volatile Map<String, Long> latestMaintenanceTimeMap = new ConcurrentHashMap<>();
   private volatile Map<String, Boolean> syncDisabledMap = new ConcurrentHashMap<>();
@@ -143,15 +143,9 @@ public class CrossHeaderMsgProcess {
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
       missBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
-
-      BlockHeaderCapsule blockHeaderCapsule =
-              new BlockHeaderCapsule(noticeMessage.getSignedBlockHeader().getBlockHeader());
-      peer.setBlockBothHave(blockHeaderCapsule.getBlockId());
-      peer.setNeedSyncFromPeer(false);
     } else {
       //sync
       syncDisabledMap.put(chainIdStr, false);
-      peer.setNeedSyncFromPeer(true);
     }
     //notice local node
     syncPool.getActivePeers().forEach(peerConnection -> {
@@ -197,7 +191,7 @@ public class CrossHeaderMsgProcess {
       }
       latestMaintenanceTimeMap.put(chainIdString, 0L);
     } else {
-      //todo
+      logger.warn("request num should be less than current num!");
     }
 
     String genesisBlockIdStr = ByteArray.toHexString(
@@ -218,7 +212,11 @@ public class CrossHeaderMsgProcess {
     }
     if (CollectionUtils.isEmpty(blockHeaders)) {
       //todo
-      syncFailPeerSet.add(peer);
+      if (!syncFailPeerMap.containsKey(chainIdStr)) {
+        Set<PeerConnection> syncFailPeerSet = new HashSet<>();
+        syncFailPeerMap.put(chainIdStr, syncFailPeerSet);
+      }
+      syncFailPeerMap.get(chainIdStr).add(peer);
       sendHeaderNumCache.invalidate(chainIdStr);
       return;
     }
@@ -313,27 +311,30 @@ public class CrossHeaderMsgProcess {
     public void run() {
       ByteString chainIdBS = ByteString.copyFrom(ByteArray.fromHexString(chainId));
       List<PeerConnection> peerConnectionList = crossChainConnectPool.getPeerConnect(chainIdBS);
+
+      String genesisBlockId = ByteArray.toHexString(
+              chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
       if (CollectionUtils.isEmpty(peerConnectionList)) {
         peerConnectionList = syncPool.getActivePeers();
+        genesisBlockId = chainId;
       }
       if (peerConnectionList.size() == 0) {
         return;
       }
 
       PeerConnection peer = selectPeer(peerConnectionList);
-      String genesisBlockId = ByteArray.toHexString(
-              chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
       if (peer == null) {
-        syncFailPeerSet.clear();
+        if (syncFailPeerMap.containsKey(chainId)) {
+          syncFailPeerMap.get(chainId).clear();
+        }
         peer = selectPeer(peerConnectionList);
-        genesisBlockId = chainId;
       }
       long nextMain = chainBaseManager.getCommonDataBase().getCrossNextMaintenanceTime(chainId);
       if (peer != null) {
         peer.sendMessage(new BlockHeaderRequestMessage(
                 genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
-        logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}",
-                chainId, syncHeaderNum, nextMain);
+        logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}, peer:{}",
+                chainId, syncHeaderNum, nextMain, peer);
       } else {
         logger.warn("send block header request failed, selectPeer is null, chainID: {},"
                 + " syncHeaderNum: {}, nextMain: {}", chainId, syncHeaderNum, nextMain);
@@ -342,7 +343,8 @@ public class CrossHeaderMsgProcess {
 
     private PeerConnection selectPeer(List<PeerConnection> peerConnectionList) {
       for (PeerConnection peer : peerConnectionList) {
-        if (!syncFailPeerSet.contains(peer)) {
+        if (!syncFailPeerMap.containsKey(chainId)
+                || !syncFailPeerMap.get(chainId).contains(peer)) {
           return peer;
         }
       }
