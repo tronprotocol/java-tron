@@ -189,6 +189,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowMarketTransaction = 0;
     PARAMETER.allowTransactionFeePool = 0;
     PARAMETER.allowBlackHoleOptimization = 0;
+    PARAMETER.allowNewResourceModel = 0;
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
@@ -199,6 +200,8 @@ public class Args extends CommonParameter {
     PARAMETER.shouldRegister = true;
     PARAMETER.crossChainWhiteListRefresh = false;
     PARAMETER.crossChainWhiteList = Collections.emptyList();
+    PARAMETER.openPrintLog = true;
+    PARAMETER.openTransactionSort = false;
   }
 
   /**
@@ -651,6 +654,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) : 0;
 
+    PARAMETER.allowNewResourceModel =
+        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) : 0;
+
     PARAMETER.allowTvmIstanbul =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) : 0;
@@ -730,6 +737,11 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmAssetIssue =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
+
+    PARAMETER.allowTvmFreeze =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
             .getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -757,8 +769,8 @@ public class Args extends CommonParameter {
     PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
             .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
 
-    PARAMETER.shouldRegister = config.hasPath(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) ? config
-        .getBoolean(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) : true;
+    PARAMETER.shouldRegister = !config.hasPath(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER) || config
+            .getBoolean(Constant.NODE_CROSS_CHAIN_SHOULD_REGISTER);
 
     // lite fullnode params
     PARAMETER.setLiteFullNode(checkIsLiteFullNode());
@@ -769,10 +781,14 @@ public class Args extends CommonParameter {
     PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
         .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
 
-
     PARAMETER.crossChainWhiteListRefresh = config.hasPath(Constant.CROSS_CHAIN_WHITE_LIST_REFRESH)
             && config.getBoolean(CROSS_CHAIN_WHITE_LIST_REFRESH);
     PARAMETER.crossChainWhiteList = getCrossChainWhiteList(config);
+    
+    PARAMETER.openPrintLog = config.hasPath(Constant.OPEN_PRINT_LOG) && config
+        .getBoolean(Constant.OPEN_PRINT_LOG);
+    PARAMETER.openTransactionSort = config.hasPath(Constant.OPEN_TRANSACTION_SORT) && config
+        .getBoolean(Constant.OPEN_TRANSACTION_SORT);
 
     logConfig();
   }
@@ -1178,6 +1194,7 @@ public class Args extends CommonParameter {
   }
 
   private static CrossChainInfo createCrossChainInfo(final ConfigObject configObject) {
+    String srListStr = "srList";
     final CrossChainInfo.Builder crossChainInfo = CrossChainInfo.newBuilder();
     crossChainInfo.setOwnerAddress(ByteString.copyFrom(
             ByteArray.fromHexString(configObject.get("ownerAddress").unwrapped().toString())));
@@ -1185,8 +1202,7 @@ public class Args extends CommonParameter {
             ByteArray.fromHexString(configObject.get("proxyAddress").unwrapped().toString())));
     crossChainInfo.setChainId(ByteString.copyFrom(
             ByteArray.fromHexString(configObject.get("chainId").unwrapped().toString())));
-    List<String> srList = configObject.get("srList").atKey("srList").getStringList("srList");
-    int index = 0;
+    List<String> srList = configObject.get(srListStr).atKey(srListStr).getStringList(srListStr);
     for (String sr : srList) {
       crossChainInfo.addSrList(ByteString.copyFrom(ByteArray.fromHexString(sr)));
     }

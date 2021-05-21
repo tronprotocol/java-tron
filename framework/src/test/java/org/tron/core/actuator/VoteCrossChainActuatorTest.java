@@ -27,8 +27,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.CrossChain;
 
 
-
-
 @Slf4j
 public class VoteCrossChainActuatorTest {
 

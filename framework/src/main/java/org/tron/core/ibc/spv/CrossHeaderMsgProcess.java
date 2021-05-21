@@ -51,7 +51,7 @@ public class CrossHeaderMsgProcess {
   public static final int SYNC_NUMBER = 200;
   private static final int MAX_HEADER_NUMBER = 10000;
 
-  private static boolean go = true;
+  private boolean go = true;
 
   private static Set<PeerConnection> syncFailPeerSet = new HashSet<>();
 
@@ -143,15 +143,9 @@ public class CrossHeaderMsgProcess {
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
       missBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());
-
-      BlockHeaderCapsule blockHeaderCapsule =
-              new BlockHeaderCapsule(noticeMessage.getSignedBlockHeader().getBlockHeader());
-      peer.setBlockBothHave(blockHeaderCapsule.getBlockId());
-      peer.setNeedSyncFromPeer(false);
     } else {
       //sync
       syncDisabledMap.put(chainIdStr, false);
-      peer.setNeedSyncFromPeer(true);
     }
     //notice local node
     syncPool.getActivePeers().forEach(peerConnection -> {
@@ -292,8 +286,9 @@ public class CrossHeaderMsgProcess {
             Thread.sleep(200);
           }
         }
-      } catch (Exception e) {
+      } catch (InterruptedException e) {
         logger.error("sendRequest error!", e);
+        Thread.currentThread().interrupt();
       }
     }
   }
@@ -312,26 +307,32 @@ public class CrossHeaderMsgProcess {
     public void run() {
       ByteString chainIdBS = ByteString.copyFrom(ByteArray.fromHexString(chainId));
       List<PeerConnection> peerConnectionList = crossChainConnectPool.getPeerConnect(chainIdBS);
+
+      String genesisBlockId = ByteArray.toHexString(
+              chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
       if (CollectionUtils.isEmpty(peerConnectionList)) {
         peerConnectionList = syncPool.getActivePeers();
+        genesisBlockId = chainId;
       }
       if (peerConnectionList.size() == 0) {
         return;
       }
 
       PeerConnection peer = selectPeer(peerConnectionList);
-      String genesisBlockId = ByteArray.toHexString(
-              chainBaseManager.getGenesisBlockId().getByteString().toByteArray());
       if (peer == null) {
         syncFailPeerSet.clear();
         peer = selectPeer(peerConnectionList);
-        genesisBlockId = chainId;
       }
       long nextMain = chainBaseManager.getCommonDataBase().getCrossNextMaintenanceTime(chainId);
-      peer.sendMessage(new BlockHeaderRequestMessage(
-              genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
-      logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}",
-              chainId, syncHeaderNum, nextMain);
+      if (peer != null) {
+        peer.sendMessage(new BlockHeaderRequestMessage(
+                genesisBlockId, syncHeaderNum, SYNC_NUMBER, nextMain));
+        logger.info("begin send request to:{}, header num:{}, latest maintenance time:{}, peer:{}",
+                chainId, syncHeaderNum, nextMain, peer);
+      } else {
+        logger.warn("send block header request failed, selectPeer is null, chainID: {},"
+                + " syncHeaderNum: {}, nextMain: {}", chainId, syncHeaderNum, nextMain);
+      }
     }
 
     private PeerConnection selectPeer(List<PeerConnection> peerConnectionList) {

@@ -27,9 +27,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract;
 
-
-
-
 @Slf4j
 public class CrossChainUpdateActuatorTest {
 
@@ -118,10 +115,10 @@ public class CrossChainUpdateActuatorTest {
       ownerAccountCapsule.addAssetAmount("1000001".getBytes(), 1000L);
 
       dbManager.getAccountStore().put(ownerAddress, ownerAccountCapsule);
-      BalanceContract.CrossChainInfo crossChainInfo = getContract().unpack(BalanceContract
-          .CrossChainInfo.class);
-      dbManager.getChainBaseManager().getCrossRevokingStore().putChainInfo(CHAINID,
-          crossChainInfo.toByteArray());
+      BalanceContract.CrossChainInfo crossChainInfo =
+              getContract().unpack(BalanceContract.CrossChainInfo.class);
+      dbManager.getChainBaseManager().getCrossRevokingStore()
+              .putChainInfo(CHAINID,crossChainInfo.toByteArray());
 
       //2.run test
       CrossChainUpdateActuator actuator = new CrossChainUpdateActuator();
@@ -133,8 +130,8 @@ public class CrossChainUpdateActuatorTest {
       actuator.execute(ret);
 
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      Assert.assertNotNull(dbManager.getChainBaseManager().getCrossRevokingStore()
-          .getChainInfo(CHAINID));
+      Assert.assertNotNull(dbManager.getChainBaseManager()
+              .getCrossRevokingStore().getChainInfo(CHAINID));
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {

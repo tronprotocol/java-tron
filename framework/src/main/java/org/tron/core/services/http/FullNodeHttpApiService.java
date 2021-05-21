@@ -280,6 +280,12 @@ public class FullNodeHttpApiService implements Service {
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+  @Autowired
+  private GetTransactionFromPendingServlet getTransactionFromPendingServlet;
+  @Autowired
+  private GetTransactionListFromPendingServlet getTransactionListFromPendingServlet;
+  @Autowired
+  private GetPendingSizeServlet getPendingSizeServlet;
 
   @Autowired
   private RegisterCrossChainServlet registerCrossChainServlet;
@@ -547,6 +553,11 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockBalanceServlet),
           "/wallet/getblockbalance");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/wallet/getburntrx");
+      context.addServlet(new ServletHolder(getTransactionFromPendingServlet),
+          "/wallet/gettransactionfrompending");
+      context.addServlet(new ServletHolder(getTransactionListFromPendingServlet),
+          "/wallet/gettransactionlistfrompending");
+      context.addServlet(new ServletHolder(getPendingSizeServlet), "/wallet/getpendingsize");
 
       context.addServlet(new ServletHolder(registerCrossChainServlet),
           "/wallet/registercrosschain");

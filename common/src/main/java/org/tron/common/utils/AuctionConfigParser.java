@@ -4,14 +4,6 @@ import org.tron.protos.contract.CrossChain;
 
 
 public class AuctionConfigParser {
-  private static Integer ROUND_LENGH = 2;//round
-
-  private static Integer SLOT_COUNT_LENGH = 2;//slot count for every round
-
-  private static Integer END_TIME_LENGH = 10;//auction end time
-
-  private static Integer DURATION_LENGH = 3;//slot duration
-
 
   public static CrossChain.AuctionRoundContract parseAuctionConfig(Long auctionConfig) {
     try {
@@ -40,7 +32,6 @@ public class AuctionConfigParser {
           .setSlotCount(slotCount);
       return builder.build();
     } catch (Exception e) {
-      e.printStackTrace();
       return CrossChain.AuctionRoundContract.newBuilder().build();
     }
   }

@@ -28,8 +28,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract;
 
-
-
 @Slf4j
 public class CrossChainRegisterActuatorTest {
 
@@ -102,7 +100,7 @@ public class CrossChainRegisterActuatorTest {
 
 
   /**
-   * register cross chain test
+   * register cross chain test.
    */
   @Test
   public void crossChainRegisterTest() {
@@ -132,12 +130,10 @@ public class CrossChainRegisterActuatorTest {
       actuator.execute(ret);
 
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      Assert.assertNotNull(dbManager.getChainBaseManager().getCrossRevokingStore()
-          .getChainInfo(CHAINID));
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      Assert.assertNotNull(dbManager.getChainBaseManager()
+              .getCrossRevokingStore().getChainInfo(CHAINID));
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail();
     }
   }
 

@@ -75,6 +75,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     long unfreezeBalance = 0L;
 
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
+
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
@@ -195,7 +200,12 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
               .setBalance(oldBalance + unfreezeBalance)
               .setAccountResource(newAccountResource).build());
-
+          break;
+        case TRON_POWER:
+          unfreezeBalance = accountCapsule.getTronPowerFrozenBalance();
+          accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+              .setBalance(oldBalance + unfreezeBalance)
+              .clearTronPower().build());
           break;
         default:
           //this should never happen
@@ -213,24 +223,47 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         dynamicStore
             .addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
         break;
+      case TRON_POWER:
+        dynamicStore
+            .addTotalTronPowerWeight(-unfreezeBalance / TRX_PRECISION);
+        break;
       default:
         //this should never happen
         break;
     }
 
-    VotesCapsule votesCapsule;
-    if (!votesStore.has(ownerAddress)) {
-      votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
-          accountCapsule.getVotesList());
-    } else {
-      votesCapsule = votesStore.get(ownerAddress);
+    boolean needToClearVote = true;
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsInvalid()) {
+      switch (unfreezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+        case ENERGY:
+          needToClearVote = false;
+          break;
+        default:
+          break;
+      }
     }
-    accountCapsule.clearVotes();
-    votesCapsule.clearNewVotes();
+
+    if (needToClearVote) {
+      VotesCapsule votesCapsule;
+      if (!votesStore.has(ownerAddress)) {
+        votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
+            accountCapsule.getVotesList());
+      } else {
+        votesCapsule = votesStore.get(ownerAddress);
+      }
+      accountCapsule.clearVotes();
+      votesCapsule.clearNewVotes();
+      votesStore.put(ownerAddress, votesCapsule);
+    }
+
+    if (dynamicStore.supportAllowNewResourceModel()
+        && !accountCapsule.oldTronPowerIsInvalid()) {
+      accountCapsule.invalidateOldTronPower();
+    }
 
     accountStore.put(ownerAddress, accountCapsule);
-
-    votesStore.put(ownerAddress, votesCapsule);
 
     ret.setUnfreezeAmount(unfreezeBalance);
     ret.setStatus(fee, code.SUCESS);
@@ -397,9 +430,28 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           }
 
           break;
+        case TRON_POWER:
+          if (dynamicStore.supportAllowNewResourceModel()) {
+            Frozen frozenBalanceForTronPower = accountCapsule.getInstance().getTronPower();
+            if (frozenBalanceForTronPower.getFrozenBalance() <= 0) {
+              throw new ContractValidateException("no frozenBalance(TronPower)");
+            }
+            if (frozenBalanceForTronPower.getExpireTime() > now) {
+              throw new ContractValidateException("It's not time to unfreeze(TronPower).");
+            }
+          } else {
+            throw new ContractValidateException(
+                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          }
+          break;
         default:
-          throw new ContractValidateException(
-              "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          if (dynamicStore.supportAllowNewResourceModel()) {
+            throw new ContractValidateException(
+                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy、TRON_POWER]");
+          } else {
+            throw new ContractValidateException(
+                "ResourceCode error.valid ResourceCode[BANDWIDTH、Energy]");
+          }
       }
 
     }

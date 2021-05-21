@@ -6,26 +6,22 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -36,8 +32,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract;
-
-
 
 
 @Slf4j
@@ -64,7 +58,7 @@ public class CrossChainActuatorTest {
     TO_CHAINID =
         "000000000000000029b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c";
     Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
-        .setRawData(Protocol.Transaction.raw.newBuilder().addContract(
+            .setRawData(Protocol.Transaction.raw.newBuilder().addContract(
         Protocol.Transaction.Contract.newBuilder()
             .setType(Protocol.Transaction.Contract.ContractType.CrossContract))).build();
     trx = new TransactionCapsule(transaction);
@@ -130,7 +124,7 @@ public class CrossChainActuatorTest {
 
 
   /**
-   * normal cross chain token transaction
+   * normal cross chain token transaction.
    */
   @Test
   public void crossChainTransferTrxIsSource() {
@@ -158,13 +152,13 @@ public class CrossChainActuatorTest {
 
       dbManager.getAccountStore().put(ownerAddress, ownerAccountCapsule);
       dbManager.getChainBaseManager().getCrossRevokingStore()
-          .put(("in_" + OWNER_CHAINID + "_" + "1000001").getBytes(),
+              .put(("in_" + OWNER_CHAINID + "_" + "1000001").getBytes(),
           new BytesCapsule(ByteArray.fromLong(1000L)));
       dbManager.getChainBaseManager().getCrossRevokingStore()
-          .put(("out_" + TO_CHAINID + "_" + "1000001").getBytes(),
+              .put(("out_" + TO_CHAINID + "_" + "1000001").getBytes(),
           new BytesCapsule(ByteArray.fromLong(1000L)));
       dbManager.getChainBaseManager().getAssetIssueV2Store()
-          .put(assetIssueCapsule.getName().toByteArray(),assetIssueCapsule);
+              .put(assetIssueCapsule.getName().toByteArray(),assetIssueCapsule);
       //2.run test
       CrossChainActuator actuator = new CrossChainActuator();
       actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -177,10 +171,8 @@ public class CrossChainActuatorTest {
       actuator.execute(ret);
 
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (ContractValidateException | ContractExeException e) {
+      Assert.fail();
     }
   }
 

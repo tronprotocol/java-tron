@@ -16,9 +16,10 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -33,9 +34,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
@@ -108,6 +111,7 @@ import org.tron.core.exception.CrossContractConstructException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
+import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -164,6 +168,7 @@ import org.tron.protos.contract.BalanceContract.CrossContract.CrossDataType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
+@SuppressWarnings("checkstyle:CommentsIndentation")
 @Slf4j(topic = "DB")
 @Component
 public class Manager {
@@ -224,7 +229,7 @@ public class Manager {
   @Getter
   private ChainBaseManager chainBaseManager;
   // transactions cache
-  private List<TransactionCapsule> pendingTransactions;
+  private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
   // transactions popped
@@ -252,7 +257,10 @@ public class Manager {
               crossTxQueue.remove(crossMessage);
             }
             tx = getRePushTransactions().peek();
-            if (tx != null) {
+            if (tx != null && System.currentTimeMillis() - tx.getTime() >= Args.getInstance()
+                .getPendingTransactionTimeout()) {
+              logger.warn("[timeout] remove tx from rePush, txId:{}", tx.getTransactionId());
+            } else if (tx != null) {
               this.rePush(tx);
             } else {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
@@ -379,7 +387,7 @@ public class Manager {
     }
   }
 
-  public List<TransactionCapsule> getPendingTransactions() {
+  public BlockingQueue<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
 
@@ -491,6 +499,9 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
+  private Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
+      .compare(o2.getOrder(), o1.getOrder());
+
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
@@ -505,8 +516,13 @@ public class Manager {
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
             chainBaseManager.getMerkleTreeIndexStore()));
-    this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
-    this.rePushTransactions = new LinkedBlockingQueue<>();
+    if (Args.getInstance().isOpenTransactionSort()) {
+      this.pendingTransactions = new PriorityBlockingQueue(2000, downComparator);
+      this.rePushTransactions = new PriorityBlockingQueue<>(2000, downComparator);
+    } else {
+      this.pendingTransactions = new LinkedBlockingQueue<>();
+      this.rePushTransactions = new LinkedBlockingQueue<>();
+    }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     this.crossTxQueue = new LinkedBlockingDeque<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
@@ -1382,7 +1398,8 @@ public class Manager {
               trace.getRuntimeResult().getResultCode().name());
       chainBaseManager.getBalanceTraceStore().resetCurrentTransactionTrace();
     }
-
+    //set the sort order
+    trxCap.setOrder(transactionInfo.getFee());
     return transactionInfo.getInstance();
   }
 
@@ -1433,9 +1450,9 @@ public class Manager {
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
-    Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     CrossMessage crossMessage;
-    while (crossTxQueue.size() > 0 || iterator.hasNext() || rePushTransactions.size() > 0) {
+    while (crossTxQueue.size() > 0 || pendingTransactions.size() > 0
+            || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       crossMessage = null;
       TransactionCapsule trx;
@@ -1464,9 +1481,18 @@ public class Manager {
           continue;
         }
       } else {
-        if (iterator.hasNext()) {
-          fromPending = true;
-          trx = iterator.next();
+        if (pendingTransactions.size() > 0) {
+          trx = pendingTransactions.peek();
+          if (Args.getInstance().isOpenTransactionSort()) {
+            TransactionCapsule trxRepush = rePushTransactions.peek();
+            if (trxRepush == null || trx.getOrder() >= trxRepush.getOrder()) {
+              fromPending = true;
+            } else {
+              trx = rePushTransactions.poll();
+            }
+          } else {
+            fromPending = true;
+          }
         } else {
           trx = rePushTransactions.poll();
         }
@@ -1524,10 +1550,11 @@ public class Manager {
           transactionRetCapsule.addTransactionInfo(result);
         }
         if (fromPending) {
-          iterator.remove();
+          pendingTransactions.poll();
         }
       } catch (Exception e) {
-        logger.error("Process trx failed when generating block!", e);
+        logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
+            e.getMessage());
       }
     }
 
@@ -1739,31 +1766,45 @@ public class Manager {
           Transaction source = contractTrigger.getSource();
           Transaction dest = contractTrigger.getDest();
 
-          TriggerSmartContract sourceTrigger = source.getRawData().getContract(0).getParameter()
-              .unpack(TriggerSmartContract.class);
-          TriggerSmartContract destTrigger = dest.getRawData().getContract(0).getParameter()
-              .unpack(TriggerSmartContract.class);
+          TriggerSmartContract sourceTrigger = source.getRawData().getContract(0)
+                  .getParameter().unpack(TriggerSmartContract.class);
+          TriggerSmartContract destTrigger = dest.getRawData().getContract(0)
+                  .getParameter().unpack(TriggerSmartContract.class);
 
           if (transactionCapsule.isSource() && !Arrays
-              .equals(sourceTrigger.getOwnerAddress().toByteArray(), TransactionCapsule
-                  .getOwner(contract))) {
+              .equals(sourceTrigger.getOwnerAddress().toByteArray(),
+                      TransactionCapsule.getOwner(contract))) {
             throw new ValidateSignatureException(
                 "trigger source owner address not equals sign address");
           }
 
           // check source and dest contract data
           if (!Arrays.equals(source.getRawData().getData().toByteArray(),
-              dest.getRawData().getData().toByteArray())) {
+                  dest.getRawData().getData().toByteArray())) {
             throw new CrossContractConstructException("dest data must equal with source data");
           }
 
-          // todo: check proxy account
-
-          // todo: check source tx sign
+          // check proxy account
+          String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
+                  ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
+          String realProxyAccount = ByteArray.toHexString(
+                  destTrigger.getOwnerAddress().toByteArray());
+          ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
+          if (localChainId.equals(crossContract.getOwnerChainId())
+                  && !proxyAccount.equals(realProxyAccount)) {
+            throw new PermissionException(String.format(
+                    "cross transaction proxy account is not right, require: %s, actually: %s",
+                    proxyAccount, realProxyAccount));
+          }
 
           TransactionCapsule crossTriggerTx;
           if (transactionCapsule.isSource()) {
             crossTriggerTx = new TransactionCapsule(source);
+            // check source tx sign
+            if (!crossTriggerTx.validateSignature(chainBaseManager.getAccountStore(),
+                    chainBaseManager.getDynamicPropertiesStore())) {
+              throw new ValidateSignatureException("cross transaction signature validate failed");
+            }
           } else {
             crossTriggerTx = new TransactionCapsule(dest);
             // set the fee payer when transaction is dest
@@ -1801,22 +1842,6 @@ public class Manager {
       }
     }
     return result;
-  }
-
-  private byte[] buildDestData(TriggerSmartContract source, TriggerSmartContract dest,
-      Result.contractResult sourceResult) {
-    /*byte[] sourceData = source.getData().toByteArray();
-    byte[] destData = dest.getData().toByteArray();
-    byte[] result = new byte[destData.length + sourceData.length + 64 + 64];
-    //set contract data
-    System.arraycopy(sourceData, 0, destData, 0, sourceData.length);
-    byte[] contractAddress = source.getContractAddress().toByteArray();
-    System.arraycopy(contractAddress, 0, destData, sourceData.length, contractAddress.length);
-    byte[] txResult = Hex.decode(sourceResult.name());
-    System.arraycopy(txResult, 0, destData, sourceData.length + contractAddress.length,
-        txResult.length);
-    return result;*/
-    return source.getData().toByteArray();
   }
 
   private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx) {
@@ -2262,8 +2287,8 @@ public class Manager {
         if (parentBlockHash.isEmpty()) {
           throw new Exception("No parentBlockHash!");
         }
-        if (crossChainInfo.getParentBlockHash().toByteArray().length != ActuatorConstant
-            .CHAIN_ID_LENGTH) {
+        if (crossChainInfo.getParentBlockHash().toByteArray().length
+                != ActuatorConstant.CHAIN_ID_LENGTH) {
           throw new Exception("Invalid parentBlockHash!");
         }
       } catch (Exception e) {
@@ -2306,9 +2331,49 @@ public class Manager {
         builder.setData(pbftMsgRaw.toByteString());
         commonDataBase.saveSRL(chainId, epoch, builder.build());
         commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
+        int agreeNodeCount = crossChainInfo.getSrListList().size() * 2 / 3 + 1;
+        commonDataBase.saveAgreeNodeCount(chainId, agreeNodeCount);
       } catch (Exception e) {
         logger.error("chain {} get the whitelist information failed!", chainId, e);
       }
     });
+  }
+
+  public TransactionCapsule getTxFromPending(String txId) {
+    AtomicReference<TransactionCapsule> transactionCapsule = new AtomicReference<>();
+    Sha256Hash txHash = Sha256Hash.wrap(ByteArray.fromHexString(txId));
+    pendingTransactions.forEach(tx -> {
+      if (tx.getTransactionId().equals(txHash)) {
+        transactionCapsule.set(tx);
+        return;
+      }
+    });
+    if (transactionCapsule.get() != null) {
+      return transactionCapsule.get();
+    }
+    rePushTransactions.forEach(tx -> {
+      if (tx.getTransactionId().equals(txHash)) {
+        transactionCapsule.set(tx);
+        return;
+      }
+    });
+    return transactionCapsule.get();
+  }
+
+  public Collection<String> getTxListFromPending() {
+    Set<String> result = new HashSet<>();
+    pendingTransactions.forEach(tx -> {
+      result.add(tx.getTransactionId().toString());
+    });
+    rePushTransactions.forEach(tx -> {
+      result.add(tx.getTransactionId().toString());
+    });
+    return result;
+  }
+
+  public long getPendingSize() {
+    long value = getPendingTransactions().size() + getRePushTransactions().size()
+        + getPoppedTransactions().size();
+    return value;
   }
 }

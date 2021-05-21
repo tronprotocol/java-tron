@@ -243,7 +243,7 @@ public class ProposalService extends ProposalUtil {
           break;
         }
 
-        case CROSS_CHAIN: {
+        case ALLOW_CROSS_CHAIN: {
           manager.getDynamicPropertiesStore().saveCrossChain(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(54);
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(55);
@@ -255,7 +255,7 @@ public class ProposalService extends ProposalUtil {
         case AUCTION_CONFIG: {
           //check duplicate round config
           boolean duplicateConfig = manager.getChainBaseManager()
-              .checkAuctionConfigExist(entry.getValue());
+                  .checkAuctionConfigExist(entry.getValue());
           if (!duplicateConfig) {
             manager.getDynamicPropertiesStore().saveAuctionConfig(entry.getValue());
           } else {
@@ -267,6 +267,15 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMinAuctionVoteCount(entry.getValue());
           break;
         }
+        case ALLOW_NEW_RESOURCE_MODEL: {
+          manager.getDynamicPropertiesStore().saveAllowNewResourceModel(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_FREEZE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
+          break;
+        }
+
         default:
           find = false;
           break;
