@@ -40,10 +40,13 @@ public class PbftMessageAction {
         long blockNum = message.getNumber();
         SnapshotManager.allowCrossChain = chainBaseManager
             .getDynamicPropertiesStore().allowCrossChain();
-        long latestBlockNumOnDisk = Optional.ofNullable(blockStore.getLatestBlockFromDisk(1).get(0))
-            .map(BlockCapsule::getNum).orElse(0L);
-        revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
-            chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+          long latestBlockNumOnDisk = Optional.ofNullable(
+                  blockStore.getLatestBlockFromDisk(1).get(0))
+                  .map(BlockCapsule::getNum).orElse(0L);
+          revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
+                  chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        }
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
         chainBaseManager.getPbftSignDataStore()
