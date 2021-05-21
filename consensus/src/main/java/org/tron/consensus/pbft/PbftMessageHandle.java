@@ -80,9 +80,9 @@ public class PbftMessageHandle {
     start();
   }
 
-  public List<Miner> getSrMinerList() {
+  public List<Miner> getSrMinerList(List<ByteString> signSrList) {
     return Param.getInstance().getMiners().stream()
-        .filter(miner -> chainBaseManager.getWitnesses().contains(miner.getWitnessAddress()))
+        .filter(miner -> signSrList.contains(miner.getWitnessAddress()))
         .collect(Collectors.toList());
   }
 
@@ -107,7 +107,8 @@ public class PbftMessageHandle {
     if (!checkIsCanSendMsg(message)) {
       return;
     }
-    for (Miner miner : getSrMinerList()) {
+    List<ByteString> signSrList = witnesssList(message);
+    for (Miner miner : getSrMinerList(signSrList)) {
       PbftMessage paMessage = message.buildPrePareMessage(miner);
       forwardMessage(paMessage);
       try {
@@ -151,7 +152,8 @@ public class PbftMessageHandle {
       if (agCou >= Param.getInstance().getAgreeNodeCount()) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
-        for (Miner miner : getSrMinerList()) {
+        List<ByteString> signSrList = witnesssList(message);
+        for (Miner miner : getSrMinerList(signSrList)) {
           PbftMessage cmMessage = message.buildCommitMessage(miner);
           doneMsg.put(message.getNo(), cmMessage);
           forwardMessage(cmMessage);
@@ -204,6 +206,21 @@ public class PbftMessageHandle {
 
   public void onChangeView(PbftBaseMessage message) {
 
+  }
+
+  public List<ByteString> witnesssList(PbftBaseMessage msg) {
+    long epoch = msg.getPbftMessage().getRawData().getEpoch();
+    List<ByteString> witnessList;
+    if (msg.getDataType() == DataType.SRL) {
+      witnessList = maintenanceManager.getBeforeWitness();
+    } else {
+      if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
+        witnessList = maintenanceManager.getCurrentWitness();
+      } else {
+        witnessList = maintenanceManager.getBeforeWitness();
+      }
+    }
+    return witnessList;
   }
 
   public void forwardMessage(PbftBaseMessage message) {

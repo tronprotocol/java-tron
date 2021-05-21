@@ -1,7 +1,6 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.common.utils.WalletUtil.getAddressStringList;
-import static org.tron.core.Constant.ONE_YEAR_MS;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -65,6 +64,7 @@ public class MaintenanceManager {
 
   public void init() {
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
+    beforeWitness.addAll(currentWitness);
   }
 
   public void applyBlock(BlockCapsule blockCapsule) {
@@ -83,7 +83,7 @@ public class MaintenanceManager {
       if (blockNum != 1) {
         //pbft sr msg
         pbftManager.srPrePrepare(blockCapsule, currentWitness,
-            consensusDelegate.getNextMaintenanceTime());
+            consensusDelegate.getNextMaintenanceTime(), beforeWitness);
       }
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
@@ -91,7 +91,11 @@ public class MaintenanceManager {
     if (blockNum == 1) {
       nextMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
     }
-    pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime);
+    if (flag) {
+      pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime, beforeWitness);
+    } else {
+      pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime, currentWitness);
+    }
   }
 
   private void updateWitnessValue(List<ByteString> srList) {
@@ -172,16 +176,17 @@ public class MaintenanceManager {
     auctionRoundList.forEach(value -> {
       CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
       if (roundInfo != null && roundInfo.getRound() > 0
-              && (roundInfo.getEndTime() * 1000) <= currentBlockHeaderTimestamp) {
+          && (roundInfo.getEndTime() * 1000) <= currentBlockHeaderTimestamp) {
         CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
-        if (currentBlockHeaderTimestamp <= (roundInfo.getEndTime() + roundInfo.getDuration() * 86400) * 1000) {
+        if (currentBlockHeaderTimestamp
+            <= (roundInfo.getEndTime() + roundInfo.getDuration() * 86400) * 1000) {
           if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
             // set parachains
             List<Pair<String, Long>> eligibleChainLists =
-                    crossRevokingStore.getEligibleChainLists(roundInfo.getRound(),
-                            roundInfo.getSlotCount(), minAuctionVoteCount);
+                crossRevokingStore.getEligibleChainLists(roundInfo.getRound(),
+                    roundInfo.getSlotCount(), minAuctionVoteCount);
             List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
-                    .collect(Collectors.toList());
+                .collect(Collectors.toList());
             crossRevokingStore.updateParaChains(roundInfo.getRound(), chainIds);
             crossRevokingStore.updateParaChainsHistory(chainIds);
 
@@ -210,12 +215,12 @@ public class MaintenanceManager {
           return;
         }
         commonDataBase.saveProxyAddress(chainId,
-                ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
+            ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
         commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
             ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
         commonDataBase.saveChainMaintenanceTimeInterval(chainId,
-                crossChainInfo.getMaintenanceTimeInterval());
+            crossChainInfo.getMaintenanceTimeInterval());
         long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
         long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
         if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {
