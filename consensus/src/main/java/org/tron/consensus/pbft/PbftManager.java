@@ -7,9 +7,9 @@ import java.util.concurrent.Executors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
@@ -49,8 +49,9 @@ public class PbftManager {
       return;
     }
     if (!pbftMessageHandle.isSyncing()) {
-      if (Param.getInstance().isEnable()) {
-        for (Miner miner : pbftMessageHandle.getSrMinerList(signSrList)) {
+      List<Miner> minerList = pbftMessageHandle.getSrMinerList(signSrList);
+      if (CollectionUtils.isNotEmpty(minerList)) {
+        for (Miner miner : minerList) {
           doAction(PbftMessage.prePrepareBlockMsg(block, epoch, miner));
         }
       } else {
@@ -65,8 +66,9 @@ public class PbftManager {
       return;
     }
     if (!pbftMessageHandle.isSyncing()) {
-      if (Param.getInstance().isEnable()) {
-        for (Miner miner : pbftMessageHandle.getSrMinerList(signSrList)) {
+      List<Miner> minerList = pbftMessageHandle.getSrMinerList(signSrList);
+      if (CollectionUtils.isNotEmpty(minerList)) {
+        for (Miner miner : minerList) {
           doAction(PbftMessage.prePrepareSRLMsg(block, currentWitness, epoch, miner));
         }
       } else {
