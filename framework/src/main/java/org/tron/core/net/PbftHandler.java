@@ -13,12 +13,15 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Component
 @Scope("prototype")
@@ -39,6 +42,12 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
   @Autowired
   private SyncPool syncPool;
 
+  @Autowired
+  private ConsensusDelegate consensusDelegate;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, PbftMessage msg) throws Exception {
     msgQueue.receivedMessage(msg);
@@ -50,10 +59,10 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
     Lock lock = striped.get(key);
     try {
       lock.lock();
-      if (msgCache.getIfPresent(key) != null) {
+      if (msgCache.getIfPresent(key) != null || !verifyMsgEnable(msg)) {
         return;
       }
-      if (!pbftManager.verifyMsg(msg)) {
+      if (!nextTimesVerifyMsgSign(msg) && !pbftManager.verifyMsgSign(msg)) {
         throw new P2pException(P2pException.TypeEnum.BAD_MESSAGE, msg.toString());
       }
       msgCache.put(key, true);
@@ -63,6 +72,33 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
       lock.unlock();
     }
 
+  }
+
+  private boolean verifyMsgEnable(PbftMessage msg) {
+    long viewN = msg.getNumber();
+    if (msg.getDataType() == DataType.BLOCK
+        && viewN >= consensusDelegate.getLatestBlockHeaderNumber() + 10) {
+      return false;
+    }
+    if (msg.getDataType() == DataType.SRL && viewN > consensusDelegate
+        .getNextMaintenanceTime() + chainBaseManager.getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval()) {
+      return false;
+    }
+    return true;
+  }
+
+  private boolean nextTimesVerifyMsgSign(PbftMessage msg) {
+    long viewN = msg.getNumber();
+    if (msg.getDataType() == DataType.BLOCK
+        && viewN > consensusDelegate.getLatestBlockHeaderNumber()) {
+      return true;
+    }
+    if (msg.getDataType() == DataType.SRL && viewN > consensusDelegate
+        .getNextMaintenanceTime()) {
+      return true;
+    }
+    return false;
   }
 
   public void forwardMessage(PbftBaseMessage message) {

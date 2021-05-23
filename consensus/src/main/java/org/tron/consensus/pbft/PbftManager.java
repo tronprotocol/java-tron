@@ -109,9 +109,8 @@ public class PbftManager {
     return true;
   }
 
-  public boolean verifyMsg(PbftBaseMessage msg) {
-    List<ByteString> witnessList = pbftMessageHandle.witnesssList(msg);
-    return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
+  public boolean verifyMsgSign(PbftBaseMessage msg) {
+    return pbftMessageHandle.verifyMsgSign(msg);
   }
 
 }

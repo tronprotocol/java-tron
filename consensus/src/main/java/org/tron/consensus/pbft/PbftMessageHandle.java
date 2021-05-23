@@ -231,7 +231,12 @@ public class PbftMessageHandle {
     for (Entry<String, PbftMessage> entry : pareMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         pareMsgCache.invalidate(entry.getKey());
-        onPrepare(entry.getValue());
+        if (verifyMsgSign(entry.getValue())) {
+          onPrepare(entry.getValue());
+        } else {
+          logger.error("[prepare]verify {}, {} pbft msg sign fail!", entry.getKey(),
+              entry.getValue().getDataType());
+        }
       }
     }
   }
@@ -240,9 +245,18 @@ public class PbftMessageHandle {
     for (Entry<String, PbftMessage> entry : commitMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         commitMsgCache.invalidate(entry.getKey());
-        onCommit(entry.getValue());
+        if (verifyMsgSign(entry.getValue())) {
+          onCommit(entry.getValue());
+        } else {
+          logger.error("[commit]verify {}, {} pbft msg sign fail!", entry.getKey(),
+              entry.getValue().getDataType());
+        }
       }
     }
+  }
+
+  public boolean verifyMsgSign(PbftBaseMessage msg) {
+    return witnesssList(msg).contains(ByteString.copyFrom(msg.getPublicKey()));
   }
 
   public boolean checkIsCanSendMsg(PbftMessage msg) {
