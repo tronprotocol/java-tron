@@ -264,13 +264,7 @@ public class PbftMessageHandle {
       return false;
     }
     ByteString publicKey = Param.getInstance().getMiner().getPrivateKeyAddress();
-    List<ByteString> compareList;
-    long epoch = msg.getPbftMessage().getRawData().getEpoch();
-    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
-      compareList = maintenanceManager.getCurrentWitness();
-    } else {
-      compareList = maintenanceManager.getBeforeWitness();
-    }
+    List<ByteString> compareList = witnesssList(msg);
     if (!compareList.contains(publicKey)) {
       return false;
     }

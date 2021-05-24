@@ -80,8 +80,17 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
         && viewN >= consensusDelegate.getLatestBlockHeaderNumber() + 10) {
       return false;
     }
+    if (msg.getDataType() == DataType.BLOCK
+        && viewN < consensusDelegate.getLatestBlockHeaderNumber() - 10) {
+      return false;
+    }
     if (msg.getDataType() == DataType.SRL && viewN > consensusDelegate
         .getNextMaintenanceTime() + chainBaseManager.getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval()) {
+      return false;
+    }
+    if (msg.getDataType() == DataType.SRL && viewN < consensusDelegate
+        .getNextMaintenanceTime() - chainBaseManager.getDynamicPropertiesStore()
         .getMaintenanceTimeInterval()) {
       return false;
     }
