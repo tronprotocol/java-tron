@@ -499,7 +499,7 @@ public class ProposalUtil {
         Long endTime = AuctionConfigParser.getAuctionEndTime(value);
         if (endTime * 1000 < System.currentTimeMillis()) {
           throw new ContractValidateException(
-              "Bad AUCTION_CONFIG parameter value, value must greater than current timestamp.");
+              "Parameter configuration error, endTime must be 10 bits long and should be greater than current timestamp");
         }
 //        if (value > MAX_TIMESTAMP) {
 //          throw new ContractValidateException(
