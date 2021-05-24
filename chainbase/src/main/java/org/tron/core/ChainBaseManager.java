@@ -434,7 +434,7 @@ public class ChainBaseManager {
     CrossChain.AuctionRoundContract newAuctionInfo = AuctionConfigParser.parseAuctionConfig(auctionConfig);
     for (Long value : auctionRoundList) {
       CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
-      if (roundInfo == null || roundInfo.getRound() <= 0) {
+      if (roundInfo == null || roundInfo.getRound() < 0) {
         continue;
       }
       // duplicated round auction config
