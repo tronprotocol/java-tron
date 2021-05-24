@@ -1020,6 +1020,11 @@ public class Wallet {
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getBurnedForRegisterCross")
+            .setValue(dbManager.getDynamicPropertiesStore().getBurnedForRegisterCross())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowNewResourceModel")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
         .build());

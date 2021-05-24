@@ -267,6 +267,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveMinAuctionVoteCount(entry.getValue());
           break;
         }
+        case BURNED_FOR_REGISTER_CROSS: {
+          manager.getDynamicPropertiesStore().saveBurnedForRegisterCross(entry.getValue());
+          break;
+        }
         case ALLOW_NEW_RESOURCE_MODEL: {
           manager.getDynamicPropertiesStore().saveAllowNewResourceModel(entry.getValue());
           break;
