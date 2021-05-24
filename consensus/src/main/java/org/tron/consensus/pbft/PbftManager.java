@@ -7,9 +7,9 @@ import java.util.concurrent.Executors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
@@ -44,13 +44,14 @@ public class PbftManager {
     executorService.shutdown();
   }
 
-  public void blockPrePrepare(BlockCapsule block, long epoch) {
+  public void blockPrePrepare(BlockCapsule block, long epoch, List<ByteString> signSrList) {
     if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
       return;
     }
     if (!pbftMessageHandle.isSyncing()) {
-      if (Param.getInstance().isEnable()) {
-        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
+      List<Miner> minerList = pbftMessageHandle.getSrMinerList(signSrList);
+      if (CollectionUtils.isNotEmpty(minerList)) {
+        for (Miner miner : minerList) {
           doAction(PbftMessage.prePrepareBlockMsg(block, epoch, miner));
         }
       } else {
@@ -59,13 +60,15 @@ public class PbftManager {
     }
   }
 
-  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long epoch) {
+  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long epoch,
+      List<ByteString> signSrList) {
     if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
       return;
     }
     if (!pbftMessageHandle.isSyncing()) {
-      if (Param.getInstance().isEnable()) {
-        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
+      List<Miner> minerList = pbftMessageHandle.getSrMinerList(signSrList);
+      if (CollectionUtils.isNotEmpty(minerList)) {
+        for (Miner miner : minerList) {
           doAction(PbftMessage.prePrepareSRLMsg(block, currentWitness, epoch, miner));
         }
       } else {
@@ -106,15 +109,8 @@ public class PbftManager {
     return true;
   }
 
-  public boolean verifyMsg(PbftBaseMessage msg) {
-    long epoch = msg.getPbftMessage().getRawData().getEpoch();
-    List<ByteString> witnessList;
-    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
-      witnessList = maintenanceManager.getCurrentWitness();
-    } else {
-      witnessList = maintenanceManager.getBeforeWitness();
-    }
-    return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
+  public boolean verifyMsgSign(PbftBaseMessage msg) {
+    return pbftMessageHandle.verifyMsgSign(msg);
   }
 
 }
