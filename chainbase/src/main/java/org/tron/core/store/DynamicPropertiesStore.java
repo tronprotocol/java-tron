@@ -2013,9 +2013,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       return new BlockCapsule(this.get(LATEST_BLOCK_CAPSULE).getData());
     } catch (BadItemException | ItemNotFoundException e) {
-      logger.error("get latestBlockCapsule failed");
+      throw new IllegalArgumentException("get latestBlockCapsule failed");
     }
-    return null;
   }
 
   public void saveLatestBlockCapsule(BlockCapsule blockCapsule) {
