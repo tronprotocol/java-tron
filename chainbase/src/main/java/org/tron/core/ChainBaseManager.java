@@ -437,7 +437,7 @@ public class ChainBaseManager {
       if (roundInfo == null || roundInfo.getRound() <= 0) {
         continue;
       }
-      //exsit same round auction config
+      // duplicated round auction config
       if (roundInfo.getRound()==newAuctionInfo.getRound()) {
         result = true;
         break;
