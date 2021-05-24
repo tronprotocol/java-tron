@@ -496,11 +496,11 @@ public class ProposalUtil {
               "CrossChain is not activated, can not set auction config");
         }
         // check end_time value is a Timestamp and make sure the timestamp is greater than now()
-        Long endTime = AuctionConfigParser.getAuctionEndTime(value);
-        if (endTime * 1000 < System.currentTimeMillis()) {
-          throw new ContractValidateException(
-              "Parameter configuration error, endTime must be 10 bits long and should be greater than current timestamp");
-        }
+//        Long endTime = AuctionConfigParser.getAuctionEndTime(value);
+//        if (endTime * 1000 < dynamicPropertiesStore.getLatestBlockHeaderTimestamp()) {
+//          throw new ContractValidateException(
+//              "Parameter configuration error, endTime must be 10 bits long and should be greater than current timestamp");
+//        }
 //        if (value > MAX_TIMESTAMP) {
 //          throw new ContractValidateException(
 //                  "Bad AUCTION_END_TIME parameter value, value is too large.");
