@@ -131,6 +131,11 @@ public class PbftMessageHandle {
       pareMsgCache.put(key, message);
       return;
     }
+    if (!verifyMsgSign(message)) {
+      logger.error("[prepare]verify {}, {} pbft msg sign fail!", message.getKey(),
+          message.getDataType());
+      return;
+    }
     if (pareVoteMap.containsKey(key)) {
       //Explain that the vote has been voted and cannot be repeated
       if (!pareVoteMap.get(key).getPbftMessage().getRawData().getData()
@@ -174,6 +179,11 @@ public class PbftMessageHandle {
     if (!pareVoteMap.containsKey(key)) {
       //Must be prepared
       commitMsgCache.put(key, message);
+      return;
+    }
+    if (!verifyMsgSign(message)) {
+      logger.error("[commit]verify {}, {} pbft msg sign fail!", message.getKey(),
+          message.getDataType());
       return;
     }
     if (commitVoteMap.containsKey(key)) {
@@ -231,12 +241,7 @@ public class PbftMessageHandle {
     for (Entry<String, PbftMessage> entry : pareMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         pareMsgCache.invalidate(entry.getKey());
-        if (verifyMsgSign(entry.getValue())) {
-          onPrepare(entry.getValue());
-        } else {
-          logger.error("[prepare]verify {}, {} pbft msg sign fail!", entry.getKey(),
-              entry.getValue().getDataType());
-        }
+        onPrepare(entry.getValue());
       }
     }
   }
@@ -245,12 +250,7 @@ public class PbftMessageHandle {
     for (Entry<String, PbftMessage> entry : commitMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         commitMsgCache.invalidate(entry.getKey());
-        if (verifyMsgSign(entry.getValue())) {
-          onCommit(entry.getValue());
-        } else {
-          logger.error("[commit]verify {}, {} pbft msg sign fail!", entry.getKey(),
-              entry.getValue().getDataType());
-        }
+        onCommit(entry.getValue());
       }
     }
   }
@@ -264,13 +264,7 @@ public class PbftMessageHandle {
       return false;
     }
     ByteString publicKey = Param.getInstance().getMiner().getPrivateKeyAddress();
-    List<ByteString> compareList;
-    long epoch = msg.getPbftMessage().getRawData().getEpoch();
-    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
-      compareList = maintenanceManager.getCurrentWitness();
-    } else {
-      compareList = maintenanceManager.getBeforeWitness();
-    }
+    List<ByteString> compareList = witnesssList(msg);
     if (!compareList.contains(publicKey)) {
       return false;
     }
