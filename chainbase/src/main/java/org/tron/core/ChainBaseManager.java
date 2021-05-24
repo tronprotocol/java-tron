@@ -438,8 +438,7 @@ public class ChainBaseManager {
         continue;
       }
       //exsit same round auction config
-      if (roundInfo.getRound()==newAuctionInfo.getRound()&&
-          roundInfo.getEndTime()*1000>=System.currentTimeMillis()) {
+      if (roundInfo.getRound()==newAuctionInfo.getRound()) {
         result = true;
         break;
       }
