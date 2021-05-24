@@ -521,6 +521,20 @@ public class ProposalUtil {
         }
         break;
       }
+      case BURNED_FOR_REGISTER_CROSS: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_5_0)) {
+          throw new ContractValidateException("Bad chain parameter id [BURNED_FOR_REGISTER_CROSS]");
+        }
+        if (!dynamicPropertiesStore.allowCrossChain()) {
+          throw new ContractValidateException(
+                  "CrossChain is not activated, can not set BURNED_FOR_REGISTER_CROSS");
+        }
+        if (value < 0 || value > 1_000_000_000_000L) {
+          throw new ContractValidateException(
+                  "Bad BURNED_FOR_REGISTER_CROSS parameter value, valid range is [0,1_000_000_000_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -579,7 +593,8 @@ public class ProposalUtil {
 
     ALLOW_CROSS_CHAIN(54), // 0, 1
     AUCTION_CONFIG(55), //
-    MIN_AUCTION_VOTE_COUNT(56); // 0, [0, 10_000_000_000_000]
+    MIN_AUCTION_VOTE_COUNT(56), // 0, [0, 10_000_000_000_000]
+    BURNED_FOR_REGISTER_CROSS(57); // 0, [0, 1_000_000_000_000]
 
     private long code;
 

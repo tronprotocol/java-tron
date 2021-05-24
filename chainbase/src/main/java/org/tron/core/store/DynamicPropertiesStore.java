@@ -779,7 +779,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getBurnedForRegisterCross();
     } catch (IllegalArgumentException e) {
-      this.saveBurnedForRegisterCross();
+      this.saveBurnedForRegisterCross(100000000L);
     }
 
     try {
@@ -2340,8 +2340,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(() -> new IllegalArgumentException("not found BURNED_FOR_REGISTER_CROSS"));
   }
 
-  public void saveBurnedForRegisterCross() {
-    this.put(BURNED_FOR_REGISTER_CROSS, new BytesCapsule(ByteArray.fromLong(1000000L)));
+  public void saveBurnedForRegisterCross(long burn) {
+    this.put(BURNED_FOR_REGISTER_CROSS, new BytesCapsule(ByteArray.fromLong(burn)));
   }
 
   public boolean supportAllowNewResourceModel() {
