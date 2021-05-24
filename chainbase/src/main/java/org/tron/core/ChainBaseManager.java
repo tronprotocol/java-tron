@@ -3,7 +3,9 @@ package org.tron.core;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
+
 import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -428,9 +430,9 @@ public class ChainBaseManager {
   }
 
 
-  public  boolean checkAuctionConfigExist(Long auctionConfig){
-    boolean result =false;
-    List<Long> auctionRoundList =getDynamicPropertiesStore().listAuctionConfigs();
+  public boolean checkAuctionConfigExist(Long auctionConfig) {
+    boolean result = false;
+    List<Long> auctionRoundList = getDynamicPropertiesStore().listAuctionConfigs();
     CrossChain.AuctionRoundContract newAuctionInfo = AuctionConfigParser.parseAuctionConfig(auctionConfig);
     for (Long value : auctionRoundList) {
       CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
@@ -438,7 +440,7 @@ public class ChainBaseManager {
         continue;
       }
       // duplicated round auction config
-      if (roundInfo.getRound()==newAuctionInfo.getRound()) {
+      if (roundInfo.getRound() != 0 && roundInfo.getRound() == newAuctionInfo.getRound()) {
         result = true;
         break;
       }
