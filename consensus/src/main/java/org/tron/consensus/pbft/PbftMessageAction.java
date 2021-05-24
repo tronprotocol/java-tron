@@ -40,10 +40,13 @@ public class PbftMessageAction {
         long blockNum = message.getNumber();
         SnapshotManager.allowCrossChain = chainBaseManager
             .getDynamicPropertiesStore().allowCrossChain();
-        long latestBlockNumOnDisk = Optional.ofNullable(blockStore.getLatestBlockFromDisk(1).get(0))
-            .map(BlockCapsule::getNum).orElse(0L);
-        revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
-            chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+          long latestBlockNumOnDisk = Optional.ofNullable(
+                  blockStore.getLatestBlockFromDisk(1).get(0))
+                  .map(BlockCapsule::getNum).orElse(0L);
+          revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
+                  chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        }
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
         chainBaseManager.getPbftSignDataStore()
@@ -51,8 +54,11 @@ public class PbftMessageAction {
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockHash(raw.getData().toByteArray());
         logger.info("commit msg block num is:{}", blockNum);
 
-        eventBusService.postEvent(
-            new PbftBlockCommitEvent(blockNum, message.getPbftMessage().getRawData().getData()));
+        if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+          eventBusService.postEvent(
+                  new PbftBlockCommitEvent(blockNum,
+                          message.getPbftMessage().getRawData().getData()));
+        }
       }
       break;
       case SRL: {

@@ -53,7 +53,7 @@ public class CrossHeaderMsgProcess {
 
   private boolean go = true;
 
-  private static Set<PeerConnection> syncFailPeerSet = new HashSet<>();
+  private static Map<String, Set<PeerConnection>> syncFailPeerMap = new ConcurrentHashMap<>();
 
   private volatile Map<String, Long> latestMaintenanceTimeMap = new ConcurrentHashMap<>();
   private volatile Map<String, Boolean> syncDisabledMap = new ConcurrentHashMap<>();
@@ -191,7 +191,7 @@ public class CrossHeaderMsgProcess {
       }
       latestMaintenanceTimeMap.put(chainIdString, 0L);
     } else {
-      //todo
+      logger.warn("request num should be less than current num!");
     }
 
     String genesisBlockIdStr = ByteArray.toHexString(
@@ -212,7 +212,11 @@ public class CrossHeaderMsgProcess {
     }
     if (CollectionUtils.isEmpty(blockHeaders)) {
       //todo
-      syncFailPeerSet.add(peer);
+      if (!syncFailPeerMap.containsKey(chainIdStr)) {
+        Set<PeerConnection> syncFailPeerSet = new HashSet<>();
+        syncFailPeerMap.put(chainIdStr, syncFailPeerSet);
+      }
+      syncFailPeerMap.get(chainIdStr).add(peer);
       sendHeaderNumCache.invalidate(chainIdStr);
       return;
     }
@@ -320,7 +324,9 @@ public class CrossHeaderMsgProcess {
 
       PeerConnection peer = selectPeer(peerConnectionList);
       if (peer == null) {
-        syncFailPeerSet.clear();
+        if (syncFailPeerMap.containsKey(chainId)) {
+          syncFailPeerMap.get(chainId).clear();
+        }
         peer = selectPeer(peerConnectionList);
       }
       long nextMain = chainBaseManager.getCommonDataBase().getCrossNextMaintenanceTime(chainId);
@@ -337,7 +343,8 @@ public class CrossHeaderMsgProcess {
 
     private PeerConnection selectPeer(List<PeerConnection> peerConnectionList) {
       for (PeerConnection peer : peerConnectionList) {
-        if (!syncFailPeerSet.contains(peer)) {
+        if (!syncFailPeerMap.containsKey(chainId)
+                || !syncFailPeerMap.get(chainId).contains(peer)) {
           return peer;
         }
       }
