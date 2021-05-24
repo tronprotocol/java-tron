@@ -2018,7 +2018,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveLatestBlockCapsule(BlockCapsule blockCapsule) {
-    this.put(LATEST_BLOCK_CAPSULE, new BytesCapsule(blockCapsule.getData()));
+    if(blockCapsule != null){
+      this.put(LATEST_BLOCK_CAPSULE, new BytesCapsule(blockCapsule.getData()));
+    }
   }
 
   /**
