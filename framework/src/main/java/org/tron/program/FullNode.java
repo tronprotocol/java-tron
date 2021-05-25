@@ -19,7 +19,8 @@ import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
-import org.tron.core.services.jsonrpc.JsonRpcSocketService;
+import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
+import org.tron.core.services.jsonrpc.FullNodeJsonRpcStreamService;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -83,9 +84,13 @@ public class FullNode {
       appT.addService(httpApiService);
     }
 
-    // jsonrpc api server
-    JsonRpcSocketService jsonRpcSocketService1 = context.getBean(JsonRpcSocketService.class);
-    appT.addService(jsonRpcSocketService1);
+    // jsonrpc http server
+    FullNodeJsonRpcStreamService jsonRpcStreamService = context.getBean(FullNodeJsonRpcStreamService.class);
+    FullNodeJsonRpcHttpService jsonRpcHttpService = context.getBean(FullNodeJsonRpcHttpService.class);
+    if (CommonParameter.getInstance().fullNodeHttpEnable) {
+      appT.addService(jsonRpcStreamService);
+      appT.addService(jsonRpcHttpService);
+    }
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.

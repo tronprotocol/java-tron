@@ -7,19 +7,23 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import javax.net.ServerSocketFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.config.args.Args;
 
 @Component
-public class JsonRpcService implements Service {
+@Slf4j(topic = "API")
+public class FullNodeJsonRpcStreamService implements Service {
 
-  private int port = 50063;
+  private int port = 8099;
 
-  @Autowired
-  private AddService addService;
   private JsonRpcServer jsonRpcServer;
+  private TestService testService;
   private StreamServer streamServer;
 
   @Override
@@ -27,50 +31,43 @@ public class JsonRpcService implements Service {
   }
 
   @Override
-  public void init(CommonParameter parameter) {
+  public void init(CommonParameter args) {
   }
 
   @Override
   public void start() {
+    testService = new TestServiceImpl();
 
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
         this.getClass().getClassLoader(),
-        new Object[] {new AddService()},
-        new Class<?>[] {AddInterface.class}, //interface类名
+        new Object[] {testService},
+        new Class<?>[] {TestService.class},
         true);
+
     jsonRpcServer = new JsonRpcServer(compositeService);
-    jsonRpcServer.setContentType("application/json-rpc");
 
     // create the stream server
     int maxThreads = 50;
-
-    ServerSocket serverSocket = null;
+    ServerSocket serverSocket;
     try {
-      InetAddress bindAddress = InetAddress.getByName("localhost");
+      // serverSocket = new ServerSocket(port);
+      InetAddress bindAddress = InetAddress.getByName("127.0.0.1");
       serverSocket = ServerSocketFactory.getDefault().createServerSocket(port, 0, bindAddress);
-    } catch (IOException e) {
-      e.printStackTrace();
+    } catch (Exception e) {
+      return;
     }
     streamServer = new StreamServer(jsonRpcServer, maxThreads, serverSocket);
 
-    // start it, this method doesn't block
+// start it, this method doesn't block
     streamServer.start();
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down jsonrpc server on solidity since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** jsonrpc server on solidity shut down");
-    }));
   }
 
   @Override
   public void stop() {
-    if (streamServer != null) {
-      try {
-        streamServer.stop();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+    try {
+      streamServer.stop();
+    } catch (Exception e) {
+      logger.debug("IOException: {}", e.getMessage());
     }
   }
 }
