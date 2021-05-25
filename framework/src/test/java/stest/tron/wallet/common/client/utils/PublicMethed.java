@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,8 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.CrossChainVoteSummary;
+import org.tron.api.GrpcAPI.CrossChainVoteDetailList;
+import org.tron.api.GrpcAPI.CrossChainVotePaginated;
 import org.tron.api.GrpcAPI.CrossChainVoteSummaryList;
 import org.tron.api.GrpcAPI.CrossChainVoteSummaryPaginated;
 import org.tron.api.GrpcAPI.DecryptNotes;
@@ -57,7 +59,6 @@ import org.tron.api.GrpcAPI.Note;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.OvkDecryptParameters;
-import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ParaChainList;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
@@ -77,6 +78,7 @@ import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
@@ -110,11 +112,9 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContra
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 import org.tron.protos.contract.BalanceContract;
-import org.tron.protos.contract.BalanceContract.CrossChainInfoOrBuilder;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.CrossChainInfo;
 import org.tron.protos.contract.CrossChain;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
@@ -145,7 +145,6 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
-import stest.tron.wallet.dailybuild.crosschain.RegisterCrossChain;
 
 public class PublicMethed {
 
@@ -7435,6 +7434,76 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  public static String createTriggerContractForCross(String priKey) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+
+    return null;
+
+
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,ByteString tokenId,Integer precision,
+      Long amount,String tokenName,ByteString chainId,ByteString paraChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    BalanceContract.CrossToken crossToken = BalanceContract.CrossToken.newBuilder()
+        .setTokenId(tokenId)
+        .setAmount(amount)
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString(tokenName)))
+        .setPrecision(precision)
+        .setChainId(Sha256Hash.wrap(
+            chainId.toByteArray()).getByteString())
+        .build();
+
+
+    BalanceContract.CrossContract crossContract = BalanceContract.CrossContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ownerAddress))
+        .setOwnerChainId(Sha256Hash.wrap(
+            chainId.toByteArray()).getByteString())
+        .setToAddress(ByteString.copyFrom(toAddress))
+        .setToChainId(Sha256Hash.wrap(
+            paraChainId.toByteArray()).getByteString())
+        .setData(crossToken.toByteString())
+        .setType(BalanceContract.CrossContract.CrossDataType.TOKEN)
+        .build();
+
+    Protocol.Transaction.Builder transaction = Protocol.Transaction.newBuilder();
+    Protocol.Transaction.raw.Builder raw = Protocol.Transaction.raw.newBuilder();
+    Protocol.Transaction.Contract.Builder contract = Protocol.Transaction.Contract.newBuilder();
+    contract.setType(Protocol.Transaction.Contract.ContractType.CrossContract)
+        .setParameter(Any.pack(crossContract));
+    raw.addContract(contract.build());
+    transaction.setRawData(raw.build());
+
+
+    TransactionExtention transactionExtention = blockingStubFull.createCommonTransaction(transaction.build());
+    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+  }
+
+
+  /**
+   * constructor.
+   */
   public static Optional<CrossChainVoteSummaryList> getCrossChainVoteSummaryList(Integer round,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -7454,5 +7523,37 @@ public class PublicMethed {
     ParaChainList paraChainList = blockingStubFull.getParaChainList(request);
     return Optional.ofNullable(paraChainList);
   }
+
+  /**
+   * constructor.
+   */
+  public static Optional<CrossChainVoteDetailList> getCrossChainVoteDetailList(Integer round,ByteString paraChainId,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    CrossChainVotePaginated request = CrossChainVotePaginated.newBuilder()
+        .setLimit(10).setOffset(0).setRound(round).setChainId(paraChainId).build();
+
+    CrossChainVoteDetailList crossChainVoteDetailList = blockingStubFull.getCrossChainVoteDetailList(request);
+    return Optional.ofNullable(crossChainVoteDetailList);
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<String> getTransactionListFromTargetRange(Long startNum,Long endNum,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    List<String> transactionList = new ArrayList<>();
+    for(Long i = startNum;i <= endNum;i++) {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(i);
+      Block block = blockingStubFull.getBlockByNum(builder.build());
+      for(Transaction transaction : block.getTransactionsList()) {
+        transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
+            .isECKeyCryptoEngine(), transaction.getRawData().toByteArray())));
+      }
+    }
+    return transactionList;
+  }
+
 
 }

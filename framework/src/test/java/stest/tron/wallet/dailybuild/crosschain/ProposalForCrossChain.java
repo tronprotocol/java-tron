@@ -17,6 +17,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.CrossChainVoteDetailList;
 import org.tron.api.GrpcAPI.CrossChainVoteSummaryList;
 import org.tron.api.GrpcAPI.CrossChainVoteSummaryPaginated;
 import org.tron.api.GrpcAPI.EmptyMessage;
@@ -93,8 +94,8 @@ public class ProposalForCrossChain {
         .build();
     crossBlockingStubFull = WalletGrpc.newBlockingStub(crossChannelFull);
 
-    chainId = PublicMethed.getBlock(0,blockingStubFull ).getBlockHeader().getRawData().getParentHash();
-    crossChainId = PublicMethed.getBlock(0,crossBlockingStubFull).getBlockHeader().getRawData().getParentHash();
+    chainId = PublicMethed.getBlock(1,blockingStubFull ).getBlockHeader().getRawData().getParentHash();
+    crossChainId = PublicMethed.getBlock(1,crossBlockingStubFull).getBlockHeader().getRawData().getParentHash();
     parentHash = PublicMethed.getBlock(startSynBlockNum,blockingStubFull).getBlockHeader().getRawData().getParentHash();
     crossParentHash = PublicMethed.getBlock(startSynBlockNum,crossBlockingStubFull).getBlockHeader().getRawData().getParentHash();
     startSynTimeStamp = PublicMethed.getBlock(startSynBlockNum,blockingStubFull ).getBlockHeader().getRawData().getTimestamp();
@@ -148,7 +149,7 @@ public class ProposalForCrossChain {
   public void test02CreateProposalForGetAuctionConfig() {
     //Create proposal and approval it
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    String slotCount = "11";
+    String slotCount = "12";
     String endTime = String.valueOf(System.currentTimeMillis()/1000L + 300);
     logger.info("endTime:" + endTime);
     String duration = "111";
@@ -300,20 +301,39 @@ public class ProposalForCrossChain {
     Assert.assertEquals(beforeUpdateBalance - afterUpdateBalance,infoById.get().getFee());
   }
 
-  @Test(enabled = false,description = "Get cross chain vote summary list")
+  @Test(enabled = true,description = "Get cross chain vote summary list")
   public void test07GetCrossChainVoteSummaryList() throws InvalidProtocolBufferException {
     Optional<CrossChainVoteSummaryList> crossChainVoteSummaryList =  PublicMethed
-        .getCrossChainVoteSummaryList(Integer.valueOf(crossRound),blockingStubFull );
+        .getCrossChainVoteSummaryList(Integer.valueOf(crossRound),blockingStubFull);
     crossChainVoteSummaryList.get().getCrossChainVoteSummaryCount();
     Assert.assertTrue(crossChainVoteSummaryList.get().getCrossChainVoteSummaryCount() >= 1);
     Assert.assertEquals(crossChainVoteSummaryList.get().getCrossChainVoteSummary(0).getChainId(),crossChainId);
     Assert.assertEquals((Long)crossChainVoteSummaryList.get().getCrossChainVoteSummary(0).getAmount(),voteAmount);
-    int i = 0;
+
   }
 
   @Test(enabled = true,description = "Get cross chain parachain list")
-  public void test08GetCrossChainParachainList() throws InvalidProtocolBufferException {
-    Optional<ParaChainList> paraChainList = PublicMethed.getParaChainList(Integer.valueOf(crossRound),blockingStubFull);
+  public void test08GetCrossChainParachainList() throws Exception {
+    int waitTimes = 30;
+    Optional<ParaChainList> paraChainList = null;
+    while (waitTimes-- >= 0) {
+      paraChainList = PublicMethed.getParaChainList(Integer.valueOf(crossRound),blockingStubFull);
+      if (paraChainList.get().getParaChainIdsCount() != 0) {
+        break;
+      }
+      Thread.sleep(30000);
+    }
+
+    Assert.assertTrue(paraChainList.get().getParaChainIdsCount() >= 1);
+
+
+  }
+
+  @Test(enabled = true,description = "Get cross chain vote detail list")
+  public void test09GetCrossChainVoteDetailList() throws InvalidProtocolBufferException {
+    Optional<CrossChainVoteDetailList> crossChainVoteDetailList = PublicMethed.getCrossChainVoteDetailList(Integer.valueOf(crossRound),crossChainId,blockingStubFull);
+
+    Assert.assertTrue(crossChainVoteDetailList.get().getVoteCrossChainContractCount() >= 1);
     int i = 0;
 
 
