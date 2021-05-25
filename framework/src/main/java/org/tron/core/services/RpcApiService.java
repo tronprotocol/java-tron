@@ -2671,6 +2671,7 @@ public class RpcApiService implements Service {
       GrpcAPI.RegisterCrossChainList registerCrossList =
               wallet.getRegisterCrossList(request.getOffset(), request.getLimit());
       responseObserver.onNext(registerCrossList);
+      responseObserver.onCompleted();
     }
 
     @Override
@@ -2693,6 +2694,7 @@ public class RpcApiService implements Service {
               wallet.getCrossChainTotalVoteList(request.getOffset(), request.getLimit(),
                   request.getRound());
       responseObserver.onNext(crossTotalVoteList);
+      responseObserver.onCompleted();
     }
 
     @Override
@@ -2703,6 +2705,7 @@ public class RpcApiService implements Service {
           request.getOffset(),
               request.getLimit(), request.getChainId().toString(), request.getRound());
       responseObserver.onNext(voteCrossList);
+      responseObserver.onCompleted();
     }
 
     @Override
@@ -2710,6 +2713,7 @@ public class RpcApiService implements Service {
                                  StreamObserver<GrpcAPI.ParaChainList> responseObserver) {
       GrpcAPI.ParaChainList paraChainList = wallet.getParaChainList(request.getRound());
       responseObserver.onNext(paraChainList);
+      responseObserver.onCompleted();
     }
 
     public void getTransactionFromPending(BytesMessage request,
