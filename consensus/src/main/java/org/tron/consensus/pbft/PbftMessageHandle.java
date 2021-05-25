@@ -154,7 +154,7 @@ public class PbftMessageHandle {
     //The number of votes plus 1
     if (!doneMsg.containsKey(message.getNo())) {
       long agCou = agreePare.incrementAndGet(message.getDataKey());
-      if (agCou >= Param.getInstance().getAgreeNodeCount()) {
+      if (checkPbftConsensusNum(agCou)) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
         List<ByteString> signSrList = witnesssList(message);
@@ -200,7 +200,7 @@ public class PbftMessageHandle {
     long agCou = agreeCommit.incrementAndGet(message.getDataKey());
     dataSignCache.getUnchecked(message.getDataKey())
         .add(message.getPbftMessage().getSignature());
-    if (agCou >= Param.getInstance().getAgreeNodeCount()) {
+    if (checkPbftConsensusNum(agCou)) {
       srPbftMessage = null;
       remove(message.getNo());
       //commit,
@@ -332,5 +332,9 @@ public class PbftMessageHandle {
   @PreDestroy
   public void stop() {
     timer.cancel();
+  }
+
+  private boolean checkPbftConsensusNum(long agCount) {
+    return agCount >= Param.getInstance().getAgreeNodeCount() && agCount > 1;
   }
 }
