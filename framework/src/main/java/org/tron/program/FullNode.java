@@ -19,10 +19,11 @@ import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.core.services.jsonrpc.JsonRpcSocketService;
 
 @Slf4j(topic = "app")
 public class FullNode {
-  
+
   public static final int dbVersion = 2;
 
   public static void load(String path) {
@@ -81,6 +82,10 @@ public class FullNode {
     if (CommonParameter.getInstance().fullNodeHttpEnable) {
       appT.addService(httpApiService);
     }
+
+    // jsonrpc api server
+    JsonRpcSocketService jsonRpcSocketService1 = context.getBean(JsonRpcSocketService.class);
+    appT.addService(jsonRpcSocketService1);
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.
