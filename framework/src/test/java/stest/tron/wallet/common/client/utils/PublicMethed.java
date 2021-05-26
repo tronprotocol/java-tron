@@ -94,6 +94,7 @@ import org.tron.keystore.WalletFile;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Key;
@@ -129,6 +130,7 @@ import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
@@ -7282,260 +7284,7 @@ public class PublicMethed {
     return Optional.ofNullable(transaction);
   }
 
-  /**
-   * constructor.
-   */
-  public static String getTxidFromTransactionExtention(TransactionExtention transactionExtention,
-      ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
 
-    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
-      System.out.println("RPC create trx failed!");
-      if (transactionExtention != null) {
-        System.out.println("Code = " + transactionExtention.getResult().getCode());
-        System.out
-            .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
-      }
-      return null;
-    }
-
-    if (transactionExtention == null) {
-      return null;
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return null;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return null;
-    }
-    transaction = signTransaction(ecKey, transaction);
-    String txid = ByteArray.toHexString(Sha256Hash
-        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-            transaction.getRawData().toByteArray()));
-    System.out.println("txid = " + txid);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    if (response.getResult() == false) {
-      return null;
-    } else {
-      return txid;
-    }
-  }
-
-  /**
-   * constructor.
-   */
-  public static String registerCrossChainGetTxid(byte[] ownerAddress, byte[] proxyAddress,
-      ByteString chainId, List<ByteString> srList, Long beginSyncHeight, Long maintenanceTimeInterval,
-      ByteString parentBlockHash, Long blockTime, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    BalanceContract.CrossChainInfo.Builder build = BalanceContract.CrossChainInfo.newBuilder();
-    build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
-    build.setProxyAddress(ByteString.copyFrom(proxyAddress));
-    build.setChainId(chainId);
-    build.addAllSrList(srList);
-    build.setBeginSyncHeight(beginSyncHeight);
-    build.setMaintenanceTimeInterval(maintenanceTimeInterval);
-    build.setParentBlockHash(parentBlockHash);
-    build.setBlockTime(blockTime);
-    TransactionExtention transactionExtention = blockingStubFull.registerCrossChain(build.build());
-    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
-  }
-
-  /**
-   * constructor.
-   */
-  public static String updateCrossChainGetTxid(byte[] ownerAddress, byte[] proxyAddress,
-      ByteString chainId, List<ByteString> srList, Long beginSyncHeight, Long maintenanceTimeInterval,
-      String parentBlockHash, Long blockTime, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    BalanceContract.CrossChainInfo.Builder build = BalanceContract.CrossChainInfo.newBuilder();
-    build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
-    build.setProxyAddress(ByteString.copyFrom(proxyAddress));
-    build.setChainId(chainId);
-    build.addAllSrList(srList);
-    build.setBeginSyncHeight(beginSyncHeight);
-    build.setMaintenanceTimeInterval(maintenanceTimeInterval);
-    build.setParentBlockHash(ByteString.copyFrom(ByteArray.fromHexString(parentBlockHash)));
-    build.setBlockTime(blockTime);
-    TransactionExtention transactionExtention = blockingStubFull.updateCrossChain(build.build());
-    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
-  }
-
-
-  /**
-   * constructor.
-   */
-  public static String voteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId, Long amount,
-      Integer round,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    CrossChain.VoteCrossChainContract.Builder build =
-        CrossChain.VoteCrossChainContract.newBuilder();
-    build.setAmount(amount);
-    build.setChainId(chainId);
-    build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
-    build.setRound(round);
-    TransactionExtention transactionExtention = blockingStubFull.voteCrossChain(build.build());
-    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
-  }
-
-  /**
-   * constructor.
-   */
-  public static String unVoteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId,
-      Integer round,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    CrossChain.UnvoteCrossChainContract.Builder build =
-        CrossChain.UnvoteCrossChainContract.newBuilder();
-    build.setChainId(chainId);
-    build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
-    build.setRound(round);
-    TransactionExtention transactionExtention = blockingStubFull.unvoteCrossChain(build.build());
-    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
-  }
-
-  /**
-   * constructor.
-   */
-  public static String createTriggerContractForCross(String priKey) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-
-
-    return null;
-
-
-  }
-
-
-  /**
-   * constructor.
-   */
-  public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,ByteString tokenId,Integer precision,
-      Long amount,String tokenName,ByteString chainId,ByteString paraChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    BalanceContract.CrossToken crossToken = BalanceContract.CrossToken.newBuilder()
-        .setTokenId(tokenId)
-        .setAmount(amount)
-        .setTokenName(ByteString.copyFrom(ByteArray.fromString(tokenName)))
-        .setPrecision(precision)
-        .setChainId(Sha256Hash.wrap(
-            chainId.toByteArray()).getByteString())
-        .build();
-
-
-    BalanceContract.CrossContract crossContract = BalanceContract.CrossContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ownerAddress))
-        .setOwnerChainId(Sha256Hash.wrap(
-            chainId.toByteArray()).getByteString())
-        .setToAddress(ByteString.copyFrom(toAddress))
-        .setToChainId(Sha256Hash.wrap(
-            paraChainId.toByteArray()).getByteString())
-        .setData(crossToken.toByteString())
-        .setType(BalanceContract.CrossContract.CrossDataType.TOKEN)
-        .build();
-
-    Protocol.Transaction.Builder transaction = Protocol.Transaction.newBuilder();
-    Protocol.Transaction.raw.Builder raw = Protocol.Transaction.raw.newBuilder();
-    Protocol.Transaction.Contract.Builder contract = Protocol.Transaction.Contract.newBuilder();
-    contract.setType(Protocol.Transaction.Contract.ContractType.CrossContract)
-        .setParameter(Any.pack(crossContract));
-    raw.addContract(contract.build());
-    transaction.setRawData(raw.build());
-
-
-    TransactionExtention transactionExtention = blockingStubFull.createCommonTransaction(transaction.build());
-    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
-  }
-
-
-  /**
-   * constructor.
-   */
-  public static Optional<CrossChainVoteSummaryList> getCrossChainVoteSummaryList(Integer round,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    CrossChainVoteSummaryPaginated request = CrossChainVoteSummaryPaginated.newBuilder()
-        .setLimit(10).setOffset(0).setRound(round).build();
-    CrossChainVoteSummaryList crossChainVoteSummaryList = blockingStubFull.getCrossChainVoteSummaryList(request);
-    return Optional.ofNullable(crossChainVoteSummaryList);
-  }
-
-  /**
-   * constructor.
-   */
-  public static Optional<ParaChainList> getParaChainList(Integer round,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    RoundMessage request = RoundMessage.newBuilder().setRound(round).build();
-    ParaChainList paraChainList = blockingStubFull.getParaChainList(request);
-    return Optional.ofNullable(paraChainList);
-  }
-
-  /**
-   * constructor.
-   */
-  public static Optional<CrossChainVoteDetailList> getCrossChainVoteDetailList(Integer round,ByteString paraChainId,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    CrossChainVotePaginated request = CrossChainVotePaginated.newBuilder()
-        .setLimit(10).setOffset(0).setRound(round).setChainId(paraChainId).build();
-
-    CrossChainVoteDetailList crossChainVoteDetailList = blockingStubFull.getCrossChainVoteDetailList(request);
-    return Optional.ofNullable(crossChainVoteDetailList);
-  }
 
   /**
    * constructor.
@@ -7550,6 +7299,26 @@ public class PublicMethed {
       for(Transaction transaction : block.getTransactionsList()) {
         transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
             .isECKeyCryptoEngine(), transaction.getRawData().toByteArray())));
+      }
+    }
+    return transactionList;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static List<String> getCrossTransactionListFromTargetRange(Long startNum,Long endNum,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    List<String> transactionList = new ArrayList<>();
+    for(Long i = startNum;i <= endNum;i++) {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(i);
+      Block block = blockingStubFull.getBlockByNum(builder.build());
+
+      for(CrossMessage crossMessage : block.getCrossMessageList()) {
+        transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
+            .isECKeyCryptoEngine(), crossMessage.getTransaction().getRawData().toByteArray())));
       }
     }
     return transactionList;

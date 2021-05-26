@@ -40,79 +40,15 @@ import org.tron.protos.contract.CrossChain.UnvoteCrossChainContract;
 import org.tron.protos.contract.CrossChain.VoteCrossChainContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.CrossChainBase;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 
 @Slf4j
-public class ProposalForCrossChain {
-
-  private final String foundationKey = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
-  private final byte[] foundationAddress = PublicMethed.getFinalAddress(foundationKey);
-  private final String witnessKey001 = Configuration.getByPath("testng.conf")
-      .getString("witness.key1");
-  private final String witnessKey002 = Configuration.getByPath("testng.conf")
-      .getString("witness.key2");
-  private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
-  private final byte[] witness002Address = PublicMethed.getFinalAddress(witnessKey002);
-  private ManagedChannel channelFull = null;
-  private ManagedChannel crossChannelFull = null;
-  private ManagedChannel channelSolidity = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private WalletGrpc.WalletBlockingStub crossBlockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-  private String crossFullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(1);
-  private ByteString chainId;
-  private ByteString crossChainId;
-  private ByteString parentHash;
-  private ByteString crossParentHash;
-  private Long voteAmount = 110000000L;
-  private String round ="1";
-  private String crossRound ="2";
-  private Long startSynBlockNum = 10L;
-  private Long startSynTimeStamp;
-  private Long crossStartSynTimeStamp;
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] registerAccountAddress = ecKey1.getAddress();
-  String registerAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  /**
-   * constructor.
-   */
-
-  @BeforeClass
-  public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-    crossChannelFull = ManagedChannelBuilder.forTarget(crossFullnode)
-        .usePlaintext(true)
-        .build();
-    crossBlockingStubFull = WalletGrpc.newBlockingStub(crossChannelFull);
-
-    chainId = PublicMethed.getBlock(1,blockingStubFull ).getBlockHeader().getRawData().getParentHash();
-    crossChainId = PublicMethed.getBlock(1,crossBlockingStubFull).getBlockHeader().getRawData().getParentHash();
-    parentHash = PublicMethed.getBlock(startSynBlockNum,blockingStubFull).getBlockHeader().getRawData().getParentHash();
-    crossParentHash = PublicMethed.getBlock(startSynBlockNum,crossBlockingStubFull).getBlockHeader().getRawData().getParentHash();
-    startSynTimeStamp = PublicMethed.getBlock(startSynBlockNum,blockingStubFull ).getBlockHeader().getRawData().getTimestamp();
-    crossStartSynTimeStamp = PublicMethed.getBlock(startSynBlockNum,crossBlockingStubFull).getBlockHeader().getRawData().getTimestamp();
-
-    registerAccountKey = "7400E3D0727F8A61041A8E8BF86599FE5597CE19DE451E59AED07D60967A5E25";
-    registerAccountAddress = PublicMethed.getFinalAddress(registerAccountKey);
-  }
+public class ProposalForCrossChain extends CrossChainBase {
 
   @Test(enabled = true,description = "Create proposal for cross chain")
   public void test01CreateProposalForGetAllowCrossChain() {
-    PublicMethed.sendcoin(witness001Address, 5000000L,
-        foundationAddress, foundationKey, blockingStubFull);
-    PublicMethed.sendcoin(witness002Address, 5000000L,
-        foundationAddress, foundationKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     //Create proposal for first chain
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(54L, 1L);
@@ -194,13 +130,13 @@ public class ProposalForCrossChain {
     List<ByteString> srList = new ArrayList<>();
     srList.add(ByteString.copyFrom(witness001Address));
     srList.add(ByteString.copyFrom(witness002Address));
-    String txid = PublicMethed.registerCrossChainGetTxid(registerAccountAddress, registerAccountAddress,
-        crossChainId,srList,startSynBlockNum,30000L,
+    String txid = RegisterCrossChainGetTxid(registerAccountAddress, registerAccountAddress,
+        crossChainId,srList,startSynBlockNum,300000L,
         crossParentHash,crossStartSynTimeStamp,registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String txid1 = PublicMethed.registerCrossChainGetTxid(registerAccountAddress, registerAccountAddress,
-        crossChainId,srList,startSynBlockNum,30000L,
+    String txid1 = RegisterCrossChainGetTxid(registerAccountAddress, registerAccountAddress,
+        crossChainId,srList,startSynBlockNum,300000L,
         crossParentHash,crossStartSynTimeStamp,registerAccountKey,blockingStubFull);
     Assert.assertEquals(txid1, null);
 
@@ -214,19 +150,19 @@ public class ProposalForCrossChain {
     Assert.assertEquals(registerCrossChain.getParentBlockHash(),crossParentHash);
     Assert.assertEquals(registerCrossChain.getSrListList(),srList);
     Assert.assertEquals((Long)registerCrossChain.getBeginSyncHeight(),startSynBlockNum );
-    Assert.assertEquals(registerCrossChain.getMaintenanceTimeInterval(),30000L );
+    Assert.assertEquals(registerCrossChain.getMaintenanceTimeInterval(),300000L );
     Assert.assertEquals((Long)registerCrossChain.getBlockTime(), crossStartSynTimeStamp);
 
 
-    PublicMethed.registerCrossChainGetTxid(registerAccountAddress, registerAccountAddress,
-        chainId,srList,startSynBlockNum,30000L,parentHash
+    RegisterCrossChainGetTxid(registerAccountAddress, registerAccountAddress,
+        chainId,srList,startSynBlockNum,300000L,parentHash
         ,startSynTimeStamp,registerAccountKey,crossBlockingStubFull);
   }
 
   @Test(enabled = true,description = "Vote cross chain")
   public void test04VoteCrossChain() throws InvalidProtocolBufferException {
     Long beforeVoteBalance = PublicMethed.queryAccount(registerAccountKey,blockingStubFull ).getBalance();
-    String txid = PublicMethed.voteCrossChainGetTxid(registerAccountAddress, crossChainId,
+    String txid = VoteCrossChainGetTxid(registerAccountAddress, crossChainId,
         voteAmount,Integer.valueOf(crossRound), registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterVoteBalance = PublicMethed.queryAccount(registerAccountKey,blockingStubFull ).getBalance();
@@ -242,7 +178,7 @@ public class ProposalForCrossChain {
     Assert.assertTrue(beforeVoteBalance - afterVoteBalance ==voteAmount + infoById.get().getFee());
 
     //vote cross chain for second chain
-    PublicMethed.voteCrossChainGetTxid(registerAccountAddress, chainId,
+    VoteCrossChainGetTxid(registerAccountAddress, chainId,
         voteAmount,Integer.valueOf(round), registerAccountKey,crossBlockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
   }
@@ -251,7 +187,7 @@ public class ProposalForCrossChain {
   @Test(enabled = true,description = "Unvote cross chain")
   public void test05UnVoteCrossChain() throws InvalidProtocolBufferException {
     Long beforeUnVoteBalance = PublicMethed.queryAccount(registerAccountKey,blockingStubFull ).getBalance();
-    String txid = PublicMethed.unVoteCrossChainGetTxid(registerAccountAddress, crossChainId,Integer.valueOf(crossRound), registerAccountKey,blockingStubFull);
+    String txid = UnVoteCrossChainGetTxid(registerAccountAddress, crossChainId,Integer.valueOf(crossRound), registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterUnVoteBalance = PublicMethed.queryAccount(registerAccountKey,blockingStubFull ).getBalance();
     Optional<Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
@@ -265,7 +201,7 @@ public class ProposalForCrossChain {
     Assert.assertEquals(infoById.get().getFee(),1000000L);
     Assert.assertEquals(afterUnVoteBalance - beforeUnVoteBalance,voteAmount - infoById.get().getFee());
 
-    PublicMethed.voteCrossChainGetTxid(registerAccountAddress, crossChainId,
+    VoteCrossChainGetTxid(registerAccountAddress, crossChainId,
         voteAmount,Integer.valueOf(crossRound), registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -278,7 +214,7 @@ public class ProposalForCrossChain {
     srList.add(ByteString.copyFrom(registerAccountAddress));
     String updateParentHash = "0000000000000000fd45f1e9a38283a5555dd5616efd8691c8a736e91ce9f918";
     Long beforeUpdateBalance = PublicMethed.queryAccount(registerAccountKey,blockingStubFull ).getBalance();
-    String txid = PublicMethed.updateCrossChainGetTxid(registerAccountAddress, foundationAddress,
+    String txid = UpdateCrossChainGetTxid(registerAccountAddress, foundationAddress,
         chainId,srList,2L,30000L,
         updateParentHash,1621491901000L,registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -303,8 +239,7 @@ public class ProposalForCrossChain {
 
   @Test(enabled = true,description = "Get cross chain vote summary list")
   public void test07GetCrossChainVoteSummaryList() throws InvalidProtocolBufferException {
-    Optional<CrossChainVoteSummaryList> crossChainVoteSummaryList =  PublicMethed
-        .getCrossChainVoteSummaryList(Integer.valueOf(crossRound),blockingStubFull);
+    Optional<CrossChainVoteSummaryList> crossChainVoteSummaryList =  GetCrossChainVoteSummaryList(Integer.valueOf(crossRound),blockingStubFull);
     crossChainVoteSummaryList.get().getCrossChainVoteSummaryCount();
     Assert.assertTrue(crossChainVoteSummaryList.get().getCrossChainVoteSummaryCount() >= 1);
     Assert.assertEquals(crossChainVoteSummaryList.get().getCrossChainVoteSummary(0).getChainId(),crossChainId);
@@ -317,7 +252,7 @@ public class ProposalForCrossChain {
     int waitTimes = 30;
     Optional<ParaChainList> paraChainList = null;
     while (waitTimes-- >= 0) {
-      paraChainList = PublicMethed.getParaChainList(Integer.valueOf(crossRound),blockingStubFull);
+      paraChainList = GetParaChainList(Integer.valueOf(crossRound),blockingStubFull);
       if (paraChainList.get().getParaChainIdsCount() != 0) {
         break;
       }
@@ -331,7 +266,7 @@ public class ProposalForCrossChain {
 
   @Test(enabled = true,description = "Get cross chain vote detail list")
   public void test09GetCrossChainVoteDetailList() throws InvalidProtocolBufferException {
-    Optional<CrossChainVoteDetailList> crossChainVoteDetailList = PublicMethed.getCrossChainVoteDetailList(Integer.valueOf(crossRound),crossChainId,blockingStubFull);
+    Optional<CrossChainVoteDetailList> crossChainVoteDetailList = GetCrossChainVoteDetailList(Integer.valueOf(crossRound),crossChainId,blockingStubFull);
 
     Assert.assertTrue(crossChainVoteDetailList.get().getVoteCrossChainContractCount() >= 1);
     int i = 0;
@@ -339,20 +274,6 @@ public class ProposalForCrossChain {
 
   }
 
-
-  /**
-   * constructor.
-   */
-
-  @AfterClass
-  public void shutdown() throws InterruptedException {
-    if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-  }
 }
 
 
