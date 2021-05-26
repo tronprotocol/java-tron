@@ -30,8 +30,8 @@ import org.tron.core.services.filter.HttpInterceptor;
 @Slf4j(topic = "API")
 public class FullNodeJsonRpcHttpService implements Service {
 
-  // private int port = Args.getInstance().getFullNodeHttpPort();
-  private int port = 8080;
+  private int port = Args.getInstance().getJsonRpcHttpPort();
+//  private int port = 8098;
 
   private Server server;
 
@@ -58,7 +58,7 @@ public class FullNodeJsonRpcHttpService implements Service {
       context.setContextPath("/");
       server.setHandler(context);
 
-      context.addServlet(new ServletHolder(jsonRpcServlet), "/rpc");
+      context.addServlet(new ServletHolder(jsonRpcServlet), "/");
 
       // filter
       // ServletHandler handler = new ServletHandler();

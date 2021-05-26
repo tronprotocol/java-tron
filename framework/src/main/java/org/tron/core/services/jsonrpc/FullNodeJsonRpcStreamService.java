@@ -11,10 +11,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.NodeInfoService;
 
 @Component
 @Slf4j(topic = "API")
@@ -23,8 +26,13 @@ public class FullNodeJsonRpcStreamService implements Service {
   private int port = 8099;
 
   private JsonRpcServer jsonRpcServer;
-  private TestService testService;
+  private TestServiceImpl testServiceImpl;
   private StreamServer streamServer;
+
+  @Autowired
+  private NodeInfoService nodeInfoService;
+  @Autowired
+  private Wallet wallet;
 
   @Override
   public void init() {
@@ -36,11 +44,11 @@ public class FullNodeJsonRpcStreamService implements Service {
 
   @Override
   public void start() {
-    testService = new TestServiceImpl();
+    testServiceImpl = new TestServiceImpl(nodeInfoService, wallet);
 
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
         this.getClass().getClassLoader(),
-        new Object[] {testService},
+        new Object[] {testServiceImpl},
         new Class<?>[] {TestService.class},
         true);
 

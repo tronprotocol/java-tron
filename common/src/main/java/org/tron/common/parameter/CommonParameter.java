@@ -170,6 +170,9 @@ public class CommonParameter {
   public int solidityHttpPort;
   @Getter
   @Setter
+  public int jsonRpcHttpPort;
+  @Getter
+  @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   public int rpcThreadNum;
   @Getter
