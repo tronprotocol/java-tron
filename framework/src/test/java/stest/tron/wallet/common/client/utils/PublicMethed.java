@@ -2648,8 +2648,6 @@ public class PublicMethed {
     transactionExtention = texBuilder.build();
 
     byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction(), owner);
-    System.out.println(
-        "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
     if (transactionExtention == null) {
       return null;
     }

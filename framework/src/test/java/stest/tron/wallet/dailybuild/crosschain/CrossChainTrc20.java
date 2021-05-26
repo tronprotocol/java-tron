@@ -16,6 +16,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -35,17 +36,38 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class CrossChainTrc20  extends CrossChainBase {
 
+
   @Test(enabled = true,description = "Create trc20 transfer for cross chain")
-  public void test01CreateCrossTrc20Transfer() throws Exception{
+  public void test01CreateCrossTrc20Transfer() throws Exception {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String method = "increment(address,address,uint256)";
-    String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\"" + Base58.encode58Check(crossContractAddress) + "\"" +",\"1\"";
+    String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
+        + Base58.encode58Check(crossContractAddress) + "\"" + ",\"1\"";
+
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,"read()","#",
+        false,0,100000000L,"0",0,
+        trc10TokenAccountAddress,trc10TokenAccountKey,blockingStubFull);
+
+    final long beforeFirstChainValue = ByteArray.toLong(transactionExtention.getConstantResult(0)
+        .toByteArray());
+
+    transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(crossContractAddress,"read()","#",
+        false,0,100000000L,"0",0,
+        trc10TokenAccountAddress,trc10TokenAccountKey,crossBlockingStubFull);
+
+    final long beforeSecondChainValue = ByteArray
+        .toLong(transactionExtention.getConstantResult(0).toByteArray());
+
+
+
 
     //Create cross contract transaction
-    String txid = CreateTriggerContractForCross(trc10TokenAccountAddress,registerAccountAddress ,
-        contractAddress, crossContractAddress, method,argsStr ,chainId ,crossChainId ,
-        trc10TokenAccountKey ,blockingStubFull);
+    String txid = createTriggerContractForCross(trc10TokenAccountAddress,registerAccountAddress,
+        contractAddress, crossContractAddress, method,argsStr,chainId,crossChainId,
+        trc10TokenAccountKey,blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
@@ -74,6 +96,25 @@ public class CrossChainTrc20  extends CrossChainBase {
     Assert.assertEquals(crossContract.getOwnerChainId(),chainId);
     Assert.assertEquals(crossContract.getToChainId(),crossChainId);
     Assert.assertEquals(crossContract.getType(), CrossDataType.CONTRACT);
+
+
+    transactionExtention = PublicMethed.triggerConstantContractForExtention(contractAddress,
+        "read()","#",
+        false,0,100000000L,"0",0,
+        trc10TokenAccountAddress,trc10TokenAccountKey,blockingStubFull);
+
+    long afterFirstChainValue = ByteArray.toLong(transactionExtention
+        .getConstantResult(0).toByteArray());
+
+    transactionExtention = PublicMethed.triggerConstantContractForExtention(crossContractAddress,
+        "read()","#",
+        false,0,100000000L,"0",0,
+        trc10TokenAccountAddress,trc10TokenAccountKey,crossBlockingStubFull);
+
+    long afterSecondChainValue = ByteArray
+        .toLong(transactionExtention.getConstantResult(0).toByteArray());
+    Assert.assertEquals(beforeFirstChainValue - afterFirstChainValue,-1);
+    Assert.assertEquals(afterSecondChainValue - beforeSecondChainValue,-1);
 
 
   }
