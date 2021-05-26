@@ -1657,9 +1657,22 @@ public class Manager {
       for (CrossMessage crossMessage : block.getCrossMessageList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(
                 crossMessage.getTransaction());
+        // forbid duplicated timeout-txs
         if (crossMessage.getType() == Type.TIME_OUT) {
           transactionCapsule.setSource(false);
+          if (communicateService.isSyncFinish()) {
+            Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
+            //todo:getSendCrossMsgUnEx not safe
+            CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
+            if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
+                    source.getToChainId(), source.getTransaction())) {
+              //todo:if block head sync fail,then the time out will be valid fail!
+              throw new ValidateSignatureException(
+                      "valid time out tx fail,sourceTxId: " + sourceTxId);
+            }
+          }
         }
+
         // check logic when tx source is false
         if (!(crossMessage.getFromChainId().isEmpty()
                 || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
@@ -1670,17 +1683,6 @@ public class Manager {
           if (crossMessage.getType() == Type.DATA
                   && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
             throw new ValidateSignatureException("cross chain tx was time out");
-          }
-          if (communicateService.isSyncFinish() && crossMessage.getType() == Type.TIME_OUT) {
-            Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
-            //todo:getSendCrossMsgUnEx not safe
-            CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
-            if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
-                    source.getToChainId(), source.getTransaction())) {
-              //todo:if block head sync fail,then the time out will be valid fail!
-              throw new ValidateSignatureException(
-                      "valid time out tx fail,sourceTxId: " + sourceTxId);
-            }
           }
           transactionCapsule.setSource(false);
         }

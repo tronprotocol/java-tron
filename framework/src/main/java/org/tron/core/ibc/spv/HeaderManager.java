@@ -238,6 +238,7 @@ public class HeaderManager {
             TransactionCapsule.getBase64FromByteString(sign));
         logger.debug("block signature sr address:{}", ByteArray.toHexString(srAddress));
         if (!srSet.contains(ByteString.copyFrom(srAddress))) {
+          logger.info("block signature sr address:{}", ByteArray.toHexString(srAddress));
           srSet.forEach(address -> {
             logger.error("block preCycleSrSet:{}", ByteArray.toHexString(address.toByteArray()));
           });

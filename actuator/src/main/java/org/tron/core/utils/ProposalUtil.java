@@ -496,11 +496,11 @@ public class ProposalUtil {
               "CrossChain is not activated, can not set auction config");
         }
         // check end_time value is a Timestamp and make sure the timestamp is greater than now()
-        Long endTime = AuctionConfigParser.getAuctionEndTime(value);
-        if (endTime * 1000 < System.currentTimeMillis()) {
-          throw new ContractValidateException(
-              "Parameter configuration error, endTime must be 10 bits long and should be greater than current timestamp");
-        }
+//        Long endTime = AuctionConfigParser.getAuctionEndTime(value);
+//        if (endTime * 1000 < dynamicPropertiesStore.getLatestBlockHeaderTimestamp()) {
+//          throw new ContractValidateException(
+//              "Parameter configuration error, endTime must be 10 bits long and should be greater than current timestamp");
+//        }
 //        if (value > MAX_TIMESTAMP) {
 //          throw new ContractValidateException(
 //                  "Bad AUCTION_END_TIME parameter value, value is too large.");
@@ -518,6 +518,20 @@ public class ProposalUtil {
         if (value < 0 || value > 10_000_000_000_000_000L) {
           throw new ContractValidateException(
                   "Bad MIN_AUCTION_VOTE_COUNT parameter value, valid range is [0,10_000_000_000_000_000L]");
+        }
+        break;
+      }
+      case BURNED_FOR_REGISTER_CROSS: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_5_0)) {
+          throw new ContractValidateException("Bad chain parameter id [BURNED_FOR_REGISTER_CROSS]");
+        }
+        if (!dynamicPropertiesStore.allowCrossChain()) {
+          throw new ContractValidateException(
+                  "CrossChain is not activated, can not set BURNED_FOR_REGISTER_CROSS");
+        }
+        if (value < 0 || value > 1_000_000_000_000L) {
+          throw new ContractValidateException(
+                  "Bad BURNED_FOR_REGISTER_CROSS parameter value, valid range is [0,1_000_000_000_000_000L]");
         }
         break;
       }
@@ -579,7 +593,8 @@ public class ProposalUtil {
 
     ALLOW_CROSS_CHAIN(54), // 0, 1
     AUCTION_CONFIG(55), //
-    MIN_AUCTION_VOTE_COUNT(56); // 0, [0, 10_000_000_000_000]
+    MIN_AUCTION_VOTE_COUNT(56), // 0, [0, 10_000_000_000_000]
+    BURNED_FOR_REGISTER_CROSS(57); // 0, [0, 1_000_000_000_000]
 
     private long code;
 

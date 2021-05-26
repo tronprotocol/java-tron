@@ -131,6 +131,11 @@ public class PbftMessageHandle {
       pareMsgCache.put(key, message);
       return;
     }
+    if (!verifyMsgSign(message)) {
+      logger.error("[prepare]verify {}, {} pbft msg sign fail!", message.getKey(),
+          message.getDataType());
+      return;
+    }
     if (pareVoteMap.containsKey(key)) {
       //Explain that the vote has been voted and cannot be repeated
       if (!pareVoteMap.get(key).getPbftMessage().getRawData().getData()
@@ -149,7 +154,7 @@ public class PbftMessageHandle {
     //The number of votes plus 1
     if (!doneMsg.containsKey(message.getNo())) {
       long agCou = agreePare.incrementAndGet(message.getDataKey());
-      if (agCou >= Param.getInstance().getAgreeNodeCount()) {
+      if (checkPbftConsensusNum(agCou)) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
         List<ByteString> signSrList = witnesssList(message);
@@ -176,6 +181,11 @@ public class PbftMessageHandle {
       commitMsgCache.put(key, message);
       return;
     }
+    if (!verifyMsgSign(message)) {
+      logger.error("[commit]verify {}, {} pbft msg sign fail!", message.getKey(),
+          message.getDataType());
+      return;
+    }
     if (commitVoteMap.containsKey(key)) {
       //Explain that the node has voted on the data and cannot vote repeatedly.
       if (!commitVoteMap.get(key).getPbftMessage().getRawData().getData()
@@ -190,7 +200,7 @@ public class PbftMessageHandle {
     long agCou = agreeCommit.incrementAndGet(message.getDataKey());
     dataSignCache.getUnchecked(message.getDataKey())
         .add(message.getPbftMessage().getSignature());
-    if (agCou >= Param.getInstance().getAgreeNodeCount()) {
+    if (checkPbftConsensusNum(agCou)) {
       srPbftMessage = null;
       remove(message.getNo());
       //commit,
@@ -231,12 +241,7 @@ public class PbftMessageHandle {
     for (Entry<String, PbftMessage> entry : pareMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         pareMsgCache.invalidate(entry.getKey());
-        if (verifyMsgSign(entry.getValue())) {
-          onPrepare(entry.getValue());
-        } else {
-          logger.error("[prepare]verify {}, {} pbft msg sign fail!", entry.getKey(),
-              entry.getValue().getDataType());
-        }
+        onPrepare(entry.getValue());
       }
     }
   }
@@ -245,12 +250,7 @@ public class PbftMessageHandle {
     for (Entry<String, PbftMessage> entry : commitMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         commitMsgCache.invalidate(entry.getKey());
-        if (verifyMsgSign(entry.getValue())) {
-          onCommit(entry.getValue());
-        } else {
-          logger.error("[commit]verify {}, {} pbft msg sign fail!", entry.getKey(),
-              entry.getValue().getDataType());
-        }
+        onCommit(entry.getValue());
       }
     }
   }
@@ -264,13 +264,7 @@ public class PbftMessageHandle {
       return false;
     }
     ByteString publicKey = Param.getInstance().getMiner().getPrivateKeyAddress();
-    List<ByteString> compareList;
-    long epoch = msg.getPbftMessage().getRawData().getEpoch();
-    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
-      compareList = maintenanceManager.getCurrentWitness();
-    } else {
-      compareList = maintenanceManager.getBeforeWitness();
-    }
+    List<ByteString> compareList = witnesssList(msg);
     if (!compareList.contains(publicKey)) {
       return false;
     }
@@ -338,5 +332,9 @@ public class PbftMessageHandle {
   @PreDestroy
   public void stop() {
     timer.cancel();
+  }
+
+  private boolean checkPbftConsensusNum(long agCount) {
+    return agCount >= Param.getInstance().getAgreeNodeCount() && agCount > 1;
   }
 }

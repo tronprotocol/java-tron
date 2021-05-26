@@ -27,6 +27,7 @@ import org.tron.protos.Protocol.PBFTMessage.DataType;
 @Scope("prototype")
 public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
 
+  public static final int ENABLE_BLOCK_NUM = 10;
   protected PeerConnection peer;
 
   private MessageQueue msgQueue;
@@ -77,11 +78,20 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
   private boolean verifyMsgEnable(PbftMessage msg) {
     long viewN = msg.getNumber();
     if (msg.getDataType() == DataType.BLOCK
-        && viewN >= consensusDelegate.getLatestBlockHeaderNumber() + 10) {
+        && viewN >= consensusDelegate.getLatestBlockHeaderNumber() + ENABLE_BLOCK_NUM) {
+      return false;
+    }
+    if (msg.getDataType() == DataType.BLOCK
+        && viewN < consensusDelegate.getLatestBlockHeaderNumber() - ENABLE_BLOCK_NUM) {
       return false;
     }
     if (msg.getDataType() == DataType.SRL && viewN > consensusDelegate
         .getNextMaintenanceTime() + chainBaseManager.getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval()) {
+      return false;
+    }
+    if (msg.getDataType() == DataType.SRL && viewN < consensusDelegate
+        .getNextMaintenanceTime() - chainBaseManager.getDynamicPropertiesStore()
         .getMaintenanceTimeInterval()) {
       return false;
     }
