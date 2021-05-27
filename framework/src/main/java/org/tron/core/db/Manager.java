@@ -1544,7 +1544,9 @@ public class Manager {
         tmpSession.merge();
         ++index;
         if (crossMessage == null) {
-          trx.setIndex(index);
+          if (getDynamicPropertiesStore().allowCrossChain()) {
+            trx.setIndex(index);
+          }
           blockCapsule.addTransaction(trx);
         } else {
           blockCapsule.addCrossMessage(crossMessage);
