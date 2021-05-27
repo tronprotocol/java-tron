@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -159,7 +160,6 @@ import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.BalanceContract;
@@ -401,7 +401,7 @@ public class Manager {
 
   private boolean checkInSameFork(BlockCapsule newblock) {
     if (CommonParameter.getInstance().isDebug() || !getDynamicPropertiesStore().allowCrossChain()
-            || Objects.isNull(newblock)) {
+        || Objects.isNull(newblock)) {
       return true;
     }
 
@@ -961,7 +961,7 @@ public class Manager {
     processBlock(block);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
-    if (block.getTransactions().size() != 0) {
+    if (block.getTransactions().size() != 0 || block.getCrossMessageList().size() != 0) {
       chainBaseManager.getTransactionRetStore()
           .put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
@@ -1309,7 +1309,7 @@ public class Manager {
    * Process transaction.
    */
   public TransactionInfo processTransaction(
-          final TransactionCapsule trxCap, BlockCapsule blockCap, boolean save)
+      final TransactionCapsule trxCap, BlockCapsule blockCap, boolean save)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
@@ -1428,9 +1428,15 @@ public class Manager {
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
-        chainBaseManager.getHeadBlockId(), blockTime, miner.getWitnessAddress(),
-        chainBaseManager.getGenesisBlockId().getByteString());
+    BlockCapsule blockCapsule;
+    if (getDynamicPropertiesStore().allowCrossChain()) {
+      blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
+          chainBaseManager.getHeadBlockId(), blockTime, miner.getWitnessAddress(),
+          chainBaseManager.getGenesisBlockId().getByteString());
+    } else {
+      blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
+          chainBaseManager.getHeadBlockId(), blockTime, miner.getWitnessAddress(), null);
+    }
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
@@ -1452,8 +1458,9 @@ public class Manager {
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);
     CrossMessage crossMessage;
+    int index = 0;
     while (crossTxQueue.size() > 0 || pendingTransactions.size() > 0
-            || rePushTransactions.size() > 0) {
+        || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       crossMessage = null;
       TransactionCapsule trx;
@@ -1497,12 +1504,11 @@ public class Manager {
         } else {
           trx = rePushTransactions.poll();
         }
-        if (trx.getInstance().getRawData().getContract(0).getType()
-               == ContractType.CrossContract) {
+        if (trx.getInstance().getRawData().getContract(0).getType() == ContractType.CrossContract) {
           crossMessage = CrossMessage.newBuilder()
-                 .setType(Type.DATA)
-                 .setTransaction(trx.getInstance())
-                 .build();
+              .setType(Type.DATA)
+              .setTransaction(trx.getInstance())
+              .build();
         }
       }
 
@@ -1542,7 +1548,11 @@ public class Manager {
         TransactionInfo result = preProcessTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSession.merge();
+        ++index;
         if (crossMessage == null) {
+          if (getDynamicPropertiesStore().allowCrossChain()) {
+            trx.setIndex(index);
+          }
           blockCapsule.addTransaction(trx);
         } else {
           blockCapsule.addCrossMessage(crossMessage);
@@ -1550,12 +1560,12 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
         }
-        if (fromPending) {
-          pendingTransactions.poll();
-        }
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
             e.getMessage());
+      }
+      if (fromPending) {
+        pendingTransactions.poll();
       }
     }
 
@@ -1570,7 +1580,9 @@ public class Manager {
         crossTxQueue.size());
 
     blockCapsule.setMerkleRoot();
-    blockCapsule.setCrossMerkleRoot();
+    if (getDynamicPropertiesStore().allowCrossChain()) {
+      blockCapsule.setCrossMerkleRoot();
+    }
     blockCapsule.sign(miner.getPrivateKey());
     return blockCapsule;
 
@@ -1654,43 +1666,30 @@ public class Manager {
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
-      for (CrossMessage crossMessage : block.getCrossMessageList()) {
-        TransactionCapsule transactionCapsule = new TransactionCapsule(
-                crossMessage.getTransaction());
-        // forbid duplicated timeout-txs
-        if (crossMessage.getType() == Type.TIME_OUT) {
-          transactionCapsule.setSource(false);
-          if (communicateService.isSyncFinish()) {
-            Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
-            //todo:getSendCrossMsgUnEx not safe
-            CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
-            if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
-                    source.getToChainId(), source.getTransaction())) {
-              //todo:if block head sync fail,then the time out will be valid fail!
-              throw new ValidateSignatureException(
-                      "valid time out tx fail,sourceTxId: " + sourceTxId);
-            }
+      Iterator<TransactionCapsule> txIterator = block.getTransactions().iterator();
+      Iterator<CrossMessage> crossIterator = block.getCrossMessageList().iterator();
+      TransactionCapsule transactionCapsule = txIterator.hasNext() ? txIterator.next() : null;
+      CrossMessage crossMessage = crossIterator.hasNext() ? crossIterator.next() : null;
+      int index = 0;
+      while (transactionCapsule != null || crossMessage != null) {
+        ++index;
+        if (transactionCapsule != null && crossMessage != null) {
+          if (transactionCapsule.getIndex() == index) {
+            processTx(block, transactionRetCapsule, transactionCapsule);
+            transactionCapsule = txIterator.hasNext() ? txIterator.next() : null;
+          } else {
+            processCrossMessage(block, transactionRetCapsule, crossMessage);
+            crossMessage = crossIterator.hasNext() ? crossIterator.next() : null;
           }
+          continue;
         }
-
-        // check logic when tx source is false
-        if (!(crossMessage.getFromChainId().isEmpty()
-                || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
-          if (communicateService.isSyncFinish() && crossMessage.getType() != Type.TIME_OUT
-                  && !communicateService.validProof(crossMessage)) {
-            throw new ValidateSignatureException("valid proof fail");
-          }
-          if (crossMessage.getType() == Type.DATA
-                  && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
-            throw new ValidateSignatureException("cross chain tx was time out");
-          }
-          transactionCapsule.setSource(false);
+        if (transactionCapsule != null) {
+          processTx(block, transactionRetCapsule, transactionCapsule);
+          transactionCapsule = txIterator.hasNext() ? txIterator.next() : null;
+          continue;
         }
-        transactionCapsule.setType(crossMessage.getType());
-        processTx(block, transactionRetCapsule, transactionCapsule);
-      }
-      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-        processTx(block, transactionRetCapsule, transactionCapsule);
+        processCrossMessage(block, transactionRetCapsule, crossMessage);
+        crossMessage = crossIterator.hasNext() ? crossIterator.next() : null;
       }
       accountStateCallBack.executePushFinish();
     } finally {
@@ -1724,6 +1723,48 @@ public class Manager {
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
   }
 
+  private void processCrossMessage(
+      BlockCapsule block, TransactionRetCapsule transactionRetCapsule, CrossMessage crossMessage)
+      throws ValidateSignatureException, ContractValidateException,
+      TooBigTransactionException, TransactionExpirationException,
+      TooBigTransactionResultException, ReceiptCheckErrException,
+      TaposException, VMIllegalException, DupTransactionException,
+      ContractExeException, AccountResourceInsufficientException {
+    TransactionCapsule transactionCapsule = new TransactionCapsule(
+        crossMessage.getTransaction());
+    // forbid duplicated timeout-txs
+    if (crossMessage.getType() == Type.TIME_OUT) {
+      transactionCapsule.setSource(false);
+      if (communicateService.isSyncFinish()) {
+        Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
+        //todo:getSendCrossMsgUnEx not safe
+        CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
+        if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
+            source.getToChainId(), source.getTransaction())) {
+          //todo:if block head sync fail,then the time out will be valid fail!
+          throw new ValidateSignatureException(
+              "valid time out tx fail,sourceTxId: " + sourceTxId);
+        }
+      }
+    }
+
+    // check logic when tx source is false
+    if (!(crossMessage.getFromChainId().isEmpty()
+        || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
+      if (communicateService.isSyncFinish() && crossMessage.getType() != Type.TIME_OUT
+          && !communicateService.validProof(crossMessage)) {
+        throw new ValidateSignatureException("valid proof fail");
+      }
+      if (crossMessage.getType() == Type.DATA
+          && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
+        throw new ValidateSignatureException("cross chain tx was time out");
+      }
+      transactionCapsule.setSource(false);
+    }
+    transactionCapsule.setType(crossMessage.getType());
+    processTx(block, transactionRetCapsule, transactionCapsule);
+  }
+
   private void processTx(BlockCapsule block, TransactionRetCapsule transationRetCapsule,
       TransactionCapsule transactionCapsule)
       throws ValidateSignatureException,
@@ -1751,12 +1792,12 @@ public class Manager {
   }
 
   private TransactionInfo preProcessTransaction(
-          TransactionCapsule transactionCapsule, BlockCapsule block) throws
-          ValidateSignatureException, ContractValidateException,
-          TooBigTransactionException, TransactionExpirationException,
-          TooBigTransactionResultException, ReceiptCheckErrException,
-          TaposException, VMIllegalException, DupTransactionException,
-          ContractExeException, AccountResourceInsufficientException {
+      TransactionCapsule transactionCapsule, BlockCapsule block) throws
+      ValidateSignatureException, ContractValidateException,
+      TooBigTransactionException, TransactionExpirationException,
+      TooBigTransactionResultException, ReceiptCheckErrException,
+      TaposException, VMIllegalException, DupTransactionException,
+      ContractExeException, AccountResourceInsufficientException {
     TransactionInfo result = processTransaction(transactionCapsule, block, true);
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (contract.getType() == ContractType.CrossContract) {
@@ -1770,34 +1811,34 @@ public class Manager {
           Transaction dest = contractTrigger.getDest();
 
           TriggerSmartContract sourceTrigger = source.getRawData().getContract(0)
-                  .getParameter().unpack(TriggerSmartContract.class);
+              .getParameter().unpack(TriggerSmartContract.class);
           TriggerSmartContract destTrigger = dest.getRawData().getContract(0)
-                  .getParameter().unpack(TriggerSmartContract.class);
+              .getParameter().unpack(TriggerSmartContract.class);
 
           if (transactionCapsule.isSource() && !Arrays
               .equals(sourceTrigger.getOwnerAddress().toByteArray(),
-                      TransactionCapsule.getOwner(contract))) {
+                  TransactionCapsule.getOwner(contract))) {
             throw new ValidateSignatureException(
                 "trigger source owner address not equals sign address");
           }
 
           // check source and dest contract data
           if (!Arrays.equals(source.getRawData().getData().toByteArray(),
-                  dest.getRawData().getData().toByteArray())) {
+              dest.getRawData().getData().toByteArray())) {
             throw new CrossContractConstructException("dest data must equal with source data");
           }
 
           // check proxy account
           String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
-                  ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
+              ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
           String realProxyAccount = ByteArray.toHexString(
-                  destTrigger.getOwnerAddress().toByteArray());
+              destTrigger.getOwnerAddress().toByteArray());
           ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
           if (localChainId.equals(crossContract.getOwnerChainId())
-                  && !proxyAccount.equals(realProxyAccount)) {
+              && !proxyAccount.equals(realProxyAccount)) {
             throw new PermissionException(String.format(
-                    "cross transaction proxy account is not right, require: %s, actually: %s",
-                    proxyAccount, realProxyAccount));
+                "cross transaction proxy account is not right, require: %s, actually: %s",
+                proxyAccount, realProxyAccount));
           }
 
           TransactionCapsule crossTriggerTx;
@@ -1805,7 +1846,7 @@ public class Manager {
             crossTriggerTx = new TransactionCapsule(source);
             // check source tx sign
             if (!crossTriggerTx.validateSignature(chainBaseManager.getAccountStore(),
-                    chainBaseManager.getDynamicPropertiesStore())) {
+                chainBaseManager.getDynamicPropertiesStore())) {
               throw new ValidateSignatureException("cross transaction signature validate failed");
             }
           } else {
@@ -2228,14 +2269,14 @@ public class Manager {
   private void initCrossChainWhiteList() {
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     if (crossRevokingStore.getParaChainList(0).isEmpty()
-            || Args.getInstance().isCrossChainWhiteListRefresh()) {
+        || Args.getInstance().isCrossChainWhiteListRefresh()) {
       if (!checkCrossChainWhiteList()) {
         System.exit(1);
       }
       chainBaseManager.getDynamicPropertiesStore().saveAuctionConfig(181617162101023L);
       List<String> chainIds = Args.getInstance().getCrossChainWhiteList().stream()
-              .map(entry -> ByteArray.toHexString(entry.getChainId().toByteArray()))
-              .collect(Collectors.toList());
+          .map(entry -> ByteArray.toHexString(entry.getChainId().toByteArray()))
+          .collect(Collectors.toList());
 
       crossRevokingStore.updateParaChains(0, chainIds);
       crossRevokingStore.updateParaChainsHistory(chainIds);
@@ -2246,7 +2287,7 @@ public class Manager {
 
   private boolean checkCrossChainWhiteList() {
     for (BalanceContract.CrossChainInfo crossChainInfo :
-            Args.getInstance().getCrossChainWhiteList()) {
+        Args.getInstance().getCrossChainWhiteList()) {
       String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
       byte[] proxyAddress = crossChainInfo.getProxyAddress().toByteArray();
@@ -2286,17 +2327,17 @@ public class Manager {
           throw new Exception("Invalid beginSyncHeight!");
         }
         String parentBlockHash =
-                ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray());
+            ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray());
         if (parentBlockHash.isEmpty()) {
           throw new Exception("No parentBlockHash!");
         }
         if (crossChainInfo.getParentBlockHash().toByteArray().length
-                != ActuatorConstant.CHAIN_ID_LENGTH) {
+            != ActuatorConstant.CHAIN_ID_LENGTH) {
           throw new Exception("Invalid parentBlockHash!");
         }
       } catch (Exception e) {
         logger.error("chain {} get the whitelist information failed! message:{}",
-                chainId, e.getMessage());
+            chainId, e.getMessage());
         return false;
       }
     }
@@ -2310,16 +2351,16 @@ public class Manager {
       String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
       try {
         if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
-                .getLatestHeaderBlockNum(chainId)) {
+            .getLatestHeaderBlockNum(chainId)) {
           return;
         }
         commonDataBase.saveProxyAddress(chainId,
-                ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
+            ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
         commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
-                ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
+            ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
         commonDataBase.saveChainMaintenanceTimeInterval(chainId,
-                crossChainInfo.getMaintenanceTimeInterval());
+            crossChainInfo.getMaintenanceTimeInterval());
         long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
         long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
         if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {
@@ -2329,7 +2370,7 @@ public class Manager {
         Protocol.SRL.Builder srlBuilder = Protocol.SRL.newBuilder();
         srlBuilder.addAllSrAddress(crossChainInfo.getSrListList());
         Protocol.PBFTMessage.Raw pbftMsgRaw = Protocol.PBFTMessage.Raw.newBuilder()
-                .setData(srlBuilder.build().toByteString()).setEpoch(epoch).build();
+            .setData(srlBuilder.build().toByteString()).setEpoch(epoch).build();
         Protocol.PBFTCommitResult.Builder builder = Protocol.PBFTCommitResult.newBuilder();
         builder.setData(pbftMsgRaw.toByteString());
         commonDataBase.saveSRL(chainId, epoch, builder.build());

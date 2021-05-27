@@ -64,51 +64,53 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 @Slf4j
 public class CrossChainBase {
 
-  public final String foundationKey = Configuration.getByPath("testng.conf")
+  public static final String foundationKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
-  public final byte[] foundationAddress = PublicMethed.getFinalAddress(foundationKey);
+  public static final byte[] foundationAddress = PublicMethed.getFinalAddress(foundationKey);
   public static final String zenTrc20TokenOwnerKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTrc20TokenOwnerKey");
-  public ManagedChannel channelFull = null;
-  public ManagedChannel crossChannelFull = null;
-  public ManagedChannel channelSolidity = null;
-  public WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  public WalletGrpc.WalletBlockingStub crossBlockingStubFull = null;
-  public String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-  public String crossFullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(1);
-  public ByteString chainId;
-  public ByteString crossChainId;
-  public ByteString parentHash;
-  public ByteString crossParentHash;
-  public Long voteAmount = 110000000L;
-  public String round ="1";
-  public String crossRound ="2";
-  public Long startSynBlockNum = 10L;
-  public Long startSynTimeStamp;
-  public Long crossStartSynTimeStamp;
+  public static ManagedChannel channelFull = null;
+  public static ManagedChannel crossChannelFull = null;
+  public static ManagedChannel channelSolidity = null;
+  public static WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  public static WalletGrpc.WalletBlockingStub crossBlockingStubFull = null;
+  public static String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
+  public static String crossFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
+  public static ByteString chainId;
+  public static ByteString crossChainId;
+  public static ByteString parentHash;
+  public static ByteString crossParentHash;
+  public static Long voteAmount = 110000000L;
+  public static String round = "1";
+  public static String crossRound = "2";
+  public static Long startSynBlockNum = 12L;
+  public static Long startSynTimeStamp;
+  public static Long crossStartSynTimeStamp;
 
 
-  public String registerAccountKey = "7400E3D0727F8A61041A8E8BF86599FE5597CE19DE451E59AED07D60967A5E25";
-  public byte[] registerAccountAddress = PublicMethed.getFinalAddress(registerAccountKey);
+  public static String registerAccountKey
+      = "7400E3D0727F8A61041A8E8BF86599FE5597CE19DE451E59AED07D60967A5E25";
+  public static byte[] registerAccountAddress = PublicMethed.getFinalAddress(registerAccountKey);
 
-  public ECKey ecKey1 = new ECKey(Utils.getRandom());
-  public String trc10TokenAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  public final byte[] trc10TokenAccountAddress = PublicMethed.getFinalAddress(trc10TokenAccountKey);
+  public static ECKey ecKey1 = new ECKey(Utils.getRandom());
+  public static String trc10TokenAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  public static final byte[] trc10TokenAccountAddress
+      = PublicMethed.getFinalAddress(trc10TokenAccountKey);
 
   public static long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
-  public final String witnessKey001 = Configuration.getByPath("testng.conf")
+  public static final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
-  public final String witnessKey002 = Configuration.getByPath("testng.conf")
+  public static final String witnessKey002 = Configuration.getByPath("testng.conf")
       .getString("witness.key2");
-  public final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
-  public final byte[] witness002Address = PublicMethed.getFinalAddress(witnessKey002);
-  public String description = Configuration.getByPath("testng.conf")
+  public static final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
+  public static final byte[] witness002Address = PublicMethed.getFinalAddress(witnessKey002);
+  public static String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
-  public String url = Configuration.getByPath("testng.conf")
+  public static String url = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetUrl");
   public static final long now = System.currentTimeMillis();
   public static final long totalSupply = now;
@@ -118,6 +120,7 @@ public class CrossChainBase {
   public static ByteString assetAccountId2;
   public static byte[] contractAddress;
   public static byte[] crossContractAddress;
+  public static final long getChainIdBlockNum = 1L;
 
   /**
    * constructor.
@@ -155,33 +158,40 @@ public class CrossChainBase {
     Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name1, totalSupply, 1,
         100, start, end, 1, description, url, 10000L, 10000L,
         1L, 1L, trc10TokenAccountKey, blockingStubFull));
-    Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name2, totalSupply/100, 1,
-        100, start, end, 1, description, url, 10000L, 10000L,
+    Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name2,
+        totalSupply / 100, 1, 100, start, end, 1, description, url,
+        10000L, 10000L,
         1L, 1L, trc10TokenAccountKey, crossBlockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
 
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(trc10TokenAccountAddress, blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed
+        .queryAccount(trc10TokenAccountAddress, blockingStubFull);
     assetAccountId1 = getAssetIdFromThisAccount.getAssetIssuedID();
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(trc10TokenAccountAddress, crossBlockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed
+        .queryAccount(trc10TokenAccountAddress, crossBlockingStubFull);
     assetAccountId2 = getAssetIdFromThisAccount.getAssetIssuedID();
     GrpcAPI.AssetIssueList assetIssueList = crossBlockingStubFull
         .getAssetIssueList(EmptyMessage.newBuilder().build());
-    assetAccountId2 = ByteString.copyFromUtf8(String.valueOf(1000001L + assetIssueList.getAssetIssueCount()));
+    assetAccountId2 = ByteString.copyFromUtf8(String
+        .valueOf(1000001L + assetIssueList.getAssetIssueCount()));
 
 
 
 
-    chainId = PublicMethed.getBlock(1,blockingStubFull ).getBlockHeader().getRawData().getParentHash();
-    crossChainId = PublicMethed.getBlock(1,crossBlockingStubFull).getBlockHeader().getRawData().getParentHash();
-    parentHash = PublicMethed.getBlock(startSynBlockNum,blockingStubFull).getBlockHeader().getRawData().getParentHash();
-    crossParentHash = PublicMethed.getBlock(startSynBlockNum,crossBlockingStubFull).getBlockHeader().getRawData().getParentHash();
-    startSynTimeStamp = PublicMethed.getBlock(startSynBlockNum,blockingStubFull ).getBlockHeader().getRawData().getTimestamp();
-    crossStartSynTimeStamp = PublicMethed.getBlock(startSynBlockNum,crossBlockingStubFull).getBlockHeader().getRawData().getTimestamp();
-
-    //registerAccountKey = "7400E3D0727F8A61041A8E8BF86599FE5597CE19DE451E59AED07D60967A5E25";
-    //registerAccountAddress = PublicMethed.getFinalAddress(registerAccountKey);
+    chainId = PublicMethed.getBlock(getChainIdBlockNum,blockingStubFull)
+        .getBlockHeader().getRawData().getParentHash();
+    crossChainId = PublicMethed.getBlock(getChainIdBlockNum,crossBlockingStubFull)
+        .getBlockHeader().getRawData().getParentHash();
+    parentHash = PublicMethed.getBlock(startSynBlockNum,blockingStubFull)
+        .getBlockHeader().getRawData().getParentHash();
+    crossParentHash = PublicMethed.getBlock(startSynBlockNum,crossBlockingStubFull)
+        .getBlockHeader().getRawData().getParentHash();
+    startSynTimeStamp = PublicMethed.getBlock(startSynBlockNum,blockingStubFull)
+        .getBlockHeader().getRawData().getTimestamp();
+    crossStartSynTimeStamp = PublicMethed.getBlock(startSynBlockNum,crossBlockingStubFull)
+        .getBlockHeader().getRawData().getTimestamp();
 
 
     PublicMethed.sendcoin(witness001Address, 5000000L,
@@ -189,6 +199,12 @@ public class CrossChainBase {
     PublicMethed.sendcoin(witness002Address, 5000000L,
         foundationAddress, foundationKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    PublicMethed.sendcoin(witness001Address, 5000000L,
+        foundationAddress, foundationKey, crossBlockingStubFull);
+    PublicMethed.sendcoin(witness002Address, 5000000L,
+        foundationAddress, foundationKey, crossBlockingStubFull);
+    PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
 
 
 
@@ -201,7 +217,8 @@ public class CrossChainBase {
     String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed
         .deployContract(contractName, abi, code, null,
-            maxFeeLimit, 0L, 100, null, trc10TokenAccountKey, trc10TokenAccountAddress, blockingStubFull);
+            maxFeeLimit, 0L, 100, null,
+            trc10TokenAccountKey, trc10TokenAccountAddress, blockingStubFull);
 
     filePath = "./src/test/resources/soliditycode/crossContractB.sol";
     contractName = "crossContractB";
@@ -211,7 +228,8 @@ public class CrossChainBase {
     abi = retMap.get("abI").toString();
     crossContractAddress = PublicMethed
         .deployContract(contractName, abi, code, null,
-            maxFeeLimit, 0L, 100, null, trc10TokenAccountKey, trc10TokenAccountAddress, crossBlockingStubFull);
+            maxFeeLimit, 0L, 100, null,
+            trc10TokenAccountKey, trc10TokenAccountAddress, crossBlockingStubFull);
     //test send coin
     PublicMethed.sendcoin(witness001Address, 1L,
         foundationAddress, foundationKey, blockingStubFull);
@@ -219,17 +237,11 @@ public class CrossChainBase {
         foundationAddress, foundationKey, blockingStubFull);
     PublicMethed.sendcoin(witness001Address, 3L,
         foundationAddress, foundationKey, blockingStubFull);
-
-
-
-
   }
-
 
   /**
    * constructor.
    */
-
   @AfterSuite(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
@@ -241,7 +253,7 @@ public class CrossChainBase {
   /**
    * constructor.
    */
-  public static String GetTxidFromTransactionExtention(TransactionExtention transactionExtention,
+  public static String getTxidFromTransactionExtention(TransactionExtention transactionExtention,
       ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
 
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -284,9 +296,9 @@ public class CrossChainBase {
   /**
    * constructor.
    */
-  public static String RegisterCrossChainGetTxid(byte[] ownerAddress, byte[] proxyAddress,
-      ByteString chainId, List<ByteString> srList, Long beginSyncHeight, Long maintenanceTimeInterval,
-      ByteString parentBlockHash, Long blockTime, String priKey,
+  public static String registerCrossChainGetTxid(byte[] ownerAddress, byte[] proxyAddress,
+      ByteString chainId, List<ByteString> srList, Long beginSyncHeight,
+      Long maintenanceTimeInterval, ByteString parentBlockHash, Long blockTime, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -307,15 +319,15 @@ public class CrossChainBase {
     build.setParentBlockHash(parentBlockHash);
     build.setBlockTime(blockTime);
     TransactionExtention transactionExtention = blockingStubFull.registerCrossChain(build.build());
-    return GetTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
   }
 
   /**
    * constructor.
    */
-  public static String UpdateCrossChainGetTxid(byte[] ownerAddress, byte[] proxyAddress,
-      ByteString chainId, List<ByteString> srList, Long beginSyncHeight, Long maintenanceTimeInterval,
-      String parentBlockHash, Long blockTime, String priKey,
+  public static String updateCrossChainGetTxid(byte[] ownerAddress, byte[] proxyAddress,
+      ByteString chainId, List<ByteString> srList, Long beginSyncHeight,
+      Long maintenanceTimeInterval, String parentBlockHash, Long blockTime, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -336,14 +348,14 @@ public class CrossChainBase {
     build.setParentBlockHash(ByteString.copyFrom(ByteArray.fromHexString(parentBlockHash)));
     build.setBlockTime(blockTime);
     TransactionExtention transactionExtention = blockingStubFull.updateCrossChain(build.build());
-    return GetTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
   }
 
 
   /**
    * constructor.
    */
-  public static String VoteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId, Long amount,
+  public static String voteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId, Long amount,
       Integer round,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -361,13 +373,13 @@ public class CrossChainBase {
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
     build.setRound(round);
     TransactionExtention transactionExtention = blockingStubFull.voteCrossChain(build.build());
-    return GetTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
   }
 
   /**
    * constructor.
    */
-  public static String UnVoteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId,
+  public static String unVoteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId,
       Integer round,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -384,15 +396,16 @@ public class CrossChainBase {
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
     build.setRound(round);
     TransactionExtention transactionExtention = blockingStubFull.unvoteCrossChain(build.build());
-    return GetTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
   }
 
   /**
    * constructor.
    */
-  public static String CreateTriggerContractForCross(byte[] ownerAddress,byte[] proxyAddress,
+  public static String createTriggerContractForCross(byte[] ownerAddress,byte[] proxyAddress,
       byte[] contractAddress,byte[] crossContractAddress,String method,String argsStr,
-      ByteString chainId,ByteString crossChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      ByteString chainId,ByteString crossChainId,String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -408,9 +421,11 @@ public class CrossChainBase {
     byte[] data =  Hex.decode(AbiUtil.parseMethod(method, argsStr, false));
 
 
-    SmartContractOuterClass.TriggerSmartContract triggerSmartContractSource = TvmTestUtils.buildTriggerSmartContract(
+    SmartContractOuterClass.TriggerSmartContract triggerSmartContractSource
+        = TvmTestUtils.buildTriggerSmartContract(
         ownerAddress, contractAddress, data, 0);
-    Protocol.Transaction.raw.Builder transactionBuilder1 = Protocol.Transaction.raw.newBuilder().addContract(
+    Protocol.Transaction.raw.Builder transactionBuilder1
+        = Protocol.Transaction.raw.newBuilder().addContract(
         Protocol.Transaction.Contract.newBuilder()
             .setType(Protocol.Transaction.Contract.ContractType.TriggerSmartContract)
             .setParameter(Any.pack(triggerSmartContractSource))
@@ -419,19 +434,23 @@ public class CrossChainBase {
     Protocol.Transaction transactionSource = Protocol.Transaction.newBuilder()
         .setRawData(transactionBuilder1.build())
         .build();
-    transactionSource = PublicMethed.addTransactionSign(transactionSource, priKey, blockingStubFull);
+    transactionSource = PublicMethed.addTransactionSign(transactionSource,
+        priKey, blockingStubFull);
 
 
-    SmartContractOuterClass.TriggerSmartContract triggerSmartContractDest = TvmTestUtils.buildTriggerSmartContract(
+    SmartContractOuterClass.TriggerSmartContract triggerSmartContractDest
+        = TvmTestUtils.buildTriggerSmartContract(
         proxyAddress, crossContractAddress, data, 0);
 
-    Protocol.Transaction.raw.Builder transactionBuilder2 = Protocol.Transaction.raw.newBuilder().addContract(
+    Protocol.Transaction.raw.Builder transactionBuilder2
+        = Protocol.Transaction.raw.newBuilder().addContract(
         Protocol.Transaction.Contract.newBuilder()
             .setType(Protocol.Transaction.Contract.ContractType.TriggerSmartContract)
             .setParameter(Any.pack(triggerSmartContractDest))
             .build())
         .setFeeLimit(100000000L);
-    Protocol.Transaction transactionDest = Protocol.Transaction.newBuilder().setRawData(transactionBuilder2.build()).build();
+    Protocol.Transaction transactionDest
+        = Protocol.Transaction.newBuilder().setRawData(transactionBuilder2.build()).build();
 
 
     BalanceContract.ContractTrigger contractTrigger = BalanceContract.ContractTrigger.newBuilder()
@@ -451,20 +470,22 @@ public class CrossChainBase {
     Protocol.Transaction.Builder transaction = Protocol.Transaction.newBuilder();
     Protocol.Transaction.raw.Builder raw = Protocol.Transaction.raw.newBuilder();
     Protocol.Transaction.Contract.Builder contract = Protocol.Transaction.Contract.newBuilder();
-    contract.setType(Protocol.Transaction.Contract.ContractType.CrossContract).setParameter(Any.pack(crossContract));
+    contract.setType(Protocol.Transaction.Contract.ContractType.CrossContract)
+        .setParameter(Any.pack(crossContract));
     raw.addContract(contract.build());
     transaction.setRawData(raw.build());
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull
         .createCommonTransaction(transaction.build());
-    return GetTxidFromTransactionExtention(transactionExtention,ecKey,blockingStubFull);
+    return getTxidFromTransactionExtention(transactionExtention,ecKey,blockingStubFull);
   }
 
 
   /**
    * constructor.
    */
-  public static String CreateCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,ByteString tokenId,Integer precision,
-      Long amount,String tokenName,ByteString chainId,ByteString paraChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,
+      ByteString tokenId,Integer precision, Long amount,String tokenName,ByteString chainId,
+      ByteString paraChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -504,27 +525,29 @@ public class CrossChainBase {
     transaction.setRawData(raw.build());
 
 
-    TransactionExtention transactionExtention = blockingStubFull.createCommonTransaction(transaction.build());
-    return GetTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+    TransactionExtention transactionExtention
+        = blockingStubFull.createCommonTransaction(transaction.build());
+    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
   }
 
 
   /**
    * constructor.
    */
-  public static Optional<CrossChainVoteSummaryList> GetCrossChainVoteSummaryList(Integer round,
+  public static Optional<CrossChainVoteSummaryList> getCrossChainVoteSummaryList(Integer round,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     CrossChainVoteSummaryPaginated request = CrossChainVoteSummaryPaginated.newBuilder()
         .setLimit(10).setOffset(0).setRound(round).build();
-    CrossChainVoteSummaryList crossChainVoteSummaryList = blockingStubFull.getCrossChainVoteSummaryList(request);
+    CrossChainVoteSummaryList crossChainVoteSummaryList
+        = blockingStubFull.getCrossChainVoteSummaryList(request);
     return Optional.ofNullable(crossChainVoteSummaryList);
   }
 
   /**
    * constructor.
    */
-  public static Optional<ParaChainList> GetParaChainList(Integer round,
+  public static Optional<ParaChainList> getParaChainList(Integer round,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     RoundMessage request = RoundMessage.newBuilder().setRound(round).build();
@@ -535,13 +558,14 @@ public class CrossChainBase {
   /**
    * constructor.
    */
-  public static Optional<CrossChainVoteDetailList> GetCrossChainVoteDetailList(Integer round,ByteString paraChainId,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static Optional<CrossChainVoteDetailList> getCrossChainVoteDetailList(Integer round,
+      ByteString paraChainId, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     CrossChainVotePaginated request = CrossChainVotePaginated.newBuilder()
         .setLimit(10).setOffset(0).setRound(round).setChainId(paraChainId).build();
 
-    CrossChainVoteDetailList crossChainVoteDetailList = blockingStubFull.getCrossChainVoteDetailList(request);
+    CrossChainVoteDetailList crossChainVoteDetailList
+        = blockingStubFull.getCrossChainVoteDetailList(request);
     return Optional.ofNullable(crossChainVoteDetailList);
   }
 
