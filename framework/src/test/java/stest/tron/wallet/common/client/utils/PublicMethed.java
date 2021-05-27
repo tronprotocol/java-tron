@@ -22,7 +22,6 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,10 +40,6 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.CrossChainVoteDetailList;
-import org.tron.api.GrpcAPI.CrossChainVotePaginated;
-import org.tron.api.GrpcAPI.CrossChainVoteSummaryList;
-import org.tron.api.GrpcAPI.CrossChainVoteSummaryPaginated;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
 import org.tron.api.GrpcAPI.DecryptNotesMarked;
@@ -59,13 +54,11 @@ import org.tron.api.GrpcAPI.Note;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.OvkDecryptParameters;
-import org.tron.api.GrpcAPI.ParaChainList;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.RoundMessage;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -78,7 +71,6 @@ import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
@@ -116,7 +108,6 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.protos.contract.CrossChain;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -130,7 +121,6 @@ import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
-import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
@@ -7283,18 +7273,18 @@ public class PublicMethed {
   }
 
 
-
   /**
    * constructor.
    */
-  public static List<String> getTransactionListFromTargetRange(Long startNum,Long endNum,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static List<String> getTransactionListFromTargetRange(Long startNum, Long endNum,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     List<String> transactionList = new ArrayList<>();
-    for(Long i = startNum;i <= endNum;i++) {
+    for (Long i = startNum; i <= endNum; i++) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(i);
       Block block = blockingStubFull.getBlockByNum(builder.build());
-      for(Transaction transaction : block.getTransactionsList()) {
+      for (Transaction transaction : block.getTransactionsList()) {
         transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
             .isECKeyCryptoEngine(), transaction.getRawData().toByteArray())));
       }
@@ -7306,15 +7296,16 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static List<String> getCrossTransactionListFromTargetRange(Long startNum,Long endNum,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static List<String> getCrossTransactionListFromTargetRange(Long startNum, Long endNum,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     List<String> transactionList = new ArrayList<>();
-    for(Long i = startNum;i <= endNum;i++) {
+    for (Long i = startNum; i <= endNum; i++) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(i);
       Block block = blockingStubFull.getBlockByNum(builder.build());
 
-      for(CrossMessage crossMessage : block.getCrossMessageList()) {
+      for (CrossMessage crossMessage : block.getCrossMessageList()) {
         transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
             .isECKeyCryptoEngine(), crossMessage.getTransaction().getRawData().toByteArray())));
       }
