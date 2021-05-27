@@ -75,15 +75,16 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       ByteString chainId) {
     // block header raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
-    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+    blockHeaderRawBuild
         .setNumber(number)
         .setParentHash(hash.getByteString())
         .setTimestamp(when)
         .setVersion(ChainConstant.BLOCK_VERSION)
-        .setWitnessAddress(witnessAddress)
-        .setChainId(chainId)
-        .build();
-
+        .setWitnessAddress(witnessAddress);
+    if (chainId != null){
+      blockHeaderRawBuild.setChainId(chainId);
+    }
+    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild.build();
     // block header
     BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
     BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();

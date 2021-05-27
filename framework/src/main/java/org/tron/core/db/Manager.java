@@ -1428,9 +1428,15 @@ public class Manager {
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
-        chainBaseManager.getHeadBlockId(), blockTime, miner.getWitnessAddress(),
-        chainBaseManager.getGenesisBlockId().getByteString());
+    BlockCapsule blockCapsule;
+    if (getDynamicPropertiesStore().allowCrossChain()) {
+      blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
+          chainBaseManager.getHeadBlockId(), blockTime, miner.getWitnessAddress(),
+          chainBaseManager.getGenesisBlockId().getByteString());
+    } else {
+      blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
+          chainBaseManager.getHeadBlockId(), blockTime, miner.getWitnessAddress(), null);
+    }
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
@@ -1574,7 +1580,9 @@ public class Manager {
         crossTxQueue.size());
 
     blockCapsule.setMerkleRoot();
-    blockCapsule.setCrossMerkleRoot();
+    if (getDynamicPropertiesStore().allowCrossChain()) {
+      blockCapsule.setCrossMerkleRoot();
+    }
     blockCapsule.sign(miner.getPrivateKey());
     return blockCapsule;
 
