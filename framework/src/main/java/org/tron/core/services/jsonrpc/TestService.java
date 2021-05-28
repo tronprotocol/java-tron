@@ -1,8 +1,10 @@
 package org.tron.core.services.jsonrpc;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
+import java.math.BigInteger;
 import org.springframework.stereotype.Component;
 import org.tron.core.exception.TronException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Component
 public interface TestService {
@@ -31,16 +33,30 @@ public interface TestService {
   @JsonRpcMethod("eth_protocolVersion")
   int getProtocolVersion();
 
+  @JsonRpcMethod("eth_blockNumber")
+  int getLatestBlockNum();
+
+  @JsonRpcMethod("eth_getBalance")
+  long getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException;
+
+  @JsonRpcMethod("eth_getStorageAt")
+  BigInteger getTrc20Balance(String address, String contractAddress, String blockNumOrTag);
+
+  @JsonRpcMethod("eth_getTransactionCount")
+  int getSendTransactionCountOfAddress(String address, String blockNumOrTag);
+
+  @JsonRpcMethod("eth_getCode")
+  String getABIofSmartContract(String contractAddress);
+
   @JsonRpcMethod("eth_syncing")
   Object isSyncing();
 
   @JsonRpcMethod("eth_coinbase")
-  String getCoinbase() throws Exception;
+  String getCoinbase();
 
   @JsonRpcMethod("eth_gasPrice")
   String gasPrice();
 
   @JsonRpcMethod("eth_estimateGas")
   String estimateGas();
-
 }
