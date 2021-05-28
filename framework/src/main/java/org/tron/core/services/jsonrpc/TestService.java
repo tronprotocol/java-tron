@@ -16,6 +16,12 @@ public interface TestService {
   @JsonRpcMethod("web3_sha3")
   String web3Sha3(String data) throws Exception;
 
+  @JsonRpcMethod("eth_getBlockTransactionCountByHash")
+  String ethGetBlockTransactionCountByHash(String blockHash) throws Exception;
+
+  @JsonRpcMethod("eth_getBlockTransactionCountByNumber")
+  String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception;
+
   @JsonRpcMethod("net_version")
   int getNetVersion();
 

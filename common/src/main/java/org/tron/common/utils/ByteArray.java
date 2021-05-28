@@ -116,15 +116,27 @@ public class ByteArray {
     return x == null || x.length == 0 ? null : "0x" + Hex.toHexString(x);
   }
 
-  /**
-   * Generate a subarray of a given byte array.
-   *
-   * @param input the input byte array
-   * @param start the start index
-   * @param end the end index
-   * @return a subarray of <tt>input</tt>, ranging from <tt>start</tt> (inclusively) to <tt>end</tt>
-   * (exclusively)
-   */
+  public static String toJsonHex(Long x) {
+    return x == null ? null : "0x" + Long.toHexString(x);
+  }
+
+  public static BigInteger hexToBigInteger(String input) {
+    if (input.startsWith("0x")) {
+      return new BigInteger(input.substring(2), 16);
+    } else {
+      return new BigInteger(input, 10);
+    }
+  }
+
+    /**
+     * Generate a subarray of a given byte array.
+     *
+     * @param input the input byte array
+     * @param start the start index
+     * @param end the end index
+     * @return a subarray of <tt>input</tt>, ranging from <tt>start</tt> (inclusively) to <tt>end</tt>
+     * (exclusively)
+     */
   public static byte[] subArray(byte[] input, int start, int end) {
     byte[] result = new byte[end - start];
     System.arraycopy(input, start, result, 0, end - start);

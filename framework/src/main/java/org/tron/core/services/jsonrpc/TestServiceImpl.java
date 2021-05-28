@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -12,11 +13,14 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TronException;
 import org.tron.program.Version;
 
 import org.tron.core.Wallet;
 import org.tron.core.services.NodeInfoService;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
 
 public class TestServiceImpl implements TestService {
 
@@ -52,6 +56,22 @@ public class TestServiceImpl implements TestService {
   public String web3Sha3(String data) {
     byte[] result = Hash.sha3(ByteArray.fromHexString(data));
     return ByteArray.toJsonHex(result);
+  }
+
+  public String ethGetBlockTransactionCountByHash(String blockHash) throws Exception {
+    Block b = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+    if (b == null) return null;
+
+    long n = b.getTransactionsList().size();
+    return ByteArray.toJsonHex(n);
+  }
+
+  public String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception {
+    List<Transaction> list = wallet.getTransactionsByJsonBlockId(bnOrId);
+    if (list == null) return null;
+
+    long n = list.size();
+    return ByteArray.toJsonHex(n);
   }
 
   @Override
