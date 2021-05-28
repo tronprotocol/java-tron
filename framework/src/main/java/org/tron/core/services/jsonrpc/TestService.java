@@ -23,4 +23,17 @@ public interface TestService {
 
   @JsonRpcMethod("eth_protocolVersion")
   int getProtocolVersion();
+
+  @JsonRpcMethod("eth_syncing")
+  Object isSyncing();
+
+  @JsonRpcMethod("eth_coinbase")
+  String getCoinbase();
+
+  @JsonRpcMethod("eth_gasPrice")
+  String gasPrice();
+
+  @JsonRpcMethod("eth_estimateGas")
+  String estimateGas();
+
 }
