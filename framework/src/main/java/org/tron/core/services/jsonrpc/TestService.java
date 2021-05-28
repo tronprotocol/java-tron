@@ -11,6 +11,12 @@ public interface TestService {
   @JsonRpcMethod("getInt")
   int getInt(int code);
 
+  @JsonRpcMethod("web3_clientVersion")
+  String web3ClientVersion();
+
+  @JsonRpcMethod("web3_sha3")
+  String web3Sha3(String data) throws Exception;
+
   @JsonRpcMethod("net_version")
   int getNetVersion();
 
@@ -34,4 +40,16 @@ public interface TestService {
 
   @JsonRpcMethod("eth_getCode")
   String getABIofSmartContract(String contractAddress);
+
+  @JsonRpcMethod("eth_syncing")
+  Object isSyncing();
+
+  @JsonRpcMethod("eth_coinbase")
+  String getCoinbase();
+
+  @JsonRpcMethod("eth_gasPrice")
+  String gasPrice();
+
+  @JsonRpcMethod("eth_estimateGas")
+  String estimateGas();
 }

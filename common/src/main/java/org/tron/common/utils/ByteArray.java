@@ -108,6 +108,15 @@ public class ByteArray {
   }
 
   /**
+   * Stringify byte[] x
+   * null for null
+   * null for empty []
+   */
+  public static String toJsonHex(byte[] x) {
+    return x == null || x.length == 0 ? null : "0x" + Hex.toHexString(x);
+  }
+
+  /**
    * Generate a subarray of a given byte array.
    *
    * @param input the input byte array

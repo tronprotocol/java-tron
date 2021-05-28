@@ -94,6 +94,8 @@ public class Constant {
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
+  public static final String NODE_HTTP_JSONRPC_PORT = "node.http.jsonRpcPort";
+  public static final String NODE_HTTP_JSONRPC_ENABLE = "node.http.jsonRpcEnable";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
   public static final String NODE_SOLIDITY_THREADS = "node.solidity.threads";

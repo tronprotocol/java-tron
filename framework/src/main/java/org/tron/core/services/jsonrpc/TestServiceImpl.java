@@ -1,18 +1,21 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.common.utils.Commons.decode58Check;
-import static org.tron.common.utils.DecodeUtil.addressValid;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.tronToEthAddress;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
@@ -20,12 +23,15 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
+import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -33,7 +39,6 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
-@Component
 public class TestServiceImpl implements TestService {
 
   private NodeInfoService nodeInfoService;
@@ -50,6 +55,24 @@ public class TestServiceImpl implements TestService {
   @Override
   public int getInt(int code) {
     return code;
+  }
+
+  public String web3ClientVersion() {
+    Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
+    Matcher matcher = shortVersion.matcher(System.getProperty("java.version"));
+    matcher.matches();
+
+    return Arrays.asList(
+        "TRON", "v" + Version.getVersion(),
+        System.getProperty("os.name"),
+        "Java" + matcher.group(1),
+        Version.VERSION_NAME).stream()
+        .collect(Collectors.joining("/"));
+  }
+
+  public String web3Sha3(String data) {
+    byte[] result = Hash.sha3(ByteArray.fromHexString(data));
+    return ByteArray.toJsonHex(result);
   }
 
   @Override
@@ -79,63 +102,23 @@ public class TestServiceImpl implements TestService {
   @Override
   public long getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException {
     //某个用户的trx余额，以sun为单位
-    byte[] addressData = decodeFromBase58Check(address);
+    byte[] addressData = Commons.decodeFromBase58Check(address);
     Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
     return wallet.getAccount(account).getBalance();
-  }
-
-  private String getMethodSign(String method) {
-    byte[] selector = new byte[4];
-    System.arraycopy(Hash.sha3(method.getBytes()), 0, selector, 0, 4);
-    return Hex.toHexString(selector);
-  }
-
-  public byte[] decodeFromBase58Check(String addressBase58) {
-    if (StringUtils.isEmpty(addressBase58)) {
-      // logger.warn("Warning: Address is empty !!");
-      return null;
-    }
-
-    byte[] address;
-    try {
-      address = decode58Check(addressBase58);
-      if (!addressValid(address)) {
-        return null;
-      }
-    } catch (Exception e) {
-      // logger.warn("decodeFromBase58Check exception, address is " + addressBase58);
-      return null;
-    }
-
-    return address;
-  }
-
-  public TriggerSmartContract triggerCallContract(byte[] address, byte[] contractAddress,
-      long callValue, byte[] data, long tokenValue, String tokenId) {
-    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
-    builder.setOwnerAddress(ByteString.copyFrom(address));
-    builder.setContractAddress(ByteString.copyFrom(contractAddress));
-    builder.setData(ByteString.copyFrom(data));
-    builder.setCallValue(callValue);
-    if (tokenId != null && tokenId != "") {
-      builder.setCallTokenValue(tokenValue);
-      builder.setTokenId(Long.parseLong(tokenId));
-    }
-    return builder.build();
   }
 
   @Override
   public BigInteger getTrc20Balance(String ownerAddress, String contractAddress,
       String blockNumOrTag) {
     //某个用户拥有的某个token20余额，带精度
-    byte[] addressData = decodeFromBase58Check(ownerAddress);
+    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
     byte[] addressDataWord = new byte[32];
     System.arraycopy(addressData, 0, addressDataWord, 32 - addressData.length, addressData.length);
     String dataStr = getMethodSign("balanceOf(address)") + Hex.toHexString(addressDataWord);
 
     //构造静态合约时，只需要3个字段
     TriggerSmartContract triggerContract = triggerCallContract(addressData,
-        decodeFromBase58Check(contractAddress), 0,
+        Commons.decodeFromBase58Check(contractAddress), 0,
         ByteArray.fromHexString(dataStr), 0, null);
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
@@ -205,10 +188,47 @@ public class TestServiceImpl implements TestService {
   @Override
   public String getABIofSmartContract(String contractAddress) {
     //获取某个合约地址的字节码
-    byte[] addressData = decodeFromBase58Check(contractAddress);
+    byte[] addressData = Commons.decodeFromBase58Check(contractAddress);
     BytesMessage.Builder build = BytesMessage.newBuilder();
     BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressData)).build();
     SmartContract smartContract = wallet.getContract(bytesMessage);
     return ByteArray.toHexString(smartContract.getBytecode().toByteArray());
+  }
+
+  @Override
+  public Object isSyncing() {
+    return true;
+  }
+
+  @Override
+  public String getCoinbase() {
+    byte[] tronAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
+        .toByteArray();
+    return tronToEthAddress(StringUtil.encode58Check(tronAddress));
+  }
+
+  @Override
+  public String gasPrice() {
+    BigInteger gasPrice;
+    BigInteger multiplier = new BigInteger("1000000000", 10); // Gwei: 10^9
+
+    if ("getTransactionFee".equals(wallet.getChainParameters().getChainParameter(3).getKey())) {
+      gasPrice = BigInteger.valueOf(wallet.getChainParameters().getChainParameter(3).getValue());
+    } else {
+      gasPrice = BigInteger.valueOf(140);
+    }
+    return "0x" + gasPrice.multiply(multiplier).toString(16);
+  }
+
+  @Override
+  public String estimateGas() {
+    BigInteger feeLimit = BigInteger.valueOf(100);  // set fee limit: 100 trx
+    BigInteger precision = new BigInteger("1000000000000000000"); // 1ether = 10^18 wei
+    BigInteger gasPrice = new BigInteger(gasPrice().substring(2), 16);
+    if (gasPrice.compareTo(BigInteger.ZERO) > 0) {
+      return "0x" + feeLimit.multiply(precision).divide(gasPrice).toString(16);
+    } else {
+      return "0x0";
+    }
   }
 }
