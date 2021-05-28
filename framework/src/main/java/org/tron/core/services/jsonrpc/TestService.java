@@ -2,6 +2,7 @@ package org.tron.core.services.jsonrpc;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import org.springframework.stereotype.Component;
+import org.tron.core.exception.TronException;
 
 @Component
 public interface TestService {
@@ -23,4 +24,17 @@ public interface TestService {
 
   @JsonRpcMethod("eth_protocolVersion")
   int getProtocolVersion();
+
+  @JsonRpcMethod("eth_syncing")
+  Object isSyncing();
+
+  @JsonRpcMethod("eth_coinbase")
+  String getCoinbase() throws Exception;
+
+  @JsonRpcMethod("eth_gasPrice")
+  String gasPrice();
+
+  @JsonRpcMethod("eth_estimateGas")
+  String estimateGas();
+
 }
