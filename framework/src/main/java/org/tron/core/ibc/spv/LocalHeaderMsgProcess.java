@@ -39,18 +39,18 @@ public class LocalHeaderMsgProcess {
     String chainIdString = ByteArray.toHexString(chainId);
     long blockHeight = requestMessage.getBlockHeight();
     long latestMaintenanceTime = requestMessage.getLatestMaintenanceTime();
-    long currentBlockheight = chainBaseManager.getCommonDataBase()
+    long currentBlockHeight = chainBaseManager.getCrossRevokingStore()
         .getLatestHeaderBlockNum(chainIdString);
     if (!chainBaseManager.chainIsSelected(requestMessage.getChainId())) {
       return;
     }
     logger.info("handleRequest, peer:{}, chainId:{}, request num:{}, current:{}, ",
-        peer, chainIdString, blockHeight, currentBlockheight);
+        peer, chainIdString, blockHeight, currentBlockHeight);
     List<SignedBlockHeader> blockHeaders = new ArrayList<>();
-    if (currentBlockheight > blockHeight) {
+    if (currentBlockHeight > blockHeight) {
       long height = blockHeight + 1;
       boolean isMaintenanceTimeUpdated = false;
-      for (int i = 1; i <= SYNC_NUMBER && height < currentBlockheight; i++) {
+      for (int i = 1; i <= SYNC_NUMBER && height < currentBlockHeight; i++) {
         height = blockHeight + i;
         BlockId blockId = chainBaseManager.getBlockHeaderIndexStore()
             .getUnchecked(chainIdString, height);
@@ -73,7 +73,7 @@ public class LocalHeaderMsgProcess {
       //todo
     }
     BlockHeaderInventoryMesasge inventoryMesasge =
-        new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);
+        new BlockHeaderInventoryMesasge(chainIdString, currentBlockHeight, blockHeaders);
     peer.sendMessage(inventoryMesasge);
   }
 

@@ -25,6 +25,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
   private static final String PARACHAINS_KEY = "k_parachain";
   private static final String VOTED_KEY = "voted_";
   private static final String PARACHAIN__HISTORY = "parachain_history";
+  private static final String LATEST_SYNC_BLOCK_NUM = "LATEST_SYNC_BLOCK_NUM";
 
   public CrossRevokingStore() {
     super("cross-revoke-database");
@@ -234,6 +235,27 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
             .collect(Collectors.toList());
   }
 
+  public long getLatestHeaderBlockNum(String chainId) {
+    BytesCapsule data = getUnchecked(buildKey(LATEST_SYNC_BLOCK_NUM, chainId));
+    if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
+      return ByteArray.toLong(data.getData());
+    } else {
+      return 0L;
+    }
+  }
+
+  public void saveLatestHeaderBlockNum(String chainId, long number, boolean forceUpdate) {
+    if (!forceUpdate && number <= getLatestHeaderBlockNum(chainId)) {
+      logger.warn("chainId: {}, sync number {} <= latest number {}",
+              chainId, number, getLatestHeaderBlockNum(chainId));
+      return;
+    }
+    this.put(buildKey(LATEST_SYNC_BLOCK_NUM, chainId), new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  private byte[] buildKey(String prefix, String chainId) {
+    return (prefix + "_" + chainId).getBytes();
+  }
 
   private byte[] buildTokenKey(String chainId, String tokenId) {
     return ("token_" + chainId + "_" + tokenId).getBytes();

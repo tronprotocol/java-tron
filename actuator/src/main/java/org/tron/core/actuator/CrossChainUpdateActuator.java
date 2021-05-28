@@ -12,12 +12,14 @@ import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract;
@@ -40,15 +42,66 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    CommonDataBase commonDataBase = chainBaseManager.getCommonDataBase();
     try {
       CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
       String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
+      if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())) {
+        byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(chainId);
+        BalanceContract.CrossChainInfo crossChainInfoOld = null;
+
+        if (crossChainInfoBytes == null) {
+          throw new ContractValidateException("ChainId has not been registered!");
+        }
+        try {
+          crossChainInfoOld =
+                  BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
+        } catch (InvalidProtocolBufferException e) {
+          throw new ContractValidateException("the format of crossChainInfo stored in db is not right!");
+        }
+
+        if (crossChainInfo.getBeginSyncHeight() != crossChainInfoOld.getBeginSyncHeight()) {
+          crossRevokingStore.saveLatestHeaderBlockNum(chainId,
+                  crossChainInfo.getBeginSyncHeight() - 1, true);
+        }
+
+        if (!crossChainInfo.getParentBlockHash().equals(crossChainInfoOld.getParentBlockHash())) {
+          commonDataBase.saveLatestBlockHeaderHash(chainId,
+                  ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
+        }
+
+        if (crossChainInfo.getMaintenanceTimeInterval() != crossChainInfoOld.getMaintenanceTimeInterval()
+                || crossChainInfo.getBlockTime() != crossChainInfoOld.getBlockTime()
+                || !crossChainInfo.getSrListList().equals(crossChainInfoOld.getSrListList())) {
+          commonDataBase.saveChainMaintenanceTimeInterval(chainId,
+                  crossChainInfo.getMaintenanceTimeInterval());
+          long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
+          long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
+          if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {
+            epoch = epoch - crossChainInfo.getMaintenanceTimeInterval();
+            epoch = epoch < 0 ? 0 : epoch;
+          }
+          Protocol.SRL.Builder srlBuilder = Protocol.SRL.newBuilder();
+          srlBuilder.addAllSrAddress(crossChainInfo.getSrListList());
+          Protocol.PBFTMessage.Raw pbftMsgRaw = Protocol.PBFTMessage.Raw.newBuilder()
+                  .setData(srlBuilder.build().toByteString())
+                  .setEpoch(epoch).build();
+          Protocol.PBFTCommitResult.Builder builder = Protocol.PBFTCommitResult.newBuilder();
+          builder.setData(pbftMsgRaw.toByteString());
+          commonDataBase.saveSRL(chainId, epoch, builder.build());
+          commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
+          int agreeNodeCount = crossChainInfo.getSrListList().size() * 2 / 3 + 1;
+          commonDataBase.saveAgreeNodeCount(chainId, agreeNodeCount);
+        }
+      }
+
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
       crossRevokingStore.putChainInfo(chainId, crossChainInfo.toByteArray());
       ret.setStatus(fee, code.SUCESS);
-    } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
+    } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException
+            | ContractValidateException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -100,14 +153,18 @@ public class CrossChainUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("ChainId has not been registered!");
     }
 
-    if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())) {
-      throw new ContractValidateException("ChainId has been selected!");
-    }
-
     try {
       crossChainInfoOld = BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException("the format of crossChainInfo stored in db is not right!");
+    }
+
+    long beginSyncHeightOld = crossChainInfoOld.getBeginSyncHeight();
+    long latestHeaderBlockNum = crossRevokingStore.getLatestHeaderBlockNum(chainId);
+    logger.warn("beginSyncHeightOld:" + beginSyncHeightOld + ",latestHeaderBlockNum:" + latestHeaderBlockNum);
+    if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())
+            && latestHeaderBlockNum >= beginSyncHeightOld) {
+      throw new ContractValidateException("ChainId has been selected!");
     }
 
     if (!DecodeUtil.addressValid(ownerAddress)) {

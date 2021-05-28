@@ -2306,16 +2306,18 @@ public class Manager {
 
   private void setCrossChainInfo() {
     CommonDataBase commonDataBase = chainBaseManager.getCommonDataBase();
+    CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     Args.getInstance().getCrossChainWhiteList().forEach(crossChainInfo -> {
       String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
       try {
-        if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
+        if (crossChainInfo.getBeginSyncHeight() <= crossRevokingStore
                 .getLatestHeaderBlockNum(chainId)) {
           return;
         }
         commonDataBase.saveProxyAddress(chainId,
                 ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
-        commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
+        crossRevokingStore.saveLatestHeaderBlockNum(chainId,
+                crossChainInfo.getBeginSyncHeight() - 1, false);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
                 ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
         commonDataBase.saveChainMaintenanceTimeInterval(chainId,
