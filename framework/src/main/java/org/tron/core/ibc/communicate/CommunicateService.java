@@ -171,7 +171,7 @@ public class CommunicateService implements Communicate {
     }
     MerkleTree merkleTree = MerkleTree.getInstance();
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
-        Sha256Hash.of(true, proof.getHash().toByteArray()),
+        Sha256Hash.wrap( proof.getHash()),
         proof.getLeftOrRight())).collect(Collectors.toList());
     return merkleTree.validProof(root, proofLeafList, txHash);
   }
