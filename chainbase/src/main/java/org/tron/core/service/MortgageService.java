@@ -42,7 +42,7 @@ public class MortgageService {
   private AccountStore accountStore;
 
   public void initStore(WitnessStore witnessStore, DelegationStore delegationStore,
-                        DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
+      DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
     this.witnessStore = witnessStore;
     this.delegationStore = delegationStore;
     this.dynamicPropertiesStore = dynamicPropertiesStore;
@@ -143,8 +143,8 @@ public class MortgageService {
     delegationStore.setEndCycle(address, endCycle + 1);
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
     logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
-                    + "account vote {},", Hex.toHexString(address), reward, currentCycle,
-            beginCycle, endCycle, accountCapsule.getVotesList());
+            + "account vote {},", Hex.toHexString(address), reward, currentCycle,
+        beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
   public long queryReward(byte[] address) {
@@ -197,8 +197,8 @@ public class MortgageService {
       double voteRate = (double) userVote / totalVote;
       reward += voteRate * totalReward;
       logger.debug("computeReward {} {} {} {},{},{},{}", cycle,
-              Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
-              userVote, totalVote, totalReward, reward);
+          Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
+          userVote, totalVote, totalReward, reward);
     }
     return reward;
   }
@@ -219,7 +219,7 @@ public class MortgageService {
   }
 
   public void adjustAllowance(AccountStore accountStore, byte[] accountAddress, long amount)
-          throws BalanceInsufficientException {
+      throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
     long allowance = account.getAllowance();
     if (amount == 0) {
@@ -228,7 +228,7 @@ public class MortgageService {
 
     if (amount < 0 && allowance < -amount) {
       throw new BalanceInsufficientException(
-              StringUtil.createReadableString(accountAddress) + " insufficient balance");
+          StringUtil.createReadableString(accountAddress) + " insufficient balance");
     }
     account.setAllowance(allowance + amount);
     accountStore.put(account.createDbKey(), account);
@@ -236,6 +236,6 @@ public class MortgageService {
 
   private void sortWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) -> getWitnessByAddress(b).getVoteCount())
-            .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+        .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 }
