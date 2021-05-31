@@ -3,6 +3,7 @@ package org.tron.core.services.jsonrpc;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.math.BigInteger;
 import org.springframework.stereotype.Component;
+import org.tron.core.exception.TronException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
@@ -16,6 +17,12 @@ public interface TestService {
 
   @JsonRpcMethod("web3_sha3")
   String web3Sha3(String data) throws Exception;
+
+  @JsonRpcMethod("eth_getBlockTransactionCountByHash")
+  String ethGetBlockTransactionCountByHash(String blockHash) throws Exception;
+
+  @JsonRpcMethod("eth_getBlockTransactionCountByNumber")
+  String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception;
 
   @JsonRpcMethod("net_version")
   int getNetVersion();

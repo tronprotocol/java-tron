@@ -662,6 +662,29 @@ public class Wallet {
     return count;
   }
 
+  public Block getByJsonBlockId(String id) {
+    if ("earliest".equalsIgnoreCase(id)) {
+      return getBlockByNum(0);
+    } else if ("latest".equalsIgnoreCase(id)) {
+      return getNowBlock();
+    } else if ("pending".equalsIgnoreCase(id)) {
+      return null;
+    } else {
+      long blockNumber = ByteArray.hexToBigInteger(id).longValue();
+      return getBlockByNum(blockNumber);
+    }
+  }
+
+  public List<Transaction> getTransactionsByJsonBlockId(String id) {
+    if ("pending".equalsIgnoreCase(id)) {
+      // todo
+      return null;
+    } else {
+      Block block = getByJsonBlockId(id);
+      return block != null ? block.getTransactionsList() : null;
+    }
+  }
+
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
     List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
