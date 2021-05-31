@@ -52,4 +52,13 @@ public interface TestService {
 
   @JsonRpcMethod("eth_estimateGas")
   String estimateGas();
+
+  @JsonRpcMethod("eth_getCompilers")
+  String[] getCompilers();
+
+  @JsonRpcMethod("eth_compileSolidity")
+  String compileSolidity(String source);
+
+  @JsonRpcMethod("eth_gettransactionreceipt")
+  String getTransactionReceipt(String source);
 }

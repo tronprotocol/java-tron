@@ -231,4 +231,20 @@ public class TestServiceImpl implements TestService {
       return "0x0";
     }
   }
+
+  @Override
+  public String[] getCompilers() {
+    return new String[]{"solidity"};
+  }
+
+  @Override
+  public String compileSolidity(String source) {
+    //耗费cpu太高，采用trongrid中心化服务器实现。
+    return null;
+  }
+
+  @Override
+  public String getTransactionReceipt(String source) {
+    return null;
+  }
 }
