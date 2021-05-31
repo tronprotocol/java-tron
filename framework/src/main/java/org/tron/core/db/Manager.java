@@ -946,7 +946,6 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
-
         consensus.receiveBlock(block);
       }
 
@@ -1198,6 +1197,7 @@ public class Manager {
     }
     //set the sort order
     trxCap.setOrder(transactionInfo.getFee());
+    trxCap.setTrxTrace(null);
     return transactionInfo.getInstance();
   }
 

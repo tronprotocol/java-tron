@@ -77,8 +77,8 @@ public class MultiSign28 {
 
 
   @Test(enabled = true, description =
-      "Sendcoin,use not in permissionlist address sign,not meet the requirements."
-          + "Then use in active address to sign, meet all requirements,broadcastTransaction.")
+      "Sendcoin permission id 2,use not in permissionlist address sign."
+          + "Then use in active address permission id 2 to sign ,broadcastTransaction.")
   public void testMultiUpdatepermissions_10() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -168,8 +168,8 @@ public class MultiSign28 {
   }
 
   @Test(enabled = true, description =
-      "Sendcoin,use not in permissionlist address sign,not meet the requirements."
-          + "Then use in active address to sign,not meet the requirements,broadcastTransaction.")
+      "Sendcoin permission id 2,use not in permissionlist address sign."
+          + "Then use in active address to sign,no right to sendcoin,broadcastTransaction.")
   public void testMultiUpdatepermissions_11() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -261,9 +261,9 @@ public class MultiSign28 {
 
   }
 
-  @Test(enabled = true, description = "Sendcoin,use active address sign,not meet the requirements."
-      + "Then use permissionId not same in active address to sign,"
-      + " meet all requirements,broadcastTransaction.")
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use active address in permission id 3 sign."
+      + "Then use active address in permission id 2to sign.broadcastTransaction.")
   public void testMultiUpdatepermissions_12() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -351,8 +351,7 @@ public class MultiSign28 {
   }
 
   @Test(enabled = true, description = "Sendcoin,use active address sign, meet all requirements."
-      + "Then use permissionId not same in active address to sign,"
-      + " meet all requirements,broadcastTransaction.")
+      + "sum weight > threshold")
   public void testMultiUpdatepermissions_13() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -430,8 +429,7 @@ public class MultiSign28 {
   }
 
   @Test(enabled = true, description = "Sendcoin,use active address sign, meet all requirements."
-      + "Then use permissionId not same in active address to sign,"
-      + " not meet requirements,broadcastTransaction.")
+      + "Then use permissionId not same in active address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_14() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -519,8 +517,7 @@ public class MultiSign28 {
   }
 
   @Test(enabled = true, description = "Sendcoin,use active address sign, not meet the requirements."
-      + "Then use permissionId not same in active address to sign,"
-      + " not meet requirements,broadcastTransaction.")
+      + "Then use permissionId not same active address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_15() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -607,7 +604,7 @@ public class MultiSign28 {
   }
 
   @Test(enabled = true, description =
-      "Sendcoin,use  not in permissionlist address sign, meet all requirements."
+      "Sendcoin,use  not in permissionlist address sign,"
           + "Then use owner address to sign,meet all requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_16() {
     ECKey ecKey = new ECKey(Utils.getRandom());
@@ -695,7 +692,7 @@ public class MultiSign28 {
 
   @Test(enabled = true, description =
       "Sendcoin,use not in permissionlist address sign, meet all requirements."
-          + "Then use owner address to sign,not meet the requirements,broadcastTransaction.")
+          + "Then use owner address to sign,,broadcastTransaction.")
   public void testMultiUpdatepermissions_17() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -778,8 +775,9 @@ public class MultiSign28 {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Sendcoin,use active address sign, meet all requirements."
-      + "Then use owner address to sign,not meet the requirements,broadcastTransaction.")
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use active address sign, meet all requirements."
+      + "Then use owner address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_18() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -861,8 +859,9 @@ public class MultiSign28 {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Sendcoin,use active address sign, meet all requirements."
-      + "Then use owner address to sign,meet all requirements,broadcastTransaction.")
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use active address sign, meet all requirements."
+      + "Then use owner address to sign with permission id 0,broadcastTransaction.")
   public void testMultiUpdatepermissions_19() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -945,8 +944,8 @@ public class MultiSign28 {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Sendcoin,use active address sign, not meet the requirements."
-      + "Then use owner address to sign, meet all requirements,broadcastTransaction.")
+  @Test(enabled = true, description = "Sendcoin permission id 2,use owner address sign."
+      + "Then use active address to sign, meet permission id.broadcastTransaction.")
   public void testMultiUpdatepermissions_20() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -1029,8 +1028,9 @@ public class MultiSign28 {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Sendcoin,use active address sign, not meet the requirements."
-      + "Then use owner address to sign, not meet the requirements,broadcastTransaction.")
+  @Test(enabled = true, description = "Sendcoin permission id 2"
+      + ",use not in permissionlist address sign."
+      + "Then use owner address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_21() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();

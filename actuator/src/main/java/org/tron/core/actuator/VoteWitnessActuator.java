@@ -22,6 +22,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -125,7 +126,13 @@ public class VoteWitnessActuator extends AbstractActuator {
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
 
-      long tronPower = accountCapsule.getTronPower();
+      long tronPower;
+      DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+      if (dynamicStore.supportAllowNewResourceModel()) {
+        tronPower = accountCapsule.getAllTronPower();
+      } else {
+        tronPower = accountCapsule.getTronPower();
+      }
 
       sum = LongMath
           .checkedMultiply(sum, TRX_PRECISION); //trx -> drop. The vote count is based on TRX
@@ -154,6 +161,12 @@ public class VoteWitnessActuator extends AbstractActuator {
     mortgageService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
 
     if (!votesStore.has(ownerAddress)) {
       votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),

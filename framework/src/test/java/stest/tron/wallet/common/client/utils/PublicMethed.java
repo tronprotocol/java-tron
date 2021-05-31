@@ -132,6 +132,7 @@ import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 import org.tron.protos.contract.StorageContract.BuyStorageContract;
 import org.tron.protos.contract.StorageContract.SellStorageContract;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -2045,6 +2046,58 @@ public class PublicMethed {
    * constructor.
    */
 
+  public static boolean voteWitness(byte[] ownerAddress, String priKey,
+      HashMap<byte[], Long> witnessMap, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+
+    byte[] owner = ownerAddress;
+    VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    for (byte[] address : witnessMap.keySet()) {
+      VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote.newBuilder();
+      voteBuilder.setVoteAddress(ByteString.copyFrom(address));
+      voteBuilder.setVoteCount(witnessMap.get(address));
+      builder.addVotes(voteBuilder.build());
+    }
+
+    VoteWitnessContract contract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull.voteWitnessAccount2(contract);
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+
+    return response.getResult();
+  }
+
+
+  /**
+   * constructor.
+   */
+
   public static boolean createProposal(byte[] ownerAddress, String priKey,
       HashMap<Long, Long> parametersMap, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2239,6 +2292,17 @@ public class PublicMethed {
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
     return response.getResult();
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static Boolean freezeBalanceGetTronPower(byte[] addRess, long freezeBalance,
+      long freezeDuration, int resourceCode, ByteString receiverAddress,String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return freezeBalanceForReceiver(addRess,freezeBalance,
+        freezeDuration,resourceCode,receiverAddress,priKey,blockingStubFull);
   }
 
   /**
@@ -4269,7 +4333,9 @@ public class PublicMethed {
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
-    builder.setReceiverAddress(receiverAddressBytes);
+    if (receiverAddressBytes != null) {
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
     FreezeBalanceContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
 

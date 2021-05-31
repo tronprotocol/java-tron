@@ -58,7 +58,7 @@ dependencies {
 
     compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
 
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.3'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
 
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
@@ -75,7 +75,7 @@ dependencies {
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
-    compile 'com.alibaba:fastjson:1.2.60'
+    compile 'com.alibaba:fastjson:1.2.70'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
 

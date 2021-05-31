@@ -26,10 +26,7 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -68,6 +65,7 @@ public class VMActuator implements Actuator2 {
   private Repository repository;
   private InternalTransaction rootInternalTransaction;
   private ProgramInvokeFactory programInvokeFactory;
+  private ReceiptCapsule receipt;
 
 
   private VM vm;
@@ -115,6 +113,9 @@ public class VMActuator implements Actuator2 {
     ConfigLoader.load(context.getStoreFactory());
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
+    if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {
+      receipt = context.getTrxCap().getTrxTrace().getReceipt();
+    }
     //Route Type
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
     //Prepare Repository
@@ -211,8 +212,6 @@ public class VMActuator implements Actuator2 {
           result.getLogInfoList().clear();
           result.resetFutureRefund();
           result.rejectInternalTransactions();
-          result.getDeleteVotes().clear();
-          result.getDeleteDelegation().clear();
 
           if (result.getException() != null) {
             if (!(result.getException() instanceof TransferException)) {
@@ -521,6 +520,9 @@ public class VMActuator implements Actuator2 {
     }
 
     long leftFrozenEnergy = repository.getAccountLeftEnergyFromFreeze(account);
+    if (VMConfig.allowTvmFreeze()) {
+      receipt.setCallerEnergyLeft(leftFrozenEnergy);
+    }
 
     long energyFromBalance = max(account.getBalance() - callValue, 0) / sunPerEnergy;
     long availableEnergy = Math.addExact(leftFrozenEnergy, energyFromBalance);
@@ -648,9 +650,15 @@ public class VMActuator implements Actuator2 {
       throw new ContractValidateException("originEnergyLimit can't be < 0");
     }
 
+    long originEnergyLeft = 0;
+    if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
+      originEnergyLeft = repository.getAccountLeftEnergyFromFreeze(creator);
+      if (VMConfig.allowTvmFreeze()) {
+        receipt.setOriginEnergyLeft(originEnergyLeft);
+      }
+    }
     if (consumeUserResourcePercent <= 0) {
-      creatorEnergyLimit = min(repository.getAccountLeftEnergyFromFreeze(creator),
-          originEnergyLimit);
+      creatorEnergyLimit = min(originEnergyLeft, originEnergyLimit);
     } else {
       if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
         // creatorEnergyLimit =
@@ -660,7 +668,7 @@ public class VMActuator implements Actuator2 {
             BigInteger.valueOf(callerEnergyLimit)
                 .multiply(BigInteger.valueOf(VMConstant.ONE_HUNDRED - consumeUserResourcePercent))
                 .divide(BigInteger.valueOf(consumeUserResourcePercent)).longValueExact(),
-            min(repository.getAccountLeftEnergyFromFreeze(creator), originEnergyLimit)
+            min(originEnergyLeft, originEnergyLimit)
         );
       }
     }
