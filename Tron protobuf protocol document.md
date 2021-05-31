@@ -186,7 +186,7 @@ message Account {
     
   - Message `AccountId`
   
-    `name`: the name ofthis account.
+    `name`: the name of this account.
   
     `address`: the address of this account.
   
@@ -412,7 +412,7 @@ Transaction and transaction-related messages.
 
     `net_fee`: consume yourself trx of net usage.
 
-    `result`: he result of executing transaction.
+    `result`: the result of executing transaction.
 
     ```java
     message ResourceReceipt {
