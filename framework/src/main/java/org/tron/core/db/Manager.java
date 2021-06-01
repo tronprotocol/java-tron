@@ -1836,8 +1836,9 @@ public class Manager {
           ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
           if (localChainId.equals(crossContract.getOwnerChainId())) {
             if (proxyAccount == null) {
-              throw new ProxyNotActiveException(String.format("can get the proxy addr of ChainId: %s",
-                      ByteArray.toHexString(crossContract.getToChainId().toByteArray())));
+              throw new ProxyNotActiveException(
+                      String.format("can get the proxy addr of ChainId: %s",
+                              ByteArray.toHexString(crossContract.getToChainId().toByteArray())));
             }
             if (!proxyAccount.equals(realProxyAccount)) {
               throw new PermissionException(String.format(

@@ -131,8 +131,13 @@ public class KhaosDatabase extends TronDatabase {
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blk.getNum());
-      if (witnessScheduleStore.getActiveWitnesses().size() != 1
-              && pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
+      int witnessSize = 0;
+      try {
+        witnessSize = witnessScheduleStore.getActiveWitnesses().size();
+      } catch (IllegalArgumentException e) {
+        logger.warn("witness size is 0");
+      }
+      if (witnessSize != 1 && pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
         throw new BlockNotInMainForkException();
       }
 
