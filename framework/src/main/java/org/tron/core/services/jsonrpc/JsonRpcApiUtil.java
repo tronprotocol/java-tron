@@ -124,6 +124,21 @@ public class JsonRpcApiUtil {
     return sb.toString();
   }
 
+  public static byte[] convertToTronAddress(byte[] address) {
+    byte[] newAddress = new byte[21];
+    byte[] temp = new byte[] {Wallet.getAddressPreFixByte()};
+    System.arraycopy(temp, 0, newAddress, 0, temp.length);
+
+    if (address.length <= 20) {
+      int start = 20 - address.length;
+      System.arraycopy(address, 0, newAddress, temp.length + start, address.length);
+    } else {
+      int start = address.length - 20;
+      System.arraycopy(address, start, newAddress, temp.length, 20);
+    }
+    return newAddress;
+  }
+
   public static String getMethodSign(String method) {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(method.getBytes()), 0, selector, 0, 4);
@@ -576,10 +591,10 @@ public class JsonRpcApiUtil {
   }
 
   public static String int2HexString(int i) {
-    return "0x" + Integer.toHexString(i);
+    return "0x" + Integer.toUnsignedString(i, 16);
   }
 
   public static String long2HexString(long l) {
-    return "0x" + Long.toHexString(l);
+    return "0x" + Long.toUnsignedString(l, 16);
   }
 }

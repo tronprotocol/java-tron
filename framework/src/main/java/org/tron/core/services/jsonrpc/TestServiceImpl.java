@@ -2,6 +2,7 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateContractAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getBlockID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
@@ -300,11 +301,11 @@ public class TestServiceImpl implements TestService {
     jsonObject.put("blockHash", getBlockID(block));
     jsonObject.put("blockNumber", long2HexString(blockNum));
 
-    jsonObject.put("gas", -1); //暂时不填
-    jsonObject.put("gasPrice", -1); //暂时不填
-    jsonObject.put("hash", txid);
-    jsonObject.put("input", ""); //暂时不填data字段
-    jsonObject.put("nonce", -1); //暂时不写
+    jsonObject.put("gas", null); //暂时不填
+    jsonObject.put("gasPrice", null); //暂时不填
+    jsonObject.put("hash", "0x" + txid);
+    jsonObject.put("input", null); //暂时不填data字段
+    jsonObject.put("nonce", null); //暂时不写
     byte[] owner = getOwner(transaction.getRawData().getContract(0));
     ArrayList<ByteString> toAddressList = getTo(transaction);
     jsonObject.put("from", owner != null ? StringUtil.encode58Check(owner) : null);
@@ -319,15 +320,16 @@ public class TestServiceImpl implements TestService {
       }
     }
     jsonObject.put("transactionIndex", int2HexString(transactionIndex));
-    jsonObject.put("value", getTransactionAmount(transaction.getRawData().getContract(0), txid,
-        blockNum, transactionInfo, wallet));
+    long amount = getTransactionAmount(transaction.getRawData().getContract(0), txid,
+        blockNum, transactionInfo, wallet);
+    jsonObject.put("value", long2HexString(amount));
 
-    ByteString signature = transaction.getSignature(0);
+    ByteString signature = transaction.getSignature(0); // r[32] + s[32] + 符号位v[1]
     byte[] signData = signature.toByteArray();
-    byte v = (byte) (signData[0] - 27);
-    byte[] r = Arrays.copyOfRange(signData, 1, 33);
-    byte[] s = Arrays.copyOfRange(signData, 33, 65);
-    jsonObject.put("v", "0x" + int2HexString(v));
+    byte v = (byte) (signData[64] + 27); //参考函数 Base64toBytes
+    byte[] r = Arrays.copyOfRange(signData, 0, 32);
+    byte[] s = Arrays.copyOfRange(signData, 32, 64);
+    jsonObject.put("v", int2HexString(v));
     jsonObject.put("r", "0x" + ByteArray.toHexString(r));
     jsonObject.put("s", "0x" + ByteArray.toHexString(s));
 
@@ -375,6 +377,9 @@ public class TestServiceImpl implements TestService {
         .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     TransactionInfo transactionInfo = wallet
         .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
+    if (transaction == null || transactionInfo == null) {
+      return null;
+    }
 
     long blockNum = transactionInfo.getBlockNumber();
     Block block = wallet.getBlockByNum(blockNum);
@@ -395,19 +400,12 @@ public class TestServiceImpl implements TestService {
     for (TransactionInfo info : reply.getTransactionInfoList()) {
       cumulativeGasUsed += info.getFee();
     }
-    jsonObject.put("cumulativeGasUsed", cumulativeGasUsed);
-    jsonObject.put("gasUsed", transactionInfo.getFee());
+    jsonObject.put("cumulativeGasUsed", long2HexString(cumulativeGasUsed));
+    jsonObject.put("gasUsed", long2HexString(transactionInfo.getFee()));
 
     String contractAddress = null;
-    Transaction.Contract contract = transaction.getRawData().getContract(0);
     if (transaction.getRawData().getContract(0).getType() == ContractType.CreateSmartContract) {
-      try {
-        CreateSmartContract createSmartContract =
-            contract.getParameter().unpack(CreateSmartContract.class);
-        contractAddress = StringUtil.encode58Check(generateContractAddress(transaction));
-      } catch (InvalidProtocolBufferException e) {
-        e.printStackTrace();
-      }
+      contractAddress = StringUtil.encode58Check(generateContractAddress(transaction));
     }
     jsonObject.put("contractAddress", contractAddress);
 
@@ -421,7 +419,8 @@ public class TestServiceImpl implements TestService {
       logItem.put("transactionIndex", jsonObject.getString("transactionIndex"));
       logItem.put("blockHash", jsonObject.getString("blockHash"));
       logItem.put("blockNumber", jsonObject.getString("blockNumber"));
-      logItem.put("address", StringUtil.encode58Check(log.getAddress().toByteArray()));
+      logItem.put("address",
+          StringUtil.encode58Check(convertToTronAddress(log.getAddress().toByteArray())));
       logItem.put("data", "0x" + ByteArray.toHexString(log.getData().toByteArray()));
       String[] topics = new String[log.getTopicsCount()];
       for (int i = 0; i < log.getTopicsCount(); i++) {
