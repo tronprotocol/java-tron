@@ -546,8 +546,18 @@ public class CrossChainBase {
     Protocol.Transaction transactionSource = Protocol.Transaction.newBuilder()
         .setRawData(transactionBuilder1.build())
         .build();
-    transactionSource = PublicMethed.addTransactionSign(transactionSource,
-        priKey, blockingStubFull);
+
+    if(permissionId == -1) {
+      transactionSource = PublicMethed.addTransactionSign(transactionSource,
+          priKey, blockingStubFull);
+    } else {
+      for(String key : permissionKeyString) {
+        transactionSource = PublicMethedForMutiSign
+            .addTransactionSignWithPermissionId(transactionSource,key,permissionId,blockingStubFull);
+      }
+    }
+
+
 
 
     SmartContractOuterClass.TriggerSmartContract triggerSmartContractDest
