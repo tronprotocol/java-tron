@@ -335,6 +335,7 @@ public class PbftMessageHandle {
   }
 
   private boolean checkPbftConsensusNum(long agCount) {
-    return agCount >= Param.getInstance().getAgreeNodeCount() && agCount > 1;
+    //return agCount >= Param.getInstance().getAgreeNodeCount() && agCount > 1;
+    return agCount >= Param.getInstance().getAgreeNodeCount();
   }
 }

@@ -800,4 +800,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return null;
     }
   }
+
+  public void setIndex(int index) {
+    this.transaction = this.transaction.toBuilder().setIndex(index).build();
+  }
+
+  public long getIndex() {
+    return this.transaction.getIndex();
+  }
 }

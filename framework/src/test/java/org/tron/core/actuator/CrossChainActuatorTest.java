@@ -99,7 +99,7 @@ public class CrossChainActuatorTest {
   private BalanceContract.CrossToken getCrossContractData() {
     BalanceContract.CrossToken.Builder crossToken = BalanceContract.CrossToken.newBuilder();
     crossToken.setAmount(100).setTokenId(ByteString.copyFrom(ByteArray.fromString("1000001")))
-        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross2"))).setPrecision(0)
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString("1000001"))).setPrecision(0)
         .setChainId(Sha256Hash.wrap(ByteArray
             .fromHexString("000000000000000029b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
             .getByteString());
