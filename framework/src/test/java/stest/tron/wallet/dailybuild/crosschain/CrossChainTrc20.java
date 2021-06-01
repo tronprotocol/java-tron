@@ -39,7 +39,7 @@ public class CrossChainTrc20  extends CrossChainBase {
 
   @Test(enabled = true,description = "Create trc20 transfer for cross chain")
   public void test01CreateCrossTrc20Transfer() throws Exception {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    //PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String method = "increment(address,address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
@@ -116,6 +116,11 @@ public class CrossChainTrc20  extends CrossChainBase {
     Assert.assertEquals(beforeFirstChainValue - afterFirstChainValue,-1);
     Assert.assertEquals(afterSecondChainValue - beforeSecondChainValue,-1);
 
+
+    //Create cross contract transaction
+    createTriggerContractForCross(mutisignTestAddress,registerAccountAddress,
+        contractAddress, crossContractAddress, method,argsStr,chainId,crossChainId,
+        mutisignTestKey,2,permissionKeyString,blockingStubFull);
 
   }
 

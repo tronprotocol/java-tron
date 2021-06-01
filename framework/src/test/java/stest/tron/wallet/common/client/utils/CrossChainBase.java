@@ -33,7 +33,10 @@ import org.tron.api.GrpcAPI.CrossChainVoteSummaryList;
 import org.tron.api.GrpcAPI.CrossChainVoteSummaryPaginated;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.Note;
+import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ParaChainList;
+import org.tron.api.GrpcAPI.RegisterCrossChainList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.RoundMessage;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
@@ -48,10 +51,13 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.core.exception.CancelException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.BalanceContract;
@@ -99,6 +105,12 @@ public class CrossChainBase {
   public static final byte[] trc10TokenAccountAddress
       = PublicMethed.getFinalAddress(trc10TokenAccountKey);
 
+  public static ECKey ecKey2 = new ECKey(Utils.getRandom());
+  public static String mutisignTestKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  public static final byte[] mutisignTestAddress
+      = PublicMethed.getFinalAddress(mutisignTestKey);
+
+
   public static long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -118,9 +130,20 @@ public class CrossChainBase {
   public static String name2 = "chain2_" + Long.toString(now);
   public static ByteString assetAccountId1;
   public static ByteString assetAccountId2;
+  public static ByteString mutisignAssetAccountId1;
+  public static ByteString mutisignAssetAccountId2;
   public static byte[] contractAddress;
   public static byte[] crossContractAddress;
   public static final long getChainIdBlockNum = 1L;
+  public static ECKey ecKey3 = new ECKey(Utils.getRandom());
+  public static byte[] manager1Address = ecKey3.getAddress();
+  public static String manager1Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+  public static ECKey ecKey4 = new ECKey(Utils.getRandom());
+  public static byte[] manager2Address = ecKey4.getAddress();
+  public static String manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+  public static String[] permissionKeyString = new String[2];
+  public static String[] ownerKeyString = new String[3];
+  public static String accountPermissionJson = "";
 
   /**
    * constructor.
@@ -149,9 +172,13 @@ public class CrossChainBase {
         foundationAddress, foundationKey, blockingStubFull);
     PublicMethed.sendcoin(trc10TokenAccountAddress, 2048000000L,
         foundationAddress, foundationKey, crossBlockingStubFull);
+    PublicMethed.sendcoin(mutisignTestAddress, 2048000000L,
+        foundationAddress, foundationKey, blockingStubFull);
+    PublicMethed.sendcoin(mutisignTestAddress, 2048000000L,
+        foundationAddress, foundationKey, crossBlockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Long start = System.currentTimeMillis() + 5000;
+    Long start = System.currentTimeMillis() + 50000;
     Long end = System.currentTimeMillis() + 1000000000;
 
     //Create a new AssetIssue success.
@@ -159,9 +186,10 @@ public class CrossChainBase {
         100, start, end, 1, description, url, 10000L, 10000L,
         1L, 1L, trc10TokenAccountKey, blockingStubFull));
     Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name2,
-        totalSupply / 100, 1, 100, start, end, 1, description, url,
+        totalSupply, 1, 100, start, end, 1, description, url,
         10000L, 10000L,
         1L, 1L, trc10TokenAccountKey, crossBlockingStubFull));
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
 
@@ -175,7 +203,29 @@ public class CrossChainBase {
     GrpcAPI.AssetIssueList assetIssueList = crossBlockingStubFull
         .getAssetIssueList(EmptyMessage.newBuilder().build());
     assetAccountId2 = ByteString.copyFromUtf8(String
-        .valueOf(1000001L + assetIssueList.getAssetIssueCount()));
+        .valueOf(1000002L + assetIssueList.getAssetIssueCount()));
+
+    start = System.currentTimeMillis() + 50000;
+    end = System.currentTimeMillis() + 1000000000;
+    Assert.assertTrue(PublicMethed.createAssetIssue(mutisignTestAddress, name1, totalSupply, 1,
+        100, start, end, 1, description, url, 10000L, 10000L,
+        1L, 1L, mutisignTestKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.createAssetIssue(mutisignTestAddress, name2,
+        totalSupply, 1, 100, start, end, 1, description, url,
+        10000L, 10000L,
+        1L, 1L, mutisignTestKey, crossBlockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
+
+
+    getAssetIdFromThisAccount = PublicMethed
+        .queryAccount(mutisignTestAddress, blockingStubFull);
+    mutisignAssetAccountId1 = getAssetIdFromThisAccount.getAssetIssuedID();
+    mutisignAssetAccountId2 = ByteString.copyFromUtf8(String
+        .valueOf(1000003L + assetIssueList.getAssetIssueCount()));
+
+
+
 
 
 
@@ -230,13 +280,39 @@ public class CrossChainBase {
         .deployContract(contractName, abi, code, null,
             maxFeeLimit, 0L, 100, null,
             trc10TokenAccountKey, trc10TokenAccountAddress, crossBlockingStubFull);
-    //test send coin
-    PublicMethed.sendcoin(witness001Address, 1L,
-        foundationAddress, foundationKey, blockingStubFull);
-    PublicMethed.sendcoin(witness001Address, 2L,
-        foundationAddress, foundationKey, blockingStubFull);
-    PublicMethed.sendcoin(witness001Address, 3L,
-        foundationAddress, foundationKey, blockingStubFull);
+
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
+    permissionKeyString[0] = manager1Key;
+    permissionKeyString[1] = manager2Key;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    ownerKeyString[0] = mutisignTestKey;
+    ownerKeyString[1] = manager1Key;
+    ownerKeyString[2] = manager2Key;
+    accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":3,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(mutisignTestKey)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
+            + "\"operations\":\"000000000000c007000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "]}]}";
+    logger.info(accountPermissionJson);
+    PublicMethedForMutiSign.accountPermissionUpdate(
+        accountPermissionJson, mutisignTestAddress, mutisignTestKey,
+        blockingStubFull, ownerKeyString);
+
+    PublicMethedForMutiSign.accountPermissionUpdate(
+        accountPermissionJson, mutisignTestAddress, mutisignTestKey,
+        crossBlockingStubFull, ownerKeyString);
+
+
   }
 
   /**
@@ -249,12 +325,24 @@ public class CrossChainBase {
     }
   }
 
+  /**
+   * constructor.
+   */
+  public static String getTxidFromTransactionExtention(TransactionExtention transactionExtention,
+      ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return getTxidFromTransactionExtention(transactionExtention,ecKey,
+        -1,null, blockingStubFull);
+
+
+  }
+
 
   /**
    * constructor.
    */
   public static String getTxidFromTransactionExtention(TransactionExtention transactionExtention,
-      ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      ECKey ecKey, int permissionId,String[] permissionKeyString,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
 
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
       System.out.println("RPC create trx failed!");
@@ -280,7 +368,18 @@ public class CrossChainBase {
       System.out.println("Transaction is empty");
       return null;
     }
-    transaction = PublicMethed.signTransaction(ecKey, transaction);
+    if (permissionId == -1) {
+      transaction = PublicMethed.signTransaction(ecKey, transaction);
+    } else {
+      try {
+        transaction = PublicMethedForMutiSign.setPermissionId(transaction, permissionId);
+      } catch (CancelException e) {
+        e.printStackTrace();
+      }
+      transaction = PublicMethedForMutiSign.signTransaction(transaction,
+          blockingStubFull, permissionKeyString);
+    }
+
     String txid = ByteArray.toHexString(Sha256Hash
         .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
             transaction.getRawData().toByteArray()));
@@ -406,6 +505,19 @@ public class CrossChainBase {
       byte[] contractAddress,byte[] crossContractAddress,String method,String argsStr,
       ByteString chainId,ByteString crossChainId,String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return createTriggerContractForCross(ownerAddress,proxyAddress, contractAddress,
+        crossContractAddress, method, argsStr, chainId, crossChainId, priKey, -1,
+        null, blockingStubFull);
+
+  }
+
+  /**
+   * constructor.
+   */
+  public static String createTriggerContractForCross(byte[] ownerAddress,byte[] proxyAddress,
+      byte[] contractAddress,byte[] crossContractAddress,String method,String argsStr,
+      ByteString chainId,ByteString crossChainId,String priKey, int permissionId,
+      String[] permissionKeyString, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -476,7 +588,19 @@ public class CrossChainBase {
     transaction.setRawData(raw.build());
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull
         .createCommonTransaction(transaction.build());
-    return getTxidFromTransactionExtention(transactionExtention,ecKey,blockingStubFull);
+    return getTxidFromTransactionExtention(transactionExtention, ecKey,
+        permissionId,permissionKeyString,blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+  public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,
+      ByteString tokenId,Integer precision, Long amount,String tokenName,ByteString chainId,
+      ByteString paraChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return createCrossTrc10Transfer(ownerAddress,toAddress,tokenId,precision,amount,tokenName,
+        chainId,paraChainId,priKey,-1,null,blockingStubFull);
+
   }
 
 
@@ -485,7 +609,8 @@ public class CrossChainBase {
    */
   public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,
       ByteString tokenId,Integer precision, Long amount,String tokenName,ByteString chainId,
-      ByteString paraChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      ByteString paraChainId,String priKey, int permissionId,String[] permissionKeyString,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -522,12 +647,12 @@ public class CrossChainBase {
     contract.setType(Protocol.Transaction.Contract.ContractType.CrossContract)
         .setParameter(Any.pack(crossContract));
     raw.addContract(contract.build());
-    transaction.setRawData(raw.build());
-
 
     TransactionExtention transactionExtention
         = blockingStubFull.createCommonTransaction(transaction.build());
-    return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+
+    return getTxidFromTransactionExtention(transactionExtention, ecKey,
+        permissionId,permissionKeyString,blockingStubFull);
   }
 
 
@@ -543,6 +668,21 @@ public class CrossChainBase {
         = blockingStubFull.getCrossChainVoteSummaryList(request);
     return Optional.ofNullable(crossChainVoteSummaryList);
   }
+
+  /**
+   * constructor.
+   */
+  public static Optional<RegisterCrossChainList> getRegisterCrossChainList(Integer limit,
+      Integer offset, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    PaginatedMessage request = PaginatedMessage.newBuilder().build().newBuilder().build()
+        .newBuilder()
+        .setLimit(limit).setOffset(offset).build();
+    RegisterCrossChainList registerCrossChainList
+        = blockingStubFull.getRegisterCrossChainList(request);
+    return Optional.ofNullable(registerCrossChainList);
+  }
+
 
   /**
    * constructor.
@@ -568,6 +708,45 @@ public class CrossChainBase {
         = blockingStubFull.getCrossChainVoteDetailList(request);
     return Optional.ofNullable(crossChainVoteDetailList);
   }
+
+
+  /**
+   * constructor.
+   */
+  public static List<String> getCrossTransactionListFromTargetRange(Long startNum,Long endNum,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    List<String> transactionList = new ArrayList<>();
+    for (Long i = startNum;i <= endNum;i++) {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(i);
+      Block block = blockingStubFull.getBlockByNum(builder.build());
+      for (CrossMessage crossMessage : block.getCrossMessageList()) {
+        transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
+            .isECKeyCryptoEngine(), crossMessage.getTransaction().getRawData().toByteArray())));
+      }
+    }
+    return transactionList;
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<CrossMessage> getCrossMessageListFromTargetRange(Long startNum,Long endNum,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    List<CrossMessage> crossMessageList = new ArrayList<>();
+    for (Long i = startNum;i <= endNum;i++) {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(i);
+      Block block = blockingStubFull.getBlockByNum(builder.build());
+      for (CrossMessage crossMessage : block.getCrossMessageList()) {
+        crossMessageList.add(crossMessage);
+      }
+    }
+    return crossMessageList;
+  }
+
 
 
 

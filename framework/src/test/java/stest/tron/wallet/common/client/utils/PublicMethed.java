@@ -942,7 +942,6 @@ public class PublicMethed {
       builder.setToAddress(bsTo);
       builder.setOwnerAddress(bsOwner);
       builder.setAmount(amount);
-
       TransferContract contract = builder.build();
       Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
       if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -2647,7 +2646,6 @@ public class PublicMethed {
     texBuilder.setTxid(transactionExtention.getTxid());
     transactionExtention = texBuilder.build();
 
-    byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction(), owner);
     if (transactionExtention == null) {
       return null;
     }
@@ -2666,7 +2664,7 @@ public class PublicMethed {
     System.out.println("txid = " + ByteArray.toHexString(Sha256Hash
         .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
             transaction.getRawData().toByteArray())));
-    contractAddress = generateContractAddress(transaction, owner);
+    byte[] contractAddress = generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
 
@@ -4412,7 +4410,7 @@ public class PublicMethed {
    * constructor.
    */
   public static Optional<DelegatedResourceAccountIndex>
-  getDelegatedResourceAccountIndexFromSolidity(byte[] address,
+      getDelegatedResourceAccountIndexFromSolidity(byte[] address,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
@@ -7287,14 +7285,15 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static List<String> getTransactionListFromTargetRange(Long startNum,Long endNum,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static List<String> getTransactionListFromTargetRange(Long startNum,Long endNum,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     List<String> transactionList = new ArrayList<>();
-    for(Long i = startNum;i <= endNum;i++) {
+    for (Long i = startNum;i <= endNum;i++) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(i);
       Block block = blockingStubFull.getBlockByNum(builder.build());
-      for(Transaction transaction : block.getTransactionsList()) {
+      for (Transaction transaction : block.getTransactionsList()) {
         transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
             .isECKeyCryptoEngine(), transaction.getRawData().toByteArray())));
       }
@@ -7303,24 +7302,6 @@ public class PublicMethed {
   }
 
 
-  /**
-   * constructor.
-   */
-  public static List<String> getCrossTransactionListFromTargetRange(Long startNum,Long endNum,WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    List<String> transactionList = new ArrayList<>();
-    for(Long i = startNum;i <= endNum;i++) {
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(i);
-      Block block = blockingStubFull.getBlockByNum(builder.build());
-
-      for(CrossMessage crossMessage : block.getCrossMessageList()) {
-        transactionList.add(ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
-            .isECKeyCryptoEngine(), crossMessage.getTransaction().getRawData().toByteArray())));
-      }
-    }
-    return transactionList;
-  }
 
 
 }
