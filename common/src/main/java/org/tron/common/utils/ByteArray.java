@@ -120,6 +120,10 @@ public class ByteArray {
     return x == null ? null : "0x" + Long.toHexString(x);
   }
 
+  public static String toJsonHex(int x) {
+    return toJsonHex((long) x);
+  }
+
   public static BigInteger hexToBigInteger(String input) {
     if (input.startsWith("0x")) {
       return new BigInteger(input.substring(2), 16);
