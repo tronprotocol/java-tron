@@ -2,11 +2,23 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateContractAddress;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getBlockID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getOwner;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTo;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.int2HexString;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.long2HexString;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.tronToEthAddress;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +33,7 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -38,6 +51,8 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -88,7 +103,9 @@ public class TestServiceImpl implements TestService {
 
   public String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception {
     List<Transaction> list = wallet.getTransactionsByJsonBlockId(bnOrId);
-    if (list == null) return null;
+    if (list == null) {
+      return null;
+    }
 
     long n = list.size();
     return ByteArray.toJsonHex(n);
@@ -251,9 +268,9 @@ public class TestServiceImpl implements TestService {
   }
 
   @Override
-  public int getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
+  public long getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
     //发起人为某个地址的交易总数。FullNode无法实现该功能
-    return -1;
+    return wallet.getNowBlock().getBlockHeader().getRawData().getTimestamp() + 86400 * 1000;
   }
 
   @Override
@@ -273,9 +290,9 @@ public class TestServiceImpl implements TestService {
 
   @Override
   public String getCoinbase() {
-    byte[] tronAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
+    byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
-    return tronToEthAddress(StringUtil.encode58Check(tronAddress));
+    return StringUtil.encode58Check(witnessAddress);
   }
 
   @Override
@@ -301,5 +318,171 @@ public class TestServiceImpl implements TestService {
     } else {
       return "0x0";
     }
+  }
+
+  @Override
+  public String[] getCompilers() {
+    return new String[] {"solidity"};
+  }
+
+  @Override
+  public String compileSolidity(String source) {
+    //耗费cpu太高，采用trongrid中心化服务器实现。
+    return null;
+  }
+
+  @Override
+  public JSONObject getTransactionByHash(String txid) {
+    Transaction transaction = wallet
+        .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
+    TransactionInfo transactionInfo = wallet
+        .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
+
+    long blockNum = transactionInfo.getBlockNumber();
+    Block block = wallet.getBlockByNum(blockNum);
+
+    return formatRpcTransaction(transaction, transactionInfo, block);
+  }
+
+  private JSONObject formatRpcTransaction(Transaction transaction, TransactionInfo transactionInfo,
+      Block block) {
+    String txid = ByteArray.toHexString(transactionInfo.getId().toByteArray());
+    long blockNum = block.getBlockHeader().getRawData().getNumber();
+    JSONObject jsonObject = new JSONObject(true);
+    jsonObject.put("blockHash", getBlockID(block));
+    jsonObject.put("blockNumber", long2HexString(blockNum));
+
+    jsonObject.put("gas", null); //暂时不填
+    jsonObject.put("gasPrice", null); //暂时不填
+    jsonObject.put("hash", "0x" + txid);
+    jsonObject.put("input", null); //暂时不填data字段
+    jsonObject.put("nonce", null); //暂时不写
+    byte[] owner = getOwner(transaction.getRawData().getContract(0));
+    ArrayList<ByteString> toAddressList = getTo(transaction);
+    jsonObject.put("from", owner != null ? StringUtil.encode58Check(owner) : null);
+    jsonObject.put("to", toAddressList.size() > 0 ?
+        StringUtil.encode58Check(toAddressList.get(0).toByteArray()) : null);
+
+    int transactionIndex = -1;
+    for (int index = 0; index < block.getTransactionsCount(); index++) {
+      if (getTxID(block.getTransactions(index)).equals(txid)) {
+        transactionIndex = index;
+        break;
+      }
+    }
+    jsonObject.put("transactionIndex", int2HexString(transactionIndex));
+    long amount = getTransactionAmount(transaction.getRawData().getContract(0), txid,
+        blockNum, transactionInfo, wallet);
+    jsonObject.put("value", long2HexString(amount));
+
+    ByteString signature = transaction.getSignature(0); // r[32] + s[32] + 符号位v[1]
+    byte[] signData = signature.toByteArray();
+    byte v = (byte) (signData[64] + 27); //参考函数 Base64toBytes
+    byte[] r = Arrays.copyOfRange(signData, 0, 32);
+    byte[] s = Arrays.copyOfRange(signData, 32, 64);
+    jsonObject.put("v", int2HexString(v));
+    jsonObject.put("r", "0x" + ByteArray.toHexString(r));
+    jsonObject.put("s", "0x" + ByteArray.toHexString(s));
+
+    return jsonObject;
+  }
+
+  @Override
+  public JSONObject getTransactionByBlockHashAndIndex(String blockHash, int index) {
+    Block block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+    if (block == null) {
+      return null;
+    }
+    if (index > block.getTransactionsCount() - 1) {
+      return null;
+    }
+    Transaction transaction = block.getTransactions(index);
+    String txid = getTxID(transaction);
+    TransactionInfo transactionInfo = wallet.getTransactionInfoById(
+        ByteString.copyFrom(ByteArray.fromHexString(txid)));
+
+    return formatRpcTransaction(transaction, transactionInfo, block);
+  }
+
+  @Override
+  public JSONObject getTransactionByBlockNumberAndIndex(int blockNum, int index) {
+    Block block = wallet.getBlockByNum(blockNum);
+    if (block == null) {
+      return null;
+    }
+    if (index > block.getTransactionsCount() - 1) {
+      return null;
+    }
+    Transaction transaction = block.getTransactions(index);
+    String txid = getTxID(transaction);
+    TransactionInfo transactionInfo = wallet.getTransactionInfoById(
+        ByteString.copyFrom(ByteArray.fromHexString(txid)));
+
+    return formatRpcTransaction(transaction, transactionInfo, block);
+  }
+
+  @Override
+  public JSONObject getTransactionReceipt(String txid) {
+
+    Transaction transaction = wallet
+        .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
+    TransactionInfo transactionInfo = wallet
+        .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
+    if (transaction == null || transactionInfo == null) {
+      return null;
+    }
+
+    long blockNum = transactionInfo.getBlockNumber();
+    Block block = wallet.getBlockByNum(blockNum);
+    JSONObject jsonObject = formatRpcTransaction(transaction, transactionInfo, block);
+    String transactionHash = (String) jsonObject.remove("hash");
+    jsonObject.put("transactionHash", transactionHash);
+    jsonObject.remove("gas");
+    jsonObject.remove("gasPrice");
+    jsonObject.remove("input");
+    jsonObject.remove("nonce");
+    jsonObject.remove("value");
+    jsonObject.remove("v");
+    jsonObject.remove("r");
+    jsonObject.remove("s");
+
+    long cumulativeGasUsed = 0;
+    TransactionInfoList reply = wallet.getTransactionInfoByBlockNum(blockNum);
+    for (TransactionInfo info : reply.getTransactionInfoList()) {
+      cumulativeGasUsed += info.getFee();
+    }
+    jsonObject.put("cumulativeGasUsed", long2HexString(cumulativeGasUsed));
+    jsonObject.put("gasUsed", long2HexString(transactionInfo.getFee()));
+
+    String contractAddress = null;
+    if (transaction.getRawData().getContract(0).getType() == ContractType.CreateSmartContract) {
+      contractAddress = StringUtil.encode58Check(generateContractAddress(transaction));
+    }
+    jsonObject.put("contractAddress", contractAddress);
+
+    //统一的log
+    JSONArray logArray = new JSONArray();
+    for (int index = 0; index < transactionInfo.getLogCount(); index++) {
+      TransactionInfo.Log log = transactionInfo.getLogList().get(index);
+      JSONObject logItem = new JSONObject(true);
+      logItem.put("logIndex", int2HexString(index + 1)); //log的索引从1开始
+      logItem.put("transactionHash", jsonObject.getString("transactionHash"));
+      logItem.put("transactionIndex", jsonObject.getString("transactionIndex"));
+      logItem.put("blockHash", jsonObject.getString("blockHash"));
+      logItem.put("blockNumber", jsonObject.getString("blockNumber"));
+      logItem.put("address",
+          StringUtil.encode58Check(convertToTronAddress(log.getAddress().toByteArray())));
+      logItem.put("data", "0x" + ByteArray.toHexString(log.getData().toByteArray()));
+      String[] topics = new String[log.getTopicsCount()];
+      for (int i = 0; i < log.getTopicsCount(); i++) {
+        topics[i] = "0x" + ByteArray.toHexString(log.getTopics(i).toByteArray());
+      }
+      logItem.put("topics", topics);
+      logArray.add(logItem);
+    }
+    jsonObject.put("logs", logArray);
+    jsonObject.put("logsBloom", ""); //暂时不填
+
+    return jsonObject;
   }
 }
