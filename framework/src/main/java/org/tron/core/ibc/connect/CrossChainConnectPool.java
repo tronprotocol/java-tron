@@ -21,9 +21,11 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "net-cross")
 @Component
@@ -41,6 +43,8 @@ public class CrossChainConnectPool {
   private NodeManager nodeManager;
   @Autowired
   private Manager manager;
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   public void init() {
     Set<String> compare = new HashSet<>();
@@ -54,7 +58,7 @@ public class CrossChainConnectPool {
 
     logExecutor.scheduleAtFixedRate(() -> {
       try {
-        //writeCrossNode();
+        updateConnect();
         logActivePeers();
       } catch (Throwable t) {
         logger.error("CrossChainConnectPool Exception in sync worker", t);
@@ -104,6 +108,34 @@ public class CrossChainConnectPool {
         });
       });
     }
+  }
+
+  private void updateConnect() {
+    Set<Node> dbCrossNode = new HashSet<>(Args.getInstance().getCrossChainConnect());
+    Set<String> connected = new HashSet<>();
+    Set<String> disconnected = new HashSet<>();
+    for (ByteString key : crossChainConnectPool.keySet()) {
+      if (chainBaseManager.chainIsSelected(key)) {
+        for (PeerConnection peer : crossChainConnectPool.get(key)) {
+          connected.add(peer.getNode().getHostPort());
+        }
+      } else {
+        for (PeerConnection peer : crossChainConnectPool.get(key)) {
+          disconnected.add(peer.getNode().getHostPort());
+          peer.disconnect(Protocol.ReasonCode.USER_REASON);
+        }
+      }
+    }
+
+    Set<String> compare = new HashSet<>();
+    dbCrossNode.forEach(n -> {
+      if (!compare.contains(n.getHostPort())
+              && !connected.contains(n.getHostPort())
+              && !disconnected.contains(n.getHostPort())) {
+        peerClient.connectAsync(nodeManager.getNodeHandler(n), false, true);
+        compare.add(n.getHostPort());
+      }
+    });
   }
 
   private void logActivePeers() {
