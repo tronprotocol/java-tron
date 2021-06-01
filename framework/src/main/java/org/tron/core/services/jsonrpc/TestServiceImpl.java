@@ -286,10 +286,14 @@ public class TestServiceImpl implements TestService {
         .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     TransactionInfo transactionInfo = wallet
         .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
-
+    if (transaction == null || transactionInfo == null) {
+      return null;
+    }
     long blockNum = transactionInfo.getBlockNumber();
     Block block = wallet.getBlockByNum(blockNum);
-
+    if (block == null) {
+      return null;
+    }
     return formatRpcTransaction(transaction, transactionInfo, block);
   }
 
@@ -349,7 +353,9 @@ public class TestServiceImpl implements TestService {
     String txid = getTxID(transaction);
     TransactionInfo transactionInfo = wallet.getTransactionInfoById(
         ByteString.copyFrom(ByteArray.fromHexString(txid)));
-
+    if (transactionInfo == null) {
+      return null;
+    }
     return formatRpcTransaction(transaction, transactionInfo, block);
   }
 
@@ -366,7 +372,9 @@ public class TestServiceImpl implements TestService {
     String txid = getTxID(transaction);
     TransactionInfo transactionInfo = wallet.getTransactionInfoById(
         ByteString.copyFrom(ByteArray.fromHexString(txid)));
-
+    if (transactionInfo == null) {
+      return null;
+    }
     return formatRpcTransaction(transaction, transactionInfo, block);
   }
 
