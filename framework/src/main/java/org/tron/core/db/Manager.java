@@ -1346,10 +1346,8 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
-    if (trxCap.isSource()) {
-      consumeBandwidth(trxCap, trace);
-      consumeMultiSignFee(trxCap, trace);
-    }
+    consumeBandwidth(trxCap, trace);
+    consumeMultiSignFee(trxCap, trace);
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1827,26 +1825,6 @@ public class Manager {
             throw new CrossContractConstructException("dest data must equal with source data");
           }
 
-          // check proxy account
-          String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
-              ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
-
-          String realProxyAccount = ByteArray.toHexString(
-              destTrigger.getOwnerAddress().toByteArray());
-          ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
-          if (localChainId.equals(crossContract.getOwnerChainId())) {
-            if (proxyAccount == null) {
-              throw new ProxyNotActiveException(
-                      String.format("can get the proxy addr of ChainId: %s",
-                              ByteArray.toHexString(crossContract.getToChainId().toByteArray())));
-            }
-            if (!proxyAccount.equals(realProxyAccount)) {
-              throw new PermissionException(String.format(
-                      "cross transaction proxy account is not right, expect: %s, actually: %s",
-                      proxyAccount, realProxyAccount));
-            }
-          }
-
           TransactionCapsule crossTriggerTx;
           if (transactionCapsule.isSource()) {
             crossTriggerTx = new TransactionCapsule(source);
@@ -1856,6 +1834,28 @@ public class Manager {
               throw new ValidateSignatureException("cross transaction signature validate failed");
             }
           } else {
+            // check proxy account
+            String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
+                    ByteArray.toHexString(crossContract.getOwnerChainId().toByteArray()));
+
+            String realProxyAccount = ByteArray.toHexString(
+                    destTrigger.getOwnerAddress().toByteArray());
+            ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
+            if (localChainId.equals(crossContract.getToChainId())) {
+              if (proxyAccount == null) {
+                throw new ProxyNotActiveException(
+                        String.format("can get the proxy addr of ChainId: %s",
+                                ByteArray.toHexString(crossContract.getToChainId().toByteArray())));
+              }
+              if (!proxyAccount.equals(realProxyAccount)) {
+                throw new PermissionException(String.format(
+                        "cross transaction proxy account is not right, expect: %s, actually: %s",
+                        proxyAccount, realProxyAccount));
+              }
+            }
+            destTrigger.toBuilder().setOwnerAddress(
+                    ByteString.copyFrom(ByteArray.fromHexString(proxyAccount)));
+            dest = dest.getRawData().toBuilder();
             crossTriggerTx = new TransactionCapsule(dest);
             // set the fee payer when transaction is dest
             crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
