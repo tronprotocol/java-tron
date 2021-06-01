@@ -1,10 +1,11 @@
 package stest.tron.wallet.dailybuild.internaltransaction;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -127,21 +128,85 @@ public class JustlendTimesTest {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(testAccountKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
-        .build();
-    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-    Protocol.Block currentBlock = blockingStubFull
-        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-    System.out.println("beforeBlockNum: "+ beforeBlockNum);
+//    PublicMethed.printAddress(testAccountKey);
+//    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+//        .usePlaintext(true)
+//        .build();
+//    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+//    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+//        .usePlaintext(true)
+//        .build();
+//    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
+//    Protocol.Block currentBlock = blockingStubFull
+//        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+//    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+//    System.out.println("beforeBlockNum: "+ beforeBlockNum);
   }
 
+  @Test(enabled = true, description = "price")
+  public void price() {
+    String priceOracleAddressReal = "TVcMFj9JL5xNJ2BNkbvwRHFWboqjQvW9vc";
+    String cEtherAddress = "TSdrSvYpeuNuxFFR8fhHfTcvFKCY6hvL5D";
+    String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL";
+    String jstAddress = "TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3";
+    String usdtAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf";
+    String sunAddress = "TWrZRHY9aKQZcyjpovdH6qeCEyYZrRQDZt";
+    String winAddress = "TNDSHKGBmgRx9mDYA9CnxPx55nu672yQw2";
+    String btcAddress = "TG9XJ75ZWcUw69W8xViEJZQ365fRupGkFP";
+    String wbttAddress = "TLELxLrgD3dq6kqS4x6dEGJ7xNFMbzK95U";
+    String ethAddress = "TQz9i4JygMCzizdVu8NE4BdqesrsHv1L93";
+
+
+    LinkedHashMap<String, Integer> decimals = new LinkedHashMap<>();
+    decimals.put("usdt", 6);
+    decimals.put("usdj", 18);
+    decimals.put("jst", 18);
+    decimals.put("sun", 18);
+    decimals.put("win", 6);
+    decimals.put("btc", 8);
+    decimals.put("wbtt", 6);
+    decimals.put("trx", 6);
+    decimals.put("eth", 18);
+
+    LinkedHashMap<String, BigDecimal> prices = new LinkedHashMap<>();
+
+    prices.put("usdt", new BigDecimal("36.57"));
+    prices.put("usdj", new BigDecimal("36.14"));
+    prices.put("jst", new BigDecimal("0.845000"));
+    prices.put("sun", new BigDecimal("379"));
+    prices.put("win", new BigDecimal("0.003587"));
+    prices.put("btc", new BigDecimal("681027.818333"));
+    prices.put("wbtt", new BigDecimal("0.011204"));
+    prices.put("eth", new BigDecimal("379"));
+
+    System.out.println("[" + getDaiFabParam(cEtherAddress, usdjAddress, jstAddress, usdtAddress, sunAddress,
+        winAddress, btcAddress, wbttAddress, ethAddress)
+            + "],[1000000000000000000"
+        + "," + getOraclePrice(prices.get("usdj"), decimals.get("usdj"))
+        + "," + getOraclePrice(prices.get("jst"), decimals.get("jst"))
+        + "," + getOraclePrice(prices.get("usdt"), decimals.get("usdt"))
+        + "," + getOraclePrice(prices.get("sun"), decimals.get("sun"))
+        + "," + getOraclePrice(prices.get("win"), decimals.get("win"))
+        + "," + getOraclePrice(prices.get("btc"), decimals.get("btc"))
+        + "," + getOraclePrice(prices.get("wbtt"), decimals.get("wbtt"))
+        + "," + getOraclePrice(prices.get("eth"), decimals.get("eth"))
+        + "]");
+
+  }
+  private String getDaiFabParam(String... addressList) {
+    String sl = "\"";
+    if (addressList.length <= 0) {
+      return "";
+    }
+    StringBuilder result = new StringBuilder(sl).append(addressList[0]).append(sl);
+    for (int i = 1; i < addressList.length; i++) {
+      result.append(",").append(sl).append(addressList[i]).append(sl);
+    }
+    return result.toString();
+  }
+  private String getOraclePrice(BigDecimal realPrice, Integer decmial) {
+    return realPrice.multiply(new BigDecimal("10").pow(24 - decmial)).toBigInteger().toString();
+  }
   /**
    * wbtt contract:testInternalTransaction001(The tokenId in the contract must be modified first!!!)
    * 1.trigger newAccount function:sendcoin trx/token to newAccount(Need to check whether the wbtt contract needs to be redeployed)
