@@ -1,5 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
+import com.alibaba.fastjson.JSONObject;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.math.BigInteger;
 import org.springframework.stereotype.Component;
@@ -43,7 +44,7 @@ public interface TestService {
   BigInteger getTrc20Balance(String address, String contractAddress, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getTransactionCount")
-  int getSendTransactionCountOfAddress(String address, String blockNumOrTag);
+  long getSendTransactionCountOfAddress(String address, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getCode")
   String getABIofSmartContract(String contractAddress);
@@ -66,6 +67,15 @@ public interface TestService {
   @JsonRpcMethod("eth_compileSolidity")
   String compileSolidity(String source);
 
+  @JsonRpcMethod("eth_getTransactionByHash")
+  JSONObject getTransactionByHash(String txid);
+
+  @JsonRpcMethod("eth_getTransactionByBlockHashAndIndex")
+  JSONObject getTransactionByBlockHashAndIndex(String blockHash, int index);
+
+  @JsonRpcMethod("eth_getTransactionByBlockNumberAndIndex")
+  JSONObject getTransactionByBlockNumberAndIndex(int blockNum, int index);
+
   @JsonRpcMethod("eth_gettransactionreceipt")
-  String getTransactionReceipt(String source);
+  JSONObject getTransactionReceipt(String txid);
 }
