@@ -95,7 +95,7 @@ public class CommunicateService implements Communicate {
               broadcastCrossMessage(crossMessage);
               receiveCrossMsgCache.invalidate(hash);
             } else {
-              logger.warn("valid proof fail!");
+              logger.warn("crossMessage broadcast check failed");
             }
           } catch (Exception e) {
             logger.error("", e);
@@ -135,11 +135,9 @@ public class CommunicateService implements Communicate {
               .setLeftOrRight(proofLeaf.isLeftOrRight()).build();
         }).collect(Collectors.toList());
         //set the proof and root height
-        crossMessage = crossMessage.toBuilder().addAllProof(proofList)
+        crossMessage = crossMessage.toBuilder().clearProof().addAllProof(proofList)
             .setRootHeight(blockNum).build();
         //send data
-        // todo: debug, to be delete
-        logger.info("send cross tx, tx: {}", crossMessage.getTransaction());
         sendData(crossMessage);
       } catch (Exception e) {
         //wait the time out or auto rollback
@@ -171,7 +169,7 @@ public class CommunicateService implements Communicate {
     }
     MerkleTree merkleTree = MerkleTree.getInstance();
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
-        Sha256Hash.wrap( proof.getHash()),
+        Sha256Hash.wrap(proof.getHash()),
         proof.getLeftOrRight())).collect(Collectors.toList());
     return merkleTree.validProof(root, proofLeafList, txHash);
   }
@@ -202,6 +200,7 @@ public class CommunicateService implements Communicate {
             && !validProof(crossMessage)) {
       //todo: define a new reason code
       //peer.disconnect(ReasonCode.BAD_TX);
+      logger.error("broadcastCheck: valid proof failed");
       return false;
     }
     Sha256Hash txId = Sha256Hash

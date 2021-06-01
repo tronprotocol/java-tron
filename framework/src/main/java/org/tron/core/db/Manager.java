@@ -113,6 +113,7 @@ import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.ProxyNotActiveException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -1377,12 +1378,10 @@ public class Manager {
     }
     if (save) {
       chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+      Optional.ofNullable(transactionCache)
+              .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+                      new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
     }
-
-    Optional.ofNullable(transactionCache)
-        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
-            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
-
     TransactionInfoCapsule transactionInfo = TransactionUtil
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
 
@@ -1831,14 +1830,20 @@ public class Manager {
           // check proxy account
           String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
               ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
+
           String realProxyAccount = ByteArray.toHexString(
               destTrigger.getOwnerAddress().toByteArray());
           ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
-          if (localChainId.equals(crossContract.getOwnerChainId())
-              && !proxyAccount.equals(realProxyAccount)) {
-            throw new PermissionException(String.format(
-                "cross transaction proxy account is not right, require: %s, actually: %s",
-                proxyAccount, realProxyAccount));
+          if (localChainId.equals(crossContract.getOwnerChainId())) {
+            if (proxyAccount == null) {
+              throw new ProxyNotActiveException(String.format("can get the proxy addr of ChainId: %s",
+                      ByteArray.toHexString(crossContract.getToChainId().toByteArray())));
+            }
+            if (!proxyAccount.equals(realProxyAccount)) {
+              throw new PermissionException(String.format(
+                      "cross transaction proxy account is not right, expect: %s, actually: %s",
+                      proxyAccount, realProxyAccount));
+            }
           }
 
           TransactionCapsule crossTriggerTx;
@@ -1854,24 +1859,6 @@ public class Manager {
             // set the fee payer when transaction is dest
             crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
           }
-
-          /*TransactionCapsule crossTriggerTx;
-          if (transactionCapsule.isSource()) {
-            crossTriggerTx = new TransactionCapsule(contractTrigger.getSource(),
-                ContractType.TriggerSmartContract);
-          } else {
-            TriggerSmartContract source = contractTrigger.getSource();
-            crossContract.getOwnerChainId();
-            TriggerSmartContract dest = contractTrigger.getDest();
-            //todo: setOwnerAddress and data
-            byte[] destData = buildDestData(source, dest, transactionCapsule.getContractResult());
-            dest = dest.toBuilder().setData(ByteString.copyFrom(destData))//.setOwnerAddress()
-                .build();
-            crossTriggerTx = new TransactionCapsule(dest,
-                ContractType.TriggerSmartContract);
-            // set the fee payer when transaction is dest
-            crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
-          }*/
           setTransaction(crossTriggerTx, transactionCapsule);
           TransactionInfo middleResult = processTransaction(crossTriggerTx, block, false);
           //
@@ -1881,8 +1868,8 @@ public class Manager {
           }
         }
       } catch (Exception e) {
-        logger.error("", e);
-        throw new ContractValidateException("invalid protobuf");
+        logger.error("process cross transaction failed, err: {}", e.getMessage());
+        throw new ContractValidateException("process cross transaction failed");
       }
     }
     return result;
@@ -2262,7 +2249,7 @@ public class Manager {
   }
 
   public boolean addCrossTx(CrossMessage crossMessage) {
-    logger.info("crossTxQueue add {}", crossMessage);
+    logger.debug("crossTxQueue add msg {}", crossMessage);
     return crossTxQueue.add(crossMessage);
   }
 

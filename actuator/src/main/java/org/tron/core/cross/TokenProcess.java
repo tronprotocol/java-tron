@@ -182,6 +182,13 @@ public class TokenProcess {
     if (amount > assetBalance) {
       throw new ContractValidateException("assetBalance is not sufficient.");
     }
+    AssetIssueCapsule assetIssueCapsule = assetIssueV2Store.get(assetId);
+    if (!assetIssueCapsule.getName().equals(crossToken.getTokenName())) {
+      throw new ContractValidateException("token name is not matched");
+    }
+    if (assetIssueCapsule.getPrecision() != crossToken.getPrecision()) {
+      throw new ContractValidateException("token precision is not matched");
+    }
   }
 
   public static void destValidate(ChainBaseManager chainBaseManager, CrossContract crossContract)
