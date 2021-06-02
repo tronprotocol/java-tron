@@ -15,6 +15,7 @@ import org.tron.api.GrpcAPI.CrossChainVoteSummaryList;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ParaChainList;
 import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.GrpcAPI.RegisterCrossChainList;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -154,8 +155,21 @@ public class ProposalForCrossChain extends CrossChainBase {
         startSynTimeStamp,registerAccountKey,crossBlockingStubFull);
   }
 
+  @Test(enabled = true,description = "Get register cross chain list")
+  public void test04GetRegisterCrossChainList() throws InvalidProtocolBufferException {
+    Optional<RegisterCrossChainList> registerCrossChainList
+        = getRegisterCrossChainList(10,0,blockingStubFull);
+
+    Assert.assertTrue(registerCrossChainList.get().getCrossChainInfoCount() >= 1);
+    Assert.assertEquals(registerCrossChainList.get()
+        .getCrossChainInfo(registerCrossChainList.get()
+            .getCrossChainInfoCount() - 1).getChainId(),crossChainId);
+
+
+  }
+
   @Test(enabled = true,description = "Vote cross chain")
-  public void test04VoteCrossChain() throws InvalidProtocolBufferException {
+  public void test05VoteCrossChain() throws InvalidProtocolBufferException {
     final Long beforeVoteBalance = PublicMethed
         .queryAccount(registerAccountKey,blockingStubFull).getBalance();
     String txid = voteCrossChainGetTxid(registerAccountAddress, crossChainId,
@@ -186,8 +200,8 @@ public class ProposalForCrossChain extends CrossChainBase {
   }
 
 
-  @Test(enabled = true,description = "Unvote cross chain")
-  public void test05UnVoteCrossChain() throws InvalidProtocolBufferException {
+  @Test(enabled = false,description = "Unvote cross chain")
+  public void test06UnVoteCrossChain() throws InvalidProtocolBufferException {
     final Long beforeUnVoteBalance = PublicMethed
         .queryAccount(registerAccountKey,blockingStubFull).getBalance();
     String txid = unVoteCrossChainGetTxid(registerAccountAddress, crossChainId,
@@ -216,8 +230,8 @@ public class ProposalForCrossChain extends CrossChainBase {
 
   }
 
-  @Test(enabled = true,description = "Update cross chain")
-  public void test06UpdateCrossChain() throws InvalidProtocolBufferException {
+  @Test(enabled = false,description = "Update cross chain")
+  public void test07UpdateCrossChain() throws InvalidProtocolBufferException {
     List<ByteString> srList = new ArrayList<>();
     srList.add(ByteString.copyFrom(foundationAddress));
     srList.add(ByteString.copyFrom(registerAccountAddress));
@@ -254,7 +268,7 @@ public class ProposalForCrossChain extends CrossChainBase {
   }
 
   @Test(enabled = true,description = "Get cross chain vote summary list")
-  public void test07GetCrossChainVoteSummaryList() throws InvalidProtocolBufferException {
+  public void test08GetCrossChainVoteSummaryList() throws InvalidProtocolBufferException {
     Optional<CrossChainVoteSummaryList> crossChainVoteSummaryList
         = getCrossChainVoteSummaryList(Integer.valueOf(crossRound),blockingStubFull);
     crossChainVoteSummaryList.get().getCrossChainVoteSummaryCount();
@@ -267,7 +281,7 @@ public class ProposalForCrossChain extends CrossChainBase {
   }
 
   @Test(enabled = true,description = "Get cross chain parachain list")
-  public void test08GetCrossChainParachainList() throws Exception {
+  public void test09GetCrossChainParachainList() throws Exception {
     int waitTimes = 30;
     Optional<ParaChainList> paraChainList = null;
     while (waitTimes-- >= 0) {
@@ -284,13 +298,11 @@ public class ProposalForCrossChain extends CrossChainBase {
   }
 
   @Test(enabled = true,description = "Get cross chain vote detail list")
-  public void test09GetCrossChainVoteDetailList() throws InvalidProtocolBufferException {
+  public void test10GetCrossChainVoteDetailList() throws InvalidProtocolBufferException {
     Optional<CrossChainVoteDetailList> crossChainVoteDetailList
         = getCrossChainVoteDetailList(Integer.valueOf(crossRound),crossChainId,blockingStubFull);
 
     Assert.assertTrue(crossChainVoteDetailList.get().getVoteCrossChainContractCount() >= 1);
-    int i = 0;
-
 
   }
 

@@ -417,7 +417,7 @@ public class PublicMethedForMutiSign {
   /**
    * constructor.
    */
-  private static Transaction signTransaction(Transaction transaction,
+  public static Transaction signTransaction(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
     if (transaction.getRawData().getTimestamp() == 0) {
       transaction = TransactionUtils.setTimestamp(transaction);
@@ -4732,9 +4732,9 @@ public class PublicMethedForMutiSign {
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
 
-    ClearABIContract clearABIContract = builder.build();
+    ClearABIContract clearAbiContract = builder.build();
 
-    TransactionExtention transactionExtention = blockingStubFull.clearContractABI(clearABIContract);
+    TransactionExtention transactionExtention = blockingStubFull.clearContractABI(clearAbiContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
       System.out.println("RPC create call trx failed!");
       System.out.println("Code = " + transactionExtention.getResult().getCode());
@@ -4802,7 +4802,7 @@ public class PublicMethedForMutiSign {
   public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress, long fromAmount,
       ShieldAddressInfo shieldAddressInfo, NoteTx noteTx, List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress, long toAmount, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull, Integer permission_id,
+      WalletGrpc.WalletBlockingStub blockingStubFull, Integer permissionId,
       String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -4915,7 +4915,7 @@ public class PublicMethedForMutiSign {
       if (shieldedTransferContract.getFromAmount() > 0 || fromAmount == 321321) {
         Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
         Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
-            .setPermissionId(permission_id);
+            .setPermissionId(permissionId);
         raw.clearContract();
         raw.addContract(contract);
         transaction = transaction.toBuilder().setRawData(raw).build();
