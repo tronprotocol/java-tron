@@ -22,6 +22,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -117,6 +118,16 @@ public class TestServiceImpl implements TestService {
       throws Exception {
     final Block b = getBlockByJSonHash(blockHash);
     return getBlockResult(b, fullTransactionObjects);
+  }
+
+  public BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) {
+    final Block b;
+    if ("pending".equalsIgnoreCase(bnOrId)) {
+      b = null;
+    } else {
+      b = wallet.getByJsonBlockId(bnOrId);
+    }
+    return (b == null ? null : getBlockResult(b, fullTransactionObjects));
   }
 
   private Block getBlockByJSonHash(String blockHash) throws Exception {
