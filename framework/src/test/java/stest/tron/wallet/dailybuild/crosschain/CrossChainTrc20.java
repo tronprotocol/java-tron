@@ -45,6 +45,12 @@ public class CrossChainTrc20  extends CrossChainBase {
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
         + Base58.encode58Check(crossContractAddress) + "\"" + ",\"1\"";
 
+
+
+
+
+
+
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,"read()","#",
         false,0,100000000L,"0",0,
@@ -121,6 +127,18 @@ public class CrossChainTrc20  extends CrossChainBase {
     createTriggerContractForCross(mutisignTestAddress,registerAccountAddress,
         contractAddress, crossContractAddress, method,argsStr,chainId,crossChainId,
         mutisignTestKey,2,permissionKeyString,blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
+    transactionExtention = PublicMethed.triggerConstantContractForExtention(contractAddress,
+        "read()","#",
+        false,0,100000000L,"0",0,
+        trc10TokenAccountAddress,trc10TokenAccountKey,blockingStubFull);
+
+    long afterMutisignTriggerValue = ByteArray
+        .toLong(transactionExtention.getConstantResult(0).toByteArray());
+    Assert.assertEquals(afterFirstChainValue - afterMutisignTriggerValue,-1);
 
   }
 

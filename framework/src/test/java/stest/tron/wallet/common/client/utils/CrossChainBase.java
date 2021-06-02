@@ -183,7 +183,7 @@ public class CrossChainBase {
 
     //Create a new AssetIssue success.
     Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name1, totalSupply, 1,
-        100, start, end, 1, description, url, 10000L, 10000L,
+        100, 6,start, end, 1, description, url, 10000L, 10000L,
         1L, 1L, trc10TokenAccountKey, blockingStubFull));
     Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name2,
         totalSupply, 1, 100, start, end, 1, description, url,
@@ -208,7 +208,7 @@ public class CrossChainBase {
     start = System.currentTimeMillis() + 50000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(mutisignTestAddress, name1, totalSupply, 1,
-        100, start, end, 1, description, url, 10000L, 10000L,
+        100, 6,start, end, 1, description, url, 10000L, 10000L,
         1L, 1L, mutisignTestKey, blockingStubFull));
     Assert.assertTrue(PublicMethed.createAssetIssue(mutisignTestAddress, name2,
         totalSupply, 1, 100, start, end, 1, description, url,
@@ -298,7 +298,7 @@ public class CrossChainBase {
             + "{\"address\":\"" + PublicMethed.getAddressString(mutisignTestKey)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
-            + "\"operations\":\"000000000000c007000000000000000000000000000000000000000000000000\","
+            + "\"operations\":\"000000c00000c007000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
@@ -547,13 +547,14 @@ public class CrossChainBase {
         .setRawData(transactionBuilder1.build())
         .build();
 
-    if(permissionId == -1) {
+    if (permissionId == -1) {
       transactionSource = PublicMethed.addTransactionSign(transactionSource,
           priKey, blockingStubFull);
     } else {
-      for(String key : permissionKeyString) {
+      for (String key : permissionKeyString) {
         transactionSource = PublicMethedForMutiSign
-            .addTransactionSignWithPermissionId(transactionSource,key,permissionId,blockingStubFull);
+            .addTransactionSignWithPermissionId(transactionSource,key,permissionId,
+                blockingStubFull);
       }
     }
 
@@ -606,9 +607,11 @@ public class CrossChainBase {
    * constructor.
    */
   public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,
-      ByteString tokenId,Integer precision, Long amount,String tokenName,ByteString chainId,
+      ByteString tokenId,ByteString tokenChainId,Integer precision, Long amount,
+      String tokenName,ByteString chainId,
       ByteString paraChainId,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    return createCrossTrc10Transfer(ownerAddress,toAddress,tokenId,precision,amount,tokenName,
+    return createCrossTrc10Transfer(ownerAddress,toAddress,tokenId,tokenChainId,precision,
+        amount,tokenName,
         chainId,paraChainId,priKey,-1,null,blockingStubFull);
 
   }
@@ -618,7 +621,8 @@ public class CrossChainBase {
    * constructor.
    */
   public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,
-      ByteString tokenId,Integer precision, Long amount,String tokenName,ByteString chainId,
+      ByteString tokenId,ByteString tokenChainId,Integer precision, Long amount,String tokenName,
+      ByteString chainId,
       ByteString paraChainId,String priKey, int permissionId,String[] permissionKeyString,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -636,7 +640,7 @@ public class CrossChainBase {
         .setTokenName(ByteString.copyFrom(ByteArray.fromString(tokenName)))
         .setPrecision(precision)
         .setChainId(Sha256Hash.wrap(
-            chainId.toByteArray()).getByteString())
+            tokenChainId.toByteArray()).getByteString())
         .build();
 
 
@@ -657,6 +661,7 @@ public class CrossChainBase {
     contract.setType(Protocol.Transaction.Contract.ContractType.CrossContract)
         .setParameter(Any.pack(crossContract));
     raw.addContract(contract.build());
+    transaction.setRawData(raw.build());
 
     TransactionExtention transactionExtention
         = blockingStubFull.createCommonTransaction(transaction.build());
