@@ -379,9 +379,9 @@ public class TestServiceImpl implements TestService {
     jsonObject.put("input", null); //暂时不填data字段
     jsonObject.put("nonce", null); //暂时不写
     byte[] owner = getOwner(transaction.getRawData().getContract(0));
-    ArrayList<ByteString> toAddressList = getTo(transaction);
+    List<ByteString> toAddressList = getTo(transaction);
     jsonObject.put("from", owner != null ? StringUtil.encode58Check(owner) : null);
-    jsonObject.put("to", toAddressList.size() > 0
+    jsonObject.put("to", !toAddressList.isEmpty()
         ? StringUtil.encode58Check(toAddressList.get(0).toByteArray())
         : null);
 
