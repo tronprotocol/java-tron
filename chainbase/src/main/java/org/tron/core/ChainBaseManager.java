@@ -31,37 +31,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
-import org.tron.core.store.AccountAssetStore;
-import org.tron.core.store.AccountIdIndexStore;
-import org.tron.core.store.AccountIndexStore;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AccountTraceStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.BalanceTraceStore;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DelegatedResourceAccountIndexStore;
-import org.tron.core.store.DelegatedResourceStore;
-import org.tron.core.store.DelegationStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ExchangeStore;
-import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.store.IncrementalMerkleTreeStore;
-import org.tron.core.store.MarketAccountStore;
-import org.tron.core.store.MarketOrderStore;
-import org.tron.core.store.MarketPairPriceToOrderStore;
-import org.tron.core.store.MarketPairToPriceStore;
-import org.tron.core.store.NullifierStore;
-import org.tron.core.store.ProposalStore;
-import org.tron.core.store.StorageRowStore;
-import org.tron.core.store.TransactionHistoryStore;
-import org.tron.core.store.TransactionRetStore;
-import org.tron.core.store.TreeBlockIndexStore;
-import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessScheduleStore;
-import org.tron.core.store.WitnessStore;
-import org.tron.core.store.ZKProofStore;
+import org.tron.core.store.*;
 
 @Slf4j(topic = "DB")
 @Component
@@ -125,6 +95,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private MarketPairToPriceStore marketPairToPriceStore;
+  @Autowired
+  @Getter
+  private AbiStore abiStore;
   @Autowired
   @Getter
   private CodeStore codeStore;
@@ -236,6 +209,7 @@ public class ChainBaseManager {
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);
     closeOneStore(dynamicPropertiesStore);
+    closeOneStore(abiStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
     closeOneStore(storageRowStore);
