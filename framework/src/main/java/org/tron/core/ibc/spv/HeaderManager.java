@@ -101,7 +101,7 @@ public class HeaderManager {
         throw new BadBlockException("header number not 1 is " + header.getNum());
       }
     } else {
-      long latestHeaderNum = chainBaseManager.getCrossRevokingStore()
+      long latestHeaderNum = chainBaseManager.getCommonDataBase()
               .getLatestHeaderBlockNum(chainId);
       if (header.getNum() <= latestHeaderNum) {
         logger.warn("pushBlockHeader num {} <= latestHeaderBlockNum {}", header.getNum(),
@@ -125,7 +125,7 @@ public class HeaderManager {
     blockHeaderIndexStore.put(chainId, blockId);
     blockHeaderStore.put(chainId, header);
     chainBaseManager.getCommonDataBase().saveLatestBlockHeaderHash(chainId, blockId.toString());
-    chainBaseManager.getCrossRevokingStore()
+    chainBaseManager.getCommonDataBase()
             .saveLatestHeaderBlockNum(chainId, blockId.getNum(), false);
     if (validBlock) {
       chainBaseManager.getCommonDataBase().saveLatestPBFTBlockNum(chainId, blockId.getNum());

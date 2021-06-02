@@ -287,7 +287,7 @@ public class CommunicateService implements Communicate {
    */
   public long getHeight(ByteString toChainId) {
     //use toChainId
-    return chainBaseManager.getCrossRevokingStore()
+    return chainBaseManager.getCommonDataBase()
         .getLatestHeaderBlockNum(ByteArray.toHexString(toChainId.toByteArray()));
   }
 

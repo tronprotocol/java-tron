@@ -39,7 +39,7 @@ public class LocalHeaderMsgProcess {
     String chainIdString = ByteArray.toHexString(chainId);
     long blockHeight = requestMessage.getBlockHeight();
     long latestMaintenanceTime = requestMessage.getLatestMaintenanceTime();
-    long currentBlockHeight = chainBaseManager.getCrossRevokingStore()
+    long currentBlockHeight = chainBaseManager.getCommonDataBase()
         .getLatestHeaderBlockNum(chainIdString);
     if (!chainBaseManager.chainIsSelected(requestMessage.getChainId())) {
       return;

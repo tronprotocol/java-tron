@@ -132,7 +132,7 @@ public class CrossHeaderMsgProcess {
 
     logger.debug("HandleUpdatedNotice, peer:{}, notice num:{}, chainId:{}",
         peer, noticeMessage.getCurrentBlockHeight(), chainIdStr);
-    long localLatestHeight = chainBaseManager.getCrossRevokingStore()
+    long localLatestHeight = chainBaseManager.getCommonDataBase()
         .getLatestHeaderBlockNum(chainIdStr);
     if (noticeMessage.getCurrentBlockHeight() - localLatestHeight <= 1
         && noticeMessage.getCurrentBlockHeight() - localLatestHeight >= 0) {
@@ -273,7 +273,7 @@ public class CrossHeaderMsgProcess {
           syncDisabledMap.entrySet().forEach(entry -> {
             Long syncHeaderNum = syncBlockHeaderMap.get(entry.getKey());
             Long missBlock = missBlockHeaderMap.get(entry.getKey());
-            long latestHeaderNum = chainBaseManager.getCrossRevokingStore()
+            long latestHeaderNum = chainBaseManager.getCommonDataBase()
                 .getLatestHeaderBlockNum(entry.getKey());
             syncHeaderNum = syncHeaderNum == null ? latestHeaderNum : syncHeaderNum;
             if (missBlock != null && syncHeaderNum > missBlock) {
@@ -381,7 +381,7 @@ public class CrossHeaderMsgProcess {
     public void run() {
       Boolean sync = syncDisabledMap.get(chainId);
       while (sync != null) {
-        long localLatestHeight = chainBaseManager.getCrossRevokingStore()
+        long localLatestHeight = chainBaseManager.getCommonDataBase()
             .getLatestHeaderBlockNum(chainId);
         long nextHeight = localLatestHeight + 1;
         try {

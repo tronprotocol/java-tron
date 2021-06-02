@@ -47,61 +47,16 @@ public class CrossChainUpdateActuator extends AbstractActuator {
       CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
       String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
-      if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())) {
-        byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(chainId);
-        BalanceContract.CrossChainInfo crossChainInfoOld = null;
-
-        if (crossChainInfoBytes == null) {
-          throw new ContractValidateException("ChainId has not been registered!");
-        }
-        try {
-          crossChainInfoOld =
-                  BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
-        } catch (InvalidProtocolBufferException e) {
-          throw new ContractValidateException("the format of crossChainInfo stored in db is not right!");
-        }
-
-        if (crossChainInfo.getBeginSyncHeight() != crossChainInfoOld.getBeginSyncHeight()) {
-          crossRevokingStore.saveLatestHeaderBlockNum(chainId,
-                  crossChainInfo.getBeginSyncHeight() - 1, true);
-        }
-
-        if (!crossChainInfo.getParentBlockHash().equals(crossChainInfoOld.getParentBlockHash())) {
-          commonDataBase.saveLatestBlockHeaderHash(chainId,
-                  ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
-        }
-
-        if (crossChainInfo.getMaintenanceTimeInterval() != crossChainInfoOld.getMaintenanceTimeInterval()
-                || crossChainInfo.getBlockTime() != crossChainInfoOld.getBlockTime()
-                || !crossChainInfo.getSrListList().equals(crossChainInfoOld.getSrListList())) {
-          commonDataBase.saveChainMaintenanceTimeInterval(chainId,
-                  crossChainInfo.getMaintenanceTimeInterval());
-          long round = crossChainInfo.getBlockTime() / crossChainInfo.getMaintenanceTimeInterval();
-          long epoch = (round + 1) * crossChainInfo.getMaintenanceTimeInterval();
-          if (crossChainInfo.getBlockTime() % crossChainInfo.getMaintenanceTimeInterval() == 0) {
-            epoch = epoch - crossChainInfo.getMaintenanceTimeInterval();
-            epoch = epoch < 0 ? 0 : epoch;
-          }
-          Protocol.SRL.Builder srlBuilder = Protocol.SRL.newBuilder();
-          srlBuilder.addAllSrAddress(crossChainInfo.getSrListList());
-          Protocol.PBFTMessage.Raw pbftMsgRaw = Protocol.PBFTMessage.Raw.newBuilder()
-                  .setData(srlBuilder.build().toByteString())
-                  .setEpoch(epoch).build();
-          Protocol.PBFTCommitResult.Builder builder = Protocol.PBFTCommitResult.newBuilder();
-          builder.setData(pbftMsgRaw.toByteString());
-          commonDataBase.saveSRL(chainId, epoch, builder.build());
-          commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
-          int agreeNodeCount = crossChainInfo.getSrListList().size() * 2 / 3 + 1;
-          commonDataBase.saveAgreeNodeCount(chainId, agreeNodeCount);
-        }
+      if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())
+              && getTx().getBlockNum() != -1) {
+        crossRevokingStore.saveCrossChainUpdate(chainId, getTx().getBlockNum());
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
       crossRevokingStore.putChainInfo(chainId, crossChainInfo.toByteArray());
       ret.setStatus(fee, code.SUCESS);
-    } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException
-            | ContractValidateException e) {
+    } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -160,7 +115,8 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     }
 
     long beginSyncHeightOld = crossChainInfoOld.getBeginSyncHeight();
-    long latestHeaderBlockNum = crossRevokingStore.getLatestHeaderBlockNum(chainId);
+    long latestHeaderBlockNum =
+            chainBaseManager.getCommonDataBase().getLatestHeaderBlockNum(chainId);
     logger.warn("beginSyncHeightOld:" + beginSyncHeightOld + ",latestHeaderBlockNum:" + latestHeaderBlockNum);
     if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())
             && latestHeaderBlockNum >= beginSyncHeightOld) {

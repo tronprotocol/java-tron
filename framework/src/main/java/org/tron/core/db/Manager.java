@@ -2310,13 +2310,13 @@ public class Manager {
     Args.getInstance().getCrossChainWhiteList().forEach(crossChainInfo -> {
       String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
       try {
-        if (crossChainInfo.getBeginSyncHeight() <= crossRevokingStore
+        if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
                 .getLatestHeaderBlockNum(chainId)) {
           return;
         }
         commonDataBase.saveProxyAddress(chainId,
                 ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
-        crossRevokingStore.saveLatestHeaderBlockNum(chainId,
+        commonDataBase.saveLatestHeaderBlockNum(chainId,
                 crossChainInfo.getBeginSyncHeight() - 1, false);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
                 ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));

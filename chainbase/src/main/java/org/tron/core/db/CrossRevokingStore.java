@@ -25,7 +25,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
   private static final String PARACHAINS_KEY = "k_parachain";
   private static final String VOTED_KEY = "voted_";
   private static final String PARACHAIN__HISTORY = "parachain_history";
-  private static final String LATEST_SYNC_BLOCK_NUM = "LATEST_SYNC_BLOCK_NUM";
+  private static final String CROSS_CHAIN_UPDATE = "CROSS_CHAIN_UPDATE";
 
   public CrossRevokingStore() {
     super("cross-revoke-database");
@@ -235,8 +235,8 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
             .collect(Collectors.toList());
   }
 
-  public long getLatestHeaderBlockNum(String chainId) {
-    BytesCapsule data = getUnchecked(buildKey(LATEST_SYNC_BLOCK_NUM, chainId));
+  public long getCrossChainUpdate(String chainId) {
+    BytesCapsule data = getUnchecked(buildKey(CROSS_CHAIN_UPDATE, chainId));
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return ByteArray.toLong(data.getData());
     } else {
@@ -244,13 +244,24 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public void saveLatestHeaderBlockNum(String chainId, long number, boolean forceUpdate) {
-    if (!forceUpdate && number <= getLatestHeaderBlockNum(chainId)) {
-      logger.warn("chainId: {}, sync number {} <= latest number {}",
-              chainId, number, getLatestHeaderBlockNum(chainId));
-      return;
-    }
-    this.put(buildKey(LATEST_SYNC_BLOCK_NUM, chainId), new BytesCapsule(ByteArray.fromLong(number)));
+  public List<Pair<String, Long>> getAllCrossChainUpdate () {
+    String startStr = CROSS_CHAIN_UPDATE + "_";
+    return Streams.stream(iterator())
+            .filter(entry ->
+                    Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith(startStr))
+            .map(entry ->
+                    new Pair<String, Long>(ByteArray.toStr(entry.getKey())
+                            .substring(startStr.length()),
+                            ByteArray.toLong(entry.getValue().getData())))
+            .collect(Collectors.toList());
+  }
+
+  public void saveCrossChainUpdate(String chainId, long number) {
+    this.put(buildKey(CROSS_CHAIN_UPDATE, chainId), new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public void deleteCrossChainUpdate(String chainId) {
+    delete(buildKey(CROSS_CHAIN_UPDATE, chainId));
   }
 
   private byte[] buildKey(String prefix, String chainId) {

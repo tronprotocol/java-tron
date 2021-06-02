@@ -210,13 +210,13 @@ public class MaintenanceManager {
           return;
         }
         CrossChainInfo crossChainInfo = CrossChainInfo.parseFrom(chainInfoData);
-        if (crossChainInfo.getBeginSyncHeight() <= crossRevokingStore
+        if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
             .getLatestHeaderBlockNum(chainId)) {
           return;
         }
         commonDataBase.saveProxyAddress(chainId,
             ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
-        crossRevokingStore.saveLatestHeaderBlockNum(chainId,
+        commonDataBase.saveLatestHeaderBlockNum(chainId,
                 crossChainInfo.getBeginSyncHeight() - 1, false);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
             ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));

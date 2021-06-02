@@ -97,8 +97,8 @@ public class CommonDataBase extends TronDatabase<byte[]> {
         .orElse(0L);
   }
 
-  public void saveLatestHeaderBlockNum(String chainId, long number) {
-    if (number <= getLatestHeaderBlockNum(chainId)) {
+  public void saveLatestHeaderBlockNum(String chainId, long number, boolean forceUpdate) {
+    if (!forceUpdate && number <= getLatestHeaderBlockNum(chainId)) {
       logger.warn("chainId: {}, sync number {} <= latest number {}",
           chainId, number, getLatestHeaderBlockNum(chainId));
       return;
