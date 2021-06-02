@@ -1,5 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
+
 import lombok.Value;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -8,7 +10,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
 @Value
 public class TransactionResultDTO {
@@ -49,7 +50,6 @@ public class TransactionResultDTO {
 
     gas = "";
     gasPrice = "";
-
 
     input = "";
   }

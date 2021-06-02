@@ -238,15 +238,15 @@ public class JsonRpcApiUtil {
         case ProposalDeleteContract:
           owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
           break;
-//        case BuyStorageContract:
-//          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-//          break;
-//        case BuyStorageBytesContract:
-//          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-//          break;
-//        case SellStorageContract:
-//          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-//          break;
+        // case BuyStorageContract:
+        //   owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+        //   break;
+        // case BuyStorageBytesContract:
+        //   owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+        //   break;
+        // case SellStorageContract:
+        //   owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+        //   break;
         case UpdateSettingContract:
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
