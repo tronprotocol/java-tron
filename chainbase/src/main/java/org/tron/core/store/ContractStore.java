@@ -30,10 +30,12 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
       return null;
     }
 
-    AbiCapsule abiCapsule = abiStore.get(key);
-    if (abiCapsule != null) {
-      contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-          .toBuilder().setAbi(abiCapsule.getInstance()).build());
+    if (!contractCapsule.getInstance().hasAbi()) {
+      AbiCapsule abiCapsule = abiStore.get(key);
+      if (abiCapsule != null) {
+        contractCapsule = new ContractCapsule(contractCapsule.getInstance()
+            .toBuilder().setAbi(abiCapsule.getInstance()).build());
+      }
     }
     return contractCapsule;
   }
