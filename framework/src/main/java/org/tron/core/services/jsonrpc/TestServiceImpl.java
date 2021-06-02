@@ -40,6 +40,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -93,10 +94,8 @@ public class TestServiceImpl implements TestService {
   }
 
   public String ethGetBlockTransactionCountByHash(String blockHash) throws Exception {
-    Block b = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
-    if (b == null) {
-      return null;
-    }
+    Block b = getBlockByJSonHash(blockHash);
+    if (b == null) return null;
 
     long n = b.getTransactionsList().size();
     return ByteArray.toJsonHex(n);
@@ -110,6 +109,58 @@ public class TestServiceImpl implements TestService {
 
     long n = list.size();
     return ByteArray.toJsonHex(n);
+  }
+
+  public BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception {
+    final Block b = getBlockByJSonHash(blockHash);
+    return getBlockResult(b, fullTransactionObjects);
+  }
+
+  private Block getBlockByJSonHash(String blockHash) throws Exception {
+    return wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+  }
+
+  protected BlockResult getBlockResult(Block block, boolean fullTx) {
+    if (block == null)
+      return null;
+
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    boolean isPending = false;
+    BlockResult br = new BlockResult();
+    br.number = ByteArray.toJsonHex(blockCapsule.getNum());
+    br.hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
+    br.parentHash = ByteArray.toJsonHex(blockCapsule.getParentBlockId().getBytes());
+    br.nonce = ""; // no value
+    br.sha3Uncles= ""; // no value
+    br.logsBloom = ""; // no value
+    br.transactionsRoot = ByteArray.toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
+    br.stateRoot = ByteArray.toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
+    br.receiptsRoot = ""; // no value
+    br.miner = ByteArray.toJsonHex(blockCapsule.getWitnessAddress().toByteArray());
+    br.difficulty = ""; // no value
+    br.totalDifficulty = ""; // no value
+    // br.extraData // no value
+    br.size = ByteArray.toJsonHex(block.getSerializedSize());
+    br.gasLimit = "";
+    br.gasUsed = "";
+    br.timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
+
+    List<Object> txes = new ArrayList<>();
+    if (fullTx) {
+      for (int i = 0; i < block.getTransactionsList().size(); i++) {
+        // txes.add(new TransactionResultDTO(block, i, block.getTransactionsList().get(i)));
+      }
+    } else {
+      for (Transaction tx : block.getTransactionsList()) {
+        txes.add(ByteArray.toJsonHex(new TransactionCapsule(tx).getTransactionId().getBytes()));
+      }
+    }
+    br.transactions = txes.toArray();
+
+    List<String> ul = new ArrayList<>();
+    br.uncles = ul.toArray(new String[ul.size()]);
+
+    return br;
   }
 
   @Override
