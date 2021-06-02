@@ -2702,8 +2702,8 @@ public class RpcApiService implements Service {
                                        StreamObserver<GrpcAPI.CrossChainVoteDetailList>
                                            responseObserver) {
       GrpcAPI.CrossChainVoteDetailList voteCrossList = wallet.getCrossChainVoteDetailList(
-          request.getOffset(),
-              request.getLimit(), request.getChainId().toString(), request.getRound());
+          request.getOffset(), request.getLimit(),
+              ByteArray.toHexString(request.getChainId().toByteArray()), request.getRound());
       responseObserver.onNext(voteCrossList);
       responseObserver.onCompleted();
     }

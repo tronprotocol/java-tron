@@ -28,6 +28,7 @@ import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.PBFTCommitResult;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
 
@@ -48,6 +49,9 @@ public class KhaosDatabase extends TronDatabase {
 
   @Autowired
   private PbftSignDataStore pbftSignDataStore;
+
+  @Autowired
+  private WitnessScheduleStore witnessScheduleStore;
 
   @Override
   public void put(byte[] key, Object item) {
@@ -127,7 +131,13 @@ public class KhaosDatabase extends TronDatabase {
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blk.getNum());
-      if (pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
+      int witnessSize = 0;
+      try {
+        witnessSize = witnessScheduleStore.getActiveWitnesses().size();
+      } catch (IllegalArgumentException e) {
+        logger.warn("witness size is 0");
+      }
+      if (witnessSize != 1 && pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
         throw new BlockNotInMainForkException();
       }
 
