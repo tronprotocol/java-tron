@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,5 +20,9 @@ public class AbiStore extends TronStoreWithRevoking<AbiCapsule> {
   @Override
   public AbiCapsule get(byte[] key) {
     return getUnchecked(key);
+  }
+
+  public long getTotalABIs() {
+    return Streams.stream(revokingDB.iterator()).count();
   }
 }
