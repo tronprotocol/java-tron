@@ -359,6 +359,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     if (getCrossMessageList().isEmpty()) {
       toStringBuff.append("cross tx are empty\n");
     } else {
+      toStringBuff.append("cross merkle root=").append(getCrossMerkleRoot()).append("\n");
       toStringBuff.append("cross tx size=").append(getCrossMessageList().size()).append("\n");
     }
 

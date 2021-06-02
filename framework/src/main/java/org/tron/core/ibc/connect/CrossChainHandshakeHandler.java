@@ -28,6 +28,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
@@ -36,6 +37,7 @@ import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 
 @Slf4j(topic = "net-cross")
@@ -108,7 +110,10 @@ public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
   }
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
-    HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
+    Node homeNode = nodeManager.getPublicHomeNode();
+    int crossChainPort = Args.getInstance().getCrossChainPort();
+    Node node = new Node(homeNode.getId(), homeNode.getHost(), crossChainPort);
+    HelloMessage message = new HelloMessage(node, time,
         chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
         chainBaseManager.getHeadBlockId(), true);
     ctx.writeAndFlush(message.getSendData());

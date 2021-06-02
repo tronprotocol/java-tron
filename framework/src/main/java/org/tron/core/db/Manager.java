@@ -13,6 +13,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1346,10 +1347,8 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
-    if (trxCap.isSource()) {
-      consumeBandwidth(trxCap, trace);
-      consumeMultiSignFee(trxCap, trace);
-    }
+    consumeBandwidth(trxCap, trace);
+    consumeMultiSignFee(trxCap, trace);
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1811,8 +1810,9 @@ public class Manager {
 
           TriggerSmartContract sourceTrigger = source.getRawData().getContract(0)
               .getParameter().unpack(TriggerSmartContract.class);
-          TriggerSmartContract destTrigger = dest.getRawData().getContract(0)
-              .getParameter().unpack(TriggerSmartContract.class);
+          Contract destContract = dest.getRawData().getContract(0);
+          TriggerSmartContract destTrigger = destContract.getParameter()
+                  .unpack(TriggerSmartContract.class);
 
           if (transactionCapsule.isSource() && !Arrays
               .equals(sourceTrigger.getOwnerAddress().toByteArray(),
@@ -1827,26 +1827,6 @@ public class Manager {
             throw new CrossContractConstructException("dest data must equal with source data");
           }
 
-          // check proxy account
-          String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
-              ByteArray.toHexString(crossContract.getToChainId().toByteArray()));
-
-          String realProxyAccount = ByteArray.toHexString(
-              destTrigger.getOwnerAddress().toByteArray());
-          ByteString localChainId = chainBaseManager.getGenesisBlockId().getByteString();
-          if (localChainId.equals(crossContract.getOwnerChainId())) {
-            if (proxyAccount == null) {
-              throw new ProxyNotActiveException(
-                      String.format("can get the proxy addr of ChainId: %s",
-                              ByteArray.toHexString(crossContract.getToChainId().toByteArray())));
-            }
-            if (!proxyAccount.equals(realProxyAccount)) {
-              throw new PermissionException(String.format(
-                      "cross transaction proxy account is not right, expect: %s, actually: %s",
-                      proxyAccount, realProxyAccount));
-            }
-          }
-
           TransactionCapsule crossTriggerTx;
           if (transactionCapsule.isSource()) {
             crossTriggerTx = new TransactionCapsule(source);
@@ -1856,6 +1836,21 @@ public class Manager {
               throw new ValidateSignatureException("cross transaction signature validate failed");
             }
           } else {
+            // check proxy account
+            String proxyAccount = chainBaseManager.getCommonDataBase().getProxyAddress(
+                    ByteArray.toHexString(crossContract.getOwnerChainId().toByteArray()));
+            if (proxyAccount == null) {
+              throw new ProxyNotActiveException(
+                      String.format("can get the proxy addr of ChainId: %s",
+                              ByteArray.toHexString(crossContract.getOwnerChainId().toByteArray())));
+            }
+
+            // replace owner instead of proxy addr
+            destTrigger = destTrigger.toBuilder().setOwnerAddress(
+                    ByteString.copyFrom(ByteArray.fromHexString(proxyAccount))).build();
+            destContract = destContract.toBuilder().setParameter(Any.pack(destTrigger)).build();
+            dest = dest.toBuilder().setRawData(
+                    dest.getRawData().toBuilder().setContract(0, destContract).build()).build();
             crossTriggerTx = new TransactionCapsule(dest);
             // set the fee payer when transaction is dest
             crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
@@ -2344,7 +2339,8 @@ public class Manager {
         }
         commonDataBase.saveProxyAddress(chainId,
             ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
-        commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
+        commonDataBase.saveLatestHeaderBlockNum(chainId,
+                crossChainInfo.getBeginSyncHeight() - 1, false);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
             ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
         commonDataBase.saveChainMaintenanceTimeInterval(chainId,
