@@ -2339,7 +2339,8 @@ public class Manager {
         }
         commonDataBase.saveProxyAddress(chainId,
             ByteArray.toHexString(crossChainInfo.getProxyAddress().toByteArray()));
-        commonDataBase.saveLatestHeaderBlockNum(chainId, crossChainInfo.getBeginSyncHeight() - 1);
+        commonDataBase.saveLatestHeaderBlockNum(chainId,
+                crossChainInfo.getBeginSyncHeight() - 1, false);
         commonDataBase.saveLatestBlockHeaderHash(chainId,
             ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray()));
         commonDataBase.saveChainMaintenanceTimeInterval(chainId,

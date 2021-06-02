@@ -42,21 +42,31 @@ public class CrossChainTrc10 extends CrossChainBase {
     final Long beforeBlockNum = blockingStubFull.getNowBlock(EmptyMessage.newBuilder()
         .build()).getBlockHeader().getRawData().getNumber();
 
-
-
-
+    //precision wrong,transfer failed.
     String txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
-        trc10TokenAccountAddress,assetAccountId1,6,sendAmount,name1,chainId,crossChainId,
+        trc10TokenAccountAddress,assetAccountId1,chainId,5,sendAmount,name1,chainId,crossChainId,
+        trc10TokenAccountKey,blockingStubFull);
+    Optional<Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
+    Assert.assertEquals(byId.get().getRawData().getContractCount(),0);
+
+    //Name wrong,transfer failed.
+    txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
+        trc10TokenAccountAddress,assetAccountId1,chainId,6,sendAmount,name2,chainId,crossChainId,
+        trc10TokenAccountKey,blockingStubFull);
+    byId = PublicMethed.getTransactionById(txid, blockingStubFull);
+    Assert.assertEquals(byId.get().getRawData().getContractCount(),0);
+
+    txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
+        trc10TokenAccountAddress,assetAccountId1,chainId,6,sendAmount,name1,chainId,crossChainId,
         trc10TokenAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
-
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query first chain
-    Optional<Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
+    byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Any any = byId.get().getRawData().getContract(0).getParameter();
     BalanceContract.CrossContract crossContract = any.unpack(BalanceContract.CrossContract.class);
     Assert.assertEquals(crossContract.getOwnerAddress(),
@@ -111,6 +121,31 @@ public class CrossChainTrc10 extends CrossChainBase {
     Assert.assertEquals(secondCrossMessage.getTransaction().getRawData().getSourceTxId(),
         ByteString.copyFrom(ByteArray.fromHexString(txid)));
     Assert.assertEquals(secondCrossMessage.getType(), Type.ACK);
+
+
+
+    Long beforeSendBackFromBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId2,
+        trc10TokenAccountKey,crossBlockingStubFull);
+    final Long beforeSendBackToBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId1,
+        trc10TokenAccountKey,blockingStubFull);
+    txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
+        trc10TokenAccountAddress,assetAccountId1,chainId,6,sendAmount - 1,name1,
+        crossChainId,chainId,
+        trc10TokenAccountKey,crossBlockingStubFull);
+    PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
+
+    Long afterSendBackFromBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId2,
+        trc10TokenAccountKey,crossBlockingStubFull);
+    Long afterSendBackToBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId1,
+        trc10TokenAccountKey,blockingStubFull);
+
+    Assert.assertEquals(beforeSendBackFromBalance - afterSendBackFromBalance, sendAmount - 1);
+    Assert.assertEquals(afterSendBackToBalance - beforeSendBackToBalance,sendAmount - 1);
+
+
+
+
+
   }
 
 
@@ -130,7 +165,8 @@ public class CrossChainTrc10 extends CrossChainBase {
         .build()).getBlockHeader().getRawData().getNumber();
 
     String txid = createCrossTrc10Transfer(mutisignTestAddress,
-        mutisignTestAddress,mutisignAssetAccountId1,6,sendAmount * 2,name1,chainId,crossChainId,
+        mutisignTestAddress,mutisignAssetAccountId1,chainId,6,sendAmount * 2,
+        name1,chainId,crossChainId,
         mutisignTestKey,2,permissionKeyString,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
