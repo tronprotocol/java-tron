@@ -74,8 +74,8 @@ public interface TestService {
   @JsonRpcMethod("eth_getBlockByHash")
   BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception;
 
-  // @JsonRpcMethod("eth_getBlockByNumber")
-  // BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
+  @JsonRpcMethod("eth_getBlockByNumber")
+  BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
 
   @JsonRpcMethod("net_version")
   int getNetVersion();
