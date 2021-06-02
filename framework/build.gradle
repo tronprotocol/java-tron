@@ -58,7 +58,7 @@ dependencies {
 
     compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
 
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.3'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
 
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
@@ -75,7 +75,7 @@ dependencies {
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
-    compile 'com.alibaba:fastjson:1.2.60'
+    compile 'com.alibaba:fastjson:1.2.70'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
 
@@ -138,7 +138,6 @@ test {
         exceptionFormat = 'full'
     }
     jacoco {
-        append = true
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
@@ -168,7 +167,6 @@ task stest(type: Test) {
     }
 
     jacoco {
-        append = false
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
@@ -189,7 +187,7 @@ jacocoTestReport {
         csv.enabled false
         html.destination file("${buildDir}/jacocoHtml")
     }
-    executionData = files('build/jacoco/jacocoTest.exec')
+    executionData.from = 'build/jacoco/jacocoTest.exec'
 }
 
 def binaryRelease(taskName, jarName, mainClass) {
