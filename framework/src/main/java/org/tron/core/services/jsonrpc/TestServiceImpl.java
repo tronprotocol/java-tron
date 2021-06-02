@@ -95,7 +95,9 @@ public class TestServiceImpl implements TestService {
 
   public String ethGetBlockTransactionCountByHash(String blockHash) throws Exception {
     Block b = getBlockByJSonHash(blockHash);
-    if (b == null) return null;
+    if (b == null) {
+      return null;
+    }
 
     long n = b.getTransactionsList().size();
     return ByteArray.toJsonHex(n);
@@ -111,7 +113,8 @@ public class TestServiceImpl implements TestService {
     return ByteArray.toJsonHex(n);
   }
 
-  public BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception {
+  public BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects)
+      throws Exception {
     final Block b = getBlockByJSonHash(blockHash);
     return getBlockResult(b, fullTransactionObjects);
   }
@@ -121,8 +124,9 @@ public class TestServiceImpl implements TestService {
   }
 
   protected BlockResult getBlockResult(Block block, boolean fullTx) {
-    if (block == null)
+    if (block == null) {
       return null;
+    }
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
     boolean isPending = false;
@@ -131,10 +135,12 @@ public class TestServiceImpl implements TestService {
     br.hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     br.parentHash = ByteArray.toJsonHex(blockCapsule.getParentBlockId().getBytes());
     br.nonce = ""; // no value
-    br.sha3Uncles= ""; // no value
+    br.sha3Uncles = ""; // no value
     br.logsBloom = ""; // no value
-    br.transactionsRoot = ByteArray.toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
-    br.stateRoot = ByteArray.toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
+    br.transactionsRoot = ByteArray
+        .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
+    br.stateRoot = ByteArray
+        .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
     br.receiptsRoot = ""; // no value
     br.miner = ByteArray.toJsonHex(blockCapsule.getWitnessAddress().toByteArray());
     br.difficulty = ""; // no value
@@ -148,7 +154,7 @@ public class TestServiceImpl implements TestService {
     List<Object> txes = new ArrayList<>();
     if (fullTx) {
       for (int i = 0; i < block.getTransactionsList().size(); i++) {
-        // txes.add(new TransactionResultDTO(block, i, block.getTransactionsList().get(i)));
+        txes.add(new TransactionResultDTO(block, i, block.getTransactionsList().get(i), wallet));
       }
     } else {
       for (Transaction tx : block.getTransactionsList()) {
@@ -364,8 +370,9 @@ public class TestServiceImpl implements TestService {
     byte[] owner = getOwner(transaction.getRawData().getContract(0));
     ArrayList<ByteString> toAddressList = getTo(transaction);
     jsonObject.put("from", owner != null ? StringUtil.encode58Check(owner) : null);
-    jsonObject.put("to", toAddressList.size() > 0 ?
-        StringUtil.encode58Check(toAddressList.get(0).toByteArray()) : null);
+    jsonObject.put("to", toAddressList.size() > 0
+        ? StringUtil.encode58Check(toAddressList.get(0).toByteArray())
+        : null);
 
     int transactionIndex = -1;
     for (int index = 0; index < block.getTransactionsCount(); index++) {

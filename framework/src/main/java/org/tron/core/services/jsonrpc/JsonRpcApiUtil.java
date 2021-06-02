@@ -238,15 +238,15 @@ public class JsonRpcApiUtil {
         case ProposalDeleteContract:
           owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
           break;
-//        case BuyStorageContract:
-//          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-//          break;
-//        case BuyStorageBytesContract:
-//          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-//          break;
-//        case SellStorageContract:
-//          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-//          break;
+        // case BuyStorageContract:
+        //   owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+        //   break;
+        // case BuyStorageBytesContract:
+        //   owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+        //   break;
+        // case SellStorageContract:
+        //   owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+        //   break;
         case UpdateSettingContract:
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
@@ -435,6 +435,31 @@ public class JsonRpcApiUtil {
 
   public static String getTxID(Transaction transaction) {
     return ByteArray.toHexString(Sha256Hash.hash(true, transaction.getRawData().toByteArray()));
+  }
+
+  public static long getTransactionAmount(Transaction.Contract contract, String hash,
+      Wallet wallet) {
+    long amount = 0;
+    try {
+      switch (contract.getType()) {
+        case UnfreezeBalanceContract:
+        case WithdrawBalanceContract:
+          TransactionInfo transactionInfo = wallet
+              .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(hash)));
+          amount = getAmountFromTransactionInfo(hash, contract.getType(), transactionInfo);
+          break;
+        default:
+          amount = getTransactionAmount(contract, hash, 0, null, wallet);
+          break;
+      }
+    } catch (Exception e) {
+      logger.error("Exception happens when get amount. Exception = [{}]",
+          Throwables.getStackTraceAsString(e));
+    } catch (Throwable t) {
+      t.printStackTrace();
+    }
+
+    return amount;
   }
 
   /**
