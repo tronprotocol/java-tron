@@ -63,6 +63,8 @@ public class RepositoryImpl implements Repository {
   @Getter
   private AssetIssueV2Store assetIssueV2Store;
   @Getter
+  private AbiStore abiStore;
+  @Getter
   private CodeStore codeStore;
   @Getter
   private ContractStore contractStore;
@@ -112,6 +114,7 @@ public class RepositoryImpl implements Repository {
       ChainBaseManager manager = storeFactory.getChainBaseManager();
       dynamicPropertiesStore = manager.getDynamicPropertiesStore();
       accountStore = manager.getAccountStore();
+      abiStore = manager.getAbiStore();
       codeStore = manager.getCodeStore();
       contractStore = manager.getContractStore();
       assetIssueStore = manager.getAssetIssueStore();
@@ -349,7 +352,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       contractCapsule = parent.getContract(address);
     } else {
-      contractCapsule = getContractStore().get(address);
+      contractCapsule = getContractStore().getWithoutAbi(address);
     }
 
     if (contractCapsule != null) {
@@ -784,7 +787,13 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putContract(key, value);
         } else {
-          getContractStore().put(key.getData(), value.getContract());
+          ContractCapsule contractCapsule = value.getContract();
+          if (value.getType().isCreate()) {
+            abiStore.put(key.getData(), new AbiCapsule(contractCapsule.getInstance().getAbi()));
+            contractCapsule = new ContractCapsule(contractCapsule.getInstance()
+                .toBuilder().clearAbi().build());
+          }
+          getContractStore().put(key.getData(), contractCapsule);
         }
       }
     }));
