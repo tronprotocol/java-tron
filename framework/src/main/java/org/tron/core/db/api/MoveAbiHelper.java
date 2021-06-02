@@ -23,7 +23,7 @@ public class MoveAbiHelper {
 
   public void doWork(boolean isOut) {
     long start = System.currentTimeMillis();
-    logger.info("Start to move abi");
+    logger.info("Start to move abi: {}", isOut);
     AbiStore abiStore = chainBaseManager.getAbiStore();
     ContractStore contractStore = chainBaseManager.getContractStore();
     Iterator<Map.Entry<byte[], ContractCapsule>> it = contractStore.iterator();
@@ -51,6 +51,8 @@ public class MoveAbiHelper {
       }
     });
     chainBaseManager.getDynamicPropertiesStore().saveAbiMoveDone(isOut ? 1 : 0);
+    logger.info("Check store size: contract {} abi {}",
+        contractStore.getTotalContracts(), abiStore.getTotalABIs());
     logger.info(
         "Complete the abi move, total time:{} milliseconds",
         System.currentTimeMillis() - start);
