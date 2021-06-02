@@ -437,6 +437,31 @@ public class JsonRpcApiUtil {
     return ByteArray.toHexString(Sha256Hash.hash(true, transaction.getRawData().toByteArray()));
   }
 
+  public static long getTransactionAmount(Transaction.Contract contract, String hash,
+      Wallet wallet) {
+    long amount = 0;
+    try {
+      switch (contract.getType()) {
+        case UnfreezeBalanceContract:
+        case WithdrawBalanceContract:
+          TransactionInfo transactionInfo = wallet
+              .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(hash)));
+          amount = getAmountFromTransactionInfo(hash, contract.getType(), transactionInfo);
+          break;
+        default:
+          amount = getTransactionAmount(contract, hash, 0, null, wallet);
+          break;
+      }
+    } catch (Exception e) {
+      logger.error("Exception happens when get amount. Exception = [{}]",
+          Throwables.getStackTraceAsString(e));
+    } catch (Throwable t) {
+      t.printStackTrace();
+    }
+
+    return amount;
+  }
+
   /**
    * 获取交易的 amount
    */

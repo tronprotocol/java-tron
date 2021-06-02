@@ -148,7 +148,7 @@ public class TestServiceImpl implements TestService {
     List<Object> txes = new ArrayList<>();
     if (fullTx) {
       for (int i = 0; i < block.getTransactionsList().size(); i++) {
-        // txes.add(new TransactionResultDTO(block, i, block.getTransactionsList().get(i)));
+        txes.add(new TransactionResultDTO(block, i, block.getTransactionsList().get(i), wallet));
       }
     } else {
       for (Transaction tx : block.getTransactionsList()) {
