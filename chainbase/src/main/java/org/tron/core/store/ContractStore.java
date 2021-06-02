@@ -40,6 +40,10 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
     return contractCapsule;
   }
 
+  public ContractCapsule getWithoutAbi(byte[] key) {
+    return getUnchecked(key);
+  }
+
   /**
    * get total transaction.
    */
