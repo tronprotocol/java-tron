@@ -302,9 +302,18 @@ public class JsonRpcApiUtil {
     return owner == null ? null : owner.toByteArray();
   }
 
-  public static ArrayList<ByteString> getTo(Transaction transaction) {
+  public static byte[] getToAddress(Transaction transaction) {
+    List<ByteString> toAddressList = getTo(transaction);
+    if (!toAddressList.isEmpty()) {
+      return toAddressList.get(0).toByteArray();
+    } else {
+      return null;
+    }
+  }
+
+  public static List<ByteString> getTo(Transaction transaction) {
     Transaction.Contract contract = transaction.getRawData().getContract(0);
-    ArrayList<ByteString> list = new ArrayList<>();
+    List<ByteString> list = new ArrayList<>();
     try {
       Any contractParameter = contract.getParameter();
       switch (contract.getType()) {
@@ -370,15 +379,15 @@ public class JsonRpcApiUtil {
           break;
         case ProposalDeleteContract:
           break;
-//        case BuyStorageContract:
-//          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-//          break;
-//        case BuyStorageBytesContract:
-//          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-//          break;
-//        case SellStorageContract:
-//          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-//          break;
+        // case BuyStorageContract:
+        //   owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+        //   break;
+        // case BuyStorageBytesContract:
+        //   owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+        //   break;
+        // case SellStorageContract:
+        //   owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+        //   break;
         case UpdateSettingContract:
           list.add(contractParameter.unpack(UpdateSettingContract.class).getContractAddress());
           break;

@@ -1,6 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 
 import lombok.Value;
 import org.tron.common.utils.ByteArray;
@@ -40,7 +41,7 @@ public class TransactionResultDTO {
     if (!tx.getRawData().getContractList().isEmpty()) {
       Contract contract = tx.getRawData().getContract(0);
       from = ByteArray.toJsonHex(TransactionCapsule.getOwner(contract));
-      to = ByteArray.toJsonHex(TransactionCapsule.getToAddress(contract));
+      to = ByteArray.toJsonHex(getToAddress(tx));
       value = ByteArray.toJsonHex(getTransactionAmount(contract, hash, wallet));
     } else {
       from = "";
