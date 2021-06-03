@@ -352,8 +352,7 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       contractCapsule = parent.getContract(address);
     } else {
-      contractCapsule = VMConfig.abiMovedOut() ? getContractStore().getWithoutAbi(address) :
-          getContractStore().get(address);
+      contractCapsule = getContractStore().get(address);
     }
 
     if (contractCapsule != null) {
@@ -789,11 +788,8 @@ public class RepositoryImpl implements Repository {
           deposit.putContract(key, value);
         } else {
           ContractCapsule contractCapsule = value.getContract();
-          if (VMConfig.abiMovedOut() && value.getType().isCreate()
-              && contractCapsule.getInstance().hasAbi()) {
+          if (value.getType().isCreate()) {
             abiStore.put(key.getData(), new AbiCapsule(contractCapsule));
-            contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-                .toBuilder().clearAbi().build());
           }
           getContractStore().put(key.getData(), contractCapsule);
         }

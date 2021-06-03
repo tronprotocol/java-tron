@@ -40,19 +40,11 @@ public class ClearABIContractActuator extends AbstractActuator {
 
     long fee = calcFee();
     AbiStore abiStore = chainBaseManager.getAbiStore();
-    ContractStore contractStore = chainBaseManager.getContractStore();
     try {
       ClearABIContract usContract = any.unpack(ClearABIContract.class);
 
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
-      if (chainBaseManager.getDynamicPropertiesStore().getAbiMoveDone() == 0) {
-        ContractCapsule contractCapsule = contractStore.get(contractAddress);
-
-        contractCapsule.clearABI();
-        contractStore.put(contractAddress, contractCapsule);
-      } else {
-        abiStore.put(contractAddress, new AbiCapsule(ABI.getDefaultInstance()));
-      }
+      abiStore.put(contractAddress, new AbiCapsule(ABI.getDefaultInstance()));
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {

@@ -404,7 +404,7 @@ public class Manager {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }
 
-    if (Args.getInstance().isNeedToMoveAbi() && needToMoveAbi()) {
+    if (needToMoveAbi()) {
       new MoveAbiHelper(chainBaseManager).doWork();
     }
 

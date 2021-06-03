@@ -49,8 +49,6 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_FREEZE = false;
 
-  private static boolean ABI_MOVED_OUT = false;
-
   private static boolean ALLOW_TVM_ASSET_ISSUE = false;
 
   private VMConfig() {
@@ -102,10 +100,6 @@ public class VMConfig {
     ALLOW_TVM_FREEZE = allow == 1;
   }
 
-  public static void initAbiMovedOut(long isOut) {
-    ABI_MOVED_OUT = isOut == 1;
-  }
-
   public static void initAllowTvmAssetIssue(long allow) {
     ALLOW_TVM_ASSET_ISSUE = allow == 1;
   }
@@ -138,10 +132,6 @@ public class VMConfig {
 
   public static boolean allowTvmFreeze() {
     return ALLOW_TVM_FREEZE;
-  }
-
-  public static boolean abiMovedOut() {
-    return ABI_MOVED_OUT;
   }
 
   public static boolean allowTvmAssetIssue() {
