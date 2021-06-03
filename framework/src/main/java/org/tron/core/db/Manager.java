@@ -113,7 +113,6 @@ import org.tron.core.exception.CrossContractConstructException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
-import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ProxyNotActiveException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TaposException;
@@ -1348,7 +1347,7 @@ public class Manager {
     trxCap.setTrxTrace(trace);
 
     // do not calculate the fee when tx is a cross smart contract
-    if (!isCrossChainContract(trxCap)) {
+    if (shouldCalculateFee(trxCap)) {
       consumeBandwidth(trxCap, trace);
       consumeMultiSignFee(trxCap, trace);
     }
@@ -2409,20 +2408,23 @@ public class Manager {
     return value;
   }
 
-  private boolean isCrossChainContract(TransactionCapsule transactionCapsule) {
+  private boolean shouldCalculateFee(TransactionCapsule transactionCapsule) {
+    if (transactionCapsule.getType() != Type.DATA) {
+      return false;
+    }
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (contract.getType() == ContractType.CrossContract) {
       try {
         CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
         if (crossContract.getType() == CrossDataType.CONTRACT) {
-          return true;
+          return false;
         }
       } catch (Exception e) {
         logger.warn("parse cross transaction failed, id: {}",
                 transactionCapsule.getTransactionId());
-        return false;
+        return true;
       }
     }
-    return false;
+    return true;
   }
 }
