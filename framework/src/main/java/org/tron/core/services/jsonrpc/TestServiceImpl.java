@@ -13,6 +13,7 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -167,6 +168,10 @@ public class TestServiceImpl implements TestService {
     br.uncles = ul.toArray(new String[ul.size()]);
 
     return br;
+  }
+
+  public String ethCall(CallArguments args, String bnOrId) throws Exception {
+    return "";
   }
 
   @Override

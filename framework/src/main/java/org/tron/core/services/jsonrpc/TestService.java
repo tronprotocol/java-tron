@@ -4,11 +4,39 @@ import com.alibaba.fastjson.JSONObject;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.math.BigInteger;
 import java.util.Arrays;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
 public interface TestService {
+
+  @NoArgsConstructor
+  @AllArgsConstructor
+  class CallArguments {
+    public String from;
+    public String to;
+    public String gas;
+    public String gasPrice;
+    public String value;
+    public String data; // compiledCode
+    public String nonce;
+
+    @Override
+    public String toString() {
+      return "CallArguments{" +
+          "from='" + from + '\'' +
+          ", to='" + to + '\'' +
+          ", gas='" + gas + '\'' +
+          ", gasPrice='" + gasPrice + '\'' +
+          ", value='" + value + '\'' +
+          ", data='" + data + '\'' +
+          ", nonce='" + nonce + '\'' +
+          '}';
+    }
+  }
+
   class BlockResult {
     public String number;
     public String hash;
@@ -73,6 +101,9 @@ public interface TestService {
 
   @JsonRpcMethod("eth_getBlockByNumber")
   BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
+
+  @JsonRpcMethod("eth_call")
+  String ethCall(CallArguments args, String bnOrId) throws Exception;
 
   @JsonRpcMethod("net_version")
   int getNetVersion();
