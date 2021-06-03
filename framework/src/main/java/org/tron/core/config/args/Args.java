@@ -597,6 +597,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) ? config
             .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET)
             : true;
+    PARAMETER.needToMoveAbi =
+        !config.hasPath(Constant.STORAGE_NEEDTO_MOVE_ABI) || config
+            .getBoolean(Constant.STORAGE_NEEDTO_MOVE_ABI);
+
     PARAMETER.trxReferenceBlock = config.hasPath(Constant.TRX_REFERENCE_BLOCK)
         ? config.getString(Constant.TRX_REFERENCE_BLOCK) : "head";
 

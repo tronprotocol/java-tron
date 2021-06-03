@@ -404,7 +404,10 @@ public class Manager {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }
 
-    new MoveAbiHelper(chainBaseManager).doWork(needToMoveAbi());
+    if (Args.getInstance().isNeedToMoveAbi() && needToMoveAbi()) {
+      new MoveAbiHelper(chainBaseManager).doWork();
+    }
+
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
