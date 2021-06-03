@@ -38,6 +38,8 @@ public class CrossChainTrc10 extends CrossChainBase {
         .queryAccount(trc10TokenAccountAddress,blockingStubFull).getBalance();
     final Long beforeToBalance = PublicMethed
         .queryAccount(trc10TokenAccountAddress,crossBlockingStubFull).getBalance();
+    final Long beforeToNetUsaged = PublicMethed
+        .queryAccount(trc10TokenAccountAddress,crossBlockingStubFull).getFreeNetUsage();
 
     final Long beforeBlockNum = blockingStubFull.getNowBlock(EmptyMessage.newBuilder()
         .build()).getBlockHeader().getRawData().getNumber();
@@ -89,6 +91,8 @@ public class CrossChainTrc10 extends CrossChainBase {
     Assert.assertEquals(crossContract.getToChainId(),crossChainId);
     Assert.assertEquals(crossContract.getType(), CrossDataType.TOKEN);
 
+    final Long afterToNetUsaged = PublicMethed
+        .queryAccount(trc10TokenAccountAddress,crossBlockingStubFull).getFreeNetUsage();
     Long afterFromTokenBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId1,
         trc10TokenAccountKey,blockingStubFull);
     Long afterToTokenBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId2,
@@ -103,6 +107,8 @@ public class CrossChainTrc10 extends CrossChainBase {
     Assert.assertEquals((Long)(beforeFromTokenBalance - afterFromTokenBalance),sendAmount);
     Assert.assertEquals((Long)(afterToTokenBalance - beforeToTokenBalance),sendAmount);
     Assert.assertEquals((Long)(beforeFromBalance - afterFromBalance),(Long)info.get().getFee());
+    Assert.assertTrue((Long)(afterToNetUsaged - beforeToNetUsaged)
+        >= (Long)info.get().getReceipt().getNetUsage() - 10);
 
 
     final Long afterBlockNum = blockingStubFull.getNowBlock(EmptyMessage.newBuilder()
@@ -128,6 +134,7 @@ public class CrossChainTrc10 extends CrossChainBase {
         trc10TokenAccountKey,crossBlockingStubFull);
     final Long beforeSendBackToBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId1,
         trc10TokenAccountKey,blockingStubFull);
+
     txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
         trc10TokenAccountAddress,assetAccountId1,chainId,6,sendAmount - 1,name1,
         crossChainId,chainId,
@@ -209,7 +216,7 @@ public class CrossChainTrc10 extends CrossChainBase {
         .getBalance();
     Optional<TransactionInfo> info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
-    Assert.assertEquals(beforeToBalance,afterToBalance);
+    Assert.assertEquals(beforeToBalance - afterToBalance, 1000000L);
     Assert.assertEquals((Long)(beforeFromTokenBalance
         - afterFromTokenBalance),(Long)(2 * sendAmount));
     Assert.assertEquals((Long)(afterToTokenBalance - beforeToTokenBalance),(Long)(2 * sendAmount));

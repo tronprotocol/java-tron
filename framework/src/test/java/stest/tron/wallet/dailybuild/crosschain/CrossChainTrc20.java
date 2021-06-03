@@ -39,7 +39,7 @@ public class CrossChainTrc20  extends CrossChainBase {
 
   @Test(enabled = true,description = "Create trc20 transfer for cross chain")
   public void test01CreateCrossTrc20Transfer() throws Exception {
-    //PublicMethed.waitProduceNextBlock(blockingStubFull);
+
 
     String method = "increment(address,address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
@@ -67,6 +67,9 @@ public class CrossChainTrc20  extends CrossChainBase {
     final long beforeSecondChainValue = ByteArray
         .toLong(transactionExtention.getConstantResult(0).toByteArray());
 
+
+    final long beforeToBalance = PublicMethed.queryAccount(trc10TokenAccountAddress,
+        blockingStubFull).getBalance();
 
 
 
@@ -102,7 +105,10 @@ public class CrossChainTrc20  extends CrossChainBase {
     Assert.assertEquals(crossContract.getOwnerChainId(),chainId);
     Assert.assertEquals(crossContract.getToChainId(),crossChainId);
     Assert.assertEquals(crossContract.getType(), CrossDataType.CONTRACT);
-
+    final long afterToBalance = PublicMethed.queryAccount(trc10TokenAccountAddress,
+        blockingStubFull).getBalance();
+    Optional<TransactionInfo> info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(beforeToBalance - afterToBalance, info.get().getFee());
 
     transactionExtention = PublicMethed.triggerConstantContractForExtention(contractAddress,
         "read()","#",
