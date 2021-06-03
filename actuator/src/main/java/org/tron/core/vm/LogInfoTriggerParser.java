@@ -13,6 +13,7 @@ import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
@@ -67,7 +68,8 @@ public class LogInfoTriggerParser {
       if (addrMap.get(strContractAddr) != null) {
         continue;
       }
-      ContractCapsule contract = deposit.getContract(contractAddress);
+      ContractCapsule contract = StoreFactory.getInstance().getChainBaseManager()
+          .getContractStore().get(contractAddress);
       if (contract == null) {
         // never
         addrMap.put(strContractAddr, originAddress);
