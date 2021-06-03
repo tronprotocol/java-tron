@@ -29,15 +29,16 @@ public class MoveAbiHelper {
     Iterator<Map.Entry<byte[], ContractCapsule>> it = contractStore.iterator();
     it.forEachRemaining(e -> {
       ContractCapsule contractCapsule = e.getValue();
-      if (contractCapsule.getInstance().hasAbi()) {
+      if (!abiStore.has(e.getKey())) {
         abiStore.put(e.getKey(), new AbiCapsule(contractCapsule));
-        contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-            .toBuilder().clearAbi().build());
-        contractStore.put(e.getKey(), contractCapsule);
       }
+      contractCapsule = new ContractCapsule(contractCapsule.getInstance()
+          .toBuilder().clearAbi().build());
+      contractStore.put(e.getKey(), contractCapsule);
       count += 1;
-      if (count % 10_000 == 0) {
-        logger.info("Doing the abi move, current contracts: {} {}", count, System.currentTimeMillis());
+      if (count % 100_000 == 0) {
+        logger.info("Doing the abi move, current contracts: {} {}", count,
+            System.currentTimeMillis());
       }
     });
     chainBaseManager.getDynamicPropertiesStore().saveAbiMoveDone(1);

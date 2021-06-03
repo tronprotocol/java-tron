@@ -292,9 +292,6 @@ public class CommonParameter {
   public boolean needToUpdateAsset;
   @Getter
   @Setter
-  public boolean needToMoveAbi;
-  @Getter
-  @Setter
   public String trxReferenceBlock;
   @Getter
   @Setter
