@@ -334,9 +334,9 @@ public class ProposalUtil {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
-        if (value != 1 && value != 0) {
+        if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_CHANGE_DELEGATION] is only allowed to be 1 or 0");
+                  "This value[ALLOW_CROSS_CHAIN] is only allowed to be 1");
         }
         break;
       }
