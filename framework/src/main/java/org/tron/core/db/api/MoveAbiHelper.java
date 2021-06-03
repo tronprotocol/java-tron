@@ -21,36 +21,26 @@ public class MoveAbiHelper {
     this.chainBaseManager = chainBaseManager;
   }
 
-  public void doWork(boolean isOut) {
+  public void doWork() {
     long start = System.currentTimeMillis();
-    logger.info("Start to move abi: {}", isOut);
+    logger.info("Start to move abi");
     AbiStore abiStore = chainBaseManager.getAbiStore();
     ContractStore contractStore = chainBaseManager.getContractStore();
     Iterator<Map.Entry<byte[], ContractCapsule>> it = contractStore.iterator();
     it.forEachRemaining(e -> {
       ContractCapsule contractCapsule = e.getValue();
-      if (isOut) {
-        if (contractCapsule.getInstance().hasAbi()) {
-          abiStore.put(e.getKey(), new AbiCapsule(contractCapsule));
-          contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-              .toBuilder().clearAbi().build());
-          contractStore.put(e.getKey(), contractCapsule);
-        }
-      } else {
-        AbiCapsule abiCapsule = abiStore.get(e.getKey());
-        if (abiCapsule != null) {
-          contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-              .toBuilder().setAbi(abiCapsule.getInstance()).build());
-          contractStore.put(e.getKey(), contractCapsule);
-          abiStore.delete(e.getKey());
-        }
+      if (contractCapsule.getInstance().hasAbi()) {
+        abiStore.put(e.getKey(), new AbiCapsule(contractCapsule));
+        contractCapsule = new ContractCapsule(contractCapsule.getInstance()
+            .toBuilder().clearAbi().build());
+        contractStore.put(e.getKey(), contractCapsule);
       }
       count += 1;
       if (count % 10_000 == 0) {
         logger.info("Doing the abi move, current contracts: {} {}", count, System.currentTimeMillis());
       }
     });
-    chainBaseManager.getDynamicPropertiesStore().saveAbiMoveDone(isOut ? 1 : 0);
+    chainBaseManager.getDynamicPropertiesStore().saveAbiMoveDone(1);
     logger.info("Check store size: contract {} abi {}",
         contractStore.getTotalContracts(), abiStore.getTotalABIs());
     logger.info(
