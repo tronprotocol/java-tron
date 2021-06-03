@@ -2,6 +2,7 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.balanceOfTopic;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.encode58Check;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateContractAddress;
@@ -51,8 +52,8 @@ public class TestServiceImpl implements TestService {
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
 
-//  public TestServiceImpl() {
-//  }
+  public TestServiceImpl() {
+  }
 
   public TestServiceImpl(NodeInfoService nodeInfoService, Wallet wallet) {
     this.nodeInfoService = nodeInfoService;
@@ -201,19 +202,22 @@ public class TestServiceImpl implements TestService {
     return wallet.getAccount(account).getBalance();
   }
 
-  @Override
-  public BigInteger getTrc20Balance(String ownerAddress, String contractAddress,
-      String blockNumOrTag) {
-    //某个用户拥有的某个token20余额，带精度
-    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
-    byte[] addressDataWord = new byte[32];
-    System.arraycopy(addressData, 0, addressDataWord, 32 - addressData.length, addressData.length);
-    String dataStr = getMethodSign("balanceOf(address)") + Hex.toHexString(addressDataWord);
+
+  /**
+   * @param data Hash of the method signature and encoded parameters.
+   * for example: getMethodSign(methodName(uint256,uint256)) || data1 || data2
+   */
+  private String call(byte[] ownerAddressByte, byte[] contractAddressByte, byte[] data) {
 
     //构造静态合约时，只需要3个字段
-    TriggerSmartContract triggerContract = triggerCallContract(addressData,
-        Commons.decodeFromBase58Check(contractAddress), 0,
-        ByteArray.fromHexString(dataStr), 0, null);
+    TriggerSmartContract triggerContract = triggerCallContract(
+        ownerAddressByte,
+        contractAddressByte,
+        0, //给合约发送的trx，静态合约不需要
+        data,
+        0, //给合约发送的 token10 的金额，静态合约不需要
+        null //给合约发送的 token10 ID，静态合约不需要
+    );
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
@@ -261,8 +265,76 @@ public class TestServiceImpl implements TestService {
       }
       result = Hex.toHexString(listBytes);
     } else {
-      logger.error("trigger contract to get scaling factor error.");
+      logger.error("trigger contract failed.");
     }
+    return result;
+  }
+
+  @Override
+  public BigInteger getTrc20Balance(String ownerAddress, String contractAddress,
+      String blockNumOrTag) {
+    //某个用户拥有的某个token20余额，带精度
+    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
+    byte[] addressDataWord = new byte[32];
+    System.arraycopy(addressData, 0, addressDataWord, 32 - addressData.length, addressData.length);
+    String dataStr = balanceOfTopic + Hex.toHexString(addressDataWord);
+
+    String result = call(addressData, Commons.decodeFromBase58Check(contractAddress),
+        ByteArray.fromHexString(dataStr));
+
+//    //构造静态合约时，只需要3个字段
+//    TriggerSmartContract triggerContract = triggerCallContract(addressData,
+//        Commons.decodeFromBase58Check(contractAddress), 0,
+//        ByteArray.fromHexString(dataStr), 0, null);
+//
+//    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+//    Return.Builder retBuilder = Return.newBuilder();
+//    TransactionExtention trxExt;
+//
+//    try {
+//      TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
+//          ContractType.TriggerSmartContract);
+//      Transaction trx = wallet.triggerConstantContract(
+//          triggerContract,
+//          trxCap,
+//          trxExtBuilder,
+//          retBuilder);
+//
+//      retBuilder.setResult(true).setCode(response_code.SUCCESS);
+//      trxExtBuilder.setTransaction(trx);
+//      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+//      trxExtBuilder.setResult(retBuilder);
+//    } catch (ContractValidateException | VMIllegalException e) {
+//      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+//          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+//      trxExtBuilder.setResult(retBuilder);
+//      logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+//    } catch (RuntimeException e) {
+//      retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+//          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+//      trxExtBuilder.setResult(retBuilder);
+//      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+//    } catch (Exception e) {
+//      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+//          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+//      trxExtBuilder.setResult(retBuilder);
+//      logger.warn("Unknown exception caught: " + e.getMessage(), e);
+//    } finally {
+//      trxExt = trxExtBuilder.build();
+//    }
+//
+//    String result = null;
+//    String code = trxExt.getResult().getCode().toString();
+//    if ("SUCCESS".equals(code)) {
+//      List<ByteString> list = trxExt.getConstantResultList();
+//      byte[] listBytes = new byte[0];
+//      for (ByteString bs : list) {
+//        listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
+//      }
+//      result = Hex.toHexString(listBytes);
+//    } else {
+//      logger.error("trigger contract to get scaling factor error.");
+//    }
 
     if (Objects.isNull(result)) {
       return BigInteger.valueOf(0);
@@ -497,5 +569,41 @@ public class TestServiceImpl implements TestService {
     receipt.logsBloom = null; //暂时不填
 
     return receipt;
+  }
+
+  @Override
+  public String getCall(TransactionCall transactionCall, String blockNumOrTag) {
+    //静态调用合约方法。
+    byte[] addressData = Commons.decodeFromBase58Check(transactionCall.from);
+    byte[] contractAddressData = Commons.decodeFromBase58Check(transactionCall.to);
+
+    return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
+  }
+
+  public void testGetCall() {
+    String ownerAddress = "TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD";
+    String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile测试环境udsj地址
+
+    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
+    byte[] addressDataWord = new byte[32];
+    System.arraycopy(Commons.decodeFromBase58Check(ownerAddress), 0, addressDataWord,
+        32 - addressData.length, addressData.length);
+    String dataStr = balanceOfTopic + Hex.toHexString(addressDataWord);
+    String data = getMethodSign("balanceOf(address)") + dataStr;
+
+    TransactionCall transactionCall = new TransactionCall();
+    transactionCall.from = ownerAddress;
+    transactionCall.to = usdjAddress;
+    transactionCall.data = data;
+
+    StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
+    sb.append(transactionCall);
+    sb.append(", \"latest\"],\"id\":1}");
+    System.out.println(sb);
+  }
+
+  public static void main(String[] args) {
+    TestServiceImpl impl = new TestServiceImpl();
+    impl.testGetCall();
   }
 }

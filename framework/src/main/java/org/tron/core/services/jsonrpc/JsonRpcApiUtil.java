@@ -48,6 +48,8 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
 
+  public static String balanceOfTopic = getMethodSign("balanceOf(address)");
+
   // transform the Tron address to Ethereum Address
   public static String tronToEthAddress(String tronAddress) {
     byte[] tronBytes = Commons.decodeFromBase58Check(tronAddress);
