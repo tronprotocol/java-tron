@@ -352,7 +352,8 @@ public class RepositoryImpl implements Repository {
     if (parent != null) {
       contractCapsule = parent.getContract(address);
     } else {
-      contractCapsule = getContractStore().getWithoutAbi(address);
+      contractCapsule = VMConfig.abiMovedOut() ? getContractStore().getWithoutAbi(address) :
+          getContractStore().get(address);
     }
 
     if (contractCapsule != null) {
