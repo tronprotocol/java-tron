@@ -23,7 +23,7 @@ public class AbiCapsule implements ProtoCapsule<ABI> {
   }
 
   public AbiCapsule(ABI abi) {
-    this.abi = abi;
+    this.abi = abi.toBuilder().build();
   }
 
   @Override
