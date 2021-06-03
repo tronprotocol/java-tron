@@ -10,12 +10,15 @@ import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
+import java.security.Provider;
 import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Wallet;
 
@@ -215,4 +218,26 @@ public class ECKeyTest {
 
     assertEquals(key, ECKey.fromNodeId(key.getNodeId()));
   }
+
+//  @Test
+//  public void testProvider() {
+//    Provider[] providers = Security.getProviders();
+//    for (Provider provider : providers) {
+//      System.out.println(provider.getName());
+//    }
+//    Assert.assertNull(Security.getProvider("SC"));
+//    Assert.assertNull(Security.getProvider("BC"));
+//
+//    Provider p = Security.getProvider("BC");
+//
+//    Provider p2 = (p != null) ? p : new BouncyCastleProvider();
+//
+////    Assert.assertNull(p2);
+//
+//    System.out.println("p2: " + p2.getName());
+//
+//    Provider p3 = new BouncyCastleProvider();
+//
+//    System.out.println("p3: " + p3.getName());
+//  }
 }

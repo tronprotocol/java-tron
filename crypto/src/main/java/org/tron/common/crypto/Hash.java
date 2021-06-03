@@ -29,7 +29,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.math.ec.ECPoint;
+import org.bouncycastle.math.ec.ECPoint;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.DecodeUtil;
 
@@ -67,7 +67,7 @@ public class Hash {
 
   static {
     Security.addProvider(TronCastleProvider.getInstance());
-    CRYPTO_PROVIDER = Security.getProvider("SC");
+    CRYPTO_PROVIDER = Security.getProvider("BC");
     HASH_256_ALGORITHM_NAME = "TRON-KECCAK-256";
     HASH_512_ALGORITHM_NAME = "TRON-KECCAK-512";
     EMPTY_TRIE_HASH = sha3(encodeElement(EMPTY_BYTE_ARRAY));
