@@ -42,7 +42,6 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-    CommonDataBase commonDataBase = chainBaseManager.getCommonDataBase();
     try {
       CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();

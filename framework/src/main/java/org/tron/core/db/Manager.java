@@ -2409,6 +2409,11 @@ public class Manager {
   }
 
   private boolean shouldCalculateFee(TransactionCapsule transactionCapsule) {
+    // normal tx
+    if (transactionCapsule.getType() == null) {
+      return true;
+    }
+    // ack or timeout
     if (transactionCapsule.getType() != Type.DATA) {
       return false;
     }
