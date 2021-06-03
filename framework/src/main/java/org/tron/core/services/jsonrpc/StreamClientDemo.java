@@ -27,7 +27,7 @@ public class StreamClientDemo {
     List<Integer> params = new ArrayList<>();
     params.add(12);
 
-    Integer res = jsonRpcClient.invokeAndReadResponse("getInt", params, Integer.class,
+    Integer res = jsonRpcClient.invokeAndReadResponse("getNetVersion", params, Integer.class,
         socket.getOutputStream(), socket.getInputStream());
     System.out.println(res); //传参方法三：通过ProxyUtil 客户端调用
 

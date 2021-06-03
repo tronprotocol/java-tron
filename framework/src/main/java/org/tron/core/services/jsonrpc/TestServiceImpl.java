@@ -3,26 +3,16 @@ package org.tron.core.services.jsonrpc;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.encode58Check;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateContractAddress;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getBlockID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getOwner;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTo;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.int2HexString;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.long2HexString;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.tronToEthAddress;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -39,7 +29,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -53,7 +42,6 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -63,8 +51,8 @@ public class TestServiceImpl implements TestService {
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
 
-  public TestServiceImpl() {
-  }
+//  public TestServiceImpl() {
+//  }
 
   public TestServiceImpl(NodeInfoService nodeInfoService, Wallet wallet) {
     this.nodeInfoService = nodeInfoService;
@@ -72,10 +60,6 @@ public class TestServiceImpl implements TestService {
   }
 
   @Override
-  public int getInt(int code) {
-    return code;
-  }
-
   public String web3ClientVersion() {
     Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
     Matcher matcher = shortVersion.matcher(System.getProperty("java.version"));
@@ -89,11 +73,13 @@ public class TestServiceImpl implements TestService {
         .collect(Collectors.joining("/"));
   }
 
+  @Override
   public String web3Sha3(String data) {
     byte[] result = Hash.sha3(ByteArray.fromHexString(data));
     return ByteArray.toJsonHex(result);
   }
 
+  @Override
   public String ethGetBlockTransactionCountByHash(String blockHash) throws Exception {
     Block b = getBlockByJSonHash(blockHash);
     if (b == null) {
@@ -104,6 +90,7 @@ public class TestServiceImpl implements TestService {
     return ByteArray.toJsonHex(n);
   }
 
+  @Override
   public String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception {
     List<Transaction> list = wallet.getTransactionsByJsonBlockId(bnOrId);
     if (list == null) {
@@ -114,12 +101,14 @@ public class TestServiceImpl implements TestService {
     return ByteArray.toJsonHex(n);
   }
 
+  @Override
   public BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects)
       throws Exception {
     final Block b = getBlockByJSonHash(blockHash);
     return getBlockResult(b, fullTransactionObjects);
   }
 
+  @Override
   public BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) {
     final Block b;
     if ("pending".equalsIgnoreCase(bnOrId)) {
@@ -307,9 +296,10 @@ public class TestServiceImpl implements TestService {
 
   @Override
   public String getCoinbase() {
+    //获取最新块的产块sr地址
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
-    return StringUtil.encode58Check(witnessAddress);
+    return encode58Check(witnessAddress);
   }
 
   @Override
@@ -343,13 +333,7 @@ public class TestServiceImpl implements TestService {
   }
 
   @Override
-  public String compileSolidity(String source) {
-    //耗费cpu太高，采用trongrid中心化服务器实现。
-    return null;
-  }
-
-  @Override
-  public JSONObject getTransactionByHash(String txid) {
+  public TransactionResultDTO getTransactionByHash(String txid) {
     Transaction transaction = wallet
         .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     TransactionInfo transactionInfo = wallet
@@ -362,29 +346,12 @@ public class TestServiceImpl implements TestService {
     if (block == null) {
       return null;
     }
-    return formatRpcTransaction(transaction, transactionInfo, block);
+    return formatRpcTransaction(transaction, block);
   }
 
-  private JSONObject formatRpcTransaction(Transaction transaction, TransactionInfo transactionInfo,
-      Block block) {
-    String txid = ByteArray.toHexString(transactionInfo.getId().toByteArray());
-    long blockNum = block.getBlockHeader().getRawData().getNumber();
-    JSONObject jsonObject = new JSONObject(true);
-    jsonObject.put("blockHash", getBlockID(block));
-    jsonObject.put("blockNumber", long2HexString(blockNum));
-
-    jsonObject.put("gas", null); //暂时不填
-    jsonObject.put("gasPrice", null); //暂时不填
-    jsonObject.put("hash", "0x" + txid);
-    jsonObject.put("input", null); //暂时不填data字段
-    jsonObject.put("nonce", null); //暂时不写
-    byte[] owner = getOwner(transaction.getRawData().getContract(0));
-    List<ByteString> toAddressList = getTo(transaction);
-    jsonObject.put("from", owner != null ? StringUtil.encode58Check(owner) : null);
-    jsonObject.put("to", !toAddressList.isEmpty()
-        ? StringUtil.encode58Check(toAddressList.get(0).toByteArray())
-        : null);
-
+  private TransactionResultDTO formatRpcTransaction(Transaction transaction, Block block) {
+    String txid = ByteArray.toHexString(
+        new TransactionCapsule(transaction).getTransactionId().getBytes());
     int transactionIndex = -1;
     for (int index = 0; index < block.getTransactionsCount(); index++) {
       if (getTxID(block.getTransactions(index)).equals(txid)) {
@@ -392,25 +359,55 @@ public class TestServiceImpl implements TestService {
         break;
       }
     }
-    jsonObject.put("transactionIndex", int2HexString(transactionIndex));
-    long amount = getTransactionAmount(transaction.getRawData().getContract(0), txid,
-        blockNum, transactionInfo, wallet);
-    jsonObject.put("value", long2HexString(amount));
-
-    ByteString signature = transaction.getSignature(0); // r[32] + s[32] + 符号位v[1]
-    byte[] signData = signature.toByteArray();
-    byte v = (byte) (signData[64] + 27); //参考函数 Base64toBytes
-    byte[] r = Arrays.copyOfRange(signData, 0, 32);
-    byte[] s = Arrays.copyOfRange(signData, 32, 64);
-    jsonObject.put("v", int2HexString(v));
-    jsonObject.put("r", "0x" + ByteArray.toHexString(r));
-    jsonObject.put("s", "0x" + ByteArray.toHexString(s));
-
-    return jsonObject;
+    return new TransactionResultDTO(block, transactionIndex, transaction, wallet);
   }
 
+//  private JSONObject formatRpcTransaction(Transaction transaction, TransactionInfo transactionInfo,
+//      Block block) {
+//    String txid = ByteArray.toHexString(transactionInfo.getId().toByteArray());
+//    long blockNum = block.getBlockHeader().getRawData().getNumber();
+//    JSONObject jsonObject = new JSONObject(true);
+//    jsonObject.put("blockHash", getBlockID(block));
+//    jsonObject.put("blockNumber", long2HexString(blockNum));
+//
+//    jsonObject.put("gas", null); //暂时不填
+//    jsonObject.put("gasPrice", null); //暂时不填
+//    jsonObject.put("hash", "0x" + txid);
+//    jsonObject.put("input", null); //暂时不填data字段
+//    jsonObject.put("nonce", null); //暂时不写
+//    byte[] owner = getOwner(transaction.getRawData().getContract(0));
+//    List<ByteString> toAddressList = getTo(transaction);
+//    jsonObject.put("from", owner != null ? encode58Check(owner) : null);
+//    jsonObject.put("to", !toAddressList.isEmpty()
+//        ? encode58Check(toAddressList.get(0).toByteArray())
+//        : null);
+//
+//    int transactionIndex = -1;
+//    for (int index = 0; index < block.getTransactionsCount(); index++) {
+//      if (getTxID(block.getTransactions(index)).equals(txid)) {
+//        transactionIndex = index;
+//        break;
+//      }
+//    }
+//    jsonObject.put("transactionIndex", int2HexString(transactionIndex));
+//    long amount = getTransactionAmount(transaction.getRawData().getContract(0), txid,
+//        blockNum, transactionInfo, wallet);
+//    jsonObject.put("value", long2HexString(amount));
+//
+//    ByteString signature = transaction.getSignature(0); // r[32] + s[32] + 符号位v[1]
+//    byte[] signData = signature.toByteArray();
+//    byte v = (byte) (signData[64] + 27); //参考函数 Base64toBytes
+//    byte[] r = Arrays.copyOfRange(signData, 0, 32);
+//    byte[] s = Arrays.copyOfRange(signData, 32, 64);
+//    jsonObject.put("v", int2HexString(v));
+//    jsonObject.put("r", "0x" + ByteArray.toHexString(r));
+//    jsonObject.put("s", "0x" + ByteArray.toHexString(s));
+//
+//    return jsonObject;
+//  }
+
   @Override
-  public JSONObject getTransactionByBlockHashAndIndex(String blockHash, int index) {
+  public TransactionResultDTO getTransactionByBlockHashAndIndex(String blockHash, int index) {
     Block block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
     if (block == null) {
       return null;
@@ -419,17 +416,11 @@ public class TestServiceImpl implements TestService {
       return null;
     }
     Transaction transaction = block.getTransactions(index);
-    String txid = getTxID(transaction);
-    TransactionInfo transactionInfo = wallet.getTransactionInfoById(
-        ByteString.copyFrom(ByteArray.fromHexString(txid)));
-    if (transactionInfo == null) {
-      return null;
-    }
-    return formatRpcTransaction(transaction, transactionInfo, block);
+    return formatRpcTransaction(transaction, block);
   }
 
   @Override
-  public JSONObject getTransactionByBlockNumberAndIndex(int blockNum, int index) {
+  public TransactionResultDTO getTransactionByBlockNumberAndIndex(int blockNum, int index) {
     Block block = wallet.getBlockByNum(blockNum);
     if (block == null) {
       return null;
@@ -438,17 +429,11 @@ public class TestServiceImpl implements TestService {
       return null;
     }
     Transaction transaction = block.getTransactions(index);
-    String txid = getTxID(transaction);
-    TransactionInfo transactionInfo = wallet.getTransactionInfoById(
-        ByteString.copyFrom(ByteArray.fromHexString(txid)));
-    if (transactionInfo == null) {
-      return null;
-    }
-    return formatRpcTransaction(transaction, transactionInfo, block);
+    return formatRpcTransaction(transaction, block);
   }
 
   @Override
-  public JSONObject getTransactionReceipt(String txid) {
+  public TransactionReceipt getTransactionReceipt(String txid) {
 
     Transaction transaction = wallet
         .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
@@ -460,55 +445,57 @@ public class TestServiceImpl implements TestService {
 
     long blockNum = transactionInfo.getBlockNumber();
     Block block = wallet.getBlockByNum(blockNum);
-    JSONObject jsonObject = formatRpcTransaction(transaction, transactionInfo, block);
-    String transactionHash = (String) jsonObject.remove("hash");
-    jsonObject.put("transactionHash", transactionHash);
-    jsonObject.remove("gas");
-    jsonObject.remove("gasPrice");
-    jsonObject.remove("input");
-    jsonObject.remove("nonce");
-    jsonObject.remove("value");
-    jsonObject.remove("v");
-    jsonObject.remove("r");
-    jsonObject.remove("s");
+    TransactionResultDTO dto = formatRpcTransaction(transaction, block);
+    TransactionReceipt receipt = new TransactionReceipt();
+    receipt.blockHash = dto.blockHash;
+    receipt.blockNumber = dto.blockNumber;
+    receipt.transactionIndex = dto.transactionIndex;
+    receipt.transactionHash = dto.hash;
+    receipt.from = dto.from;
+    receipt.fromBase58 = dto.fromBase58;
+    receipt.to = dto.to;
+    receipt.toBase58 = dto.toBase58;
 
     long cumulativeGasUsed = 0;
-    TransactionInfoList reply = wallet.getTransactionInfoByBlockNum(blockNum);
-    for (TransactionInfo info : reply.getTransactionInfoList()) {
+    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
+    for (TransactionInfo info : infoList.getTransactionInfoList()) {
       cumulativeGasUsed += info.getFee();
     }
-    jsonObject.put("cumulativeGasUsed", long2HexString(cumulativeGasUsed));
-    jsonObject.put("gasUsed", long2HexString(transactionInfo.getFee()));
+    receipt.cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGasUsed);
+    receipt.gasUsed = ByteArray.toJsonHex(transactionInfo.getFee());
 
     String contractAddress = null;
     if (transaction.getRawData().getContract(0).getType() == ContractType.CreateSmartContract) {
-      contractAddress = StringUtil.encode58Check(generateContractAddress(transaction));
+      contractAddress = encode58Check(generateContractAddress(transaction));
     }
-    jsonObject.put("contractAddress", contractAddress);
+    receipt.contractAddress = contractAddress;
 
     //统一的log
-    JSONArray logArray = new JSONArray();
+    List<TransactionReceipt.TransactionLog> logList = new ArrayList<>();
     for (int index = 0; index < transactionInfo.getLogCount(); index++) {
       TransactionInfo.Log log = transactionInfo.getLogList().get(index);
-      JSONObject logItem = new JSONObject(true);
-      logItem.put("logIndex", int2HexString(index + 1)); //log的索引从1开始
-      logItem.put("transactionHash", jsonObject.getString("transactionHash"));
-      logItem.put("transactionIndex", jsonObject.getString("transactionIndex"));
-      logItem.put("blockHash", jsonObject.getString("blockHash"));
-      logItem.put("blockNumber", jsonObject.getString("blockNumber"));
-      logItem.put("address",
-          StringUtil.encode58Check(convertToTronAddress(log.getAddress().toByteArray())));
-      logItem.put("data", "0x" + ByteArray.toHexString(log.getData().toByteArray()));
+
+      TransactionReceipt.TransactionLog transactionLog = new TransactionReceipt.TransactionLog();
+      transactionLog.logIndex = ByteArray.toJsonHex(index + 1); //log的索引从1开始
+      transactionLog.transactionHash = dto.hash;
+      transactionLog.transactionIndex = dto.transactionIndex;
+      transactionLog.blockHash = dto.blockHash;
+      transactionLog.blockNumber = dto.blockNumber;
+      byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
+      transactionLog.address = ByteArray.toJsonHex(addressByte);
+      transactionLog.addressBase58 = encode58Check(addressByte);
+      transactionLog.data = ByteArray.toJsonHex(log.getData().toByteArray());
       String[] topics = new String[log.getTopicsCount()];
       for (int i = 0; i < log.getTopicsCount(); i++) {
-        topics[i] = "0x" + ByteArray.toHexString(log.getTopics(i).toByteArray());
+        topics[i] = ByteArray.toJsonHex(log.getTopics(i).toByteArray());
       }
-      logItem.put("topics", topics);
-      logArray.add(logItem);
-    }
-    jsonObject.put("logs", logArray);
-    jsonObject.put("logsBloom", ""); //暂时不填
+      transactionLog.topics = topics;
 
-    return jsonObject;
+      logList.add(transactionLog);
+    }
+    receipt.logs = logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]);
+    receipt.logsBloom = null; //暂时不填
+
+    return receipt;
   }
 }

@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
+import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
@@ -97,7 +98,7 @@ public class JsonRpcApiUtil {
   }
 
   //reference: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md
-  public static String toChecksumAddress(String address) throws TronException {
+  private static String toChecksumAddress(String address) throws TronException {
     StringBuffer sb = new StringBuffer();
     int nibble;
 
@@ -137,6 +138,16 @@ public class JsonRpcApiUtil {
       System.arraycopy(address, start, newAddress, temp.length, 20);
     }
     return newAddress;
+  }
+
+  /**
+   * 把byte数组转换为base58编码
+   */
+  public static String encode58Check(byte[] input) {
+    if (input == null || input.length == 0) {
+      return "";
+    }
+    return StringUtil.encode58Check(input);
   }
 
   public static String getMethodSign(String method) {

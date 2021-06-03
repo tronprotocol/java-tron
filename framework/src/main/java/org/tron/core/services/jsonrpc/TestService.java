@@ -27,7 +27,7 @@ public interface TestService {
     public String gasLimit;
     public String gasUsed;
     public String timestamp;
-    public Object[] transactions;
+    public Object[] transactions; //one of TransactionResultDTO、byte32
     public String[] uncles;
 
     @Override
@@ -55,9 +55,6 @@ public interface TestService {
           + '}';
     }
   }
-
-  @JsonRpcMethod("getInt")
-  int getInt(int code);
 
   @JsonRpcMethod("web3_clientVersion")
   String web3ClientVersion();
@@ -116,18 +113,15 @@ public interface TestService {
   @JsonRpcMethod("eth_getCompilers")
   String[] getCompilers();
 
-  @JsonRpcMethod("eth_compileSolidity")
-  String compileSolidity(String source);
-
   @JsonRpcMethod("eth_getTransactionByHash")
-  JSONObject getTransactionByHash(String txid);
+  TransactionResultDTO getTransactionByHash(String txid);
 
   @JsonRpcMethod("eth_getTransactionByBlockHashAndIndex")
-  JSONObject getTransactionByBlockHashAndIndex(String blockHash, int index);
+  TransactionResultDTO getTransactionByBlockHashAndIndex(String blockHash, int index);
 
   @JsonRpcMethod("eth_getTransactionByBlockNumberAndIndex")
-  JSONObject getTransactionByBlockNumberAndIndex(int blockNum, int index);
+  TransactionResultDTO getTransactionByBlockNumberAndIndex(int blockNum, int index);
 
   @JsonRpcMethod("eth_gettransactionreceipt")
-  JSONObject getTransactionReceipt(String txid);
+  TransactionReceipt getTransactionReceipt(String txid);
 }
