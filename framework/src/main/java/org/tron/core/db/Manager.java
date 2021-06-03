@@ -1347,8 +1347,11 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
-    consumeBandwidth(trxCap, trace);
-    consumeMultiSignFee(trxCap, trace);
+    // do not calculate the fee when tx is a cross smart contract
+    if (!isCrossChainContract(trxCap)) {
+      consumeBandwidth(trxCap, trace);
+      consumeMultiSignFee(trxCap, trace);
+    }
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1842,7 +1845,8 @@ public class Manager {
             if (proxyAccount == null) {
               throw new ProxyNotActiveException(
                       String.format("can get the proxy addr of ChainId: %s",
-                              ByteArray.toHexString(crossContract.getOwnerChainId().toByteArray())));
+                              ByteArray.toHexString(
+                                      crossContract.getOwnerChainId().toByteArray())));
             }
 
             // replace owner instead of proxy addr
@@ -2403,5 +2407,22 @@ public class Manager {
     long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
+  }
+
+  private boolean isCrossChainContract(TransactionCapsule transactionCapsule) {
+    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+    if (contract.getType() == ContractType.CrossContract) {
+      try {
+        CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+        if (crossContract.getType() == CrossDataType.CONTRACT) {
+          return true;
+        }
+      } catch (Exception e) {
+        logger.warn("parse cross transaction failed, id: {}",
+                transactionCapsule.getTransactionId());
+        return false;
+      }
+    }
+    return false;
   }
 }
