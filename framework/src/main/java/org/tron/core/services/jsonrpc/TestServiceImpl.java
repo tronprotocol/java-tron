@@ -170,6 +170,14 @@ public class TestServiceImpl implements TestService {
     return br;
   }
 
+  public String ethCall(TransactionCall args, String bnOrId) throws Exception {
+    //静态调用合约方法。
+    byte[] addressData = Commons.decodeFromBase58Check(args.from);
+    byte[] contractAddressData = Commons.decodeFromBase58Check(args.to);
+
+    return call(addressData, contractAddressData, ByteArray.fromHexString(args.data));
+  }
+
   @Override
   public int getNetVersion() {
     //当前链的id，不能跟metamask已有的id冲突
@@ -275,66 +283,14 @@ public class TestServiceImpl implements TestService {
       String blockNumOrTag) {
     //某个用户拥有的某个token20余额，带精度
     byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
+
+    //生成dataStr
     byte[] addressDataWord = new byte[32];
     System.arraycopy(addressData, 0, addressDataWord, 32 - addressData.length, addressData.length);
     String dataStr = balanceOfTopic + Hex.toHexString(addressDataWord);
 
     String result = call(addressData, Commons.decodeFromBase58Check(contractAddress),
         ByteArray.fromHexString(dataStr));
-
-//    //构造静态合约时，只需要3个字段
-//    TriggerSmartContract triggerContract = triggerCallContract(addressData,
-//        Commons.decodeFromBase58Check(contractAddress), 0,
-//        ByteArray.fromHexString(dataStr), 0, null);
-//
-//    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
-//    Return.Builder retBuilder = Return.newBuilder();
-//    TransactionExtention trxExt;
-//
-//    try {
-//      TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
-//          ContractType.TriggerSmartContract);
-//      Transaction trx = wallet.triggerConstantContract(
-//          triggerContract,
-//          trxCap,
-//          trxExtBuilder,
-//          retBuilder);
-//
-//      retBuilder.setResult(true).setCode(response_code.SUCCESS);
-//      trxExtBuilder.setTransaction(trx);
-//      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
-//      trxExtBuilder.setResult(retBuilder);
-//    } catch (ContractValidateException | VMIllegalException e) {
-//      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-//          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
-//      trxExtBuilder.setResult(retBuilder);
-//      logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
-//    } catch (RuntimeException e) {
-//      retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
-//          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-//      trxExtBuilder.setResult(retBuilder);
-//      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
-//    } catch (Exception e) {
-//      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-//          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-//      trxExtBuilder.setResult(retBuilder);
-//      logger.warn("Unknown exception caught: " + e.getMessage(), e);
-//    } finally {
-//      trxExt = trxExtBuilder.build();
-//    }
-//
-//    String result = null;
-//    String code = trxExt.getResult().getCode().toString();
-//    if ("SUCCESS".equals(code)) {
-//      List<ByteString> list = trxExt.getConstantResultList();
-//      byte[] listBytes = new byte[0];
-//      for (ByteString bs : list) {
-//        listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
-//      }
-//      result = Hex.toHexString(listBytes);
-//    } else {
-//      logger.error("trigger contract to get scaling factor error.");
-//    }
 
     if (Objects.isNull(result)) {
       return BigInteger.valueOf(0);
@@ -433,50 +389,6 @@ public class TestServiceImpl implements TestService {
     }
     return new TransactionResultDTO(block, transactionIndex, transaction, wallet);
   }
-
-//  private JSONObject formatRpcTransaction(Transaction transaction, TransactionInfo transactionInfo,
-//      Block block) {
-//    String txid = ByteArray.toHexString(transactionInfo.getId().toByteArray());
-//    long blockNum = block.getBlockHeader().getRawData().getNumber();
-//    JSONObject jsonObject = new JSONObject(true);
-//    jsonObject.put("blockHash", getBlockID(block));
-//    jsonObject.put("blockNumber", long2HexString(blockNum));
-//
-//    jsonObject.put("gas", null); //暂时不填
-//    jsonObject.put("gasPrice", null); //暂时不填
-//    jsonObject.put("hash", "0x" + txid);
-//    jsonObject.put("input", null); //暂时不填data字段
-//    jsonObject.put("nonce", null); //暂时不写
-//    byte[] owner = getOwner(transaction.getRawData().getContract(0));
-//    List<ByteString> toAddressList = getTo(transaction);
-//    jsonObject.put("from", owner != null ? encode58Check(owner) : null);
-//    jsonObject.put("to", !toAddressList.isEmpty()
-//        ? encode58Check(toAddressList.get(0).toByteArray())
-//        : null);
-//
-//    int transactionIndex = -1;
-//    for (int index = 0; index < block.getTransactionsCount(); index++) {
-//      if (getTxID(block.getTransactions(index)).equals(txid)) {
-//        transactionIndex = index;
-//        break;
-//      }
-//    }
-//    jsonObject.put("transactionIndex", int2HexString(transactionIndex));
-//    long amount = getTransactionAmount(transaction.getRawData().getContract(0), txid,
-//        blockNum, transactionInfo, wallet);
-//    jsonObject.put("value", long2HexString(amount));
-//
-//    ByteString signature = transaction.getSignature(0); // r[32] + s[32] + 符号位v[1]
-//    byte[] signData = signature.toByteArray();
-//    byte v = (byte) (signData[64] + 27); //参考函数 Base64toBytes
-//    byte[] r = Arrays.copyOfRange(signData, 0, 32);
-//    byte[] s = Arrays.copyOfRange(signData, 32, 64);
-//    jsonObject.put("v", int2HexString(v));
-//    jsonObject.put("r", "0x" + ByteArray.toHexString(r));
-//    jsonObject.put("s", "0x" + ByteArray.toHexString(s));
-//
-//    return jsonObject;
-//  }
 
   @Override
   public TransactionResultDTO getTransactionByBlockHashAndIndex(String blockHash, int index) {
@@ -588,8 +500,7 @@ public class TestServiceImpl implements TestService {
     byte[] addressDataWord = new byte[32];
     System.arraycopy(Commons.decodeFromBase58Check(ownerAddress), 0, addressDataWord,
         32 - addressData.length, addressData.length);
-    String dataStr = balanceOfTopic + Hex.toHexString(addressDataWord);
-    String data = getMethodSign("balanceOf(address)") + dataStr;
+    String data = getMethodSign("balanceOf(address)") + Hex.toHexString(addressDataWord);
 
     TransactionCall transactionCall = new TransactionCall();
     transactionCall.from = ownerAddress;

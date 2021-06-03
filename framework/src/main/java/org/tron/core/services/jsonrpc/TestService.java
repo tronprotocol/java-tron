@@ -1,11 +1,8 @@
 package org.tron.core.services.jsonrpc;
 
-import com.alibaba.fastjson.JSONObject;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.math.BigInteger;
 import java.util.Arrays;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -13,7 +10,6 @@ import org.tron.core.exception.ItemNotFoundException;
 public interface TestService {
 
   class BlockResult {
-
     public String number;
     public String hash;
     public String parentHash;
@@ -57,23 +53,6 @@ public interface TestService {
           + ", transactions=" + Arrays.toString(transactions)
           + ", uncles=" + Arrays.toString(uncles)
           + '}';
-    }
-  }
-
-  @NoArgsConstructor
-  @AllArgsConstructor
-  class TransactionCall {
-
-    String from;
-    String to;
-    String gas; //无用
-    String gasPrice; //无用
-    String value; //无用
-    String data;
-
-    public String toString() {
-      return String.format("{\"from\":\"%s\", \"to\":\"%s\", \"gas\":\"0\", \"gasPrice\":\"0\", "
-          + "\"value\":\"0\", \"data\":\"%s\"}", from, to, data);
     }
   }
 
