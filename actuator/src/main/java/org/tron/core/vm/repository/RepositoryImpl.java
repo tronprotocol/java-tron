@@ -789,8 +789,9 @@ public class RepositoryImpl implements Repository {
           deposit.putContract(key, value);
         } else {
           ContractCapsule contractCapsule = value.getContract();
-          if (value.getType().isCreate()) {
-            abiStore.put(key.getData(), new AbiCapsule(contractCapsule.getInstance().getAbi()));
+          if (VMConfig.abiMovedOut() && value.getType().isCreate()
+              && contractCapsule.getInstance().hasAbi()) {
+            abiStore.put(key.getData(), new AbiCapsule(contractCapsule));
             contractCapsule = new ContractCapsule(contractCapsule.getInstance()
                 .toBuilder().clearAbi().build());
           }
