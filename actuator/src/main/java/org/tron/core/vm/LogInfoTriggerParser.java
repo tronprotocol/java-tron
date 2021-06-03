@@ -69,7 +69,7 @@ public class LogInfoTriggerParser {
         continue;
       }
       ContractCapsule contract = StoreFactory.getInstance().getChainBaseManager()
-          .getContractStore().get(contractAddress);
+          .getContractStore().getWithAbi(contractAddress);
       if (contract == null) {
         // never
         addrMap.put(strContractAddr, originAddress);
