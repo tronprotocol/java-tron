@@ -8,12 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
@@ -26,40 +24,26 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
-import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
-import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
-import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
-import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
-import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
-import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 import org.tron.protos.contract.VoteAssetContractOuterClass.VoteAssetContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
-import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
-import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
@@ -179,138 +163,6 @@ public class JsonRpcApiUtil {
     System.arraycopy(numBytes, 0, hash, 0, 8);
     System.arraycopy(blockHash, 8, hash, 8, blockHash.length - 8);
     return "0x" + ByteArray.toHexString(hash);
-  }
-
-  public static byte[] getOwner(Transaction.Contract contract) {
-    ByteString owner = null;
-    try {
-      Any contractParameter = contract.getParameter();
-      switch (contract.getType()) {
-        case AccountCreateContract:
-          owner = contractParameter.unpack(AccountCreateContract.class).getOwnerAddress();
-          break;
-        case AccountUpdateContract:
-          owner = contractParameter.unpack(AccountUpdateContract.class).getOwnerAddress();
-          break;
-        case SetAccountIdContract:
-          owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
-          break;
-        case TransferContract:
-          owner = contractParameter.unpack(TransferContract.class).getOwnerAddress();
-          break;
-        case TransferAssetContract:
-          owner = contractParameter.unpack(TransferAssetContract.class).getOwnerAddress();
-          break;
-        case VoteAssetContract:
-          owner = contractParameter.unpack(VoteAssetContract.class).getOwnerAddress();
-          break;
-        case VoteWitnessContract:
-          owner = contractParameter.unpack(VoteWitnessContract.class).getOwnerAddress();
-          break;
-        case WitnessCreateContract:
-          owner = contractParameter.unpack(WitnessCreateContract.class).getOwnerAddress();
-          break;
-        case AssetIssueContract:
-          owner = contractParameter.unpack(AssetIssueContract.class).getOwnerAddress();
-          break;
-        case WitnessUpdateContract:
-          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
-          break;
-        case ParticipateAssetIssueContract:
-          owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
-          break;
-        case FreezeBalanceContract:
-          owner = contractParameter.unpack(FreezeBalanceContract.class).getOwnerAddress();
-          break;
-        case UnfreezeBalanceContract:
-          owner = contractParameter.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
-          break;
-        case UnfreezeAssetContract:
-          owner = contractParameter.unpack(UnfreezeAssetContract.class).getOwnerAddress();
-          break;
-        case WithdrawBalanceContract:
-          owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
-          break;
-        case CreateSmartContract:
-          owner = contractParameter.unpack(CreateSmartContract.class).getOwnerAddress();
-          break;
-        case TriggerSmartContract:
-          owner = contractParameter.unpack(TriggerSmartContract.class).getOwnerAddress();
-          break;
-        case UpdateAssetContract:
-          owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
-          break;
-        case ProposalCreateContract:
-          owner = contractParameter.unpack(ProposalCreateContract.class).getOwnerAddress();
-          break;
-        case ProposalApproveContract:
-          owner = contractParameter.unpack(ProposalApproveContract.class).getOwnerAddress();
-          break;
-        case ProposalDeleteContract:
-          owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
-          break;
-        // case BuyStorageContract:
-        //   owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-        //   break;
-        // case BuyStorageBytesContract:
-        //   owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-        //   break;
-        // case SellStorageContract:
-        //   owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-        //   break;
-        case UpdateSettingContract:
-          owner = contractParameter.unpack(UpdateSettingContract.class)
-              .getOwnerAddress();
-          break;
-        case ExchangeCreateContract:
-          owner = contractParameter.unpack(ExchangeCreateContract.class).getOwnerAddress();
-          break;
-        case ExchangeInjectContract:
-          owner = contractParameter.unpack(ExchangeInjectContract.class).getOwnerAddress();
-          break;
-        case ExchangeWithdrawContract:
-          owner = contractParameter.unpack(ExchangeWithdrawContract.class).getOwnerAddress();
-          break;
-        case ExchangeTransactionContract:
-          owner = contractParameter.unpack(ExchangeTransactionContract.class).getOwnerAddress();
-          break;
-        case UpdateEnergyLimitContract:
-          owner = contractParameter.unpack(UpdateEnergyLimitContract.class).getOwnerAddress();
-          break;
-        case AccountPermissionUpdateContract:
-          owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
-          break;
-        case ClearABIContract:
-          owner = contractParameter.unpack(ClearABIContract.class).getOwnerAddress();
-          break;
-        case UpdateBrokerageContract:
-          owner = contractParameter.unpack(UpdateBrokerageContract.class)
-              .getOwnerAddress();
-          break;
-        case ShieldedTransferContract:
-          owner = contractParameter.unpack(ShieldedTransferContract.class)
-              .getTransparentFromAddress();
-          break;
-        case MarketSellAssetContract:
-          owner = contractParameter.unpack(MarketSellAssetContract.class)
-              .getOwnerAddress();
-          break;
-        case MarketCancelOrderContract:
-          owner = contractParameter.unpack(MarketCancelOrderContract.class)
-              .getOwnerAddress();
-          break;
-        default:
-          return null;
-      }
-      return owner.toByteArray();
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    } catch (Throwable t) {
-      //捕获unpack抛出的java.lang.NoClassDefFoundError，否则线程中断。上一个不能捕获
-      t.printStackTrace();
-    }
-
-    return owner == null ? null : owner.toByteArray();
   }
 
   public static byte[] getToAddress(Transaction transaction) {
@@ -633,13 +485,5 @@ public class JsonRpcApiUtil {
           Throwables.getStackTraceAsString(e));
     }
     return amount;
-  }
-
-  public static String int2HexString(int i) {
-    return "0x" + Integer.toUnsignedString(i, 16);
-  }
-
-  public static String long2HexString(long l) {
-    return "0x" + Long.toUnsignedString(l, 16);
   }
 }
