@@ -113,7 +113,6 @@ import org.tron.core.exception.CrossContractConstructException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
-import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ProxyNotActiveException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.TaposException;
@@ -1347,8 +1346,11 @@ public class Manager {
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
 
-    consumeBandwidth(trxCap, trace);
-    consumeMultiSignFee(trxCap, trace);
+    // do not calculate the fee when tx is a cross smart contract
+    if (shouldCalculateFee(trxCap)) {
+      consumeBandwidth(trxCap, trace);
+      consumeMultiSignFee(trxCap, trace);
+    }
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1842,7 +1844,8 @@ public class Manager {
             if (proxyAccount == null) {
               throw new ProxyNotActiveException(
                       String.format("can get the proxy addr of ChainId: %s",
-                              ByteArray.toHexString(crossContract.getOwnerChainId().toByteArray())));
+                              ByteArray.toHexString(
+                                      crossContract.getOwnerChainId().toByteArray())));
             }
 
             // replace owner instead of proxy addr
@@ -2403,5 +2406,30 @@ public class Manager {
     long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
+  }
+
+  private boolean shouldCalculateFee(TransactionCapsule transactionCapsule) {
+    // normal tx
+    if (transactionCapsule.getType() == null) {
+      return true;
+    }
+    // ack or timeout
+    if (transactionCapsule.getType() != Type.DATA) {
+      return false;
+    }
+    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+    if (contract.getType() == ContractType.CrossContract) {
+      try {
+        CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+        if (crossContract.getType() == CrossDataType.CONTRACT) {
+          return false;
+        }
+      } catch (Exception e) {
+        logger.warn("parse cross transaction failed, id: {}",
+                transactionCapsule.getTransactionId());
+        return true;
+      }
+    }
+    return true;
   }
 }

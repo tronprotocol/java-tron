@@ -806,7 +806,7 @@ service Wallet {
   rpc GetCrossChainVoteDetailList (CrossChainVotePaginated) returns (CrossChainVoteDetailList) {
   };
 
-  rpc GetCrossChainAuctinConfigDetailList (EmptyMessage) returns (CrossChainAuctinConfigDetailList) {
+  rpc GetCrossChainAuctionConfigDetailList (EmptyMessage) returns (CrossChainAuctionConfigDetailList) {
   };
 
   rpc GetParaChainList (RoundMessage) returns (ParaChainList) {
@@ -1592,7 +1592,7 @@ message CrossChainVoteDetailList {
   repeated VoteCrossChainContract voteCrossChainContract = 1;
 }
 
-message CrossChainAuctinConfigDetailList {
+message CrossChainAuctionConfigDetailList {
   repeated AuctionRoundContract auctionConfigDetail = 1;
 }
 

@@ -2716,6 +2716,17 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getCrossChainAuctionConfigDetailList(GrpcAPI.EmptyMessage request,
+                                                     StreamObserver<org.tron.api.GrpcAPI
+                                                         .CrossChainAuctionConfigDetailList>
+                                                         responseObserver) {
+      GrpcAPI.CrossChainAuctionConfigDetailList auctinConfigDetailList = wallet
+          .getCrossChainAuctionConfigDetailList();
+      responseObserver.onNext(auctinConfigDetailList);
+      responseObserver.onCompleted();
+    }
+
     public void getTransactionFromPending(BytesMessage request,
         StreamObserver<Transaction> responseObserver) {
       getTransactionFromPendingCommon(request, responseObserver);

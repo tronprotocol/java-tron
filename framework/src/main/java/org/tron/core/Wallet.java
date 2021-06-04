@@ -3842,9 +3842,9 @@ public class Wallet {
     return builder.build();
   }
 
-  public GrpcAPI.CrossChainAuctinConfigDetailList getCrossChainAuctionConfigDetailList() {
-    GrpcAPI.CrossChainAuctinConfigDetailList.Builder builder = GrpcAPI
-        .CrossChainAuctinConfigDetailList
+  public GrpcAPI.CrossChainAuctionConfigDetailList getCrossChainAuctionConfigDetailList() {
+    GrpcAPI.CrossChainAuctionConfigDetailList.Builder builder = GrpcAPI
+        .CrossChainAuctionConfigDetailList
         .newBuilder();
     DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     List<Long> auctionConfigDetailList = dynamicPropertiesStore.listAuctionConfigs();
