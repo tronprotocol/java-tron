@@ -3,8 +3,8 @@ if [[ "$TRAVIS_BRANCH" = "test/test_travis" || "$TRAVIS_BRANCH" = "test/sol_v0.6
     stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
     echo "Trying to connect to stest_server network"
     echo "47.253.45.120 ----- 47.253.46.247"
-    timeout 10 ping -c 5  47.253.45.120 > /dev/null || exit 1
-    timeout 10 ping -c 5  47.253.46.247  > /dev/null || exit 1
+    #timeout 10 ping -c 5  47.253.45.120 > /dev/null || exit 1
+    #timeout 10 ping -c 5  47.253.46.247  > /dev/null || exit 1
     echo "Successfully connected to stest_server network"
     stest_server=""
     docker_num_in_145=`ssh -p 22008 -t java-tron@47.253.45.120 'docker ps -a | wc -l'`
