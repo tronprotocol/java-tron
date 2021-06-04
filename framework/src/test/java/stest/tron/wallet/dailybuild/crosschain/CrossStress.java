@@ -24,7 +24,7 @@ public class CrossStress extends CrossChainBase {
 
   ConcurrentLinkedDeque<String> queue = new ConcurrentLinkedDeque<>();
 
-  @Test(enabled = true, threadPoolSize = 5, invocationCount = 5)
+  @Test(enabled = true, threadPoolSize = 10, invocationCount = 10)
   public void test01CreateCrossToken() throws Exception {
     Random random = new Random();
     long randNumber = (long)(random.nextInt(1000) + 15);
@@ -34,20 +34,34 @@ public class CrossStress extends CrossChainBase {
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
         + Base58.encode58Check(crossContractAddress) + "\"" + ",\"1\"";
 
-
-    while (times.getAndAdd(1) < 500) {
+    String txid = "";
+    while (times.getAndAdd(1) < 1000) {
       randNumber = (long)(random.nextInt(1000) + 200);
       argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
           + Base58.encode58Check(crossContractAddress) + "\"" + ",\"" + randNumber + "\"";
-      /*      String txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
-          trc10TokenAccountAddress,assetAccountId1,6,randNumber,name1,chainId,crossChainId,
-          trc10TokenAccountKey,blockingStubFull);*/
 
-      String txid = createTriggerContractForCross(trc10TokenAccountAddress,registerAccountAddress,
+      txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
+          trc10TokenAccountAddress,assetAccountId1,chainId,6,randNumber,name1,chainId,crossChainId,
+          trc10TokenAccountKey,blockingStubFull);
+      queue.offer(txid);
+
+      txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
+          trc10TokenAccountAddress,assetAccountIdCrossChain,crossChainId,6,
+          randNumber,name2,crossChainId,chainId,
+          trc10TokenAccountKey,crossBlockingStubFull);
+      queue.offer(txid);
+
+      txid = createTriggerContractForCross(trc10TokenAccountAddress,registerAccountAddress,
           contractAddress, crossContractAddress, method,argsStr,chainId,crossChainId,
           trc10TokenAccountKey,blockingStubFull);
+      queue.offer(txid);
 
+      argsStr = "\"" + Base58.encode58Check(crossContractAddress) + "\"" + "," + "\""
+          + Base58.encode58Check(contractAddress) + "\"" + ",\"" + randNumber + "\"";
 
+      txid = createTriggerContractForCross(trc10TokenAccountAddress,registerAccountAddress,
+          crossContractAddress, contractAddress, method,argsStr,crossChainId,chainId,
+          trc10TokenAccountKey,crossBlockingStubFull);
       queue.offer(txid);
       //Thread.sleep(1000);
     }
