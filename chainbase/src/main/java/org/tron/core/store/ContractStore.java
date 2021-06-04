@@ -11,6 +11,8 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
+import java.util.Objects;
+
 @Slf4j(topic = "DB")
 @Component
 public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
@@ -25,23 +27,33 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
 
   @Override
   public ContractCapsule get(byte[] key) {
+    return getUnchecked(key);
+  }
+
+  public ContractCapsule getWithAbi(byte[] key) {
     ContractCapsule contractCapsule = getUnchecked(key);
     if (contractCapsule == null) {
       return null;
     }
 
-    if (!contractCapsule.getInstance().hasAbi()) {
-      AbiCapsule abiCapsule = abiStore.get(key);
-      if (abiCapsule != null) {
-        contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-            .toBuilder().setAbi(abiCapsule.getInstance()).build());
-      }
+    AbiCapsule abiCapsule = abiStore.get(key);
+    if (abiCapsule != null) {
+      contractCapsule = new ContractCapsule(contractCapsule.getInstance()
+          .toBuilder().setAbi(abiCapsule.getInstance()).build());
     }
     return contractCapsule;
   }
 
-  public ContractCapsule getWithoutAbi(byte[] key) {
-    return getUnchecked(key);
+  @Override
+  public void put(byte[] key, ContractCapsule item) {
+    if (Objects.isNull(key) || Objects.isNull(item)) {
+      return;
+    }
+
+    if (item.getInstance().hasAbi()) {
+      item = new ContractCapsule(item.getInstance().toBuilder().clearAbi().build());
+    }
+    revokingDB.put(key, item.getData());
   }
 
   /**
@@ -64,12 +76,17 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
    * @return
    */
   public SmartContract.ABI getABI(byte[] contractAddress) {
-    ContractCapsule contractCapsule = get(contractAddress);
-    if (contractCapsule == null) {
+    byte[] value = revokingDB.getUnchecked(contractAddress);
+    if (ArrayUtils.isEmpty(value)) {
       return null;
     }
 
-    return contractCapsule.getInstance().getAbi();
+    AbiCapsule abiCapsule = abiStore.get(contractAddress);
+    if (abiCapsule == null) {
+      return SmartContract.ABI.getDefaultInstance();
+    }
+
+    return abiCapsule.getInstance();
   }
 
 }
