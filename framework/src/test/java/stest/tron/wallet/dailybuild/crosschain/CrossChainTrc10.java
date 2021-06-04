@@ -29,6 +29,11 @@ public class CrossChainTrc10 extends CrossChainBase {
 
   @Test(enabled = true,description = "Transfer trc10 in cross chain")
   public void test01CreateCrossToken() throws InvalidProtocolBufferException {
+    int times = 0;
+    while (times++ < 20) {
+      PublicMethed.sendcoin(foundationAddress, 1L, trc10TokenAccountAddress,
+          trc10TokenAccountKey, blockingStubFull);
+    }
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     final Long beforeFromTokenBalance = PublicMethed
         .getAssetBalanceByAssetId(assetAccountId1, trc10TokenAccountKey,blockingStubFull);
@@ -107,8 +112,10 @@ public class CrossChainTrc10 extends CrossChainBase {
     Assert.assertEquals((Long)(beforeFromTokenBalance - afterFromTokenBalance),sendAmount);
     Assert.assertEquals((Long)(afterToTokenBalance - beforeToTokenBalance),sendAmount);
     Assert.assertEquals((Long)(beforeFromBalance - afterFromBalance),(Long)info.get().getFee());
+    Assert.assertTrue(info.get().getFee() > 0L);
+    info = PublicMethed.getTransactionInfoById(txid, crossBlockingStubFull);
     Assert.assertTrue((Long)(afterToNetUsaged - beforeToNetUsaged)
-        >= (Long)info.get().getReceipt().getNetUsage() - 10);
+        >= (Long)info.get().getReceipt().getNetUsage() - 5);
 
 
     final Long afterBlockNum = blockingStubFull.getNowBlock(EmptyMessage.newBuilder()
@@ -130,9 +137,9 @@ public class CrossChainTrc10 extends CrossChainBase {
 
 
 
-    Long beforeSendBackFromBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId2,
+    Long beforeSendBackFromAssetBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId2,
         trc10TokenAccountKey,crossBlockingStubFull);
-    final Long beforeSendBackToBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId1,
+    final Long beforeSendBackToAssetBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId1,
         trc10TokenAccountKey,blockingStubFull);
 
     txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
@@ -146,8 +153,8 @@ public class CrossChainTrc10 extends CrossChainBase {
     Long afterSendBackToBalance = PublicMethed.getAssetBalanceByAssetId(assetAccountId1,
         trc10TokenAccountKey,blockingStubFull);
 
-    Assert.assertEquals(beforeSendBackFromBalance - afterSendBackFromBalance, sendAmount - 1);
-    Assert.assertEquals(afterSendBackToBalance - beforeSendBackToBalance,sendAmount - 1);
+    Assert.assertEquals(beforeSendBackFromAssetBalance - afterSendBackFromBalance, sendAmount - 1);
+    Assert.assertEquals(afterSendBackToBalance - beforeSendBackToAssetBalance,sendAmount - 1);
 
 
 
