@@ -7,9 +7,9 @@ if [[ "$TRAVIS_BRANCH" = "test/test_travis" || "$TRAVIS_BRANCH" = "test/sol_v0.6
     #timeout 10 ping -c 5  47.253.46.247  > /dev/null || exit 1
     echo "Successfully connected to stest_server network"
     stest_server=""
-    docker_num_in_145=`ssh -p 22008 -t java-tron@47.253.45.120 'docker ps -a | wc -l'`
+    docker_num_in_145=`ssh -o StrictHostKeyChecking=no -p 22008 -t java-tron@47.253.45.120 'docker ps -a | wc -l'`
     docker_num_in_145=`echo $docker_num_in_145 | tr -d "\r"`
-    docker_num_in_60=`ssh -p 22008 -t java-tron@47.253.46.247 'docker ps -a | wc -l'`
+    docker_num_in_60=`ssh -o StrictHostKeyChecking=no -p 22008 -t java-tron@47.253.46.247 'docker ps -a | wc -l'`
     docker_num_in_60=`echo $docker_num_in_60 | tr -d "\r"`
     if [ $docker_num_in_145 -le $docker_num_in_60 ];
       then
@@ -37,16 +37,16 @@ if [[ "$TRAVIS_BRANCH" = "test/test_travis" || "$TRAVIS_BRANCH" = "test/sol_v0.6
 
     echo "Initialize the docker stest env"
     echo "'$stest_server' is selected as stest server in this instance"
-    ssh java-tron@$stest_server -p 22008 $change_branch_CMD
-    `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
+    ssh -o StrictHostKeyChecking=no java-tron@$stest_server -p 22008 $change_branch_CMD
+    `ssh -o StrictHostKeyChecking=no java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
     sleep 300 && echo $TRAVIS_BRANCH &
     wait
     if [[ `find $stestlogname -type f | xargs grep "Connection refused"` =~ "Connection refused" || `find $stestlogname -type f | xargs grep "stest FAILED"` =~ "stest FAILED" ]];
     then
       rm -f $stestlogname
       echo "Retrying stest task for the first time"
-      ssh java-tron@$stest_server -p 22008 $change_branch_CMD
-      `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
+      ssh -o StrictHostKeyChecking=no java-tron@$stest_server -p 22008 $change_branch_CMD
+      `ssh -o StrictHostKeyChecking=no java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
       sleep 300 && echo $TRAVIS_BRANCH &
       wait
     fi
@@ -54,8 +54,8 @@ if [[ "$TRAVIS_BRANCH" = "test/test_travis" || "$TRAVIS_BRANCH" = "test/sol_v0.6
     then
       rm -f $stestlogname
       echo "Retrying stest task for the second time"
-      ssh java-tron@$stest_server -p 22008 $change_branch_CMD
-      `ssh java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
+      ssh -o StrictHostKeyChecking=no java-tron@$stest_server -p 22008 $change_branch_CMD
+      `ssh -o StrictHostKeyChecking=no java-tron@$stest_server -p 22008 sh /data/workspace/docker_workspace/do_stest.sh >$stestlogname 2>&1` &
       sleep 300 && echo $TRAVIS_BRANCH &
       wait
     fi
