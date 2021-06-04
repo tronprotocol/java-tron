@@ -53,7 +53,7 @@ public interface TronJsonRpc {
     public String gasLimit;
     public String gasUsed;
     public String timestamp;
-    public Object[] transactions; //TransactionResultDTO or byte32
+    public Object[] transactions; //TransactionResult or byte32
     public String[] uncles;
 
     @Override
@@ -212,7 +212,7 @@ public interface TronJsonRpc {
 
     @Override
     public String toString() {
-      return "TransactionResultDTO{"
+      return "TransactionResult{"
           + "hash='" + hash + '\''
           + ", nonce='" + nonce + '\''
           + ", blockHash='" + blockHash + '\''
