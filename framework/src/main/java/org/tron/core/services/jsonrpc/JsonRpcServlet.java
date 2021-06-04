@@ -20,7 +20,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
   private static final long serialVersionUID = 12341234345L;
   private JsonRpcServer rpcServer = null;
-  private TestServiceImpl testServiceImpl;
+  private TronJsonRpcImpl testServiceImpl;
 
   @Autowired
   private NodeInfoService nodeInfoService;
@@ -30,11 +30,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
   // @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
-    testServiceImpl = new TestServiceImpl(nodeInfoService, wallet);
+    testServiceImpl = new TronJsonRpcImpl(nodeInfoService, wallet);
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
         this.getClass().getClassLoader(),
         new Object[] {testServiceImpl},
-        new Class[] {TestService.class},
+        new Class[] {TronJsonRpc.class},
         true);
 
     rpcServer = new JsonRpcServer(compositeService);

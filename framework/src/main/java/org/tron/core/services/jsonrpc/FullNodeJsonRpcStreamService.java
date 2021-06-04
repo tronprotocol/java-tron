@@ -3,20 +3,15 @@ package org.tron.core.services.jsonrpc;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 import com.googlecode.jsonrpc4j.StreamServer;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import javax.net.ServerSocketFactory;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Wallet;
-import org.tron.core.config.args.Args;
 import org.tron.core.services.NodeInfoService;
 
 @Component
@@ -26,7 +21,7 @@ public class FullNodeJsonRpcStreamService implements Service {
   private int port = 8099;
 
   private JsonRpcServer jsonRpcServer;
-  private TestServiceImpl testServiceImpl;
+  private TronJsonRpcImpl testServiceImpl;
   private StreamServer streamServer;
 
   @Autowired
@@ -44,12 +39,12 @@ public class FullNodeJsonRpcStreamService implements Service {
 
   @Override
   public void start() {
-    testServiceImpl = new TestServiceImpl(nodeInfoService, wallet);
+    testServiceImpl = new TronJsonRpcImpl(nodeInfoService, wallet);
 
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
         this.getClass().getClassLoader(),
         new Object[] {testServiceImpl},
-        new Class<?>[] {TestService.class},
+        new Class<?>[] {TronJsonRpc.class},
         true);
 
     jsonRpcServer = new JsonRpcServer(compositeService);

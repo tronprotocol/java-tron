@@ -10,7 +10,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -48,15 +47,15 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
-public class TestServiceImpl implements TestService {
+public class TronJsonRpcImpl implements TronJsonRpc {
 
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
 
-  public TestServiceImpl() {
+  public TronJsonRpcImpl() {
   }
 
-  public TestServiceImpl(NodeInfoService nodeInfoService, Wallet wallet) {
+  public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
   }
@@ -156,7 +155,7 @@ public class TestServiceImpl implements TestService {
     List<Object> txes = new ArrayList<>();
     if (fullTx) {
       for (int i = 0; i < block.getTransactionsList().size(); i++) {
-        txes.add(new TransactionResultDTO(block, i, block.getTransactionsList().get(i), wallet));
+        txes.add(new TransactionResult(block, i, block.getTransactionsList().get(i), wallet));
       }
     } else {
       for (Transaction tx : block.getTransactionsList()) {
@@ -171,7 +170,7 @@ public class TestServiceImpl implements TestService {
     return br;
   }
 
-  public String ethCall(TransactionCall args, String bnOrId) throws Exception {
+  public String ethCall(CallArguments args, String bnOrId) throws Exception {
     //静态调用合约方法。
     byte[] addressData = Commons.decodeFromBase58Check(args.from);
     byte[] contractAddressData = Commons.decodeFromBase58Check(args.to);
@@ -362,7 +361,7 @@ public class TestServiceImpl implements TestService {
   }
 
   @Override
-  public TransactionResultDTO getTransactionByHash(String txid) {
+  public TransactionResult getTransactionByHash(String txid) {
     Transaction transaction = wallet
         .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     TransactionInfo transactionInfo = wallet
@@ -378,7 +377,7 @@ public class TestServiceImpl implements TestService {
     return formatRpcTransaction(transaction, block);
   }
 
-  private TransactionResultDTO formatRpcTransaction(Transaction transaction, Block block) {
+  private TransactionResult formatRpcTransaction(Transaction transaction, Block block) {
     String txid = ByteArray.toHexString(
         new TransactionCapsule(transaction).getTransactionId().getBytes());
     int transactionIndex = -1;
@@ -388,11 +387,11 @@ public class TestServiceImpl implements TestService {
         break;
       }
     }
-    return new TransactionResultDTO(block, transactionIndex, transaction, wallet);
+    return new TransactionResult(block, transactionIndex, transaction, wallet);
   }
 
   @Override
-  public TransactionResultDTO getTransactionByBlockHashAndIndex(String blockHash, int index) {
+  public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, int index) {
     Block block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
     if (block == null) {
       return null;
@@ -405,7 +404,7 @@ public class TestServiceImpl implements TestService {
   }
 
   @Override
-  public TransactionResultDTO getTransactionByBlockNumberAndIndex(int blockNum, int index) {
+  public TransactionResult getTransactionByBlockNumberAndIndex(int blockNum, int index) {
     Block block = wallet.getBlockByNum(blockNum);
     if (block == null) {
       return null;
@@ -430,7 +429,7 @@ public class TestServiceImpl implements TestService {
 
     long blockNum = transactionInfo.getBlockNumber();
     Block block = wallet.getBlockByNum(blockNum);
-    TransactionResultDTO dto = formatRpcTransaction(transaction, block);
+    TransactionResult dto = formatRpcTransaction(transaction, block);
     TransactionReceipt receipt = new TransactionReceipt();
     receipt.blockHash = dto.blockHash;
     receipt.blockNumber = dto.blockNumber;
@@ -485,7 +484,7 @@ public class TestServiceImpl implements TestService {
   }
 
   @Override
-  public String getCall(TransactionCall transactionCall, String blockNumOrTag) {
+  public String getCall(CallArguments transactionCall, String blockNumOrTag) {
     //静态调用合约方法。
     byte[] addressData = Commons.decodeFromBase58Check(transactionCall.from);
     byte[] contractAddressData = Commons.decodeFromBase58Check(transactionCall.to);
@@ -504,7 +503,7 @@ public class TestServiceImpl implements TestService {
         32 - addressData.length, addressData.length);
     String data = getMethodSign("balanceOf(address)") + Hex.toHexString(addressDataWord);
 
-    TransactionCall transactionCall = new TransactionCall();
+    CallArguments transactionCall = new CallArguments();
     transactionCall.from = ownerAddress;
     transactionCall.to = usdjAddress;
     transactionCall.data = data;
@@ -533,11 +532,11 @@ public class TestServiceImpl implements TestService {
         .getTimestamp()) / 3000;
     diff = diff > 0 ? diff : 0;
     long highestBlock = currentBlock + diff; //预测的最高块号
-    JSONObject jsonObject = new JSONObject(true);
-    jsonObject.put("startingBlock", startingBlock);
-    jsonObject.put("currentBlock", currentBlock);
-    jsonObject.put("highestBlock", highestBlock);
-    return jsonObject;
+    SyncingResult syncingResult = new SyncingResult(ByteArray.toJsonHex(startingBlock),
+        ByteArray.toJsonHex(currentBlock),
+        ByteArray.toJsonHex(highestBlock)
+    );
+    return syncingResult;
   }
 
   @Override
@@ -577,7 +576,7 @@ public class TestServiceImpl implements TestService {
   }
 
   public static void main(String[] args) {
-    TestServiceImpl impl = new TestServiceImpl();
+    TronJsonRpcImpl impl = new TronJsonRpcImpl();
     impl.generateCallParameter();
   }
 }
