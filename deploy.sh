@@ -2,6 +2,7 @@
 if [[ "$TRAVIS_BRANCH" = "test/test_travis" || "$TRAVIS_BRANCH" = "test/sol_v0.6.8_case" ]];then
     stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
     echo "Trying to connect to stest_server network"
+    echo "47.253.45.120 ----- 47.253.46.247"
     timeout 10 ping -c 5  47.253.45.120 > /dev/null || exit 1
     timeout 10 ping -c 5  47.253.46.247  > /dev/null || exit 1
     echo "Successfully connected to stest_server network"
