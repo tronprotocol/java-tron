@@ -68,15 +68,15 @@ public class LogInfoTriggerParser {
       if (addrMap.get(strContractAddr) != null) {
         continue;
       }
-      ContractCapsule contract = StoreFactory.getInstance().getChainBaseManager()
-          .getContractStore().getWithAbi(contractAddress);
+      ContractCapsule contract = deposit.getContract(contractAddress);
       if (contract == null) {
         // never
         addrMap.put(strContractAddr, originAddress);
         abiMap.put(strContractAddr, ABI.getDefaultInstance());
         continue;
       }
-      ABI abi = contract.getInstance().getAbi();
+      ABI abi = StoreFactory.getInstance().getChainBaseManager()
+          .getAbiStore().get(contractAddress).getInstance();
       String creatorAddr = StringUtil.encode58Check(
           TransactionTrace
               .convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
