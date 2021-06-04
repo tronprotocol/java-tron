@@ -10,6 +10,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -492,7 +493,8 @@ public class TestServiceImpl implements TestService {
     return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
   }
 
-  public void testGetCall() {
+  //生成一个调用call api的参数，可以自由修改
+  private void generateCallParameter() {
     String ownerAddress = "TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD";
     String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile测试环境udsj地址
 
@@ -513,8 +515,69 @@ public class TestServiceImpl implements TestService {
     System.out.println(sb);
   }
 
+  @Override
+  public int getPeerCount() {
+    //返回当前节点所连接的peer节点数量
+    return nodeInfoService.getNodeInfo().getPeerList().size();
+  }
+
+  @Override
+  public Object getSyncingStatus() {
+    //查询同步状态。未同步返回false，否则返回JSonObject
+    if (nodeInfoService.getNodeInfo().getPeerList().size() == 0) {
+      return false;
+    }
+    long startingBlock = nodeInfoService.getNodeInfo().getBeginSyncNum();
+    long currentBlock = getLatestBlockNum();
+    long diff = (System.currentTimeMillis() - wallet.getNowBlock().getBlockHeader().getRawData()
+        .getTimestamp()) / 3000;
+    diff = diff > 0 ? diff : 0;
+    long highestBlock = currentBlock + diff; //预测的最高块号
+    JSONObject jsonObject = new JSONObject(true);
+    jsonObject.put("startingBlock", startingBlock);
+    jsonObject.put("currentBlock", currentBlock);
+    jsonObject.put("highestBlock", highestBlock);
+    return jsonObject;
+  }
+
+  @Override
+  public BlockResult getUncleByBlockHashAndIndex(String blockHash, int index) {
+    //查询指定块hash的第几个分叉
+    return null;
+  }
+
+  @Override
+  public BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, int index) {
+    //查询指定块号的第几个分叉
+    return null;
+  }
+
+  @Override
+  public int getUncleCountByBlockHash(String blockHash) {
+    //查询指定块hash的分叉个数
+    return 0;
+  }
+
+  @Override
+  public int getUncleCountByBlockNumber(String blockNumOrTag) {
+    //查询指定块号的分叉个数
+    return 0;
+  }
+
+  @Override
+  public int getHashRate() {
+    //读取当前挖矿节点的每秒钟哈希值算出数量，无用
+    return 0;
+  }
+
+  @Override
+  public boolean isMining() {
+    //检查节点是否在进行挖矿，无用
+    return false;
+  }
+
   public static void main(String[] args) {
     TestServiceImpl impl = new TestServiceImpl();
-    impl.testGetCall();
+    impl.generateCallParameter();
   }
 }

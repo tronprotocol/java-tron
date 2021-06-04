@@ -10,6 +10,7 @@ import org.tron.core.exception.ItemNotFoundException;
 public interface TestService {
 
   class BlockResult {
+
     public String number;
     public String hash;
     public String parentHash;
@@ -27,7 +28,7 @@ public interface TestService {
     public String gasLimit;
     public String gasUsed;
     public String timestamp;
-    public Object[] transactions; //one of TransactionResultDTO、byte32
+    public Object[] transactions; //TransactionResultDTO or byte32
     public String[] uncles;
 
     @Override
@@ -127,4 +128,29 @@ public interface TestService {
 
   @JsonRpcMethod("eth_call")
   String getCall(TransactionCall transactionCall, String blockNumOrTag);
+
+  @JsonRpcMethod("net_peerCount")
+  int getPeerCount();
+
+  @JsonRpcMethod("eth_syncing")
+  Object getSyncingStatus();
+
+  @JsonRpcMethod("eth_getUncleByBlockHashAndIndex")
+  BlockResult getUncleByBlockHashAndIndex(String blockHash, int index);
+
+  @JsonRpcMethod("eth_getUncleByBlockNumberAndIndex")
+  BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, int index);
+
+  @JsonRpcMethod("eth_getUncleCountByBlockHash")
+  int getUncleCountByBlockHash(String blockHash);
+
+  @JsonRpcMethod("eth_getUncleCountByBlockNumber")
+  int getUncleCountByBlockNumber(String blockNumOrTag);
+
+  @JsonRpcMethod("eth_hashrate")
+  int getHashRate();
+
+  @JsonRpcMethod("eth_mining")
+  boolean isMining();
+
 }
