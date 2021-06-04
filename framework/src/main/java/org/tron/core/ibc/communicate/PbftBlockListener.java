@@ -157,11 +157,15 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
               builder.setToChainId(crossContract.getToChainId())
                   .setTimeOutBlockHeight(getTimeOutHeight(crossContract, timeOut));
             } catch (Exception e) {
-              logger.error("", e);
+              logger.error("send cross tx failed, err: {}", e.getMessage());
             }
             communicateService.sendCrossMessage(builder.build(), true);
             logger.info("send a cross chain tx:{}", hash.toString());
+          } else {
+            logger.error("cross tx is null, {}", hash);
           }
+        } else {
+          logger.error("cross hash not committed, tx: {}", hash);
         }
       });
       waitingSendTx.invalidate(blockNum);
@@ -246,9 +250,9 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
   public boolean validTimeOut(long timeOutHeight, ByteString toChainId, Transaction sourceTx) {
     Sha256Hash sourceHash = Sha256Hash.of(true, sourceTx.getRawData().toByteArray());
     TransactionStore transactionStore = chainBaseManager.getTransactionStore();
-    logger.info("valid chain {} time out, time out height:{},chain height:{}",
+    logger.info("valid chain {} time out, time out height:{},chain height:{}, tx:{}",
         ByteArray.toHexString(toChainId.toByteArray()),
-        timeOutHeight, communicateService.getHeight(toChainId));
+        timeOutHeight, communicateService.getHeight(toChainId), sourceHash);
     if (timeOutHeight < communicateService.getHeight(toChainId)
         && communicateService.checkCommit(sourceHash)
         && transactionStore.getUnchecked(CrossUtils.getAddSourceTxId(sourceTx).getBytes())

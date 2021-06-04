@@ -180,11 +180,9 @@ public class CommunicateService implements Communicate {
   @Override
   public boolean checkCommit(Sha256Hash hash) {
     TransactionStore transactionStore = chainBaseManager.getTransactionStore();
-    PbftSignDataStore pbftSignDataStore = chainBaseManager.getPbftSignDataStore();
     try {
       long blockNum = transactionStore.get(hash.getBytes()).getBlockNum();
-      PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blockNum);
-      return pbftSignCapsule != null;
+      return chainBaseManager.getCommonDataBase().getLatestPbftBlockNum() >= blockNum;
     } catch (BadItemException e) {
       logger.error("{}", e.getMessage());
     }
