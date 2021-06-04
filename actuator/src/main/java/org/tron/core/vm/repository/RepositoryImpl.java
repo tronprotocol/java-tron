@@ -788,7 +788,7 @@ public class RepositoryImpl implements Repository {
           deposit.putContract(key, value);
         } else {
           ContractCapsule contractCapsule = value.getContract();
-          if (value.getType().isCreate()) {
+          if (!abiStore.has(key.getData())) {
             abiStore.put(key.getData(), new AbiCapsule(contractCapsule));
           }
           getContractStore().put(key.getData(), contractCapsule);
@@ -952,4 +952,5 @@ public class RepositoryImpl implements Repository {
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
+
 }
