@@ -54,6 +54,8 @@ public class TransactionTrace {
 
   private CodeStore codeStore;
 
+  private AbiStore abiStore;
+
   private EnergyProcessor energyProcessor;
 
   private TrxType trxType;
@@ -92,6 +94,7 @@ public class TransactionTrace {
     this.dynamicPropertiesStore = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
     this.contractStore = storeFactory.getChainBaseManager().getContractStore();
     this.codeStore = storeFactory.getChainBaseManager().getCodeStore();
+    this.abiStore = storeFactory.getChainBaseManager().getAbiStore();
     this.accountStore = storeFactory.getChainBaseManager().getAccountStore();
 
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
@@ -297,6 +300,7 @@ public class TransactionTrace {
   }
 
   public void deleteContract(byte[] address) {
+    abiStore.delete(address);
     codeStore.delete(address);
     accountStore.delete(address);
     contractStore.delete(address);
