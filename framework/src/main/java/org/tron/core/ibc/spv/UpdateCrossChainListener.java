@@ -37,7 +37,8 @@ public class UpdateCrossChainListener implements EventListener<PbftBlockCommitEv
           try {
             crossChainInfo = BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
           } catch (InvalidProtocolBufferException e) {
-            throw new ContractValidateException("the format of crossChainInfo stored in db is not right!");
+            throw new ContractValidateException(
+                    "the format of crossChainInfo stored in db is not right!");
           }
 
           commonDataBase.saveLatestHeaderBlockNum(chainId,
