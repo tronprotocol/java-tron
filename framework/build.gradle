@@ -43,8 +43,9 @@ dependencies {
 
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
 
-    compile "com.madgag.spongycastle:core:1.58.0.0"
-    compile "com.madgag.spongycastle:prov:1.58.0.0"
+//    compile "com.madgag.spongycastle:core:1.58.0.0"
+//    compile "com.madgag.spongycastle:prov:1.58.0.0"
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.68'
 
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
 

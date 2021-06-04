@@ -10,16 +10,16 @@ import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
-import java.security.Provider;
 import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.Assert;
-import org.junit.Test;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Test;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 
 @Slf4j
@@ -240,4 +240,27 @@ public class ECKeyTest {
 //
 //    System.out.println("p3: " + p3.getName());
 //  }
+
+  @Test
+  public void testPrivateKeyRangeException() {
+    for (int i = 0; i < 10; i++) {
+      ECKey ecKey = new ECKey(Utils.getRandom());
+      String privateKey = ByteArray.toHexString(ecKey.getPrivKey().toByteArray());
+      SignInterface ecKeyEngine = SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine());
+      byte[] hash = new byte[32];
+      hash[0] = 0x12;
+      String signature = ecKeyEngine.signHash(hash);
+      System.out.println(ByteArray.toHexString(ecKeyEngine.Base64toBytes(signature)));
+    }
+  }
+
+  @Test
+  public void testHex() {
+    byte[] data = new byte[3];
+    data[0] = 0x41;
+    System.out.println(Hex.toHexString(data));
+  }
+
 }
