@@ -32,8 +32,6 @@ public class MoveAbiHelper {
       if (!abiStore.has(e.getKey())) {
         abiStore.put(e.getKey(), new AbiCapsule(contractCapsule));
       }
-      contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-          .toBuilder().clearAbi().build());
       contractStore.put(e.getKey(), contractCapsule);
       count += 1;
       if (count % 100_000 == 0) {
