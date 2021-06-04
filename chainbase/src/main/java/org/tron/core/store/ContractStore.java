@@ -30,20 +30,6 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
     return getUnchecked(key);
   }
 
-  public ContractCapsule getWithAbi(byte[] key) {
-    ContractCapsule contractCapsule = getUnchecked(key);
-    if (contractCapsule == null) {
-      return null;
-    }
-
-    AbiCapsule abiCapsule = abiStore.get(key);
-    if (abiCapsule != null) {
-      contractCapsule = new ContractCapsule(contractCapsule.getInstance()
-          .toBuilder().setAbi(abiCapsule.getInstance()).build());
-    }
-    return contractCapsule;
-  }
-
   @Override
   public void put(byte[] key, ContractCapsule item) {
     if (Objects.isNull(key) || Objects.isNull(item)) {
@@ -68,25 +54,6 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
    */
   public byte[] findContractByHash(byte[] trxHash) {
     return revokingDB.getUnchecked(trxHash);
-  }
-
-  /**
-   *
-   * @param contractAddress
-   * @return
-   */
-  public SmartContract.ABI getABI(byte[] contractAddress) {
-    byte[] value = revokingDB.getUnchecked(contractAddress);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-
-    AbiCapsule abiCapsule = abiStore.get(contractAddress);
-    if (abiCapsule == null) {
-      return SmartContract.ABI.getDefaultInstance();
-    }
-
-    return abiCapsule.getInstance();
   }
 
 }
