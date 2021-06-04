@@ -2718,9 +2718,11 @@ public class RpcApiService implements Service {
 
     @Override
     public void getCrossChainAuctionConfigDetailList(GrpcAPI.EmptyMessage request,
-                                                     StreamObserver<org.tron.api.GrpcAPI.CrossChainAuctionConfigDetailList>
+                                                     StreamObserver<org.tron.api.GrpcAPI
+                                                         .CrossChainAuctionConfigDetailList>
                                                          responseObserver) {
-      GrpcAPI.CrossChainAuctionConfigDetailList auctinConfigDetailList =wallet.getCrossChainAuctionConfigDetailList();
+      GrpcAPI.CrossChainAuctionConfigDetailList auctinConfigDetailList = wallet
+          .getCrossChainAuctionConfigDetailList();
       responseObserver.onNext(auctinConfigDetailList);
       responseObserver.onCompleted();
     }
