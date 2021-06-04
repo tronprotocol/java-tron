@@ -18,7 +18,7 @@ public class GetCrossChainAuctionConfigDetailListServlet extends RateLimiterServ
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      GrpcAPI.CrossChainAuctinConfigDetailList reply = wallet
+      GrpcAPI.CrossChainAuctionConfigDetailList reply = wallet
           .getCrossChainAuctionConfigDetailList();
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
@@ -34,7 +34,7 @@ public class GetCrossChainAuctionConfigDetailListServlet extends RateLimiterServ
     try {
       PostParams params = PostParams.getPostParams(request);
       boolean visible = params.isVisible();
-      GrpcAPI.CrossChainAuctinConfigDetailList reply = wallet
+      GrpcAPI.CrossChainAuctionConfigDetailList reply = wallet
           .getCrossChainAuctionConfigDetailList();
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
