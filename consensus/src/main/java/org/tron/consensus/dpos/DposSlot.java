@@ -7,7 +7,6 @@ import static org.tron.core.config.Parameter.ChainConstant.SINGLE_REPEAT;
 import com.google.protobuf.ByteString;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.ConsensusDelegate;
@@ -51,10 +50,6 @@ public class DposSlot {
   }
 
   public ByteString getScheduledWitness(long slot) {
-    for (ByteString address : consensusDelegate.getActiveWitnesses()) {
-      System.out.println("witness is: " + Hex.toHexString(address.toByteArray()));
-    }
-
     final long currentSlot = getAbSlot(consensusDelegate.getLatestBlockHeaderTimestamp()) + slot;
     if (currentSlot < 0) {
       throw new RuntimeException("current slot should be positive.");

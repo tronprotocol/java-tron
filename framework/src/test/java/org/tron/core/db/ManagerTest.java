@@ -8,6 +8,7 @@ import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -458,12 +459,14 @@ public class ManagerTest extends BlockGenerate {
     byte[] address = ecKey.getAddress();
 
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     ByteString latestHeadHash =
@@ -565,6 +568,7 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
@@ -572,6 +576,7 @@ public class ManagerTest extends BlockGenerate {
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
@@ -641,13 +646,16 @@ public class ManagerTest extends BlockGenerate {
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
@@ -745,12 +753,14 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =

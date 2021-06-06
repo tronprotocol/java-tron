@@ -86,7 +86,6 @@ public class BackupDbUtilTest {
   }
 
   @Test
-//  @Ignore
   public void testDoBackup() {
     PropUtil.writeProperty(propPath, BackupDbUtil.getDB_BACKUP_STATE(),
         String.valueOf("11"));
