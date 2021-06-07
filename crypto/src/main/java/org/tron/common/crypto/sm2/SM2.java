@@ -825,34 +825,6 @@ public class SM2 implements Serializable, SignInterface {
     }
   }
 
-
-//  /**
-//   * Returns a copy of this key, but with the public point represented in uncompressed form.
-//   * Normally you would never need this: it's for specialised scenarios or when backwards
-//   * compatibility in encoded form is necessary.
-//   *
-//   * @return -
-//   * @deprecated per-point compression property will be removed in Bouncy Castle
-//   */
-//  public SM2 decompress() {
-//    if (!pub.isCompressed()) {
-//      return this;
-//    } else {
-//      return new SM2(this.privKey, decompressPoint(pub));
-//    }
-//  }
-//
-//  /**
-//   * @deprecated per-point compression property will be removed in Bouncy Castle
-//   */
-//  public SM2 compress() {
-//    if (pub.isCompressed()) {
-//      return this;
-//    } else {
-//      return new SM2(this.privKey, compressPoint(pub));
-//    }
-//  }
-
   /**
    * Returns true if this key doesn't have access to private key bytes. This may be because it was
    * never given any private key bytes to begin with (a watching key).
@@ -911,16 +883,6 @@ public class SM2 implements Serializable, SignInterface {
     }
   }
 
-//  /**
-//   * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33
-//   * bytes, not 64.
-//   *
-//   * @return -
-//   */
-//  public boolean isCompressed() {
-//    return pub.isCompressed();
-//  }
-
   public String toString() {
     StringBuilder b = new StringBuilder();
     b.append("pub:").append(Hex.toHexString(pub.getEncoded(false)));
@@ -942,7 +904,6 @@ public class SM2 implements Serializable, SignInterface {
     }
     return b.toString();
   }
-
 
   /**
    * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.

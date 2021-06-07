@@ -642,33 +642,6 @@ public class ECKey implements Serializable, SignInterface {
     }
   }
 
-//  /**
-//   * Returns a copy of this key, but with the public point represented in uncompressed form.
-//   * Normally you would never need this: it's for specialised scenarios or when backwards
-//   * compatibility in encoded form is necessary.
-//   *
-//   * @return -
-//   * @deprecated per-point compression property will be removed in Bouncy Castle
-//   */
-//  public ECKey decompress() {
-//    if (!pub.isCompressed()) {
-//      return this;
-//    } else {
-//      return new ECKey(this.provider, this.privKey, decompressPoint(pub));
-//    }
-//  }
-//
-//  /**
-//   * @deprecated per-point compression property will be removed in Bouncy Castle
-//   */
-//  public ECKey compress() {
-//    if (pub.isCompressed()) {
-//      return this;
-//    } else {
-//      return new ECKey(this.provider, this.privKey, compressPoint(pub));
-//    }
-//  }
-
   /**
    * Returns true if this key doesn't have access to private key bytes. This may be because it was
    * never given any private key bytes to begin with (a watching key).
@@ -763,16 +736,6 @@ public class ECKey implements Serializable, SignInterface {
       throw new MissingPrivateKeyException();
     }
   }
-
-//  /**
-//   * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33
-//   * bytes, not 64.
-//   *
-//   * @return -
-//   */
-//  public boolean isCompressed() {
-//    return pub.isCompressed();
-//  }
 
   public String toString() {
     StringBuilder b = new StringBuilder();
