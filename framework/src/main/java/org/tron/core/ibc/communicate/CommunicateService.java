@@ -75,7 +75,7 @@ public class CommunicateService implements Communicate {
   @Autowired
   private BlockHeaderIndexStore blockHeaderIndexStore;
 
-  @PreDestroy
+  @PreDestroychainbase/src/main/java/org/tron/core/db2/core/SnapshotManager.java
   public void destroy() {
     executorService.shutdown();
   }
@@ -87,15 +87,16 @@ public class CommunicateService implements Communicate {
         .scheduleWithFixedDelay(() -> receiveCrossMsgCache.asMap().forEach((hash, crossMessage) -> {
           try {
             // skip check when the block header has not been synced.
-            if (crossMessage.getRootHeight() > getHeight(crossMessage.getFromChainId())) {
+            if (crossMessage.getRootHeight() > getHeight(crossMessage.getFromChainId())
+                    || crossMessage.getRootHeight()
+                    > chainBaseManager.getCommonDataBase().getLatestPBFTBlockNum(
+                            ByteArray.toHexString(crossMessage.getFromChainId().toByteArray()))) {
               return;
             }
             if (broadcastCheck(crossMessage)) {
               manager.addCrossTx(crossMessage);
               broadcastCrossMessage(crossMessage);
               receiveCrossMsgCache.invalidate(hash);
-            } else {
-              logger.warn("crossMessage broadcast check failed");
             }
           } catch (Exception e) {
             logger.error("", e);
@@ -192,6 +193,7 @@ public class CommunicateService implements Communicate {
   public boolean broadcastCheck(CrossMessage crossMessage) {
     CrossStore crossStore = chainBaseManager.getCrossStore();
     if (!isSyncFinish()) {
+      logger.info("sync is not finished, stop send cross message");
       return false;
     }
     if (crossMessage.getType() != Type.TIME_OUT

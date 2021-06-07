@@ -300,10 +300,12 @@ public class SnapshotManager implements RevokingDatabase {
     try {
       updateSolidity((int) (blockNum - latestSolidityBlockNum));
     } catch (Exception e) {
-      logger.error("updateSolidity failed, err: ", e);
+      logger.error("updateSolidity failed, blockNum: {}, latestBlockNumOnDisk: {},"
+                      + " latestSolidityBlockNum: {}, snapshot size: {}, err: {}",
+              blockNum, latestBlockNumOnDisk, latestSolidityBlockNum, size, e);
       throw new RuntimeException("updateSolidity failed");
     }
-    size = maxSize.get();
+    size = maxSize.get(); 
     flush();
     needFlush.set(false);
     flushCount = 0;

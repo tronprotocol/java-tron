@@ -16,6 +16,7 @@ import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.event.EventBusService;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
 
 @Slf4j(topic = "pbft")
@@ -44,17 +45,38 @@ public class PbftMessageAction {
           long latestBlockNumOnDisk = Optional.ofNullable(
                   blockStore.getLatestBlockFromDisk(1).get(0))
                   .map(BlockCapsule::getNum).orElse(0L);
-          revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
-                  chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          if (blockNum > chainBaseManager.getCommonDataBase().getLatestPbftBlockNum()) {
+            revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
+                    chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          }
         }
-        chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
+        if (blockNum > chainBaseManager.getCommonDataBase().getLatestPbftBlockNum()) {
+          chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
+          chainBaseManager.getCommonDataBase().saveLatestPbftBlockHash(raw.getData().toByteArray());
+        }
         chainBaseManager.getPbftSignDataStore()
             .putBlockSignData(blockNum, new PbftSignCapsule(raw.toByteString(), dataSignList));
-        chainBaseManager.getCommonDataBase().saveLatestPbftBlockHash(raw.getData().toByteArray());
         logger.info("commit msg block num is:{}", blockNum);
 
         if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+          long start = System.currentTimeMillis();
+          while (true) {
+            try {
+              if (System.currentTimeMillis() - start > 1000) {
+                break;
+              }
+              chainBaseManager.getBlockIndexStore().get(blockNum);
+              // if block stored in db
+              break;
+            } catch (ItemNotFoundException e) {
+              try {
+                Thread.sleep(10);
+              } catch (InterruptedException ex) {
+                ex.printStackTrace();
+              }
+            }
+          }
           eventBusService.postEvent(
                   new PbftBlockCommitEvent(blockNum,
                           message.getPbftMessage().getRawData().getData()));
