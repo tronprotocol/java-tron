@@ -3800,14 +3800,27 @@ public class Wallet {
     return builder.build();
   }
 
+  public BalanceContract.CrossChainInfo getRegisterCrossChainInfo(long registerNum) {
+    byte[] crossChainInfoBytes =
+            chainBaseManager.getCrossRevokingStore().getChainInfo(registerNum);
+    if (crossChainInfoBytes != null) {
+      try {
+        return BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
+      } catch (InvalidProtocolBufferException e) {
+        e.printStackTrace();
+      }
+    }
+    return null;
+  }
+
   public GrpcAPI.CrossChainVoteDetailList getCrossChainVoteDetailList(long offset, long limit,
-                                                                      String chainId,int round) {
+                                                                      long registerNum,int round) {
     GrpcAPI.CrossChainVoteDetailList.Builder builder = GrpcAPI.CrossChainVoteDetailList
         .newBuilder();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     limit = limit > CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX ? CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX : limit;
     List<byte[]> chainVoteList = crossRevokingStore.getCrossChainVoteDetailList(offset, limit,
-        chainId, round);
+            registerNum, round);
     if (CollectionUtils.isEmpty(chainVoteList)) {
       return null;
     }
@@ -3827,7 +3840,7 @@ public class Wallet {
         .newBuilder();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     limit = limit > CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX ? CROSS_CHAIN_VOTE_COUNT_LIMIT_MAX : limit;
-    List<org.tron.common.utils.Pair<String, Long>> chainVoteList = crossRevokingStore
+    List<org.tron.common.utils.Pair<Long, Long>> chainVoteList = crossRevokingStore
         .getCrossChainTotalVoteList(offset, limit, round);
     if (CollectionUtils.isEmpty(chainVoteList)) {
       return null;
@@ -3835,7 +3848,7 @@ public class Wallet {
     chainVoteList.forEach(voteInfo -> {
       GrpcAPI.CrossChainVoteSummary.Builder totalVoteBuilder = GrpcAPI.CrossChainVoteSummary
           .newBuilder();
-      totalVoteBuilder.setChainId(ByteString.copyFrom(ByteArray.fromHexString(voteInfo.getKey())));
+      totalVoteBuilder.setRegisterNum(voteInfo.getKey());
       totalVoteBuilder.setAmount(voteInfo.getValue());
       builder.addCrossChainVoteSummary(totalVoteBuilder.build());
     });

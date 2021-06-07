@@ -5,12 +5,9 @@ import static org.tron.common.utils.WalletUtil.getAddressStringList;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -182,34 +179,62 @@ public class MaintenanceManager {
             <= (roundInfo.getEndTime() + roundInfo.getDuration() * 86400) * 1000) {
           if (crossRevokingStore.getParaChainList(roundInfo.getRound()).isEmpty()) {
             // set parachains
-            List<Pair<String, Long>> eligibleChainLists =
-                crossRevokingStore.getEligibleChainLists(roundInfo.getRound(),
-                    roundInfo.getSlotCount(), minAuctionVoteCount);
-            List<String> chainIds = eligibleChainLists.stream().map(Pair::getKey)
-                .collect(Collectors.toList());
-            crossRevokingStore.updateParaChains(roundInfo.getRound(), chainIds);
-            crossRevokingStore.updateParaChainsHistory(chainIds);
-
-            setChainInfo(chainIds);
+            List<Pair<Long, Long>> eligibleChainLists = crossRevokingStore
+                    .getChainVoteCountList(roundInfo.getRound(), minAuctionVoteCount);
+            updateParaChains(eligibleChainLists, roundInfo);
           }
         } else {
           crossRevokingStore.deleteParaChains(roundInfo.getRound());
+          crossRevokingStore.deleteParaChainRegisterNums(roundInfo.getRound());
         }
       }
     });
 
   }
 
-  private void setChainInfo(List<String> chainIds) {
+  private void updateParaChains(List<Pair<Long, Long>> eligibleChainLists,
+                                CrossChain.AuctionRoundContract roundInfo) {
     CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
-    CommonDataBase commonDataBase = consensusDelegate.getChainBaseManager().getCommonDataBase();
-    chainIds.forEach(chainId -> {
+    List<Long> registerNums = new LinkedList<>();
+    List<String> chainIds = new LinkedList<>();
+    for (Pair<Long, Long> voteInfo : eligibleChainLists) {
+      if (chainIds.size() >= roundInfo.getSlotCount()) {
+        break;
+      }
       try {
-        byte[] chainInfoData = crossRevokingStore.getChainInfo(chainId);
+        byte[] chainInfoData = crossRevokingStore.getChainInfo(voteInfo.getKey());
         if (ByteArray.isEmpty(chainInfoData)) {
           return;
         }
         CrossChainInfo crossChainInfo = CrossChainInfo.parseFrom(chainInfoData);
+        String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
+        if (!chainIds.contains(chainId)) {
+          chainIds.add(chainId);
+          registerNums.add(voteInfo.getKey());
+        }
+      } catch (InvalidProtocolBufferException e) {
+        logger.error("chain {} get the info fail!", voteInfo.getKey(), e);
+      }
+    }
+
+    crossRevokingStore.updateParaChainRegisterNums(roundInfo.getRound(), registerNums);
+    crossRevokingStore.updateParaChains(roundInfo.getRound(), chainIds);
+    crossRevokingStore.updateParaChainsHistory(chainIds);
+
+    setChainInfo(registerNums);
+  }
+
+  private void setChainInfo(List<Long> registerNums) {
+    CrossRevokingStore crossRevokingStore = consensusDelegate.getCrossRevokingStore();
+    CommonDataBase commonDataBase = consensusDelegate.getChainBaseManager().getCommonDataBase();
+    registerNums.forEach(registerNum -> {
+      try {
+        byte[] chainInfoData = crossRevokingStore.getChainInfo(registerNum);
+        if (ByteArray.isEmpty(chainInfoData)) {
+          return;
+        }
+        CrossChainInfo crossChainInfo = CrossChainInfo.parseFrom(chainInfoData);
+        String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
         if (crossChainInfo.getBeginSyncHeight() <= commonDataBase
             .getLatestHeaderBlockNum(chainId)) {
           return;
@@ -239,7 +264,7 @@ public class MaintenanceManager {
         int agreeNodeCount = crossChainInfo.getSrListList().size() * 2 / 3 + 1;
         commonDataBase.saveAgreeNodeCount(chainId, agreeNodeCount);
       } catch (InvalidProtocolBufferException e) {
-        logger.error("chain {} get the info fail!", chainId, e);
+        logger.error("chain {} get the info fail!", registerNum, e);
       }
     });
   }

@@ -33,6 +33,7 @@ public class UnVoteCrossChainActuatorTest {
   private static final String dbPath = "output_unvotecrosschain_test";
   private static final String OWNER_ADDRESS;
   private static final String CHAINID;
+  private static final Long REGISTER_NUM;
   private static final String PROXY_ADDRESS;
   private static TronApplicationContext context;
   private static Manager dbManager;
@@ -46,6 +47,7 @@ public class UnVoteCrossChainActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     CHAINID =
         "00000000000000007adbf8dc20423f587a5f3f8ea83e2877e2129c5128c12d1e";
+    REGISTER_NUM = 1L;
   }
 
   /**
@@ -85,9 +87,7 @@ public class UnVoteCrossChainActuatorTest {
     return Any.pack(
         CrossChain.UnvoteCrossChainContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setChainId(Sha256Hash.wrap(ByteArray
-                .fromHexString(CHAINID))
-                .getByteString())
+            .setRegisterNum(REGISTER_NUM)
             .setRound(1)
             .build());
   }
@@ -112,12 +112,12 @@ public class UnVoteCrossChainActuatorTest {
       CrossChain.VoteCrossChainContract voteCrossInfo =
               CrossChain.VoteCrossChainContract.newBuilder()
                       .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-                      .setChainId(Sha256Hash.wrap(ByteArray.fromHexString(CHAINID)).getByteString())
+                      .setRegisterNum(REGISTER_NUM)
                       .setAmount(1000L)
                       .setRound(1)
                       .build();
       dbManager.getChainBaseManager().getCrossRevokingStore()
-              .putChainVote(1, CHAINID, OWNER_ADDRESS, voteCrossInfo.toByteArray());
+              .putChainVote(1, REGISTER_NUM, OWNER_ADDRESS, voteCrossInfo.toByteArray());
 
       //2.run test
       UnvoteCrossChainActuator actuator = new UnvoteCrossChainActuator();

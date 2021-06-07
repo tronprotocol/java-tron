@@ -812,6 +812,9 @@ service Wallet {
   rpc GetParaChainList (RoundMessage) returns (ParaChainList) {
   };
 
+  rpc GetRegisterCrossChainInfo (RegisterNumMessage) returns (CrossChainInfo) {
+  };
+
   rpc GetTransactionFromPending (BytesMessage) returns (Transaction) {
   }
 
@@ -1566,7 +1569,7 @@ message RegisterCrossChainList {
 }
 
 message CrossChainVoteSummary {
-  bytes chain_id = 1;
+  int64 register_num = 1;
   int32 round = 2;
   int64 amount = 3;
 }
@@ -1582,7 +1585,7 @@ message CrossChainVoteSummaryPaginated {
 }
 
 message CrossChainVotePaginated {
-  bytes chain_id = 1;
+  int64 register_num = 1;
   int32 round = 2;
   int64 offset = 3;
   int64 limit = 4;
@@ -1602,4 +1605,8 @@ message RoundMessage {
 
 message ParaChainList {
   repeated bytes paraChainIds = 1;
+}
+
+message RegisterNumMessage {
+  int64 registerNum = 1;
 }

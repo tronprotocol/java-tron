@@ -39,12 +39,13 @@ public class VoteCrossChainActuator extends AbstractActuator {
       VoteCrossChainContract voteCrossContract = any.unpack(VoteCrossChainContract.class);
       AccountStore accountStore = chainBaseManager.getAccountStore();
       CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
-      String chainId = ByteArray.toHexString(voteCrossContract.getChainId().toByteArray());
+      long registerNum = voteCrossContract.getRegisterNum();
       long amount = voteCrossContract.getAmount();
       byte[] address = voteCrossContract.getOwnerAddress().toByteArray();
       int round = voteCrossContract.getRound();
 
-      byte[] voteCrossInfoBytes = crossRevokingStore.getChainVote(round, chainId, ByteArray.toHexString(address));
+      byte[] voteCrossInfoBytes =
+              crossRevokingStore.getChainVote(round, registerNum, ByteArray.toHexString(address));
       if (!ByteArray.isEmpty(voteCrossInfoBytes)) {
         VoteCrossChainContract voteCrossInfo = VoteCrossChainContract.parseFrom(voteCrossInfoBytes);
         VoteCrossChainContract.Builder builder = voteCrossContract.toBuilder();
@@ -53,8 +54,9 @@ public class VoteCrossChainActuator extends AbstractActuator {
       }
 
       Commons.adjustBalance(accountStore, address, -amount);
-      crossRevokingStore.putChainVote(round, chainId, ByteArray.toHexString(address), voteCrossContract.toByteArray());
-      crossRevokingStore.updateTotalChainVote(round, chainId, amount);
+      crossRevokingStore.putChainVote(round, registerNum,
+              ByteArray.toHexString(address), voteCrossContract.toByteArray());
+      crossRevokingStore.updateTotalChainVote(round, registerNum, amount);
 
       Commons.adjustBalance(accountStore, address, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
@@ -95,7 +97,7 @@ public class VoteCrossChainActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    String chainId = ByteArray.toHexString(contract.getChainId().toByteArray());
+    long registerNum = contract.getRegisterNum();
     long amount = contract.getAmount();
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     int round = contract.getRound();
@@ -111,12 +113,8 @@ public class VoteCrossChainActuator extends AbstractActuator {
               "Validate VoteCrossContract error, balance is not sufficient.");
     }
 
-    if (chainId.isEmpty()) {
-      throw new ContractValidateException("No chainId");
-    }
-
-    if (contract.getChainId().toByteArray().length != ActuatorConstant.CHAIN_ID_LENGTH) {
-      throw new ContractValidateException("Invalid chainId!");
+    if (registerNum <= 0) {
+      throw new ContractValidateException("Invalid registerNum");
     }
 
     if (round <= 0) {

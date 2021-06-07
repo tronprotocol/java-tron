@@ -94,6 +94,7 @@ public class CrossChainBase {
   public static Long startSynBlockNum = 12L;
   public static Long startSynTimeStamp;
   public static Long crossStartSynTimeStamp;
+  public static long registerNum = 1;
 
 
   public static String registerAccountKey
@@ -456,7 +457,7 @@ public class CrossChainBase {
   /**
    * constructor.
    */
-  public static String voteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId, Long amount,
+  public static String voteCrossChainGetTxid(byte[] ownerAddress, Long registerNum, Long amount,
       Integer round,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -470,7 +471,7 @@ public class CrossChainBase {
     CrossChain.VoteCrossChainContract.Builder build =
         CrossChain.VoteCrossChainContract.newBuilder();
     build.setAmount(amount);
-    build.setChainId(chainId);
+    build.setRegisterNum(registerNum);
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
     build.setRound(round);
     TransactionExtention transactionExtention = blockingStubFull.voteCrossChain(build.build());
@@ -480,7 +481,7 @@ public class CrossChainBase {
   /**
    * constructor.
    */
-  public static String unVoteCrossChainGetTxid(byte[] ownerAddress, ByteString chainId,
+  public static String unVoteCrossChainGetTxid(byte[] ownerAddress, Long registerNum,
       Integer round,String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -493,7 +494,7 @@ public class CrossChainBase {
     final ECKey ecKey = temKey;
     CrossChain.UnvoteCrossChainContract.Builder build =
         CrossChain.UnvoteCrossChainContract.newBuilder();
-    build.setChainId(chainId);
+    build.setRegisterNum(registerNum);
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
     build.setRound(round);
     TransactionExtention transactionExtention = blockingStubFull.unvoteCrossChain(build.build());
@@ -716,10 +717,10 @@ public class CrossChainBase {
    * constructor.
    */
   public static Optional<CrossChainVoteDetailList> getCrossChainVoteDetailList(Integer round,
-      ByteString paraChainId, WalletGrpc.WalletBlockingStub blockingStubFull) {
+      Long registerNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     CrossChainVotePaginated request = CrossChainVotePaginated.newBuilder()
-        .setLimit(10).setOffset(0).setRound(round).setChainId(paraChainId).build();
+        .setLimit(10).setOffset(0).setRound(round).setRegisterNum(registerNum).build();
 
     CrossChainVoteDetailList crossChainVoteDetailList
         = blockingStubFull.getCrossChainVoteDetailList(request);

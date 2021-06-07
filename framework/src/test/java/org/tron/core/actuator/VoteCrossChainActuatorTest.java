@@ -33,6 +33,7 @@ public class VoteCrossChainActuatorTest {
   private static final String dbPath = "output_votecrosschain_test";
   private static final String OWNER_ADDRESS;
   private static final String CHAINID;
+  private static final Long REGISTER_NUM;
   private static final String PROXY_ADDRESS;
   private static TronApplicationContext context;
   private static Manager dbManager;
@@ -46,6 +47,7 @@ public class VoteCrossChainActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     CHAINID =
         "00000000000000007adbf8dc20423f587a5f3f8ea83e2877e2129c5128c12d1e";
+    REGISTER_NUM = 1L;
   }
 
   /**
@@ -85,9 +87,7 @@ public class VoteCrossChainActuatorTest {
     return Any.pack(
         CrossChain.VoteCrossChainContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setChainId(Sha256Hash.wrap(ByteArray
-                .fromHexString(CHAINID))
-                .getByteString())
+            .setRegisterNum(REGISTER_NUM)
             .setAmount(1000L)
             .setRound(1)
             .build());
