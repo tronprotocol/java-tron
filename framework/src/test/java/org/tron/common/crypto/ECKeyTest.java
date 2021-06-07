@@ -17,9 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 
 @Slf4j
@@ -219,48 +216,18 @@ public class ECKeyTest {
     assertEquals(key, ECKey.fromNodeId(key.getNodeId()));
   }
 
-//  @Test
-//  public void testProvider() {
-//    Provider[] providers = Security.getProviders();
-//    for (Provider provider : providers) {
-//      System.out.println(provider.getName());
-//    }
-//    Assert.assertNull(Security.getProvider("SC"));
-//    Assert.assertNull(Security.getProvider("BC"));
-//
-//    Provider p = Security.getProvider("BC");
-//
-//    Provider p2 = (p != null) ? p : new BouncyCastleProvider();
-//
-////    Assert.assertNull(p2);
-//
-//    System.out.println("p2: " + p2.getName());
-//
-//    Provider p3 = new BouncyCastleProvider();
-//
-//    System.out.println("p3: " + p3.getName());
-//  }
-
   @Test
-  public void testPrivateKeyRangeException() {
-    for (int i = 0; i < 10; i++) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      String privateKey = ByteArray.toHexString(ecKey.getPrivKey().toByteArray());
-      SignInterface ecKeyEngine = SignUtils
-          .fromPrivate(ByteArray.fromHexString(privateKey),
-              CommonParameter.getInstance().isECKeyCryptoEngine());
-      byte[] hash = new byte[32];
-      hash[0] = 0x12;
-      String signature = ecKeyEngine.signHash(hash);
-      System.out.println(ByteArray.toHexString(ecKeyEngine.Base64toBytes(signature)));
-    }
+  public void testSignature() throws SignatureException {
+    SignInterface sign = SignUtils.fromPrivate(Hex.decode(privString), true);
+    String msg = "transaction raw data";
+    byte[] hash = Hash.sha3(msg.getBytes());
+    String sig = sign.signHash(hash);
+    byte[] address = SignUtils.signatureToAddress(hash, sig, true);
+    System.out.println("hash:" + Hex.toHexString(hash));
+    System.out.println("sig:" + sig);
+    System.out.println("address: " + Hex.toHexString(address));
+    assertEquals("429e4ce662a41be0a50e65626f0ec4c8f68d45a57fe80beebab2f82601884795",
+        Hex.toHexString(hash));
+    assertEquals("41cd2a3d9f938e13cd947ec05abc7fe734df8dd826", Hex.toHexString(address));
   }
-
-  @Test
-  public void testHex() {
-    byte[] data = new byte[3];
-    data[0] = 0x41;
-    System.out.println(Hex.toHexString(data));
-  }
-
 }
