@@ -131,6 +131,7 @@ public class CrossChainBase {
   public static String name2 = "chain2_" + Long.toString(now);
   public static ByteString assetAccountId1;
   public static ByteString assetAccountId2;
+  public static ByteString assetAccountIdCrossChain;
   public static ByteString mutisignAssetAccountId1;
   public static ByteString mutisignAssetAccountId2;
   public static byte[] contractAddress;
@@ -183,11 +184,12 @@ public class CrossChainBase {
     Long end = System.currentTimeMillis() + 1000000000;
 
     //Create a new AssetIssue success.
-    Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name1, totalSupply, 1,
+    Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name1,
+        totalSupply * 10000, 1,
         100, 6,start, end, 1, description, url, 10000L, 10000L,
         1L, 1L, trc10TokenAccountKey, blockingStubFull));
     Assert.assertTrue(PublicMethed.createAssetIssue(trc10TokenAccountAddress, name2,
-        totalSupply, 1, 100, start, end, 1, description, url,
+        totalSupply * 10000, 1, 100,6, start, end, 1, description, url,
         10000L, 10000L,
         1L, 1L, trc10TokenAccountKey, crossBlockingStubFull));
 
@@ -200,7 +202,7 @@ public class CrossChainBase {
     assetAccountId1 = getAssetIdFromThisAccount.getAssetIssuedID();
     getAssetIdFromThisAccount = PublicMethed
         .queryAccount(trc10TokenAccountAddress, crossBlockingStubFull);
-    assetAccountId2 = getAssetIdFromThisAccount.getAssetIssuedID();
+    assetAccountIdCrossChain = getAssetIdFromThisAccount.getAssetIssuedID();
     GrpcAPI.AssetIssueList assetIssueList = crossBlockingStubFull
         .getAssetIssueList(EmptyMessage.newBuilder().build());
     assetAccountId2 = ByteString.copyFromUtf8(String
@@ -212,7 +214,7 @@ public class CrossChainBase {
         100, 6,start, end, 1, description, url, 10000L, 10000L,
         1L, 1L, mutisignTestKey, blockingStubFull));
     Assert.assertTrue(PublicMethed.createAssetIssue(mutisignTestAddress, name2,
-        totalSupply, 1, 100, start, end, 1, description, url,
+        totalSupply, 1, 100, 6,start, end, 1, description, url,
         10000L, 10000L,
         1L, 1L, mutisignTestKey, crossBlockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
