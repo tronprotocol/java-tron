@@ -29,7 +29,7 @@ contract Counter {
     }
 
     function getCodeHashCreate() public  returns (bytes32 _hashBefore){
-        TestContract A = (new TestContract).value(0)();
+        TestContract A = (new TestContract){value:0}();
         address addr = address(A);
         assembly{
                     _hashBefore := extcodehash(addr)

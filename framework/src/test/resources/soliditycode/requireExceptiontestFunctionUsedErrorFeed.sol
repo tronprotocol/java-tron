@@ -12,6 +12,6 @@ contract MessageUseContract {
         return msg.value;
     }
     function messageUse(address addr) payable public returns (uint) {
-        return MessageFeed(addr).mValue.value(1)();
+        return MessageFeed(addr).mValue{value:1}();
     }
 }
