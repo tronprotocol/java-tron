@@ -3805,7 +3805,7 @@ public class Wallet {
             chainBaseManager.getCrossRevokingStore().getChainInfo(registerNum);
     if (crossChainInfoBytes != null) {
       try {
-         return BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
+        return BalanceContract.CrossChainInfo.parseFrom(crossChainInfoBytes);
       } catch (InvalidProtocolBufferException e) {
         e.printStackTrace();
       }
