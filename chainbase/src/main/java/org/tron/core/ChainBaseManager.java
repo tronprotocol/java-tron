@@ -424,7 +424,7 @@ public class ChainBaseManager {
     }
 
     if (!result) {
-      logger.warn("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
+      logger.info("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
     }
     return result;
   }
@@ -472,7 +472,7 @@ public class ChainBaseManager {
     }
 
     if (!result) {
-      logger.warn("chain {} don't be select", registerNum);
+      logger.info("chain {} don't be select", registerNum);
     }
     return result;
   }
