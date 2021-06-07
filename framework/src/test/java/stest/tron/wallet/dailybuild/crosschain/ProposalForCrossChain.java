@@ -172,7 +172,7 @@ public class ProposalForCrossChain extends CrossChainBase {
   public void test05VoteCrossChain() throws InvalidProtocolBufferException {
     final Long beforeVoteBalance = PublicMethed
         .queryAccount(registerAccountKey,blockingStubFull).getBalance();
-    String txid = voteCrossChainGetTxid(registerAccountAddress, crossChainId,
+    String txid = voteCrossChainGetTxid(registerAccountAddress, registerNum,
         voteAmount,Integer.valueOf(crossRound), registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterVoteBalance = PublicMethed
@@ -181,7 +181,7 @@ public class ProposalForCrossChain extends CrossChainBase {
     Any any = byId.get().getRawData().getContract(0).getParameter();
     VoteCrossChainContract voteCrossChainContract = any.unpack(VoteCrossChainContract.class);
     Assert.assertEquals((Long) voteCrossChainContract.getAmount(), voteAmount);
-    Assert.assertEquals(voteCrossChainContract.getChainId(),crossChainId);
+    Assert.assertEquals(voteCrossChainContract.getRegisterNum(),registerNum);
     Assert.assertEquals((Integer) voteCrossChainContract.getRound(), Integer.valueOf(crossRound));
     Assert.assertEquals(voteCrossChainContract.getOwnerAddress(),
         ByteString.copyFrom(registerAccountAddress));
@@ -194,7 +194,7 @@ public class ProposalForCrossChain extends CrossChainBase {
 
 
     //vote cross chain for second chain
-    voteCrossChainGetTxid(registerAccountAddress, chainId,
+    voteCrossChainGetTxid(registerAccountAddress, registerNum,
         voteAmount,Integer.valueOf(round), registerAccountKey,crossBlockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
   }
@@ -204,7 +204,7 @@ public class ProposalForCrossChain extends CrossChainBase {
   public void test06UnVoteCrossChain() throws InvalidProtocolBufferException {
     final Long beforeUnVoteBalance = PublicMethed
         .queryAccount(registerAccountKey,blockingStubFull).getBalance();
-    String txid = unVoteCrossChainGetTxid(registerAccountAddress, crossChainId,
+    String txid = unVoteCrossChainGetTxid(registerAccountAddress, registerNum,
         Integer.valueOf(crossRound), registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterUnVoteBalance = PublicMethed
@@ -213,7 +213,7 @@ public class ProposalForCrossChain extends CrossChainBase {
     Any any = byId.get().getRawData().getContract(0).getParameter();
     UnvoteCrossChainContract voteCrossChainContract = any.unpack(UnvoteCrossChainContract.class);
 
-    Assert.assertEquals(voteCrossChainContract.getChainId(),crossChainId);
+    Assert.assertEquals(voteCrossChainContract.getRegisterNum(),registerNum);
     Assert.assertEquals((Integer) voteCrossChainContract.getRound(), Integer.valueOf(crossRound));
     Assert.assertEquals(voteCrossChainContract.getOwnerAddress(),
         ByteString.copyFrom(registerAccountAddress));
@@ -224,7 +224,7 @@ public class ProposalForCrossChain extends CrossChainBase {
     Assert.assertEquals((Long)(afterUnVoteBalance
         - beforeUnVoteBalance),(Long)(voteAmount - actualFee));
 
-    voteCrossChainGetTxid(registerAccountAddress, crossChainId,
+    voteCrossChainGetTxid(registerAccountAddress, registerNum,
         voteAmount,Integer.valueOf(crossRound), registerAccountKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -274,7 +274,7 @@ public class ProposalForCrossChain extends CrossChainBase {
     crossChainVoteSummaryList.get().getCrossChainVoteSummaryCount();
     Assert.assertTrue(crossChainVoteSummaryList.get().getCrossChainVoteSummaryCount() >= 1);
     Assert.assertEquals(crossChainVoteSummaryList.get()
-        .getCrossChainVoteSummary(0).getChainId(),crossChainId);
+        .getCrossChainVoteSummary(0).getRegisterNum(),registerNum);
     Assert.assertEquals((Long)crossChainVoteSummaryList
         .get().getCrossChainVoteSummary(0).getAmount(),voteAmount);
 
@@ -300,7 +300,7 @@ public class ProposalForCrossChain extends CrossChainBase {
   @Test(enabled = true,description = "Get cross chain vote detail list")
   public void test10GetCrossChainVoteDetailList() throws InvalidProtocolBufferException {
     Optional<CrossChainVoteDetailList> crossChainVoteDetailList
-        = getCrossChainVoteDetailList(Integer.valueOf(crossRound),crossChainId,blockingStubFull);
+        = getCrossChainVoteDetailList(Integer.valueOf(crossRound),registerNum,blockingStubFull);
 
     Assert.assertTrue(crossChainVoteDetailList.get().getVoteCrossChainContractCount() >= 1);
 

@@ -23,6 +23,7 @@ import org.tron.core.capsule.BytesCapsule;
 public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final String PARACHAINS_KEY = "k_parachain";
+  private static final String PARA_CHAIN_REGISTER_NUMS_KEY = "parachain_register_num";
   private static final String VOTED_KEY = "voted_";
   private static final String PARACHAIN__HISTORY = "parachain_history";
   private static final String CROSS_CHAIN_UPDATE = "CROSS_CHAIN_UPDATE";
@@ -80,39 +81,41 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public byte[] getChainInfo(String chainId) {
-    return getUnchecked(buildRegisterKey(chainId)).getData();
+  public byte[] getChainInfo(long registerNum) {
+    return getUnchecked(buildRegisterKey(String.valueOf(registerNum))).getData();
   }
 
-  public void putChainInfo(String chainId, byte[] chainInfo) {
-    byte[] key = buildRegisterKey(chainId);
+  public void putChainInfo(long registerNum, byte[] chainInfo) {
+    byte[] key = buildRegisterKey(String.valueOf(registerNum));
     this.put(key, new BytesCapsule(chainInfo));
   }
 
   // todo: vote-infos are only stored in the db, but not stored on the chain,
   // can track the details of the withdraw and deposit
-  public void putChainVote(int round, String chainId, String address, byte[] chainVoteInfo) {
-    this.put(buildVoteKey(round, chainId, address), new BytesCapsule(chainVoteInfo));
+  public void putChainVote(int round, long registerNum, String address, byte[] chainVoteInfo) {
+    this.put(buildVoteKey(round, String.valueOf(registerNum), address),
+            new BytesCapsule(chainVoteInfo));
   }
 
-  public void deleteChainVote(int round, String chainId, String address) {
-    this.delete(buildVoteKey(round, chainId, address));
+  public void deleteChainVote(int round, long registerNum, String address) {
+    this.delete(buildVoteKey(round, String.valueOf(registerNum), address));
   }
 
-  public byte[] getChainVote(int round, String chainId, String address) {
-    return getUnchecked(buildVoteKey(round, chainId, address)).getData();
+  public byte[] getChainVote(int round, long registerNum, String address) {
+    return getUnchecked(buildVoteKey(round, String.valueOf(registerNum), address)).getData();
   }
 
-  public void updateTotalChainVote(int round, String chainId, long amount) {
-    BytesCapsule value = getUnchecked(buildVoteChainKey(round, chainId));
+  public void updateTotalChainVote(int round, long registerNum, long amount) {
+    BytesCapsule value = getUnchecked(buildVoteChainKey(round, String.valueOf(registerNum)));
     if (value != null && !ByteUtil.isNullOrZeroArray(value.getData())) {
       amount += ByteArray.toLong(value.getData());
     }
-    put(buildVoteChainKey(round, chainId), new BytesCapsule(ByteArray.fromLong(amount)));
+    put(buildVoteChainKey(round, String.valueOf(registerNum)),
+            new BytesCapsule(ByteArray.fromLong(amount)));
   }
 
-  public long getTotalChainVote(int round, String chainId) {
-    BytesCapsule value = getUnchecked(buildVoteChainKey(round, chainId));
+  public long getTotalChainVote(int round, long registerNum) {
+    BytesCapsule value = getUnchecked(buildVoteChainKey(round, String.valueOf(registerNum)));
     if (value != null && !ByteUtil.isNullOrZeroArray(value.getData())) {
       return ByteArray.toLong(value.getData());
     } else {
@@ -120,28 +123,17 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public List<Pair<String, Long>> getChainVoteCountList(int round) {
+  public List<Pair<Long, Long>> getChainVoteCountList(int round, long minAuctionVoteCount) {
     String startStr = VOTED_KEY + round + "_";
     return Streams.stream(iterator())
             .filter(entry -> Objects.requireNonNull(ByteArray.toStr(entry.getKey()))
                     .startsWith(startStr))
-            .map(entry -> new Pair<String, Long>(ByteArray.toStr(entry.getKey())
-                    .substring((startStr).length()),
+            .filter(entry -> ByteArray.toLong(entry.getValue().getData()) >= minAuctionVoteCount)
+            .map(entry -> new Pair<Long, Long>(Long.valueOf(ByteArray.toStr(entry.getKey())
+                    .substring((startStr).length())),
                     ByteArray.toLong(entry.getValue().getData())))
             .sorted((v1, v2) -> Long.compare(v2.getValue(), v1.getValue()))
             .collect(Collectors.toList());
-  }
-
-  public List<Pair<String, Long>> getEligibleChainLists(int round, int slotCount, long minAuctionVoteCount) {
-    List<Pair<String, Long>> chainVoteCountList = getChainVoteCountList(round);
-    chainVoteCountList = chainVoteCountList.stream()
-            .filter(entry -> entry.getValue() >= minAuctionVoteCount)
-            .collect(Collectors.toList());
-    if (chainVoteCountList.size() < slotCount) {
-      return chainVoteCountList;
-    } else {
-      return getChainVoteCountList(round).subList(0, slotCount);
-    }
   }
 
   public void updateParaChains(int round, List<String> chainIds) {
@@ -205,11 +197,31 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
             .collect(Collectors.toList());
   }
 
-  public List<byte[]> getCrossChainVoteDetailList(long offset, long limit, String chainId, int round) {
+  public void updateParaChainRegisterNums(int round, List<Long> registerNums) {
+    put(buildParaChainRegisterNumsKey(round),
+            new BytesCapsule(JsonUtil.obj2Json(registerNums).getBytes()));
+  }
+
+  public void deleteParaChainRegisterNums(int round) {
+    delete(buildParaChainRegisterNumsKey(round));
+  }
+
+  public List<Long> getParaChainRegisterNumList(int round) {
+    BytesCapsule value = getUnchecked(buildParaChainRegisterNumsKey(round));
+    if (value != null && !ByteUtil.isNullOrZeroArray(value.getData())) {
+      return JsonUtil.json2Obj(ByteArray.toStr(value.getData()),
+              new TypeReference<List<Long>>() {
+              });
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  public List<byte[]> getCrossChainVoteDetailList(long offset, long limit, long registerNum, int round) {
     if (offset < 0 || limit < 0) {
       return null;
     }
-    String startStr = "vote_" + round + "_" + chainId;
+    String startStr = "vote_" + round + "_" + registerNum;
     return Streams.stream(iterator())
             .filter(entry -> Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith(startStr))
             .map(entry -> entry.getValue().getData())
@@ -218,7 +230,7 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
             .collect(Collectors.toList());
   }
 
-  public List<Pair<String, Long>> getCrossChainTotalVoteList(long offset, long limit, int round) {
+  public List<Pair<Long, Long>> getCrossChainTotalVoteList(long offset, long limit, int round) {
     if (offset < 0 || limit < 0) {
       return null;
     }
@@ -227,16 +239,16 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
             .filter(entry ->
                     Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith(startStr))
             .map(entry ->
-                    new Pair<String, Long>(ByteArray.toStr(entry.getKey())
-                            .substring(startStr.length()),
+                    new Pair<Long, Long>(Long.valueOf(ByteArray.toStr(entry.getKey())
+                            .substring(startStr.length())),
                     ByteArray.toLong(entry.getValue().getData())))
             .skip(offset)
             .limit(limit)
             .collect(Collectors.toList());
   }
 
-  public long getCrossChainUpdate(String chainId) {
-    BytesCapsule data = getUnchecked(buildKey(CROSS_CHAIN_UPDATE, chainId));
+  public long getCrossChainUpdate(long registerNum) {
+    BytesCapsule data = getUnchecked(buildKey(CROSS_CHAIN_UPDATE, registerNum));
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       return ByteArray.toLong(data.getData());
     } else {
@@ -244,28 +256,28 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public List<Pair<String, Long>> getAllCrossChainUpdate () {
+  public List<Pair<Long, Long>> getAllCrossChainUpdate () {
     String startStr = CROSS_CHAIN_UPDATE + "_";
     return Streams.stream(iterator())
             .filter(entry ->
                     Objects.requireNonNull(ByteArray.toStr(entry.getKey())).startsWith(startStr))
             .map(entry ->
-                    new Pair<String, Long>(ByteArray.toStr(entry.getKey())
-                            .substring(startStr.length()),
+                    new Pair<Long, Long>(Long.valueOf(ByteArray.toStr(entry.getKey())
+                            .substring(startStr.length())),
                             ByteArray.toLong(entry.getValue().getData())))
             .collect(Collectors.toList());
   }
 
-  public void saveCrossChainUpdate(String chainId, long number) {
-    this.put(buildKey(CROSS_CHAIN_UPDATE, chainId), new BytesCapsule(ByteArray.fromLong(number)));
+  public void saveCrossChainUpdate(long registerNum, long number) {
+    this.put(buildKey(CROSS_CHAIN_UPDATE, registerNum), new BytesCapsule(ByteArray.fromLong(number)));
   }
 
-  public void deleteCrossChainUpdate(String chainId) {
-    delete(buildKey(CROSS_CHAIN_UPDATE, chainId));
+  public void deleteCrossChainUpdate(long registerNum) {
+    delete(buildKey(CROSS_CHAIN_UPDATE, registerNum));
   }
 
-  private byte[] buildKey(String prefix, String chainId) {
-    return (prefix + "_" + chainId).getBytes();
+  private byte[] buildKey(String prefix, long registerNum) {
+    return (prefix + "_" + registerNum).getBytes();
   }
 
   private byte[] buildTokenKey(String chainId, String tokenId) {
@@ -294,6 +306,10 @@ public class CrossRevokingStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildParaChainsKey(int round) {
     return (PARACHAINS_KEY + round).getBytes();
+  }
+
+  private byte[] buildParaChainRegisterNumsKey(int round) {
+    return (PARA_CHAIN_REGISTER_NUMS_KEY + round).getBytes();
   }
 
 }

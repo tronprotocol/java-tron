@@ -34,6 +34,7 @@ public class CrossChainRegisterActuatorTest {
   private static final String dbPath = "output_crosschainregister_test";
   private static final String OWNER_ADDRESS;
   private static final String CHAINID;
+  private static final Long REGISTER_NUM;
   private static final String PROXY_ADDRESS;
   private static TronApplicationContext context;
   private static Manager dbManager;
@@ -47,6 +48,7 @@ public class CrossChainRegisterActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     CHAINID =
         "00000000000000007adbf8dc20423f587a5f3f8ea83e2877e2129c5128c12d1e";
+    REGISTER_NUM = 1L;
   }
 
   /**
@@ -95,6 +97,7 @@ public class CrossChainRegisterActuatorTest {
             .setMaintenanceTimeInterval(3600L)
             .setParentBlockHash(ByteString.copyFromUtf8("000000000000000029b59068c6058ff4"))
             .setBlockTime(100000000000L)
+                .setRegisterNum(REGISTER_NUM)
             .build());
   }
 
@@ -131,7 +134,7 @@ public class CrossChainRegisterActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       Assert.assertNotNull(dbManager.getChainBaseManager()
-              .getCrossRevokingStore().getChainInfo(CHAINID));
+              .getCrossRevokingStore().getChainInfo(REGISTER_NUM));
     } catch (ContractValidateException | ContractExeException e) {
       Assert.fail();
     }

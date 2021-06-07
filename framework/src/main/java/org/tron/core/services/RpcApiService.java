@@ -2675,6 +2675,16 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getRegisterCrossChainInfo(GrpcAPI.RegisterNumMessage request,
+                                          StreamObserver<BalanceContract.CrossChainInfo>
+                                                  responseObserver) {
+      BalanceContract.CrossChainInfo crossChainInfo =
+              wallet.getRegisterCrossChainInfo(request.getRegisterNum());
+      responseObserver.onNext(crossChainInfo);
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void voteCrossChain(CrossChain.VoteCrossChainContract request,
                           StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.VoteCrossChainContract, responseObserver);
@@ -2702,8 +2712,7 @@ public class RpcApiService implements Service {
                                        StreamObserver<GrpcAPI.CrossChainVoteDetailList>
                                            responseObserver) {
       GrpcAPI.CrossChainVoteDetailList voteCrossList = wallet.getCrossChainVoteDetailList(
-          request.getOffset(), request.getLimit(),
-              ByteArray.toHexString(request.getChainId().toByteArray()), request.getRound());
+          request.getOffset(), request.getLimit(), request.getRegisterNum(), request.getRound());
       responseObserver.onNext(voteCrossList);
       responseObserver.onCompleted();
     }

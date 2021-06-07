@@ -297,6 +297,9 @@ public class FullNodeHttpApiService implements Service {
   private GetRegisterCrossChainListServlet getRegisterCrossChainListServlet;
 
   @Autowired
+  private  GetRegisterCrossChainInfoServlet getRegisterCrossChainInfoServlet;
+
+  @Autowired
   private VoteCrossChainServlet voteCrossChainServlet;
 
   @Autowired
@@ -567,6 +570,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateCrossChainServlet), "/wallet/updatecrosschain");
       context.addServlet(new ServletHolder(getRegisterCrossChainListServlet),
               "/wallet/getregistercrosschainlist");
+      context.addServlet(new ServletHolder(getRegisterCrossChainInfoServlet),
+              "/wallet/getregistercrosschaininfo");
       context.addServlet(new ServletHolder(voteCrossChainServlet), "/wallet/votecrosschain");
       context.addServlet(new ServletHolder(unvoteCrossChainServlet), "/wallet/unvotecrosschain");
       context.addServlet(new ServletHolder(getCrossChainVoteDetailListServlet),

@@ -45,15 +45,15 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     try {
       CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
-      String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
-      if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())
+      long registerNum = crossChainInfo.getRegisterNum();
+      if (chainBaseManager.chainIsSelectedByRegisterNum(crossChainInfo.getRegisterNum())
               && getTx().getBlockNum() != -1) {
-        crossRevokingStore.saveCrossChainUpdate(chainId, getTx().getBlockNum());
+        crossRevokingStore.saveCrossChainUpdate(registerNum, getTx().getBlockNum());
       }
 
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-      crossRevokingStore.putChainInfo(chainId, crossChainInfo.toByteArray());
+      crossRevokingStore.putChainInfo(registerNum, crossChainInfo.toByteArray());
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -97,14 +97,19 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     }
 
     String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
+    long registerNum = crossChainInfo.getRegisterNum();
     byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
     byte[] proxyAddress = crossChainInfo.getProxyAddress().toByteArray();
 
-    byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(chainId);
+    byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(registerNum);
     BalanceContract.CrossChainInfo crossChainInfoOld = null;
 
+    if (registerNum <= 0) {
+      throw new ContractValidateException("Invalid registerNum!");
+    }
+
     if (crossChainInfoBytes == null) {
-      throw new ContractValidateException("ChainId has not been registered!");
+      throw new ContractValidateException("registerNum has not been registered!");
     }
 
     try {
@@ -116,10 +121,10 @@ public class CrossChainUpdateActuator extends AbstractActuator {
     long beginSyncHeightOld = crossChainInfoOld.getBeginSyncHeight();
     long latestHeaderBlockNum =
             chainBaseManager.getCommonDataBase().getLatestHeaderBlockNum(chainId);
-    logger.warn("beginSyncHeightOld:" + beginSyncHeightOld + ",latestHeaderBlockNum:" + latestHeaderBlockNum);
-    if (chainBaseManager.chainIsSelected(crossChainInfo.getChainId())
-            && latestHeaderBlockNum >= beginSyncHeightOld) {
-      throw new ContractValidateException("ChainId has been selected!");
+    if ((chainBaseManager.chainIsSelectedByRegisterNum(crossChainInfo.getRegisterNum())
+            && latestHeaderBlockNum >= beginSyncHeightOld)
+            || chainBaseManager.chainIsSelectedTwice(crossChainInfo.getChainId())) {
+      throw new ContractValidateException("ChainId or registerNum has been selected!");
     }
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
