@@ -27,6 +27,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.event.EventListener;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.ibc.common.CrossUtils;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
@@ -80,6 +81,14 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   @Override
   public void listener(PbftBlockCommitEvent event) {
+    // check block stored in db
+    try {
+      chainBaseManager.getBlockIndexStore().get(event.getBlockNum());
+    } catch (ItemNotFoundException e) {
+      // if block not stored in db
+      return;
+    }
+
     if (currentBlockNum == 0) {
       listenerBlockCommitEvent(event.getBlockNum());
     } else {
@@ -111,7 +120,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             }
             communicateService.sendCrossMessage(crossMessage, false);
             logger.info(
-                "receive a cross chain tx:{} commit success.from chain is:{},dest chain  is:{}",
+                    "receive a cross chain tx:{} commit success.from chain is:{},dest chain  is:{}",
                 hash, Hex.toHexString(crossMessage.getFromChainId().toByteArray()),
                 Hex.toHexString(crossMessage.getToChainId().toByteArray()));
           } else if (crossMessage.getType() == Type.ACK) {
@@ -157,11 +166,15 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
               builder.setToChainId(crossContract.getToChainId())
                   .setTimeOutBlockHeight(getTimeOutHeight(crossContract, timeOut));
             } catch (Exception e) {
-              logger.error("", e);
+              logger.error("send cross tx failed, err: {}", e.getMessage());
             }
             communicateService.sendCrossMessage(builder.build(), true);
             logger.info("send a cross chain tx:{}", hash.toString());
+          } else {
+            logger.error("cross tx is null, {}", hash);
           }
+        } else {
+          logger.error("cross hash not committed, tx: {}", hash);
         }
       });
       waitingSendTx.invalidate(blockNum);
@@ -246,9 +259,9 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
   public boolean validTimeOut(long timeOutHeight, ByteString toChainId, Transaction sourceTx) {
     Sha256Hash sourceHash = Sha256Hash.of(true, sourceTx.getRawData().toByteArray());
     TransactionStore transactionStore = chainBaseManager.getTransactionStore();
-    logger.info("valid chain {} time out, time out height:{},chain height:{}",
+    logger.info("valid chain {} time out, time out height:{},chain height:{}, tx:{}",
         ByteArray.toHexString(toChainId.toByteArray()),
-        timeOutHeight, communicateService.getHeight(toChainId));
+        timeOutHeight, communicateService.getHeight(toChainId), sourceHash);
     if (timeOutHeight < communicateService.getHeight(toChainId)
         && communicateService.checkCommit(sourceHash)
         && transactionStore.getUnchecked(CrossUtils.getAddSourceTxId(sourceTx).getBytes())

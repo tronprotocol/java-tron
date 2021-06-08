@@ -26,10 +26,10 @@ public class UpdateCrossChainListener implements EventListener<PbftBlockCommitEv
     CommonDataBase commonDataBase = chainBaseManager.getCommonDataBase();
     crossRevokingStore.getAllCrossChainUpdate().forEach(entry -> {
       if (entry.getValue() > 0 && entry.getValue() <= event.getBlockNum()) {
-        String chainId = entry.getKey();
-        logger.info("start update cross chain info {}", chainId);
+        long registerNum = entry.getKey();
+        logger.info("start update cross chain info {}", registerNum);
         try {
-          byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(chainId);
+          byte[] crossChainInfoBytes = crossRevokingStore.getChainInfo(registerNum);
           BalanceContract.CrossChainInfo crossChainInfo = null;
           if (crossChainInfoBytes == null) {
             throw new ContractValidateException("ChainId has not been registered!");
@@ -40,7 +40,7 @@ public class UpdateCrossChainListener implements EventListener<PbftBlockCommitEv
             throw new ContractValidateException(
                     "the format of crossChainInfo stored in db is not right!");
           }
-
+          String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
           commonDataBase.saveLatestHeaderBlockNum(chainId,
                   crossChainInfo.getBeginSyncHeight() - 1, true);
           commonDataBase.saveLatestBlockHeaderHash(chainId,
@@ -65,7 +65,7 @@ public class UpdateCrossChainListener implements EventListener<PbftBlockCommitEv
           commonDataBase.saveCrossNextMaintenanceTime(chainId, epoch);
           int agreeNodeCount = crossChainInfo.getSrListList().size() * 2 / 3 + 1;
           commonDataBase.saveAgreeNodeCount(chainId, agreeNodeCount);
-          crossRevokingStore.deleteCrossChainUpdate(chainId);
+          crossRevokingStore.deleteCrossChainUpdate(registerNum);
           logger.info("success update cross chain info {}", chainId);
         } catch (ContractValidateException e) {
           logger.warn("update cross chain info failed, error message:" + e.getMessage());

@@ -424,7 +424,55 @@ public class ChainBaseManager {
     }
 
     if (!result) {
-      logger.warn("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
+      logger.info("chain {} don't be select", ByteArray.toHexString(chainId.toByteArray()));
+    }
+    return result;
+  }
+
+  public boolean chainIsSelectedTwice(ByteString chainId) {
+    boolean result = false;
+    List<Long> auctionRoundList = getDynamicPropertiesStore().listAuctionConfigs();
+    int count = 0;
+    for (Long value : auctionRoundList) {
+      CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
+      if (roundInfo == null || roundInfo.getRound() < 0) {
+        continue;
+      }
+      List<String> paraList = getCrossRevokingStore().getParaChainList(roundInfo.getRound());
+      String chainIdStr = ByteArray.toHexString(chainId.toByteArray());
+      if (paraList.contains(chainIdStr)) {
+        count++;
+      }
+      if (count >= 2) {
+        result = true;
+        break;
+      }
+    }
+    return result;
+  }
+
+  public boolean chainIsSelectedByRegisterNum(long registerNum) {
+    if (!CommonParameter.getInstance().isShouldRegister()) {
+      return true;
+    }
+
+    boolean result = false;
+    List<Long> auctionRoundList = getDynamicPropertiesStore().listAuctionConfigs();
+    for (Long value : auctionRoundList) {
+      CrossChain.AuctionRoundContract roundInfo = AuctionConfigParser.parseAuctionConfig(value);
+      if (roundInfo == null || roundInfo.getRound() < 0) {
+        continue;
+      }
+      List<Long> paraList = getCrossRevokingStore()
+              .getParaChainRegisterNumList(roundInfo.getRound());
+      if (paraList.contains(registerNum)) {
+        result = true;
+        break;
+      }
+    }
+
+    if (!result) {
+      logger.info("chain {} don't be select", registerNum);
     }
     return result;
   }

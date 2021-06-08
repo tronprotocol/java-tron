@@ -42,11 +42,11 @@ public class CrossChainRegisterActuator extends AbstractActuator {
     try {
       CrossChainInfo crossChainInfo = any.unpack(CrossChainInfo.class);
       byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
-      String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
+      long registerNum = crossChainInfo.getRegisterNum();
       fee = fee + dynamicStore.getBurnedForRegisterCross();
       Commons.adjustBalance(accountStore, ownerAddress, -fee);
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-      crossRevokingStore.putChainInfo(chainId, crossChainInfo.toByteArray());
+      crossRevokingStore.putChainInfo(registerNum, crossChainInfo.toByteArray());
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -77,27 +77,30 @@ public class CrossChainRegisterActuator extends AbstractActuator {
           "contract type error, expected type [RegisterCrossContract], real type [" + this.any
               .getClass() + "]");
     }
-    final CrossChainInfo CrossChainInfo;
+    final CrossChainInfo crossChainInfo;
     try {
-      CrossChainInfo = any.unpack(CrossChainInfo.class);
+      crossChainInfo = any.unpack(CrossChainInfo.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
-    String chainId = ByteArray.toHexString(CrossChainInfo.getChainId().toByteArray());
-    byte[] ownerAddress = CrossChainInfo.getOwnerAddress().toByteArray();
-    byte[] proxyAddress = CrossChainInfo.getProxyAddress().toByteArray();
-
+    String chainId = ByteArray.toHexString(crossChainInfo.getChainId().toByteArray());
+    byte[] ownerAddress = crossChainInfo.getOwnerAddress().toByteArray();
+    byte[] proxyAddress = crossChainInfo.getProxyAddress().toByteArray();
+    long registerNum = crossChainInfo.getRegisterNum();
+    if (registerNum <= 0) {
+      throw new ContractValidateException("Invalid registerNum!");
+    }
     // check chain_id is exist
     if (chainId.isEmpty()) {
       throw new ContractValidateException("No chainId!");
     }
-    if (CrossChainInfo.getChainId().toByteArray().length != ActuatorConstant.CHAIN_ID_LENGTH) {
+    if (crossChainInfo.getChainId().toByteArray().length != ActuatorConstant.CHAIN_ID_LENGTH) {
       throw new ContractValidateException("Invalid chainId!");
     }
-    if (crossRevokingStore.getChainInfo(chainId) != null) {
-      throw new ContractValidateException("ChainId has already been registered!");
+    if (crossRevokingStore.getChainInfo(registerNum) != null) {
+      throw new ContractValidateException("registerNum has already been registered!");
     }
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
@@ -121,30 +124,30 @@ public class CrossChainRegisterActuator extends AbstractActuator {
     }
 
     // check sr list
-    List<ByteString> srList = CrossChainInfo.getSrListList();
+    List<ByteString> srList = crossChainInfo.getSrListList();
     if (srList.isEmpty()) {
       throw new ContractValidateException("Invalid srList!");
     }
 
     // check other params
-    long maintenanceTimeInterval = CrossChainInfo.getMaintenanceTimeInterval();
+    long maintenanceTimeInterval = crossChainInfo.getMaintenanceTimeInterval();
     if (maintenanceTimeInterval <= 0) {
       throw new ContractValidateException("Invalid maintenanceTimeInterval!");
     }
-    long blockTime = CrossChainInfo.getBlockTime();
+    long blockTime = crossChainInfo.getBlockTime();
     if (blockTime <= 0) {
       throw new ContractValidateException("Invalid blockTime!");
     }
-    long beginSyncHeight = CrossChainInfo.getBeginSyncHeight();
+    long beginSyncHeight = crossChainInfo.getBeginSyncHeight();
     if (beginSyncHeight <= 0) {
       throw new ContractValidateException("Invalid beginSyncHeight!");
     }
     String parentBlockHash =
-            ByteArray.toHexString(CrossChainInfo.getParentBlockHash().toByteArray());
+            ByteArray.toHexString(crossChainInfo.getParentBlockHash().toByteArray());
     if (parentBlockHash.isEmpty()) {
       throw new ContractValidateException("No parentBlockHash!");
     }
-    if (CrossChainInfo.getParentBlockHash().toByteArray().length !=
+    if (crossChainInfo.getParentBlockHash().toByteArray().length !=
             ActuatorConstant.CHAIN_ID_LENGTH) {
       throw new ContractValidateException("Invalid parentBlockHash!");
     }

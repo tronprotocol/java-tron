@@ -75,7 +75,6 @@ public class CommunicateService implements Communicate {
   @Autowired
   private BlockHeaderIndexStore blockHeaderIndexStore;
 
-  @PreDestroy
   public void destroy() {
     executorService.shutdown();
   }
@@ -87,15 +86,16 @@ public class CommunicateService implements Communicate {
         .scheduleWithFixedDelay(() -> receiveCrossMsgCache.asMap().forEach((hash, crossMessage) -> {
           try {
             // skip check when the block header has not been synced.
-            if (crossMessage.getRootHeight() > getHeight(crossMessage.getFromChainId())) {
+            if (crossMessage.getRootHeight() > getHeight(crossMessage.getFromChainId())
+                    || crossMessage.getRootHeight()
+                    > chainBaseManager.getCommonDataBase().getLatestPBFTBlockNum(
+                            ByteArray.toHexString(crossMessage.getFromChainId().toByteArray()))) {
               return;
             }
             if (broadcastCheck(crossMessage)) {
               manager.addCrossTx(crossMessage);
               broadcastCrossMessage(crossMessage);
               receiveCrossMsgCache.invalidate(hash);
-            } else {
-              logger.warn("crossMessage broadcast check failed");
             }
           } catch (Exception e) {
             logger.error("", e);
@@ -180,13 +180,11 @@ public class CommunicateService implements Communicate {
   @Override
   public boolean checkCommit(Sha256Hash hash) {
     TransactionStore transactionStore = chainBaseManager.getTransactionStore();
-    PbftSignDataStore pbftSignDataStore = chainBaseManager.getPbftSignDataStore();
     try {
       long blockNum = transactionStore.get(hash.getBytes()).getBlockNum();
-      PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blockNum);
-      return pbftSignCapsule != null;
-    } catch (BadItemException e) {
-      logger.error("{}", e.getMessage());
+      return chainBaseManager.getCommonDataBase().getLatestPbftBlockNum() >= blockNum;
+    } catch (BadItemException | NullPointerException e) {
+      logger.warn("check commit err, hash: {}, err: {}", hash, e.getMessage());
     }
     return false;
   }
@@ -194,6 +192,7 @@ public class CommunicateService implements Communicate {
   public boolean broadcastCheck(CrossMessage crossMessage) {
     CrossStore crossStore = chainBaseManager.getCrossStore();
     if (!isSyncFinish()) {
+      logger.info("sync is not finished, stop send cross message");
       return false;
     }
     if (crossMessage.getType() != Type.TIME_OUT
@@ -206,6 +205,8 @@ public class CommunicateService implements Communicate {
     Sha256Hash txId = Sha256Hash
             .of(true, crossMessage.getTransaction().getRawData().toByteArray());
     if (crossStore.getReceiveCrossMsgUnEx(txId) != null) {
+      // already broadcasted
+      receiveCrossMsgCache.invalidate(txId);
       return false;
     }
     //todo:timeout message how to do,save or not

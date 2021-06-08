@@ -118,4 +118,5 @@ message CrossChainInfo {
   int64 maintenance_time_interval = 6;
   bytes parent_block_hash = 7;
   int64 block_time = 8;
+  int64 register_num = 9;
 }

@@ -9,14 +9,14 @@ option go_package = "github.com/tronprotocol/grpc-gateway/core";
 
 message VoteCrossChainContract {
     bytes owner_address = 1;
-    bytes chain_id = 2;
+    int64 register_num = 2;
     int64 amount = 3;
     int32 round = 4;
 }
 
 message UnvoteCrossChainContract {
     bytes owner_address = 1;
-    bytes chain_id = 2;
+    int64 register_num = 2;
     int32 round = 3;
 }
 
