@@ -183,8 +183,8 @@ public class CommunicateService implements Communicate {
     try {
       long blockNum = transactionStore.get(hash.getBytes()).getBlockNum();
       return chainBaseManager.getCommonDataBase().getLatestPbftBlockNum() >= blockNum;
-    } catch (BadItemException e) {
-      logger.error("hash: {}, err: {}", hash, e.getMessage());
+    } catch (BadItemException | NullPointerException e) {
+      logger.error("check commit err, hash: {}, err: {}", hash, e.getMessage());
     }
     return false;
   }

@@ -120,7 +120,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             }
             communicateService.sendCrossMessage(crossMessage, false);
             logger.info(
-                "              blockNum, latestBlockNumOnDisk, latestSolidityBlockNum);\n :{} commit success.from chain is:{},dest chain  is:{}",
+                    "receive a cross chain tx:{} commit success.from chain is:{},dest chain  is:{}",
                 hash, Hex.toHexString(crossMessage.getFromChainId().toByteArray()),
                 Hex.toHexString(crossMessage.getToChainId().toByteArray()));
           } else if (crossMessage.getType() == Type.ACK) {
