@@ -75,7 +75,6 @@ public class CommunicateService implements Communicate {
   @Autowired
   private BlockHeaderIndexStore blockHeaderIndexStore;
 
-  @PreDestroychainbase/src/main/java/org/tron/core/db2/core/SnapshotManager.java
   public void destroy() {
     executorService.shutdown();
   }
@@ -185,7 +184,7 @@ public class CommunicateService implements Communicate {
       long blockNum = transactionStore.get(hash.getBytes()).getBlockNum();
       return chainBaseManager.getCommonDataBase().getLatestPbftBlockNum() >= blockNum;
     } catch (BadItemException e) {
-      logger.error("{}", e.getMessage());
+      logger.error("hash: {}, err: {}", hash, e.getMessage());
     }
     return false;
   }
@@ -206,6 +205,8 @@ public class CommunicateService implements Communicate {
     Sha256Hash txId = Sha256Hash
             .of(true, crossMessage.getTransaction().getRawData().toByteArray());
     if (crossStore.getReceiveCrossMsgUnEx(txId) != null) {
+      // already broadcasted
+      receiveCrossMsgCache.invalidate(txId);
       return false;
     }
     //todo:timeout message how to do,save or not

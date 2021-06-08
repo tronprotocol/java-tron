@@ -27,6 +27,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.event.EventListener;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.ibc.common.CrossUtils;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
@@ -80,6 +81,14 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   @Override
   public void listener(PbftBlockCommitEvent event) {
+    // check block stored in db
+    try {
+      chainBaseManager.getBlockIndexStore().get(event.getBlockNum());
+    } catch (ItemNotFoundException e) {
+      // if block not stored in db
+      return;
+    }
+
     if (currentBlockNum == 0) {
       listenerBlockCommitEvent(event.getBlockNum());
     } else {
@@ -111,7 +120,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             }
             communicateService.sendCrossMessage(crossMessage, false);
             logger.info(
-                "receive a cross chain tx:{} commit success.from chain is:{},dest chain  is:{}",
+                "              blockNum, latestBlockNumOnDisk, latestSolidityBlockNum);\n :{} commit success.from chain is:{},dest chain  is:{}",
                 hash, Hex.toHexString(crossMessage.getFromChainId().toByteArray()),
                 Hex.toHexString(crossMessage.getToChainId().toByteArray()));
           } else if (crossMessage.getType() == Type.ACK) {

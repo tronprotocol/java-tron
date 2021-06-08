@@ -7,6 +7,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.consensus.dpos.DposService;
 import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -35,6 +36,9 @@ public class PbftMessageAction {
   @Autowired
   private BlockStore blockStore;
 
+  @Autowired
+  private DposService dposService;
+
   public synchronized void action(PbftMessage message, List<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
@@ -42,12 +46,13 @@ public class PbftMessageAction {
         SnapshotManager.allowCrossChain = chainBaseManager
             .getDynamicPropertiesStore().allowCrossChain();
         if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+          long latestSolidifiedBlockNum = chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+          dposService.updateSolidBlock();
           long latestBlockNumOnDisk = Optional.ofNullable(
                   blockStore.getLatestBlockFromDisk(1).get(0))
                   .map(BlockCapsule::getNum).orElse(0L);
           if (blockNum > chainBaseManager.getCommonDataBase().getLatestPbftBlockNum()) {
-            revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
-                    chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+            revokingStore.fastFlush(blockNum, latestBlockNumOnDisk, latestSolidifiedBlockNum);
           }
         }
         Raw raw = message.getPbftMessage().getRawData();
@@ -60,23 +65,6 @@ public class PbftMessageAction {
         logger.info("commit msg block num is:{}", blockNum);
 
         if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
-          long start = System.currentTimeMillis();
-          while (true) {
-            try {
-              if (System.currentTimeMillis() - start > 1000) {
-                break;
-              }
-              chainBaseManager.getBlockIndexStore().get(blockNum);
-              // if block stored in db
-              break;
-            } catch (ItemNotFoundException e) {
-              try {
-                Thread.sleep(10);
-              } catch (InterruptedException ex) {
-                ex.printStackTrace();
-              }
-            }
-          }
           eventBusService.postEvent(
                   new PbftBlockCommitEvent(blockNum,
                           message.getPbftMessage().getRawData().getData()));
