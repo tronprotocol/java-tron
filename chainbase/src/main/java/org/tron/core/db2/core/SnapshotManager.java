@@ -298,7 +298,7 @@ public class SnapshotManager implements RevokingDatabase {
     }
     needFlush.set(true);
     try {
-      updateSolidity((int) (blockNum - latestSolidityBlockNum));
+      updateSolidity((int) (blockNum - latestBlockNumOnDisk));
       logger.info("updateSolidity success, blockNum: {}, latestBlockNumOnDisk: {},"
                       + " latestSolidityBlockNum: {}",
               blockNum, latestBlockNumOnDisk, latestSolidityBlockNum);
