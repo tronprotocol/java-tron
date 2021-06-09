@@ -79,16 +79,16 @@ public class LocalHeaderMsgProcess {
 
   protected boolean setSrList(Builder builder, String chainIdString, long blockTime,
                            long latestMaintenanceTime, boolean isMaintenanceTimeUpdated) {
-    //
-    long round = blockTime / chainBaseManager.getCommonDataBase()
+    long maintenanceTimeInterval = chainBaseManager.getCommonDataBase()
             .getChainMaintenanceTimeInterval(chainIdString);
-    long maintenanceTime = (round + 1) * chainBaseManager.getCommonDataBase()
-            .getChainMaintenanceTimeInterval(chainIdString);
+    long round = blockTime / maintenanceTimeInterval;
+    long maintenanceTime = (round + 1) * maintenanceTimeInterval;
     // Long latestMaintenanceTimeTmp = latestMaintenanceTimeMap.get(chainIdString);
     // latestMaintenanceTimeTmp = latestMaintenanceTimeTmp == null ? 0 : latestMaintenanceTimeTmp;
     logger.debug("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
         latestMaintenanceTime);
-    if (maintenanceTime > latestMaintenanceTime && !isMaintenanceTimeUpdated) {
+    if ((maintenanceTime > latestMaintenanceTime && !isMaintenanceTimeUpdated)
+            || (blockTime % maintenanceTimeInterval == 0)) {
       PBFTCommitResult pbftCommitResult = chainBaseManager.getCommonDataBase()
           .getSRLCommit(chainIdString, maintenanceTime);
       if (pbftCommitResult != null) {
