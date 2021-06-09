@@ -45,7 +45,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   private long txDelaySendBlockNum = 5;
 
-  private static volatile long currentBlockNum = 0;
+  private volatile long currentBlockNum = 0;
 
   private static final LoadingCache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder()
       .initialCapacity(100).expireAfterWrite(1, TimeUnit.HOURS)
