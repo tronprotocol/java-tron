@@ -22,6 +22,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.capsule.utils.MerkleTree.ProofLeaf;
 import org.tron.core.config.args.Args;
@@ -181,10 +182,15 @@ public class CommunicateService implements Communicate {
   public boolean checkCommit(Sha256Hash hash) {
     TransactionStore transactionStore = chainBaseManager.getTransactionStore();
     try {
-      long blockNum = transactionStore.get(hash.getBytes()).getBlockNum();
+      TransactionCapsule transactionCapsule = transactionStore.get(hash.getBytes());
+      if (transactionCapsule == null) {
+        logger.warn("check commit err, tx is null, hash: {}", hash);
+        return false;
+      }
+      long blockNum = transactionCapsule.getBlockNum();
       return chainBaseManager.getCommonDataBase().getLatestPbftBlockNum() >= blockNum;
     } catch (BadItemException e) {
-      logger.error("hash: {}, err: {}", hash, e.getMessage());
+      logger.warn("check commit err, hash: {}, err: {}", hash, e.getMessage());
     }
     return false;
   }
@@ -267,6 +273,8 @@ public class CommunicateService implements Communicate {
     }
     BlockId blockId = blockHeaderIndexStore.getUnchecked(chainId, crossMessage.getRootHeight());
     if (blockId == null) {
+      logger.warn("block header index not found, chainId: {}, high: {}",
+              chainId, crossMessage.getRootHeight());
       return null;
     }
     if (blockId.getNum() > chainBaseManager.getCommonDataBase().getLatestPBFTBlockNum(chainId)) {
@@ -278,6 +286,8 @@ public class CommunicateService implements Communicate {
     if (blockHeaderCapsule != null) {
       return blockHeaderCapsule.getCrossMerkleRoot().equals(Sha256Hash.ZERO_HASH)
           ? blockHeaderCapsule.getMerkleRoot() : blockHeaderCapsule.getCrossMerkleRoot();
+    } else {
+      logger.warn("block header is null, chainId:{}, blockId: {}", chainId, blockId);
     }
     return null;
   }
