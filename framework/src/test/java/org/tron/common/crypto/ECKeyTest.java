@@ -223,11 +223,9 @@ public class ECKeyTest {
     byte[] hash = Hash.sha3(msg.getBytes());
     String sig = sign.signHash(hash);
     byte[] address = SignUtils.signatureToAddress(hash, sig, true);
-    System.out.println("hash:" + Hex.toHexString(hash));
-    System.out.println("sig:" + sig);
-    System.out.println("address: " + Hex.toHexString(address));
     assertEquals("429e4ce662a41be0a50e65626f0ec4c8f68d45a57fe80beebab2f82601884795",
         Hex.toHexString(hash));
-    assertEquals("41cd2a3d9f938e13cd947ec05abc7fe734df8dd826", Hex.toHexString(address));
+    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+        Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
   }
 }

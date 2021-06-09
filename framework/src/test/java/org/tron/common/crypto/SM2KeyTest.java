@@ -282,6 +282,7 @@ public class SM2KeyTest {
     byte[] address = SignUtils.signatureToAddress(hash, sig, false);
     assertEquals("5521fbff5abf495e6db8fb4a83ed2bf27b97197757fc5a1002a7edc58b690900",
         Hex.toHexString(hash));
-    assertEquals("4162e49e4c2f4e3c0653a02f8859c1e6991b759e87", Hex.toHexString(address));
+    assertEquals("62e49e4c2f4e3c0653a02f8859c1e6991b759e87",
+        Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
   }
 }
