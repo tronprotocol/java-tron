@@ -149,7 +149,7 @@ public class CrossHeaderMsgProcess {
     }
     //notice local node
     syncPool.getActivePeers().forEach(peerConnection -> {
-      peerConnection.sendMessage(msg);
+      peerConnection.fastSend(msg);
     });
     logger.info("chain {} handleUpdatedNotice {} end", chainIdStr,
         noticeMessage.getCurrentBlockHeight());
@@ -251,7 +251,8 @@ public class CrossHeaderMsgProcess {
     // latestMaintenanceTimeTmp = latestMaintenanceTimeTmp == null ? 0 : latestMaintenanceTimeTmp;
     logger.debug("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
         latestMaintenanceTime);
-    if (maintenanceTime > latestMaintenanceTime && maintenanceTime != currentMaintenanceTime) {
+    if ((maintenanceTime > latestMaintenanceTime && maintenanceTime != currentMaintenanceTime)
+            || (blockTime % CommonParameter.getInstance().getMaintenanceTimeInterval() == 0)) {
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
           .getSrSignData(maintenanceTime);
       if (srSignCapsule != null) {

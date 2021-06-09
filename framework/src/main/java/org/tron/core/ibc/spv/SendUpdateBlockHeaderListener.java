@@ -70,7 +70,7 @@ public class SendUpdateBlockHeaderListener implements EventListener<PbftBlockCom
         logger.info("triggerNotice, peer:{}, notice num:{}, chainId:{}",
             peerConnection, noticeMessage.getCurrentBlockHeight(),
             ByteArray.toHexString(noticeMessage.getChainId()));
-        peerConnection.sendMessage(noticeMessage);
+        peerConnection.fastSend(noticeMessage);
       });
     });
   }
