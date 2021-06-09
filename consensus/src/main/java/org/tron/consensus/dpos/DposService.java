@@ -153,7 +153,7 @@ public class DposService implements ConsensusInterface {
     return true;
   }
 
-  private void updateSolidBlock() {
+  public synchronized void updateSolidBlock() {
     long newSolidNum;
     if (!consensusDelegate.getDynamicPropertiesStore().allowCrossChain() || pbftInterface.isSyncing()) {
       List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()

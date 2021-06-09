@@ -51,7 +51,7 @@ public class SendUpdateBlockHeaderListener implements EventListener<PbftBlockCom
     try {
       blockCapsule = manager.getBlockByNum(event.getBlockNum());
     } catch (ItemNotFoundException | BadItemException e) {
-      logger.error("", e);
+      logger.warn("{}", e.getMessage());
     }
     if (blockCapsule == null) {
       return;

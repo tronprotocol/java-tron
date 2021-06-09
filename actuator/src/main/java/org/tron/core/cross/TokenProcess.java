@@ -88,7 +88,7 @@ public class TokenProcess {
         accountCapsule.addAssetAmountV2(ByteArray.fromString(destTokenId),
             amount, dynamicStore, assetIssueStore);
         accountStore.put(toAddress, accountCapsule);
-        assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
+        assetIssueV2Store.put(ByteArray.fromString(destTokenId), assetIssueCapsule);
       } else {
         //create the asset
         long descTokenId = createAsset(chainBaseManager, crossToken, crossContract);

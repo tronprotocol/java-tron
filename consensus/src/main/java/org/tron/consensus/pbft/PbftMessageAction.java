@@ -7,6 +7,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.consensus.dpos.DposService;
 import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -16,6 +17,7 @@ import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.event.EventBusService;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
 
 @Slf4j(topic = "pbft")
@@ -34,6 +36,9 @@ public class PbftMessageAction {
   @Autowired
   private BlockStore blockStore;
 
+  @Autowired
+  private DposService dposService;
+
   public synchronized void action(PbftMessage message, List<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
@@ -41,17 +46,22 @@ public class PbftMessageAction {
         SnapshotManager.allowCrossChain = chainBaseManager
             .getDynamicPropertiesStore().allowCrossChain();
         if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+          long latestSolidifiedBlockNum = chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+          dposService.updateSolidBlock();
           long latestBlockNumOnDisk = Optional.ofNullable(
                   blockStore.getLatestBlockFromDisk(1).get(0))
                   .map(BlockCapsule::getNum).orElse(0L);
-          revokingStore.fastFlush(blockNum, latestBlockNumOnDisk,
-                  chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          if (blockNum > chainBaseManager.getCommonDataBase().getLatestPbftBlockNum()) {
+            revokingStore.fastFlush(blockNum, latestBlockNumOnDisk, latestSolidifiedBlockNum);
+          }
         }
-        chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
+        if (blockNum > chainBaseManager.getCommonDataBase().getLatestPbftBlockNum()) {
+          chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
+          chainBaseManager.getCommonDataBase().saveLatestPbftBlockHash(raw.getData().toByteArray());
+        }
         chainBaseManager.getPbftSignDataStore()
             .putBlockSignData(blockNum, new PbftSignCapsule(raw.toByteString(), dataSignList));
-        chainBaseManager.getCommonDataBase().saveLatestPbftBlockHash(raw.getData().toByteArray());
         logger.info("commit msg block num is:{}", blockNum);
 
         if (chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {

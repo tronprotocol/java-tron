@@ -1741,6 +1741,7 @@ public class Manager {
         CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
         if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
             source.getToChainId(), source.getTransaction())) {
+          logger.error("tx valid timeout: " + source);
           //todo:if block head sync fail,then the time out will be valid fail!
           throw new ValidateSignatureException(
               "valid time out tx fail,sourceTxId: " + sourceTxId);

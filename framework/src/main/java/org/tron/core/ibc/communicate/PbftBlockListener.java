@@ -27,6 +27,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.event.EventListener;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.ibc.common.CrossUtils;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
@@ -41,6 +42,8 @@ import org.tron.protos.contract.BalanceContract.CrossContract.CrossDataType;
 public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   private long timeOut = 1000 * 60 * 1L;
+
+  private long txDelaySendBlockNum = 5;
 
   private static volatile long currentBlockNum = 0;
 
@@ -80,14 +83,25 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   @Override
   public void listener(PbftBlockCommitEvent event) {
+    // check block stored in db
+    try {
+      chainBaseManager.getBlockIndexStore().get(event.getBlockNum());
+    } catch (ItemNotFoundException e) {
+      // if block not stored in db
+      return;
+    }
+
+    long index = event.getBlockNum() - txDelaySendBlockNum;
     if (currentBlockNum == 0) {
-      listenerBlockCommitEvent(event.getBlockNum());
-    } else {
-      for (long num = currentBlockNum + 1; num <= event.getBlockNum(); num++) {
+      currentBlockNum = event.getBlockNum() - 1;
+      return;
+    }
+    if (currentBlockNum < index) {
+      for (long num = currentBlockNum + 1; num <= index; num++) {
         listenerBlockCommitEvent(num);
       }
+      currentBlockNum = index;
     }
-    currentBlockNum = event.getBlockNum();
     checkTimeOut();
   }
 
@@ -111,7 +125,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             }
             communicateService.sendCrossMessage(crossMessage, false);
             logger.info(
-                "receive a cross chain tx:{} commit success.from chain is:{},dest chain  is:{}",
+                    "receive a cross chain tx:{} commit success.from chain is:{},dest chain  is:{}",
                 hash, Hex.toHexString(crossMessage.getFromChainId().toByteArray()),
                 Hex.toHexString(crossMessage.getToChainId().toByteArray()));
           } else if (crossMessage.getType() == Type.ACK) {
@@ -154,8 +168,13 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             Contract contract = tx.getInstance().getRawData().getContract(0);
             try {
               CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+              long timeoutHeight = getTimeOutHeight(crossContract, timeOut);
               builder.setToChainId(crossContract.getToChainId())
-                  .setTimeOutBlockHeight(getTimeOutHeight(crossContract, timeOut));
+                  .setTimeOutBlockHeight(timeoutHeight);
+              if (crossContract.getType() == CrossDataType.TOKEN) {
+                sendTxMap.put(hash, new SendTxEntry(hash, System.currentTimeMillis(),
+                        (long)(timeoutHeight * 1.5), crossContract.getToChainId()));
+              }
             } catch (Exception e) {
               logger.error("send cross tx failed, err: {}", e.getMessage());
             }
@@ -188,11 +207,6 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
       }
       CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
       if (transactionCapsule.isSource()) {
-        if (crossContract.getType() == CrossDataType.TOKEN) {
-          sendTxMap.put(txHash, new SendTxEntry(txHash, System.currentTimeMillis(),
-              getTimeOutHeight(crossContract, (long) (timeOut * 1.5)),
-              crossContract.getToChainId()));
-        }
         waitingSendTx.get(blockNum).add(txHash);
         return true;
       }
@@ -256,7 +270,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
     if (timeOutHeight < communicateService.getHeight(toChainId)
         && communicateService.checkCommit(sourceHash)
         && transactionStore.getUnchecked(CrossUtils.getAddSourceTxId(sourceTx).getBytes())
-        == null) {
+            == null) {
       return true;
     }
     return false;

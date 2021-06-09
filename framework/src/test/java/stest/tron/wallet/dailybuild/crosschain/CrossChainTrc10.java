@@ -158,7 +158,12 @@ public class CrossChainTrc10 extends CrossChainBase {
 
 
 
-
+    Assert.assertEquals(PublicMethed.getAssetIssueById(assetAccountId1.toStringUtf8(),
+        blockingStubFull).getId(), assetAccountId1.toStringUtf8());
+    Assert.assertEquals(PublicMethed.getAssetIssueById(assetAccountIdCrossChain.toStringUtf8(),
+        crossBlockingStubFull).getId(), assetAccountIdCrossChain.toStringUtf8());
+    Assert.assertEquals(PublicMethed.getAssetIssueById(assetAccountId2.toStringUtf8(),
+        crossBlockingStubFull).getId(), assetAccountId2.toStringUtf8());
 
   }
 
