@@ -43,6 +43,8 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   private long timeOut = 1000 * 60 * 1L;
 
+  private long txDelaySendBlockNum = 5;
+
   private static volatile long currentBlockNum = 0;
 
   private static final LoadingCache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder()
@@ -89,14 +91,17 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
       return;
     }
 
+    long index = event.getBlockNum() - txDelaySendBlockNum;
     if (currentBlockNum == 0) {
-      listenerBlockCommitEvent(event.getBlockNum());
-    } else {
-      for (long num = currentBlockNum + 1; num <= event.getBlockNum(); num++) {
+      currentBlockNum = event.getBlockNum() - 1;
+      return;
+    }
+    if (currentBlockNum < index) {
+      for (long num = currentBlockNum + 1; num <= index; num++) {
         listenerBlockCommitEvent(num);
       }
+      currentBlockNum = index;
     }
-    currentBlockNum = event.getBlockNum();
     checkTimeOut();
   }
 
@@ -163,8 +168,13 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             Contract contract = tx.getInstance().getRawData().getContract(0);
             try {
               CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+              long timeoutHeight = getTimeOutHeight(crossContract, timeOut);
               builder.setToChainId(crossContract.getToChainId())
-                  .setTimeOutBlockHeight(getTimeOutHeight(crossContract, timeOut));
+                  .setTimeOutBlockHeight(timeoutHeight);
+              if (crossContract.getType() == CrossDataType.TOKEN) {
+                sendTxMap.put(hash, new SendTxEntry(hash, System.currentTimeMillis(),
+                        (long)(timeoutHeight * 1.5), crossContract.getToChainId()));
+              }
             } catch (Exception e) {
               logger.error("send cross tx failed, err: {}", e.getMessage());
             }
@@ -197,11 +207,6 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
       }
       CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
       if (transactionCapsule.isSource()) {
-        if (crossContract.getType() == CrossDataType.TOKEN) {
-          sendTxMap.put(txHash, new SendTxEntry(txHash, System.currentTimeMillis(),
-              getTimeOutHeight(crossContract, (long) (timeOut * 1.5)),
-              crossContract.getToChainId()));
-        }
         waitingSendTx.get(blockNum).add(txHash);
         return true;
       }
@@ -265,7 +270,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
     if (timeOutHeight < communicateService.getHeight(toChainId)
         && communicateService.checkCommit(sourceHash)
         && transactionStore.getUnchecked(CrossUtils.getAddSourceTxId(sourceTx).getBytes())
-        == null) {
+            == null) {
       return true;
     }
     return false;

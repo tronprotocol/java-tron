@@ -273,6 +273,8 @@ public class CommunicateService implements Communicate {
     }
     BlockId blockId = blockHeaderIndexStore.getUnchecked(chainId, crossMessage.getRootHeight());
     if (blockId == null) {
+      logger.warn("block header index not found, chainId: {}, high: {}",
+              chainId, crossMessage.getRootHeight());
       return null;
     }
     if (blockId.getNum() > chainBaseManager.getCommonDataBase().getLatestPBFTBlockNum(chainId)) {
@@ -284,6 +286,8 @@ public class CommunicateService implements Communicate {
     if (blockHeaderCapsule != null) {
       return blockHeaderCapsule.getCrossMerkleRoot().equals(Sha256Hash.ZERO_HASH)
           ? blockHeaderCapsule.getMerkleRoot() : blockHeaderCapsule.getCrossMerkleRoot();
+    } else {
+      logger.warn("block header is null, chainId:{}, blockId: {}", chainId, blockId);
     }
     return null;
   }
