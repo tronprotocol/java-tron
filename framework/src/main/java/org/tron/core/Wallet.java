@@ -3872,7 +3872,9 @@ public class Wallet {
                 .setRound(AuctionConfigParser.getAuctionRound(value))
                 .setSlotCount(AuctionConfigParser.getSlotCount(value))
                 .build();
-      builder.addAuctionConfigDetail(auctionRoundContract);
+      if (auctionRoundContract.getRound() > 0) {
+        builder.addAuctionConfigDetail(auctionRoundContract);
+      }
     });
     return builder.build();
   }
