@@ -399,7 +399,7 @@ public class CrossChainBase {
    * constructor.
    */
   public static String registerCrossChainGetTxid(byte[] ownerAddress, byte[] proxyAddress,
-      ByteString chainId, List<ByteString> srList, Long beginSyncHeight,
+      Long registerNum, ByteString chainId, List<ByteString> srList, Long beginSyncHeight,
       Long maintenanceTimeInterval, ByteString parentBlockHash, Long blockTime, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -420,6 +420,7 @@ public class CrossChainBase {
     build.setMaintenanceTimeInterval(maintenanceTimeInterval);
     build.setParentBlockHash(parentBlockHash);
     build.setBlockTime(blockTime);
+    build.setRegisterNum(registerNum);
     TransactionExtention transactionExtention = blockingStubFull.registerCrossChain(build.build());
     return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
   }
