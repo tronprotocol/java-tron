@@ -173,7 +173,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
                   .setTimeOutBlockHeight(timeoutHeight);
               if (crossContract.getType() == CrossDataType.TOKEN) {
                 sendTxMap.put(hash, new SendTxEntry(hash, System.currentTimeMillis(),
-                        (long)(timeoutHeight * 1.5), crossContract.getToChainId()));
+                        (long)(timeoutHeight + 10), crossContract.getToChainId()));
               }
             } catch (Exception e) {
               logger.error("send cross tx failed, err: {}", e.getMessage());
