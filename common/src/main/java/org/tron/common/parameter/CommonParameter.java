@@ -394,6 +394,9 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
+  public boolean fullNodeHttpJsonRpcEnable = true;
+  @Getter
+  @Setter
   public int maxTransactionPendingSize;
   @Getter
   @Setter
