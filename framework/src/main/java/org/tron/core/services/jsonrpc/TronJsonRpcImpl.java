@@ -179,9 +179,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public int getNetVersion() {
+  public String getNetVersion() {
     //当前链的id，不能跟metamask已有的id冲突
-    return 100;
+    return ByteArray.toJsonHex(100);
   }
 
   @Override
@@ -191,23 +191,24 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public int getProtocolVersion() {
+  public String getProtocolVersion() {
     //当前块的版本号。实际是与代码版本对应的。
-    return wallet.getNowBlock().getBlockHeader().getRawData().getVersion();
+    return ByteArray.toJsonHex(wallet.getNowBlock().getBlockHeader().getRawData().getVersion());
   }
 
   @Override
-  public int getLatestBlockNum() {
+  public String getLatestBlockNum() {
     //当前节点同步的最新块号
-    return (int) wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    return ByteArray.toJsonHex(wallet.getNowBlock().getBlockHeader().getRawData().getNumber());
   }
 
   @Override
-  public long getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException {
+  public String getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException {
     //某个用户的trx余额，以sun为单位
-    byte[] addressData = Commons.decodeFromBase58Check(address);
+    byte[] addressData = ByteArray.fromHexString(address);
     Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
-    return wallet.getAccount(account).getBalance();
+    long balance = wallet.getAccount(account).getBalance();
+    return ByteArray.toJsonHex(balance);
   }
 
 
@@ -279,42 +280,45 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public BigInteger getTrc20Balance(String ownerAddress, String contractAddress,
+  public String getTrc20Balance(String ownerAddress, String contractAddress,
       String blockNumOrTag) {
     //某个用户拥有的某个token20余额，带精度
-    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
+    byte[] addressData = ByteArray.fromHexString(ownerAddress);
+    //byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
 
     //生成dataStr
     byte[] addressDataWord = new byte[32];
     System.arraycopy(addressData, 0, addressDataWord, 32 - addressData.length, addressData.length);
     String dataStr = balanceOfTopic + Hex.toHexString(addressDataWord);
 
-    String result = call(addressData, Commons.decodeFromBase58Check(contractAddress),
+    String result = call(addressData, ByteArray.fromHexString(contractAddress),
         ByteArray.fromHexString(dataStr));
 
     if (Objects.isNull(result)) {
-      return BigInteger.valueOf(0);
+      return "0x0";
     }
     if (result.length() > 64) {
       result = result.substring(0, 64);
     }
-    return new BigInteger(1, ByteArray.fromHexString(result));
+
+    return ByteArray.toJsonHex(ByteUtil.stripLeadingZeroes(ByteArray.fromHexString(result)));
   }
 
   @Override
-  public long getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
+  public String getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
     //发起人为某个地址的交易总数。FullNode无法实现该功能
-    return wallet.getNowBlock().getBlockHeader().getRawData().getTimestamp() + 86400 * 1000;
+    return ByteArray.toJsonHex(
+        wallet.getNowBlock().getBlockHeader().getRawData().getTimestamp() + 86400 * 1000);
   }
 
   @Override
   public String getABIofSmartContract(String contractAddress) {
     //获取某个合约地址的字节码
-    byte[] addressData = Commons.decodeFromBase58Check(contractAddress);
+    byte[] addressData = ByteArray.fromHexString(contractAddress);
     BytesMessage.Builder build = BytesMessage.newBuilder();
     BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressData)).build();
     SmartContract smartContract = wallet.getContract(bytesMessage);
-    return ByteArray.toHexString(smartContract.getBytecode().toByteArray());
+    return ByteArray.toJsonHex(smartContract.getBytecode().toByteArray());
   }
 
   @Override
@@ -327,7 +331,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     //获取最新块的产块sr地址
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
-    return encode58Check(witnessAddress);
+    return ByteArray.toJsonHex(witnessAddress);
   }
 
   @Override
@@ -486,8 +490,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public String getCall(CallArguments transactionCall, String blockNumOrTag) {
     //静态调用合约方法。
-    byte[] addressData = Commons.decodeFromBase58Check(transactionCall.from);
-    byte[] contractAddressData = Commons.decodeFromBase58Check(transactionCall.to);
+    byte[] addressData = ByteArray.fromHexString(transactionCall.from);
+    byte[] contractAddressData = ByteArray.fromHexString(transactionCall.to);
 
     return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
   }
@@ -515,20 +519,21 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public int getPeerCount() {
+  public String getPeerCount() {
     //返回当前节点所连接的peer节点数量
-    return nodeInfoService.getNodeInfo().getPeerList().size();
+    return ByteArray.toJsonHex(nodeInfoService.getNodeInfo().getPeerList().size());
   }
 
   @Override
   public Object getSyncingStatus() {
-    //查询同步状态。未同步返回false，否则返回JSonObject
+    //查询同步状态。未同步返回false，否则返回 SyncingResult
     if (nodeInfoService.getNodeInfo().getPeerList().size() == 0) {
       return false;
     }
     long startingBlock = nodeInfoService.getNodeInfo().getBeginSyncNum();
-    long currentBlock = getLatestBlockNum();
-    long diff = (System.currentTimeMillis() - wallet.getNowBlock().getBlockHeader().getRawData()
+    Block nowBlock = wallet.getNowBlock();
+    long currentBlock = nowBlock.getBlockHeader().getRawData().getNumber();
+    long diff = (System.currentTimeMillis() - nowBlock.getBlockHeader().getRawData()
         .getTimestamp()) / 3000;
     diff = diff > 0 ? diff : 0;
     long highestBlock = currentBlock + diff; //预测的最高块号
@@ -552,21 +557,21 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public int getUncleCountByBlockHash(String blockHash) {
+  public String getUncleCountByBlockHash(String blockHash) {
     //查询指定块hash的分叉个数
-    return 0;
+    return "0x0";
   }
 
   @Override
-  public int getUncleCountByBlockNumber(String blockNumOrTag) {
+  public String getUncleCountByBlockNumber(String blockNumOrTag) {
     //查询指定块号的分叉个数
-    return 0;
+    return "0x0";
   }
 
   @Override
-  public int getHashRate() {
+  public String getHashRate() {
     //读取当前挖矿节点的每秒钟哈希值算出数量，无用
-    return 0;
+    return "0x0";
   }
 
   @Override

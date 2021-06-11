@@ -86,11 +86,11 @@ public interface TronJsonRpc {
 
     //需要采用public修饰符，否则输入参数不能被识别
     /**
-     * T开头的用户地址
+     * 用户地址，16进制
      */
     public String from;
     /**
-     * T开头的合约地址
+     * 合约地址，16进制
      */
     public String to;
     public String gas; //not used
@@ -247,25 +247,25 @@ public interface TronJsonRpc {
   BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
 
   @JsonRpcMethod("net_version")
-  int getNetVersion();
+  String getNetVersion();
 
   @JsonRpcMethod("net_listening")
   boolean isListening();
 
   @JsonRpcMethod("eth_protocolVersion")
-  int getProtocolVersion();
+  String getProtocolVersion();
 
   @JsonRpcMethod("eth_blockNumber")
-  int getLatestBlockNum();
+  String getLatestBlockNum();
 
   @JsonRpcMethod("eth_getBalance")
-  long getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException;
+  String getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException;
 
   @JsonRpcMethod("eth_getStorageAt")
-  BigInteger getTrc20Balance(String address, String contractAddress, String blockNumOrTag);
+  String getTrc20Balance(String address, String contractAddress, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getTransactionCount")
-  long getSendTransactionCountOfAddress(String address, String blockNumOrTag);
+  String getSendTransactionCountOfAddress(String address, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getCode")
   String getABIofSmartContract(String contractAddress);
@@ -301,7 +301,7 @@ public interface TronJsonRpc {
   String getCall(CallArguments transactionCall, String blockNumOrTag);
 
   @JsonRpcMethod("net_peerCount")
-  int getPeerCount();
+  String getPeerCount();
 
   @JsonRpcMethod("eth_syncing")
   Object getSyncingStatus();
@@ -313,13 +313,13 @@ public interface TronJsonRpc {
   BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, int index);
 
   @JsonRpcMethod("eth_getUncleCountByBlockHash")
-  int getUncleCountByBlockHash(String blockHash);
+  String getUncleCountByBlockHash(String blockHash);
 
   @JsonRpcMethod("eth_getUncleCountByBlockNumber")
-  int getUncleCountByBlockNumber(String blockNumOrTag);
+  String getUncleCountByBlockNumber(String blockNumOrTag);
 
   @JsonRpcMethod("eth_hashrate")
-  int getHashRate();
+  String getHashRate();
 
   @JsonRpcMethod("eth_mining")
   boolean isMining();
