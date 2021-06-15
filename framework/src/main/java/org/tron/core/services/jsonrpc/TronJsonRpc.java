@@ -174,7 +174,7 @@ public interface TronJsonRpc {
 
       byte[] txid = new TransactionCapsule(tx).getTransactionId().getBytes();
       hash = ByteArray.toJsonHex(txid);
-      nonce = ""; // no value
+      nonce = null; // no value
       blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
       blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
       transactionIndex = ByteArray.toJsonHex(index);

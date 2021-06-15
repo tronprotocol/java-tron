@@ -135,21 +135,21 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     br.number = ByteArray.toJsonHex(blockCapsule.getNum());
     br.hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     br.parentHash = ByteArray.toJsonHex(blockCapsule.getParentBlockId().getBytes());
-    br.nonce = ""; // no value
-    br.sha3Uncles = ""; // no value
-    br.logsBloom = ""; // no value
+    br.nonce = null; // no value
+    br.sha3Uncles = null; // no value
+    br.logsBloom = null; // no value
     br.transactionsRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
     br.stateRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
-    br.receiptsRoot = ""; // no value
+    br.receiptsRoot = null; // no value
     br.miner = ByteArray.toJsonHex(blockCapsule.getWitnessAddress().toByteArray());
-    br.difficulty = ""; // no value
-    br.totalDifficulty = ""; // no value
+    br.difficulty = null; // no value
+    br.totalDifficulty = null; // no value
     // br.extraData // no value
     br.size = ByteArray.toJsonHex(block.getSerializedSize());
-    br.gasLimit = "";
-    br.gasUsed = "";
+    br.gasLimit = null;
+    br.gasUsed = null;
     br.timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
 
     List<Object> txes = new ArrayList<>();
