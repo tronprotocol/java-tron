@@ -38,6 +38,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.exception.CancelException;
@@ -491,6 +492,69 @@ public class CrossChainBase {
     build.setRound(round);
     TransactionExtention transactionExtention = blockingStubFull.unvoteCrossChain(build.build());
     return getTxidFromTransactionExtention(transactionExtention, ecKey, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+  public static String createTriggerContractForCrossByHttp(byte[] ownerAddress, byte[] proxyAddress,
+      byte[] contractAddress, byte[] crossContractAddress, String method, String argsStr,
+      ByteString chainId, ByteString crossChainId, String priKey,
+      String httpNode, WalletGrpc.WalletBlockingStub blockingStubFull) throws Exception {
+    httpNode = "http://" + httpNode;
+    byte[] data =  Hex.decode(AbiUtil.parseMethod(method, argsStr, false));
+    SmartContractOuterClass.TriggerSmartContract triggerSmartContractSource
+        = TvmTestUtils.buildTriggerSmartContract(
+        ownerAddress, contractAddress, data, 0);
+    Protocol.Transaction.raw.Builder transactionBuilder1 = Protocol.Transaction.raw.newBuilder().addContract(
+        Protocol.Transaction.Contract.newBuilder()
+            .setType(Protocol.Transaction.Contract.ContractType.TriggerSmartContract)
+            .setParameter(Any.pack(triggerSmartContractSource))
+            .build())
+        .setFeeLimit(100000000L);
+    Protocol.Transaction transactionSource = Protocol.Transaction.newBuilder()
+        .setRawData(transactionBuilder1.build())
+        .build();
+
+    transactionSource = PublicMethed.addTransactionSign(transactionSource, priKey, blockingStubFull);
+
+    SmartContractOuterClass.TriggerSmartContract triggerSmartContractDest = TvmTestUtils.buildTriggerSmartContract(
+        proxyAddress, crossContractAddress, data, 0);
+    Protocol.Transaction.raw.Builder transactionBuilder2 = Protocol.Transaction.raw.newBuilder().addContract(
+        Protocol.Transaction.Contract.newBuilder()
+            .setType(Protocol.Transaction.Contract.ContractType.TriggerSmartContract)
+            .setParameter(Any.pack(triggerSmartContractDest))
+            .build())
+        .setFeeLimit(100000000L);
+    Protocol.Transaction transactionDest = Protocol.Transaction.newBuilder().setRawData(transactionBuilder2.build()).build();
+
+    BalanceContract.ContractTrigger contractTrigger = BalanceContract.ContractTrigger.newBuilder()
+        .setSource(transactionSource)
+        .setDest(transactionDest)
+        .build();
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+    jsonObject.addProperty("owner_chainId", ByteArray.toHexString(chainId.toByteArray()));
+    jsonObject.addProperty("to_address", ByteArray.toHexString(ownerAddress));
+    jsonObject.addProperty("to_chainId", ByteArray.toHexString(crossChainId.toByteArray()));
+    jsonObject.addProperty("data", ByteArray.toHexString(contractTrigger.toByteString().toByteArray()));
+    jsonObject.addProperty("type", 1);
+    jsonObject.addProperty("contractType", "CrossContract");
+    HttpResponse response = HttpMethed.createConnect(httpNode + "/wallet/createCommonTransaction", jsonObject);
+    JSONObject responseContent = HttpMethed.parseResponseContent(response);
+    String rawDataHex = responseContent.getString("raw_data_hex");
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().setRawData(Protocol.Transaction.raw.parseFrom(ByteArray.fromHexString(rawDataHex))).build();
+    transaction = TransactionUtils.sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(priKey)));
+    String hex = Hex.toHexString(transaction.toByteArray());
+    JsonObject jsonObjectNew = new JsonObject();
+    jsonObjectNew.addProperty("transaction", hex);
+    HttpMethed.createConnect(httpNode + "/wallet/broadcasthex", jsonObjectNew);
+    String txid = ByteArray.toHexString(Sha256Hash
+        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transaction.getRawData().toByteArray()));
+    return txid;
+
   }
 
   /**
