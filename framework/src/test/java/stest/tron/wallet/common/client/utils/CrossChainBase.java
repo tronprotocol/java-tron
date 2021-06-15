@@ -610,6 +610,57 @@ public class CrossChainBase {
   /**
    * constructor.
    */
+  public static String createCrossTrc10TransferByHttp(byte[] ownerAddress, byte[] toAddress,
+      ByteString tokenId,ByteString tokenChainId,Integer precision, Long amount,
+      String tokenName,ByteString chainId,
+      ByteString paraChainId,String priKey, String httpNode) throws Exception {
+    httpNode = "http://" + httpNode;
+
+    BalanceContract.CrossToken crossToken = BalanceContract.CrossToken.newBuilder()
+        .setTokenId(tokenId)
+        .setAmount(amount)
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString(tokenName)))
+        .setPrecision(precision)
+        .setChainId(tokenChainId)
+        .build();
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+    jsonObject.addProperty("owner_chainId", ByteArray.toHexString(chainId.toByteArray()));
+    jsonObject.addProperty("to_address", ByteArray.toHexString(toAddress));
+    jsonObject.addProperty("to_chainId", ByteArray.toHexString(paraChainId.toByteArray()));
+    jsonObject.addProperty("data", ByteArray.toHexString(crossToken.toByteString().toByteArray()));
+    jsonObject.addProperty("type", 0);
+    jsonObject.addProperty("contractType", "CrossContract");
+
+    HttpResponse response = HttpMethed
+        .createConnect(httpNode + "/wallet/createCommonTransaction", jsonObject);
+    JSONObject responseContent = HttpMethed.parseResponseContent(response);
+    String rawDataHex = responseContent.getString("raw_data_hex");
+
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
+        .setRawData(Protocol.Transaction.raw
+            .parseFrom(ByteArray.fromHexString(rawDataHex))).build();
+    transaction = TransactionUtils.sign(transaction, ECKey
+        .fromPrivate(ByteArray.fromHexString(priKey)));
+
+    String hex = Hex.toHexString(transaction.toByteArray());
+    JsonObject jsonObjectNew = new JsonObject();
+    jsonObjectNew.addProperty("transaction", hex);
+    response = HttpMethed.createConnect(httpNode + "/wallet/broadcasthex", jsonObjectNew);
+    String txid = ByteArray.toHexString(Sha256Hash
+        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transaction.getRawData().toByteArray()));
+    return txid;
+
+
+
+  }
+
+
+  /**
+   * constructor.
+   */
   public static String createCrossTrc10Transfer(byte[] ownerAddress, byte[] toAddress,
       ByteString tokenId,ByteString tokenChainId,Integer precision, Long amount,
       String tokenName,ByteString chainId,
