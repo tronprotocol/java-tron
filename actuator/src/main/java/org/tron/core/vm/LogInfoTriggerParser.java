@@ -13,7 +13,6 @@ import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
@@ -75,8 +74,7 @@ public class LogInfoTriggerParser {
         abiMap.put(strContractAddr, ABI.getDefaultInstance());
         continue;
       }
-      ABI abi = StoreFactory.getInstance().getChainBaseManager()
-          .getAbiStore().get(contractAddress).getInstance();
+      ABI abi = contract.getInstance().getAbi();
       String creatorAddr = StringUtil.encode58Check(
           TransactionTrace
               .convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
