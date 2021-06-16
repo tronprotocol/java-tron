@@ -289,10 +289,10 @@ public interface TronJsonRpc {
   TransactionResult getTransactionByHash(String txid);
 
   @JsonRpcMethod("eth_getTransactionByBlockHashAndIndex")
-  TransactionResult getTransactionByBlockHashAndIndex(String blockHash, int index);
+  TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index);
 
   @JsonRpcMethod("eth_getTransactionByBlockNumberAndIndex")
-  TransactionResult getTransactionByBlockNumberAndIndex(int blockNum, int index);
+  TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index);
 
   @JsonRpcMethod("eth_gettransactionreceipt")
   TransactionReceipt getTransactionReceipt(String txid);

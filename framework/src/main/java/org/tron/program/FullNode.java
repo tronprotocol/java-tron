@@ -20,7 +20,6 @@ import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
-import org.tron.core.services.jsonrpc.FullNodeJsonRpcStreamService;
 
 @Slf4j(topic = "app")
 public class FullNode {
