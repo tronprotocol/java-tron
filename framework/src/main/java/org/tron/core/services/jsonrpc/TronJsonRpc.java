@@ -5,8 +5,9 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
 import com.google.protobuf.ByteString;
+import com.googlecode.jsonrpc4j.JsonRpcError;
+import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
-import java.math.BigInteger;
 import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
@@ -241,6 +242,9 @@ public interface TronJsonRpc {
   String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception;
 
   @JsonRpcMethod("eth_getBlockByHash")
+  @JsonRpcErrors({
+      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="no data"),
+  })
   BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception;
 
   @JsonRpcMethod("eth_getBlockByNumber")

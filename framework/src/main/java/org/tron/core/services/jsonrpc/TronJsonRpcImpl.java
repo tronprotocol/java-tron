@@ -48,6 +48,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
+  String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
 
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
@@ -120,8 +121,23 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return (b == null ? null : getBlockResult(b, fullTransactionObjects));
   }
 
+  private byte[] hashToByteArray(String hash) {
+    if(!Pattern.matches(regexHash, hash)) {
+      throw new JsonRpcApiException("invalid hash value");
+    }
+
+    byte[] bHash;
+    try {
+      bHash = ByteArray.fromHexString(hash);
+    } catch (Exception e) {
+      throw new JsonRpcApiException(e.getMessage());
+    }
+    return bHash;
+  }
+
   private Block getBlockByJSonHash(String blockHash) throws Exception {
-    return wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+    byte[] bHash = hashToByteArray(blockHash);
+    return wallet.getBlockById(ByteString.copyFrom(bHash));
   }
 
   protected BlockResult getBlockResult(Block block, boolean fullTx) {
