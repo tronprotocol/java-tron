@@ -110,6 +110,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.CrossContractConstructException;
+import org.tron.core.exception.CrossTimeoutException;
+import org.tron.core.exception.CrossValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -943,7 +945,7 @@ public class Manager {
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
       NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
-      BlockNotInMainForkException {
+      BlockNotInMainForkException, CrossTimeoutException, CrossValidateException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -958,7 +960,8 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException,
+      CrossTimeoutException, CrossValidateException {
     processBlock(block);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -980,7 +983,8 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, ZksnarkException, BadBlockException {
+      VMIllegalException, ZksnarkException, BadBlockException, CrossTimeoutException,
+      CrossValidateException {
 
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT);
 
@@ -1034,7 +1038,9 @@ public class Manager {
             | ValidateScheduleException
             | VMIllegalException
             | ZksnarkException
-            | BadBlockException e) {
+            | BadBlockException
+            | CrossTimeoutException
+            | CrossValidateException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -1069,7 +1075,9 @@ public class Manager {
                   | TransactionExpirationException
                   | TooBigTransactionException
                   | ValidateScheduleException
-                  | ZksnarkException e) {
+                  | ZksnarkException
+                  | CrossTimeoutException
+                  | CrossValidateException e) {
                 logger.warn(e.getMessage(), e);
               }
             }
@@ -1089,7 +1097,8 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException, ZksnarkException, BlockNotInMainForkException {
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException, BlockNotInMainForkException,
+      CrossTimeoutException, CrossValidateException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1639,7 +1648,7 @@ public class Manager {
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BadBlockException {
+      ZksnarkException, BadBlockException, CrossTimeoutException, CrossValidateException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1729,21 +1738,23 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       TooBigTransactionResultException, ReceiptCheckErrException,
       TaposException, VMIllegalException, DupTransactionException,
-      ContractExeException, AccountResourceInsufficientException {
+      ContractExeException, AccountResourceInsufficientException,
+      CrossTimeoutException, CrossValidateException {
     TransactionCapsule transactionCapsule = new TransactionCapsule(
         crossMessage.getTransaction());
+    Sha256Hash sourceTxId = null;
     // forbid duplicated timeout-txs
     if (crossMessage.getType() == Type.TIME_OUT) {
       transactionCapsule.setSource(false);
       if (communicateService.isSyncFinish()) {
-        Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
+        sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
         //todo:getSendCrossMsgUnEx not safe
         CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
         if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
             source.getToChainId(), source.getTransaction())) {
           logger.error("tx valid timeout: " + source);
           //todo:if block head sync fail,then the time out will be valid fail!
-          throw new ValidateSignatureException(
+          throw new CrossTimeoutException(
               "valid time out tx fail,sourceTxId: " + sourceTxId);
         }
       }
@@ -1754,11 +1765,13 @@ public class Manager {
         || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
       if (communicateService.isSyncFinish() && crossMessage.getType() != Type.TIME_OUT
           && !communicateService.validProof(crossMessage)) {
-        throw new ValidateSignatureException("valid proof fail");
+        throw new CrossValidateException("valid proof fail");
       }
       if (crossMessage.getType() == Type.DATA
           && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
-        throw new ValidateSignatureException("cross chain tx was time out");
+        logger.error("cross chain tx was time out, tx: {}, headBlcokNum: {}",
+                sourceTxId, chainBaseManager.getHeadBlockNum());
+        throw new CrossTimeoutException("cross chain tx was time out");
       }
       transactionCapsule.setSource(false);
     }

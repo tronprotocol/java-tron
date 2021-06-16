@@ -30,6 +30,8 @@ import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.CrossTimeoutException;
+import org.tron.core.exception.CrossValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -233,7 +235,9 @@ public class TronNetDelegate {
           | NonCommonBlockException
           | ReceiptCheckErrException
           | VMIllegalException
-          | ZksnarkException e) {
+          | ZksnarkException
+          | CrossTimeoutException
+          | CrossValidateException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
