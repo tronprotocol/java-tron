@@ -34,7 +34,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.program.Version;
@@ -93,8 +92,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception {
-    List<Transaction> list = wallet.getTransactionsByJsonBlockId(bnOrId);
+  public String ethGetBlockTransactionCountByNumber(String blockNumOrTag) throws Exception {
+    List<Transaction> list = wallet.getTransactionsByJsonBlockId(blockNumOrTag);
     if (list == null) {
       return null;
     }
@@ -111,13 +110,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) {
-    final Block b;
-    if ("pending".equalsIgnoreCase(bnOrId)) {
-      b = null;
-    } else {
-      b = wallet.getByJsonBlockId(bnOrId);
-    }
+  public BlockResult ethGetBlockByNumber(String blockNumOrTag, Boolean fullTransactionObjects) {
+    final Block b = wallet.getByJsonBlockId(blockNumOrTag);
     return (b == null ? null : getBlockResult(b, fullTransactionObjects));
   }
 
@@ -219,14 +213,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException {
+  public String getTrxBalance(String address, String blockNumOrTag) {
     //某个用户的trx余额，以sun为单位
     byte[] addressData = ByteArray.fromHexString(address);
     Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
     long balance = wallet.getAccount(account).getBalance();
     return ByteArray.toJsonHex(balance);
   }
-
 
   /**
    * @param data Hash of the method signature and encoded parameters.
@@ -411,34 +404,35 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, int index) {
+  public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index) {
     Block block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
     if (block == null) {
       return null;
     }
-    if (index > block.getTransactionsCount() - 1) {
+    int txIndex = ByteArray.hexToBigInteger(index).intValue();
+    if (txIndex > block.getTransactionsCount() - 1) {
       return null;
     }
-    Transaction transaction = block.getTransactions(index);
+    Transaction transaction = block.getTransactions(txIndex);
     return formatRpcTransaction(transaction, block);
   }
 
   @Override
-  public TransactionResult getTransactionByBlockNumberAndIndex(int blockNum, int index) {
-    Block block = wallet.getBlockByNum(blockNum);
+  public TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index) {
+    Block block = wallet.getByJsonBlockId(blockNumOrTag);
     if (block == null) {
       return null;
     }
-    if (index > block.getTransactionsCount() - 1) {
+    int txIndex = ByteArray.hexToBigInteger(index).intValue();
+    if (txIndex > block.getTransactionsCount() - 1) {
       return null;
     }
-    Transaction transaction = block.getTransactions(index);
+    Transaction transaction = block.getTransactions(txIndex);
     return formatRpcTransaction(transaction, block);
   }
 
   @Override
   public TransactionReceipt getTransactionReceipt(String txid) {
-
     Transaction transaction = wallet
         .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     TransactionInfo transactionInfo = wallet
@@ -512,8 +506,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
   }
 
-  //生成一个调用call api的参数，可以自由修改
-  private void generateCallParameter() {
+  //生成一个调用 eth_call api的参数，可以自由修改
+  private String generateCallParameter() {
     String ownerAddress = "TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD";
     String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile测试环境udsj地址
 
@@ -531,7 +525,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
     sb.append(transactionCall);
     sb.append(", \"latest\"],\"id\":1}");
-    System.out.println(sb);
+    return sb.toString();
   }
 
   @Override
@@ -598,6 +592,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   public static void main(String[] args) {
     TronJsonRpcImpl impl = new TronJsonRpcImpl();
-    impl.generateCallParameter();
+    System.out.println(impl.generateCallParameter());
   }
 }
