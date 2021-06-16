@@ -32,7 +32,7 @@ public class MoveAbiHelper {
       if (!abiStore.has(e.getKey())) {
         abiStore.put(e.getKey(), new AbiCapsule(contractCapsule));
       }
-      contractStore.put(e.getKey(), contractCapsule);
+      //contractStore.put(e.getKey(), contractCapsule);
       count += 1;
       if (count % 100_000 == 0) {
         logger.info("Doing the abi move, current contracts: {} {}", count,
