@@ -1,6 +1,5 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.encode58Check;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
@@ -266,7 +265,7 @@ public interface TronJsonRpc {
   String getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException;
 
   @JsonRpcMethod("eth_getStorageAt")
-  String getTrc20Balance(String address, String contractAddress, String blockNumOrTag);
+  String getStorageAt(String address, String storageIdx, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getTransactionCount")
   String getSendTransactionCountOfAddress(String address, String blockNumOrTag);

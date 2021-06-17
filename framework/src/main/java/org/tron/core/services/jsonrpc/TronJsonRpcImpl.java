@@ -2,7 +2,6 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.balanceOfTopic;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.encode58Check;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateContractAddress;
@@ -15,7 +14,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -27,15 +25,19 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
+import org.tron.core.store.StorageRowStore;
+import org.tron.core.vm.program.Storage;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -47,17 +49,20 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
+
   String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
 
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
+  private Manager manager;
 
   public TronJsonRpcImpl() {
   }
 
-  public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet) {
+  public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
+    this.manager = manager;
   }
 
   @Override
@@ -288,28 +293,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getTrc20Balance(String ownerAddress, String contractAddress,
-      String blockNumOrTag) {
-    //某个用户拥有的某个token20余额，带精度
-    byte[] addressData = ByteArray.fromHexString(ownerAddress);
-    //byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
-
-    //生成dataStr
-    byte[] addressDataWord = new byte[32];
-    System.arraycopy(addressData, 0, addressDataWord, 32 - addressData.length, addressData.length);
-    String dataStr = balanceOfTopic + Hex.toHexString(addressDataWord);
-
-    String result = call(addressData, ByteArray.fromHexString(contractAddress),
-        ByteArray.fromHexString(dataStr));
-
-    if (Objects.isNull(result)) {
-      return "0x0";
-    }
-    if (result.length() > 64) {
-      result = result.substring(0, 64);
-    }
-
-    return ByteArray.toJsonHex(ByteUtil.stripLeadingZeroes(ByteArray.fromHexString(result)));
+  public String getStorageAt(String address, String storageIdx, String blockNumOrTag) {
+    byte[] addressByte = ByteArray.fromHexString(address);
+    StorageRowStore store = manager.getStorageRowStore();
+    Storage storage = new Storage(addressByte, store);
+    DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
+    return value == null ? null : ByteArray.toJsonHex(value.getData());
   }
 
   @Override
@@ -525,6 +514,24 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return sb.toString();
   }
 
+  private String generateStorageParameter() {
+    String contractAddress = "41E94EAD5F4CA072A25B2E5500934709F1AEE3C64B";// nile合约：TXEphLzyv5jFwvjzwMok9UoehaSn294ZhN
+
+    String sendAddress = "41F0CC5A2A84CD0F68ED1667070934542D673ACBD8"; // nile测试环境：TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD
+    String index = "01";
+    byte[] byte1 = new DataWord(new DataWord(sendAddress).getLast20Bytes()).getData();
+    byte[] byte2 = new DataWord(new DataWord(index).getLast20Bytes()).getData();
+    byte[] byte3 = ByteUtil.merge(byte1, byte2);
+    String position = ByteArray.toJsonHex(Hash.sha3(byte3));
+
+    StringBuffer sb = new StringBuffer(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getStorageAt\",\"params\":[\"0x");
+    sb.append(contractAddress + "\",\"");
+    sb.append(position + "\",");
+    sb.append("\"latest\"],\"id\":1}");
+    return sb.toString();
+  }
+
   @Override
   public String getPeerCount() {
     //返回当前节点所连接的peer节点数量
@@ -590,5 +597,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public static void main(String[] args) {
     TronJsonRpcImpl impl = new TronJsonRpcImpl();
     System.out.println(impl.generateCallParameter());
+    System.out.println(impl.generateStorageParameter());
   }
 }

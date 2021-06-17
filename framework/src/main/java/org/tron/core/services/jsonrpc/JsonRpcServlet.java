@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
+import org.tron.core.db.Manager;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.RateLimiterServlet;
 
@@ -26,11 +27,13 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private NodeInfoService nodeInfoService;
   @Autowired
   private Wallet wallet;
+  @Autowired
+  private Manager manager;
 
   // @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
-    testServiceImpl = new TronJsonRpcImpl(nodeInfoService, wallet);
+    testServiceImpl = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
         this.getClass().getClassLoader(),
         new Object[] {testServiceImpl},
