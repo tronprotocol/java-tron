@@ -185,10 +185,6 @@ public class JsonRpcApiUtil {
         case AccountCreateContract:
           list.add(contractParameter.unpack(AccountCreateContract.class).getAccountAddress());
           break;
-        case AccountUpdateContract:
-          break;
-        case SetAccountIdContract:
-          break;
         case TransferContract:
           list.add(contractParameter.unpack(TransferContract.class).getToAddress());
           break;
@@ -202,12 +198,6 @@ public class JsonRpcApiUtil {
           for (Vote vote : contractParameter.unpack(VoteWitnessContract.class).getVotesList()) {
             list.add(vote.getVoteAddress());
           }
-          break;
-        case WitnessCreateContract:
-          break;
-        case AssetIssueContract:
-          break;
-        case WitnessUpdateContract:
           break;
         case ParticipateAssetIssueContract:
           list.add(contractParameter.unpack(ParticipateAssetIssueContract.class).getToAddress());
@@ -226,23 +216,11 @@ public class JsonRpcApiUtil {
             list.add(receiverAddress);
           }
           break;
-        case UnfreezeAssetContract:
-          break;
-        case WithdrawBalanceContract:
-          break;
         case CreateSmartContract:
           list.add(ByteString.copyFrom(generateContractAddress(transaction)));
           break;
         case TriggerSmartContract:
           list.add(contractParameter.unpack(TriggerSmartContract.class).getContractAddress());
-          break;
-        case UpdateAssetContract:
-          break;
-        case ProposalCreateContract:
-          break;
-        case ProposalApproveContract:
-          break;
-        case ProposalDeleteContract:
           break;
         // case BuyStorageContract:
         //   owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
@@ -256,23 +234,11 @@ public class JsonRpcApiUtil {
         case UpdateSettingContract:
           list.add(contractParameter.unpack(UpdateSettingContract.class).getContractAddress());
           break;
-        case ExchangeCreateContract:
-          break;
-        case ExchangeInjectContract:
-          break;
-        case ExchangeWithdrawContract:
-          break;
-        case ExchangeTransactionContract:
-          break;
         case UpdateEnergyLimitContract:
           list.add(contractParameter.unpack(UpdateEnergyLimitContract.class).getContractAddress());
           break;
-        case AccountPermissionUpdateContract:
-          break;
         case ClearABIContract:
           list.add(contractParameter.unpack(ClearABIContract.class).getContractAddress());
-          break;
-        case UpdateBrokerageContract:
           break;
         case ShieldedTransferContract:
           ShieldedTransferContract shieldedTransferContract = contract.getParameter()
