@@ -2581,8 +2581,10 @@ public class Wallet {
     if (Objects.nonNull(contractCapsule)) {
       AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
       if (Objects.nonNull(abiCapsule)) {
-        return contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build();
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
       }
+      return contractCapsule.getInstance();
     }
     return null;
   }
@@ -2607,13 +2609,17 @@ public class Wallet {
     ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
       AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
-      CodeCapsule codeCapsule = chainBaseManager.getCodeStore().get(address);
-      if (Objects.nonNull(abiCapsule) && Objects.nonNull(codeCapsule)) {
+      if (Objects.nonNull(abiCapsule)) {
         contractCapsule = new ContractCapsule(
             contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
-        contractCapsule.setRuntimecode(codeCapsule.getData());
-        return contractCapsule.generateWrapper();
       }
+      CodeCapsule codeCapsule = chainBaseManager.getCodeStore().get(address);
+      if (Objects.nonNull(codeCapsule) && Objects.nonNull(codeCapsule.getData())) {
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+      } else {
+        contractCapsule.setRuntimecode(new byte[0]);
+      }
+      return contractCapsule.generateWrapper();
     }
     return null;
   }
