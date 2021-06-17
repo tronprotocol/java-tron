@@ -5,6 +5,7 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.ContractStore;
@@ -22,24 +23,27 @@ public class MoveAbiHelper {
 
   public void doWork() {
     long start = System.currentTimeMillis();
-    logger.info("Start to copy abi");
+    logger.info("Start to move abi");
     AbiStore abiStore = chainBaseManager.getAbiStore();
     ContractStore contractStore = chainBaseManager.getContractStore();
     Iterator<Map.Entry<byte[], ContractCapsule>> it = contractStore.iterator();
     it.forEachRemaining(e -> {
       ContractCapsule contractCapsule = e.getValue();
-      if (!contractCapsule.getInstance().getAbi().getEntrysList().isEmpty()) {
-        abiStore.put(e.getKey(), contractCapsule.getInstance().getAbi().toByteArray());
+      if (!abiStore.has(e.getKey())) {
+        abiStore.put(e.getKey(), new AbiCapsule(contractCapsule));
       }
+      //contractStore.put(e.getKey(), contractCapsule);
       count += 1;
       if (count % 100_000 == 0) {
-        logger.info("Doing the abi copy, current count: {} {}", count,
+        logger.info("Doing the abi move, current contracts: {} {}", count,
             System.currentTimeMillis());
       }
     });
     chainBaseManager.getDynamicPropertiesStore().saveAbiMoveDone(1);
+    logger.info("Check store size: contract {} abi {}",
+        contractStore.getTotalContracts(), abiStore.getTotalABIs());
     logger.info(
-        "Complete the abi copy, total time: {} milliseconds, total count: {}",
-        System.currentTimeMillis() - start, count);
+        "Complete the abi move, total time:{} milliseconds",
+        System.currentTimeMillis() - start);
   }
 }

@@ -40,15 +40,10 @@ public class ClearABIContractActuator extends AbstractActuator {
 
     long fee = calcFee();
     AbiStore abiStore = chainBaseManager.getAbiStore();
-    ContractStore contractStore = chainBaseManager.getContractStore();
     try {
       ClearABIContract usContract = any.unpack(ClearABIContract.class);
 
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
-      ContractCapsule deployedContract = contractStore.get(contractAddress);
-
-      deployedContract.clearABI();
-      contractStore.put(contractAddress, deployedContract);
       abiStore.put(contractAddress, new AbiCapsule(ABI.getDefaultInstance()));
 
       ret.setStatus(fee, code.SUCESS);

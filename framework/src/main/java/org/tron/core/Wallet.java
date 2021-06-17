@@ -121,6 +121,7 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -171,6 +172,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -2469,14 +2471,15 @@ public class Wallet {
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = chainBaseManager.getContractStore();
+    AbiStore abiStore = chainBaseManager.getAbiStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    SmartContract.ABI abi = contractStore.getABI(contractAddress);
-    if (abi == null) {
+    AbiCapsule abiCapsule = abiStore.get(contractAddress);
+    if (abiCapsule == null) {
       throw new ContractValidateException(
           "No contract or not a valid smart contract");
     }
+    SmartContract.ABI abi = abiCapsule.getInstance();
 
     byte[] selector = WalletUtil.getSelector(
         triggerSmartContract.getData().toByteArray());
@@ -2574,10 +2577,12 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = chainBaseManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
-      return contractCapsule.getInstance();
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      if (Objects.nonNull(abiCapsule)) {
+        return contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build();
+      }
     }
     return null;
   }
@@ -2591,7 +2596,7 @@ public class Wallet {
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
           "Get contract failed, the account does not exist or the account does not have a code "
@@ -2599,11 +2604,13 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = dbManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
-      CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
-      if (Objects.nonNull(codeCapsule)) {
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      CodeCapsule codeCapsule = chainBaseManager.getCodeStore().get(address);
+      if (Objects.nonNull(abiCapsule) && Objects.nonNull(codeCapsule)) {
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
         contractCapsule.setRuntimecode(codeCapsule.getData());
         return contractCapsule.generateWrapper();
       }
