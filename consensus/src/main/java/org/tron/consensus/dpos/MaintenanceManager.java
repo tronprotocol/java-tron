@@ -87,6 +87,14 @@ public class MaintenanceManager {
     //pbft block msg
     if (blockNum == 1) {
       nextMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
+    } else {
+      long maintenanceTimeInterval =
+              consensusDelegate.getDynamicPropertiesStore().getMaintenanceTimeInterval();
+      nextMaintenanceTime = (blockTime / maintenanceTimeInterval + 1) * maintenanceTimeInterval;
+      if (blockTime % maintenanceTimeInterval == 0) {
+        nextMaintenanceTime = nextMaintenanceTime - maintenanceTimeInterval;
+        nextMaintenanceTime = nextMaintenanceTime < 0 ? 0 : nextMaintenanceTime;
+      }
     }
     if (flag) {
       pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime, beforeWitness);
