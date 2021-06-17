@@ -58,7 +58,7 @@ public class FullNodeJsonRpcHttpService implements Service {
       context.setContextPath("/");
       server.setHandler(context);
 
-      context.addServlet(new ServletHolder(jsonRpcServlet), "/");
+      context.addServlet(new ServletHolder(jsonRpcServlet), "/jsonrpc");
 
       // filter
       // ServletHandler handler = new ServletHandler();
