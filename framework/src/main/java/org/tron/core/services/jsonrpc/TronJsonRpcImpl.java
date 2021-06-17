@@ -134,7 +134,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return wallet.getBlockById(ByteString.copyFrom(bHash));
   }
 
-  protected BlockResult getBlockResult(Block block, boolean fullTx) {
+  private BlockResult getBlockResult(Block block, boolean fullTx) {
     if (block == null) {
       return null;
     }
