@@ -2614,14 +2614,12 @@ public class Wallet {
             contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
       }
       CodeCapsule codeCapsule = chainBaseManager.getCodeStore().get(address);
-      if (Objects.nonNull(codeCapsule)) {
-        if (codeCapsule.getData() == null) {
-          contractCapsule.setRuntimecode(new byte[0]);
-        } else {
-          contractCapsule.setRuntimecode(codeCapsule.getData());
-        }
-        return contractCapsule.generateWrapper();
+      if (Objects.nonNull(codeCapsule) && Objects.nonNull(codeCapsule.getData())) {
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+      } else {
+        contractCapsule.setRuntimecode(new byte[0]);
       }
+      return contractCapsule.generateWrapper();
     }
     return null;
   }
