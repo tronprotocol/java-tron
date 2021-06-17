@@ -155,7 +155,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     br.miner = ByteArray.toJsonHex(blockCapsule.getWitnessAddress().toByteArray());
     br.difficulty = null; // no value
     br.totalDifficulty = null; // no value
-    // br.extraData // no value
+    br.extraData = null; // no value
     br.size = ByteArray.toJsonHex(block.getSerializedSize());
     br.gasLimit = null;
     br.gasUsed = null;
