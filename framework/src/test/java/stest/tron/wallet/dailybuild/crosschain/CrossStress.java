@@ -7,8 +7,10 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.CrossChainBase;
@@ -24,7 +26,7 @@ public class CrossStress extends CrossChainBase {
 
   ConcurrentLinkedDeque<String> queue = new ConcurrentLinkedDeque<>();
 
-  @Test(enabled = true, threadPoolSize = 10, invocationCount = 10)
+  @Test(enabled = true, threadPoolSize = 20, invocationCount = 20)
   public void test01CreateCrossToken() throws Exception {
     Random random = new Random();
     long randNumber = (long)(random.nextInt(1000) + 15);
@@ -35,26 +37,48 @@ public class CrossStress extends CrossChainBase {
         + Base58.encode58Check(crossContractAddress) + "\"" + ",\"1\"";
 
     String txid = "";
-    while (times.getAndAdd(1) < 1000) {
-      randNumber = (long)(random.nextInt(1000) + 200);
+    while (times.getAndAdd(1) < 5000) {
+      randNumber = (long)(random.nextInt(100) + 200);
       argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
           + Base58.encode58Check(crossContractAddress) + "\"" + ",\"" + randNumber + "\"";
 
-      txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
+/*      txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
           trc10TokenAccountAddress,assetAccountId1,chainId,6,randNumber,name1,chainId,crossChainId,
           trc10TokenAccountKey,blockingStubFull);
-      queue.offer(txid);
+      logger.info("name1:" + name1);
+      logger.info("name1 token id:" + assetAccountId1.toStringUtf8());
+      logger.info("name1 token id:" +  ByteArray.toStr(assetAccountId1.toByteArray()));
+      if (txid != null) {
+        queue.offer(txid);
+      }
+
 
       txid = createCrossTrc10Transfer(trc10TokenAccountAddress,
           trc10TokenAccountAddress,assetAccountIdCrossChain,crossChainId,6,
           randNumber,name2,crossChainId,chainId,
           trc10TokenAccountKey,crossBlockingStubFull);
-      queue.offer(txid);
+      logger.info("name2:" + name2);
+      logger.info("name2 token id:" + assetAccountId2.toStringUtf8());
+      logger.info("name2 token id:" +  ByteArray.toStr(assetAccountId2.toByteArray()));
+      if (txid != null) {
+        queue.offer(txid);
+      }
+
+
+      createCrossTrc10Transfer(trc10TokenAccountAddress,
+          trc10TokenAccountAddress,assetAccountId1,chainId,6,randNumber - 99,name1,
+          crossChainId,chainId,
+          trc10TokenAccountKey,crossBlockingStubFull);
+
+      createCrossTrc10Transfer(trc10TokenAccountAddress,
+          trc10TokenAccountAddress,assetAccountId1,chainId,6,randNumber - 99,name1,
+          crossChainId,chainId,
+          trc10TokenAccountKey,crossBlockingStubFull);*/
 
       txid = createTriggerContractForCross(trc10TokenAccountAddress,registerAccountAddress,
           contractAddress, crossContractAddress, method,argsStr,chainId,crossChainId,
           trc10TokenAccountKey,blockingStubFull);
-      queue.offer(txid);
+      //queue.offer(txid);
 
       argsStr = "\"" + Base58.encode58Check(crossContractAddress) + "\"" + "," + "\""
           + Base58.encode58Check(contractAddress) + "\"" + ",\"" + randNumber + "\"";
@@ -62,8 +86,15 @@ public class CrossStress extends CrossChainBase {
       txid = createTriggerContractForCross(trc10TokenAccountAddress,registerAccountAddress,
           crossContractAddress, contractAddress, method,argsStr,crossChainId,chainId,
           trc10TokenAccountKey,crossBlockingStubFull);
-      queue.offer(txid);
-      //Thread.sleep(1000);
+      //queue.offer(txid);
+
+/*      PublicMethed.transferAsset(foundationAddress, assetAccountId1.toByteArray(),
+          randNumber  - 50, trc10TokenAccountAddress, trc10TokenAccountKey, blockingStubFull);
+      PublicMethed.transferAsset(foundationAddress, assetAccountId2.toByteArray(),
+          randNumber  - 50, trc10TokenAccountAddress, trc10TokenAccountKey, crossBlockingStubFull);
+      PublicMethed.transferAsset(foundationAddress, assetAccountIdCrossChain.toByteArray(),
+          randNumber  - 50, trc10TokenAccountAddress, trc10TokenAccountKey, crossBlockingStubFull);*/
+
     }
 
   }
