@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
+import java.util.Objects;
+
 @Slf4j(topic = "DB")
 @Component
 public class AbiStore extends TronStoreWithRevoking<AbiCapsule> {
@@ -20,6 +22,14 @@ public class AbiStore extends TronStoreWithRevoking<AbiCapsule> {
   @Override
   public AbiCapsule get(byte[] key) {
     return getUnchecked(key);
+  }
+
+  public void put(byte[] key, byte[] value) {
+    if (Objects.isNull(key) || Objects.isNull(value)) {
+      return;
+    }
+
+    revokingDB.put(key, value);
   }
 
   public long getTotalABIs() {
