@@ -116,7 +116,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private byte[] hashToByteArray(String hash) {
-    if(!Pattern.matches(regexHash, hash)) {
+    if (!Pattern.matches(regexHash, hash)) {
       throw new JsonRpcApiException("invalid hash value");
     }
 
@@ -449,9 +449,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     receipt.transactionIndex = dto.transactionIndex;
     receipt.transactionHash = dto.hash;
     receipt.from = dto.from;
-    receipt.fromBase58 = dto.fromBase58;
     receipt.to = dto.to;
-    receipt.toBase58 = dto.toBase58;
 
     long cumulativeGasUsed = 0;
     TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);

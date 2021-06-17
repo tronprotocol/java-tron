@@ -133,14 +133,11 @@ public interface TronJsonRpc {
     public String transactionIndex;
     public String transactionHash;
     public String from;
-    public String fromBase58;
     public String to;
-    public String toBase58;
 
     public String cumulativeGasUsed;
     public String gasUsed;
     public String contractAddress;
-    public String contractAddressBase58;
     public TransactionLog[] logs;
     public String logsBloom;
 
@@ -158,9 +155,7 @@ public interface TronJsonRpc {
     public String transactionIndex;
 
     public String from;
-    public String fromBase58;
     public String to;
-    public String toBase58;
     public String gas;
     public String gasPrice;
     public String value;
@@ -186,14 +181,10 @@ public interface TronJsonRpc {
         byte[] toByte = getToAddress(tx);
         from = ByteArray.toJsonHex(fromByte);
         to = ByteArray.toJsonHex(toByte);
-        fromBase58 = encode58Check(fromByte);
-        toBase58 = encode58Check(toByte);
         value = ByteArray.toJsonHex(getTransactionAmount(contract, hash, wallet));
       } else {
         from = "";
         to = "";
-        fromBase58 = "";
-        toBase58 = "";
         value = "";
       }
 
@@ -237,25 +228,25 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_getBlockTransactionCountByHash")
   @JsonRpcErrors({
-      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="{}"),
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
   })
   String ethGetBlockTransactionCountByHash(String blockHash) throws Exception;
 
   @JsonRpcMethod("eth_getBlockTransactionCountByNumber")
   @JsonRpcErrors({
-      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="{}"),
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
   })
   String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception;
 
   @JsonRpcMethod("eth_getBlockByHash")
   @JsonRpcErrors({
-      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="{}"),
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
   })
   BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception;
 
   @JsonRpcMethod("eth_getBlockByNumber")
   @JsonRpcErrors({
-      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="{}"),
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
   })
   BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
 
