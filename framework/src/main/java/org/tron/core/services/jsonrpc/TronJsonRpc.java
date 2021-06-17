@@ -236,9 +236,15 @@ public interface TronJsonRpc {
   String web3Sha3(String data) throws Exception;
 
   @JsonRpcMethod("eth_getBlockTransactionCountByHash")
+  @JsonRpcErrors({
+      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="{}"),
+  })
   String ethGetBlockTransactionCountByHash(String blockHash) throws Exception;
 
   @JsonRpcMethod("eth_getBlockTransactionCountByNumber")
+  @JsonRpcErrors({
+      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="{}"),
+  })
   String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception;
 
   @JsonRpcMethod("eth_getBlockByHash")
@@ -248,6 +254,9 @@ public interface TronJsonRpc {
   BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception;
 
   @JsonRpcMethod("eth_getBlockByNumber")
+  @JsonRpcErrors({
+      @JsonRpcError(exception=JsonRpcApiException.class, code=-32602, data="{}"),
+  })
   BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
 
   @JsonRpcMethod("net_version")

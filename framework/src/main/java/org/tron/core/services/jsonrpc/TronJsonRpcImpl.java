@@ -82,7 +82,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String ethGetBlockTransactionCountByHash(String blockHash) throws Exception {
-    Block b = getBlockByJSonHash(blockHash);
+    Block b = getBlockByJsonHash(blockHash);
     if (b == null) {
       return null;
     }
@@ -105,7 +105,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects)
       throws Exception {
-    final Block b = getBlockByJSonHash(blockHash);
+    final Block b = getBlockByJsonHash(blockHash);
     return getBlockResult(b, fullTransactionObjects);
   }
 
@@ -129,7 +129,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return bHash;
   }
 
-  private Block getBlockByJSonHash(String blockHash) throws Exception {
+  private Block getBlockByJsonHash(String blockHash) throws Exception {
     byte[] bHash = hashToByteArray(blockHash);
     return wallet.getBlockById(ByteString.copyFrom(bHash));
   }
@@ -140,7 +140,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
-    boolean isPending = false;
     BlockResult br = new BlockResult();
     br.number = ByteArray.toJsonHex(blockCapsule.getNum());
     br.hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
