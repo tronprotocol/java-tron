@@ -597,6 +597,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return false;
   }
 
+  @Override
+  public String[] getAccounts() {
+    return new String[0];
+  }
+
   public static void main(String[] args) {
     TronJsonRpcImpl impl = new TronJsonRpcImpl();
     System.out.println(impl.generateCallParameter());

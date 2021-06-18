@@ -331,4 +331,6 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_mining")
   boolean isMining();
 
+  @JsonRpcMethod("eth_accounts")
+  String[] getAccounts();
 }
