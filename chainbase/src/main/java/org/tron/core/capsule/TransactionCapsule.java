@@ -525,6 +525,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   private Sha256Hash getRawHash() {
+//    System.out.println("get hash param "+CommonParameter.getInstance().isECKeyCryptoEngine());
     return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
         this.transaction.getRawData().toByteArray());
   }

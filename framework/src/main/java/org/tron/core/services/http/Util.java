@@ -272,6 +272,7 @@ public class Util {
           JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(), builder, selfType);
           any = Any.pack(builder.build());
         }
+        System.out.println(any.toString());
         if (any != null) {
           String value = ByteArray.toHexString(any.getValue().toByteArray());
           parameter.put(VALUE, value);
@@ -289,6 +290,8 @@ public class Util {
     Transaction.Builder transactionBuilder = Transaction.newBuilder();
     try {
       JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
+      System.out.println(jsonTransaction.toJSONString());
+      System.out.println(transactionBuilder.toString());
       return transactionBuilder.build();
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());

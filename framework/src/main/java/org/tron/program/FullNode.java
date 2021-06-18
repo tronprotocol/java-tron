@@ -3,13 +3,16 @@ package org.tron.program;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import java.io.File;
+import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -62,6 +65,21 @@ public class FullNode {
       logger.info("not in debug mode, it will check energy time");
     }
 
+    System.out.println("start to test");
+    String priKey = "a551a5a55ffb2d7225660962b193cbda57b911e2d0fcedaf29d6d7c1f1e710c4";
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+      String message = "4c92858ca5e2100593638670c474fcc4eae2e267a58f7e4035309d9789f1b51a";
+      System.out.println(ByteArray.fromHexString(message).length);
+      System.out.println(temKey.sign(ByteArray.fromHexString(message)));
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+
+
+
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     beanFactory.setAllowCircularReferences(false);
     TronApplicationContext context =
@@ -73,8 +91,8 @@ public class FullNode {
     shutdown(appT);
 
     // grpc api server
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    appT.addService(rpcApiService);
+//    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
+//    appT.addService(rpcApiService);
 
     // http api server
     FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
@@ -84,32 +102,32 @@ public class FullNode {
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.
-    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
-      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
-          .getBean(RpcApiServiceOnSolidity.class);
-      appT.addService(rpcApiServiceOnSolidity);
-      HttpApiOnSolidityService httpApiOnSolidityService = context
-          .getBean(HttpApiOnSolidityService.class);
-      if (CommonParameter.getInstance().solidityNodeHttpEnable) {
-        appT.addService(httpApiOnSolidityService);
-      }
-    }
+//    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
+//      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
+//          .getBean(RpcApiServiceOnSolidity.class);
+//      appT.addService(rpcApiServiceOnSolidity);
+//      HttpApiOnSolidityService httpApiOnSolidityService = context
+//          .getBean(HttpApiOnSolidityService.class);
+//      if (CommonParameter.getInstance().solidityNodeHttpEnable) {
+//        appT.addService(httpApiOnSolidityService);
+//      }
+//    }
 
-    // PBFT API (HTTP and GRPC)
-    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
-      RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
-          .getBean(RpcApiServiceOnPBFT.class);
-      appT.addService(rpcApiServiceOnPBFT);
-      HttpApiOnPBFTService httpApiOnPBFTService = context
-          .getBean(HttpApiOnPBFTService.class);
-      appT.addService(httpApiOnPBFTService);
-    }
+//    // PBFT API (HTTP and GRPC)
+//    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
+//      RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
+//          .getBean(RpcApiServiceOnPBFT.class);
+//      appT.addService(rpcApiServiceOnPBFT);
+//      HttpApiOnPBFTService httpApiOnPBFTService = context
+//          .getBean(HttpApiOnPBFTService.class);
+//      appT.addService(httpApiOnPBFTService);
+//    }
 
     appT.initServices(parameter);
     appT.startServices();
     appT.startup();
 
-    rpcApiService.blockUntilShutdown();
+//    rpcApiService.blockUntilShutdown();
   }
 
   public static void shutdown(final Application app) {

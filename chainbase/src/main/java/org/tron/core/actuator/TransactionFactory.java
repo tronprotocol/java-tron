@@ -22,6 +22,7 @@ public class TransactionFactory {
   public static void register(ContractType type, Class<? extends Actuator> actuatorClass,
       Class<? extends GeneratedMessageV3> clazz) {
     Set<String> actuatorSet = CommonParameter.getInstance().getActuatorSet();
+
     if (actuatorClass != null && !actuatorSet.isEmpty() && !actuatorSet
         .contains(actuatorClass.getSimpleName())) {
       return;
@@ -33,6 +34,7 @@ public class TransactionFactory {
     if (type != null && clazz != null) {
       contractMap.put(type, clazz);
     }
+
   }
 
   public static Class<? extends Actuator> getActuator(ContractType type) {

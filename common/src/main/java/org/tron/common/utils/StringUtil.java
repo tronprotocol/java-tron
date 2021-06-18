@@ -29,6 +29,7 @@ public class StringUtil {
   }
 
   public static String encode58Check(byte[] input) {
+//    System.out.println("encode58Check param ="+CommonParameter.getInstance().isECKeyCryptoEngine());
     byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), input);
     byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), hash0);
     byte[] inputCheck = new byte[input.length + 4];
