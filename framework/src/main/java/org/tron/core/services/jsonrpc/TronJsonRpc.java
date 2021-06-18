@@ -277,7 +277,11 @@ public interface TronJsonRpc {
   Object isSyncing();
 
   @JsonRpcMethod("eth_coinbase")
-  String getCoinbase();
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{invalid "
+          + "witness address}"),
+  })
+  String getCoinbase() throws Exception;
 
   @JsonRpcMethod("eth_gasPrice")
   String gasPrice();

@@ -305,7 +305,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
     //发起人为某个地址的交易总数。FullNode无法实现该功能
     return ByteArray.toJsonHex(
-        wallet.getNowBlock().getBlockHeader().getRawData().getTimestamp() + 86400 * 1000);
+        wallet.getNowBlock().getBlockHeader().getRawData().getTimestamp() + 60 * 1000);
   }
 
   @Override
@@ -328,6 +328,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     //获取最新块的产块sr地址
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
+    if (witnessAddress == null || witnessAddress.length != 21) {
+      throw new JsonRpcApiException("invalid witness address");
+    }
     return ByteArray.toJsonHex(witnessAddress);
   }
 
