@@ -67,8 +67,8 @@ public class Tests {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-  private String fullnode = "39.106.192.110:50051";
-  private String fullnode1 = "39.106.192.110:50051";
+  private String fullnode = "47.94.243.150:50051";
+  private String fullnode1 = "47.94.243.150:50051";
   private static byte[] unitrAddress =
       WalletClient.decodeFromBase58Check("TEgfD7cGY7xHuoGuyDBdMicysbbZhpjwx9");
   private static byte[] priceAddress =
@@ -152,12 +152,29 @@ public class Tests {
   @Test(enabled = true,threadPoolSize = 1, invocationCount = 1)
   public void scanBlock() {
     String addressStr = toStr();
-    Long startNum = 29208706L;
-    Long endNum = 29208763L;
+    Long startNum = 31165351L;
+    Long endNum = 31165543L;
     Integer totalNum = 0;
     Integer successNum = 0;
     Integer failedNum = 0;
     NumberMessage.Builder builder = NumberMessage.newBuilder();
+    String contractAddresses = "TPSxiJuCgyZUjLs8PhV9L3vM2ZUqkxqoee,\n"
+        + "TPu8gN2jBKakVtK1tRZE1fzF4ugV5S8emr,\n"
+        + "TTScnCpJ4rvDYTAYLQSb1TfUe6n9rNVV5r,\n"
+        + "TQTfdhUbX6CYMjdJeMRNEwatibF8jiPsFt,\n"
+        + "TBG8YFY23a6pd47BKw1TDYJqeW1TTy9HZp,\n"
+        + "TM5fhZbqth2Cbr1Z8TEWZMFCJqXUJQYp8Z,\n"
+        + "TNyBXHVbgUjF9zB7NGpcJ2suq7os1UByDC,\n"
+        + "TVmD8sH38KvBWH6N4rnSFjmxbTmPEmiTMo,\n"
+        + "TVx8jELiVpNvgj2mxd6nbQ8EQV59ovgE3f,\n"
+        + "TTuzqgesoQAd5VkTHXtVahM3sJApaEbLNs,\n"
+        + "TQYaDoPzAUUs5eCBbM2PrLMbNSRXqQvmkh,\n"
+        + "TYTeYCQWpg49TV7VogNw38KvpxzHoQ37yz,\n"
+        + "TLiNbBysgaA4V84HaUttczRXP4coGurbnM,\n"
+        + "TDs6Eh6XjcCV91gpUWAF7tzCW2wrJv3gd3";
+//    String contractAddresses = "TUeun3aBssMSLhrqBV9XQM1DkT9jYzGYY9";
+//    String contractAddresses = "TQ7bt9bdEFfMkuY3MAnLekvndLdev7r3un";
+//    String contractAddresses = "TUeun3aBssMSLhrqBV9XQM1DkT9jYzGYY9,TQ7bt9bdEFfMkuY3MAnLekvndLdev7r3un";
     while (startNum <= endNum) {
       logger.info("scan block num:" + startNum);
       builder.setNum(startNum);
@@ -172,18 +189,23 @@ public class Tests {
 //        System.out.println("transaction.getRawData().getContract(0).getType().toString():  "+transaction.getRawData().getContract(0).getType().toString());
         if (transaction.getRawData().getContract(0).getType().toString().equals("TriggerSmartContract")){
 //          System.out.println("Base58.encode58Check(infoById.get().getContractAddress().toByteArray()):  "+Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
-          if (addressStr.contains(Base58.encode58Check(infoById.get().getContractAddress().toByteArray()))) {
+          if (contractAddresses.contains(Base58.encode58Check(infoById.get().getContractAddress().toByteArray()))) {
             totalNum ++;
             if (transaction.getRet(0).getContractRet().name().equals("SUCCESS") && infoById.get().getReceipt().getResult().equals(
-                contractResult.SUCCESS)) {
+                contractResult.SUCCESS) && (ByteArray.toInt(infoById.get().getContractResult(0).toByteArray())==0)) {
+            /*if (transaction.getRet(0).getContractRet().name().equals("SUCCESS") && infoById.get().getReceipt().getResult().equals(
+                contractResult.SUCCESS)) {*/
               successNum ++;
+//              System.out.println("contractAddress: "+Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
             } else if (infoById.get().getReceipt().getResult().equals("OUT_OF_TIME"))  {
               System.out.println("failed ----- "+infoById.get().getReceipt().getResult());
               failedNum ++;
             } else {
-              System.out.println("failed !!!!!!"+infoById.get().getReceipt().getResult()+"id: "+txid);
+              System.out.println("failed !!!!!!"+infoById.get().getReceipt().getResult()+"id: "+txid+"contractAddress: "+Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
               failedNum ++;
             }
+          } else {
+            System.out.println("addressStr not contains txid:"+txid);
           }
         }
       }

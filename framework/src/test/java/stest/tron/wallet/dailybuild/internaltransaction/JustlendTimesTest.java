@@ -1,6 +1,7 @@
 package stest.tron.wallet.dailybuild.internaltransaction;
 
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,20 +34,20 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class JustlendTimesTest {
 
-  private final String testAccountKey = "9FD8E129DE181EA44C6129F727A6871440169568ADE002943EAD0E7A16D8EDAC";
+  private final String testAccountKey = "44FE180410D7BF05E41388A881C3C5566C6667840116EC25C6FC924CE678FC4A";
   private final byte[] testAccountAddress = PublicMethed.getFinalAddress(testAccountKey);
-  private final String testAccountKey2 = "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
+  private final String testAccountKey2 = "553c7b0dee17d3f5b334925f5a90fe99fb0b93d47073d69ec33eead8459d171e";
   private final byte[] testAccountAddress2 = PublicMethed.getFinalAddress(testAccountKey2);
-  private final String testAccountKey3 = "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testAccountKey3 = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb8";
   private final byte[] testAccountAddress3 = PublicMethed.getFinalAddress(testAccountKey3);
-  private final String testAccountKey4 = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb8";
+  private final String testAccountKey4 = "ff5d867c4434ac17d264afc6696e15365832d5e8000f75733ebb336d66df148d";
   private final byte[] testAccountAddress4 = PublicMethed.getFinalAddress(testAccountKey4);
   private final String testAccountKey5 = "2925e186bb1e88988855f11ebf20ea3a6e19ed92328b0ffb576122e769d45b68";
   private final byte[] testAccountAddress5 = PublicMethed.getFinalAddress(testAccountKey5);
   private final String accountKey = "7d5a7396d6430edb7f66aa5736ef388f2bea862c9259de8ad8c2cfe080f6f5a0";
   private final byte[] accountAddress = PublicMethed.getFinalAddress(accountKey);
 
-  private final String ownerKey = "1ec9c30c9c246572557d8aaf88fd0823b70fb4b5a085be80959d66be0afb2848";
+  private final String ownerKey = "44FE180410D7BF05E41388A881C3C5566C6667840116EC25C6FC924CE678FC4A";
   private final byte[] ownerAddress = PublicMethed.getFinalAddress(ownerKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
@@ -61,37 +62,37 @@ public class JustlendTimesTest {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private static byte[] unitrAddress =
-      WalletClient.decodeFromBase58Check("TEgfD7cGY7xHuoGuyDBdMicysbbZhpjwx9");
+      WalletClient.decodeFromBase58Check("TAWHLaa4UjkDffo9SfCq3eMpqpmufapA7w");
   private static byte[] priceAddress =
-      WalletClient.decodeFromBase58Check("TSjNzNRKdQMZtazPD7dkMi1Tt8Zj4ZC3wA");
+      WalletClient.decodeFromBase58Check("TDx47dU6YYySHvx9nCotgtvwX5RPMPsXjz");
   private static byte[] trxAddress =
-      WalletClient.decodeFromBase58Check("TVEvT4vNh3oAabHjxPhgU11Se9riqatQ9h");
+      WalletClient.decodeFromBase58Check("TPSxiJuCgyZUjLs8PhV9L3vM2ZUqkxqoee");
   private static byte[] sunAddress =
-      WalletClient.decodeFromBase58Check("TZAe6nHgHRU9BwHax1Do8MAeLQg8ikXzLZ");
+      WalletClient.decodeFromBase58Check("TTScnCpJ4rvDYTAYLQSb1TfUe6n9rNVV5r");
   private static byte[] usdtAddress =
-      WalletClient.decodeFromBase58Check("TVrvkKyDqrrveLkZ67qDYJi29QYdG8iAJi");
+      WalletClient.decodeFromBase58Check("TYTeYCQWpg49TV7VogNw38KvpxzHoQ37yz");
   private static byte[] usdjAddress =
-      WalletClient.decodeFromBase58Check("TNP36KeZaAzCCnjgNHm7w3dCFkKDsQ9Wh3");
+      WalletClient.decodeFromBase58Check("TQTfdhUbX6CYMjdJeMRNEwatibF8jiPsFt");
   private static byte[] winAddress =
-      WalletClient.decodeFromBase58Check("TUU67mPrNxJS53AtpySji5LQqB5eZgnxu4");
+      WalletClient.decodeFromBase58Check("TPu8gN2jBKakVtK1tRZE1fzF4ugV5S8emr");
   private static byte[] btcAddress =
-      WalletClient.decodeFromBase58Check("TDAJq9iNagWNScz18xLx6HfyJf8ktp1aru");
+      WalletClient.decodeFromBase58Check("TQYaDoPzAUUs5eCBbM2PrLMbNSRXqQvmkh");
   private static byte[] jstAddress =
-      WalletClient.decodeFromBase58Check("TMxwHannVrcp1HteiJTW1ZDDAS6iEsPJ3s");
+      WalletClient.decodeFromBase58Check("TBG8YFY23a6pd47BKw1TDYJqeW1TTy9HZp");
   private static byte[] wbttAddress =
-      WalletClient.decodeFromBase58Check("TMDx1DFX62v7wfpByMKRbWX8xZhiU6w5s7");
+      WalletClient.decodeFromBase58Check("TDs6Eh6XjcCV91gpUWAF7tzCW2wrJv3gd3");
   private static byte[] ethAddress =
-      WalletClient.decodeFromBase58Check("TEsaQVSi84WSASUvUxqN81b6kUGghV5dzH");
+      WalletClient.decodeFromBase58Check("TM5fhZbqth2Cbr1Z8TEWZMFCJqXUJQYp8Z");
   private static byte[] eth2Address =
-      WalletClient.decodeFromBase58Check("TL1yMm8YUbW8TkwC3J1Qfy3L6uGQvaDzrY");
+      WalletClient.decodeFromBase58Check("TNyBXHVbgUjF9zB7NGpcJ2suq7os1UByDC");
   private static byte[] eth3Address =
-      WalletClient.decodeFromBase58Check("TQeWYubxpW1h6Kc5L289r26FGUK4hd6xS1");
+      WalletClient.decodeFromBase58Check("TVmD8sH38KvBWH6N4rnSFjmxbTmPEmiTMo");
   private static byte[] eth4Address =
-      WalletClient.decodeFromBase58Check("TVT81JPzTXsQCWCAydVPDecn2xFnXGkAV9");
+      WalletClient.decodeFromBase58Check("TVx8jELiVpNvgj2mxd6nbQ8EQV59ovgE3f");
   private static byte[] eth5Address =
-      WalletClient.decodeFromBase58Check("TCr81A6pA9qZATBz36GQUBySc74j77HQg8");
+      WalletClient.decodeFromBase58Check("TTuzqgesoQAd5VkTHXtVahM3sJApaEbLNs");
   private static byte[] eth6Address =
-      WalletClient.decodeFromBase58Check("TFHc1Q3KxYvS8AcWRyeitQxJ393P8qBkfr");
+      WalletClient.decodeFromBase58Check("TLiNbBysgaA4V84HaUttczRXP4coGurbnM");
   private static byte[] eth7Address =
       WalletClient.decodeFromBase58Check("TKogFfhggBV9PkrUT9vd5Vjc2x9dQs9B1E");
   private static byte[] eth8Address =
@@ -100,18 +101,19 @@ public class JustlendTimesTest {
       WalletClient.decodeFromBase58Check("TSdxbcvDiwassY8pyiz8Jphd4tpid4xYZF");
   private static byte[] eth10Address =
       WalletClient.decodeFromBase58Check("TVu1viG4cTBHxhdeekK1fgNnxPbn3Ktctx");
-  String usdjTokenAddress= "TJ7KV8qKAyAFkdYu1Xr4mEAmhieNJ24ZmF";
-  String jstTokenAddress= "TYrR7VCv1UcWb18ndBkewvhSApf97vnXEf";
-  String usdtTokenAddress= "TSyUnhJdZ8NFNBawRzS8JDatwbFKiuFJVU";// 6
-  String sunTokenAddress= "TD6z6KmS2EWh1Bg2gwP5cqSaAvchZizHPq";
-  String winTokenAddress= "TVQSiwAf3EkGdr5sKAJ1kywaGnRqhuSBeo";// 6
-  String btcTokenAddress= "TE8P2NpxGjn4vF4G3ZvAXkeaog3Zu2mnrz";// 8
-  String wbttTokenAddress= "TYM21rrHMgD7RrjQzUn6nYn3kbdjEwtBpx";// 6
-  String ethTokenAddress= "TMjF58nf7X4h721tFJCjebMiHWpmJhRuUB";
-  String eth2TokenAddress= "TEvRu1eq3wTZromoUuViMEnD9nhieVkLrv";
-  String eth3TokenAddress= "TCr27WGkiDfn6RJjVLL6upx5gPYC4viH6o";
-  String eth4TokenAddress= "TURMZAEYoq5MoBPsSAdKnddEesVwrixdfv";
-  String eth5TokenAddress= "TPwz2xMddMSgjJVaetztx38gBevK9von7y";
+  String usdjTokenAddress= "TNczdrmjcngC7AaUAqW5eboq9bW9tkiSjo";
+  String jstTokenAddress= "TQrW33CF7kWXdrXVJaerGx7HqDFtPUwcG8";
+  String usdtTokenAddress= "TDazaUcwSPEPb3cKevmitaKN8t9ywAaCK4";// 6
+  String sunTokenAddress= "TR1DN8iHvN57ijjaoBNeooHgh6ARNq9vAs";
+  String winTokenAddress= "TRkLU4tTRH25cuEhCigb1X7yBkf7iUm2zL";// 6
+  String btcTokenAddress= "TFJrYkkHuZ4Q8jsoCmXMDuz3ywPUrbBLAd";// 8
+  String wbttTokenAddress= "TLNnfDffmXiWPMQahuaVNYSo6UoTp1xYzk";// 6
+  String ethTokenAddress= "TTyKk4az3Mqi5Sy2rWrzQZ5mhbctDHUNtZ";
+  String eth2TokenAddress= "TCUknHwUG3HemAWtiC99NFy4cr3HuqMLoA";
+  String eth3TokenAddress= "TDyaza138icmrEGUNhVCno7T5oqDyvXxHV";
+  String eth4TokenAddress= "TNWoemzg54N8ugitMHWkwW4H2rYw9CW13b";
+  String eth5TokenAddress= "TBesWEKHWVi9Jp26E8pHrAaYbxMjjX9bHj";
+  String eth6TokenAddress= "TTrDQt2CvFWo161h237gKxPeUDnjMW5wBc";
 
   private static int borrowtimeoutTimes = 0;
   private static int redeemTimes = 0;
@@ -128,19 +130,19 @@ public class JustlendTimesTest {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-//    PublicMethed.printAddress(testAccountKey);
-//    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-//        .usePlaintext(true)
-//        .build();
-//    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-//    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-//        .usePlaintext(true)
-//        .build();
-//    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-//    Protocol.Block currentBlock = blockingStubFull
-//        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-//    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-//    System.out.println("beforeBlockNum: "+ beforeBlockNum);
+    PublicMethed.printAddress(testAccountKey);
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
+    Protocol.Block currentBlock = blockingStubFull
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    System.out.println("beforeBlockNum: "+ beforeBlockNum);
   }
 
   @Test(enabled = true, description = "price")
@@ -193,6 +195,7 @@ public class JustlendTimesTest {
         + "]");
 
   }
+
   private String getDaiFabParam(String... addressList) {
     String sl = "\"";
     if (addressList.length <= 0) {
@@ -218,11 +221,11 @@ public class JustlendTimesTest {
   @Test(enabled = true, description = "newAccount")
   public void newAccount() {
     ArrayList<String> addressList = new ArrayList<>();
-    addressList.add(Base58.encode58Check(testAccountAddress));
-    addressList.add(Base58.encode58Check(testAccountAddress2));
-    addressList.add(Base58.encode58Check(testAccountAddress3));
-    addressList.add(Base58.encode58Check(testAccountAddress4));
-    addressList.add(Base58.encode58Check(testAccountAddress5));
+    addressList.add(Base58.encode58Check(ownerAddress));
+//    addressList.add(Base58.encode58Check(testAccountAddress2));
+//    addressList.add(Base58.encode58Check(testAccountAddress3));
+//    addressList.add(Base58.encode58Check(testAccountAddress4));
+//    addressList.add(Base58.encode58Check(testAccountAddress5));
 
     // sendcoin 1000000000
 //    for (String address : addressList) {
@@ -595,16 +598,30 @@ public class JustlendTimesTest {
     // usdj-price:36140000,jst-price:845000,usdt-price:36570000000000000000,sun-price:379000000,win-price:3587000000000000,btc-price:6810278183330000000000,wbtt-price:11204000000000000
 
     Map<String, String> map = new HashMap<String, String>();
-    map.put(usdj, "36140000");
-    map.put(jst,"8450000");
-    map.put(usdt,"36570000000000000000");
-    map.put(sun,"379000000");
-    map.put(win,"3587000000000000");
-    map.put(btc,"6810278183330000000000");
-    map.put(wbtt,"11204000000000000");
-    map.put(eth,"379000000");
-    map.put(eth2,"379000000");
+//    map.put(usdj, "36140000");
+//    map.put(jst,"8450000");
+//    map.put(usdt,"36570000000000000000");
+//    map.put(sun,"379000000");
+//    map.put(win,"3587000000000000");
+//    map.put(btc,"6810278183330000000000");
+//    map.put(wbtt,"11204000000000000");
+//    map.put(eth,"379000000");
+//    map.put(eth2,"379000000");
 
+    map.put(jstTokenAddress,"jstTokenAddress");
+    map.put(usdtTokenAddress,"usdtTokenAddress");
+    map.put(usdjTokenAddress,"usdjTokenAddress");
+    map.put(sunTokenAddress,"sunTokenAddress");
+    map.put(winTokenAddress,"winTokenAddress");
+    map.put(btcTokenAddress,"btcTokenAddress");
+    map.put(wbttTokenAddress,"wbttTokenAddress");
+    map.put(ethTokenAddress,"ethTokenAddress");
+    map.put(eth2TokenAddress,"eth2TokenAddress");
+    map.put(eth3TokenAddress,"eth3TokenAddress");
+    map.put(eth4TokenAddress,"eth4TokenAddress");
+    map.put(eth5TokenAddress,"eth5TokenAddress");
+    map.put(eth6TokenAddress,"eth6TokenAddress");
+    map.put(usdjTokenAddress,"usdjTokenAddress");
 
     for (String key : map.keySet()) {
       System.out.println(key + ":" + map.get(key));
@@ -723,10 +740,10 @@ public class JustlendTimesTest {
     addressMap.put("wbtt", wbttAddress);
     addressMap.put("eth", ethAddress);
     addressMap.put("eth2", eth2Address);
-//    addressMap.put("eth3", eth3Address);
-//    addressMap.put("eth4", eth4Address);
-//    addressMap.put("eth5", eth5Address);
-//    addressMap.put("eth6", eth6Address);
+    addressMap.put("eth3", eth3Address);
+    addressMap.put("eth4", eth4Address);
+    addressMap.put("eth5", eth5Address);
+    addressMap.put("eth6", eth6Address);
 //    addressMap.put("eth7", eth7Address);
     for (String ctoken:addressMap.keySet()) {
       TransactionExtention transactionExtention = PublicMethed
@@ -761,11 +778,11 @@ public class JustlendTimesTest {
     String txid;
     Optional<Protocol.TransactionInfo>  infoById;
     // trx
-    /*String txid = PublicMethed.triggerContract(trxAddress,
+    txid = PublicMethed.triggerContract(trxAddress,
         "mint(uint256)", "100000000000000", false,
         100000000000000l, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo>  infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     txid = PublicMethed.triggerContract(trxAddress,
@@ -774,17 +791,7 @@ public class JustlendTimesTest {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
-
-    // eth6 18
-    /*
-    String txid = PublicMethed.triggerContract(eth6Address,
-        "mint(uint256)", "00000000000000000000000000000000000000000000152d02c7e14af6800000", true,
-        0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
+    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // eth10
     /*
@@ -855,12 +862,11 @@ public class JustlendTimesTest {
     Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
 
     // eth6
-    /*
-    String txid = PublicMethed.triggerContract(eth6Address,
+    txid = PublicMethed.triggerContract(eth6Address,
         "mint(uint256)", "00000000000000000000000000000000000000000000152d02c7e14af6800000", true,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     txid = PublicMethed.triggerContract(eth6Address,
@@ -869,10 +875,10 @@ public class JustlendTimesTest {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
+    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // eth5 18
-    /*txid = PublicMethed.triggerContract(eth5Address,
+    txid = PublicMethed.triggerContract(eth5Address,
         "mint(uint256)", "00000000000000000000000000000000000000000000152d02c7e14af6800000", true,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -885,10 +891,10 @@ public class JustlendTimesTest {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
+    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // eth4 18
-    /*txid = PublicMethed.triggerContract(eth4Address,
+    txid = PublicMethed.triggerContract(eth4Address,
         "mint(uint256)", "00000000000000000000000000000000000000000000152d02c7e14af6800000", true,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -901,16 +907,16 @@ public class JustlendTimesTest {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
+    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // eth3 18
-    /*txid = PublicMethed.triggerContract(eth3Address,
+    txid = PublicMethed.triggerContract(eth3Address,
         "mint(uint256)", "00000000000000000000000000000000000000000000152d02c7e14af6800000", true,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
+    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     txid = PublicMethed.triggerContract(eth3Address,
         "borrow(uint256)", "00000000000000000000000000000000000000000000021e19e0c9bab2400000", true,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
@@ -920,7 +926,7 @@ public class JustlendTimesTest {
     Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // eth2 18
-    /*txid = PublicMethed.triggerContract(eth2Address,
+    txid = PublicMethed.triggerContract(eth2Address,
         "mint(uint256)", "00000000000000000000000000000000000000000000152d02c7e14af6800000", true,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1061,38 +1067,20 @@ public class JustlendTimesTest {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));*/
+    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true)
   public void approve() {
-    String usdj="TJ7KV8qKAyAFkdYu1Xr4mEAmhieNJ24ZmF";
-    String jst="TYrR7VCv1UcWb18ndBkewvhSApf97vnXEf";
-    String usdt="TSyUnhJdZ8NFNBawRzS8JDatwbFKiuFJVU";
-    String sun="TD6z6KmS2EWh1Bg2gwP5cqSaAvchZizHPq";
-    String win="TVQSiwAf3EkGdr5sKAJ1kywaGnRqhuSBeo";
-    String btc="TE8P2NpxGjn4vF4G3ZvAXkeaog3Zu2mnrz";
-    String wbtt="TYM21rrHMgD7RrjQzUn6nYn3kbdjEwtBpx";
-    String eth="TMjF58nf7X4h721tFJCjebMiHWpmJhRuUB";
-    String eth2="TEvRu1eq3wTZromoUuViMEnD9nhieVkLrv";
-    String eth3="TCr27WGkiDfn6RJjVLL6upx5gPYC4viH6o";
-    String eth4="TURMZAEYoq5MoBPsSAdKnddEesVwrixdfv";
-    String eth5="TPwz2xMddMSgjJVaetztx38gBevK9von7y";
-    String eth6="TSoMFARJvevysGUR7ZBUPX5pM6v9CNmuU5";
-    String eth7="TQprmUBzGJUVeebqK4UA6iTfbP6rpF9Tob";
-    String eth8="TCXL6jT2yUNw85RzEicUBp8yTmd4Jc92ZW";
-    String eth9="TJFEw99wkMGVEK6SUjdBFb78nDPbqcJgEL";
-    String eth10="THB3BidL5CE6Eu5bs4JwzEneVW1c7vaPx2";
 
-    String txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdj),
+    String txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdjTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(usdjAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
-
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(jst),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(jstTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(jstAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1100,7 +1088,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdt),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdtTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(usdtAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1108,7 +1096,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(sun),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(sunTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(sunAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1116,7 +1104,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(win),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(winTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(winAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1124,7 +1112,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(btc),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(btcTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(btcAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1132,7 +1120,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(wbtt),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(wbttTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(wbttAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1140,7 +1128,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(ethTokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(ethAddress)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1148,7 +1136,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth2),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth2TokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(eth2Address)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1156,7 +1144,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth3),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth3TokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(eth3Address)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1164,7 +1152,7 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth4),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth4TokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(eth4Address)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -1172,13 +1160,28 @@ public class JustlendTimesTest {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
-    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth5),
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth5TokenAddress),
         "approve(address,uint256)", "\""+Base58.encode58Check(eth5Address)+"\",-1", false,
         0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(eth6TokenAddress),
+        "approve(address,uint256)", "\""+Base58.encode58Check(eth6Address)+"\",-1", false,
+        0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+
+    String argStr = "\"" + Base58.encode58Check(testAccountAddress) + "\",\"" + Base58.encode58Check(eth6Address) + "\"";
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(eth6TokenAddress), "allowance(address,address)", argStr,
+            false, 0, 0, "0", 0, testAccountAddress, testAccountKey, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    System.out.println(testAccountAddress+"--- allowance --- " + ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   public void mint(byte[] Address, Long value, String flag) {
@@ -1298,9 +1301,9 @@ public class JustlendTimesTest {
             "0", 0, testAccountAddress, testAccountKey, blockingStubFull);
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     BigInteger p = new BigInteger(Hex.toHexString(result),16);
-    System.out.println("第一次查询价格：" + p);
-    BigInteger bigprice=new BigInteger(price);
-    if (bigprice.equals(p)) {
+    System.out.println("第一次查询价格：" +price+":"+ p);
+//    BigInteger bigprice=new BigInteger(price);
+    /*if (bigprice.equals(p)) {
       System.out.println("价格不需要修改：" + p);
     } else
     { String txid = "";
@@ -1325,7 +1328,7 @@ public class JustlendTimesTest {
       byte[] result1 = transactionExtention.getConstantResult(0).toByteArray();
       BigInteger p1 = new BigInteger(Hex.toHexString(result1),16);
       System.out.println("修改后价格：" + p1);
-    }
+    }*/
   }
 
   public void supportMaket(String address) {
