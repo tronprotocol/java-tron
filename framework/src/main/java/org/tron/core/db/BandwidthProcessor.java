@@ -91,7 +91,13 @@ public class BandwidthProcessor extends ResourceProcessor {
 
       logger.debug("trxId {}, bandwidth cost: {}", trx.getTransactionId(), bytesSize);
       trace.setNetBill(bytesSize, 0);
-      byte[] address = TransactionCapsule.getOwner(contract);
+      byte[] address = null;
+      if (trx.getCallerAddress() != null && trx.getCallerAddress().length > 0) {
+        // for cross smart contract
+        address = trx.getCallerAddress();
+      } else {
+        address = TransactionCapsule.getOwner(contract);
+      }
       AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
       if (accountCapsule == null) {
         throw new ContractValidateException("account does not exist");

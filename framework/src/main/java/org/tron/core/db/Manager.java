@@ -890,7 +890,13 @@ public class Manager {
 
       List<Contract> contracts = trx.getInstance().getRawData().getContractList();
       for (Contract contract : contracts) {
-        byte[] address = TransactionCapsule.getOwner(contract);
+        byte[] address = null;
+        if (trx.getCallerAddress() != null && trx.getCallerAddress().length > 0) {
+          // for cross smart contract
+          address = trx.getCallerAddress();
+        } else {
+          address = TransactionCapsule.getOwner(contract);
+        }
         AccountCapsule accountCapsule = getAccountStore().get(address);
         try {
           if (accountCapsule != null) {
@@ -1881,7 +1887,8 @@ public class Manager {
           }
         }
       } catch (Exception e) {
-        logger.error("process cross transaction failed, err: {}", e.getMessage());
+        logger.error("process cross transaction failed, txid:{}, err: {}",
+                transactionCapsule.getTransactionId(), e.getMessage());
         throw new ContractValidateException("process cross transaction failed");
       }
     }
