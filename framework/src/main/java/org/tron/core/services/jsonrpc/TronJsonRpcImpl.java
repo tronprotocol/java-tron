@@ -51,6 +51,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 public class TronJsonRpcImpl implements TronJsonRpc {
 
   String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
+  String regexAddressHash = "(0x)?[a-zA-Z0-9]{42}$";
 
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
@@ -134,7 +135,21 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return bHash;
   }
 
-  private Block getBlockByJsonHash(String blockHash) throws Exception {
+  private byte[] addressHashToByteArray(String hash) {
+    if (!Pattern.matches(regexAddressHash, hash)) {
+      throw new JsonRpcApiException("invalid address hash value");
+    }
+
+    byte[] bHash;
+    try {
+      bHash = ByteArray.fromHexString(hash);
+    } catch (Exception e) {
+      throw new JsonRpcApiException(e.getMessage());
+    }
+    return bHash;
+  }
+
+  private Block getBlockByJsonHash(String blockHash) {
     byte[] bHash = hashToByteArray(blockHash);
     return wallet.getBlockById(ByteString.copyFrom(bHash));
   }
@@ -184,14 +199,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return br;
   }
 
-  public String ethCall(CallArguments args, String bnOrId) throws Exception {
-    //静态调用合约方法。
-    byte[] addressData = Commons.decodeFromBase58Check(args.from);
-    byte[] contractAddressData = Commons.decodeFromBase58Check(args.to);
-
-    return call(addressData, contractAddressData, ByteArray.fromHexString(args.data));
-  }
-
   @Override
   public String getNetVersion() {
     //当前链的id，不能跟metamask已有的id冲突
@@ -218,11 +225,30 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getTrxBalance(String address, String blockNumOrTag) {
-    //某个用户的trx余额，以sun为单位
-    byte[] addressData = ByteArray.fromHexString(address);
-    Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
-    long balance = wallet.getAccount(account).getBalance();
-    return ByteArray.toJsonHex(balance);
+    if ("earliest".equalsIgnoreCase(blockNumOrTag)
+        || "pending".equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+    } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
+      //某个用户的trx余额，以sun为单位
+      byte[] addressData = addressHashToByteArray(address);
+
+      Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
+      Account reply = wallet.getAccount(account);
+      long balance = 0;
+
+      if (reply != null) {
+        balance = reply.getBalance();
+      }
+      return ByteArray.toJsonHex(balance);
+    } else {
+      try {
+        ByteArray.hexToBigInteger(blockNumOrTag);
+      } catch (Exception e) {
+        throw new JsonRpcApiException("invalid block number");
+      }
+
+      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+    }
   }
 
   /**
@@ -294,11 +320,26 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getStorageAt(String address, String storageIdx, String blockNumOrTag) {
-    byte[] addressByte = ByteArray.fromHexString(address);
-    StorageRowStore store = manager.getStorageRowStore();
-    Storage storage = new Storage(addressByte, store);
-    DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
-    return value == null ? null : ByteArray.toJsonHex(value.getData());
+    if ("earliest".equalsIgnoreCase(blockNumOrTag)
+        || "pending".equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+    } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
+      byte[] addressByte = addressHashToByteArray(address);
+
+      StorageRowStore store = manager.getStorageRowStore();
+      Storage storage = new Storage(addressByte, store);
+
+      DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
+      return value == null ? null : ByteArray.toJsonHex(value.getData());
+    } else {
+      try {
+        ByteArray.hexToBigInteger(blockNumOrTag);
+      } catch (Exception e) {
+        throw new JsonRpcApiException("invalid block number");
+      }
+
+      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+    }
   }
 
   @Override
@@ -309,13 +350,33 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getABIofSmartContract(String contractAddress) {
-    //获取某个合约地址的字节码
-    byte[] addressData = ByteArray.fromHexString(contractAddress);
-    BytesMessage.Builder build = BytesMessage.newBuilder();
-    BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressData)).build();
-    SmartContract smartContract = wallet.getContract(bytesMessage);
-    return ByteArray.toJsonHex(smartContract.getBytecode().toByteArray());
+  public String getABIofSmartContract(String contractAddress, String blockNumOrTag) {
+    if ("earliest".equalsIgnoreCase(blockNumOrTag)
+        || "pending".equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+    } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
+      //获取某个合约地址的字节码
+      byte[] addressData = addressHashToByteArray(contractAddress);
+
+      BytesMessage.Builder build = BytesMessage.newBuilder();
+      BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressData)).build();
+      SmartContract smartContract = wallet.getContract(bytesMessage);
+
+      if (smartContract != null) {
+        return ByteArray.toJsonHex(smartContract.getBytecode().toByteArray());
+      } else {
+        return "0x";
+      }
+
+    } else {
+      try {
+        ByteArray.hexToBigInteger(blockNumOrTag);
+      } catch (Exception e) {
+        throw new JsonRpcApiException("invalid block number");
+      }
+
+      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+    }
   }
 
   @Override
@@ -348,7 +409,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String estimateGas() {
+  public String estimateGas(CallArguments args) {
     BigInteger feeLimit = BigInteger.valueOf(100);  // set fee limit: 100 trx
     BigInteger precision = new BigInteger("1000000000000000000"); // 1ether = 10^18 wei
     BigInteger gasPrice = new BigInteger(gasPrice().substring(2), 16);
@@ -366,24 +427,49 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public TransactionResult getTransactionByHash(String txid) {
-    Transaction transaction = wallet
-        .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
+    byte[] txHash = hashToByteArray(txid);
+
     TransactionInfo transactionInfo = wallet
-        .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
-    if (transaction == null || transactionInfo == null) {
+        .getTransactionInfoById(ByteString.copyFrom(txHash));
+    if (transactionInfo == null) {
       return null;
     }
+
     long blockNum = transactionInfo.getBlockNumber();
     Block block = wallet.getBlockByNum(blockNum);
     if (block == null) {
       return null;
     }
-    return formatRpcTransaction(transaction, block);
+
+    return formatRpcTransaction(transactionInfo, block);
+  }
+
+  private TransactionResult formatRpcTransaction(TransactionInfo transactioninfo, Block block) {
+    String txid = ByteArray.toHexString(transactioninfo.getId().toByteArray());
+
+    Transaction transaction = null;
+    int transactionIndex = -1;
+
+    List<Transaction> txList = block.getTransactionsList();
+    for (int index = 0; index < txList.size(); index++) {
+      transaction = txList.get(index);
+      if (getTxID(transaction).equals(txid)) {
+        transactionIndex = index;
+        break;
+      }
+    }
+
+    if (transactionIndex == -1) {
+      return null;
+    }
+
+    return new TransactionResult(block, transactionIndex, transaction, wallet);
   }
 
   private TransactionResult formatRpcTransaction(Transaction transaction, Block block) {
     String txid = ByteArray.toHexString(
         new TransactionCapsule(transaction).getTransactionId().getBytes());
+
     int transactionIndex = -1;
     for (int index = 0; index < block.getTransactionsCount(); index++) {
       if (getTxID(block.getTransactions(index)).equals(txid)) {
@@ -391,21 +477,34 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         break;
       }
     }
+
     return new TransactionResult(block, transactionIndex, transaction, wallet);
+  }
+
+  public TransactionResult getTransactionByBlockAndIndex(Block block, String index) {
+    int txIndex;
+    try {
+      txIndex = ByteArray.jsonHexToInt(index);
+    } catch (Exception e) {
+      throw new JsonRpcApiException("invalid index value");
+    }
+
+    if (txIndex >= block.getTransactionsCount()) {
+      return null;
+    }
+    Transaction transaction = block.getTransactions(txIndex);
+    return new TransactionResult(block, txIndex, transaction, wallet);
   }
 
   @Override
   public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index) {
-    Block block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+    final Block block = getBlockByJsonHash(blockHash);
+
     if (block == null) {
       return null;
     }
-    int txIndex = ByteArray.hexToBigInteger(index).intValue();
-    if (txIndex > block.getTransactionsCount() - 1) {
-      return null;
-    }
-    Transaction transaction = block.getTransactions(txIndex);
-    return formatRpcTransaction(transaction, block);
+
+    return getTransactionByBlockAndIndex(block, index);
   }
 
   @Override
@@ -414,12 +513,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     if (block == null) {
       return null;
     }
-    int txIndex = ByteArray.hexToBigInteger(index).intValue();
-    if (txIndex > block.getTransactionsCount() - 1) {
-      return null;
-    }
-    Transaction transaction = block.getTransactions(txIndex);
-    return formatRpcTransaction(transaction, block);
+
+    return getTransactionByBlockAndIndex(block, index);
   }
 
   @Override
@@ -488,11 +583,24 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getCall(CallArguments transactionCall, String blockNumOrTag) {
-    //静态调用合约方法。
-    byte[] addressData = ByteArray.fromHexString(transactionCall.from);
-    byte[] contractAddressData = ByteArray.fromHexString(transactionCall.to);
+    if ("earliest".equalsIgnoreCase(blockNumOrTag)
+        || "pending".equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+    } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
+      //静态调用合约方法。
+      byte[] addressData = addressHashToByteArray(transactionCall.from);
+      byte[] contractAddressData = addressHashToByteArray(transactionCall.to);
 
-    return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
+      return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
+    } else {
+      try {
+        ByteArray.hexToBigInteger(blockNumOrTag).longValue();
+      } catch (Exception e) {
+        throw new JsonRpcApiException("invalid block number");
+      }
+
+      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+    }
   }
 
   //生成一个调用 eth_call api的参数，可以自由修改
@@ -518,9 +626,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private String generateStorageParameter() {
-    String contractAddress = "41E94EAD5F4CA072A25B2E5500934709F1AEE3C64B";// nile合约：TXEphLzyv5jFwvjzwMok9UoehaSn294ZhN
+    // nile合约：TXEphLzyv5jFwvjzwMok9UoehaSn294ZhN
+    String contractAddress = "41E94EAD5F4CA072A25B2E5500934709F1AEE3C64B";
 
-    String sendAddress = "41F0CC5A2A84CD0F68ED1667070934542D673ACBD8"; // nile测试环境：TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD
+    // nile测试环境：TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD
+    String sendAddress = "41F0CC5A2A84CD0F68ED1667070934542D673ACBD8";
     String index = "01";
     byte[] byte1 = new DataWord(new DataWord(sendAddress).getLast20Bytes()).getData();
     byte[] byte2 = new DataWord(new DataWord(index).getLast20Bytes()).getData();

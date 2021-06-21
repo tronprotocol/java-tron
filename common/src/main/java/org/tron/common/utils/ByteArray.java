@@ -132,15 +132,22 @@ public class ByteArray {
     }
   }
 
-    /**
-     * Generate a subarray of a given byte array.
-     *
-     * @param input the input byte array
-     * @param start the start index
-     * @param end the end index
-     * @return a subarray of <tt>input</tt>, ranging from <tt>start</tt> (inclusively) to <tt>end</tt>
-     * (exclusively)
-     */
+  public static int jsonHexToInt(String x) throws Exception {
+    if (!x.startsWith("0x"))
+      throw new Exception("Incorrect hex syntax");
+    x = x.substring(2);
+    return Integer.parseInt(x, 16);
+  }
+
+  /**
+   * Generate a subarray of a given byte array.
+   *
+   * @param input the input byte array
+   * @param start the start index
+   * @param end the end index
+   * @return a subarray of <tt>input</tt>, ranging from <tt>start</tt> (inclusively) to <tt>end</tt>
+   * (exclusively)
+   */
   public static byte[] subArray(byte[] input, int start, int end) {
     byte[] result = new byte[end - start];
     System.arraycopy(input, start, result, 0, end - start);

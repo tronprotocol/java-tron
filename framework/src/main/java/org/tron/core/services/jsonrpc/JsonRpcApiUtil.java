@@ -333,14 +333,14 @@ public class JsonRpcApiUtil {
           amount = 1024_000_000L;
           break;
         case ParticipateAssetIssueContract:
-         // long token = DataImporter.getTokenID(blockNum,
-         //     contractParameter.unpack(ParticipateAssetIssueContract.class).getAssetName());
-         // //获取token的比例，计算出10币的数量
-         // long trxNum = contractParameter.unpack(ParticipateAssetIssueContract.class).getAmount();
-         // Token10Entity entity = DataImporter.getTokenEntity(token);
-         // long exchangeAmount = Math.multiplyExact(trxNum, entity.getNum());
-         // exchangeAmount = Math.floorDiv(exchangeAmount, entity.getTrxNum());
-         // amount = exchangeAmount;
+          // long token = DataImporter.getTokenID(blockNum,
+          //     contractParameter.unpack(ParticipateAssetIssueContract.class).getAssetName());
+          // //获取token的比例，计算出10币的数量
+          // long trxNum = contractParameter.unpack(ParticipateAssetIssueContract.class).getAmount();
+          // Token10Entity entity = DataImporter.getTokenEntity(token);
+          // long exchangeAmount = Math.multiplyExact(trxNum, entity.getNum());
+          // exchangeAmount = Math.floorDiv(exchangeAmount, entity.getTrxNum());
+          // amount = exchangeAmount;
           break;
         case FreezeBalanceContract:
           amount = contractParameter.unpack(FreezeBalanceContract.class).getFrozenBalance();

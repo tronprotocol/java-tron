@@ -182,14 +182,14 @@ public interface TronJsonRpc {
         to = ByteArray.toJsonHex(toByte);
         value = ByteArray.toJsonHex(getTransactionAmount(contract, hash, wallet));
       } else {
-        from = "";
-        to = "";
-        value = "";
+        from = null;
+        to = null;
+        value = null;
       }
 
-      gas = "";
-      gasPrice = "";
-      input = "";
+      gas = null; // no value
+      gasPrice = null; // no value
+      input = null; // no value
 
       ByteString signature = tx.getSignature(0); // r[32] + s[32] + 符号位v[1]
       byte[] signData = signature.toByteArray();
@@ -262,24 +262,32 @@ public interface TronJsonRpc {
   String getLatestBlockNum();
 
   @JsonRpcMethod("eth_getBalance")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   String getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException;
 
   @JsonRpcMethod("eth_getStorageAt")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   String getStorageAt(String address, String storageIdx, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getTransactionCount")
   String getSendTransactionCountOfAddress(String address, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getCode")
-  String getABIofSmartContract(String contractAddress);
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
+  String getABIofSmartContract(String contractAddress, String bnOrId);
 
   @JsonRpcMethod("eth_syncing")
   Object isSyncing();
 
   @JsonRpcMethod("eth_coinbase")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{invalid "
-          + "witness address}"),
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
   })
   String getCoinbase() throws Exception;
 
@@ -287,24 +295,36 @@ public interface TronJsonRpc {
   String gasPrice();
 
   @JsonRpcMethod("eth_estimateGas")
-  String estimateGas();
+  String estimateGas(CallArguments args);
 
   @JsonRpcMethod("eth_getCompilers")
   String[] getCompilers();
 
   @JsonRpcMethod("eth_getTransactionByHash")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   TransactionResult getTransactionByHash(String txid);
 
   @JsonRpcMethod("eth_getTransactionByBlockHashAndIndex")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index);
 
   @JsonRpcMethod("eth_getTransactionByBlockNumberAndIndex")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index);
 
-  @JsonRpcMethod("eth_gettransactionreceipt")
+  @JsonRpcMethod("eth_getTransactionReceipt")
   TransactionReceipt getTransactionReceipt(String txid);
 
   @JsonRpcMethod("eth_call")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   String getCall(CallArguments transactionCall, String blockNumOrTag);
 
   @JsonRpcMethod("net_peerCount")
