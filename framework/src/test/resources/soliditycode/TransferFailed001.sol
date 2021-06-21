@@ -49,11 +49,11 @@ contract EnergyOfTransferFailedTest {
     }
 
     function testCallTrxInsufficientBalance(uint256 i,address payable caller) public {
-        caller.call.value(i)(abi.encodeWithSignature("test()"));
+        caller.call{value:i}(abi.encodeWithSignature("test()"));
     }
 
     function testCreateTrxInsufficientBalance(uint256 i) payable public {
-        (new Caller).value(i)();
+        (new Caller){value:i}();
     }
 
     // NonexistentTarget
@@ -86,7 +86,7 @@ contract EnergyOfTransferFailedTest {
     }
 
     function testCallTrxNonexistentTarget(uint256 i,address payable nonexistentTarget) payable public {
-        nonexistentTarget.call.value(i)(abi.encodeWithSignature("test()"));
+        nonexistentTarget.call{value:i}(abi.encodeWithSignature("test()"));
     }
 
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {

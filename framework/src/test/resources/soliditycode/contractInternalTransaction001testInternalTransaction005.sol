@@ -3,12 +3,12 @@ contract A{
     constructor() payable public{}
     fallback() payable external{}
     function test1() public payable{
-        B b1 = (new B).value(10)();//1.1
+        B b1 = (new B){value:10}();//1.1
         b1.callCGetZero(false);
         b1.callCGetZero(true);//1.4
     }
     function test2() public payable{
-        C c1 = (new C).value(10)();//1.1
+        C c1 = (new C){value:10}();//1.1
         c1.newBAndTransfer(false);
         c1.newBAndTransfer(true);//1.4
 
