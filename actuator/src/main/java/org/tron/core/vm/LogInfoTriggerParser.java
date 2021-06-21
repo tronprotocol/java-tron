@@ -11,6 +11,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.store.StoreFactory;
@@ -75,8 +76,14 @@ public class LogInfoTriggerParser {
         abiMap.put(strContractAddr, ABI.getDefaultInstance());
         continue;
       }
-      ABI abi = StoreFactory.getInstance().getChainBaseManager()
-          .getAbiStore().get(contractAddress).getInstance();
+      AbiCapsule abiCapsule = StoreFactory.getInstance().getChainBaseManager()
+          .getAbiStore().get(contractAddress);
+      ABI abi;
+      if (abiCapsule == null || abiCapsule.getInstance() == null) {
+        abi = ABI.getDefaultInstance();
+      } else {
+        abi = abiCapsule.getInstance();
+      }
       String creatorAddr = StringUtil.encode58Check(
           TransactionTrace
               .convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
