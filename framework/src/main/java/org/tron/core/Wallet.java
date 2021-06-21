@@ -2471,15 +2471,20 @@ public class Wallet {
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    AbiStore abiStore = chainBaseManager.getAbiStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    AbiCapsule abiCapsule = abiStore.get(contractAddress);
-    if (abiCapsule == null) {
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(contractAddress);
+    if (contractCapsule == null) {
       throw new ContractValidateException(
           "No contract or not a valid smart contract");
     }
-    SmartContract.ABI abi = abiCapsule.getInstance();
+    AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(contractAddress);
+    SmartContract.ABI abi;
+    if (abiCapsule == null || abiCapsule.getData() == null) {
+      abi = SmartContract.ABI.getDefaultInstance();
+    } else {
+      abi = abiCapsule.getInstance();
+    }
 
     byte[] selector = WalletUtil.getSelector(
         triggerSmartContract.getData().toByteArray());
@@ -2580,7 +2585,7 @@ public class Wallet {
     ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
       AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
-      if (Objects.nonNull(abiCapsule)) {
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
         contractCapsule = new ContractCapsule(
             contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
       }
@@ -2609,7 +2614,7 @@ public class Wallet {
     ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
       AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
-      if (Objects.nonNull(abiCapsule)) {
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
         contractCapsule = new ContractCapsule(
             contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
       }
