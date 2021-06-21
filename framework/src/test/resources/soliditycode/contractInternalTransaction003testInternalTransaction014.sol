@@ -20,7 +20,7 @@ contract callerContract {
        }
 
        function setIinC(address c) public payable{
-           c.call.value(5)(abi.encodeWithSignature("setI()"));
+           c.call{value:5}(abi.encodeWithSignature("setI()"));
        }
 
    }

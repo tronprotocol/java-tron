@@ -4,7 +4,7 @@ contract A{
     constructor() payable public{}
     fallback() payable external{}
     function test1(address bAddr,address eAddr) public payable{
-        bAddr.call.value(1)(abi.encodeWithSignature("testNN(address)",eAddr));//2.1
+        bAddr.call{value:1}(abi.encodeWithSignature("testNN(address)",eAddr));//2.1
     }
 
 }
@@ -16,7 +16,7 @@ contract B{
         return 1;
     }
     function testNN(address eAddress) public payable{
-         D d1=(new D).value(1000)();
+         D d1=(new D){value:1000}();
          d1.getOne(eAddress);
     }
 }
@@ -45,7 +45,7 @@ contract D{
     constructor() payable public{}
     fallback() payable external{}
     function getOne(address eAddress) payable public returns(uint256){
-        eAddress.call.value(1)(abi.encodeWithSignature("getZero()"));//2.1
+        eAddress.call{value:1}(abi.encodeWithSignature("getZero()"));//2.1
     }
 
 }

@@ -4,22 +4,22 @@ contract Base {
     enum ActionChoices { GoLeft, GoRight, GoStraight, SitStill }
     ActionChoices public choice2 = ActionChoices.GoRight;
 
-    function stopped() virtual external pure returns (bool) {
+    function stopped() virtual external view returns (bool) {
         return true;
     }
-    function i() virtual external pure returns (int) {
+    function i() virtual external view returns (int) {
         return 32482980;
     }
-    function i2() virtual external pure returns (int) {
+    function i2() virtual external view returns (int) {
         return -32482980;
     }
-    function ui() virtual external pure returns (uint) {
+    function ui() virtual external view returns (uint) {
         return 23487820;
     }
-    function origin() virtual external pure returns (address) {
+    function origin() virtual external view returns (address) {
         return 0x3b0E4a6EdEE231CE0c3433F00F1bbc5FeD409c0B;
     }
-    function b32() virtual external pure returns (bytes32) {
+    function b32() virtual external view returns (bytes32) {
         return 0xb55a21aaee0ce8f1c8ffaa0dbd23105cb55a21aaee0ce8f1c8ffaa0dbd231050;
     }
     function choice() virtual external returns (ActionChoices) {

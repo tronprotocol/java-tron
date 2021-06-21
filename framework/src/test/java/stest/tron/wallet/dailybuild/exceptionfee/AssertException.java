@@ -355,7 +355,7 @@ public class AssertException {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "Trigger contract move a negative value to a binary")
+  @Test(enabled = false, description = "Trigger contract move a negative value to a binary")
   public void test5MoveRight() {
     String filePath = "src/test/resources/soliditycode/assertExceptiontest5MoveRight.sol";
     String contractName = "binaryRightContract";
@@ -385,7 +385,7 @@ public class AssertException {
     String txid = "";
     Integer triggerNum = -1;
     txid = PublicMethed.triggerContract(contractAddress,
-        "binaryMoveR(int256)", triggerNum.toString(), false,
+        "binaryMoveR(uint256)", triggerNum.toString(), false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);

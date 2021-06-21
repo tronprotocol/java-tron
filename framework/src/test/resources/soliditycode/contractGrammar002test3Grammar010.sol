@@ -6,5 +6,5 @@ contract Consumer {
 constructor() payable public{}
 InfoFeed feed;
 function setFeed(address addr) public { feed = InfoFeed(addr); }
-function callFeed() public payable { feed.info.value(10).gas(800)(); }
+function callFeed() public payable { feed.info{value:10,gas:800}(); }
 }
