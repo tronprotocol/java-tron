@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -133,6 +134,7 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort = 0;
     PARAMETER.pBFTHttpPort = 0;
     PARAMETER.jsonRpcHttpPort = 0;
+    PARAMETER.energyCost = "";
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -459,6 +461,10 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcHttpPort =
         config.hasPath(Constant.NODE_HTTP_JSONRPC_PORT)
             ? config.getInt(Constant.NODE_HTTP_JSONRPC_PORT) : 8093;
+
+    PARAMETER.energyCost =
+        config.hasPath(Constant.NODE_ENERGY_COST)
+            ? config.getString(Constant.NODE_ENERGY_COST) : "27553334:140,25304425:40,0:10";
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)

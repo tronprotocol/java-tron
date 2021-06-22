@@ -3784,5 +3784,9 @@ public class Wallet {
       throw new IllegalArgumentException("account_identifier address is null");
     }
   }
+
+  public long getEnergyFee() {
+    return chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+  }
 }
 

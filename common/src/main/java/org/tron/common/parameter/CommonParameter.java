@@ -3,6 +3,7 @@ package org.tron.common.parameter;
 import com.beust.jcommander.Parameter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -171,6 +172,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int jsonRpcHttpPort;
+  @Getter
+  @Setter
+  public String energyCost;
   @Getter
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")

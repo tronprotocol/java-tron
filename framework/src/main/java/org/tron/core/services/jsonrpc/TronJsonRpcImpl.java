@@ -2,9 +2,6 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.encode58Check;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateContractAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
@@ -23,7 +20,6 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
@@ -519,66 +515,20 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public TransactionReceipt getTransactionReceipt(String txid) {
-    Transaction transaction = wallet
-        .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
-    TransactionInfo transactionInfo = wallet
-        .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(txid)));
-    if (transaction == null || transactionInfo == null) {
+    byte[] txHash = hashToByteArray(txid);
+
+    TransactionInfo transactionInfo = wallet.getTransactionInfoById(ByteString.copyFrom(txHash));
+    if (transactionInfo == null) {
       return null;
     }
 
     long blockNum = transactionInfo.getBlockNumber();
     Block block = wallet.getBlockByNum(blockNum);
-    TransactionResult dto = formatRpcTransaction(transaction, block);
-    TransactionReceipt receipt = new TransactionReceipt();
-    receipt.blockHash = dto.blockHash;
-    receipt.blockNumber = dto.blockNumber;
-    receipt.transactionIndex = dto.transactionIndex;
-    receipt.transactionHash = dto.hash;
-    receipt.from = dto.from;
-    receipt.to = dto.to;
-
-    long cumulativeGasUsed = 0;
-    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
-    for (TransactionInfo info : infoList.getTransactionInfoList()) {
-      cumulativeGasUsed += info.getFee();
+    if (block == null) {
+      return null;
     }
-    receipt.cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGasUsed);
-    receipt.gasUsed = ByteArray.toJsonHex(transactionInfo.getFee());
 
-    String contractAddress = null;
-    if (transaction.getRawData().getContract(0).getType() == ContractType.CreateSmartContract) {
-      contractAddress = encode58Check(generateContractAddress(transaction));
-    }
-    receipt.contractAddress = contractAddress;
-
-    //统一的log
-    List<TransactionReceipt.TransactionLog> logList = new ArrayList<>();
-    for (int index = 0; index < transactionInfo.getLogCount(); index++) {
-      TransactionInfo.Log log = transactionInfo.getLogList().get(index);
-
-      TransactionReceipt.TransactionLog transactionLog = new TransactionReceipt.TransactionLog();
-      transactionLog.logIndex = ByteArray.toJsonHex(index + 1); //log的索引从1开始
-      transactionLog.transactionHash = dto.hash;
-      transactionLog.transactionIndex = dto.transactionIndex;
-      transactionLog.blockHash = dto.blockHash;
-      transactionLog.blockNumber = dto.blockNumber;
-      byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
-      transactionLog.address = ByteArray.toJsonHex(addressByte);
-      transactionLog.addressBase58 = encode58Check(addressByte);
-      transactionLog.data = ByteArray.toJsonHex(log.getData().toByteArray());
-      String[] topics = new String[log.getTopicsCount()];
-      for (int i = 0; i < log.getTopicsCount(); i++) {
-        topics[i] = ByteArray.toJsonHex(log.getTopics(i).toByteArray());
-      }
-      transactionLog.topics = topics;
-
-      logList.add(transactionLog);
-    }
-    receipt.logs = logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]);
-    receipt.logsBloom = null; //暂时不填
-
-    return receipt;
+    return new TransactionReceipt(block, transactionInfo, wallet);
   }
 
   @Override

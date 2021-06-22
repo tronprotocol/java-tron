@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
@@ -453,5 +454,24 @@ public class JsonRpcApiUtil {
           Throwables.getStackTraceAsString(e));
     }
     return amount;
+  }
+
+  public static long calEngergyFee(long blockNum, Wallet wallet) {
+    String energyCost = CommonParameter.getInstance().getEnergyCost();
+    if (energyCost.isEmpty()) {
+      return wallet.getEnergyFee();
+    } else {
+      String[] costList = energyCost.split(",");
+      for (String data : costList) {
+        String[] costStrArray = data.split(":");
+        long num = Long.parseLong(costStrArray[0]);
+        long cost = Long.parseLong(costStrArray[1]);
+        if (blockNum >= num) {
+          return cost;
+        }
+      }
+
+      return wallet.getEnergyFee();
+    }
   }
 }

@@ -1,5 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
@@ -7,19 +8,25 @@ import com.google.protobuf.ByteString;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.TransactionInfo;
 
 @Component
 public interface TronJsonRpc {
@@ -118,7 +125,6 @@ public interface TronJsonRpc {
       public String transactionIndex;
       public String transactionHash;
       public String address;
-      public String addressBase58;
       public String data;
       public String[] topics;
 
@@ -142,6 +148,81 @@ public interface TronJsonRpc {
 
     public TransactionReceipt() {
 
+    }
+
+    public TransactionReceipt(Block block, TransactionInfo txInfo, Wallet wallet) {
+      BlockCapsule blockCapsule = new BlockCapsule(block);
+      String txid = ByteArray.toHexString(txInfo.getId().toByteArray());
+
+      Transaction transaction = null;
+      long cumulativeGas = 0;
+
+      long sunPerEnergy = Constant.SUN_PER_ENERGY;
+      long dynamicEnergyFee = wallet.getEnergyFee();
+      if (dynamicEnergyFee > 0) {
+        sunPerEnergy = dynamicEnergyFee;
+      }
+
+      TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockCapsule.getNum());
+      for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
+        TransactionInfo info = infoList.getTransactionInfo(index);
+        ResourceReceipt resourceReceipt = info.getReceipt();
+
+        long energyUsage = resourceReceipt.getEnergyUsage()
+            + resourceReceipt.getEnergyFee() / sunPerEnergy;
+        cumulativeGas += energyUsage;
+
+        if (ByteArray.toHexString(info.getId().toByteArray()).equals(txid)) {
+          transactionIndex = ByteArray.toJsonHex(index);
+          cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGas);
+          gasUsed = ByteArray.toJsonHex(energyUsage);
+
+          transaction = block.getTransactions(index);
+          break;
+        }
+      }
+
+      blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
+      blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
+      transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
+
+      if (transaction != null && !transaction.getRawData().getContractList().isEmpty()) {
+        Contract contract = transaction.getRawData().getContract(0);
+        byte[] fromByte = TransactionCapsule.getOwner(contract);
+        byte[] toByte = getToAddress(transaction);
+        from = ByteArray.toJsonHex(fromByte);
+        to = ByteArray.toJsonHex(toByte);
+      } else {
+        from = null;
+        to = null;
+      }
+
+      contractAddress = ByteArray.toJsonHex(txInfo.getContractAddress().toByteArray());
+
+      // 统一的log
+      List<TransactionLog> logList = new ArrayList<>();
+      for (int index = 0; index < txInfo.getLogCount(); index++) {
+        TransactionInfo.Log log = txInfo.getLogList().get(index);
+
+        TransactionReceipt.TransactionLog transactionLog = new TransactionReceipt.TransactionLog();
+        transactionLog.logIndex = ByteArray.toJsonHex(index + 1); //log的索引从1开始
+        transactionLog.transactionHash = txid;
+        transactionLog.transactionIndex = transactionIndex;
+        transactionLog.blockHash = blockHash;
+        transactionLog.blockNumber = blockNumber;
+        byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
+        transactionLog.address = ByteArray.toJsonHex(addressByte);
+        transactionLog.data = ByteArray.toJsonHex(log.getData().toByteArray());
+        String[] topics = new String[log.getTopicsCount()];
+        for (int i = 0; i < log.getTopicsCount(); i++) {
+          topics[i] = ByteArray.toJsonHex(log.getTopics(i).toByteArray());
+        }
+        transactionLog.topics = topics;
+
+        logList.add(transactionLog);
+      }
+      logs = logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]);
+      logsBloom = null; // no value
     }
   }
 
@@ -319,6 +400,9 @@ public interface TronJsonRpc {
   TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index);
 
   @JsonRpcMethod("eth_getTransactionReceipt")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   TransactionReceipt getTransactionReceipt(String txid);
 
   @JsonRpcMethod("eth_call")
