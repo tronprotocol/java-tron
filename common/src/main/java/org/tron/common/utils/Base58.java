@@ -111,7 +111,7 @@ public class Base58 {
   private static byte divmod58(byte[] number, int startAt) {
     int remainder = 0;
     for (int i = startAt; i < number.length; i++) {
-      int digit256 = (int) number[i] & 0xFF;
+      int digit256 = number[i] & 0xFF;
       int temp = remainder * 256 + digit256;
 
       number[i] = (byte) (temp / 58);
@@ -128,7 +128,7 @@ public class Base58 {
   private static byte divmod256(byte[] number58, int startAt) {
     int remainder = 0;
     for (int i = startAt; i < number58.length; i++) {
-      int digit58 = (int) number58[i] & 0xFF;
+      int digit58 = number58[i] & 0xFF;
       int temp = remainder * 58 + digit58;
 
       number58[i] = (byte) (temp / 256);
