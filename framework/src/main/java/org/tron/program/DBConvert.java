@@ -228,7 +228,7 @@ public class DBConvert {
 
   public int byteArrayToIntWithOne(int sum, byte[] b) {
     for (byte oneByte : b) {
-      sum += (int) oneByte;
+      sum += oneByte;
     }
     return sum;
   }
