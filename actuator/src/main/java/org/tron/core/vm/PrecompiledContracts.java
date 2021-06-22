@@ -769,7 +769,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      int cnt = (data.length / WORD_SIZE - 5) / 5;
+      long cnt = (data.length / WORD_SIZE - 5) / 5;
       // one sign 1500, half of ecrecover
       return cnt * ENGERYPERSIGN;
     }
@@ -839,7 +839,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      int cnt = (data.length / WORD_SIZE - 5) / 6;
+      long cnt = (data.length / WORD_SIZE - 5) / 6;
       // one sign 1500, half of ecrecover
       return cnt * ENGERYPERSIGN;
     }
