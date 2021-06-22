@@ -29,6 +29,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -136,13 +137,20 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private byte[] addressHashToByteArray(String hash) {
-    if (!Pattern.matches(regexAddressHash, hash)) {
-      throw new JsonRpcApiException("invalid address hash value");
-    }
+//    if (!Pattern.matches(regexAddressHash, hash)) {
+//      throw new JsonRpcApiException("invalid address hash value");
+//    }
 
     byte[] bHash;
     try {
       bHash = ByteArray.fromHexString(hash);
+      if (bHash.length != DecodeUtil.ADDRESS_SIZE / 2
+          && bHash.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
+        throw new JsonRpcApiException("invalid address hash value");
+      }
+      if (bHash.length == DecodeUtil.ADDRESS_SIZE/2 - 1) {
+        bHash = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, bHash);
+      }
     } catch (Exception e) {
       throw new JsonRpcApiException(e.getMessage());
     }
@@ -604,7 +612,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   //生成一个调用 eth_call api的参数，可以自由修改
-  private String generateCallParameter() {
+  private String generateCallParameter1() {
     String ownerAddress = "TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD";
     String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile测试环境udsj地址
 
@@ -615,8 +623,30 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     String data = getMethodSign("balanceOf(address)") + Hex.toHexString(addressDataWord);
 
     CallArguments transactionCall = new CallArguments();
-    transactionCall.from = ownerAddress;
-    transactionCall.to = usdjAddress;
+    transactionCall.from = ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress));
+    transactionCall.to = ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress));
+    transactionCall.data = data;
+
+    StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
+    sb.append(transactionCall);
+    sb.append(", \"latest\"],\"id\":1}");
+    return sb.toString();
+  }
+
+  //生成一个调用 eth_call api的参数，可以自由修改
+  private String generateCallParameter2() {
+    String ownerAddress = "TRXPT6Ny7EFvTPv7mFUqaFUST39WUZ4zzz";
+    String usdjAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"; // nile测试环境udsj地址
+
+    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
+    byte[] addressDataWord = new byte[32];
+    System.arraycopy(Commons.decodeFromBase58Check(ownerAddress), 0, addressDataWord,
+        32 - addressData.length, addressData.length);
+    String data = getMethodSign("name()");
+
+    CallArguments transactionCall = new CallArguments();
+    transactionCall.from = ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress));
+    transactionCall.to = ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress));
     transactionCall.data = data;
 
     StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
@@ -714,7 +744,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   public static void main(String[] args) {
     TronJsonRpcImpl impl = new TronJsonRpcImpl();
-    System.out.println(impl.generateCallParameter());
+    System.out.println(impl.generateCallParameter1());
+    System.out.println(impl.generateCallParameter2());
     System.out.println(impl.generateStorageParameter());
   }
 }
