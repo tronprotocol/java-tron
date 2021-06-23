@@ -158,6 +158,7 @@ public interface TronJsonRpc {
 
       Transaction transaction = null;
       long cumulativeGas = 0;
+      long cumulativeLogCount = 0;
 
       long sunPerEnergy = Constant.SUN_PER_ENERGY;
       long dynamicEnergyFee = wallet.getEnergyFee();
@@ -183,6 +184,8 @@ public interface TronJsonRpc {
 
           transaction = block.getTransactions(index);
           break;
+        } else {
+          cumulativeLogCount += info.getLogCount();
         }
       }
 
@@ -209,7 +212,8 @@ public interface TronJsonRpc {
         TransactionInfo.Log log = txInfo.getLogList().get(index);
 
         TransactionReceipt.TransactionLog transactionLog = new TransactionReceipt.TransactionLog();
-        transactionLog.logIndex = ByteArray.toJsonHex(index + 1); //log的索引从1开始
+        // log的index为在这个block中的index
+        transactionLog.logIndex = ByteArray.toJsonHex(index + cumulativeLogCount);
         transactionLog.transactionHash = txid;
         transactionLog.transactionIndex = transactionIndex;
         transactionLog.blockHash = blockHash;
