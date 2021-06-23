@@ -79,7 +79,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String web3Sha3(String data) {
-    byte[] result = Hash.sha3(ByteArray.fromHexString(data));
+    byte[] input;
+    try {
+      input = ByteArray.fromHexString(data);
+    } catch (Exception e) {
+      throw new JsonRpcApiException("invalid input value");
+    }
+
+    byte[] result = Hash.sha3(input);
     return ByteArray.toJsonHex(result);
   }
 
@@ -133,9 +140,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private byte[] addressHashToByteArray(String hash) {
-//    if (!Pattern.matches(regexAddressHash, hash)) {
-//      throw new JsonRpcApiException("invalid address hash value");
-//    }
+   // if (!Pattern.matches(regexAddressHash, hash)) {
+   //   throw new JsonRpcApiException("invalid address hash value");
+   // }
 
     byte[] bHash;
     try {
@@ -384,11 +391,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public Object isSyncing() {
-    return true;
-  }
-
-  @Override
   public String getCoinbase() {
     //获取最新块的产块sr地址
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
@@ -465,21 +467,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     if (transactionIndex == -1) {
       return null;
-    }
-
-    return new TransactionResult(block, transactionIndex, transaction, wallet);
-  }
-
-  private TransactionResult formatRpcTransaction(Transaction transaction, Block block) {
-    String txid = ByteArray.toHexString(
-        new TransactionCapsule(transaction).getTransactionId().getBytes());
-
-    int transactionIndex = -1;
-    for (int index = 0; index < block.getTransactionsCount(); index++) {
-      if (getTxID(block.getTransactions(index)).equals(txid)) {
-        transactionIndex = index;
-        break;
-      }
     }
 
     return new TransactionResult(block, transactionIndex, transaction, wallet);
@@ -634,21 +621,22 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public Object getSyncingStatus() {
     //查询同步状态。未同步返回false，否则返回 SyncingResult
-    if (nodeInfoService.getNodeInfo().getPeerList().size() == 0) {
+    if (nodeInfoService.getNodeInfo().getPeerList().isEmpty()) {
       return false;
     }
-    long startingBlock = nodeInfoService.getNodeInfo().getBeginSyncNum();
+
+    long startingBlockNum = nodeInfoService.getNodeInfo().getBeginSyncNum();
     Block nowBlock = wallet.getNowBlock();
-    long currentBlock = nowBlock.getBlockHeader().getRawData().getNumber();
-    long diff = (System.currentTimeMillis() - nowBlock.getBlockHeader().getRawData()
-        .getTimestamp()) / 3000;
+    long currentBlockNum = nowBlock.getBlockHeader().getRawData().getNumber();
+    long diff = (System.currentTimeMillis()
+        - nowBlock.getBlockHeader().getRawData().getTimestamp()) / 3000;
     diff = diff > 0 ? diff : 0;
-    long highestBlock = currentBlock + diff; //预测的最高块号
-    SyncingResult syncingResult = new SyncingResult(ByteArray.toJsonHex(startingBlock),
-        ByteArray.toJsonHex(currentBlock),
-        ByteArray.toJsonHex(highestBlock)
+    long highestBlockNum = currentBlockNum + diff; //预测的最高块号
+
+    return new SyncingResult(ByteArray.toJsonHex(startingBlockNum),
+        ByteArray.toJsonHex(currentBlockNum),
+        ByteArray.toJsonHex(highestBlockNum)
     );
-    return syncingResult;
   }
 
   @Override
@@ -673,6 +661,22 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String getUncleCountByBlockNumber(String blockNumOrTag) {
     //查询指定块号的分叉个数
     return "0x0";
+  }
+
+  @Override
+  public List<Object> ethGetWork() {
+    Block block = wallet.getNowBlock();
+    String blockHash = null;
+
+    if (block != null) {
+      blockHash = ByteArray.toJsonHex(new BlockCapsule(block).getBlockId().getBytes());
+    }
+
+    return Arrays.asList(
+        blockHash,
+        null,
+        null
+    );
   }
 
   @Override

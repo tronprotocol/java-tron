@@ -314,6 +314,9 @@ public interface TronJsonRpc {
   String web3ClientVersion();
 
   @JsonRpcMethod("web3_sha3")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
+  })
   String web3Sha3(String data) throws Exception;
 
   @JsonRpcMethod("eth_getBlockTransactionCountByHash")
@@ -372,9 +375,6 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcApiException.class, code = -32602, data = "{}"),
   })
   String getABIofSmartContract(String contractAddress, String bnOrId);
-
-  @JsonRpcMethod("eth_syncing")
-  Object isSyncing();
 
   @JsonRpcMethod("eth_coinbase")
   @JsonRpcErrors({
@@ -438,6 +438,9 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_getUncleCountByBlockNumber")
   String getUncleCountByBlockNumber(String blockNumOrTag);
+
+  @JsonRpcMethod("eth_getWork")
+  List<Object> ethGetWork();
 
   @JsonRpcMethod("eth_hashrate")
   String getHashRate();
