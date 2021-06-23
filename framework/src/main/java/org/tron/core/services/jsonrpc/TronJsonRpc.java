@@ -346,6 +346,9 @@ public interface TronJsonRpc {
   @JsonRpcMethod("net_version")
   String getNetVersion();
 
+  @JsonRpcMethod("eth_chainId")
+  String ethChainId();
+
   @JsonRpcMethod("net_listening")
   boolean isListening();
 

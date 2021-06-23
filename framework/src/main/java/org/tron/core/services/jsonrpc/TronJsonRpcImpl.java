@@ -212,7 +212,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getNetVersion() {
-    //当前链的id，不能跟metamask已有的id冲突
+    //network id，不能跟metamask已有的id冲突
+    return ByteArray.toJsonHex(100);
+  }
+
+  @Override
+  public String ethChainId() {
     return ByteArray.toJsonHex(100);
   }
 
