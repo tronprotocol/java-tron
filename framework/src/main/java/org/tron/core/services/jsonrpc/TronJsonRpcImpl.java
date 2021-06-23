@@ -315,7 +315,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       for (ByteString bs : list) {
         listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
       }
-      result = Hex.toHexString(listBytes);
+      result = ByteArray.toHexString(listBytes);
     } else {
       logger.error("trigger contract failed.");
     }
