@@ -78,7 +78,7 @@ public class ClearAbi006 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = false, description = "Clear a uninitialized account")
+  @Test(enabled = true, description = "Clear a uninitialized account")
   public void testClearAbi() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
