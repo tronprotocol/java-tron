@@ -4,6 +4,8 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.protobuf.ByteString;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
@@ -145,10 +147,10 @@ public interface TronJsonRpc {
     public String contractAddress;
     public TransactionLog[] logs;
     public String logsBloom;
-
-    public TransactionReceipt() {
-
-    }
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String root;  // 32 bytes of post-transaction stateroot (pre Byzantium)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String status;  //  either 1 (success) or 0 (failure) (post Byzantium)
 
     public TransactionReceipt(Block block, TransactionInfo txInfo, Wallet wallet) {
       BlockCapsule blockCapsule = new BlockCapsule(block);
@@ -169,6 +171,7 @@ public interface TronJsonRpc {
         ResourceReceipt resourceReceipt = info.getReceipt();
 
         long energyUsage = resourceReceipt.getEnergyUsage()
+            + resourceReceipt.getOriginEnergyUsage()
             + resourceReceipt.getEnergyFee() / sunPerEnergy;
         cumulativeGas += energyUsage;
 
@@ -176,6 +179,7 @@ public interface TronJsonRpc {
           transactionIndex = ByteArray.toJsonHex(index);
           cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGas);
           gasUsed = ByteArray.toJsonHex(energyUsage);
+          status = resourceReceipt.getResultValue() == 1 ? "0x1" : "0x0";
 
           transaction = block.getTransactions(index);
           break;
@@ -223,6 +227,8 @@ public interface TronJsonRpc {
       }
       logs = logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]);
       logsBloom = null; // no value
+
+      root = null;
     }
   }
 
