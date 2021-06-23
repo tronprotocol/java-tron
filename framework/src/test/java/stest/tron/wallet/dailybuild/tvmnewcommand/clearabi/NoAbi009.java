@@ -135,7 +135,7 @@ public class NoAbi009 {
 
     // getcontract
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-    System.out.println("smartContract:"+smartContract.toString());
+    System.out.println("smartContract:" + smartContract.toString());
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
@@ -143,10 +143,10 @@ public class NoAbi009 {
     // getcontractinfo
     SmartContractDataWrapper contractInfo = PublicMethed
         .getContractInfo(contractAddress, blockingStubFull);
-    System.out.println("contractInfo.toString():"+contractInfo.toString());
+    System.out.println("contractInfo.toString():" + contractInfo.toString());
     Assert.assertTrue(contractInfo.getSmartContract().getAbi().toString().isEmpty());
     Assert.assertTrue(contractInfo.getSmartContract().getName().equalsIgnoreCase(contractName));
-    Assert.assertTrue(contractInfo.getRuntimecode().size()>0);
+    Assert.assertTrue(contractInfo.getRuntimecode().size() > 0);
     Assert.assertFalse(contractInfo.getSmartContract().getBytecode().toString().isEmpty());
 
     // triggerconstantcontract fullnode
@@ -157,7 +157,8 @@ public class NoAbi009 {
     logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
-    Assert.assertEquals(3, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals(3,
+        ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     // triggercontract
     txid = PublicMethed
@@ -171,7 +172,7 @@ public class NoAbi009 {
     Assert.assertTrue(3 == returnNumber);
     List<String> retList = PublicMethed
         .getStrings(infoById.get().getLogList().get(0).getData().toByteArray());
-    logger.info("retList:"+retList.toString());
+    logger.info("retList:" + retList.toString());
     byte[] tmpAddress = new byte[20];
     System.arraycopy(ByteArray.fromHexString(retList.get(1)), 12, tmpAddress, 0, 20);
     String addressHex = "41" + ByteArray.toHexString(tmpAddress);
@@ -193,7 +194,8 @@ public class NoAbi009 {
     logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
-    Assert.assertEquals(4, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals(4,
+        ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "create2 contract with event")
@@ -266,7 +268,7 @@ public class NoAbi009 {
 
     // getcontract
     smartContract = PublicMethed.getContract(testNoABiContractAddress, blockingStubFull);
-    System.out.println("smartContract:"+smartContract.toString());
+    System.out.println("smartContract:" + smartContract.toString());
     // the contract owner of contract created by create2 is the factory contract
     Assert.assertEquals(Base58.encode58Check(factoryContractAddress),
         Base58.encode58Check(smartContract.getOriginAddress().toByteArray()));
@@ -279,10 +281,10 @@ public class NoAbi009 {
     // getcontractinfo
     SmartContractDataWrapper contractInfo = PublicMethed
         .getContractInfo(testNoABiContractAddress, blockingStubFull);
-    System.out.println("contractInfo.toString():"+contractInfo.toString());
+    System.out.println("contractInfo.toString():" + contractInfo.toString());
     Assert.assertTrue(contractInfo.getSmartContract().getAbi().toString().isEmpty());
     // Assert.assertTrue(contractInfo.getSmartContract().getName().equalsIgnoreCase(contractName));
-    Assert.assertTrue(contractInfo.getRuntimecode().size()>0);
+    Assert.assertTrue(contractInfo.getRuntimecode().size() > 0);
     Assert.assertFalse(contractInfo.getSmartContract().getBytecode().toString().isEmpty());
 
     // triggerconstantcontract fullnode
@@ -293,7 +295,8 @@ public class NoAbi009 {
     logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
-    Assert.assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals(1,
+        ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     // triggercontract
     String txid = PublicMethed
@@ -307,7 +310,7 @@ public class NoAbi009 {
     Assert.assertTrue(1 == returnNumber);
     retList = PublicMethed
         .getStrings(infoById.get().getLogList().get(0).getData().toByteArray());
-    logger.info("retList:"+retList.toString());
+    logger.info("retList:" + retList.toString());
     tmpAddress = new byte[20];
     System.arraycopy(ByteArray.fromHexString(retList.get(1)), 12, tmpAddress, 0, 20);
     addressHex = "41" + ByteArray.toHexString(tmpAddress);
@@ -329,7 +332,8 @@ public class NoAbi009 {
     logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
-    Assert.assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals(2,
+        ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   /**
