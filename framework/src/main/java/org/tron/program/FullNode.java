@@ -92,7 +92,7 @@ public class FullNode {
     }
 
     // json rpc on solidity
-    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
+    if (CommonParameter.getInstance().getStorage().getDbVersion() == dbVersion) {
       JsonRpcOnSolidityService jsonRpcOnSolidityService = context
           .getBean(JsonRpcOnSolidityService.class);
       appT.addService(jsonRpcOnSolidityService);
