@@ -433,7 +433,26 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String[] getCompilers() {
-    return new String[] {"solidity"};
+    throw new UnsupportedOperationException(
+        "the method eth_getCompilers does not exist/is not available");
+  }
+
+  @Override
+  public CompilationResult ethCompileSolidity(String contract) {
+    throw new UnsupportedOperationException(
+        "the method eth_compileSolidity does not exist/is not available");
+  }
+
+  @Override
+  public CompilationResult ethCompileLLL(String contract) {
+    throw new UnsupportedOperationException(
+        "the method eth_compileLLL does not exist/is not available");
+  }
+
+  @Override
+  public CompilationResult ethCompileSerpent(String contract) {
+    throw new UnsupportedOperationException(
+        "the method eth_compileSerpent does not exist/is not available");
   }
 
   @Override
@@ -699,6 +718,36 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public String[] getAccounts() {
     return new String[0];
+  }
+
+  @Override
+  public boolean ethSubmitWork(String nonceHex, String headerHex, String digestHex) {
+    throw new UnsupportedOperationException(
+        "the method eth_submitWork does not exist/is not available");
+  }
+
+  @Override
+  public String ethSendRawTransaction(String rawData) {
+    throw new UnsupportedOperationException(
+        "the method eth_sendRawTransaction does not exist/is not available");
+  }
+
+  @Override
+  public String ethSendTransaction(CallArguments args) {
+    throw new UnsupportedOperationException(
+        "the method eth_sendTransaction does not exist/is not available");
+  }
+
+  @Override
+  public String ethSign(String address, String msg) {
+    throw new UnsupportedOperationException(
+        "the method eth_sign does not exist/is not available");
+  }
+
+  @Override
+  public String ethSignTransaction(CallArguments transactionArgs) {
+    throw new UnsupportedOperationException(
+        "the method eth_signTransaction does not exist/is not available");
   }
 
   public static void main(String[] args) {

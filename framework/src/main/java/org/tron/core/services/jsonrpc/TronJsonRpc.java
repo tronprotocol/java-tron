@@ -310,6 +310,42 @@ public interface TronJsonRpc {
     }
   }
 
+  class CompilationResult {
+    public String code;
+    public CompilationInfo info;
+
+    @Override
+    public String toString() {
+      return "CompilationResult{"
+          + "code='" + code + '\''
+          + ", info=" + info
+          + '}';
+    }
+  }
+
+  class CompilationInfo {
+    public String source;
+    public String language;
+    public String languageVersion;
+    public String compilerVersion;
+    // public CallTransaction.Function[] abiDefinition;
+    public String userDoc;
+    public String developerDoc;
+
+    @Override
+    public String toString() {
+      return "CompilationInfo{" +
+          "source='" + source + '\''
+          + ", language='" + language + '\''
+          + ", languageVersion='" + languageVersion + '\''
+          + ", compilerVersion='" + compilerVersion + '\''
+          // + ", abiDefinition=" + abiDefinition + '\''
+          + ", userDoc='" + userDoc + '\''
+          + ", developerDoc='" + developerDoc + '\''
+          + '}';
+    }
+  }
+
   @JsonRpcMethod("web3_clientVersion")
   String web3ClientVersion();
 
@@ -392,7 +428,28 @@ public interface TronJsonRpc {
   String estimateGas(CallArguments args);
 
   @JsonRpcMethod("eth_getCompilers")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
   String[] getCompilers();
+
+  @JsonRpcMethod("eth_compileSolidity")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  CompilationResult ethCompileSolidity(String contract) throws Exception;
+
+  @JsonRpcMethod("eth_compileLLL")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  CompilationResult ethCompileLLL(String contract);
+
+  @JsonRpcMethod("eth_compileSerpent")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  CompilationResult ethCompileSerpent(String contract);
 
   @JsonRpcMethod("eth_getTransactionByHash")
   @JsonRpcErrors({
@@ -453,4 +510,35 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_accounts")
   String[] getAccounts();
+
+  // not supported
+  @JsonRpcMethod("eth_submitWork")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  boolean ethSubmitWork(String nonce, String header, String digest);
+
+  @JsonRpcMethod("eth_sendRawTransaction")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  String ethSendRawTransaction(String rawData);
+
+  @JsonRpcMethod("eth_sendTransaction")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  String ethSendTransaction(CallArguments transactionArgs);
+
+  @JsonRpcMethod("eth_sign")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  String ethSign(String addr, String data);
+
+  @JsonRpcMethod("eth_signTransaction")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  String ethSignTransaction(CallArguments transactionArgs);
 }
