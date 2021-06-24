@@ -1,4 +1,4 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.interfaceJsonRpcOnSolidity;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
@@ -11,14 +11,14 @@ import org.tron.common.parameter.CommonParameter;
 
 @Component
 @Slf4j(topic = "API")
-public class FullNodeJsonRpcHttpService implements Service {
+public class JsonRpcOnSolidityService implements Service {
 
-  private int port = CommonParameter.getInstance().getJsonRpcHttpPort();
+  private int port = 8094;
 
   private Server server;
 
   @Autowired
-  private JsonRpcServlet jsonRpcServlet;
+  private JsonRpcOnSolidityServlet jsonRpcOnSolidityServlet;
 
   @Override
   public void init() {
@@ -36,7 +36,7 @@ public class FullNodeJsonRpcHttpService implements Service {
       context.setContextPath("/");
       server.setHandler(context);
 
-      context.addServlet(new ServletHolder(jsonRpcServlet), "/jsonrpc");
+      context.addServlet(new ServletHolder(jsonRpcOnSolidityServlet), "/jsonrpc");
 
       // filter
       // ServletHandler handler = new ServletHandler();
