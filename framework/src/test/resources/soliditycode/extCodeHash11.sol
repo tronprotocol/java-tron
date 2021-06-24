@@ -3,7 +3,7 @@ uint count = 0;
 address payable owner;
 event LogResult(bytes32 _hashBefore, bytes32 _hashAfter);
 constructor() public{
-owner = msg.sender;
+owner = payable(msg.sender);
 }
 function getCodeHashByAddr() public returns (bytes32 _hashBefore, bytes32 _hashAfter) {
 address addr = address(this);
@@ -26,7 +26,7 @@ uint count = 0;
 address payable owner;
 event LogResult(bytes32 _hashBefore, bytes32 _hashAfter);
 constructor() public{
-owner = msg.sender;
+owner = payable(msg.sender);
 }
 function getCodeHashByAddr() public returns (bytes32 _hashBefore, bytes32 _hashAfter) {
 address addr = address(this);
@@ -50,7 +50,7 @@ uint count = 0;
 address payable owner;
 event LogResult(bytes32 _hashBefore, bytes32 _hashAfter);
 constructor() public{
-owner = msg.sender;
+owner = payable(msg.sender);
 }
 function getCodeHashByAddr(address c) public returns (bytes32 _hashBefore, bytes32 _hashAfter) {
     TestConstract t=new TestConstract();
@@ -75,7 +75,7 @@ uint count = 0;
 address payable owner;
 event LogResult(bytes32 _hashBefore, bytes32 _hashAfter);
 constructor() public{
-owner = msg.sender;
+owner = payable(msg.sender);
 }
 function getCodeHashByAddr(address c) public returns (bytes32 _hashBefore, bytes32 _hashAfter) {
     TestConstract t=new TestConstract();

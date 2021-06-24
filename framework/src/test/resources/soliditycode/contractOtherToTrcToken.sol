@@ -18,7 +18,7 @@ function uint256ToTrctoken(address payable toAddress, uint256 tokenValue, uint25
 }
 
 function addressToTrctoken(address payable toAddress, uint256 tokenValue, address adr) public {
-  trcToken t = trcToken(adr); // OK
+  trcToken t = trcToken(uint256(uint160(adr))); // OK
   toAddress.transferToken(tokenValue, t); // OK
 //toAddress.transferToken(tokenValue, adr); // ERROR
 }

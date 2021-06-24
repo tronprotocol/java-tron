@@ -59,10 +59,10 @@ contract Factory {
 contract TestConstract {
     uint public i=1;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+          payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
@@ -72,10 +72,10 @@ contract TestConstract {
 contract TestConstract1 {
     uint public i=2;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+        payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
@@ -85,10 +85,10 @@ contract TestConstract1 {
 contract TestConstract2 {
     uint public i=3;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+        payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
@@ -98,10 +98,10 @@ contract TestConstract2 {
 contract TestConstract3 {
     uint public i=4;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+        payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
