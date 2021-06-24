@@ -1,4 +1,4 @@
-package stest.tron.wallet.onlinestress;
+package stest.tron.wallet.onlinestress.tvm;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

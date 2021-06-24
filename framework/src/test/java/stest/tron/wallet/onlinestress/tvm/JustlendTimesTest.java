@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.internaltransaction;
+package stest.tron.wallet.onlinestress.tvm;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -776,7 +776,7 @@ public class JustlendTimesTest {
   @Test(enabled = true)
   public void mintAndBorrow() {
     String txid;
-    Optional<Protocol.TransactionInfo>  infoById;
+    Optional<TransactionInfo>  infoById;
     // trx
     txid = PublicMethed.triggerContract(trxAddress,
         "mint(uint256)", "100000000000000", false,
