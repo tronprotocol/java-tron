@@ -15,6 +15,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1524,6 +1525,7 @@ public class Manager {
               .setType(Type.DATA)
               .setTransaction(trx.getInstance())
               .build();
+          trx.setType(crossMessage.getType());
         }
       }
 
@@ -1570,7 +1572,8 @@ public class Manager {
           }
           blockCapsule.addTransaction(trx);
         } else {
-          blockCapsule.addCrossMessage(crossMessage);
+          blockCapsule.addCrossMessage(
+                  crossMessage.toBuilder().setTransaction(trx.getInstance()).build());
         }
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
@@ -1818,6 +1821,7 @@ public class Manager {
       TooBigTransactionResultException, ReceiptCheckErrException,
       TaposException, VMIllegalException, DupTransactionException,
       ContractExeException, AccountResourceInsufficientException {
+    Transaction.Result.contractResult originResult = transactionCapsule.getContractResult();
     TransactionInfo result = processTransaction(transactionCapsule, block, true);
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (contract.getType() == ContractType.CrossContract) {
@@ -1878,7 +1882,7 @@ public class Manager {
             // set the fee payer when transaction is dest
             crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
           }
-          setTransaction(crossTriggerTx, transactionCapsule);
+          setTransaction(crossTriggerTx, transactionCapsule, originResult);
           TransactionInfo middleResult = processTransaction(crossTriggerTx, block, false);
           //
           result = middleResult.toBuilder().setId(result.getId()).build();
@@ -1886,24 +1890,27 @@ public class Manager {
             transactionCapsule.setResultCode(crossTriggerTx.getContractResult());
           }
         }
-      } catch (Exception e) {
-        logger.error("process cross transaction failed, txid:{}, err: {}",
-                transactionCapsule.getTransactionId(), e.getMessage());
+      } catch (ValidateSignatureException
+              | ProxyNotActiveException
+              | CrossContractConstructException
+              | InvalidProtocolBufferException e) {
+        logger.error("process cross transaction failed, err: {}", e.getMessage());
         throw new ContractValidateException("process cross transaction failed");
       }
     }
     return result;
   }
 
-  private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx) {
+  private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx,
+                              Transaction.Result.contractResult result) {
     raw raw = crossTrx.getInstance().getRawData();
     trx.setReference(raw.getRefBlockHash(), raw.getRefBlockBytes());
     trx.setExpiration(crossTrx.getExpiration());
     trx.setTimestamp();
     trx.setVerified(true);
     trx.setSource(crossTrx.isSource());
-    if (crossTrx.getContractResult() != null) {
-      trx.setResultCode(crossTrx.getContractResult());
+    if (result != null) {
+      trx.setResultCode(result);
     }
   }
 
@@ -2438,19 +2445,20 @@ public class Manager {
     if (transactionCapsule.getType() != Type.DATA) {
       return false;
     }
+    return !isCrossContract(transactionCapsule);
+  }
+
+  private boolean isCrossContract(TransactionCapsule transactionCapsule) {
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (contract.getType() == ContractType.CrossContract) {
+      CrossContract crossContract = null;
       try {
-        CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
-        if (crossContract.getType() == CrossDataType.CONTRACT) {
-          return false;
-        }
-      } catch (Exception e) {
-        logger.warn("parse cross transaction failed, id: {}",
-                transactionCapsule.getTransactionId());
-        return true;
+        crossContract = contract.getParameter().unpack(CrossContract.class);
+      } catch (InvalidProtocolBufferException e) {
+        return false;
       }
+      return crossContract.getType() == CrossDataType.CONTRACT;
     }
-    return true;
+    return false;
   }
 }
