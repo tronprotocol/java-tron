@@ -86,7 +86,8 @@ public class FullNode {
 
     // jsonrpc http server
     if (CommonParameter.getInstance().fullNodeHttpJsonRpcEnable) {
-      FullNodeJsonRpcHttpService jsonRpcHttpService = context.getBean(FullNodeJsonRpcHttpService.class);
+      FullNodeJsonRpcHttpService jsonRpcHttpService =
+          context.getBean(FullNodeJsonRpcHttpService.class);
       appT.addService(jsonRpcHttpService);
     }
 
