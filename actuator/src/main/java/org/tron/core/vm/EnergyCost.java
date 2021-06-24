@@ -299,10 +299,6 @@ public class EnergyCost {
     return FREEZE_EXPIRE_TIME;
   }
 
-  public int getStakeAndUnstake() {
-    return STAKE_UNSTAKE;
-  }
-
   public int getWithdrawReward() {
     return WITHDRAW_REWARD;
   }
