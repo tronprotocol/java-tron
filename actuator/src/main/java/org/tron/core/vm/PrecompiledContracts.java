@@ -22,13 +22,7 @@ import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.BIUtil.isZero;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.ByteUtil.bytesToBigInteger;
-import static org.tron.common.utils.ByteUtil.merge;
-import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
-import static org.tron.common.utils.ByteUtil.parseBytes;
-import static org.tron.common.utils.ByteUtil.parseWord;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.common.utils.ByteUtil.*;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import java.math.BigInteger;
@@ -68,10 +62,14 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.ContractService;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Permission;
 
 /**
@@ -99,6 +97,10 @@ public class PrecompiledContracts {
   private static final VerifyBurnProof verifyBurnProof = new VerifyBurnProof();
 
   private static final MerkleHash merkleHash = new MerkleHash();
+
+  private static final RewardBalance rewardBalance = new RewardBalance();
+  private static final IsSrCandidate isSrCandidate = new IsSrCandidate();
+  private static final VoteCount voteCount = new VoteCount();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -128,6 +130,12 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000001000003");
   private static final DataWord merkleHashAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000004");
+  private static final DataWord rewardBalanceAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000002000001");
+  private static final DataWord isSrCandidateAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000002000002");
+  private static final DataWord voteCountAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000002000003");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -176,6 +184,16 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowShieldedTRC20Transaction() && address.equals(merkleHashAddr)) {
       return merkleHash;
+    }
+    // todo add proposal
+    if (address.equals(rewardBalanceAddr)) {
+      return rewardBalance;
+    }
+    if (address.equals(isSrCandidateAddr)) {
+      return isSrCandidate;
+    }
+    if (address.equals(voteCountAddr)) {
+      return voteCount;
     }
 
     return null;
@@ -1505,6 +1523,99 @@ public class PrecompiledContracts {
     private int parseInt(byte[] data) {
       byte[] bytes = parseBytes(data, 0, 32);
       return new DataWord(bytes).intValueSafe();
+    }
+  }
+
+  public static class RewardBalance extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 20;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      byte[] callerAddress = getCallerAddress();
+      long rewardBalance =
+          ContractService.getInstance()
+              .queryReward(convertToTronAddress(callerAddress), getDeposit());
+      return Pair.of(true, longTo32Bytes(rewardBalance));
+    }
+
+  }
+
+  public static class IsSrCandidate extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 20;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] addr = words[0].getLast20Bytes();
+
+      WitnessCapsule witnessCapsule = this.getDeposit()
+          .getWitnessCapsule(convertToTronAddress(addr));
+      if (witnessCapsule != null) {
+        return Pair.of(true, dataBoolean(true));
+      } else {
+        return Pair.of(true, dataBoolean(false));
+      }
+
+    }
+  }
+
+  public static class VoteCount extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 20;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      DataWord[] words = DataWord.parseArray(data);
+      DataWord voteAddr = words[0];
+      DataWord targetAddr = words[1];
+      byte[] voteTronAddr = convertToTronAddress(voteAddr.getLast20Bytes());
+      byte[] targetTronAddr = convertToTronAddress(targetAddr.getLast20Bytes());
+
+      long voteCount = 0;
+      if (!voteAddr.isZero() && !targetAddr.isZero()) {
+        AccountCapsule voteAccountCapsule = this.getDeposit().getAccount(voteTronAddr);
+        if (voteAccountCapsule != null && !voteAccountCapsule.getVotesList().isEmpty()) {
+          List<Protocol.Vote> voteList =
+              voteAccountCapsule.getVotesList();
+          for (Protocol.Vote vote : voteList) {
+            if (targetTronAddr.equals(vote.getVoteAddress().toByteArray())) {
+              voteCount = vote.getVoteCount();
+              break;
+            }
+          }
+        }
+        return Pair.of(true, longTo32Bytes(voteCount));
+      }
+
+      if (!voteAddr.isZero()) {
+        AccountCapsule voteAccountCapsule = this.getDeposit().getAccount(voteTronAddr);
+        if (voteAccountCapsule != null && !voteAccountCapsule.getVotesList().isEmpty()) {
+          List<Protocol.Vote> voteList =
+              voteAccountCapsule.getVotesList();
+          for (Protocol.Vote vote : voteList) {
+            voteCount += vote.getVoteCount();
+          }
+        }
+      } else {
+        WitnessCapsule witnessCapsule =
+            this.getDeposit().getWitnessCapsule(targetTronAddr);
+        if(witnessCapsule != null) {
+          voteCount = witnessCapsule.getVoteCount();
+        }
+      }
+      return Pair.of(true, longTo32Bytes(voteCount));
     }
   }
 
