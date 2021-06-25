@@ -747,6 +747,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         "the method eth_signTransaction does not exist/is not available");
   }
 
+  @Override
+  public String parityNextNonce(String address) {
+    throw new UnsupportedOperationException(
+        "the method parity_nextNonce does not exist/is not available");
+  }
+
   public static void main(String[] args) {
     TronJsonRpcImpl impl = new TronJsonRpcImpl();
     System.out.println(impl.generateCallParameter1());
