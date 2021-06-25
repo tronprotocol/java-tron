@@ -1751,12 +1751,11 @@ public class Manager {
       CrossTimeoutException, CrossValidateException {
     TransactionCapsule transactionCapsule = new TransactionCapsule(
         crossMessage.getTransaction());
-    Sha256Hash sourceTxId = null;
+    Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());;
     // forbid duplicated timeout-txs
     if (crossMessage.getType() == Type.TIME_OUT) {
       transactionCapsule.setSource(false);
       if (communicateService.isSyncFinish()) {
-        sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
         //todo:getSendCrossMsgUnEx not safe
         CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
         if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
@@ -1778,8 +1777,10 @@ public class Manager {
       }
       if (crossMessage.getType() == Type.DATA
           && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
-        logger.error("cross chain tx was time out, tx: {}, headBlcokNum: {}",
-                sourceTxId, chainBaseManager.getHeadBlockNum());
+        logger.error(
+                "cross chain tx was time out, tx: {}, headBlcokNum: {}, timeoutHight: {}",
+                sourceTxId, chainBaseManager.getHeadBlockNum(),
+                crossMessage.getTimeOutBlockHeight());
         throw new CrossTimeoutException("cross chain tx was time out");
       }
       transactionCapsule.setSource(false);
