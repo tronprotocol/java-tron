@@ -337,7 +337,8 @@ public class JsonRpcApiUtil {
           // long token = DataImporter.getTokenID(blockNum,
           //     contractParameter.unpack(ParticipateAssetIssueContract.class).getAssetName());
           // //获取token的比例，计算出10币的数量
-          // long trxNum = contractParameter.unpack(ParticipateAssetIssueContract.class).getAmount();
+          // long trxNum = contractParameter.unpack(ParticipateAssetIssueContract.class)
+          // .getAmount();
           // Token10Entity entity = DataImporter.getTokenEntity(token);
           // long exchangeAmount = Math.multiplyExact(trxNum, entity.getNum());
           // exchangeAmount = Math.floorDiv(exchangeAmount, entity.getTrxNum());

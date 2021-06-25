@@ -140,10 +140,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private byte[] addressHashToByteArray(String hash) {
-   // if (!Pattern.matches(regexAddressHash, hash)) {
-   //   throw new JsonRpcApiException("invalid address hash value");
-   // }
-
     byte[] bHash;
     try {
       bHash = ByteArray.fromHexString(hash);
@@ -151,7 +147,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
           && bHash.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
         throw new JsonRpcApiException("invalid address hash value");
       }
-      if (bHash.length == DecodeUtil.ADDRESS_SIZE/2 - 1) {
+
+      if (bHash.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
         bHash = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, bHash);
       }
     } catch (Exception e) {

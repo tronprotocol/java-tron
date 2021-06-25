@@ -174,6 +174,9 @@ public class CommonParameter {
   public int jsonRpcHttpPort;
   @Getter
   @Setter
+  public int solidityJsonRpcHttpPort;
+  @Getter
+  @Setter
   public String energyCost;
   @Getter
   @Setter
@@ -399,6 +402,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean fullNodeHttpJsonRpcEnable = true;
+  @Getter
+  @Setter
+  public boolean solidityNodeHttpJsonRpcEnable = true;
   @Getter
   @Setter
   public int maxTransactionPendingSize;

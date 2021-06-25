@@ -12,17 +12,18 @@ import org.tron.core.services.jsonrpc.JsonRpcServlet;
 @Component
 @Slf4j(topic = "API")
 public class JsonRpcOnSolidityServlet extends JsonRpcServlet {
+
   @Autowired
   private WalletOnSolidity walletOnSolidity;
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-      walletOnSolidity.futureGet(() -> {
-        try {
-          super.doPost(request, response);
-        } catch (IOException e) {
-          e.printStackTrace();
-          throw new RuntimeException(e);
-        }
-      });
+    walletOnSolidity.futureGet(() -> {
+      try {
+        super.doPost(request, response);
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+    });
   }
 }

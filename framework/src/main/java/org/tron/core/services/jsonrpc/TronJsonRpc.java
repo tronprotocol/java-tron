@@ -4,7 +4,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.protobuf.ByteString;
 import com.googlecode.jsonrpc4j.JsonRpcError;
@@ -334,8 +333,8 @@ public interface TronJsonRpc {
 
     @Override
     public String toString() {
-      return "CompilationInfo{" +
-          "source='" + source + '\''
+      return "CompilationInfo{"
+          + "source='" + source + '\''
           + ", language='" + language + '\''
           + ", languageVersion='" + languageVersion + '\''
           + ", compilerVersion='" + compilerVersion + '\''

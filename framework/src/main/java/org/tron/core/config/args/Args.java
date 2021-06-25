@@ -134,6 +134,7 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort = 0;
     PARAMETER.pBFTHttpPort = 0;
     PARAMETER.jsonRpcHttpPort = 0;
+    PARAMETER.solidityJsonRpcHttpPort = 0;
     PARAMETER.energyCost = "";
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
@@ -177,6 +178,7 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
     PARAMETER.fullNodeHttpJsonRpcEnable = true;
+    PARAMETER.solidityNodeHttpJsonRpcEnable = true;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
@@ -295,6 +297,11 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.NODE_HTTP_JSONRPC_ENABLE)) {
       PARAMETER.fullNodeHttpJsonRpcEnable = config.getBoolean(Constant.NODE_HTTP_JSONRPC_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_JSONRPC_SOLIDITY_ENABLE)) {
+      PARAMETER.solidityNodeHttpJsonRpcEnable =
+          config.getBoolean(Constant.NODE_HTTP_JSONRPC_SOLIDITY_ENABLE);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
@@ -461,6 +468,10 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcHttpPort =
         config.hasPath(Constant.NODE_HTTP_JSONRPC_PORT)
             ? config.getInt(Constant.NODE_HTTP_JSONRPC_PORT) : 8093;
+
+    PARAMETER.solidityJsonRpcHttpPort =
+        config.hasPath(Constant.NODE_HTTP_JSONRPC_SOLIDITY_PORT)
+            ? config.getInt(Constant.NODE_HTTP_JSONRPC_SOLIDITY_PORT) : 8094;
 
     PARAMETER.energyCost =
         config.hasPath(Constant.NODE_ENERGY_COST)

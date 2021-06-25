@@ -13,7 +13,7 @@ import org.tron.common.parameter.CommonParameter;
 @Slf4j(topic = "API")
 public class JsonRpcOnSolidityService implements Service {
 
-  private int port = 8094;
+  private int port = CommonParameter.getInstance().getSolidityJsonRpcHttpPort();
 
   private Server server;
 
