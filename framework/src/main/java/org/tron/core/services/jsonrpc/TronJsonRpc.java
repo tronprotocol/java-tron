@@ -540,4 +540,10 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
   })
   String ethSignTransaction(CallArguments transactionArgs);
+
+  @JsonRpcMethod("parity_nextNonce")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  String parityNextNonce(String address);
 }
