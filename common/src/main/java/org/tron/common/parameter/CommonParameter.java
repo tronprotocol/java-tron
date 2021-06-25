@@ -3,7 +3,6 @@ package org.tron.common.parameter;
 import com.beust.jcommander.Parameter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -175,6 +174,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int solidityJsonRpcHttpPort;
+  @Getter
+  @Setter
+  public int pBFTJsonRpcHttpPort;
   @Getter
   @Setter
   public String energyCost;
@@ -405,6 +407,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean solidityNodeHttpJsonRpcEnable = true;
+  @Getter
+  @Setter
+  public boolean pBFTNodeHttpJsonRpcEnable = false;
   @Getter
   @Setter
   public int maxTransactionPendingSize;

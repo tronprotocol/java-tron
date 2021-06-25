@@ -16,7 +16,7 @@ public class JsonRpcTest {
   @Test
   public void generateCallParameter1() {
     String ownerAddress = "TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD";
-    String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile测试环境udsj地址
+    String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile udsj address
 
     byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
     byte[] addressDataWord = new byte[32];
@@ -39,7 +39,7 @@ public class JsonRpcTest {
   @Test
   public void generateCallParameter2() {
     String ownerAddress = "TRXPT6Ny7EFvTPv7mFUqaFUST39WUZ4zzz";
-    String usdjAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"; // nile测试环境udsj地址
+    String usdjAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"; // nile udsj address
 
     byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
     byte[] addressDataWord = new byte[32];

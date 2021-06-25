@@ -15,6 +15,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
 import org.tron.core.services.interfaceJsonRpcOnSolidity.JsonRpcServiceOnSolidity;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
@@ -119,6 +120,12 @@ public class FullNode {
       HttpApiOnPBFTService httpApiOnPBFTService = context
           .getBean(HttpApiOnPBFTService.class);
       appT.addService(httpApiOnPBFTService);
+
+      // JSON-RPC on PBFT
+      if (CommonParameter.getInstance().pBFTNodeHttpJsonRpcEnable) {
+        JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
+        appT.addService(jsonRpcServiceOnPBFT);
+      }
     }
 
     appT.initServices(parameter);
