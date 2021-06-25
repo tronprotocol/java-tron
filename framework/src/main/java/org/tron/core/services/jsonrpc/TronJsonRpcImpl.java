@@ -569,70 +569,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
   }
 
-  //生成一个调用 eth_call api的参数，可以自由修改
-  private String generateCallParameter1() {
-    String ownerAddress = "TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD";
-    String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile测试环境udsj地址
-
-    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
-    byte[] addressDataWord = new byte[32];
-    System.arraycopy(Commons.decodeFromBase58Check(ownerAddress), 0, addressDataWord,
-        32 - addressData.length, addressData.length);
-    String data = getMethodSign("balanceOf(address)") + Hex.toHexString(addressDataWord);
-
-    CallArguments transactionCall = new CallArguments();
-    transactionCall.from = ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress));
-    transactionCall.to = ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress));
-    transactionCall.data = data;
-
-    StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
-    sb.append(transactionCall);
-    sb.append(", \"latest\"],\"id\":1}");
-    return sb.toString();
-  }
-
-  //生成一个调用 eth_call api的参数，可以自由修改
-  private String generateCallParameter2() {
-    String ownerAddress = "TRXPT6Ny7EFvTPv7mFUqaFUST39WUZ4zzz";
-    String usdjAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"; // nile测试环境udsj地址
-
-    byte[] addressData = Commons.decodeFromBase58Check(ownerAddress);
-    byte[] addressDataWord = new byte[32];
-    System.arraycopy(Commons.decodeFromBase58Check(ownerAddress), 0, addressDataWord,
-        32 - addressData.length, addressData.length);
-    String data = getMethodSign("name()");
-
-    CallArguments transactionCall = new CallArguments();
-    transactionCall.from = ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress));
-    transactionCall.to = ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress));
-    transactionCall.data = data;
-
-    StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
-    sb.append(transactionCall);
-    sb.append(", \"latest\"],\"id\":1}");
-    return sb.toString();
-  }
-
-  private String generateStorageParameter() {
-    // nile合约：TXEphLzyv5jFwvjzwMok9UoehaSn294ZhN
-    String contractAddress = "41E94EAD5F4CA072A25B2E5500934709F1AEE3C64B";
-
-    // nile测试环境：TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD
-    String sendAddress = "41F0CC5A2A84CD0F68ED1667070934542D673ACBD8";
-    String index = "01";
-    byte[] byte1 = new DataWord(new DataWord(sendAddress).getLast20Bytes()).getData();
-    byte[] byte2 = new DataWord(new DataWord(index).getLast20Bytes()).getData();
-    byte[] byte3 = ByteUtil.merge(byte1, byte2);
-    String position = ByteArray.toJsonHex(Hash.sha3(byte3));
-
-    StringBuffer sb = new StringBuffer(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getStorageAt\",\"params\":[\"0x");
-    sb.append(contractAddress + "\",\"");
-    sb.append(position + "\",");
-    sb.append("\"latest\"],\"id\":1}");
-    return sb.toString();
-  }
-
   @Override
   public String getPeerCount() {
     //返回当前节点所连接的peer节点数量
@@ -751,12 +687,5 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String parityNextNonce(String address) {
     throw new UnsupportedOperationException(
         "the method parity_nextNonce does not exist/is not available");
-  }
-
-  public static void main(String[] args) {
-    TronJsonRpcImpl impl = new TronJsonRpcImpl();
-    System.out.println(impl.generateCallParameter1());
-    System.out.println(impl.generateCallParameter2());
-    System.out.println(impl.generateStorageParameter());
   }
 }
