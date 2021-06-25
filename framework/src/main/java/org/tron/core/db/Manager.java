@@ -717,6 +717,7 @@ public class Manager {
 
         try (ISession tmpSession = revokingStore.buildSession()) {
           processTransaction(trx, null);
+          trx.setTrxTrace(null);
           pendingTransactions.add(trx);
           tmpSession.merge();
         }
@@ -1207,7 +1208,6 @@ public class Manager {
     }
     //set the sort order
     trxCap.setOrder(transactionInfo.getFee());
-    trxCap.setTrxTrace(null);
     return transactionInfo.getInstance();
   }
 
