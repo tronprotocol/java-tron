@@ -62,11 +62,10 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.nativecontract.ContractService;
+import org.tron.core.vm.nativecontract.VoteRewardUtils;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
@@ -185,14 +184,13 @@ public class PrecompiledContracts {
     if (VMConfig.allowShieldedTRC20Transaction() && address.equals(merkleHashAddr)) {
       return merkleHash;
     }
-    // todo add proposal
-    if (address.equals(rewardBalanceAddr)) {
+    if (VMConfig.allowTvmVote() && address.equals(rewardBalanceAddr)) {
       return rewardBalance;
     }
-    if (address.equals(isSrCandidateAddr)) {
+    if (VMConfig.allowTvmVote() && address.equals(isSrCandidateAddr)) {
       return isSrCandidate;
     }
-    if (address.equals(voteCountAddr)) {
+    if (VMConfig.allowTvmVote() && address.equals(voteCountAddr)) {
       return voteCount;
     }
 
@@ -1537,8 +1535,7 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
       byte[] callerAddress = getCallerAddress();
       long rewardBalance =
-          ContractService.getInstance()
-              .queryReward(convertToTronAddress(callerAddress), getDeposit());
+          VoteRewardUtils.queryReward(convertToTronAddress(callerAddress), getDeposit());
       return Pair.of(true, longTo32Bytes(rewardBalance));
     }
 
