@@ -15,6 +15,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -110,6 +111,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.CrossContractConstructException;
+import org.tron.core.exception.CrossTimeoutException;
+import org.tron.core.exception.CrossValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -888,7 +891,13 @@ public class Manager {
 
       List<Contract> contracts = trx.getInstance().getRawData().getContractList();
       for (Contract contract : contracts) {
-        byte[] address = TransactionCapsule.getOwner(contract);
+        byte[] address = null;
+        if (trx.getCallerAddress() != null && trx.getCallerAddress().length > 0) {
+          // for cross smart contract
+          address = trx.getCallerAddress();
+        } else {
+          address = TransactionCapsule.getOwner(contract);
+        }
         AccountCapsule accountCapsule = getAccountStore().get(address);
         try {
           if (accountCapsule != null) {
@@ -943,7 +952,7 @@ public class Manager {
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
       NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
-      BlockNotInMainForkException {
+      BlockNotInMainForkException, CrossTimeoutException, CrossValidateException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -958,7 +967,8 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException,
+      CrossTimeoutException, CrossValidateException {
     processBlock(block);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -980,7 +990,8 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, ZksnarkException, BadBlockException {
+      VMIllegalException, ZksnarkException, BadBlockException, CrossTimeoutException,
+      CrossValidateException {
 
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT);
 
@@ -1034,7 +1045,9 @@ public class Manager {
             | ValidateScheduleException
             | VMIllegalException
             | ZksnarkException
-            | BadBlockException e) {
+            | BadBlockException
+            | CrossTimeoutException
+            | CrossValidateException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -1069,7 +1082,9 @@ public class Manager {
                   | TransactionExpirationException
                   | TooBigTransactionException
                   | ValidateScheduleException
-                  | ZksnarkException e) {
+                  | ZksnarkException
+                  | CrossTimeoutException
+                  | CrossValidateException e) {
                 logger.warn(e.getMessage(), e);
               }
             }
@@ -1089,7 +1104,8 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException, ZksnarkException, BlockNotInMainForkException {
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException, BlockNotInMainForkException,
+      CrossTimeoutException, CrossValidateException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1479,8 +1495,9 @@ public class Manager {
             trx.setSource(false);
             trx.setType(crossMessage.getType());
           } else {
-            logger.warn("{} cross tx time out, timeOutHeight:{}, now block height:{}",
-                crossMessage.getType(), crossMessage.getTimeOutBlockHeight(),
+            logger.warn("{} cross tx {} time out, timeOutHeight:{}, now block height:{}",
+                crossMessage.getType(), CrossUtils.getSourceTxId(crossMessage.getTransaction()),
+                    crossMessage.getTimeOutBlockHeight(),
                 chainBaseManager.getHeadBlockNum());
             continue;
           }
@@ -1509,6 +1526,7 @@ public class Manager {
               .setType(Type.DATA)
               .setTransaction(trx.getInstance())
               .build();
+          trx.setType(crossMessage.getType());
         }
       }
 
@@ -1555,7 +1573,8 @@ public class Manager {
           }
           blockCapsule.addTransaction(trx);
         } else {
-          blockCapsule.addCrossMessage(crossMessage);
+          blockCapsule.addCrossMessage(
+                  crossMessage.toBuilder().setTransaction(trx.getInstance()).build());
         }
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
@@ -1639,7 +1658,7 @@ public class Manager {
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BadBlockException {
+      ZksnarkException, BadBlockException, CrossTimeoutException, CrossValidateException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1729,21 +1748,22 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       TooBigTransactionResultException, ReceiptCheckErrException,
       TaposException, VMIllegalException, DupTransactionException,
-      ContractExeException, AccountResourceInsufficientException {
+      ContractExeException, AccountResourceInsufficientException,
+      CrossTimeoutException, CrossValidateException {
     TransactionCapsule transactionCapsule = new TransactionCapsule(
         crossMessage.getTransaction());
+    Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());;
     // forbid duplicated timeout-txs
     if (crossMessage.getType() == Type.TIME_OUT) {
       transactionCapsule.setSource(false);
       if (communicateService.isSyncFinish()) {
-        Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
         //todo:getSendCrossMsgUnEx not safe
         CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
         if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
             source.getToChainId(), source.getTransaction())) {
           logger.error("tx valid timeout: " + source);
           //todo:if block head sync fail,then the time out will be valid fail!
-          throw new ValidateSignatureException(
+          throw new CrossTimeoutException(
               "valid time out tx fail,sourceTxId: " + sourceTxId);
         }
       }
@@ -1754,11 +1774,24 @@ public class Manager {
         || crossMessage.getFromChainId().equals(communicateService.getLocalChainId()))) {
       if (communicateService.isSyncFinish() && crossMessage.getType() != Type.TIME_OUT
           && !communicateService.validProof(crossMessage)) {
-        throw new ValidateSignatureException("valid proof fail");
+        throw new CrossValidateException("valid proof fail");
+      }
+      CrossContract crossContract = null;
+      try {
+        crossContract = crossMessage.getTransaction().getRawData().getContract(0)
+                .getParameter().unpack(CrossContract.class);
+      } catch (InvalidProtocolBufferException e) {
+        logger.error("invalid cross message, crossMessage: {}", crossMessage);
+        throw new CrossValidateException("invalid protocol");
       }
       if (crossMessage.getType() == Type.DATA
-          && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
-        throw new ValidateSignatureException("cross chain tx was time out");
+              && crossContract.getType() != CrossDataType.CONTRACT
+              && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
+        logger.error(
+                "cross chain tx was time out, tx: {}, headBlcokNum: {}, timeoutHight: {}",
+                sourceTxId, chainBaseManager.getHeadBlockNum(),
+                crossMessage.getTimeOutBlockHeight());
+        throw new CrossTimeoutException("cross chain tx was time out");
       }
       transactionCapsule.setSource(false);
     }
@@ -1799,6 +1832,7 @@ public class Manager {
       TooBigTransactionResultException, ReceiptCheckErrException,
       TaposException, VMIllegalException, DupTransactionException,
       ContractExeException, AccountResourceInsufficientException {
+    Transaction.Result.contractResult originResult = transactionCapsule.getContractResult();
     TransactionInfo result = processTransaction(transactionCapsule, block, true);
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (contract.getType() == ContractType.CrossContract) {
@@ -1859,7 +1893,7 @@ public class Manager {
             // set the fee payer when transaction is dest
             crossTriggerTx.setCallerAddress(TransactionCapsule.getOwner(contract));
           }
-          setTransaction(crossTriggerTx, transactionCapsule);
+          setTransaction(crossTriggerTx, transactionCapsule, originResult);
           TransactionInfo middleResult = processTransaction(crossTriggerTx, block, false);
           //
           result = middleResult.toBuilder().setId(result.getId()).build();
@@ -1867,7 +1901,10 @@ public class Manager {
             transactionCapsule.setResultCode(crossTriggerTx.getContractResult());
           }
         }
-      } catch (Exception e) {
+      } catch (ValidateSignatureException
+              | ProxyNotActiveException
+              | CrossContractConstructException
+              | InvalidProtocolBufferException e) {
         logger.error("process cross transaction failed, err: {}", e.getMessage());
         throw new ContractValidateException("process cross transaction failed");
       }
@@ -1875,15 +1912,16 @@ public class Manager {
     return result;
   }
 
-  private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx) {
+  private void setTransaction(TransactionCapsule trx, TransactionCapsule crossTrx,
+                              Transaction.Result.contractResult result) {
     raw raw = crossTrx.getInstance().getRawData();
     trx.setReference(raw.getRefBlockHash(), raw.getRefBlockBytes());
     trx.setExpiration(crossTrx.getExpiration());
     trx.setTimestamp();
     trx.setVerified(true);
     trx.setSource(crossTrx.isSource());
-    if (crossTrx.getContractResult() != null) {
-      trx.setResultCode(crossTrx.getContractResult());
+    if (result != null) {
+      trx.setResultCode(result);
     }
   }
 
@@ -2418,19 +2456,20 @@ public class Manager {
     if (transactionCapsule.getType() != Type.DATA) {
       return false;
     }
+    return !isCrossContract(transactionCapsule);
+  }
+
+  private boolean isCrossContract(TransactionCapsule transactionCapsule) {
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (contract.getType() == ContractType.CrossContract) {
+      CrossContract crossContract = null;
       try {
-        CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
-        if (crossContract.getType() == CrossDataType.CONTRACT) {
-          return false;
-        }
-      } catch (Exception e) {
-        logger.warn("parse cross transaction failed, id: {}",
-                transactionCapsule.getTransactionId());
-        return true;
+        crossContract = contract.getParameter().unpack(CrossContract.class);
+      } catch (InvalidProtocolBufferException e) {
+        return false;
       }
+      return crossContract.getType() == CrossDataType.CONTRACT;
     }
-    return true;
+    return false;
   }
 }

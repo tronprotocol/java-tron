@@ -26,6 +26,8 @@ import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.CrossTimeoutException;
+import org.tron.core.exception.CrossValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -216,7 +218,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
       VMIllegalException, DupTransactionException, TooBigTransactionException,
       TooBigTransactionResultException, BadBlockException, NonCommonBlockException,
       TransactionExpirationException, UnLinkedBlockException, TaposException,
-      ZksnarkException, AccountResourceInsufficientException, BlockNotInMainForkException {
+      ZksnarkException, AccountResourceInsufficientException, BlockNotInMainForkException,
+      CrossValidateException, CrossTimeoutException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -495,7 +498,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
       AccountResourceInsufficientException, BadBlockException, NonCommonBlockException,
       TransactionExpirationException, UnLinkedBlockException, ZksnarkException,
       TaposException, TooBigTransactionResultException, ValidateSignatureException,
-      BadNumberBlockException, ValidateScheduleException, BlockNotInMainForkException {
+      BadNumberBlockException, ValidateScheduleException, BlockNotInMainForkException,
+      CrossValidateException, CrossTimeoutException  {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -854,7 +858,8 @@ public class WithdrawRewardTest extends VMContractTestBase {
       VMIllegalException, DupTransactionException, TooBigTransactionException,
       TooBigTransactionResultException, BadBlockException, NonCommonBlockException,
       TransactionExpirationException, UnLinkedBlockException, TaposException,
-      ZksnarkException, AccountResourceInsufficientException, BlockNotInMainForkException {
+      ZksnarkException, AccountResourceInsufficientException, BlockNotInMainForkException,
+      CrossValidateException, CrossTimeoutException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);

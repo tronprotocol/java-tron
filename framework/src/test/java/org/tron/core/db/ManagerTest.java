@@ -45,6 +45,8 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.CrossTimeoutException;
+import org.tron.core.exception.CrossValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
@@ -133,7 +135,8 @@ public class ManagerTest extends BlockGenerate {
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
       NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
-      TooBigTransactionResultException, ZksnarkException, BlockNotInMainForkException {
+      TooBigTransactionResultException, ZksnarkException, BlockNotInMainForkException,
+      CrossValidateException, CrossTimeoutException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -453,7 +456,8 @@ public class ManagerTest extends BlockGenerate {
       BadNumberBlockException, DupTransactionException, ContractExeException,
       ValidateSignatureException, TooBigTransactionResultException, TransactionExpirationException,
       TaposException, ReceiptCheckErrException, TooBigTransactionException,
-      AccountResourceInsufficientException, BlockNotInMainForkException {
+      AccountResourceInsufficientException, BlockNotInMainForkException,
+      CrossValidateException, CrossTimeoutException {
 
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
@@ -559,7 +563,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BlockNotInMainForkException {
+      ZksnarkException, BlockNotInMainForkException, CrossValidateException, CrossTimeoutException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     Args.getInstance().setDebug(true);
     long size = dbManager.getBlockStore().size();
@@ -637,7 +641,7 @@ public class ManagerTest extends BlockGenerate {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BlockNotInMainForkException {
+      ZksnarkException, BlockNotInMainForkException, CrossValidateException, CrossTimeoutException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -741,7 +745,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BlockNotInMainForkException {
+      ZksnarkException, BlockNotInMainForkException, CrossValidateException, CrossTimeoutException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
