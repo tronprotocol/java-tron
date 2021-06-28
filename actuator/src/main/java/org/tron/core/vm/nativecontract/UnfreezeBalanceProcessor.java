@@ -5,10 +5,13 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import com.google.common.collect.Lists;
 import java.util.Iterator;
 import java.util.List;
+
+import com.google.protobuf.ByteString;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
@@ -194,6 +197,18 @@ public class UnfreezeBalanceProcessor {
     }
 
     // notice: clear vote code is removed
-    repo.updateAccount(ownerAddress, accountCapsule);
+    // notice: clear vote code is added
+    if (!accountCapsule.getVotesList().isEmpty()) {
+      VotesCapsule votesCapsule = repo.getVotesCapsule(ownerAddress);
+      if (votesCapsule == null) {
+        votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
+            accountCapsule.getVotesList());
+      }
+      accountCapsule.clearVotes();
+      votesCapsule.clearNewVotes();
+      repo.updateVotesCapsule(ownerAddress, votesCapsule);
+    }
+
+    repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
   }
 }
