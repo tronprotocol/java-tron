@@ -11,12 +11,15 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
+import java.math.BigInteger;
+
 @Slf4j
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public static final long REMARK = -1L;
   public static final int DEFAULT_BROKERAGE = 20;
+  public static final BigInteger DECIMAL_OF_VI_REWARD = BigInteger.valueOf(10).pow(18);
 
   @Autowired
   public DelegationStore(@Value("delegation") String dbName) {
@@ -114,6 +117,31 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     return getBrokerage(-1, address);
   }
 
+  public void setWitnessVi(long cycle, byte[] address, BigInteger value) {
+    put(buildViKey(cycle, address), new BytesCapsule(value.toByteArray()));
+  }
+
+  public BigInteger getWitnessVi(long cycle, byte[] address) {
+    BytesCapsule bytesCapsule = get(buildViKey(cycle, address));
+    if (bytesCapsule == null) {
+      return BigInteger.ZERO;
+    } else {
+      return new BigInteger(bytesCapsule.getData());
+    }
+  }
+
+  public void accumulateWitnessVi(long cycle, byte[] address, long voteCount) {
+    long reward = getReward(cycle, address);
+    if (reward == 0 || voteCount == 0) {
+      setWitnessVi(cycle, address, getWitnessVi(cycle - 1, address));
+      return;
+    }
+    BigInteger deltaVi = BigInteger.valueOf(reward)
+        .multiply(DECIMAL_OF_VI_REWARD)
+        .divide(BigInteger.valueOf(voteCount));
+    setWitnessVi(cycle, address, getWitnessVi(cycle - 1, address).add(deltaVi));
+  }
+
   private byte[] buildVoteKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-vote").getBytes();
   }
@@ -132,6 +160,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildBrokerageKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-brokerage").getBytes();
+  }
+
+  private byte[] buildViKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "-vi").getBytes();
   }
 
 }
