@@ -417,23 +417,10 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void updateRemark(byte[] word, long cycle) {
-    BytesCapsule bytesCapsule = new BytesCapsule(ByteArray.fromLong(DelegationStore.REMARK));
-    byte[] key = (cycle + "-" + Hex.toHexString(word) + "-remark").getBytes();
-    updateDelegation(key, bytesCapsule);
-  }
-
-  @Override
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
     Key key = Key.create(word);
     Value value = Value.create(bytesCapsule.getData(), Type.VALUE_TYPE_DIRTY);
     delegationCache.put(key, value);
-  }
-
-  @Override
-  public void updateLastWithdrawCycle(byte[] address, long cycle) {
-    BytesCapsule bytesCapsule = new BytesCapsule(ByteArray.fromLong(cycle));
-    updateDelegation(("lastWithdraw-" + Hex.toHexString(address)).getBytes(), bytesCapsule);
   }
 
   @Override

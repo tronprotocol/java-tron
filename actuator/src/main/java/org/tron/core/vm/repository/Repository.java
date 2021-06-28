@@ -26,7 +26,7 @@ public interface Repository {
 
   AccountCapsule getAccount(byte[] address);
 
-    BytesCapsule getDynamic(byte[] bytesKey);
+  BytesCapsule getDynamic(byte[] bytesKey);
 
   DelegatedResourceCapsule getDelegatedResource(byte[] key);
 
@@ -62,11 +62,7 @@ public interface Repository {
 
   void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule);
 
-  void updateRemark(byte[] word, long cycle);
-
   void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
-
-  void updateLastWithdrawCycle(byte[] address, long cycle);
 
   void saveCode(byte[] address, byte[] code);
 

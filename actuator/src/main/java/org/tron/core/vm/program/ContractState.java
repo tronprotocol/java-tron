@@ -344,18 +344,8 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void updateRemark(byte[] word, long cycle) {
-    repository.updateRemark(word, cycle);
-  }
-
-  @Override
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDelegation(word, bytesCapsule);
-  }
-
-  @Override
-  public void updateLastWithdrawCycle(byte[] address, long cycle) {
-    repository.updateLastWithdrawCycle(address, cycle);
   }
 
   @Override
