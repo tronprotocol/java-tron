@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+//pragma solidity ^0.6.0;
 contract A {
     uint public x;
     function setValue(uint _x) public virtual {

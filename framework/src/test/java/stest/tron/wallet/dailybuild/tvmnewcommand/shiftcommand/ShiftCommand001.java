@@ -111,7 +111,7 @@ public class ShiftCommand001 {
     String txid = "";
     String num = "1";
     txid = PublicMethed.triggerContract(contractAddress,
-        "binaryMoveR(int256)", num, false,
+        "binaryMoveR(uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
@@ -146,7 +146,7 @@ public class ShiftCommand001 {
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     txid = PublicMethed.triggerContract(contractAddress,
-        "binaryLiftR(int256)", num, false,
+        "binaryLiftR(uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

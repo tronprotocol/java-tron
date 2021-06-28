@@ -85,7 +85,7 @@ public class Chainbase implements IRevokingDB {
     }
   }
 
-  public synchronized Snapshot getHead() {
+  public Snapshot getHead() {
     return head();
   }
 
@@ -119,7 +119,7 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public synchronized byte[] get(byte[] key) throws ItemNotFoundException {
+  public byte[] get(byte[] key) throws ItemNotFoundException {
     byte[] value = getUnchecked(key);
     if (value == null) {
       throw new ItemNotFoundException();
@@ -129,12 +129,12 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public synchronized byte[] getUnchecked(byte[] key) {
+  public byte[] getUnchecked(byte[] key) {
     return head().get(key);
   }
 
   @Override
-  public synchronized boolean has(byte[] key) {
+  public boolean has(byte[] key) {
     return getUnchecked(key) != null;
   }
 

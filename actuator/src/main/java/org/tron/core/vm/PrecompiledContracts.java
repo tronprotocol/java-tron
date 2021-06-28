@@ -834,7 +834,7 @@ public class PrecompiledContracts {
     private static final int MAX_SIZE = 16;
 
     static {
-      workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
+      workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2 + 1);
     }
 
     @Override
