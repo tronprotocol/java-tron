@@ -33,7 +33,6 @@ import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
 public class RateLimiterInterceptor implements ServerInterceptor {
 
   private static final String KEY_PREFIX_RPC = "rpc_";
-  private static final String ADAPTER_PREFIX = "org.tron.core.services.ratelimiter.adapter.";
 
   @Autowired
   private RateLimiterContainer container;
