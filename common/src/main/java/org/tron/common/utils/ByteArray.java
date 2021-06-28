@@ -116,6 +116,20 @@ public class ByteArray {
     return x == null || x.length == 0 ? null : "0x" + Hex.toHexString(x);
   }
 
+  // ignore the 41
+  public static String toJsonHexAddress(byte[] x) {
+    if (x == null || x.length == 0) {
+      return null;
+    } else {
+      String res = Hex.toHexString(x);
+      if (res.startsWith(DecodeUtil.addressPreFixString)) {
+        return "0x" + res.substring(DecodeUtil.addressPreFixString.length());
+      } else {
+        return "0x" + res;
+      }
+    }
+  }
+
   public static String toJsonHex(Long x) {
     return x == null ? null : "0x" + Long.toHexString(x);
   }

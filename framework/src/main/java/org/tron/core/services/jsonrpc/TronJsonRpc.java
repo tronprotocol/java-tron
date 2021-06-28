@@ -196,14 +196,14 @@ public interface TronJsonRpc {
         Contract contract = transaction.getRawData().getContract(0);
         byte[] fromByte = TransactionCapsule.getOwner(contract);
         byte[] toByte = getToAddress(transaction);
-        from = ByteArray.toJsonHex(fromByte);
-        to = ByteArray.toJsonHex(toByte);
+        from = ByteArray.toJsonHexAddress(fromByte);
+        to = ByteArray.toJsonHexAddress(toByte);
       } else {
         from = null;
         to = null;
       }
 
-      contractAddress = ByteArray.toJsonHex(txInfo.getContractAddress().toByteArray());
+      contractAddress = ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray());
 
       // 统一的log
       List<TransactionLog> logList = new ArrayList<>();
@@ -218,7 +218,7 @@ public interface TronJsonRpc {
         transactionLog.blockHash = blockHash;
         transactionLog.blockNumber = blockNumber;
         byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
-        transactionLog.address = ByteArray.toJsonHex(addressByte);
+        transactionLog.address = ByteArray.toJsonHexAddress(addressByte);
         transactionLog.data = ByteArray.toJsonHex(log.getData().toByteArray());
         String[] topics = new String[log.getTopicsCount()];
         for (int i = 0; i < log.getTopicsCount(); i++) {
