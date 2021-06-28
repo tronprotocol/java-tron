@@ -250,6 +250,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
           break;
         }
+        case ALLOW_TVM_VOTE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmVote(entry.getValue());
+          break;
+        }
 
         default:
           find = false;

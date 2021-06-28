@@ -157,6 +157,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
+  private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -755,8 +756,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowTvmFreeze();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmFreeze(
-          CommonParameter.getInstance().getAllowTvmFreeze());
+      this.saveAllowTvmFreeze(CommonParameter.getInstance().getAllowTvmFreeze());
+    }
+
+    try {
+      this.getAllowTvmVote();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmVote(CommonParameter.getInstance().getAllowTvmVote());
     }
 
   }
@@ -2254,6 +2260,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowTvmFreeze() {
     String msg = "not found ALLOW_TVM_FREEZE";
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_FREEZE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmVote(long allowTvmVote) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_VOTE,
+        new BytesCapsule(ByteArray.fromLong(allowTvmVote)));
+  }
+
+  public long getAllowTvmVote() {
+    String msg = "not found ALLOW_TVM_VOTE";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_VOTE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

@@ -458,6 +458,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowTvmVote;
+
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter
