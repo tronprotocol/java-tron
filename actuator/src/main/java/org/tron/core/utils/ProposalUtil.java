@@ -475,6 +475,22 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_NEW_REWARD_ALGORITHM: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_NEW_REWARD_ALGORITHM]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              PRE_VALUE_NOT_ONE_ERROR + "ALLOW_NEW_REWARD_ALGORITHM" + VALUE_NOT_ONE_ERROR);
+        }
+        if (dynamicPropertiesStore.getChangeDelegation() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_CHANGE_DELEGATION] proposal must be approved "
+                  + "before [ALLOW_NEW_REWARD_ALGORITHM] can be proposed");
+        }
+        break;
+      }
 
 
       default:
@@ -531,7 +547,8 @@ public class ProposalUtil {
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
-    ALLOW_TVM_FREEZE(52); // 0, 1
+    ALLOW_TVM_FREEZE(52), // 0, 1
+    ALLOW_NEW_REWARD_ALGORITHM(58); // 0, 1
 
     private long code;
 

@@ -458,6 +458,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowNewRewardAlgorithm;
+
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter

@@ -1010,6 +1010,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowNewRewardAlgorithm")
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowNewRewardAlgorithm())
+        .build());
+
     return builder.build();
   }
 
