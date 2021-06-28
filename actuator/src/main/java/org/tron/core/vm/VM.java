@@ -102,6 +102,8 @@ public class VM {
           || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID))
           || (!VMConfig.allowTvmFreeze()
               && (op == FREEZE || op == UNFREEZE || op == FREEZEEXPIRETIME))
+          || (!VMConfig.allowTvmVote()
+          && (op == VOTEWITNESS || op == WITHDRAWREWARD))
           ) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
@@ -169,6 +171,13 @@ public class VM {
           break;
         case FREEZEEXPIRETIME:
           energyCost = energyCosts.getFREEZE_EXPIRE_TIME();
+          break;
+        //TODO decide energy cost
+        case VOTEWITNESS:
+          energyCost = 10000L;
+          break;
+        case WITHDRAWREWARD:
+          energyCost = 1000L;
           break;
 
         // These all operate on memory and therefore potentially expand it:
@@ -1204,6 +1213,24 @@ public class VM {
           DataWord targetAddress = program.stackPop();
           long expireTime = program.freezeExpireTime(targetAddress, resourceType);
           program.stackPush(new DataWord(expireTime / 1000));
+
+          program.step();
+          break;
+        }
+        case VOTEWITNESS: {
+          int tronPowerArrayLength = program.stackPop().intValueSafe();
+          int tronPowerArrayOffset = program.stackPop().intValueSafe();
+          int witnessArrayLength = program.stackPop().intValueSafe();
+          int witnessArrayOffset = program.stackPop().intValueSafe();
+          boolean result = program.voteWitness(witnessArrayOffset, witnessArrayLength,
+              tronPowerArrayOffset, tronPowerArrayLength);
+          program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+
+          program.step();
+        }
+        case WITHDRAWREWARD: {
+          long allowance = program.withdrawReward();
+          program.stackPush(new DataWord(allowance));
 
           program.step();
           break;
