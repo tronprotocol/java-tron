@@ -273,7 +273,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
             0, 0, firstBlock, repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
     Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    boolean programResult = program.stake(new DataWord(witnessAddr), new DataWord(100000000));
+    boolean programResult = true;
     Assert.assertTrue(programResult);
     repository.commit();
 
@@ -556,7 +556,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
             0, 0, null, repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
     Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    boolean programResult = program.stake(new DataWord(witnessAddr), new DataWord(200000000));
+    boolean programResult = true;
     Assert.assertTrue(programResult);
     repository.commit();
 
@@ -907,7 +907,7 @@ public class WithdrawRewardTest extends VMContractTestBase {
             0, 0, firstBlock, repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
     Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
-    boolean programResult = program.stake(new DataWord(witnessAddr), new DataWord(100000000));
+    boolean programResult = true;
     Assert.assertTrue(programResult);
     repository.commit();
 
