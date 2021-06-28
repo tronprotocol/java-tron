@@ -1495,8 +1495,9 @@ public class Manager {
             trx.setSource(false);
             trx.setType(crossMessage.getType());
           } else {
-            logger.warn("{} cross tx time out, timeOutHeight:{}, now block height:{}",
-                crossMessage.getType(), crossMessage.getTimeOutBlockHeight(),
+            logger.warn("{} cross tx {} time out, timeOutHeight:{}, now block height:{}",
+                crossMessage.getType(), CrossUtils.getSourceTxId(crossMessage.getTransaction()),
+                    crossMessage.getTimeOutBlockHeight(),
                 chainBaseManager.getHeadBlockNum());
             continue;
           }
@@ -1775,8 +1776,17 @@ public class Manager {
           && !communicateService.validProof(crossMessage)) {
         throw new CrossValidateException("valid proof fail");
       }
+      CrossContract crossContract = null;
+      try {
+        crossContract = crossMessage.getTransaction().getRawData().getContract(0)
+                .getParameter().unpack(CrossContract.class);
+      } catch (InvalidProtocolBufferException e) {
+        logger.error("invalid cross message, crossMessage: {}", crossMessage);
+        throw new CrossValidateException("invalid protocol");
+      }
       if (crossMessage.getType() == Type.DATA
-          && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
+              && crossContract.getType() != CrossDataType.CONTRACT
+              && crossMessage.getTimeOutBlockHeight() <= chainBaseManager.getHeadBlockNum()) {
         logger.error(
                 "cross chain tx was time out, tx: {}, headBlcokNum: {}, timeoutHight: {}",
                 sourceTxId, chainBaseManager.getHeadBlockNum(),
