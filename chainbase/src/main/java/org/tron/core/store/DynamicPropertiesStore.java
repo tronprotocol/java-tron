@@ -159,6 +159,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
 
+  private static final byte[] ALLOW_NEW_REWARD_ALGORITHM = "ALLOW_NEW_REWARD_ALGORITHM".getBytes();
+  private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE = "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -763,6 +766,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowTvmVote();
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmVote(CommonParameter.getInstance().getAllowTvmVote());
+    }
+
+    try {
+      this.getAllowNewRewardAlgorithm();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowNewRewardAlgorithm(
+          CommonParameter.getInstance().getAllowNewRewardAlgorithm());
     }
 
   }
@@ -2278,6 +2288,38 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowNewRewardAlgorithm(long value) {
+    this.put(ALLOW_NEW_REWARD_ALGORITHM,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowNewRewardAlgorithm() {
+    return Optional.ofNullable(getUnchecked(ALLOW_NEW_REWARD_ALGORITHM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_NEW_REWARD_ALGORITHM"));
+  }
+
+  public boolean useNewRewardAlgorithm() {
+    return getAllowNewRewardAlgorithm() == 1;
+  }
+
+  public void saveNewRewardAlgorithmEffectiveCycle() {
+    if (getNewRewardAlgorithmEffectiveCycle() == 0) {
+      long currentCycle = getCurrentCycleNumber();
+      this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+          new BytesCapsule(ByteArray.fromLong(currentCycle + 1)));
+    }
+  }
+
+  public long getNewRewardAlgorithmEffectiveCycle() {
+    return Optional.ofNullable(getUnchecked(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(Long.MAX_VALUE);
   }
 
   private static class DynamicResourceProperties {
