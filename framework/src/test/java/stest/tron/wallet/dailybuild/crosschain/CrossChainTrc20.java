@@ -40,15 +40,23 @@ public class CrossChainTrc20  extends CrossChainBase {
   @Test(enabled = true,description = "Create trc20 transfer for cross chain")
   public void test01CreateCrossTrc20Transfer() throws Exception {
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
 
     String method = "increment(address,address,uint256)";
     String argsStr = "\"" + Base58.encode58Check(contractAddress) + "\"" + "," + "\""
         + Base58.encode58Check(crossContractAddress) + "\"" + ",\"1\"";
 
 
+    final Long beforeTriggerAccountBalance = PublicMethed
+        .queryAccount(trc10TokenAccountAddress, blockingStubFull).getBalance();
+    final Long beforeRegisterAccountBalance = PublicMethed
+        .queryAccount(registerAccountAddress, blockingStubFull).getBalance();
 
-
-
+    final Long beforeCrossTriggerAccountBalance = PublicMethed
+        .queryAccount(trc10TokenAccountAddress, crossBlockingStubFull).getBalance();
+    final Long beforeCrossRegisterAccountBalance = PublicMethed
+        .queryAccount(registerAccountAddress, crossBlockingStubFull).getBalance();
 
 
     TransactionExtention transactionExtention = PublicMethed
@@ -91,6 +99,10 @@ public class CrossChainTrc20  extends CrossChainBase {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(crossBlockingStubFull);
 
+
+
+
+
     //Query first chain
     Optional<Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Any any = byId.get().getRawData().getContract(0).getParameter();
@@ -118,6 +130,22 @@ public class CrossChainTrc20  extends CrossChainBase {
         blockingStubFull).getBalance();
     Optional<TransactionInfo> info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(beforeToBalance - afterToBalance, info.get().getFee());
+
+    final Long afterTriggerAccountBalance = PublicMethed
+        .queryAccount(trc10TokenAccountAddress, blockingStubFull).getBalance();
+    final Long afterCrossTriggerAccountBalance = PublicMethed
+        .queryAccount(trc10TokenAccountAddress, crossBlockingStubFull).getBalance();
+    Assert.assertEquals(beforeTriggerAccountBalance
+        - afterTriggerAccountBalance, info.get().getFee());
+
+    info = PublicMethed.getTransactionInfoById(txid, crossBlockingStubFull);
+    Assert.assertEquals(beforeCrossTriggerAccountBalance
+        - afterCrossTriggerAccountBalance, info.get().getFee());
+
+
+    Assert.assertEquals(beforeTriggerAccountBalance - afterTriggerAccountBalance,
+        info.get().getFee());
+
 
     transactionExtention = PublicMethed.triggerConstantContractForExtention(contractAddress,
         "read()","#",
@@ -154,6 +182,20 @@ public class CrossChainTrc20  extends CrossChainBase {
     long afterMutisignTriggerValue = ByteArray
         .toLong(transactionExtention.getConstantResult(0).toByteArray());
     Assert.assertEquals(afterFirstChainValue - afterMutisignTriggerValue,-1);
+
+
+    //register balance not change
+
+    final Long afterRegisterAccountBalance = PublicMethed
+        .queryAccount(registerAccountAddress, blockingStubFull).getBalance();
+
+
+    final Long afterCrossRegisterAccountBalance = PublicMethed
+        .queryAccount(registerAccountAddress, crossBlockingStubFull).getBalance();
+
+
+    Assert.assertEquals(beforeCrossRegisterAccountBalance, afterCrossRegisterAccountBalance);
+    Assert.assertEquals(beforeRegisterAccountBalance, afterRegisterAccountBalance);
 
   }
 
