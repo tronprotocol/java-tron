@@ -91,22 +91,11 @@ public interface TronJsonRpc {
   }
 
   class CallArguments {
-
-    //需要采用public修饰符，否则输入参数不能被识别
-    /**
-     * 用户地址，16进制
-     */
     public String from;
-    /**
-     * 合约地址，16进制
-     */
     public String to;
     public String gas; //not used
     public String gasPrice; //not used
     public String value; //not used
-    /**
-     * 函数的签名 || 输入参数列表
-     */
     public String data;
 
     @Override
