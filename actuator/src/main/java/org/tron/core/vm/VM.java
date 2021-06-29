@@ -1227,6 +1227,7 @@ public class VM {
           program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
 
           program.step();
+          break;
         }
         case WITHDRAWREWARD: {
           long allowance = program.withdrawReward();
