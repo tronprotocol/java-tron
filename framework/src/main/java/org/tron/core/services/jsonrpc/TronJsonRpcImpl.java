@@ -2,7 +2,6 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
@@ -15,7 +14,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
@@ -24,7 +22,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -48,14 +45,10 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 public class TronJsonRpcImpl implements TronJsonRpc {
 
   String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
-  String regexAddressHash = "(0x)?[a-zA-Z0-9]{42}$";
 
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
   private Manager manager;
-
-  public TronJsonRpcImpl() {
-  }
 
   public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
     this.nodeInfoService = nodeInfoService;
@@ -226,13 +219,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getProtocolVersion() {
-    //当前块的版本号。实际是与代码版本对应的。
     return ByteArray.toJsonHex(wallet.getNowBlock().getBlockHeader().getRawData().getVersion());
   }
 
   @Override
   public String getLatestBlockNum() {
-    //当前节点同步的最新块号
     return ByteArray.toJsonHex(wallet.getNowBlock().getBlockHeader().getRawData().getNumber());
   }
 
@@ -242,7 +233,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcApiException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      //某个用户的trx余额，以sun为单位
       byte[] addressData = addressHashToByteArray(address);
 
       Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
@@ -361,7 +351,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcApiException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      //获取某个合约地址的字节码
       byte[] addressData = addressHashToByteArray(contractAddress);
 
       BytesMessage.Builder build = BytesMessage.newBuilder();
@@ -563,13 +552,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getPeerCount() {
-    //返回当前节点所连接的peer节点数量
+    // return the peer list count
     return ByteArray.toJsonHex(nodeInfoService.getNodeInfo().getPeerList().size());
   }
 
   @Override
   public Object getSyncingStatus() {
-    //查询同步状态。未同步返回false，否则返回 SyncingResult
     if (nodeInfoService.getNodeInfo().getPeerList().isEmpty()) {
       return false;
     }
@@ -590,25 +578,21 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public BlockResult getUncleByBlockHashAndIndex(String blockHash, int index) {
-    //查询指定块hash的第几个分叉
     return null;
   }
 
   @Override
   public BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, int index) {
-    //查询指定块号的第几个分叉
     return null;
   }
 
   @Override
   public String getUncleCountByBlockHash(String blockHash) {
-    //查询指定块hash的分叉个数
     return "0x0";
   }
 
   @Override
   public String getUncleCountByBlockNumber(String blockNumOrTag) {
-    //查询指定块号的分叉个数
     return "0x0";
   }
 
