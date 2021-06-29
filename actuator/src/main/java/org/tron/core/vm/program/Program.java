@@ -1798,12 +1798,12 @@ public class Program {
         voteCount * DataWord.WORD_SIZE);
 
     for (int i = 0; i < voteCount; i++) {
-      byte[] witness = Arrays.copyOfRange(witnessArrayData,
-          i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE);
-      byte[] tronPower = Arrays.copyOfRange(tronPowerArrayData,
-          i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE);
-      param.addVote(TransactionTrace.convertToTronAddress(witness),
-          new DataWord(tronPower).longValueSafe());
+      DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
+          i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+      DataWord tronPower = new DataWord(Arrays.copyOfRange(tronPowerArrayData,
+          i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+      param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
+          tronPower.longValueSafe());
     }
 
     try {
