@@ -209,7 +209,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getNetVersion() {
-    //network id，不能跟metamask已有的id冲突
+    //network id
     return ByteArray.toJsonHex(100);
   }
 
@@ -270,14 +270,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
    */
   private String call(byte[] ownerAddressByte, byte[] contractAddressByte, byte[] data) {
 
-    //构造静态合约时，只需要3个字段
     TriggerSmartContract triggerContract = triggerCallContract(
         ownerAddressByte,
         contractAddressByte,
-        0, //给合约发送的trx，静态合约不需要
+        0,
         data,
-        0, //给合约发送的 token10 的金额，静态合约不需要
-        null //给合约发送的 token10 ID，静态合约不需要
+        0,
+        null
     );
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
@@ -328,6 +327,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     } else {
       logger.error("trigger contract failed.");
     }
+
     return result;
   }
 
@@ -353,13 +353,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
     }
-  }
-
-  @Override
-  public String getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
-    //发起人为某个地址的交易总数。FullNode无法实现该功能
-    return ByteArray.toJsonHex(
-        wallet.getNowBlock().getBlockHeader().getRawData().getTimestamp() + 60 * 1000);
   }
 
   @Override
@@ -394,13 +387,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getCoinbase() {
-    //获取最新块的产块sr地址
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
     if (witnessAddress == null || witnessAddress.length != 21) {
       throw new JsonRpcApiException("invalid witness address");
     }
-    return ByteArray.toJsonHex(witnessAddress);
+    return ByteArray.toJsonHexAddress(witnessAddress);
   }
 
   @Override
@@ -638,13 +630,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getHashRate() {
-    //读取当前挖矿节点的每秒钟哈希值算出数量，无用
     return "0x0";
   }
 
   @Override
   public boolean isMining() {
-    //检查节点是否在进行挖矿，无用
     return false;
   }
 
@@ -687,5 +677,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String parityNextNonce(String address) {
     throw new UnsupportedOperationException(
         "the method parity_nextNonce does not exist/is not available");
+  }
+
+  @Override
+  public String getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
+    throw new UnsupportedOperationException(
+        "the method eth_getTransactionCount does not exist/is not available");
   }
 }
