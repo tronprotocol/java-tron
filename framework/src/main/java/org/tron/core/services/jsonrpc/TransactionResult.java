@@ -12,7 +12,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract;
 
-class TransactionResult {
+public class TransactionResult {
 
   public String hash;
   public String nonce;

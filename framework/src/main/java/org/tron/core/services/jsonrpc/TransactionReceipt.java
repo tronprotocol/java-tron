@@ -17,7 +17,7 @@ import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
 
-class TransactionReceipt {
+public class TransactionReceipt {
 
   public static class TransactionLog {
 
