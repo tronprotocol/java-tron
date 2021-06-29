@@ -106,10 +106,10 @@ public class CrossStress extends CrossChainBase {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("Total send transaction: " + queue.size());
 
-    logger.info("Before register balance for chain A:" + registerBeforeBalance);
+    //logger.info("Before register balance for chain A:" + registerBeforeBalance);
     logger.info("After register balance for chain A:"
         + PublicMethed.queryAccount(registerAccountAddress,blockingStubFull).getBalance());
-    logger.info("Befpre register balance for chain B:" + crossRegisterBeforeBalance);
+    //logger.info("Befpre register balance for chain B:" + crossRegisterBeforeBalance);
 
 
 
