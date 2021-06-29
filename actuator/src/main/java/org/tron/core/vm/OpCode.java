@@ -594,7 +594,7 @@ public enum OpCode {
 
   VOTEWITNESS(0xd8, 4, 1, OpCode.Tier.ExtTier),
 
-  WITHDRAWREWARD(0xd9, 1, 1, OpCode.Tier.ExtTier),
+  WITHDRAWREWARD(0xd9, 0, 1, OpCode.Tier.ExtTier),
 
   /**
    * (0xf0) Create a new account with associated code
