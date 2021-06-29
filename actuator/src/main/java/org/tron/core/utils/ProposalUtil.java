@@ -501,6 +501,11 @@ public class ProposalUtil {
           throw new ContractValidateException(
               PRE_VALUE_NOT_ONE_ERROR + "ALLOW_TVM_VOTE" + VALUE_NOT_ONE_ERROR);
         }
+        if (dynamicPropertiesStore.getAllowNewRewardAlgorithm() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_NEW_REWARD_ALGORITHM] proposal must be approved "
+                  + "before [ALLOW_TVM_VOTE] can be proposed");
+        }
         break;
       }
 
