@@ -45,8 +45,8 @@ public class VoteWitnessProcessor {
         Protocol.Vote vote = iterator.next();
 
         byte[] witnessAddress = vote.getVoteAddress().toByteArray();
-        String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-        if (repo.getAccount(witnessAddress) != null) {
+        String readableWitnessAddress = StringUtil.encode58Check(witnessAddress);
+        if (repo.getAccount(witnessAddress) == null) {
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
