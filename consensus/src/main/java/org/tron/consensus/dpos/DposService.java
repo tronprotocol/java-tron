@@ -24,9 +24,12 @@ import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.PbftInterface;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.CommonDataBase;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -34,6 +37,9 @@ public class DposService implements ConsensusInterface {
 
   @Autowired
   private ConsensusDelegate consensusDelegate;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   @Autowired
   private DposTask dposTask;
@@ -174,6 +180,16 @@ public class DposService implements ConsensusInterface {
     }
     CommonParameter.getInstance()
         .setOldSolidityBlockNum(consensusDelegate.getLatestSolidifiedBlockNum());
+    // update pbft when node is syncing
+    try {
+      BlockCapsule blockCapsule = chainBaseManager.getBlockByNum(newSolidNum);
+      if (newSolidNum > commonDataBase.getLatestPbftBlockNum()) {
+        commonDataBase.saveLatestPbftBlockHash(blockCapsule.getBlockId().getBytes());
+        commonDataBase.saveLatestPbftBlockNum(newSolidNum);
+      }
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.error("update latest pbft block failed, err: {}", e.getMessage());
+    }
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);
     logger.info("Update solid block number to {}", newSolidNum);
   }
