@@ -223,7 +223,7 @@ public class Create2Test020 {
     String num = "\"" + code1 + "\"" + "," + 1000001;
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy1(bytes,uint8)", num, false,
+            "deploy1(bytes,uint256)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);

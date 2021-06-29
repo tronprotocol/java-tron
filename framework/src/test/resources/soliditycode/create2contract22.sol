@@ -1,6 +1,6 @@
 contract Factory {
     event Deployed(address addr, trcToken salt, address sender);
-    event Deployed1(address addr, uint8 salt, address sender);
+    event Deployed1(address addr, uint256 salt, address sender);
     event Deployed2(address addr, address salt, address sender);
     event Deployed3(address addr, string salt, address sender);
 
@@ -17,7 +17,7 @@ contract Factory {
         return addr;
     }
 
-    function deploy1(bytes memory code, uint8 salt) public returns(address){
+    function deploy1(bytes memory code, uint256 salt) public returns(address){
             address addr;
             assembly {
                 addr := create2(0, add(code, 0x20), mload(code), salt)
