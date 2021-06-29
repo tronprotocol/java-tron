@@ -590,9 +590,6 @@ public enum OpCode {
 
   UNFREEZE(0xd6, 2, 1, OpCode.Tier.ExtTier),
 
-  /**
-   * (0xd6) Get the expire time of freeze in seconds
-   */
   FREEZEEXPIRETIME(0xd7, 2, 1, OpCode.Tier.ExtTier),
 
   /**
