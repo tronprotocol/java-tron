@@ -280,8 +280,8 @@ public class CrossHeaderMsgProcess {
             if (missBlock != null && syncHeaderNum > missBlock) {
               syncHeaderNum = missBlock;
             }
-            if (!entry.getValue() && sendHeaderNumCache.getIfPresent(entry.getKey()) == null
-                && syncHeaderNum - latestHeaderNum <= MAX_HEADER_NUMBER / 2) {
+            if (!entry.getValue() && sendHeaderNumCache.getIfPresent(entry.getKey()) == null) {
+//                && syncHeaderNum - latestHeaderNum <= MAX_HEADER_NUMBER / 2) {
               sendHeaderNumCache.put(entry.getKey(), syncHeaderNum);
               sendService.submit(new SyncHeader(entry.getKey(), syncHeaderNum));
               sleep.set(false);
