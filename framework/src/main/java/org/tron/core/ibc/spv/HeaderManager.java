@@ -109,7 +109,7 @@ public class HeaderManager {
         return;
       }
       if (!latestHeaderHash.equals(header.getParentBlockId().toString())) {
-        throw new BadBlockException("not exist parent");
+        throw new BadBlockException("not exist parent, latest header hash:" + latestHeaderHash);
       }
     }
     //update maintenance time
