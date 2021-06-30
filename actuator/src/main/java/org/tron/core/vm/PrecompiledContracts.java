@@ -37,6 +37,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -1533,15 +1535,19 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+
       byte[] callerAddress = getCallerAddress();
       long rewardBalance =
           VoteRewardUtils.queryReward(convertToTronAddress(callerAddress), getDeposit());
       return Pair.of(true, longTo32Bytes(rewardBalance));
+
     }
 
   }
 
   public static class IsSrCandidate extends PrecompiledContract {
+
+    private static final int SIZE = 1;
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -1550,6 +1556,11 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null || data.length != SIZE) {
+        return Pair.of(true, dataBoolean(false));
+      }
+
       DataWord[] words = DataWord.parseArray(data);
       byte[] addr = words[0].getLast20Bytes();
 
@@ -1566,6 +1577,8 @@ public class PrecompiledContracts {
 
   public static class VoteCount extends PrecompiledContract {
 
+    private static final int SIZE = 2;
+
     @Override
     public long getEnergyForData(byte[] data) {
       return 20;
@@ -1574,9 +1587,13 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
+      if (data == null || data.length != SIZE) {
+        return Pair.of(true, longTo32Bytes(0L));
+      }
+
       DataWord[] words = DataWord.parseArray(data);
-      DataWord voteAddr = words[0];
-      DataWord targetAddr = words[1];
+      DataWord voteAddr = new DataWord(words[0].getLast20Bytes());
+      DataWord targetAddr = new DataWord(words[1].getLast20Bytes());
       byte[] voteTronAddr = convertToTronAddress(voteAddr.getLast20Bytes());
       byte[] targetTronAddr = convertToTronAddress(targetAddr.getLast20Bytes());
 
@@ -1587,7 +1604,7 @@ public class PrecompiledContracts {
           List<Protocol.Vote> voteList =
               voteAccountCapsule.getVotesList();
           for (Protocol.Vote vote : voteList) {
-            if (targetTronAddr.equals(vote.getVoteAddress().toByteArray())) {
+            if (ByteString.copyFrom(targetTronAddr).equals(vote.getVoteAddress())) {
               voteCount = vote.getVoteCount();
               break;
             }
