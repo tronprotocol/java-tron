@@ -95,8 +95,8 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public WitnessCapsule getWitnessCapsule(byte[] address) {
-    return repository.getWitnessCapsule(address);
+  public WitnessCapsule getWitness(byte[] address) {
+    return repository.getWitness(address);
   }
 
   @Override

@@ -120,7 +120,7 @@ public interface Repository {
 
   AccountCapsule createNormalAccount(byte[] address);
 
-  WitnessCapsule getWitnessCapsule(byte[] address);
+  WitnessCapsule getWitness(byte[] address);
 
   void saveTokenIdNum(long num);
 

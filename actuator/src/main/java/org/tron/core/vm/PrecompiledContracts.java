@@ -1563,7 +1563,7 @@ public class PrecompiledContracts {
       byte[] addr = words[0].getLast20Bytes();
 
       WitnessCapsule witnessCapsule = this.getDeposit()
-          .getWitnessCapsule(convertToTronAddress(addr));
+          .getWitness(convertToTronAddress(addr));
       if (witnessCapsule != null) {
         return Pair.of(true, dataBoolean(true));
       } else {
@@ -1622,7 +1622,7 @@ public class PrecompiledContracts {
         }
       } else {
         WitnessCapsule witnessCapsule =
-            this.getDeposit().getWitnessCapsule(targetTronAddr);
+            this.getDeposit().getWitness(targetTronAddr);
         if(witnessCapsule != null) {
           voteCount = witnessCapsule.getVoteCount();
         }

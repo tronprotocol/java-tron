@@ -37,7 +37,6 @@ public class VoteWitnessProcessor {
           "VoteNumber more than maxVoteNumber " + MAX_VOTE_NUMBER);
     }
 
-    WitnessStore witnessStore = repo.getWitnessStore();
     Iterator<Protocol.Vote> iterator = param.getVotes().iterator();
     try {
       long sum = 0;
@@ -50,7 +49,7 @@ public class VoteWitnessProcessor {
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
-        if (!witnessStore.has(witnessAddress)) {
+        if (repo.getWitness(witnessAddress) == null) {
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }

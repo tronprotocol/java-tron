@@ -278,7 +278,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public WitnessCapsule getWitnessCapsule(byte[] address) {
+  public WitnessCapsule getWitness(byte[] address) {
     return witnessStore.get(address);
   }
 
