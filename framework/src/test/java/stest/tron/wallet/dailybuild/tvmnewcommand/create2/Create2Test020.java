@@ -220,7 +220,7 @@ public class Create2Test020 {
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
     String txid = "";
-    String num = "\"" + code1 + "\"" + "," + 1000001;
+    String num = "\"" + code1 + "\"" + "," + 1000031;
     txid = PublicMethed
         .triggerContract(contractAddress,
             "deploy1(bytes,uint256)", num, false,
