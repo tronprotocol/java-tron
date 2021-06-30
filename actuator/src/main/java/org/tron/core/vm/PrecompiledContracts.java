@@ -1547,8 +1547,6 @@ public class PrecompiledContracts {
 
   public static class IsSrCandidate extends PrecompiledContract {
 
-    private static final int SIZE = 1;
-
     @Override
     public long getEnergyForData(byte[] data) {
       return 20;
@@ -1557,7 +1555,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null || data.length != SIZE) {
+      if (data == null || data.length != WORD_SIZE) {
         return Pair.of(true, dataBoolean(false));
       }
 
@@ -1577,7 +1575,7 @@ public class PrecompiledContracts {
 
   public static class VoteCount extends PrecompiledContract {
 
-    private static final int SIZE = 2;
+    private static final int SIZE = 64;
 
     @Override
     public long getEnergyForData(byte[] data) {
