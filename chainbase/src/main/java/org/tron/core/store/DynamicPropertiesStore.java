@@ -763,16 +763,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowTvmVote();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowTvmVote(CommonParameter.getInstance().getAllowTvmVote());
-    }
-
-    try {
       this.getAllowNewRewardAlgorithm();
     } catch (IllegalArgumentException e) {
       this.saveAllowNewRewardAlgorithm(
           CommonParameter.getInstance().getAllowNewRewardAlgorithm());
+    }
+
+    try {
+      this.getAllowTvmVote();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmVote(CommonParameter.getInstance().getAllowTvmVote());
     }
 
   }
