@@ -269,6 +269,7 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_RECEIPTS_MERKLE_ROOT = "committee.allowReceiptsMerkleRoot";
 
   public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
+  public static final String COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM = "committee.allowNewRewardAlgorithm";
   public static final String COMMITTEE_ALLOW_TVM_VOTE = "committee.allowTvmVote";
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";

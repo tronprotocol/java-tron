@@ -720,6 +720,10 @@ public class Args extends CommonParameter {
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
 
+    PARAMETER.allowNewRewardAlgorithm =
+        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) : 0;
+
     PARAMETER.allowTvmVote =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
