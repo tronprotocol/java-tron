@@ -255,6 +255,29 @@ public class NewFeatureForSolc080 {
     Assert.assertTrue(beforeBalance == afterBalance+1000000);
   }
 
+  @Test(enabled = true, description = "transfer trx to literal address with payable")
+  public void test15TransferToLiteralAddress() {
+    Protocol.Account info = PublicMethed.queryAccount(mapKeyContract,blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    logger.info("beforeBalance: " + beforeBalance);
+
+    String methodStr = "transferToLiteralAddress(uint64)";
+    String TriggerTxid = PublicMethed.triggerContract(mapKeyContract, methodStr, "1000000", false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<Protocol.TransactionInfo> transactionInfo = PublicMethed
+        .getTransactionInfoById(TriggerTxid, blockingStubFull);
+
+    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(Protocol.Transaction.Result.contractResult.SUCCESS,
+        transactionInfo.get().getReceipt().getResult());
+
+    info = PublicMethed.queryAccount(mapKeyContract,blockingStubFull);
+    Long afterBalance = info.getBalance();
+    logger.info("afterBalance: " + afterBalance);
+    Assert.assertTrue(beforeBalance == afterBalance+1000000);
+  }
+
   /**
    * constructor.
    */

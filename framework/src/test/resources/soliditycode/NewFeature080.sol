@@ -97,6 +97,12 @@ contract C {
 //
 //        emit FallbackCalled(msg.data);
 //    }
+
+    function transferToLiteralAddress(uint64 value) public{
+        uint160 num = type(uint160).max;
+        address add = address(num);
+        payable(add).transfer(value);
+    }
 }
 
 
