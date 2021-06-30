@@ -85,7 +85,7 @@ public class RewardBalanceTest extends VMTestBase {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmStake(1);
+    VMConfig.initAllowTvmVote(1);
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
     StoreFactory storeFactory = StoreFactory.getInstance();
     Repository repository;

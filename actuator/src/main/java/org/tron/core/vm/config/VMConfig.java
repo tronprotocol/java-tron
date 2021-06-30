@@ -96,8 +96,6 @@ public class VMConfig {
     ALLOW_TVM_ISTANBUL = allow == 1;
   }
 
-  public static void initAllowTvmStake(long value) {}
-
   public static void initAllowTvmFreeze(long allow) {
     ALLOW_TVM_FREEZE = allow == 1;
   }

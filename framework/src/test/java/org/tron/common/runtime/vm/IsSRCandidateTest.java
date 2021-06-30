@@ -81,7 +81,7 @@ public class IsSRCandidateTest extends VMTestBase {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmStake(1);
+    VMConfig.initAllowTvmVote(1);
     String contractName = "TestIsSRCandidate";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi =
