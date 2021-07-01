@@ -274,6 +274,8 @@ public class PbftMessageHandle {
     if (srPbftMessage != null && StringUtils.equals(no, srPbftMessage.getNo())) {
       try {
         Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } catch (Exception e) {
       }
       onPrePrepare(srPbftMessage);
