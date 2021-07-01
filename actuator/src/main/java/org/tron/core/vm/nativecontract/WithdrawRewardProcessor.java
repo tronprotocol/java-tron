@@ -20,23 +20,8 @@ public class WithdrawRewardProcessor {
 
     byte[] targetAddress = param.getTargetAddress();
     AccountCapsule accountCapsule = repo.getAccount(targetAddress);
-
-    long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
-    long now = param.getNowInMs();
-    long witnessAllowanceFrozenTime = repo.getDynamicPropertiesStore()
-        .getWitnessAllowanceFrozenTime() * FROZEN_PERIOD;
-
-    boolean needCheckFrozenTime = CommonParameter.getInstance()
-            .getCheckFrozenTime() == 1;//for test
-    if (needCheckFrozenTime && now - latestWithdrawTime < witnessAllowanceFrozenTime) {
-      throw new ContractValidateException("The last withdraw time is "
-          + latestWithdrawTime + ", less than 24 hours");
-    }
-
     long reward = VoteRewardUtils.queryReward(targetAddress, repo);
-    if (accountCapsule.getAllowance() <= 0 && reward <= 0) {
-      throw new ContractValidateException("Account does not have any reward");
-    }
+
     try {
       LongMath.checkedAdd(LongMath.checkedAdd(
           accountCapsule.getBalance(),
@@ -56,6 +41,11 @@ public class WithdrawRewardProcessor {
     AccountCapsule accountCapsule = repo.getAccount(target);
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
+
+    // If no allowance, do nothing and just return zero.
+    if (allowance <= 0) {
+      return 0;
+    }
 
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
         .setBalance(oldBalance + allowance)
