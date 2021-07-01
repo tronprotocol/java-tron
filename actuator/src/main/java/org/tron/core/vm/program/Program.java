@@ -1824,17 +1824,18 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     param.setTargetAddress(owner);
     param.setNowInMs(getTimestamp().longValue() * 1000);
+    long allowance;
     try {
       Repository repository = getContractState().newRepositoryChild();
       WithdrawRewardProcessor processor = new WithdrawRewardProcessor();
       processor.validate(param, repository);
-      long allowance = processor.execute(param, repository);
+      allowance = processor.execute(param, repository);
       repository.commit();
-      return allowance;
     } catch (ContractValidateException e) {
       logger.error("validateForWithdrawReward failure:{}", e.getMessage());
       return 0;
     }
+    return allowance;
   }
 
   public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
