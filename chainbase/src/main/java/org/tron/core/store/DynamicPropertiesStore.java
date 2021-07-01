@@ -2286,7 +2286,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveNewRewardAlgorithmEffectiveCycle() {
-    if (getNewRewardAlgorithmEffectiveCycle() == 0) {
+    if (getNewRewardAlgorithmEffectiveCycle() == Long.MAX_VALUE) {
       long currentCycle = getCurrentCycleNumber();
       this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
           new BytesCapsule(ByteArray.fromLong(currentCycle + 1)));
