@@ -99,7 +99,7 @@ contract C {
 //    }
 
     function transferToLiteralAddress(uint64 value) public{
-        uint160 num = type(uint160).max;
+        uint160 num = type(uint160).max-3;
         address add = address(num);
         payable(add).transfer(value);
     }
