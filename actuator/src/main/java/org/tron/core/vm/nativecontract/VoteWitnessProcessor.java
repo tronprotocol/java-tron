@@ -8,7 +8,6 @@ import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.WitnessStore;
 import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
@@ -80,7 +79,7 @@ public class VoteWitnessProcessor {
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
 
-    VotesCapsule votesCapsule = repo.getVotesCapsule(ownerAddress);
+    VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
     if (votesCapsule == null) {
       votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
           accountCapsule.getVotesList());
@@ -95,6 +94,6 @@ public class VoteWitnessProcessor {
     }
 
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
-    repo.updateVotesCapsule(ownerAddress, votesCapsule);
+    repo.updateVotes(ownerAddress, votesCapsule);
   }
 }

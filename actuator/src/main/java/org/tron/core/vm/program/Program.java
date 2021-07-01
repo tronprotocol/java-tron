@@ -592,14 +592,14 @@ public class Program {
 
     long reward = VoteRewardUtils.queryReward(owner, repo);
     if (!ownerCapsule.getVotesList().isEmpty()) {
-      VotesCapsule votesCapsule = repo.getVotesCapsule(owner);
+      VotesCapsule votesCapsule = repo.getVotes(owner);
       if (votesCapsule == null) {
         votesCapsule = new VotesCapsule(ByteString.copyFrom(owner),
             ownerCapsule.getVotesList());
       }
       ownerCapsule.clearVotes();
       votesCapsule.clearNewVotes();
-      repo.updateVotesCapsule(owner, votesCapsule);
+      repo.updateVotes(owner, votesCapsule);
     }
 
     repo.addBalance(owner, Math.addExact(ownerCapsule.getAllowance(), reward));

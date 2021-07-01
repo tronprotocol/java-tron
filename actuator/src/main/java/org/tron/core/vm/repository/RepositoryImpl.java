@@ -208,7 +208,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public BytesCapsule getDynamic(byte[] word) {
+  public BytesCapsule getDynamicProperty(byte[] word) {
     Key key = Key.create(word);
     if (dynamicPropertiesCache.containsKey(key)) {
       return dynamicPropertiesCache.get(key).getDynamicProperties();
@@ -216,7 +216,7 @@ public class RepositoryImpl implements Repository {
 
     BytesCapsule bytesCapsule;
     if (parent != null) {
-      bytesCapsule = parent.getDynamic(word);
+      bytesCapsule = parent.getDynamicProperty(word);
     } else {
       try {
         bytesCapsule = getDynamicPropertiesStore().get(word);
@@ -253,7 +253,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public VotesCapsule getVotesCapsule(byte[] address) {
+  public VotesCapsule getVotes(byte[] address) {
     Key cacheKey = new Key(address);
     if (votesCache.containsKey(cacheKey)) {
       return votesCache.get(cacheKey).getVotes();
@@ -261,7 +261,7 @@ public class RepositoryImpl implements Repository {
 
     VotesCapsule votesCapsule;
     if (parent != null) {
-      votesCapsule = parent.getVotesCapsule(address);
+      votesCapsule = parent.getVotes(address);
     } else {
       votesCapsule = getVotesStore().get(address);
     }
@@ -280,7 +280,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public long getBeginCycle(byte[] address) {
     Key cacheKey = new Key(address);
-    BytesCapsule bytesCapsule = getDelegationCache(cacheKey);
+    BytesCapsule bytesCapsule = getDelegation(cacheKey);
     return bytesCapsule == null ? 0 : ByteArray.toLong(bytesCapsule.getData());
   }
 
@@ -288,7 +288,7 @@ public class RepositoryImpl implements Repository {
   public long getEndCycle(byte[] address) {
     byte[] key = ("end-" + Hex.toHexString(address)).getBytes();
     Key cacheKey = new Key(key);
-    BytesCapsule bytesCapsule = getDelegationCache(cacheKey);
+    BytesCapsule bytesCapsule = getDelegation(cacheKey);
     return bytesCapsule == null ? DelegationStore.REMARK : ByteArray.toLong(bytesCapsule.getData());
   }
 
@@ -296,7 +296,7 @@ public class RepositoryImpl implements Repository {
   public AccountCapsule getAccountVote(long cycle, byte[] address) {
     byte[] key = (cycle + "-" + Hex.toHexString(address) + "-account-vote").getBytes();
     Key cacheKey = new Key(key);
-    BytesCapsule bytesCapsule = getDelegationCache(cacheKey);
+    BytesCapsule bytesCapsule = getDelegation(cacheKey);
     if (bytesCapsule == null) {
       return null;
     } else {
@@ -305,13 +305,13 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public BytesCapsule getDelegationCache(Key key) {
+  public BytesCapsule getDelegation(Key key) {
     if (delegationCache.containsKey(key)) {
       return delegationCache.get(key).getBytes();
     }
     BytesCapsule bytesCapsule;
     if (parent != null) {
-      bytesCapsule = parent.getDelegationCache(key);
+      bytesCapsule = parent.getDelegation(key);
     } else {
       bytesCapsule = getDelegationStore().get(key.getData());
     }
@@ -371,7 +371,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void updateDynamic(byte[] word, BytesCapsule bytesCapsule) {
+  public void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule) {
     Key key = Key.create(word);
     Value value = Value.create(bytesCapsule.getData(), Type.VALUE_TYPE_DIRTY);
     dynamicPropertiesCache.put(key, value);
@@ -385,7 +385,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule) {
+  public void updateVotes(byte[] word, VotesCapsule votesCapsule) {
     Key key = Key.create(word);
     Value value = Value.create(votesCapsule.getData(), Type.VALUE_TYPE_DIRTY);
     votesCache.put(key, value);
@@ -598,7 +598,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void putDynamic(Key key, Value value) {
+  public void putDynamicProperty(Key key, Value value) {
     dynamicPropertiesCache.put(key, value);
   }
 
@@ -608,7 +608,7 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void putVotesCapsule(Key key, Value value) {
+  public void putVotes(Key key, Value value) {
     votesCache.put(key, value);
   }
 
@@ -787,7 +787,7 @@ public class RepositoryImpl implements Repository {
     dynamicPropertiesCache.forEach(((key, value) -> {
       if (value.getType().isDirty() || value.getType().isCreate()) {
         if (deposit != null) {
-          deposit.putDynamic(key, value);
+          deposit.putDynamicProperty(key, value);
         } else {
           getDynamicPropertiesStore().put(key.getData(), value.getDynamicProperties());
         }
@@ -811,7 +811,7 @@ public class RepositoryImpl implements Repository {
     votesCache.forEach(((key, value) -> {
       if (value.getType().isDirty() || value.getType().isCreate()) {
         if (deposit != null) {
-          deposit.putVotesCapsule(key, value);
+          deposit.putVotes(key, value);
         } else {
           getVotesStore().put(key.getData(), value.getVotes());
         }
@@ -869,17 +869,19 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void saveTotalNetWeight(long totalNetWeight) {
-    updateDynamic(TOTAL_NET_WEIGHT, new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
+    updateDynamicProperty(TOTAL_NET_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalNetWeight)));
   }
 
   @Override
   public void saveTotalEnergyWeight(long totalEnergyWeight) {
-    updateDynamic(TOTAL_ENERGY_WEIGHT, new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
+    updateDynamicProperty(TOTAL_ENERGY_WEIGHT,
+        new BytesCapsule(ByteArray.fromLong(totalEnergyWeight)));
   }
 
   @Override
   public long getTotalNetWeight() {
-    return Optional.ofNullable(getDynamic(TOTAL_NET_WEIGHT))
+    return Optional.ofNullable(getDynamicProperty(TOTAL_NET_WEIGHT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -888,7 +890,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public long getTotalEnergyWeight() {
-    return Optional.ofNullable(getDynamic(TOTAL_ENERGY_WEIGHT))
+    return Optional.ofNullable(getDynamicProperty(TOTAL_ENERGY_WEIGHT))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

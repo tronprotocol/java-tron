@@ -199,14 +199,14 @@ public class UnfreezeBalanceProcessor {
     // notice: clear vote code is removed
     // notice: clear vote code is added
     if (!accountCapsule.getVotesList().isEmpty()) {
-      VotesCapsule votesCapsule = repo.getVotesCapsule(ownerAddress);
+      VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
       if (votesCapsule == null) {
         votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
             accountCapsule.getVotesList());
       }
       accountCapsule.clearVotes();
       votesCapsule.clearNewVotes();
-      repo.updateVotesCapsule(ownerAddress, votesCapsule);
+      repo.updateVotes(ownerAddress, votesCapsule);
     }
 
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);

@@ -24,11 +24,11 @@ public interface Repository {
 
   AccountCapsule getAccount(byte[] address);
 
-  BytesCapsule getDynamic(byte[] bytesKey);
+  BytesCapsule getDynamicProperty(byte[] bytesKey);
 
   DelegatedResourceCapsule getDelegatedResource(byte[] key);
 
-  VotesCapsule getVotesCapsule(byte[] address);
+  VotesCapsule getVotes(byte[] address);
 
   long getBeginCycle(byte[] address);
 
@@ -36,7 +36,7 @@ public interface Repository {
 
   AccountCapsule getAccountVote(long cycle, byte[] address);
 
-  BytesCapsule getDelegationCache(Key key);
+  BytesCapsule getDelegation(Key key);
 
   void deleteContract(byte[] address);
 
@@ -48,11 +48,11 @@ public interface Repository {
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
-  void updateDynamic(byte[] word, BytesCapsule bytesCapsule);
+  void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule);
 
   void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule);
 
-  void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule);
+  void updateVotes(byte[] word, VotesCapsule votesCapsule);
 
   void updateBeginCycle(byte[] word, long cycle);
 
@@ -92,11 +92,11 @@ public interface Repository {
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
 
-  void putDynamic(Key key, Value value);
+  void putDynamicProperty(Key key, Value value);
 
   void putDelegatedResource(Key key, Value value);
 
-  void putVotesCapsule(Key key, Value value);
+  void putVotes(Key key, Value value);
 
   void putDelegation(Key key, Value value);
 
