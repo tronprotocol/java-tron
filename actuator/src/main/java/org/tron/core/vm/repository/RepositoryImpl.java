@@ -34,7 +34,6 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
-import org.tron.core.service.MortgageService;
 import org.tron.core.store.*;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program.IllegalOperationException;
@@ -46,12 +45,11 @@ import org.tron.protos.Protocol.AccountType;
 public class RepositoryImpl implements Repository {
 
   //for energycal
-  private long precision = Parameter.ChainConstant.PRECISION;
-  private long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
+  private final long precision = Parameter.ChainConstant.PRECISION;
+  private final long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
       BLOCK_PRODUCED_INTERVAL;
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
-  private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT".getBytes();
 
   private StoreFactory storeFactory;
   @Getter
@@ -83,8 +81,6 @@ public class RepositoryImpl implements Repository {
   @Getter
   private VotesStore votesStore;
   @Getter
-  private MortgageService mortgageService;
-  @Getter
   private DelegationStore delegationStore;
 
   private Repository parent = null;
@@ -92,10 +88,10 @@ public class RepositoryImpl implements Repository {
   private HashMap<Key, Value> accountCache = new HashMap<>();
   private HashMap<Key, Value> codeCache = new HashMap<>();
   private HashMap<Key, Value> contractCache = new HashMap<>();
-  private HashMap<Key, Value> dynamicPropertiesCache = new HashMap<>();
   private HashMap<Key, Storage> storageCache = new HashMap<>();
 
   private HashMap<Key, Value> assetIssueCache = new HashMap<>();
+  private HashMap<Key, Value> dynamicPropertiesCache = new HashMap<>();
   private HashMap<Key, Value> delegatedResourceCache = new HashMap<>();
   private HashMap<Key, Value> votesCache = new HashMap<>();
   private HashMap<Key, Value> delegationCache = new HashMap<>();
@@ -126,7 +122,6 @@ public class RepositoryImpl implements Repository {
       witnessStore = manager.getWitnessStore();
       delegatedResourceStore = manager.getDelegatedResourceStore();
       votesStore = manager.getVotesStore();
-      mortgageService = manager.getMortgageService();
       delegationStore = manager.getDelegationStore();
     }
     this.parent = parent;
@@ -565,11 +560,15 @@ public class RepositoryImpl implements Repository {
     commitCodeCache(repository);
     commitContractCache(repository);
     commitStorageCache(repository);
-    commitDynamicCache(repository);
-    commitDelegatedResourceCache(repository);
-    commitVotesCache(repository);
-    commitAssetIssue(repository);
-    commitDelegationCache(repository);
+    //TODO proposal needed?
+    if (VMConfig.allowTvmFreeze()) {
+      commitDynamicCache(repository);
+      commitDelegatedResourceCache(repository);
+    }
+    if (VMConfig.allowTvmVote()) {
+      commitVotesCache(repository);
+      commitDelegationCache(repository);
+    }
   }
 
   @Override
@@ -604,11 +603,6 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void putAssetIssue(Key key, Value value) {
-    assetIssueCache.put(key, value);
-  }
-
-  @Override
   public void putDelegatedResource(Key key, Value value) {
     delegatedResourceCache.put(key, value);
   }
@@ -619,17 +613,9 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
-    Key key = new Key(tokenId);
-    Value value = new Value(assetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE);
-    assetIssueCache.put(key, value);
-  }
-
-  @Override
   public void putDelegation(Key key, Value value) {
     delegationCache.put(key, value);
   }
-
 
   @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
@@ -833,22 +819,6 @@ public class RepositoryImpl implements Repository {
     }));
   }
 
-  private void commitAssetIssue(Repository deposit) {
-    AssetIssueStore assetIssueStoreFinal = Commons
-        .getAssetIssueStoreFinal(dynamicPropertiesStore, assetIssueStore, assetIssueV2Store);
-
-    assetIssueCache.forEach((key, value) -> {
-      if (value.getType().isCreate() || value.getType().isDirty()) {
-        if (deposit != null) {
-          deposit.putAssetIssue(key, value);
-        } else {
-          assetIssueStoreFinal
-              .put(key.getData(), value.getAssetIssue());
-        }
-      }
-    });
-  }
-
   private void commitDelegationCache(Repository deposit) {
     delegationCache.forEach((key, value) -> {
       if (value.getType().isDirty() || value.getType().isCreate()) {
@@ -879,21 +849,6 @@ public class RepositoryImpl implements Repository {
 
     accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
     return account;
-  }
-
-  @Override
-  public void saveTokenIdNum(long num) {
-    this.updateDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
-        new BytesCapsule(ByteArray.fromLong(num)));
-  }
-
-  @Override
-  public long getTokenIdNum() {
-    return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("error in contract not found TOKEN_ID_NUM"));
   }
 
   //The unit is trx

@@ -209,18 +209,8 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void putAssetIssue(Key key, Value value) {
-    repository.putAssetIssue(key, value);
-  }
-
-  @Override
   public void putDelegatedResource(Key key, Value value) {
     repository.putDelegatedResource(key, value);
-  }
-
-  @Override
-  public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
-    repository.putAssetIssueValue(tokenId, assetIssueCapsule);
   }
 
   @Override
@@ -264,28 +254,8 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void saveTokenIdNum(long num) {
-    this.updateDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
-            new BytesCapsule(ByteArray.fromLong(num)));
-  }
-
-  @Override
-  public long getTokenIdNum() {
-    return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("error in contract not found TOKEN_ID_NUM"));
-  }
-
-  @Override
   public DelegationStore getDelegationStore() {
     return repository.getDelegationStore();
-  }
-
-  @Override
-  public WitnessStore getWitnessStore() {
-    return repository.getWitnessStore();
   }
 
   @Override

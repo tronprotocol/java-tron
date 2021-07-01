@@ -1838,52 +1838,6 @@ public class Program {
     return allowance;
   }
 
-  public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
-    Repository repository = getContractState().newRepositoryChild();
-    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    TokenIssueProcessor tokenIssueProcessor = new TokenIssueProcessor();
-    TokenIssueParam tokenIssueParam = new TokenIssueParam();
-    tokenIssueParam.setName(name.getNoEndZeroesData());
-    tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
-    tokenIssueParam.setTotalSupply(totalSupply.sValue().longValueExact());
-    tokenIssueParam.setPrecision(precision.sValue().intValueExact());
-    tokenIssueParam.setOwnerAddress(ownerAddress);
-    try {
-      tokenIssueProcessor.validate(tokenIssueParam, repository);
-      tokenIssueProcessor.execute(tokenIssueParam, repository);
-      stackPush(new DataWord(repository.getTokenIdNum()));
-      repository.commit();
-    } catch (ContractValidateException e) {
-      logger.error("validateForAssetIssue failure:{}", e.getMessage());
-      stackPushZero();
-    }
-  }
-
-  public void updateAsset(DataWord urlDataOffs, DataWord descriptionDataOffs) {
-    Repository repository = getContractState().newRepositoryChild();
-    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    DataWord urlSize = memoryLoad(urlDataOffs);
-    DataWord descriptionSize = memoryLoad(descriptionDataOffs);
-    byte[] urlData = memoryChunk(urlDataOffs.intValueSafe() + DataWord.WORD_SIZE,
-            urlSize.intValueSafe());
-    byte[] descriptionData = memoryChunk(descriptionDataOffs.intValueSafe() + DataWord.WORD_SIZE,
-            descriptionSize.intValueSafe());
-    UpdateAssetParam updateAssetParam = new UpdateAssetParam();
-    updateAssetParam.setOwnerAddress(ownerAddress);
-    updateAssetParam.setNewUrl(urlData);
-    updateAssetParam.setNewDesc(descriptionData);
-    UpdateAssetProcessor updateAssetProcessor = new UpdateAssetProcessor();
-    try {
-      updateAssetProcessor.validate(updateAssetParam, repository);
-      updateAssetProcessor.execute(updateAssetParam, repository);
-      stackPushOne();
-      repository.commit();
-    } catch (ContractValidateException e) {
-      logger.error("validateForUpdateAsset failure:{}", e.getMessage());
-      stackPushZero();
-    }
-  }
-
   /**
    * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is
    * quite normal situation and doesn't mean exceptional situation in terms of the program

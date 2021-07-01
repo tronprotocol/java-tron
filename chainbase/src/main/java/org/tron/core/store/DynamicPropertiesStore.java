@@ -127,7 +127,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "ALLOW_SHIELDED_TRC20_TRANSACTION"
           .getBytes();
   private static final byte[] ALLOW_TVM_ISTANBUL = "ALLOW_TVM_ISTANBUL".getBytes();
-  private static final byte[] ALLOW_TVM_ASSET_ISSUE = "ALLOW_TVM_ASSET_ISSUE".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
   private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
@@ -636,13 +635,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmIstanbul(
           CommonParameter.getInstance().getAllowTvmIstanbul());
-    }
-
-    try {
-      this.getAllowTvmAssetIssue();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowTvmAssetIssue(
-          CommonParameter.getInstance().getAllowTvmAssetIssue());
     }
 
     try {
@@ -1842,20 +1834,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowTvmIstanbul() {
     String msg = "not found ALLOW_TVM_ISTANBUL";
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_ISTANBUL))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException(msg));
-  }
-
-  public void saveAllowTvmAssetIssue(long allowTvmAssetIssue) {
-    this.put(DynamicPropertiesStore.ALLOW_TVM_ASSET_ISSUE,
-        new BytesCapsule(ByteArray.fromLong(allowTvmAssetIssue)));
-  }
-
-  public long getAllowTvmAssetIssue() {
-    String msg = "not found ALLOW_TVM_ASSETISSUE";
-    return Optional.ofNullable(getUnchecked(ALLOW_TVM_ASSET_ISSUE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

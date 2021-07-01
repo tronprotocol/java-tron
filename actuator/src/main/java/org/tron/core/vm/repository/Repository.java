@@ -18,8 +18,6 @@ public interface Repository {
 
   DelegationStore getDelegationStore();
 
-  WitnessStore getWitnessStore();
-
   AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
   AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
@@ -96,13 +94,9 @@ public interface Repository {
 
   void putDynamic(Key key, Value value);
 
-  void putAssetIssue(Key key, Value value);
-
   void putDelegatedResource(Key key, Value value);
 
   void putVotesCapsule(Key key, Value value);
-
-  void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule);
 
   void putDelegation(Key key, Value value);
 
@@ -121,10 +115,6 @@ public interface Repository {
   AccountCapsule createNormalAccount(byte[] address);
 
   WitnessCapsule getWitness(byte[] address);
-
-  void saveTokenIdNum(long num);
-
-  long getTokenIdNum();
 
   void addTotalNetWeight(long amount);
 
