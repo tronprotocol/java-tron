@@ -1623,7 +1623,7 @@ public class PrecompiledContracts {
       } else {
         WitnessCapsule witnessCapsule =
             this.getDeposit().getWitness(targetTronAddr);
-        if(witnessCapsule != null) {
+        if (witnessCapsule != null) {
           voteCount = witnessCapsule.getVoteCount();
         }
       }
