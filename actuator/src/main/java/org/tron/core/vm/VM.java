@@ -168,12 +168,11 @@ public class VM {
         case FREEZEEXPIRETIME:
           energyCost = energyCosts.getFREEZE_EXPIRE_TIME();
           break;
-        //TODO decide energy cost
         case VOTEWITNESS:
-          energyCost = 10000L;
+          energyCost = energyCosts.getVOTE_WITNESS();
           break;
         case WITHDRAWREWARD:
-          energyCost = 1000L;
+          energyCost = energyCosts.getWITHDRAW_REWARD();
           break;
 
         // These all operate on memory and therefore potentially expand it:
