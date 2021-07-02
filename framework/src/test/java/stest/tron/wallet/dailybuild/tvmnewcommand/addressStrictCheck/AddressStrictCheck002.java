@@ -116,7 +116,8 @@ public class AddressStrictCheck002 {
             "checkAddress2(address)", num, true,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-    Assert.assertEquals("REVERT opcode executed", transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
   }
 
 

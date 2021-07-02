@@ -245,6 +245,9 @@ public class NegativeArrayTest {
         .getResMessage().toStringUtf8());
   }
 
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     long balance = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();

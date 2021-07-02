@@ -2,6 +2,9 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.newGrammar;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -20,10 +23,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -88,8 +87,10 @@ public class NewFeatureForSolc080 {
         .triggerConstantContractForExtention(mapKeyContract,
             "subNoUncheck()", "#", true,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals("REVERT opcode executed", transactionExtention.getResult().getMessage().toStringUtf8());
-    Assert.assertEquals("FAILED", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
 
   }
 
@@ -102,7 +103,8 @@ public class NewFeatureForSolc080 {
     int trueRes = ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray());
     Assert.assertEquals(255, trueRes);
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
-    Assert.assertEquals("SUCESS", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
 
   }
 
@@ -112,8 +114,10 @@ public class NewFeatureForSolc080 {
         .triggerConstantContractForExtention(mapKeyContract,
             "addNoUncheck()", "#", true,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals("REVERT opcode executed", transactionExtention.getResult().getMessage().toStringUtf8());
-    Assert.assertEquals("FAILED", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
 
   }
 
@@ -123,8 +127,10 @@ public class NewFeatureForSolc080 {
         .triggerConstantContractForExtention(mapKeyContract,
             "divideZeroNoUncheck()", "#", true,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals("REVERT opcode executed", transactionExtention.getResult().getMessage().toStringUtf8());
-    Assert.assertEquals("FAILED", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
 
   }
 
@@ -134,8 +140,10 @@ public class NewFeatureForSolc080 {
         .triggerConstantContractForExtention(mapKeyContract,
             "assertFailNoUncheck()", "#", true,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals("REVERT opcode executed", transactionExtention.getResult().getMessage().toStringUtf8());
-    Assert.assertEquals("FAILED", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
   }
 
   @Test(enabled = true, description = "array out of index without unchecked, transaction revert")
@@ -144,8 +152,10 @@ public class NewFeatureForSolc080 {
         .triggerConstantContractForExtention(mapKeyContract,
             "arrayOutofIndex()", "#", true,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals("REVERT opcode executed", transactionExtention.getResult().getMessage().toStringUtf8());
-    Assert.assertEquals("FAILED", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
   }
 
   @Test(enabled = true, description = "type convert")
@@ -156,8 +166,10 @@ public class NewFeatureForSolc080 {
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     int trueRes = ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray());
     Assert.assertEquals(65535, trueRes);
-    Assert.assertEquals(true, transactionExtention.getResult().getResult());
-    Assert.assertEquals("SUCESS", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals(true,
+        transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
   }
 
   @Test(enabled = true, description = "power multi by default turn: right to left")
@@ -168,8 +180,10 @@ public class NewFeatureForSolc080 {
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     int trueRes = ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray());
     Assert.assertEquals(2, trueRes);
-    Assert.assertEquals(true, transactionExtention.getResult().getResult());
-    Assert.assertEquals("SUCESS", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals(true,
+        transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
   }
 
   @Test(enabled = true, description = "power multi: left to right ")
@@ -181,7 +195,8 @@ public class NewFeatureForSolc080 {
     int trueRes = ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray());
     Assert.assertEquals(64, trueRes);
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
-    Assert.assertEquals("SUCESS", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
   }
 
   @Test(enabled = true, description = "power multi with 2 params ")
@@ -193,7 +208,8 @@ public class NewFeatureForSolc080 {
     int trueRes = ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray());
     Assert.assertEquals(8, trueRes);
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
-    Assert.assertEquals("SUCESS", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
   }
 
   @Test(enabled = true, description = "get block chain id ")
@@ -203,9 +219,10 @@ public class NewFeatureForSolc080 {
             "getBlockChainId()", "#", true,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     String chainId = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
-    logger.info("chainId:  "  +chainId);
+    logger.info("chainId:  "  + chainId);
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
-    Assert.assertEquals("SUCESS", transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
   }
 
   @Test(enabled = true, description = "get normal account address hashcode ")
@@ -217,7 +234,7 @@ public class NewFeatureForSolc080 {
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info(transactionExtention.toString());
     String trueRes = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
-    logger.info("0000000:  "+trueRes);
+    logger.info("0000000:  " + trueRes);
   }
 
   @Test(enabled = true, description = "get contract address hashcode ")
@@ -229,53 +246,53 @@ public class NewFeatureForSolc080 {
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info(transactionExtention.toString());
     String trueRes = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
-    logger.info("0000000:  "+trueRes);
+    logger.info("0000000:  " + trueRes);
   }
 
   @Test(enabled = true, description = "transfer trx to tx.origin address with payable")
   public void test14TransferToTxoriginAddress() {
-    Protocol.Account info = PublicMethed.queryAccount(mapKeyContract,blockingStubFull);
+    Protocol.Account info = PublicMethed.queryAccount(mapKeyContract, blockingStubFull);
     Long beforeBalance = info.getBalance();
     logger.info("beforeBalance: " + beforeBalance);
 
     String methodStr = "transferToTxorigin(uint64)";
-    String TriggerTxid = PublicMethed.triggerContract(mapKeyContract, methodStr, "1000000", false,
+    String triggerTxid = PublicMethed.triggerContract(mapKeyContract, methodStr, "1000000", false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<Protocol.TransactionInfo> transactionInfo = PublicMethed
-        .getTransactionInfoById(TriggerTxid, blockingStubFull);
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
 
-    info = PublicMethed.queryAccount(mapKeyContract,blockingStubFull);
+    info = PublicMethed.queryAccount(mapKeyContract, blockingStubFull);
     Long afterBalance = info.getBalance();
     logger.info("afterBalance: " + afterBalance);
-    Assert.assertTrue(beforeBalance == afterBalance+1000000);
+    Assert.assertTrue(beforeBalance == afterBalance + 1000000);
   }
 
   @Test(enabled = true, description = "transfer trx to literal address with payable")
   public void test15TransferToLiteralAddress() {
-    Protocol.Account info = PublicMethed.queryAccount(mapKeyContract,blockingStubFull);
+    Protocol.Account info = PublicMethed.queryAccount(mapKeyContract, blockingStubFull);
     Long beforeBalance = info.getBalance();
     logger.info("beforeBalance: " + beforeBalance);
 
     String methodStr = "transferToLiteralAddress(uint64)";
-    String TriggerTxid = PublicMethed.triggerContract(mapKeyContract, methodStr, "1000000", false,
+    String triggerTxid = PublicMethed.triggerContract(mapKeyContract, methodStr, "1000000", false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> transactionInfo = PublicMethed
-        .getTransactionInfoById(TriggerTxid, blockingStubFull);
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
 
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
 
-    info = PublicMethed.queryAccount(mapKeyContract,blockingStubFull);
+    info = PublicMethed.queryAccount(mapKeyContract, blockingStubFull);
     Long afterBalance = info.getBalance();
     logger.info("afterBalance: " + afterBalance);
-    Assert.assertTrue(beforeBalance == afterBalance+1000000);
+    Assert.assertTrue(beforeBalance == afterBalance + 1000000);
   }
 
   /**

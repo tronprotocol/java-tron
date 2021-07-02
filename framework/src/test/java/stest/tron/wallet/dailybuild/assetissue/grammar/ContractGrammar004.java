@@ -1,5 +1,12 @@
 package stest.tron.wallet.dailybuild.assetissue.grammar;
 
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.BAD_JUMP_DESTINATION_VALUE;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_MEMORY_VALUE;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_TIME_VALUE;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT_VALUE;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.STACK_TOO_LARGE_VALUE;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.STACK_TOO_SMALL_VALUE;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -27,8 +34,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.*;
 
 @Slf4j
 public class ContractGrammar004 {
@@ -266,8 +271,9 @@ public class ContractGrammar004 {
     Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), REVERT_VALUE);
     Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.REVERT);
 
-    Assert
-        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()), "4e487b710000000000000000000000000000000000000000000000000000000000000001");
+    Assert.assertEquals(ByteArray.toHexString(infoById.get()
+            .getContractResult(0).toByteArray()),
+        "4e487b710000000000000000000000000000000000000000000000000000000000000001");
     Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
 
     Assert.assertEquals(byId.get().getRet(0).getRet().getNumber(), 0);
