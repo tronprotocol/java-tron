@@ -49,8 +49,6 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_FREEZE = false;
 
-  private static boolean ALLOW_TVM_ASSET_ISSUE = false;
-
   private static boolean ALLOW_TVM_VOTE = false;
 
   private VMConfig() {
@@ -100,10 +98,6 @@ public class VMConfig {
     ALLOW_TVM_FREEZE = allow == 1;
   }
 
-  public static void initAllowTvmAssetIssue(long allow) {
-    ALLOW_TVM_ASSET_ISSUE = allow == 1;
-  }
-
   public static void initAllowTvmVote(long allow) {
     ALLOW_TVM_VOTE = allow == 1;
   }
@@ -136,10 +130,6 @@ public class VMConfig {
 
   public static boolean allowTvmFreeze() {
     return ALLOW_TVM_FREEZE;
-  }
-
-  public static boolean allowTvmAssetIssue() {
-    return ALLOW_TVM_ASSET_ISSUE;
   }
 
   public static boolean allowTvmVote() {
