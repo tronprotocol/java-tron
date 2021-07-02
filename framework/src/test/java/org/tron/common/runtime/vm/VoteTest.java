@@ -1,5 +1,8 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.protos.Protocol.Transaction.Result.contractResult;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -33,78 +36,77 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import static org.tron.protos.Protocol.Transaction.Result.contractResult;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class VoteTest {
 
-  private static final String CODE = "6080604052610676806100136000396000f3fe608060405234801561001" +
-      "057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100a2576000356" +
-      "0e01c8063aa5c3ab411610075578063aa5c3ab4146101ed578063bd73f07c1461020b578063c885bc581461028" +
-      "3578063df126771146102a1576100a2565b806330e1e4e5146100a75780633a507d7d146100ff5780637b46b80" +
-      "b146101435780638ee6633114610191575b600080fd5b6100fd600480360360608110156100bd57600080fd5b8" +
-      "1019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291908035906020019092919" +
-      "080359060200190929190505050610405565b005b6101416004803603602081101561011557600080fd5b81019" +
-      "080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610436565b005b610" +
-      "18f6004803603604081101561015957600080fd5b81019080803573fffffffffffffffffffffffffffffffffff" +
-      "fffff1690602001909291908035906020019092919050505061044f565b005b6101d3600480360360208110156" +
-      "101a757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905" +
-      "0505061047e565b604051808215151515815260200191505060405180910390f35b6101f5610509565b6040518" +
-      "082815260200191505060405180910390f35b61026d6004803603604081101561022157600080fd5b810190808" +
-      "03573ffffffffffffffffffffffffffffffffffffffff169060200190929190803573fffffffffffffffffffff" +
-      "fffffffffffffffffff16906020019092919050505061055b565b6040518082815260200191505060405180910" +
-      "390f35b61028b61061b565b6040518082815260200191505060405180910390f35b6103eb60048036036040811" +
-      "0156102b757600080fd5b81019080803590602001906401000000008111156102d457600080fd5b82018360208" +
-      "20111156102e657600080fd5b8035906020019184602083028401116401000000008311171561030857600080f" +
-      "d5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840" +
-      "152601f19601f82011690508083019250505050505050919291929080359060200190640100000000811115610" +
-      "36857600080fd5b82018360208201111561037a57600080fd5b803590602001918460208302840111640100000" +
-      "0008311171561039c57600080fd5b9190808060200260200160405190810160405280939291908181526020018" +
-      "38360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610" +
-      "623565b604051808215151515815260200191505060405180910390f35b8273fffffffffffffffffffffffffff" +
-      "fffffffffffff168282d5158015610430573d6000803e3d6000fd5b50505050565b8073fffffffffffffffffff" +
-      "fffffffffffffffffffff16ff5b8173ffffffffffffffffffffffffffffffffffffffff1681d61580156104795" +
-      "73d6000803e3d6000fd5b505050565b6000630200000282604051808273fffffffffffffffffffffffffffffff" +
-      "fffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506020604051808303818" +
-      "55afa1580156104dc573d6000803e3d6000fd5b5050506040513d60208110156104f157600080fd5b810190808" +
-      "05190602001909291905050509050919050565b60006302000001604051602060405180830381855afa1580156" +
-      "10530573d6000803e3d6000fd5b5050506040513d602081101561054557600080fd5b810190808051906020019" +
-      "0929190505050905090565b600063020000038383604051808373fffffffffffffffffffffffffffffffffffff" +
-      "fff1673ffffffffffffffffffffffffffffffffffffffff1681526020018273fffffffffffffffffffffffffff" +
-      "fffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001925050506020604051808" +
-      "30381855afa1580156105ed573d6000803e3d6000fd5b5050506040513d602081101561060257600080fd5b810" +
-      "1908080519060200190929190505050905092915050565b6000d9905090565b6000828051838051d8801580156" +
-      "1063957600080fd5b5090509291505056fea26474726f6e5820da5f7b2f1aa6cece505fadc8806b9c3d7c70d31" +
-      "8f9cf5bd682b5df19880e2f8764736f6c63430005120031";
+  private static final String CODE = "6080604052610676806100136000396000f3fe608060405234801561001"
+      + "057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100a2576000356"
+      + "0e01c8063aa5c3ab411610075578063aa5c3ab4146101ed578063bd73f07c1461020b578063c885bc581461028"
+      + "3578063df126771146102a1576100a2565b806330e1e4e5146100a75780633a507d7d146100ff5780637b46b80"
+      + "b146101435780638ee6633114610191575b600080fd5b6100fd600480360360608110156100bd57600080fd5b8"
+      + "1019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291908035906020019092919"
+      + "080359060200190929190505050610405565b005b6101416004803603602081101561011557600080fd5b81019"
+      + "080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610436565b005b610"
+      + "18f6004803603604081101561015957600080fd5b81019080803573fffffffffffffffffffffffffffffffffff"
+      + "fffff1690602001909291908035906020019092919050505061044f565b005b6101d3600480360360208110156"
+      + "101a757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905"
+      + "0505061047e565b604051808215151515815260200191505060405180910390f35b6101f5610509565b6040518"
+      + "082815260200191505060405180910390f35b61026d6004803603604081101561022157600080fd5b810190808"
+      + "03573ffffffffffffffffffffffffffffffffffffffff169060200190929190803573fffffffffffffffffffff"
+      + "fffffffffffffffffff16906020019092919050505061055b565b6040518082815260200191505060405180910"
+      + "390f35b61028b61061b565b6040518082815260200191505060405180910390f35b6103eb60048036036040811"
+      + "0156102b757600080fd5b81019080803590602001906401000000008111156102d457600080fd5b82018360208"
+      + "20111156102e657600080fd5b8035906020019184602083028401116401000000008311171561030857600080f"
+      + "d5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840"
+      + "152601f19601f82011690508083019250505050505050919291929080359060200190640100000000811115610"
+      + "36857600080fd5b82018360208201111561037a57600080fd5b803590602001918460208302840111640100000"
+      + "0008311171561039c57600080fd5b9190808060200260200160405190810160405280939291908181526020018"
+      + "38360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610"
+      + "623565b604051808215151515815260200191505060405180910390f35b8273fffffffffffffffffffffffffff"
+      + "fffffffffffff168282d5158015610430573d6000803e3d6000fd5b50505050565b8073fffffffffffffffffff"
+      + "fffffffffffffffffffff16ff5b8173ffffffffffffffffffffffffffffffffffffffff1681d61580156104795"
+      + "73d6000803e3d6000fd5b505050565b6000630200000282604051808273fffffffffffffffffffffffffffffff"
+      + "fffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506020604051808303818"
+      + "55afa1580156104dc573d6000803e3d6000fd5b5050506040513d60208110156104f157600080fd5b810190808"
+      + "05190602001909291905050509050919050565b60006302000001604051602060405180830381855afa1580156"
+      + "10530573d6000803e3d6000fd5b5050506040513d602081101561054557600080fd5b810190808051906020019"
+      + "0929190505050905090565b600063020000038383604051808373fffffffffffffffffffffffffffffffffffff"
+      + "fff1673ffffffffffffffffffffffffffffffffffffffff1681526020018273fffffffffffffffffffffffffff"
+      + "fffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001925050506020604051808"
+      + "30381855afa1580156105ed573d6000803e3d6000fd5b5050506040513d602081101561060257600080fd5b810"
+      + "1908080519060200190929190505050905092915050565b6000d9905090565b6000828051838051d8801580156"
+      + "1063957600080fd5b5090509291505056fea26474726f6e5820da5f7b2f1aa6cece505fadc8806b9c3d7c70d31"
+      + "8f9cf5bd682b5df19880e2f8764736f6c63430005120031";
 
-  private static final String ABI = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payab" +
-      "le\",\"type\":\"constructor\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address" +
-      " payable\",\"name\":\"receiver\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"nam" +
-      "e\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"res\",\"type" +
-      "\":\"uint256\"}],\"name\":\"freeze\",\"outputs\":[],\"payable\":false,\"stateMutability\":" +
-      "\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"a" +
-      "ddress\",\"name\":\"sr\",\"type\":\"address\"}],\"name\":\"isSR\",\"outputs\":[{\"internal" +
-      "Type\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"" +
-      "view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address " +
-      "payable\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"killSelf\",\"outputs\":[]," +
-      "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":" +
-      "true,\"inputs\":[],\"name\":\"rewardBalance\",\"outputs\":[{\"internalType\":\"uint256\"," +
-      "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type" +
-      "\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address payable\",\"n" +
-      "ame\":\"receiver\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"res\",\"" +
-      "type\":\"uint256\"}],\"name\":\"unfreeze\",\"outputs\":[],\"payable\":false,\"stateMutabil" +
-      "ity\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType" +
-      "\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"nam" +
-      "e\":\"to\",\"type\":\"address\"}],\"name\":\"voteCount\",\"outputs\":[{\"internalType\":\"" +
-      "uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"vie" +
-      "w\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address[]\"" +
-      ",\"name\":\"sr\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tp\"," +
-      "\"type\":\"uint256[]\"}],\"name\":\"voteWitness\",\"outputs\":[{\"internalType\":\"bool\"," +
-      "\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"t" +
-      "ype\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawReward\",\"output" +
-      "s\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false," +
-      "\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+  private static final String ABI = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payab"
+      + "le\",\"type\":\"constructor\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address"
+      + " payable\",\"name\":\"receiver\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"nam"
+      + "e\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"res\",\"type"
+      + "\":\"uint256\"}],\"name\":\"freeze\",\"outputs\":[],\"payable\":false,\"stateMutability\":"
+      + "\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"a"
+      + "ddress\",\"name\":\"sr\",\"type\":\"address\"}],\"name\":\"isSR\",\"outputs\":[{\"internal"
+      + "Type\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\""
+      + "view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address "
+      + "payable\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"killSelf\",\"outputs\":[],"
+      + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":"
+      + "true,\"inputs\":[],\"name\":\"rewardBalance\",\"outputs\":[{\"internalType\":\"uint256\","
+      + "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type"
+      + "\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address payable\",\"n"
+      + "ame\":\"receiver\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"res\",\""
+      + "type\":\"uint256\"}],\"name\":\"unfreeze\",\"outputs\":[],\"payable\":false,\"stateMutabil"
+      + "ity\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType"
+      + "\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"nam"
+      + "e\":\"to\",\"type\":\"address\"}],\"name\":\"voteCount\",\"outputs\":[{\"internalType\":\""
+      + "uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"vie"
+      + "w\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address[]\""
+      + ",\"name\":\"sr\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tp\","
+      + "\"type\":\"uint256[]\"}],\"name\":\"voteWitness\",\"outputs\":[{\"internalType\":\"bool\","
+      + "\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"t"
+      + "ype\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawReward\",\"output"
+      + "s\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,"
+      + "\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
   private static final long value = 100_000_000_000_000_000L;
   private static final long fee = 1_000_000_000;
