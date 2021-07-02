@@ -1,5 +1,7 @@
 package org.tron.common.runtime.vm;
 
+import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +14,7 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -26,12 +29,14 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
 import static org.tron.protos.Protocol.Transaction.Result.contractResult;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
+@Slf4j
 public class VoteTest {
 
   private static final String CODE = "6080604052610676806100136000396000f3fe608060405234801561001" +
@@ -124,7 +129,7 @@ public class VoteTest {
 
   @Before
   public void init() throws Exception {
-    dbPath = "output_" + FreezeTest.class.getName();
+    dbPath = "output_" + VoteTest.class.getName();
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
@@ -142,6 +147,19 @@ public class VoteTest {
     VMConfig.initAllowTvmIstanbul(1);
     VMConfig.initAllowTvmFreeze(1);
     VMConfig.initAllowTvmVote(1);
+  }
+
+  @After
+  public void destroy() {
+    ConfigLoader.disable = false;
+    VMConfig.initVmHardFork(false);
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.error("Release resources failure.");
+    }
   }
 
   private byte[] deployContract(String contractName, String code) throws Exception {
