@@ -1777,7 +1777,6 @@ public class Program {
     int witnessArrayLength = memoryLoad(witnessArrayOffset).intValueSafe();
     int amountArrayLength = memoryLoad(amountArrayOffset).intValueSafe();
 
-
     if (witnessArrayLength != amountArrayLength) {
       logger.warn("witness array length {} does not match amount array length {}",
           witnessArrayLength, amountArrayLength);
@@ -1820,7 +1819,7 @@ public class Program {
   public long withdrawReward() {
     WithdrawRewardParam param = new WithdrawRewardParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    param.setTargetAddress(owner);
+    param.setOwnerAddress(owner);
     param.setNowInMs(getTimestamp().longValue() * 1000);
     long allowance;
     try {

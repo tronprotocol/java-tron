@@ -1,12 +1,12 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.exception.ContractExeException;
@@ -21,7 +21,7 @@ public class FreezeBalanceProcessor {
 
   public void validate(FreezeBalanceParam param, Repository repo) throws ContractValidateException {
     if (repo == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+      throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
     // validate arg @frozenBalance
