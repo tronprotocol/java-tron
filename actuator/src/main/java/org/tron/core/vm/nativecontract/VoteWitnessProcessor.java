@@ -27,9 +27,6 @@ public class VoteWitnessProcessor {
       throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
-    if (param.getVotes().isEmpty()) {
-      throw new ContractValidateException("VoteNumber must more than 0");
-    }
     if (param.getVotes().size() > MAX_VOTE_NUMBER) {
       throw new ContractValidateException(
           "VoteNumber more than maxVoteNumber " + MAX_VOTE_NUMBER);
@@ -53,10 +50,13 @@ public class VoteWitnessProcessor {
         }
 
         long voteCount = vote.getVoteCount();
-        if (voteCount <= 0) {
-          throw new ContractValidateException("Vote count must be greater than 0");
+        if (voteCount < 0) {
+          throw new ContractValidateException("Vote count must not be less than 0");
+        } else if (voteCount == 0) {
+          iterator.remove();
+        } else {
+          sum = LongMath.checkedAdd(sum, voteCount);
         }
-        sum = LongMath.checkedAdd(sum, voteCount);
       }
 
       AccountCapsule accountCapsule = repo.getAccount(param.getOwnerAddress());
@@ -66,6 +66,10 @@ public class VoteWitnessProcessor {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
                 + "]");
+      }
+
+      if (sum == 0 && accountCapsule.getVotesList().isEmpty()) {
+        throw new ContractValidateException("Can not revoke vote if there are no old vote");
       }
     } catch (ArithmeticException e) {
       throw new ContractValidateException(e.getMessage());
