@@ -2,20 +2,18 @@ package org.tron.core.vm.nativecontract;
 
 import com.google.common.math.LongMath;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.repository.Repository;
-
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 @Slf4j(topic = "Processor")
 public class WithdrawRewardProcessor {
 
   public void validate(WithdrawRewardParam param, Repository repo) throws ContractValidateException {
     if (repo == null) {
-      throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
 
     byte[] targetAddress = param.getTargetAddress();
