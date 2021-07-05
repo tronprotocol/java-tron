@@ -30,7 +30,6 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 import java.io.File;
 import java.util.Arrays;
