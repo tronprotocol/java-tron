@@ -1151,13 +1151,10 @@ public class VM {
         }
         break;
         case VOTEWITNESS: {
-          int tronPowerArrayLength = program.stackPop().intValueSafe();
           int tronPowerArrayOffset = program.stackPop().intValueSafe();
-          int witnessArrayLength = program.stackPop().intValueSafe();
           int witnessArrayOffset = program.stackPop().intValueSafe();
 
-          boolean result = program.voteWitness(witnessArrayOffset, witnessArrayLength,
-              tronPowerArrayOffset, tronPowerArrayLength);
+          boolean result = program.voteWitness(witnessArrayOffset, tronPowerArrayOffset);
           program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
           program.step();
         }
