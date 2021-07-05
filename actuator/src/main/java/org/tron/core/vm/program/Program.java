@@ -1773,17 +1773,14 @@ public class Program {
     }
   }
 
-  public boolean voteWitness(int witnessArrayOffset, int witnessArrayLength,
-                          int tronPowerArrayOffset,int tronPowerArrayLength) {
-    if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength
-        || memoryLoad(tronPowerArrayOffset).intValueSafe() != tronPowerArrayLength) {
-      throw new BytecodeExecutionException(
-          "Memory array length do not match length parameter!");
-    }
+  public boolean voteWitness(int witnessArrayOffset, int amountArrayOffset) {
+    int witnessArrayLength = memoryLoad(witnessArrayOffset).intValueSafe();
+    int amountArrayLength = memoryLoad(amountArrayOffset).intValueSafe();
 
-    if (witnessArrayLength != tronPowerArrayLength) {
-      throw new BytecodeExecutionException(
-          "Witness array length is not same as TronPower array length!");
+    if (witnessArrayLength != amountArrayLength) {
+      logger.warn("witness array length {} does not match amount array length {}",
+          witnessArrayLength, amountArrayLength);
+      return false;
     }
 
     int voteCount = witnessArrayLength;
@@ -1794,16 +1791,16 @@ public class Program {
 
     byte[] witnessArrayData = memoryChunk(witnessArrayOffset + DataWord.WORD_SIZE,
         voteCount * DataWord.WORD_SIZE);
-    byte[] tronPowerArrayData = memoryChunk(tronPowerArrayOffset + DataWord.WORD_SIZE,
+    byte[] amountArrayData = memoryChunk(amountArrayOffset + DataWord.WORD_SIZE,
         voteCount * DataWord.WORD_SIZE);
 
     for (int i = 0; i < voteCount; i++) {
       DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
           i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
-      DataWord tronPower = new DataWord(Arrays.copyOfRange(tronPowerArrayData,
+      DataWord amount = new DataWord(Arrays.copyOfRange(amountArrayData,
           i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
       param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
-          tronPower.longValueSafe());
+          amount.longValueSafe());
     }
 
     try {
@@ -1822,7 +1819,7 @@ public class Program {
   public long withdrawReward() {
     WithdrawRewardParam param = new WithdrawRewardParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    param.setTargetAddress(owner);
+    param.setOwnerAddress(owner);
     param.setNowInMs(getTimestamp().longValue() * 1000);
     long allowance;
     try {

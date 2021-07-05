@@ -2,16 +2,16 @@ package org.tron.core.vm.nativecontract.param;
 
 public class WithdrawRewardParam {
 
-  private byte[] targetAddress;
+  private byte[] ownerAddress;
 
   private long nowInMs;
 
-  public byte[] getTargetAddress() {
-    return targetAddress;
+  public byte[] getOwnerAddress() {
+    return ownerAddress;
   }
 
-  public void setTargetAddress(byte[] targetAddress) {
-    this.targetAddress = targetAddress;
+  public void setOwnerAddress(byte[] ownerAddress) {
+    this.ownerAddress = ownerAddress;
   }
 
   public long getNowInMs() {

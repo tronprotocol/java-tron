@@ -1,10 +1,17 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
+import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.actuator.ActuatorConstant;
+import static org.tron.core.actuator.ActuatorConstant.*;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -12,20 +19,12 @@ import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
-import java.util.Iterator;
-
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
-import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-
 @Slf4j(topic = "Processor")
 public class VoteWitnessProcessor {
 
   public void validate(VoteWitnessParam param, Repository repo) throws ContractValidateException {
     if (repo == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+      throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
     if (param.getVotes().isEmpty()) {

@@ -1,8 +1,13 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+
 import com.google.common.math.LongMath;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.actuator.ActuatorConstant;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
@@ -13,12 +18,23 @@ public class WithdrawRewardProcessor {
 
   public void validate(WithdrawRewardParam param, Repository repo) throws ContractValidateException {
     if (repo == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+      throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
-    byte[] targetAddress = param.getTargetAddress();
-    AccountCapsule accountCapsule = repo.getAccount(targetAddress);
-    long reward = VoteRewardUtils.queryReward(targetAddress, repo);
+    byte[] ownerAddress = param.getOwnerAddress();
+    String readableOwnerAddress = StringUtil.encode58Check(ownerAddress);
+
+    boolean isGP = CommonParameter.getInstance()
+        .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
+            Arrays.equals(ownerAddress, witness.getAddress()));
+    if (isGP) {
+      throw new ContractValidateException(
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress
+              + "] is a guard representative and is not allowed to withdraw Balance");
+    }
+
+    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
+    long reward = VoteRewardUtils.queryReward(ownerAddress, repo);
 
     try {
       LongMath.checkedAdd(LongMath.checkedAdd(
@@ -32,11 +48,11 @@ public class WithdrawRewardProcessor {
   }
 
   public long execute(WithdrawRewardParam param, Repository repo) {
-    byte[] target = param.getTargetAddress();
+    byte[] ownerAddress = param.getOwnerAddress();
 
-    VoteRewardUtils.withdrawReward(target, repo);
+    VoteRewardUtils.withdrawReward(ownerAddress, repo);
 
-    AccountCapsule accountCapsule = repo.getAccount(target);
+    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
 
