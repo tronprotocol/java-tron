@@ -96,6 +96,11 @@ contract testMapKey is testModifier{
         return (type(uint8).min, type(uint8).max);
     }
 
+    function calldataModifier(bytes calldata a) external returns(bytes calldata) {
+        bytes calldata b = a;
+        return b;
+    }
+
 }
 
 
