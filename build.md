@@ -14,8 +14,8 @@
 ## Getting the code with git
 
 * Use Git from the console, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
-* develop branch: the newest code 
-* master branch: more stable than develop.
+* `develop` branch: the newest code 
+* `master` branch: more stable than develop.
 In the shell command, type:
 ```bash
 git clone https://github.com/tronprotocol/java-tron.git
@@ -28,7 +28,7 @@ git checkout -t origin/master
 
 ## Including java-tron as dependency
 
-* If you don't want to checkout the code and build the project, you can include it directly as a dependency
+If you don't want to checkout the code and build the project, you can include it directly as a dependency.
 
 **Using gradle:**
 
@@ -64,7 +64,7 @@ dependencies {
 
 ## Building from source code
 
-* Building using the console:
+**Building using the console:**
 
 ```bash
 cd java-tron

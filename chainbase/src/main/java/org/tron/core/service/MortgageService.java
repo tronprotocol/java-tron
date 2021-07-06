@@ -3,7 +3,10 @@ package org.tron.core.service;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -47,29 +50,32 @@ public class MortgageService {
   }
 
   public void payStandbyWitness() {
+    List<WitnessCapsule> witnessCapsules = witnessStore.getAllWitnesses();
+    Map<ByteString, WitnessCapsule> witnessCapsuleMap = new HashMap<>();
     List<ByteString> witnessAddressList = new ArrayList<>();
-    for (WitnessCapsule witnessCapsule : witnessStore.getAllWitnesses()) {
+    for (WitnessCapsule witnessCapsule : witnessCapsules) {
       witnessAddressList.add(witnessCapsule.getAddress());
+      witnessCapsuleMap.put(witnessCapsule.getAddress(), witnessCapsule);
     }
-    sortWitness(witnessAddressList);
+    witnessAddressList.sort(Comparator.comparingLong((ByteString b) -> witnessCapsuleMap.get(b).getVoteCount())
+            .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
     if (witnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
       witnessAddressList = witnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH);
     }
-
     long voteSum = 0;
     long totalPay = dynamicPropertiesStore.getWitness127PayPerBlock();
     for (ByteString b : witnessAddressList) {
-      voteSum += getWitnessByAddress(b).getVoteCount();
+      voteSum += witnessCapsuleMap.get(b).getVoteCount();
     }
+
     if (voteSum > 0) {
       for (ByteString b : witnessAddressList) {
         double eachVotePay = (double) totalPay / voteSum;
-        long pay = (long) (getWitnessByAddress(b).getVoteCount() * eachVotePay);
+        long pay = (long) (witnessCapsuleMap.get(b).getVoteCount() * eachVotePay);
         logger.debug("pay {} stand reward {}", Hex.toHexString(b.toByteArray()), pay);
         payReward(b.toByteArray(), pay);
       }
     }
-
   }
 
   public void payBlockReward(byte[] witnessAddress, long value) {
