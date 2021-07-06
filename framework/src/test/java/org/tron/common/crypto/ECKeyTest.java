@@ -215,17 +215,4 @@ public class ECKeyTest {
 
     assertEquals(key, ECKey.fromNodeId(key.getNodeId()));
   }
-
-  @Test
-  public void testSignature() throws SignatureException {
-    SignInterface sign = SignUtils.fromPrivate(Hex.decode(privString), true);
-    String msg = "transaction raw data";
-    byte[] hash = Hash.sha3(msg.getBytes());
-    String sig = sign.signHash(hash);
-    byte[] address = SignUtils.signatureToAddress(hash, sig, true);
-    assertEquals("429e4ce662a41be0a50e65626f0ec4c8f68d45a57fe80beebab2f82601884795",
-        Hex.toHexString(hash));
-    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
-        Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
-  }
 }
