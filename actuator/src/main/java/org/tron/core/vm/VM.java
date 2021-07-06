@@ -170,6 +170,22 @@ public class VM {
           break;
         case VOTEWITNESS:
           energyCost = energyCosts.getVOTE_WITNESS();
+          DataWord amountArrayLength = stack.get(stack.size() - 1);
+          DataWord amountArrayOffset = stack.get(stack.size() - 2);
+          DataWord witnessArrayLength = stack.get(stack.size() - 3);
+          DataWord witnessArrayOffset = stack.get(stack.size() - 4);
+
+          DataWord wordSize = new DataWord(DataWord.WORD_SIZE);
+
+          amountArrayLength.mul(wordSize);
+          BigInteger amountArrayMemoryNeeded = memNeeded(amountArrayOffset, amountArrayLength);
+
+          witnessArrayLength.mul(wordSize);
+          BigInteger witnessArrayMemoryNeeded = memNeeded(witnessArrayOffset, witnessArrayLength);
+
+          energyCost += calcMemEnergy(energyCosts, oldMemSize,
+              (amountArrayMemoryNeeded.compareTo(witnessArrayMemoryNeeded) > 0 ?
+                  amountArrayMemoryNeeded : witnessArrayMemoryNeeded), 0, op);
           break;
         case WITHDRAWREWARD:
           energyCost = energyCosts.getWITHDRAW_REWARD();
@@ -1151,10 +1167,13 @@ public class VM {
         }
         break;
         case VOTEWITNESS: {
-          int tronPowerArrayOffset = program.stackPop().intValueSafe();
+          int amountArrayLength = program.stackPop().intValueSafe();
+          int amountArrayOffset = program.stackPop().intValueSafe();
+          int witnessArrayLength = program.stackPop().intValueSafe();
           int witnessArrayOffset = program.stackPop().intValueSafe();
 
-          boolean result = program.voteWitness(witnessArrayOffset, tronPowerArrayOffset);
+          boolean result = program.voteWitness(witnessArrayOffset, witnessArrayLength,
+              amountArrayOffset, amountArrayLength);
           program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
           program.step();
         }

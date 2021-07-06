@@ -63,6 +63,7 @@ import static java.lang.StrictMath.min;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ArrayUtils.*;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 /**
@@ -1773,9 +1774,15 @@ public class Program {
     }
   }
 
-  public boolean voteWitness(int witnessArrayOffset, int amountArrayOffset) {
-    int witnessArrayLength = memoryLoad(witnessArrayOffset).intValueSafe();
-    int amountArrayLength = memoryLoad(amountArrayOffset).intValueSafe();
+  public boolean voteWitness(int witnessArrayOffset, int witnessArrayLength,
+                             int amountArrayOffset, int amountArrayLength) {
+
+    if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength ||
+        memoryLoad(amountArrayOffset).intValueSafe() != amountArrayLength) {
+      logger.warn("Memory array length do not match length parameter!");
+      throw new BytecodeExecutionException(
+          "Memory array length do not match length parameter!");
+    }
 
     if (witnessArrayLength != amountArrayLength) {
       logger.warn("witness array length {} does not match amount array length {}",

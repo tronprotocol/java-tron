@@ -67,10 +67,6 @@ public class VoteWitnessProcessor {
             "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
                 + "]");
       }
-
-      if (sum == 0 && accountCapsule.getVotesList().isEmpty()) {
-        throw new ContractValidateException("Can not revoke vote if there are no old vote");
-      }
     } catch (ArithmeticException e) {
       throw new ContractValidateException(e.getMessage());
     }
