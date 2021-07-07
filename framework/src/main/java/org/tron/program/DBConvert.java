@@ -3,41 +3,111 @@ package org.tron.program;
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.fusesource.leveldbjni.JniDBFactory;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
+import org.rocksdb.ComparatorOptions;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
+import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
 import org.tron.common.utils.PropUtil;
 
 @Slf4j
-public class DBConvert {
+public class DBConvert implements Callable<Boolean> {
 
   static {
     RocksDB.loadLibrary();
   }
 
-  private String srcDir;
-  private String dstDir;
-  private String dbName;
-  private Path srcDbPath;
-  private Path dstDbPath;
+  private final String srcDir;
+  private final String dstDir;
+  private final String dbName;
+  private final Path srcDbPath;
+  private final Path dstDbPath;
 
-  private int srcDbKeyCount = 0;
-  private int dstDbKeyCount = 0;
-  private int srcDbKeySum = 0;
-  private int dstDbKeySum = 0;
-  private int srcDbValueSum = 0;
-  private int dstDbValueSum = 0;
+  private long srcDbKeyCount = 0L;
+  private long dstDbKeyCount = 0L;
+  private long srcDbKeySum = 0L;
+  private long dstDbKeySum = 0L;
+  private long srcDbValueSum = 0L;
+  private long dstDbValueSum = 0L;
+  private final long startTime;
+  private static final int CPUS  = Runtime.getRuntime().availableProcessors();
+  private static final int BATCH  = 256;
+  private static final DateTimeFormatter formatter = DateTimeFormatter
+      .ofPattern("yyyy-MM-dd HH:mm:ss SS");
+  private static final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
+      CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
+      new ArrayBlockingQueue<>(CPUS, true), new DbThreadFactory("covertDb"),
+      new ThreadPoolExecutor.CallerRunsPolicy());
+
+  static {
+    esDb.allowCoreThreadTimeOut(true);
+  }
+
+  @Override
+  public Boolean call() throws Exception {
+    return doConvert();
+  }
+
+
+  /**
+   * The default thread factory
+   */
+
+  static class DbThreadFactory implements ThreadFactory {
+    private static final AtomicInteger poolNumber = new AtomicInteger(1);
+    private final ThreadGroup group;
+    private final AtomicInteger threadNumber = new AtomicInteger(1);
+    private final String namePrefix;
+
+    DbThreadFactory(String name) {
+      SecurityManager s = System.getSecurityManager();
+      group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+      namePrefix = name + "-" + poolNumber.getAndIncrement() + "-thread-";
+    }
+
+    public Thread newThread(Runnable r) {
+      Thread t = new Thread(group, r,
+          namePrefix + threadNumber.getAndIncrement(),
+          0);
+      t.setUncaughtExceptionHandler(((t1, e) -> logger.error(t.getName(), e)));
+      if (t.isDaemon()) {
+        t.setDaemon(false);
+      }
+      if (t.getPriority() != Thread.NORM_PRIORITY) {
+        t.setPriority(Thread.NORM_PRIORITY);
+      }
+      return t;
+    }
+  }
+
 
   public DBConvert(String src, String dst, String name) {
     this.srcDir = src;
@@ -45,6 +115,7 @@ public class DBConvert {
     this.dbName = name;
     this.srcDbPath = Paths.get(this.srcDir, name);
     this.dstDbPath = Paths.get(this.dstDir, name);
+    this.startTime = System.currentTimeMillis();
   }
 
   private static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
@@ -56,7 +127,7 @@ public class DBConvert {
     dbOptions.blockSize(4 * 1024);
     dbOptions.writeBufferSize(10 * 1024 * 1024);
     dbOptions.cacheSize(10 * 1024 * 1024L);
-    dbOptions.maxOpenFiles(100);
+    dbOptions.maxOpenFiles(1000);
     return dbOptions;
   }
 
@@ -64,64 +135,59 @@ public class DBConvert {
     String dbSrc;
     String dbDst;
     if (args.length < 2) {
-      dbSrc = "output-directory/database";
-      dbDst = "output-directory-dst/database";
+      dbSrc = "/Users/lizibo/tron/db/output-directory/database";
+      dbDst = "/Users/lizibo/tron/db/output-directory-dst/database";
     } else {
       dbSrc = args[0];
       dbDst = args[1];
     }
     File dbDirectory = new File(dbSrc);
     if (!dbDirectory.exists()) {
-      System.out.println(dbSrc + "does not exist.");
+      printf(" %s does not exist.", dbSrc);
       return;
     }
-    File[] files = dbDirectory.listFiles();
+    List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
+        .filter(File::isDirectory).collect(
+            Collectors.toList());
 
-    if (files == null || files.length == 0) {
-      System.out.println(dbSrc + "does not contain any database.");
+    if (files.isEmpty()) {
+      printf("%s does not contain any database.", dbSrc);
       return;
     }
-    long time = System.currentTimeMillis();
-    for (File file : files) {
-      if (!file.isDirectory()) {
-        System.out.println(file.getName() + " is not a database directory, ignore it.");
-        continue;
-      }
+    final long time = System.currentTimeMillis();
+    final List<Future<Boolean>> res = new ArrayList<>();
+
+    files.forEach(f -> res.add(esDb.submit(new DBConvert(dbSrc, dbDst, f.getName()))));
+
+    int fails = res.size();
+
+    for (Future<Boolean> re : res) {
       try {
-        DBConvert convert = new DBConvert(dbSrc, dbDst, file.getName());
-        if (convert.doConvert()) {
-          System.out.println(String
-              .format(
-                  "Convert database %s successful with %s key-value. keySum: %d, valueSum: %d",
-                  convert.dbName,
-                  convert.srcDbKeyCount, convert.dstDbKeySum, convert.dstDbValueSum));
-        } else {
-          System.out.println(String.format("Convert database %s failure", convert.dbName));
+        if (re.get()) {
+          fails--;
         }
-      } catch (Exception e) {
-        System.out.println(e.getMessage());
-        return;
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
       }
     }
-    System.out.println(String
-        .format("database convert use %d seconds total.",
-            (System.currentTimeMillis() - time) / 1000));
+
+    esDb.shutdown();
+    printf("database convert use %d seconds total.",
+        (System.currentTimeMillis() - time) / 1000);
+    if (fails > 0) {
+      printf("failed!!!!!!!!!!!!!!!!!!!!!!!! size:%d", fails);
+    }
+    System.exit(fails);
   }
 
-  public DB newLevelDb(Path db) throws IOException {
+  public DB newLevelDb(Path db) throws Exception {
     DB database;
     File file = db.toFile();
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions();
-    try {
-      database = factory.open(file, dbOptions);
-    } catch (IOException e) {
-      if (e.getMessage().contains("Corruption:")) {
-        factory.repair(file, dbOptions);
-        database = factory.open(file, dbOptions);
-      } else {
-        throw e;
-      }
+    if (this.dbName.equalsIgnoreCase("market_pair_price_to_order")) {
+      dbOptions.comparator(new MarketOrderPriceComparatorForLevelDB());
     }
+    database = factory.open(file, dbOptions);
     return database;
   }
 
@@ -130,13 +196,16 @@ public class DBConvert {
     options.setCreateIfMissing(true);
     options.setIncreaseParallelism(1);
     options.setNumLevels(7);
-    options.setMaxOpenFiles(-1);
+    options.setMaxOpenFiles(5000);
     options.setTargetFileSizeBase(64 * 1024 * 1024);
     options.setTargetFileSizeMultiplier(1);
     options.setMaxBytesForLevelBase(512 * 1024 * 1024);
     options.setMaxBackgroundCompactions(Math.max(1, Runtime.getRuntime().availableProcessors()));
     options.setLevel0FileNumCompactionTrigger(4);
     options.setLevelCompactionDynamicLevelBytes(true);
+    if (this.dbName.equalsIgnoreCase("market_pair_price_to_order")) {
+      options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
+    }
     final BlockBasedTableConfig tableCfg;
     options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
     tableCfg.setBlockSize(64 * 1024);
@@ -144,6 +213,7 @@ public class DBConvert {
     tableCfg.setCacheIndexAndFilterBlocks(true);
     tableCfg.setPinL0FilterAndIndexBlocksInCache(true);
     tableCfg.setFilter(new BloomFilter(10, false));
+    options.prepareForBulkLoad();
     return options;
   }
 
@@ -151,16 +221,16 @@ public class DBConvert {
     RocksDB database = null;
     try (Options options = newDefaultRocksDbOptions()) {
       database = RocksDB.open(options, db.toString());
-    } catch (Exception ignore) {
-      logger.error(ignore.getMessage());
+    } catch (Exception e) {
+      logger.error(e.getMessage());
     }
     return database;
   }
 
   public boolean convertLevelToRocks(DB level, RocksDB rocks) {
     // convert
-    DBIterator levelIterator = level.iterator();
-    try {
+    try (DBIterator levelIterator = level.iterator()) {
+      JniDBFactory.pushMemoryPool(1024 * 1024);
       for (levelIterator.seekToFirst(); levelIterator.hasNext(); levelIterator.next()) {
         byte[] key = levelIterator.peekNext().getKey();
         byte[] value = levelIterator.peekNext().getValue();
@@ -169,20 +239,127 @@ public class DBConvert {
         srcDbValueSum = byteArrayToIntWithOne(srcDbValueSum, value);
         rocks.put(key, value);
       }
-    } catch (RocksDBException e) {
+      // check
+      check(rocks);
+    } catch (Exception e) {
       logger.error(e.getMessage());
       return false;
     } finally {
       try {
-        levelIterator.close();
-      } catch (IOException e1) {
+        level.close();
+        rocks.close();
+        JniDBFactory.popMemoryPool();
+      } catch (Exception e1) {
         logger.error(e1.getMessage());
       }
     }
+    return dstDbKeyCount == srcDbKeyCount && dstDbKeySum == srcDbKeySum
+        && dstDbValueSum == srcDbValueSum;
+  }
 
+
+  private void batchInsert(RocksDB rocks, List<byte[]> keys, List<byte[]> values)
+      throws Exception {
+    try (org.rocksdb.WriteBatch batch = new org.rocksdb.WriteBatch()) {
+      for (int i = 0; i < keys.size(); i++) {
+        byte[] k = keys.get(i);
+        byte[] v = values.get(i);
+        batch.put(k, v);
+      }
+      write(rocks, batch);
+    }
+    keys.clear();
+    values.clear();
+  }
+
+  private void write(RocksDB rocks, org.rocksdb.WriteBatch batch) throws Exception {
+    try {
+      rocks.write(new org.rocksdb.WriteOptions(), batch);
+    } catch (RocksDBException e) {
+      // retry
+      if (e.getMessage() != null && e.getMessage().equalsIgnoreCase("Write stall")) {
+        TimeUnit.MILLISECONDS.sleep(1);
+        write(rocks, batch);
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  /**
+   * https://github.com/facebook/rocksdb/wiki/RocksDB-FAQ .
+   *  What's the fastest way to load data into RocksDB?
+   * @param level leveldb
+   * @param rocks rocksdb
+   * @return if ok
+   */
+  public boolean convertLevelToRocksBatchIterator(DB level, RocksDB rocks) {
+    // convert
+    List<byte[]> keys = new ArrayList<>(BATCH);
+    List<byte[]> values = new ArrayList<>(BATCH);
+    try (DBIterator levelIterator = level.iterator()) {
+
+      JniDBFactory.pushMemoryPool(1024 * 1024);
+      levelIterator.seekToFirst();
+
+      while (levelIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = levelIterator.next();
+        byte[] key = entry.getKey();
+        byte[] value = entry.getValue();
+        srcDbKeyCount++;
+        srcDbKeySum = byteArrayToIntWithOne(srcDbKeySum, key);
+        srcDbValueSum = byteArrayToIntWithOne(srcDbValueSum, value);
+        keys.add(key);
+        values.add(value);
+        if (keys.size() >= BATCH) {
+          try {
+            batchInsert(rocks, keys, values);
+          } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return false;
+          }
+        }
+      }
+
+      if (!keys.isEmpty()) {
+        try {
+          batchInsert(rocks, keys, values);
+        } catch (Exception e) {
+          logger.error(e.getMessage(), e);
+          e.printStackTrace();
+          return false;
+        }
+      }
+      // check
+      check(rocks);
+    }  catch (Exception e) {
+      e.printStackTrace();
+      logger.error(e.getMessage());
+      return false;
+    } finally {
+      try {
+        level.close();
+        rocks.close();
+        JniDBFactory.popMemoryPool();
+      } catch (Exception e1) {
+        e1.printStackTrace();
+        logger.error(e1.getMessage());
+      }
+    }
+    return dstDbKeyCount == srcDbKeyCount && dstDbKeySum == srcDbKeySum
+        && dstDbValueSum == srcDbValueSum;
+  }
+
+  private void check(RocksDB rocks) throws RocksDBException {
+    printf("check database %s start", this.dbName);
+    // manually call CompactRange()
+    printf("compact database %s start", this.dbName);
+    rocks.compactRange();
+    printf("compact database %s end", this.dbName);
     // check
-    try (final RocksIterator rocksIterator = rocks.newIterator()) {
-      for (rocksIterator.seekToLast(); rocksIterator.isValid(); rocksIterator.prev()) {
+    try (RocksIterator rocksIterator = rocks.newIterator()) {
+      for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         byte[] key = rocksIterator.key();
         byte[] value = rocksIterator.value();
         dstDbKeyCount++;
@@ -190,9 +367,7 @@ public class DBConvert {
         dstDbValueSum = byteArrayToIntWithOne(dstDbValueSum, value);
       }
     }
-
-    return dstDbKeyCount == srcDbKeyCount && dstDbKeySum == srcDbKeySum
-        && dstDbValueSum == srcDbValueSum;
+    printf("check database %s end", this.dbName);
   }
 
   public boolean createEngine(String dir) {
@@ -205,28 +380,81 @@ public class DBConvert {
     return PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
   }
 
-  public boolean doConvert() {
+  public boolean checkDone(String dir) {
+    String enginePath = dir + File.separator + "engine.properties";
+    return FileUtil.isExists(enginePath);
+
+  }
+
+  public boolean doConvert() throws Exception {
+
+    if (checkDone(this.dstDbPath.toString())) {
+      printf(" %s is done, skip it.", this.dbName);
+      // delete leveldb for space
+      // TODO
+      /*if (this.srcDbPath.toFile().exists()) {
+        printf(" %s begin to delete database directory", this.dbName);
+        FileUtil.deleteDir(this.srcDbPath.toFile());
+        printf(" %s clear database directory done.", this.dbName);
+      }*/
+      return true;
+    }
 
     File levelDbFile = srcDbPath.toFile();
     if (!levelDbFile.exists()) {
-      System.out.println(srcDbPath.toString() + "does not exist.");
+      printf(" %s does not exist.", srcDbPath.toString());
       return false;
     }
 
-    DB level = null;
-    try {
-      level = newLevelDb(srcDbPath);
-    } catch (IOException e) {
-      logger.error("{}", e);
+    DB level = newLevelDb(srcDbPath);
+
+    if (this.dstDbPath.toFile().exists()) {
+      printf(" %s begin to clear exist database directory", this.dbName);
+      FileUtil.deleteDir(this.dstDbPath.toFile());
+      printf(" %s clear exist database directory done.", this.dbName);
     }
 
     FileUtil.createDirIfNotExists(dstDir);
     RocksDB rocks = newRocksDb(dstDbPath);
 
-    return convertLevelToRocks(level, rocks) && createEngine(dstDbPath.toString());
+    printf("Convert database %s start", this.dbName);
+    // convertLevelToRocksBatchIterator convertLevelToRocks
+    boolean result  = convertLevelToRocksBatchIterator(level, rocks)
+        && createEngine(dstDbPath.toString());
+    long etime = System.currentTimeMillis();
+
+    if (result) {
+      printf("Convert database %s successful end with %d key-value cost %(,.2f minutes",
+          this.dbName, this.srcDbKeyCount, (etime - this.startTime) / 1000.0 / 60);
+      // TODO
+      /*if (this.srcDbPath.toFile().exists()) {
+        printf(" %s begin to delete database directory", this.srcDbPath.toFile().getName());
+        FileUtil.deleteDir(this.srcDbPath.toFile());
+        printf(" %s clear database directory done.", this.srcDbPath.toFile().getName());
+      }*/
+    } else {
+      printf("Convert database %s failure", this.dbName);
+      if (this.dstDbPath.toFile().exists()) {
+        printf(" %s begin to clear exist database directory", this.dbName);
+        FileUtil.deleteDir(this.dstDbPath.toFile());
+        printf(" %s clear exist database directory done.", this.dbName);
+      }
+    }
+    return result;
   }
 
-  public int byteArrayToIntWithOne(int sum, byte[] b) {
+  public static String getTime() {
+    LocalDateTime now = LocalDateTime.now();
+    return  "[" + formatter.format(now) + "] ";
+  }
+
+  public static void printf(String reg, Object... args) {
+    reg = reg + "%n";
+    System.out.printf("%s", getTime());
+    System.out.printf(reg,  args);
+  }
+
+  public long byteArrayToIntWithOne(long sum, byte[] b) {
     for (byte oneByte : b) {
       sum += (int) oneByte;
     }
