@@ -170,9 +170,9 @@ public class VM {
           break;
         case VOTEWITNESS:
           energyCost = energyCosts.getVOTE_WITNESS();
-          DataWord amountArrayLength = stack.get(stack.size() - 1);
+          DataWord amountArrayLength = stack.get(stack.size() - 1).clone();
           DataWord amountArrayOffset = stack.get(stack.size() - 2);
-          DataWord witnessArrayLength = stack.get(stack.size() - 3);
+          DataWord witnessArrayLength = stack.get(stack.size() - 3).clone();
           DataWord witnessArrayOffset = stack.get(stack.size() - 4);
 
           DataWord wordSize = new DataWord(DataWord.WORD_SIZE);
@@ -334,7 +334,7 @@ public class VM {
       }
 
       program.spendEnergy(energyCost, op.name());
-      program.checkCPUTimeLimit(op.name());
+      //program.checkCPUTimeLimit(op.name());
 
       // Execute operation
       switch (op) {

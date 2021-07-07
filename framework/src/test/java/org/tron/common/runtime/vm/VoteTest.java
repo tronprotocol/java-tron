@@ -3,6 +3,9 @@ package org.tron.common.runtime.vm;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -30,11 +33,6 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.function.Consumer;
-
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
