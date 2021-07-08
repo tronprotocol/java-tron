@@ -456,7 +456,7 @@ public class DBConvert implements Callable<Boolean> {
 
   public long byteArrayToIntWithOne(long sum, byte[] b) {
     for (byte oneByte : b) {
-      sum += (int) oneByte;
+      sum += oneByte;
     }
     return sum;
   }

@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -220,8 +219,6 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
-  private volatile long latestSolidityNumShutDown = -1;
-
   /**
    * Cycle thread to rePush Transactions
    */
@@ -240,6 +237,10 @@ public class Manager {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
             }
           } catch (Throwable ex) {
+            if (ex instanceof InterruptedException) {
+              Thread.currentThread().interrupt();
+              logger.error("unknown exception happened in rePush loop", ex);
+            }
             logger.error("unknown exception happened in rePush loop", ex);
           } finally {
             if (tx != null) {
@@ -822,17 +823,9 @@ public class Manager {
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
-      if (Args.getCronExpression() != null) {
-        if (Args.getCronExpression().getNextValidTimeAfter(
-            new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
-                .compareTo(new Date(block.getTimeStamp())) <= 0) {
-          revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
-        }
-      }
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
-
   }
 
   private void switchFork(BlockCapsule newHead)
@@ -951,16 +944,6 @@ public class Manager {
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
-
-    if (latestSolidityNumShutDown == -1) {
-      if (Args.getCronExpression() != null) {
-        if (Args.getCronExpression().isSatisfiedBy(new Date(block.getTimeStamp()))) {
-          latestSolidityNumShutDown = block.getNum();
-        }
-      } else {
-        latestSolidityNumShutDown = -2;
-      }
-    }
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1095,16 +1078,6 @@ public class Manager {
         block.getNum(),
         System.currentTimeMillis() - start,
         block.getTransactions().size());
-
-    if (latestSolidityNumShutDown > 0
-        && latestSolidityNumShutDown == getDynamicPropertiesStore().getLatestSolidifiedBlockNum()) {
-
-      logger.info("begin shutdown, currentBlockNum:{}, solidifiedBlockNum:{}",
-          block.getNum(),
-          getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-      System.exit(0);
-    }
-
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1239,7 +1212,6 @@ public class Manager {
     }
     //set the sort order
     trxCap.setOrder(transactionInfo.getFee());
-    trxCap.setTrxTrace(null);
     return transactionInfo.getInstance();
   }
 
