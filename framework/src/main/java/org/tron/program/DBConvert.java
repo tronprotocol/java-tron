@@ -14,12 +14,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.fusesource.leveldbjni.JniDBFactory;
@@ -64,7 +62,7 @@ public class DBConvert implements Callable<Boolean> {
       .ofPattern("yyyy-MM-dd HH:mm:ss SS");
   private static final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
       CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
-      new ArrayBlockingQueue<>(CPUS, true), new DbThreadFactory("covertDb"),
+      new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
       new ThreadPoolExecutor.CallerRunsPolicy());
 
   static {
@@ -75,39 +73,6 @@ public class DBConvert implements Callable<Boolean> {
   public Boolean call() throws Exception {
     return doConvert();
   }
-
-
-  /**
-   * The default thread factory
-   */
-
-  static class DbThreadFactory implements ThreadFactory {
-    private static final AtomicInteger poolNumber = new AtomicInteger(1);
-    private final ThreadGroup group;
-    private final AtomicInteger threadNumber = new AtomicInteger(1);
-    private final String namePrefix;
-
-    DbThreadFactory(String name) {
-      SecurityManager s = System.getSecurityManager();
-      group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-      namePrefix = name + "-" + poolNumber.getAndIncrement() + "-thread-";
-    }
-
-    public Thread newThread(Runnable r) {
-      Thread t = new Thread(group, r,
-          namePrefix + threadNumber.getAndIncrement(),
-          0);
-      t.setUncaughtExceptionHandler(((t1, e) -> logger.error(t.getName(), e)));
-      if (t.isDaemon()) {
-        t.setDaemon(false);
-      }
-      if (t.getPriority() != Thread.NORM_PRIORITY) {
-        t.setPriority(Thread.NORM_PRIORITY);
-      }
-      return t;
-    }
-  }
-
 
   public DBConvert(String src, String dst, String name) {
     this.srcDir = src;
@@ -131,12 +96,12 @@ public class DBConvert implements Callable<Boolean> {
     return dbOptions;
   }
 
-  public static void main(String[] args) {
+  public static void main (String[] args) throws Exception{
     String dbSrc;
     String dbDst;
     if (args.length < 2) {
-      dbSrc = "/Users/lizibo/tron/db/output-directory/database";
-      dbDst = "/Users/lizibo/tron/db/output-directory-dst/database";
+      dbSrc = "output-directory/database";
+      dbDst = "output-directory-dst/database";
     } else {
       dbSrc = args[0];
       dbDst = args[1];
@@ -162,13 +127,9 @@ public class DBConvert implements Callable<Boolean> {
     int fails = res.size();
 
     for (Future<Boolean> re : res) {
-      try {
         if (re.get()) {
           fails--;
         }
-      } catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
-      }
     }
 
     esDb.shutdown();
@@ -184,7 +145,7 @@ public class DBConvert implements Callable<Boolean> {
     DB database;
     File file = db.toFile();
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions();
-    if (this.dbName.equalsIgnoreCase("market_pair_price_to_order")) {
+    if ("market_pair_price_to_order".equalsIgnoreCase(this.dbName)) {
       dbOptions.comparator(new MarketOrderPriceComparatorForLevelDB());
     }
     database = factory.open(file, dbOptions);
@@ -203,7 +164,7 @@ public class DBConvert implements Callable<Boolean> {
     options.setMaxBackgroundCompactions(Math.max(1, Runtime.getRuntime().availableProcessors()));
     options.setLevel0FileNumCompactionTrigger(4);
     options.setLevelCompactionDynamicLevelBytes(true);
-    if (this.dbName.equalsIgnoreCase("market_pair_price_to_order")) {
+    if ("market_pair_price_to_order".equalsIgnoreCase(this.dbName)) {
       options.setComparator(new MarketOrderPriceComparatorForRockDB(new ComparatorOptions()));
     }
     final BlockBasedTableConfig tableCfg;
@@ -277,7 +238,7 @@ public class DBConvert implements Callable<Boolean> {
       rocks.write(new org.rocksdb.WriteOptions(), batch);
     } catch (RocksDBException e) {
       // retry
-      if (e.getMessage() != null && e.getMessage().equalsIgnoreCase("Write stall")) {
+      if (e.getMessage() != null && "Write stall".equalsIgnoreCase(e.getMessage())) {
         TimeUnit.MILLISECONDS.sleep(1);
         write(rocks, batch);
       } else {
@@ -297,7 +258,8 @@ public class DBConvert implements Callable<Boolean> {
     // convert
     List<byte[]> keys = new ArrayList<>(BATCH);
     List<byte[]> values = new ArrayList<>(BATCH);
-    try (DBIterator levelIterator = level.iterator()) {
+    try (DBIterator levelIterator = level.iterator(
+        new org.iq80.leveldb.ReadOptions().fillCache(false))) {
 
       JniDBFactory.pushMemoryPool(1024 * 1024);
       levelIterator.seekToFirst();
@@ -358,7 +320,8 @@ public class DBConvert implements Callable<Boolean> {
     rocks.compactRange();
     printf("compact database %s end", this.dbName);
     // check
-    try (RocksIterator rocksIterator = rocks.newIterator()) {
+    try (org.rocksdb.ReadOptions r = new org.rocksdb.ReadOptions().setFillCache(false);
+         RocksIterator rocksIterator = rocks.newIterator(r)) {
       for (rocksIterator.seekToFirst(); rocksIterator.isValid(); rocksIterator.next()) {
         byte[] key = rocksIterator.key();
         byte[] value = rocksIterator.value();
