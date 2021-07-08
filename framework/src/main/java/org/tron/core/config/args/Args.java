@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.quartz.CronExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.Account;
@@ -84,6 +86,10 @@ public class Args extends CommonParameter {
   @Getter
   private static ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
+
+  @Getter
+  private static CronExpression cronExpression = null;
+
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -188,6 +194,7 @@ public class Args extends CommonParameter {
     PARAMETER.historyBalanceLookup = false;
     PARAMETER.openPrintLog = true;
     PARAMETER.openTransactionSort = false;
+    cronExpression = null;
   }
 
   /**
@@ -761,10 +768,17 @@ public class Args extends CommonParameter {
     PARAMETER.openTransactionSort = config.hasPath(Constant.OPEN_TRANSACTION_SORT) && config
         .getBoolean(Constant.OPEN_TRANSACTION_SORT);
 
+    if (config.hasPath(Constant.CRON_SHUTDOWN_EXP)) {
+      try {
+        cronExpression = new CronExpression(config.getString(Constant.CRON_SHUTDOWN_EXP));
+      } catch (ParseException e) {
+        logger.error(e.getMessage(),e);
+      }
+    }
     logConfig();
   }
 
-  private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
+  private static List<Witness> getWitnessesFromConfig(final Config config) {
     return config.getObjectList(Constant.GENESIS_BLOCK_WITNESSES).stream()
         .map(Args::createWitness)
         .collect(Collectors.toCollection(ArrayList::new));
@@ -779,7 +793,7 @@ public class Args extends CommonParameter {
     return witness;
   }
 
-  private static List<Account> getAccountsFromConfig(final com.typesafe.config.Config config) {
+  private static List<Account> getAccountsFromConfig(final Config config) {
     return config.getObjectList(Constant.GENESIS_BLOCK_ASSETS).stream()
         .map(Args::createAccount)
         .collect(Collectors.toCollection(ArrayList::new));
@@ -795,7 +809,7 @@ public class Args extends CommonParameter {
   }
 
   private static RateLimiterInitialization getRateLimiterFromConfig(
-      final com.typesafe.config.Config config) {
+      final Config config) {
 
     RateLimiterInitialization initialization = new RateLimiterInitialization();
     ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
@@ -813,7 +827,7 @@ public class Args extends CommonParameter {
     return initialization;
   }
 
-  private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
+  private static List<Node> getNodes(final Config config, String path) {
     if (!config.hasPath(path)) {
       return Collections.emptyList();
     }
@@ -831,7 +845,7 @@ public class Args extends CommonParameter {
     return ret;
   }
 
-  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config) {
+  private static EventPluginConfig getEventPluginConfig(final Config config) {
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
     boolean useNativeQueue = false;
@@ -908,7 +922,7 @@ public class Args extends CommonParameter {
     return triggerConfig;
   }
 
-  private static FilterQuery getEventFilter(final com.typesafe.config.Config config) {
+  private static FilterQuery getEventFilter(final Config config) {
     FilterQuery filter = new FilterQuery();
     long fromBlockLong = 0;
     long toBlockLong = 0;
@@ -944,7 +958,7 @@ public class Args extends CommonParameter {
     return filter;
   }
 
-  private static void bindIp(final com.typesafe.config.Config config) {
+  private static void bindIp(final Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP)
         || config.getString(Constant.NODE_DISCOVERY_BIND_IP)
         .trim().isEmpty()) {
@@ -963,7 +977,7 @@ public class Args extends CommonParameter {
     }
   }
 
-  private static void externalIp(final com.typesafe.config.Config config) {
+  private static void externalIp(final Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
         .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
       if (PARAMETER.nodeExternalIp == null) {
