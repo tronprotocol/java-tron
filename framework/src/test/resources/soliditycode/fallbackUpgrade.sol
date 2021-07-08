@@ -50,7 +50,7 @@ contract Caller {
         return true;
     }
     function callTest2(address test) public payable returns (bool) {
-        (bool success,) = test.call.value(1000)(abi.encodeWithSignature("nonExistingFunction()"));
+        (bool success,) = test.call{value:1000}(abi.encodeWithSignature("nonExistingFunction()"));
         require(success);
         return true;
     }

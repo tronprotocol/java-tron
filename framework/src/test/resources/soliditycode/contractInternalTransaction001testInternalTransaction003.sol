@@ -3,7 +3,7 @@
         uint256 public num = 0;
         constructor() public payable{}
         function transfer()  payable public{
-            B b = (new B).value(10)();//1
+            B b = (new B){value:10}();//1
 
         }
         function getBalance() public returns(uint256){

@@ -91,6 +91,7 @@ import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
@@ -239,6 +240,10 @@ public class Manager {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
             }
           } catch (Throwable ex) {
+            if (ex instanceof InterruptedException) {
+              Thread.currentThread().interrupt();
+              logger.error("unknown exception happened in rePush loop", ex);
+            }
             logger.error("unknown exception happened in rePush loop", ex);
           } finally {
             if (tx != null) {
@@ -270,6 +275,10 @@ public class Manager {
 
   public boolean needToUpdateAsset() {
     return getDynamicPropertiesStore().getTokenUpdateDone() == 0L;
+  }
+
+  public boolean needToMoveAbi() {
+    return getDynamicPropertiesStore().getAbiMoveDone() == 0L;
   }
 
   public DynamicPropertiesStore getDynamicPropertiesStore() {
@@ -401,6 +410,11 @@ public class Manager {
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }
+
+    if (needToMoveAbi()) {
+      new MoveAbiHelper(chainBaseManager).doWork();
+    }
+
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
@@ -710,6 +724,7 @@ public class Manager {
 
         try (ISession tmpSession = revokingStore.buildSession()) {
           processTransaction(trx, null);
+          trx.setTrxTrace(null);
           pendingTransactions.add(trx);
           tmpSession.merge();
         }
