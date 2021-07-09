@@ -227,7 +227,7 @@ public class BandwidthProcessorTest {
   }
 
 
-  //@Test
+  @Test
   public void testCreateNewAccount() throws Exception {
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     TransferAssetContract transferAssetContract = getTransferAssetContract();
@@ -254,12 +254,13 @@ public class BandwidthProcessorTest {
 
     Assert.assertEquals(true, processor.contractCreateNewAccount(contract));
     long bytes = trx.getSerializedSize();
-    processor.consumeBandwidthForCreateNewAccount(ownerCapsule, bytes, 1526647838000L);
+    TransactionTrace trace = new TransactionTrace(trx, StoreFactory
+        .getInstance(), new RuntimeImpl());
+    processor.consumeBandwidthForCreateNewAccount(ownerCapsule, bytes, 1526647838000L, trace);
 
     AccountCapsule ownerCapsuleNew = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     Assert.assertEquals(122L, ownerCapsuleNew.getNetUsage());
-
   }
 
 

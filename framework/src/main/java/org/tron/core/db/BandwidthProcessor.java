@@ -142,7 +142,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now, TransactionTrace trace)
       throws AccountResourceInsufficientException {
-    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
+    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now, trace);
 
     if (!ret) {
       ret = consumeFeeForCreateNewAccount(accountCapsule, trace);
@@ -153,7 +153,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
-      long now) {
+      long now, TransactionTrace trace) {
 
     long createNewAccountBandwidthRatio = chainBaseManager.getDynamicPropertiesStore()
         .getCreateNewAccountBandwidthRate();
@@ -172,6 +172,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
+      trace.setNetBillForCreateNewAccount(bytes * createNewAccountBandwidthRatio, 0);
       chainBaseManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       return true;
     }

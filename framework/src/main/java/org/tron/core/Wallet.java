@@ -1010,6 +1010,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("feeNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getFreeNetLimit())
+        .build());
+
     return builder.build();
   }
 

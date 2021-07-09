@@ -475,7 +475,16 @@ public class ProposalUtil {
         }
         break;
       }
-
+      case FREE_NET_LIMIT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException("Bad chain parameter id [FREE_FEE_LIMIT]");
+        }
+        if (value < 0 || value > 10_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value, valid range is [1,10_000]");
+        }
+        break;
+      }
 
       default:
         break;
@@ -531,7 +540,8 @@ public class ProposalUtil {
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
-    ALLOW_TVM_FREEZE(52); // 0, 1
+    ALLOW_TVM_FREEZE(52), // 0, 1
+    FREE_NET_LIMIT(61); // [0, 10_000]
 
     private long code;
 
