@@ -14,7 +14,9 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -474,5 +476,23 @@ public class JsonRpcApiUtil {
 
       return wallet.getEnergyFee();
     }
+  }
+
+  public static byte[] addressHashToByteArray(String hash) {
+    byte[] bHash;
+    try {
+      bHash = ByteArray.fromHexString(hash);
+      if (bHash.length != DecodeUtil.ADDRESS_SIZE / 2
+          && bHash.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
+        throw new JsonRpcInvalidParams("invalid address hash value");
+      }
+
+      if (bHash.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
+        bHash = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, bHash);
+      }
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParams(e.getMessage());
+    }
+    return bHash;
   }
 }

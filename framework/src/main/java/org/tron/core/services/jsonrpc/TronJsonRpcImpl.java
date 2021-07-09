@@ -2,9 +2,13 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
+import static org.tron.core.services.http.Util.setTransactionExtraData;
+import static org.tron.core.services.http.Util.setTransactionPermissionId;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
+import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -14,6 +18,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
@@ -22,7 +28,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -30,6 +35,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
+import org.tron.core.services.http.JsonFormat;
+import org.tron.core.services.http.Util;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
 import org.tron.program.Version;
@@ -38,7 +45,10 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
@@ -76,7 +86,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     try {
       input = ByteArray.fromHexString(data);
     } catch (Exception e) {
-      throw new JsonRpcApiException("invalid input value");
+      throw new JsonRpcInvalidParams("invalid input value");
     }
 
     byte[] result = Hash.sha3(input);
@@ -120,32 +130,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   private byte[] hashToByteArray(String hash) {
     if (!Pattern.matches(regexHash, hash)) {
-      throw new JsonRpcApiException("invalid hash value");
+      throw new JsonRpcInvalidParams("invalid hash value");
     }
 
     byte[] bHash;
     try {
       bHash = ByteArray.fromHexString(hash);
     } catch (Exception e) {
-      throw new JsonRpcApiException(e.getMessage());
-    }
-    return bHash;
-  }
-
-  private byte[] addressHashToByteArray(String hash) {
-    byte[] bHash;
-    try {
-      bHash = ByteArray.fromHexString(hash);
-      if (bHash.length != DecodeUtil.ADDRESS_SIZE / 2
-          && bHash.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
-        throw new JsonRpcApiException("invalid address hash value");
-      }
-
-      if (bHash.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
-        bHash = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, bHash);
-      }
-    } catch (Exception e) {
-      throw new JsonRpcApiException(e.getMessage());
+      throw new JsonRpcInvalidParams(e.getMessage());
     }
     return bHash;
   }
@@ -231,7 +223,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String getTrxBalance(String address, String blockNumOrTag) {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressHashToByteArray(address);
 
@@ -247,10 +239,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
-        throw new JsonRpcApiException("invalid block number");
+        throw new JsonRpcInvalidParams("invalid block number");
       }
 
-      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
     }
   }
 
@@ -325,7 +317,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String getStorageAt(String address, String storageIdx, String blockNumOrTag) {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressByte = addressHashToByteArray(address);
 
@@ -338,10 +330,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
-        throw new JsonRpcApiException("invalid block number");
+        throw new JsonRpcInvalidParams("invalid block number");
       }
 
-      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
     }
   }
 
@@ -349,7 +341,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String getABIofSmartContract(String contractAddress, String blockNumOrTag) {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressHashToByteArray(contractAddress);
 
@@ -367,10 +359,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
-        throw new JsonRpcApiException("invalid block number");
+        throw new JsonRpcInvalidParams("invalid block number");
       }
 
-      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
     }
   }
 
@@ -379,7 +371,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
     if (witnessAddress == null || witnessAddress.length != 21) {
-      throw new JsonRpcApiException("invalid witness address");
+      throw new JsonRpcInvalidParams("invalid witness address");
     }
     return ByteArray.toJsonHexAddress(witnessAddress);
   }
@@ -479,7 +471,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     try {
       txIndex = ByteArray.jsonHexToInt(index);
     } catch (Exception e) {
-      throw new JsonRpcApiException("invalid index value");
+      throw new JsonRpcInvalidParams("invalid index value");
     }
 
     if (txIndex >= block.getTransactionsCount()) {
@@ -532,7 +524,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String getCall(CallArguments transactionCall, String blockNumOrTag) {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcApiException("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       //静态调用合约方法。
       byte[] addressData = addressHashToByteArray(transactionCall.from);
@@ -543,10 +535,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag).longValue();
       } catch (Exception e) {
-        throw new JsonRpcApiException("invalid block number");
+        throw new JsonRpcInvalidParams("invalid block number");
       }
 
-      throw new JsonRpcApiException("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
     }
   }
 
@@ -568,7 +560,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     long diff = (System.currentTimeMillis()
         - nowBlock.getBlockHeader().getRawData().getTimestamp()) / 3000;
     diff = diff > 0 ? diff : 0;
-    long highestBlockNum = currentBlockNum + diff; //预测的最高块号
+    long highestBlockNum = currentBlockNum + diff; // estimated the highest block number
 
     return new SyncingResult(ByteArray.toJsonHex(startingBlockNum),
         ByteArray.toJsonHex(currentBlockNum),
@@ -625,6 +617,179 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public String[] getAccounts() {
     return new String[0];
+  }
+
+  private TransactionJson buildCreateSmartContractTransaction(byte[] ownerAddress,
+      BuildArguments args) {
+    try {
+      CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
+
+      build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
+
+      build.setCallTokenValue(args.callTokenValue)
+          .setTokenId(args.tokenId);
+
+      ABI.Builder abiBuilder = ABI.newBuilder();
+      if (StringUtils.isNotEmpty(args.abi)) {
+        StringBuffer abiSB = new StringBuffer("{");
+        abiSB.append("\"entrys\":");
+        abiSB.append(args.abi);
+        abiSB.append("}");
+        JsonFormat.merge(abiSB.toString(), abiBuilder, args.visible);
+      }
+
+      SmartContract.Builder smartBuilder = SmartContract.newBuilder();
+      smartBuilder
+          .setAbi(abiBuilder)
+          .setCallValue(args.callValue)
+          .setConsumeUserResourcePercent(args.consumeUserResourcePercent)
+          .setOriginEnergyLimit(args.originEnergyLimit);
+
+      // todo ownerAddress is empty?
+      if (ArrayUtils.isNotEmpty(ownerAddress)) {
+        smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
+      }
+
+      // bytecode + parameter
+      smartBuilder.setBytecode(ByteString.copyFrom(ByteArray.fromHexString(args.data)));
+
+      if (StringUtils.isNotEmpty(args.name)) {
+        smartBuilder.setName(args.name);
+      }
+
+      build.setNewContract(smartBuilder);
+
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
+      Transaction.Builder txBuilder = tx.toBuilder();
+      Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
+      rawBuilder.setFeeLimit(args.feeLimit);
+
+      txBuilder.setRawData(rawBuilder);
+      tx = setTransactionPermissionId(args.permissionId, txBuilder.build());
+
+      TransactionJson transactionJson = new TransactionJson();
+      transactionJson.transaction = JSON.parseObject(Util.printCreateTransaction(tx, false));
+
+      return transactionJson;
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParams(e.getMessage());
+    }
+  }
+
+  private TransactionJson buildTransferContractTransaction(byte[] ownerAddress,
+      BuildArguments args) {
+    long amount;
+    try {
+      amount = ByteArray.hexToBigInteger(args.value).longValue();
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParams("invalid input value");
+    }
+
+    TransferContract.Builder build = TransferContract.newBuilder();
+    build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
+        .setToAddress(ByteString.copyFrom(addressHashToByteArray(args.to)))
+        .setAmount(amount);
+
+    try {
+      Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferContract)
+          .getInstance();
+      tx = setTransactionPermissionId(args.permissionId, tx);
+      tx = setTransactionExtraData(args.extraData, tx, args.visible);
+
+      String jsonString = Util.printCreateTransaction(tx, args.visible);
+
+      TransactionJson transactionJson = new TransactionJson();
+      transactionJson.transaction = JSON.parseObject(jsonString);
+
+      return transactionJson;
+    } catch (Exception e) {
+      throw new JsonRpcInternalError(e.getMessage());
+    }
+  }
+
+  // from and to should not be null
+  private TransactionJson buildTriggerSmartContractTransaction(byte[] ownerAddress,
+      BuildArguments args) {
+    byte[] contractAddress = addressHashToByteArray(args.to);
+
+    TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
+    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    Return.Builder retBuilder = Return.newBuilder();
+
+    try {
+
+      build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
+          .setContractAddress(ByteString.copyFrom(contractAddress));
+
+      if (StringUtils.isNotEmpty(args.data)) {
+        build.setData(ByteString.copyFrom(ByteArray.fromHexString(args.data)));
+      } else {
+        build.setData(ByteString.copyFrom(new byte[0]));
+      }
+
+      build.setCallTokenValue(args.callTokenValue)
+          .setTokenId(args.tokenId)
+          .setCallValue(args.callValue);
+
+      TransactionCapsule trxCap = wallet
+          .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
+
+      Transaction.Builder txBuilder = trxCap.getInstance().toBuilder();
+      Transaction.raw.Builder rawBuilder = trxCap.getInstance().getRawData().toBuilder();
+      rawBuilder.setFeeLimit(args.feeLimit);
+      txBuilder.setRawData(rawBuilder);
+
+      Transaction trx = wallet
+          .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
+              retBuilder);
+      trx = setTransactionPermissionId(args.permissionId, trx);
+      trxExtBuilder.setTransaction(trx);
+      retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    } catch (ContractValidateException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+    } catch (Exception e) {
+      String errString = null;
+      if (e.getMessage() != null) {
+        errString = e.getMessage().replaceAll("[\"]", "\'");
+      }
+      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
+    }
+
+    trxExtBuilder.setResult(retBuilder);
+
+    String jsonString = Util.printTransactionExtention(trxExtBuilder.build(), args.visible);
+    TransactionJson transactionJson = new TransactionJson();
+    transactionJson.transaction = JSON.parseObject(jsonString);
+
+    return transactionJson;
+  }
+
+  @Override
+  public TransactionJson buildTransaction(BuildArguments args) {
+    byte[] fromAddressData;
+    try {
+      fromAddressData = addressHashToByteArray(args.from);
+    } catch (JsonRpcInvalidParams e) {
+      throw new JsonRpcInvalidRequest("invalid json request");
+    }
+
+    // check possible ContractType
+    ContractType contractType = args.getContractType(wallet);
+    switch (contractType.getNumber()) {
+      case ContractType.CreateSmartContract_VALUE:
+        return buildCreateSmartContractTransaction(fromAddressData, args);
+      case ContractType.TriggerSmartContract_VALUE:
+        return buildTriggerSmartContractTransaction(fromAddressData, args);
+      case ContractType.TransferContract_VALUE:
+        return buildTransferContractTransaction(fromAddressData, args);
+      default:
+        break;
+    }
+
+    return null;
   }
 
   @Override

@@ -171,7 +171,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.services.jsonrpc.JsonRpcApiException;
+import org.tron.core.services.jsonrpc.JsonRpcInvalidParams;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -675,7 +675,7 @@ public class Wallet {
       try {
         blockNumber = ByteArray.hexToBigInteger(id).longValue();
       } catch (Exception e) {
-        throw new JsonRpcApiException("invalid block number");
+        throw new JsonRpcInvalidParams("invalid block number");
       }
 
       return getBlockByNum(blockNumber);

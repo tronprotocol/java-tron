@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -349,15 +348,22 @@ public class Util {
       Transaction transaction) {
     if (jsonObject.containsKey(PERMISSION_ID)) {
       int permissionId = jsonObject.getInteger(PERMISSION_ID);
-      if (permissionId > 0) {
-        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
-            .setPermissionId(permissionId);
-        raw.clearContract();
-        raw.addContract(contract);
-        return transaction.toBuilder().setRawData(raw).build();
-      }
+      return setTransactionPermissionId(permissionId, transaction);
     }
+
+    return transaction;
+  }
+
+  public static Transaction setTransactionPermissionId(int permissionId, Transaction transaction) {
+    if (permissionId > 0) {
+      Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+      Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
+          .setPermissionId(permissionId);
+      raw.clearContract();
+      raw.addContract(contract);
+      return transaction.toBuilder().setRawData(raw).build();
+    }
+
     return transaction;
   }
 
@@ -365,16 +371,24 @@ public class Util {
       Transaction transaction, boolean visible) {
     if (jsonObject.containsKey(EXTRA_DATA)) {
       String data = jsonObject.getString(EXTRA_DATA);
-      if (data.length() > 0) {
-        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        if (visible) {
-          raw.setData(ByteString.copyFrom(data.getBytes()));
-        } else {
-          raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-        }
-        return transaction.toBuilder().setRawData(raw).build();
-      }
+      return setTransactionExtraData(data, transaction, visible);
     }
+
+    return transaction;
+  }
+
+  public static Transaction setTransactionExtraData(String data, Transaction transaction,
+      boolean visible) {
+    if (data.length() > 0) {
+      Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+      if (visible) {
+        raw.setData(ByteString.copyFrom(data.getBytes()));
+      } else {
+        raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+      }
+      return transaction.toBuilder().setRawData(raw).build();
+    }
+
     return transaction;
   }
 
