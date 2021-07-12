@@ -318,7 +318,8 @@ public class ContractGrammar004 {
     Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.REVERT);
 
     Assert
-        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()), "4e487b710000000000000000000000000000000000000000000000000000000000000012");
+        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()),
+            "4e487b710000000000000000000000000000000000000000000000000000000000000012");
     Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
 
   }
