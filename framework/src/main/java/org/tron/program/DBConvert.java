@@ -97,7 +97,7 @@ public class DBConvert implements Callable<Boolean> {
     return dbOptions;
   }
 
-  public static void main (String[] args) {
+  public static void main(String[] args) {
     String dbSrc;
     String dbDst;
     if (args.length < 2) {
