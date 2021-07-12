@@ -96,7 +96,7 @@ public class DBConvert implements Callable<Boolean> {
     return dbOptions;
   }
 
-  public static void main (String[] args) throws Exception{
+  public static void main (String[] args) {
     String dbSrc;
     String dbDst;
     if (args.length < 2) {
@@ -127,9 +127,13 @@ public class DBConvert implements Callable<Boolean> {
     int fails = res.size();
 
     for (Future<Boolean> re : res) {
+      try {
         if (re.get()) {
           fails--;
         }
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+      }
     }
 
     esDb.shutdown();
@@ -278,7 +282,6 @@ public class DBConvert implements Callable<Boolean> {
             batchInsert(rocks, keys, values);
           } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            e.printStackTrace();
             return false;
           }
         }
@@ -289,14 +292,12 @@ public class DBConvert implements Callable<Boolean> {
           batchInsert(rocks, keys, values);
         } catch (Exception e) {
           logger.error(e.getMessage(), e);
-          e.printStackTrace();
           return false;
         }
       }
       // check
       check(rocks);
     }  catch (Exception e) {
-      e.printStackTrace();
       logger.error(e.getMessage());
       return false;
     } finally {
@@ -305,7 +306,6 @@ public class DBConvert implements Callable<Boolean> {
         rocks.close();
         JniDBFactory.popMemoryPool();
       } catch (Exception e1) {
-        e1.printStackTrace();
         logger.error(e1.getMessage());
       }
     }
