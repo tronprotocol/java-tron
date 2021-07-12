@@ -477,11 +477,11 @@ public class ProposalUtil {
       }
       case FREE_NET_LIMIT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2)) {
-          throw new ContractValidateException("Bad chain parameter id [FREE_FEE_LIMIT]");
+          throw new ContractValidateException("Bad chain parameter id [FREE_NET_LIMIT]");
         }
-        if (value < 0 || value > 10_000L) {
+        if (value < 0 || value > 100_000L) {
           throw new ContractValidateException(
-              "Bad chain parameter value, valid range is [1,10_000]");
+              "Bad chain parameter value, valid range is [0,100_000]");
         }
         break;
       }
