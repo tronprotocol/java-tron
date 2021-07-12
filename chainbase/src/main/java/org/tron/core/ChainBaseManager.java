@@ -3,6 +3,8 @@ package org.tron.core;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +27,7 @@ import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
+import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
@@ -342,7 +345,19 @@ public class ChainBaseManager {
    * judge has blocks.
    */
   public boolean hasBlocks() {
-    return getBlockStore().iterator().hasNext() || this.khaosDb.hasData();
+    Iterator iterator = getBlockStore().iterator();
+    if (iterator.hasNext()) {
+      // close jni
+      if (iterator instanceof DBIterator) {
+        try {
+          ((DBIterator) iterator).close();
+        } catch (IOException e) {
+          logger.error(e.getMessage(), e);
+        }
+      }
+    return true;
+    }
+    return this.khaosDb.hasData();
   }
 
   public void setBlockReference(TransactionCapsule trans) {

@@ -2,6 +2,7 @@ package org.tron.core.db.api;
 
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
@@ -45,11 +47,31 @@ public class AssetUpdateHelper {
   }
 
   public void init() {
-    if (chainBaseManager.getAssetIssueV2Store().iterator().hasNext()) {
+    Iterator iterator =
+        chainBaseManager.getAssetIssueV2Store().iterator();
+    if (iterator.hasNext()) {
+      // close jni
+      if (iterator instanceof DBIterator) {
+        try {
+          ((DBIterator) iterator).close();
+        } catch (IOException e) {
+          logger.error(e.getMessage(), e);
+        }
+      }
       logger.warn("AssetIssueV2Store is not empty");
     }
     chainBaseManager.getAssetIssueV2Store().reset();
-    if (chainBaseManager.getExchangeV2Store().iterator().hasNext()) {
+    Iterator iterator2 =
+        chainBaseManager.getExchangeV2Store().iterator();
+    if (iterator2.hasNext()) {
+      // close jni
+      if (iterator2 instanceof DBIterator) {
+        try {
+          ((DBIterator) iterator2).close();
+        } catch (IOException e) {
+          logger.error(e.getMessage(), e);
+        }
+      }
       logger.warn("ExchangeV2Store is not empty");
     }
     chainBaseManager.getExchangeV2Store().reset();
