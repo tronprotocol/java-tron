@@ -45,11 +45,11 @@ public class AssetUpdateHelper {
   }
 
   public void init() {
-    if (chainBaseManager.getAssetIssueV2Store().hasNext()) {
+    if (chainBaseManager.getAssetIssueV2Store().isNotEmpty()) {
       logger.warn("AssetIssueV2Store is not empty");
     }
     chainBaseManager.getAssetIssueV2Store().reset();
-    if (chainBaseManager.getExchangeV2Store().hasNext()) {
+    if (chainBaseManager.getExchangeV2Store().isNotEmpty()) {
       logger.warn("ExchangeV2Store is not empty");
     }
     chainBaseManager.getExchangeV2Store().reset();

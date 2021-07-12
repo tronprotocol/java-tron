@@ -83,18 +83,9 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
 
   public abstract boolean has(byte[] key);
 
-  public  boolean hasNext() {
-    Iterator iterator = dbSource.iterator();
-    boolean value = iterator.hasNext();
-    // close jni
-    if (value && iterator instanceof DBIterator) {
-      try {
-        ((DBIterator) iterator).close();
-      } catch (IOException e) {
-        logger.error(e.getMessage(), e);
-      }
-    }
-    return value;
+  @Override
+  public  boolean isNotEmpty() {
+    throw new UnsupportedOperationException();
   }
 
   public String getName() {

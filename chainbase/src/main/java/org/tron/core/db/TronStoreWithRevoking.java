@@ -165,7 +165,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   }
 
   @Override
-  public boolean hasNext() {
+  public boolean isNotEmpty() {
     Iterator iterator = revokingDB.iterator();
     boolean value = iterator.hasNext();
     // close jni
