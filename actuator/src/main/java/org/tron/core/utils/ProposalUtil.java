@@ -541,7 +541,7 @@ public class ProposalUtil {
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
     ALLOW_TVM_FREEZE(52), // 0, 1
-    FREE_NET_LIMIT(61); //5000, [0, 100_000]
+    FREE_NET_LIMIT(61); // 5000, [0, 100_000]
 
     private long code;
 
