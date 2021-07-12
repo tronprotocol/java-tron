@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -131,7 +132,10 @@ public class DBConvert implements Callable<Boolean> {
         if (re.get()) {
           fails--;
         }
-      } catch (Exception e) {
+      } catch (InterruptedException e) {
+        logger.error(e.getMessage(), e);
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
         logger.error(e.getMessage(), e);
       }
     }
