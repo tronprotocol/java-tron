@@ -173,7 +173,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       try {
         ((DBIterator) iterator).close();
       } catch (IOException e) {
-        logger.error(e.getMessage(), e);
+        logger.error("", e);
       }
     }
     return value;
