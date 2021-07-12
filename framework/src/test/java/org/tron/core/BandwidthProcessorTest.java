@@ -260,7 +260,12 @@ public class BandwidthProcessorTest {
 
     AccountCapsule ownerCapsuleNew = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    Assert.assertEquals(122L, ownerCapsuleNew.getNetUsage());
+    long netUsage =
+        bytes * chainBaseManager.getDynamicPropertiesStore().getCreateNewAccountBandwidthRate();
+    Assert.assertEquals(
+        netUsage,
+        ownerCapsuleNew.getNetUsage());
+    Assert.assertEquals(netUsage, trace.getReceipt().getNetUsage());
   }
 
 
