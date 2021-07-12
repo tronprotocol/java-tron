@@ -4,6 +4,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.common.reflect.TypeToken;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
@@ -22,6 +23,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.ProtoCapsule;
+import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
@@ -160,6 +162,21 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public boolean has(byte[] key) {
     return revokingDB.has(key);
+  }
+
+  @Override
+  public boolean hasNext() {
+    Iterator iterator = revokingDB.iterator();
+    boolean value = iterator.hasNext();
+    // close jni
+    if (value && iterator instanceof DBIterator) {
+      try {
+        ((DBIterator) iterator).close();
+      } catch (IOException e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
+    return value;
   }
 
   @Override

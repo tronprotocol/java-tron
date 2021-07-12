@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -12,6 +13,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
+import org.tron.core.db.common.iterator.DBIterator;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -80,6 +82,20 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   }
 
   public abstract boolean has(byte[] key);
+
+  public  boolean hasNext() {
+    Iterator iterator = dbSource.iterator();
+    boolean value = iterator.hasNext();
+    // close jni
+    if (value && iterator instanceof DBIterator) {
+      try {
+        ((DBIterator) iterator).close();
+      } catch (IOException e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
+    return value;
+  }
 
   public String getName() {
     return this.getClass().getSimpleName();
