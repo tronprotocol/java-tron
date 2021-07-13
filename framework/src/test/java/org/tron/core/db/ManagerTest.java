@@ -628,6 +628,45 @@ public class ManagerTest extends BlockGenerate {
   }
 
   @Test
+  public void getVerifyTxsTest(){
+    TransferContract c1 = TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+            .setAmount(1).build();
+
+    TransferContract c2 = TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+            .setAmount(2).build();
+
+    AccountContract.AccountPermissionUpdateContract c3 =
+            AccountContract.AccountPermissionUpdateContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom("f1".getBytes())).build();
+
+    TransactionCapsule t1 = new TransactionCapsule(c1, ContractType.TransferContract);
+    TransactionCapsule t2 = new TransactionCapsule(c2, ContractType.TransferContract);
+    TransactionCapsule t3 = new TransactionCapsule(c3, ContractType.AccountPermissionUpdateContract);
+
+    List<Transaction> list = new ArrayList<>();
+
+    list.add(t1.getInstance());
+    BlockCapsule capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    List<TransactionCapsule> txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
+
+    dbManager.getPendingTransactions().add(t1);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 0);
+
+    list.add(t2.getInstance());
+    capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
+
+    dbManager.getPendingTransactions().add(t3);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 2);
+  }
+
+  @Test
   public void doNotSwitch()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,

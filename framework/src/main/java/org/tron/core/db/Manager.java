@@ -986,8 +986,9 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
     List<TransactionCapsule> txs = getVerifyTxs(block);
-    logger.info("Block num: {}, pending size: {}, block tx size: {}, verify tx size: {}",
-            block.getNum(), pendingTransactions.size(), block.getTransactions().size(), txs.size());
+    logger.info("Block num: {}, re-push-size: {}, pending-size: {}, block-tx-size: {}, verify-tx-size: {}",
+            block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
+            block.getTransactions().size(), txs.size());
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1652,8 +1653,6 @@ public class Manager {
 
   private void preValidateTransactionSign(List<TransactionCapsule> txs)
       throws InterruptedException, ValidateSignatureException {
-//    logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
-//        + ", block num:" + block.getNum());
     int transSize = txs.size();
     if (transSize <= 0) {
       return;
