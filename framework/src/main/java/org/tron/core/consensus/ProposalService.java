@@ -254,6 +254,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveFreeNetLimit(entry.getValue());
           break;
         }
+        case TOTAL_NET_LIMIT: {
+          manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
+          break;
+        }
 
         default:
           find = false;

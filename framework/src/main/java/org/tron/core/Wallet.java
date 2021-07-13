@@ -1014,6 +1014,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getFreeNetLimit())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
+        .build());
+
     return builder.build();
   }
 
