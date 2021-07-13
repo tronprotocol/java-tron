@@ -342,7 +342,7 @@ public class ChainBaseManager {
    * judge has blocks.
    */
   public boolean hasBlocks() {
-    return getBlockStore().iterator().hasNext() || this.khaosDb.hasData();
+    return getBlockStore().isNotEmpty() || this.khaosDb.hasData();
   }
 
   public void setBlockReference(TransactionCapsule trans) {
