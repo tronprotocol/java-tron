@@ -18,6 +18,7 @@ message SmartContract {
         Event = 3;
         Fallback = 4;
         Receive = 5;
+        Error = 6;
       }
       message Param {
         bool indexed = 1;
