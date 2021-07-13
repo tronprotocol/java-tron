@@ -643,7 +643,8 @@ public class ManagerTest extends BlockGenerate {
 
     TransactionCapsule t1 = new TransactionCapsule(c1, ContractType.TransferContract);
     TransactionCapsule t2 = new TransactionCapsule(c2, ContractType.TransferContract);
-    TransactionCapsule t3 = new TransactionCapsule(c3, ContractType.AccountPermissionUpdateContract);
+    TransactionCapsule t3 =
+            new TransactionCapsule(c3, ContractType.AccountPermissionUpdateContract);
 
     List<Transaction> list = new ArrayList<>();
 

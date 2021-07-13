@@ -811,15 +811,17 @@ public class Manager {
           ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
           TransactionExpirationException, TooBigTransactionException, DupTransactionException,
           TaposException, ValidateScheduleException, ReceiptCheckErrException,
-          VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException{
+          VMIllegalException, TooBigTransactionResultException,
+          ZksnarkException, BadBlockException {
     applyBlock(block, block.getTransactions());
   }
 
   private void applyBlock(BlockCapsule block, List<TransactionCapsule> txs)
           throws ContractValidateException, ContractExeException, ValidateSignatureException,
-          AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException,
-          DupTransactionException, TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
+          AccountResourceInsufficientException, TransactionExpirationException,
+          TooBigTransactionException,DupTransactionException, TaposException,
+          ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
+          TooBigTransactionResultException, ZksnarkException, BadBlockException {
     processBlock(block, txs);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -986,7 +988,8 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
     List<TransactionCapsule> txs = getVerifyTxs(block);
-    logger.info("Block num: {}, re-push-size: {}, pending-size: {}, block-tx-size: {}, verify-tx-size: {}",
+    logger.info("Block num: {}, re-push-size: {}, pending-size: {}, "
+                    + "block-tx-size: {}, verify-tx-size: {}",
             block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
             block.getTransactions().size(), txs.size());
     try (PendingManager pm = new PendingManager(this)) {
