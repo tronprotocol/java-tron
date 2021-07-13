@@ -169,12 +169,15 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     Iterator iterator = revokingDB.iterator();
     boolean value = iterator.hasNext();
     // close jni
-    closeJniIterator(iterator);
+    if (value) {
+      closeJniIterator(iterator);
+    }
+
     return value;
   }
 
   private void closeJniIterator(Iterator iterator) {
-    if (iterator != null && iterator.hasNext() && iterator instanceof DBIterator) {
+    if (iterator instanceof DBIterator) {
       try {
         ((DBIterator) iterator).close();
       } catch (IOException e) {
