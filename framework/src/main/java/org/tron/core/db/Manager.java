@@ -412,7 +412,7 @@ public class Manager {
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
-    initCacheTxs();
+    // initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
