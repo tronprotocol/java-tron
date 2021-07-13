@@ -237,6 +237,10 @@ public class Manager {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
             }
           } catch (Throwable ex) {
+            if (ex instanceof InterruptedException) {
+              Thread.currentThread().interrupt();
+              logger.error("unknown exception happened in rePush loop", ex);
+            }
             logger.error("unknown exception happened in rePush loop", ex);
           } finally {
             if (tx != null) {

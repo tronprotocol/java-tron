@@ -213,24 +213,18 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (owner.getType() != PermissionType.Owner) {
       throw new ContractValidateException("owner permission type is error");
     }
-    if (!checkPermission(owner)) {
-      return false;
-    }
+    checkPermission(owner);
     if (accountCapsule.getIsWitness()) {
       if (witness.getType() != PermissionType.Witness) {
         throw new ContractValidateException("witness permission type is error");
       }
-      if (!checkPermission(witness)) {
-        return false;
-      }
+      checkPermission(witness);
     }
     for (Permission permission : actives) {
       if (permission.getType() != PermissionType.Active) {
         throw new ContractValidateException("active permission type is error");
       }
-      if (!checkPermission(permission)) {
-        return false;
-      }
+      checkPermission(permission);
     }
     return true;
   }
