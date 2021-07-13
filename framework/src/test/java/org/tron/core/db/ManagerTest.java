@@ -628,7 +628,7 @@ public class ManagerTest extends BlockGenerate {
   }
 
   @Test
-  public void getVerifyTxsTest(){
+  public void getVerifyTxsTest() {
     TransferContract c1 = TransferContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
             .setAmount(1).build();
