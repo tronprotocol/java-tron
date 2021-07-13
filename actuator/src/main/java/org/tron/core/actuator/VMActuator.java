@@ -372,8 +372,7 @@ public class VMActuator implements Actuator2 {
               tokenValue, tokenId, blockCap.getInstance(), repository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
       this.vm = new VM();
-      this.program = new Program(ops, programInvoke, rootInternalTransaction, vmConfig
-      );
+      this.program = new Program(ops, programInvoke, rootInternalTransaction, vmConfig);
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
       if (enableEventListener && isCheckTransaction()) {

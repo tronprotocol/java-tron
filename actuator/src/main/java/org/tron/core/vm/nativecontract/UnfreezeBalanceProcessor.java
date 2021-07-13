@@ -100,7 +100,7 @@ public class UnfreezeBalanceProcessor {
     }
   }
 
-  public void execute(UnfreezeBalanceParam param, Repository repo) throws ContractExeException {
+  public long execute(UnfreezeBalanceParam param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
     byte[] receiverAddress = param.getReceiverAddress();
 
@@ -211,5 +211,6 @@ public class UnfreezeBalanceProcessor {
     }
 
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
+    return unfreezeBalance;
   }
 }

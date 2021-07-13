@@ -195,6 +195,10 @@ public class InternalTransaction {
     return value;
   }
 
+  public void setValue(long value) {
+    this.value= value;
+  }
+
   public byte[] getData() {
     if (data == null) {
       return EMPTY_BYTE_ARRAY;

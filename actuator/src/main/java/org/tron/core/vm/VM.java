@@ -334,7 +334,7 @@ public class VM {
       }
 
       program.spendEnergy(energyCost, op.name());
-      //program.checkCPUTimeLimit(op.name());
+      program.checkCPUTimeLimit(op.name());
 
       // Execute operation
       switch (op) {

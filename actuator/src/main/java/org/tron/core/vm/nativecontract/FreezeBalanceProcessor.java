@@ -71,7 +71,7 @@ public class FreezeBalanceProcessor {
     }
   }
 
-  public void execute(FreezeBalanceParam param,  Repository repo) throws ContractExeException {
+  public void execute(FreezeBalanceParam param,  Repository repo) {
     // calculate expire time
     DynamicPropertiesStore dynamicStore = repo.getDynamicPropertiesStore();
     long nowInMs = dynamicStore.getLatestBlockHeaderTimestamp();

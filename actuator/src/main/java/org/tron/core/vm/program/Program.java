@@ -31,7 +31,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.*;
 import org.tron.core.capsule.*;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
@@ -63,7 +62,6 @@ import static java.lang.StrictMath.min;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.ArrayUtils.*;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 /**
@@ -1682,17 +1680,23 @@ public class Program {
 
   public boolean freeze(DataWord receiverAddress, DataWord frozenBalance, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
-    FreezeBalanceProcessor processor = new FreezeBalanceProcessor();
-    FreezeBalanceParam param = new FreezeBalanceParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] receiver = TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes());
+
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver,
+        frozenBalance.longValue(), null,
+        "freezeFor" + convertResourceToString(resourceType), nonce, null);
+
+    FreezeBalanceParam param = new FreezeBalanceParam();
     param.setOwnerAddress(owner);
-    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    param.setReceiverAddress(receiver);
     boolean needCheckFrozenTime = CommonParameter.getInstance()
         .getCheckFrozenTime() == 1;//for test
     param.setFrozenDuration(needCheckFrozenTime ?
         repository.getDynamicPropertiesStore().getMinFrozenTime() : 0);
     param.setResourceType(parseResourceCode(resourceType));
     try {
+      FreezeBalanceProcessor processor = new FreezeBalanceProcessor();
       param.setFrozenBalance(frozenBalance.sValue().longValueExact());
       processor.validate(param, repository);
       processor.execute(param, repository);
@@ -1700,32 +1704,36 @@ public class Program {
       return true;
     } catch (ContractValidateException e) {
       logger.error("validateForFreeze failure:{}", e.getMessage());
-    } catch (ContractExeException e) {
-      logger.error("executeForFreeze failure:{}", e.getMessage());
     } catch (ArithmeticException e) {
       logger.error("frozenBalance out of long range");
     }
+    internalTx.reject();
     return false;
   }
 
   public boolean unfreeze(DataWord receiverAddress, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
-    UnfreezeBalanceProcessor processor = new UnfreezeBalanceProcessor();
-    UnfreezeBalanceParam param = new UnfreezeBalanceParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] receiver = TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes());
+
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver, 0, null,
+        "unfreezeFor" + convertResourceToString(resourceType), nonce, null);
+
+    UnfreezeBalanceParam param = new UnfreezeBalanceParam();
     param.setOwnerAddress(owner);
-    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    param.setReceiverAddress(receiver);
     param.setResourceType(parseResourceCode(resourceType));
     try {
+      UnfreezeBalanceProcessor processor = new UnfreezeBalanceProcessor();
       processor.validate(param, repository);
-      processor.execute(param, repository);
+      long unfreezeBalance = processor.execute(param, repository);
       repository.commit();
+      internalTx.setValue(unfreezeBalance);
       return true;
     } catch (ContractValidateException e) {
       logger.error("validateForUnfreeze failure:{}", e.getMessage());
-    } catch (ContractExeException e) {
-      logger.error("executeForUnfreeze failure:{}", e.getMessage());
     }
+    internalTx.reject();
     return false;
   }
 
@@ -1774,8 +1782,24 @@ public class Program {
     }
   }
 
+  private String convertResourceToString(DataWord resourceType) {
+    switch (resourceType.intValue()) {
+      case 0:
+        return "Bandwidth";
+      case 1:
+        return "Energy";
+      default:
+        return "UnknownType";
+    }
+  }
+
   public boolean voteWitness(int witnessArrayOffset, int witnessArrayLength,
                              int amountArrayOffset, int amountArrayLength) {
+    Repository repository = getContractState().newRepositoryChild();
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+
+    InternalTransaction internalTx = addInternalTx(null, owner, null, 0, null,
+        "voteWitness", nonce, null);
 
     if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength ||
         memoryLoad(amountArrayOffset).intValueSafe() != amountArrayLength) {
@@ -1790,56 +1814,69 @@ public class Program {
       return false;
     }
 
-    int voteCount = witnessArrayLength;
-
     VoteWitnessParam param = new VoteWitnessParam();
-    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     param.setOwnerAddress(owner);
 
     byte[] witnessArrayData = memoryChunk(witnessArrayOffset + DataWord.WORD_SIZE,
-        voteCount * DataWord.WORD_SIZE);
+        witnessArrayLength * DataWord.WORD_SIZE);
     byte[] amountArrayData = memoryChunk(amountArrayOffset + DataWord.WORD_SIZE,
-        voteCount * DataWord.WORD_SIZE);
-
-    for (int i = 0; i < voteCount; i++) {
-      DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
-          i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
-      DataWord amount = new DataWord(Arrays.copyOfRange(amountArrayData,
-          i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
-      param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
-          amount.longValueSafe());
-    }
+        witnessArrayLength * DataWord.WORD_SIZE);
 
     try {
-      Repository repository = getContractState().newRepositoryChild();
+      for (int i = 0; i < witnessArrayLength; i++) {
+        DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
+            i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+        DataWord amount = new DataWord(Arrays.copyOfRange(amountArrayData,
+            i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+        param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
+            amount.sValue().longValueExact());
+      }
+
+      long totalAmount = 0;
+      for (int i = 0; i < witnessArrayLength; i++) {
+        Protocol.Vote vote = param.getVotes().get(i);
+        internalTx.getTokenInfo().put(
+            StringUtil.encode58Check(vote.getVoteAddress().toByteArray()),
+            vote.getVoteCount());
+        totalAmount += vote.getVoteCount();
+      }
+      internalTx.setValue(totalAmount * TRX_PRECISION);
+
       VoteWitnessProcessor processor = new VoteWitnessProcessor();
       processor.validate(param, repository);
       processor.execute(param, repository);
       repository.commit();
+      return true;
     } catch (ContractValidateException e) {
       logger.error("validateForVoteWitness failure:{}", e.getMessage());
-      return false;
+    } catch (ArithmeticException e) {
+      logger.error("voteAmount out of long range");
     }
-    return true;
+    internalTx.reject();
+    return false;
   }
 
   public long withdrawReward() {
-    WithdrawRewardParam param = new WithdrawRewardParam();
+    Repository repository = getContractState().newRepositoryChild();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+
+    InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
+        "withdrawReward", nonce, null);
+
+    WithdrawRewardParam param = new WithdrawRewardParam();
     param.setOwnerAddress(owner);
     param.setNowInMs(getTimestamp().longValue() * 1000);
-    long allowance;
     try {
-      Repository repository = getContractState().newRepositoryChild();
       WithdrawRewardProcessor processor = new WithdrawRewardProcessor();
       processor.validate(param, repository);
-      allowance = processor.execute(param, repository);
+      long allowance = processor.execute(param, repository);
       repository.commit();
+      internalTx.setValue(allowance);
+      return allowance;
     } catch (ContractValidateException e) {
       logger.error("validateForWithdrawReward failure:{}", e.getMessage());
-      return 0;
     }
-    return allowance;
+    return 0;
   }
 
   /**
