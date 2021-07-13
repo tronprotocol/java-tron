@@ -170,7 +170,7 @@ public class CommonParameter {
   public int solidityHttpPort;
   @Getter
   @Setter
-  public int jsonRpcHttpPort;
+  public int fullNodeJsonRpcHttpPort;
   @Getter
   @Setter
   public int solidityJsonRpcHttpPort;

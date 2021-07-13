@@ -1,6 +1,7 @@
 package org.tron.core.services.interfaceJsonRpcOnSolidity;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -38,12 +39,10 @@ public class JsonRpcServiceOnSolidity implements Service {
 
       context.addServlet(new ServletHolder(jsonRpcOnSolidityServlet), "/jsonrpc");
 
-      // filter
-      // ServletHandler handler = new ServletHandler();
-      // FilterHolder fh = handler
-      //     .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
-      //         EnumSet.of(DispatcherType.REQUEST));
-      // context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+      int maxHttpConnectNumber = CommonParameter.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
+      }
 
       server.start();
 

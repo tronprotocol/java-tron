@@ -19,9 +19,7 @@ import org.tron.core.services.http.RateLimiterServlet;
 @Slf4j(topic = "API")
 public class JsonRpcServlet extends RateLimiterServlet {
 
-  private static final long serialVersionUID = 12341234345L;
   private JsonRpcServer rpcServer = null;
-  private TronJsonRpcImpl testServiceImpl;
 
   @Autowired
   private NodeInfoService nodeInfoService;
@@ -33,10 +31,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
   // @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
-    testServiceImpl = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
+
+    TronJsonRpcImpl jsonRpcImpl = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
         this.getClass().getClassLoader(),
-        new Object[] {testServiceImpl},
+        new Object[] {jsonRpcImpl},
         new Class[] {TronJsonRpc.class},
         true);
 

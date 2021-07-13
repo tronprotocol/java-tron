@@ -94,13 +94,14 @@ public class Constant {
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
-  public static final String NODE_HTTP_JSONRPC_PORT = "node.http.jsonRpcPort";
-  public static final String NODE_HTTP_JSONRPC_ENABLE = "node.http.jsonRpcEnable";
-  public static final String NODE_HTTP_JSONRPC_SOLIDITY_PORT = "node.http.jsonRpcSolidityPort";
-  public static final String NODE_HTTP_JSONRPC_SOLIDITY_ENABLE = "node.http.jsonRpcSolidityEnable";
-  public static final String NODE_HTTP_JSONRPC_PBFT_PORT = "node.http.jsonRpcPBFTPort";
-  public static final String NODE_HTTP_JSONRPC_PBFT_ENABLE = "node.http.jsonRpcPBFTEnable";
   public static final String NODE_ENERGY_COST = "node.http.energyCost";
+
+  public static final String NODE_HTTP_JSONRPC_FULLNODE_ENABLE = "node.http.jsonRpcFullNodeEnable";
+  public static final String NODE_HTTP_JSONRPC_FULLNODE_PORT = "node.http.jsonRpcFullNodePort";
+  public static final String NODE_HTTP_JSONRPC_SOLIDITY_ENABLE = "node.http.jsonRpcSolidityEnable";
+  public static final String NODE_HTTP_JSONRPC_SOLIDITY_PORT = "node.http.jsonRpcSolidityPort";
+  public static final String NODE_HTTP_JSONRPC_PBFT_ENABLE = "node.http.jsonRpcPBFTEnable";
+  public static final String NODE_HTTP_JSONRPC_PBFT_PORT = "node.http.jsonRpcPBFTPort";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
   public static final String NODE_SOLIDITY_THREADS = "node.solidity.threads";

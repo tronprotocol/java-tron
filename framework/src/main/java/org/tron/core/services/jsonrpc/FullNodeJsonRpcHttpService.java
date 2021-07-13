@@ -1,19 +1,26 @@
 package org.tron.core.services.jsonrpc;
 
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.services.filter.HttpInterceptor;
 
 @Component
 @Slf4j(topic = "API")
 public class FullNodeJsonRpcHttpService implements Service {
 
-  private int port = CommonParameter.getInstance().getJsonRpcHttpPort();
+  private int port = CommonParameter.getInstance().getFullNodeJsonRpcHttpPort();
 
   private Server server;
 
@@ -38,12 +45,17 @@ public class FullNodeJsonRpcHttpService implements Service {
 
       context.addServlet(new ServletHolder(jsonRpcServlet), "/jsonrpc");
 
+      int maxHttpConnectNumber = CommonParameter.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
+      }
+
       // filter
-      // ServletHandler handler = new ServletHandler();
-      // FilterHolder fh = handler
-      //     .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
-      //         EnumSet.of(DispatcherType.REQUEST));
-      // context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+      ServletHandler handler = new ServletHandler();
+      FilterHolder fh = handler
+          .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
+              EnumSet.of(DispatcherType.REQUEST));
+      context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
 
       server.start();
 

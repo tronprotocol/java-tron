@@ -102,66 +102,6 @@ public interface TronJsonRpc {
     }
   }
 
-  @NoArgsConstructor
-  @AllArgsConstructor
-  @ToString
-  class BuildArguments1 {
-
-    public String from;
-    public String to;
-    public String gas; //not used
-    public String gasPrice; //not used
-    public String value; //not used
-    public String data;
-    public String nonce;
-
-    public Long tokenId = 0L;
-    public Long callTokenValue = 0L;
-    public String abi = "";
-    public Long callValue = 0L;
-    public Long consumeUserResourcePercent = 0L;
-    public Long originEnergyLimit = 0L;
-    public String name = "";
-    public Long feeLimit = 0L;
-
-    public Integer permissionId = 0;
-    public String extraData = "";
-
-    public boolean isVisible = false;
-
-    // @Override
-    // public String toString() {
-    //   return "BuildArguments{"
-    //       + "from='" + from + '\''
-    //       + ", to='" + to + '\''
-    //       + ", gas='" + gas + '\''
-    //       + ", gasPrice='" + gasPrice + '\''
-    //       + ", value='" + value + '\''
-    //       + ", data='" + data + '\''
-    //       + ", nonce='" + nonce + '\''
-    //       + '}';
-    // }
-
-  }
-
-  @NoArgsConstructor
-  @AllArgsConstructor
-  @ToString
-  class BuildArguments2 {
-    public String from;
-    public String to;
-    public String value; //not used
-
-    public Integer permissionId;
-    public String extraData;
-    public JSONObject abi;
-
-    // @Override
-    // public String toString() {
-    //   return "";
-    // }
-  }
-
   class CompilationResult {
     public String code;
     public CompilationInfo info;

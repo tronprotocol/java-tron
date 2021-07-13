@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -133,7 +132,7 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
     PARAMETER.pBFTHttpPort = 0;
-    PARAMETER.jsonRpcHttpPort = 0;
+    PARAMETER.fullNodeJsonRpcHttpPort = 0;
     PARAMETER.solidityJsonRpcHttpPort = 0;
     PARAMETER.pBFTJsonRpcHttpPort = 0;
     PARAMETER.energyCost = "";
@@ -297,8 +296,9 @@ public class Args extends CommonParameter {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
     }
 
-    if (config.hasPath(Constant.NODE_HTTP_JSONRPC_ENABLE)) {
-      PARAMETER.fullNodeHttpJsonRpcEnable = config.getBoolean(Constant.NODE_HTTP_JSONRPC_ENABLE);
+    if (config.hasPath(Constant.NODE_HTTP_JSONRPC_FULLNODE_ENABLE)) {
+      PARAMETER.fullNodeHttpJsonRpcEnable =
+          config.getBoolean(Constant.NODE_HTTP_JSONRPC_FULLNODE_ENABLE);
     }
 
     if (config.hasPath(Constant.NODE_HTTP_JSONRPC_SOLIDITY_ENABLE)) {
@@ -472,9 +472,9 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
             ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
 
-    PARAMETER.jsonRpcHttpPort =
-        config.hasPath(Constant.NODE_HTTP_JSONRPC_PORT)
-            ? config.getInt(Constant.NODE_HTTP_JSONRPC_PORT) : 8093;
+    PARAMETER.fullNodeJsonRpcHttpPort =
+        config.hasPath(Constant.NODE_HTTP_JSONRPC_FULLNODE_PORT)
+            ? config.getInt(Constant.NODE_HTTP_JSONRPC_FULLNODE_PORT) : 8093;
 
     PARAMETER.solidityJsonRpcHttpPort =
         config.hasPath(Constant.NODE_HTTP_JSONRPC_SOLIDITY_PORT)
