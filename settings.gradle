@@ -7,4 +7,5 @@ include 'consensus'
 include 'common'
 include 'example:actuator-example'
 include 'crypto'
+include 'plugins'
 
