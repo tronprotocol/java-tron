@@ -173,7 +173,7 @@ contract KittyBase is KittyAccessControl {
 
     /// @dev Transfer event as defined in current draft of ERC721. Emitted every time a kitten
     ///  ownership is assigned, including births.
-    event Transfer(address from, address to, uint256 tokenId);
+    event Transfer1(address from, address to, uint256 tokenId);
 
     /*** DATA TYPES ***/
 
@@ -305,7 +305,7 @@ contract KittyBase is KittyAccessControl {
             delete kittyIndexToApproved[_tokenId];
         }
         // Emit the transfer event.
-        emit Transfer(_from, _to, _tokenId);
+        emit Transfer1(_from, _to, _tokenId);
     }
 
     /// @dev An internal method that creates a new kitty and stores it. This
@@ -343,7 +343,7 @@ contract KittyBase is KittyAccessControl {
 
         Kitty memory _kitty = Kitty({
             genes: _genes,
-            birthTime: uint64(now),
+            birthTime: uint64(block.timestamp),
             cooldownEndBlock: 0,
             matronId: uint32(_matronId),
             sireId: uint32(_sireId),
@@ -1133,7 +1133,7 @@ contract KittyAuction is KittyBreeding {
         require(msg.value >= currentPrice + autoBirthFee);
 
         // Siring auction will throw if the bid fails.
-        siringAuction.bid.value(msg.value - autoBirthFee)(_sireId);
+        siringAuction.bid{value:(msg.value - autoBirthFee)}(_sireId);
         _breedWith(uint32(_matronId), uint32(_sireId));
     }
 
@@ -1626,8 +1626,8 @@ uint256 secondsPassed = 0;
 // A bit of insurance against negative values (or wraparound).
 // Probably not necessary (since Ethereum guarnatees that the
 // now variable doesn't ever go backwards).
-if (now > _auction.startedAt) {
-secondsPassed = now - _auction.startedAt;
+if (block.timestamp > _auction.startedAt) {
+secondsPassed = block.timestamp - _auction.startedAt;
 }
 
 return _computeCurrentPrice(
@@ -1815,7 +1815,7 @@ _seller,
 uint128(_startingPrice),
 uint128(_endingPrice),
 uint64(_duration),
-uint64(now)
+uint64(block.timestamp)
 );
 _addAuction(_tokenId, auction);
 }
@@ -1944,7 +1944,7 @@ _seller,
 uint128(_startingPrice),
 uint128(_endingPrice),
 uint64(_duration),
-uint64(now)
+uint64(block.timestamp)
 );
 _addAuction(_tokenId, auction);
 }
@@ -2018,7 +2018,7 @@ _seller,
 uint128(_startingPrice),
 uint128(_endingPrice),
 uint64(_duration),
-uint64(now)
+uint64(block.timestamp)
 );
 _addAuction(_tokenId, auction);
 }

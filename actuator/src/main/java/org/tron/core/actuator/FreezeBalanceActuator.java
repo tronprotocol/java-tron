@@ -7,6 +7,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -14,11 +15,13 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
@@ -263,6 +266,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
       long balance, long expireTime) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
+    DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
+        .getDelegatedResourceAccountIndexStore();
     byte[] key = DelegatedResourceCapsule.createDbKey(ownerAddress, receiverAddress);
     //modify DelegatedResourceStore
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
@@ -285,6 +290,38 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     }
     delegatedResourceStore.put(key, delegatedResourceCapsule);
+
+    //modify DelegatedResourceAccountIndexStore
+    {
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
+          .get(ownerAddress);
+      if (delegatedResourceAccountIndexCapsule == null) {
+        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+            ByteString.copyFrom(ownerAddress));
+      }
+      List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+      if (!toAccountsList.contains(ByteString.copyFrom(receiverAddress))) {
+        delegatedResourceAccountIndexCapsule.addToAccount(ByteString.copyFrom(receiverAddress));
+      }
+      delegatedResourceAccountIndexStore
+          .put(ownerAddress, delegatedResourceAccountIndexCapsule);
+    }
+
+    {
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
+          .get(receiverAddress);
+      if (delegatedResourceAccountIndexCapsule == null) {
+        delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+            ByteString.copyFrom(receiverAddress));
+      }
+      List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
+          .getFromAccountsList();
+      if (!fromAccountsList.contains(ByteString.copyFrom(ownerAddress))) {
+        delegatedResourceAccountIndexCapsule.addFromAccount(ByteString.copyFrom(ownerAddress));
+      }
+      delegatedResourceAccountIndexStore
+          .put(receiverAddress, delegatedResourceAccountIndexCapsule);
+    }
 
     //modify AccountStore
     AccountCapsule receiverCapsule = accountStore.get(receiverAddress);

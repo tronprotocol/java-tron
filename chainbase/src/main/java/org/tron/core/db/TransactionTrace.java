@@ -54,6 +54,8 @@ public class TransactionTrace {
 
   private CodeStore codeStore;
 
+  private AbiStore abiStore;
+
   private EnergyProcessor energyProcessor;
 
   private TrxType trxType;
@@ -63,10 +65,6 @@ public class TransactionTrace {
   private Runtime runtime;
 
   private ForkController forkController;
-
-  private VotesStore votesStore;
-
-  private DelegationStore delegationStore;
 
   @Getter
   private TransactionContext transactionContext;
@@ -96,6 +94,7 @@ public class TransactionTrace {
     this.dynamicPropertiesStore = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
     this.contractStore = storeFactory.getChainBaseManager().getContractStore();
     this.codeStore = storeFactory.getChainBaseManager().getCodeStore();
+    this.abiStore = storeFactory.getChainBaseManager().getAbiStore();
     this.accountStore = storeFactory.getChainBaseManager().getAccountStore();
 
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
@@ -103,9 +102,6 @@ public class TransactionTrace {
     this.runtime = runtime;
     this.forkController = new ForkController();
     forkController.init(storeFactory.getChainBaseManager());
-
-    this.votesStore = storeFactory.getChainBaseManager().getVotesStore();
-    this.delegationStore = storeFactory.getChainBaseManager().getDelegationStore();
   }
 
   public TransactionCapsule getTrx() {
@@ -211,12 +207,6 @@ public class TransactionTrace {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
         deleteContract(convertToTronAddress((contract.getLast20Bytes())));
       }
-      for (DataWord address : transactionContext.getProgramResult().getDeleteVotes()) {
-        votesStore.delete(convertToTronAddress((address.getLast20Bytes())));
-      }
-      for (DataWord address : transactionContext.getProgramResult().getDeleteDelegation()) {
-        deleteDelegationByAddress(convertToTronAddress((address.getLast20Bytes())));
-      }
     }
   }
 
@@ -310,6 +300,7 @@ public class TransactionTrace {
   }
 
   public void deleteContract(byte[] address) {
+    abiStore.delete(address);
     codeStore.delete(address);
     accountStore.delete(address);
     contractStore.delete(address);
@@ -325,13 +316,6 @@ public class TransactionTrace {
     }
     return address;
   }
-
-  public void deleteDelegationByAddress(byte[] address){
-    delegationStore.delete(address); //begin Cycle
-    delegationStore.delete(("lastWithdraw-" + Hex.toHexString(address)).getBytes()); //last Withdraw cycle
-    delegationStore.delete(("end-" + Hex.toHexString(address)).getBytes()); //end cycle
-  }
-
 
   public enum TimeResultType {
     NORMAL,

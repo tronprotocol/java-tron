@@ -121,6 +121,7 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -171,6 +172,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -1002,11 +1004,6 @@ public class Wallet {
         .setKey("getAllowNewResourceModel")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
         .build());
-    
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowReceiptsMerkleRoot")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowReceiptsMerkleRoot())
-        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmFreeze")
@@ -1332,7 +1329,7 @@ public class Wallet {
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
           .getTransactionInfo(transactionId.toByteArray());
-    } catch (BadItemException e) {
+    } catch (StoreException e) {
       return null;
     }
     if (transactionInfoCapsule != null) {
@@ -1341,7 +1338,7 @@ public class Wallet {
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
-    } catch (StoreException e) {
+    } catch (BadItemException e) {
       return null;
     }
 
@@ -2479,13 +2476,19 @@ public class Wallet {
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = chainBaseManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    SmartContract.ABI abi = contractStore.getABI(contractAddress);
-    if (abi == null) {
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(contractAddress);
+    if (contractCapsule == null) {
       throw new ContractValidateException(
           "No contract or not a valid smart contract");
+    }
+    AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(contractAddress);
+    SmartContract.ABI abi;
+    if (abiCapsule == null || abiCapsule.getData() == null) {
+      abi = SmartContract.ABI.getDefaultInstance();
+    } else {
+      abi = abiCapsule.getInstance();
     }
 
     byte[] selector = WalletUtil.getSelector(
@@ -2584,9 +2587,13 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = chainBaseManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
+      }
       return contractCapsule.getInstance();
     }
     return null;
@@ -2601,7 +2608,7 @@ public class Wallet {
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
           "Get contract failed, the account does not exist or the account does not have a code "
@@ -2609,14 +2616,20 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = dbManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
-      CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
-      if (Objects.nonNull(codeCapsule)) {
-        contractCapsule.setRuntimecode(codeCapsule.getData());
-        return contractCapsule.generateWrapper();
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
       }
+      CodeCapsule codeCapsule = chainBaseManager.getCodeStore().get(address);
+      if (Objects.nonNull(codeCapsule) && Objects.nonNull(codeCapsule.getData())) {
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+      } else {
+        contractCapsule.setRuntimecode(new byte[0]);
+      }
+      return contractCapsule.generateWrapper();
     }
     return null;
   }

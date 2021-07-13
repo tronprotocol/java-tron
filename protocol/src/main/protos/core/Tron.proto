@@ -510,7 +510,6 @@ message BlockHeader {
     bytes witness_address = 9;
     int32 version = 10;
     bytes accountStateRoot = 11;
-    bytes receiptsRoot = 12;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;

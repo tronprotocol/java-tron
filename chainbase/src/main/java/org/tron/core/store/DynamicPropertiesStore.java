@@ -117,6 +117,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
   //Used only for token updates, once，value is {0,1}
   private static final byte[] TOKEN_UPDATE_DONE = "TOKEN_UPDATE_DONE".getBytes();
+  //Used only for abi moves, once，value is {0,1}
+  private static final byte[] ABI_MOVE_DONE = "ABI_MOVE_DONE".getBytes();
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
   //If the parameter is larger than 0, allow ZKsnark Transaction
@@ -153,7 +155,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
   private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
-  private static final byte[] ALLOW_RECEIPTS_MERKLE_ROOT = "ALLOW_RECEIPTS_MERKLE_ROOT".getBytes();
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
 
@@ -236,6 +237,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTokenUpdateDone();
     } catch (IllegalArgumentException e) {
       this.saveTokenUpdateDone(0);
+    }
+
+    try {
+      this.getAbiMoveDone();
+    } catch (IllegalArgumentException e) {
+      this.saveAbiMoveDone(0);
     }
 
     try {
@@ -749,13 +756,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowNewResourceModel(CommonParameter.getInstance().getAllowNewResourceModel());
     }
 
-
-    try {
-      this.getAllowReceiptsMerkleRoot();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowReceiptsMerkleRoot(CommonParameter.getInstance().getAllowReceiptsMerkleRoot());
-    }
-
     try {
       this.getAllowTvmFreeze();
     } catch (IllegalArgumentException e) {
@@ -812,6 +812,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOKEN_UPDATE_DONE"));
+  }
+
+  public void saveAbiMoveDone(long num) {
+    this.put(ABI_MOVE_DONE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getAbiMoveDone() {
+    return Optional.ofNullable(getUnchecked(ABI_MOVE_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ABI_MOVE_DONE"));
   }
 
   public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
@@ -2245,23 +2258,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_NEW_RESOURCE_MODEL"));
-  }
-
-  public void saveAllowReceiptsMerkleRoot(long value) {
-    this.put(ALLOW_RECEIPTS_MERKLE_ROOT, new BytesCapsule(ByteArray.fromLong(value)));
-  }
-
-  public long getAllowReceiptsMerkleRoot() {
-    return Optional.ofNullable(getUnchecked(ALLOW_RECEIPTS_MERKLE_ROOT))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("not found ALLOW_RECEIPTS_MERKLE_ROOT")
-            );
-  }
-
-  public boolean allowReceiptsMerkleRoot() {
-    return getAllowReceiptsMerkleRoot() == 1L;
   }
 
   public void saveAllowTvmFreeze(long allowTvmFreeze) {

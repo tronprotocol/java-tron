@@ -178,6 +178,8 @@ public class HttpApiOnPBFTService implements Service {
       context.addServlet(new ServletHolder(getBlockByNumOnPBFTServlet), "/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceOnPBFTServlet),
           "/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnPBFTServlet),
+          "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(getExchangeByIdOnPBFTServlet), "/getexchangebyid");
       context.addServlet(new ServletHolder(listExchangesOnPBFTServlet), "/listexchanges");
       context.addServlet(new ServletHolder(getAccountByIdOnPBFTServlet), "/getaccountbyid");

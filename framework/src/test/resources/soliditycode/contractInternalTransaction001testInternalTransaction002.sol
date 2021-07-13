@@ -5,7 +5,7 @@ contract A{
 
     function test2(address cAddress,uint256 amount) public payable{
         //cAddress.call.value(amount)();//2.1
-        cAddress.call.value(amount)("");//2.1
+        cAddress.call{value:amount}("");//2.1
     }
 }
 

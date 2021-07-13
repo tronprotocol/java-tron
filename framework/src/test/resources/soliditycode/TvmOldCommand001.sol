@@ -1,10 +1,10 @@
 
 
 contract binaryRightContract{
-    function binaryMoveR(int i)public returns (int z) {
+    function binaryMoveR(uint i)public returns (uint z) {
         return z = 5 >> i;
     }
-    function binaryLiftR(int i)public returns (int z) {
+    function binaryLiftR(uint i)public returns (uint z) {
         return z = 5 << i;
     }
 

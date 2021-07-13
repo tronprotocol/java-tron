@@ -192,7 +192,7 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get Delegated Resource Account Index by http")
+  @Test(enabled = true, description = "Get Delegated Resource Account Index by http")
   public void test009GetDelegatedResourceAccountIndex() {
     response = HttpMethed.getDelegatedResourceAccountIndex(httpnode, freezeBalanceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -205,7 +205,7 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get Delegated Resource Account Index from solidity by http")
+  @Test(enabled = true, description = "Get Delegated Resource Account Index from solidity by http")
   public void test010GetDelegatedResourceAccountIndexFromSolidity() {
     response = HttpMethed
         .getDelegatedResourceAccountIndexFromSolidity(httpSoliditynode, freezeBalanceAddress);
@@ -219,7 +219,7 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get Delegated Resource Account Index from PBFT by http")
+  @Test(enabled = true, description = "Get Delegated Resource Account Index from PBFT by http")
   public void test011GetDelegatedResourceAccountIndexFromPbft() {
     response = HttpMethed
         .getDelegatedResourceAccountIndexFromPbft(httpPbftNode, freezeBalanceAddress);

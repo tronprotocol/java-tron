@@ -90,6 +90,7 @@ import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
@@ -270,6 +271,10 @@ public class Manager {
     return getDynamicPropertiesStore().getTokenUpdateDone() == 0L;
   }
 
+  public boolean needToMoveAbi() {
+    return getDynamicPropertiesStore().getAbiMoveDone() == 0L;
+  }
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return chainBaseManager.getDynamicPropertiesStore();
   }
@@ -399,6 +404,11 @@ public class Manager {
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(chainBaseManager).doWork();
     }
+
+    if (needToMoveAbi()) {
+      new MoveAbiHelper(chainBaseManager).doWork();
+    }
+
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
@@ -712,6 +722,7 @@ public class Manager {
 
         try (ISession tmpSession = revokingStore.buildSession()) {
           processTransaction(trx, null);
+          trx.setTrxTrace(null);
           pendingTransactions.add(trx);
           tmpSession.merge();
         }
@@ -951,17 +962,6 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
-        if (getDynamicPropertiesStore().allowReceiptsMerkleRoot()
-                && !block.calcReceiptsRoot().equals(block.getReceiptsRoot())) {
-          logger.warn(
-                  "The receipts merkle root doesn't match, Calc result is "
-                          + block.calcMerkleRoot()
-                          + " , the headers is "
-                          + block.getMerkleRoot());
-          throw new BadBlockException("The receipt merkle hash is not validated");
-        }
-
-
         consensus.receiveBlock(block);
       }
 
@@ -1323,9 +1323,6 @@ public class Manager {
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
-    if (getDynamicPropertiesStore().allowReceiptsMerkleRoot()) {
-      blockCapsule.setReceiptsRoot();
-    }
     blockCapsule.sign(miner.getPrivateKey());
 
     return blockCapsule;
