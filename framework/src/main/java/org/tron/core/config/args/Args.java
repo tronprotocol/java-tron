@@ -188,6 +188,7 @@ public class Args extends CommonParameter {
     PARAMETER.historyBalanceLookup = false;
     PARAMETER.openPrintLog = true;
     PARAMETER.openTransactionSort = false;
+    PARAMETER.allowAccountAssetOptimization = 0;
   }
 
   /**
@@ -760,6 +761,10 @@ public class Args extends CommonParameter {
         .getBoolean(Constant.OPEN_PRINT_LOG);
     PARAMETER.openTransactionSort = config.hasPath(Constant.OPEN_TRANSACTION_SORT) && config
         .getBoolean(Constant.OPEN_TRANSACTION_SORT);
+
+    PARAMETER.allowAccountAssetOptimization = config
+            .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
+            .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
 
     logConfig();
   }
