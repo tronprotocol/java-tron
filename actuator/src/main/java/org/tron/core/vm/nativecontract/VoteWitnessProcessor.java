@@ -17,6 +17,7 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "Processor")
@@ -74,7 +75,7 @@ public class VoteWitnessProcessor {
 
   public void execute(VoteWitnessParam param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
-    VoteRewardUtils.withdrawReward(ownerAddress, repo);
+    VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
 

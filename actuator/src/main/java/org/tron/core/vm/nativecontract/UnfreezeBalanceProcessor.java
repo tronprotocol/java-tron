@@ -12,10 +12,11 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "Processor")
@@ -103,6 +104,8 @@ public class UnfreezeBalanceProcessor {
   public long execute(UnfreezeBalanceParam param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
     byte[] receiverAddress = param.getReceiverAddress();
+
+    VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
@@ -199,7 +202,7 @@ public class UnfreezeBalanceProcessor {
 
     // notice: clear vote code is removed
     // notice: clear vote code is added
-    if (!accountCapsule.getVotesList().isEmpty()) {
+    if (VMConfig.allowTvmVote() && !accountCapsule.getVotesList().isEmpty()) {
       VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
       if (votesCapsule == null) {
         votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),

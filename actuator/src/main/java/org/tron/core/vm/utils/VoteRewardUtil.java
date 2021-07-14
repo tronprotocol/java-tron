@@ -1,7 +1,6 @@
-package org.tron.core.vm.nativecontract;
+package org.tron.core.vm.utils;
 
 import java.math.BigInteger;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.store.DelegationStore;
@@ -9,10 +8,9 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
-@Slf4j(topic = "VoteRewardUtils")
-public class VoteRewardUtils {
+public class VoteRewardUtil {
 
-  private VoteRewardUtils() {
+  private VoteRewardUtil() {
   }
 
   public static void withdrawReward(byte[] address, Repository repository) {

@@ -749,8 +749,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowNewRewardAlgorithm();
     } catch (IllegalArgumentException e) {
-      this.saveAllowNewRewardAlgorithm(
-          CommonParameter.getInstance().getAllowNewRewardAlgorithm());
+      this.saveAllowNewRewardAlgorithm(CommonParameter.getInstance().getAllowNewRewardAlgorithm());
+      if (CommonParameter.getInstance().getAllowNewRewardAlgorithm() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      }
     }
 
     try {

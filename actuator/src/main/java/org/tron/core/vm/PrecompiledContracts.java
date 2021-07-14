@@ -67,7 +67,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.nativecontract.VoteRewardUtils;
+import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
@@ -1550,7 +1550,7 @@ public class PrecompiledContracts {
 
       byte[] callerAddress = getCallerAddress();
       long rewardBalance =
-          VoteRewardUtils.queryReward(convertToTronAddress(callerAddress), getDeposit());
+          VoteRewardUtil.queryReward(convertToTronAddress(callerAddress), getDeposit());
       return Pair.of(true, longTo32Bytes(rewardBalance));
 
     }

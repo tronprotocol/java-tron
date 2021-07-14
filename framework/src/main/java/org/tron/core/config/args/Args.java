@@ -183,12 +183,12 @@ public class Args extends CommonParameter {
     PARAMETER.allowBlackHoleOptimization = 0;
     PARAMETER.allowNewResourceModel = 0;
     PARAMETER.allowTvmIstanbul = 0;
-    PARAMETER.historyBalanceLookup = false;
-    PARAMETER.openPrintLog = true;
-    PARAMETER.openTransactionSort = false;
     PARAMETER.allowTvmFreeze = 0;
     PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowTvmVote = 0;
+    PARAMETER.historyBalanceLookup = false;
+    PARAMETER.openPrintLog = true;
+    PARAMETER.openTransactionSort = false;
   }
 
   /**

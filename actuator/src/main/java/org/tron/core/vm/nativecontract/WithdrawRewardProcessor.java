@@ -12,6 +12,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.VoteRewardUtil;
 
 @Slf4j(topic = "Processor")
 public class WithdrawRewardProcessor {
@@ -34,7 +35,7 @@ public class WithdrawRewardProcessor {
     }
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
-    long reward = VoteRewardUtils.queryReward(ownerAddress, repo);
+    long reward = VoteRewardUtil.queryReward(ownerAddress, repo);
 
     try {
       LongMath.checkedAdd(LongMath.checkedAdd(
@@ -50,7 +51,7 @@ public class WithdrawRewardProcessor {
   public long execute(WithdrawRewardParam param, Repository repo) {
     byte[] ownerAddress = param.getOwnerAddress();
 
-    VoteRewardUtils.withdrawReward(ownerAddress, repo);
+    VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
