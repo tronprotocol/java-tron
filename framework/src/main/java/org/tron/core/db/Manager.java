@@ -239,7 +239,6 @@ public class Manager {
           } catch (Throwable ex) {
             if (ex instanceof InterruptedException) {
               Thread.currentThread().interrupt();
-              logger.error("unknown exception happened in rePush loop", ex);
             }
             logger.error("unknown exception happened in rePush loop", ex);
           } finally {
