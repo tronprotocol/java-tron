@@ -48,6 +48,7 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
 import org.tron.core.vm.utils.MUtil;
+import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.Common;
@@ -505,6 +506,12 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
 
+    // 该方案总有当前维护期的收益无法提取
+    // 另一种方案是如果该自杀合约尚有未提现的收益，则不允许其自杀
+    if (VMConfig.allowTvmVote()) {
+      withdrawRewardAndCancelVote(owner, getContractState());
+    }
+
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -542,9 +549,6 @@ public class Program {
       }
     }
     if (VMConfig.allowTvmFreeze()) {
-      if (VMConfig.allowTvmVote()) {
-        withdrawRewardAndCancelVote(owner, getContractState());
-      }
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
       if (FastByteComparisons.isEqual(owner, obtainer)) {
         transferDelegatedResourceToInheritor(owner, blackHoleAddress, getContractState());
@@ -587,9 +591,9 @@ public class Program {
   }
 
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
-    AccountCapsule ownerCapsule = repo.getAccount(owner);
+    VoteRewardUtil.withdrawReward(owner, repo);
 
-    long reward = VoteRewardUtils.queryReward(owner, repo);
+    AccountCapsule ownerCapsule = repo.getAccount(owner);
     if (!ownerCapsule.getVotesList().isEmpty()) {
       VotesCapsule votesCapsule = repo.getVotes(owner);
       if (votesCapsule == null) {
@@ -600,8 +604,18 @@ public class Program {
       votesCapsule.clearNewVotes();
       repo.updateVotes(owner, votesCapsule);
     }
-
-    repo.addBalance(owner, Math.addExact(ownerCapsule.getAllowance(), reward));
+    try {
+      long balance = ownerCapsule.getBalance();
+      long allowance = ownerCapsule.getAllowance();
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+          .setBalance(Math.addExact(balance, allowance))
+          .setAllowance(0)
+          .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
+          .build());
+      repo.putAccountValue(ownerCapsule.createDbKey(), ownerCapsule);
+    } catch (ArithmeticException e) {
+      throw new BytecodeExecutionException("Suicide: balance and allowance out of long range.");
+    }
   }
 
   public boolean canSuicide() {
@@ -1131,7 +1145,7 @@ public class Program {
   }
 
   public DataWord getRewardBalance(DataWord address) {
-    long rewardBalance = VoteRewardUtils.queryReward(
+    long rewardBalance = VoteRewardUtil.queryReward(
         TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
     return new DataWord(rewardBalance);
   }
@@ -1683,6 +1697,7 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] receiver = TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes());
 
+    increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, owner, receiver,
         frozenBalance.longValue(), null,
         "freezeFor" + convertResourceToString(resourceType), nonce, null);
@@ -1691,7 +1706,7 @@ public class Program {
     param.setOwnerAddress(owner);
     param.setReceiverAddress(receiver);
     boolean needCheckFrozenTime = CommonParameter.getInstance()
-        .getCheckFrozenTime() == 1;//for test
+        .getCheckFrozenTime() == 1; // for test
     param.setFrozenDuration(needCheckFrozenTime ?
         repository.getDynamicPropertiesStore().getMinFrozenTime() : 0);
     param.setResourceType(parseResourceCode(resourceType));
@@ -1703,9 +1718,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("validateForFreeze failure:{}", e.getMessage());
+      logger.error("Freeze: validate failure, reason is {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("frozenBalance out of long range");
+      logger.error("Freeze: frozenBalance out of long range.");
     }
     internalTx.reject();
     return false;
@@ -1716,6 +1731,7 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] receiver = TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes());
 
+    increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, owner, receiver, 0, null,
         "unfreezeFor" + convertResourceToString(resourceType), nonce, null);
 
@@ -1731,7 +1747,7 @@ public class Program {
       internalTx.setValue(unfreezeBalance);
       return true;
     } catch (ContractValidateException e) {
-      logger.error("validateForUnfreeze failure:{}", e.getMessage());
+      logger.error("Unfreeze: validate failure, reason is {}", e.getMessage());
     }
     internalTx.reject();
     return false;
@@ -1798,31 +1814,32 @@ public class Program {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
 
+    increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, owner, null, 0, null,
         "voteWitness", nonce, null);
 
     if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength ||
         memoryLoad(amountArrayOffset).intValueSafe() != amountArrayLength) {
-      logger.warn("Memory array length do not match length parameter!");
+      logger.warn("VoteWitness: memory array length do not match length parameter!");
       throw new BytecodeExecutionException(
-          "Memory array length do not match length parameter!");
+          "VoteWitness: memory array length do not match length parameter!");
     }
 
     if (witnessArrayLength != amountArrayLength) {
-      logger.warn("witness array length {} does not match amount array length {}",
+      logger.warn("VoteWitness: witness array length {} does not match amount array length {}",
           witnessArrayLength, amountArrayLength);
       return false;
     }
 
-    VoteWitnessParam param = new VoteWitnessParam();
-    param.setOwnerAddress(owner);
-
-    byte[] witnessArrayData = memoryChunk(witnessArrayOffset + DataWord.WORD_SIZE,
-        witnessArrayLength * DataWord.WORD_SIZE);
-    byte[] amountArrayData = memoryChunk(amountArrayOffset + DataWord.WORD_SIZE,
-        witnessArrayLength * DataWord.WORD_SIZE);
-
     try {
+      VoteWitnessParam param = new VoteWitnessParam();
+      param.setOwnerAddress(owner);
+
+      byte[] witnessArrayData = memoryChunk(Math.addExact(witnessArrayOffset, DataWord.WORD_SIZE),
+          Math.multiplyExact(witnessArrayLength, DataWord.WORD_SIZE));
+      byte[] amountArrayData = memoryChunk(Math.addExact(amountArrayOffset, DataWord.WORD_SIZE),
+          Math.multiplyExact(amountArrayLength, DataWord.WORD_SIZE));
+
       for (int i = 0; i < witnessArrayLength; i++) {
         DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
             i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
@@ -1848,9 +1865,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("validateForVoteWitness failure:{}", e.getMessage());
+      logger.error("VoteWitness: validate failure, reason is {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("voteAmount out of long range");
+      logger.error("VoteWitness: int or long out of range, caused by {}", e.getMessage());
     }
     internalTx.reject();
     return false;
@@ -1860,6 +1877,7 @@ public class Program {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
 
+    increaseNonce();
     InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
         "withdrawReward", nonce, null);
 
@@ -1874,7 +1892,7 @@ public class Program {
       internalTx.setValue(allowance);
       return allowance;
     } catch (ContractValidateException e) {
-      logger.error("validateForWithdrawReward failure:{}", e.getMessage());
+      logger.error("WithdrawReward: validate failure, reason is {}", e.getMessage());
     }
     return 0;
   }
