@@ -1139,6 +1139,10 @@ public class VM {
         }
         break;
         case FREEZE: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+
           DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
           DataWord frozenBalance = program.stackPop();
           DataWord receiverAddress = program.stackPop();
@@ -1149,6 +1153,10 @@ public class VM {
         }
         break;
         case UNFREEZE: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+
           DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
           DataWord receiverAddress = program.stackPop();
 
@@ -1167,6 +1175,10 @@ public class VM {
         }
         break;
         case VOTEWITNESS: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+
           int amountArrayLength = program.stackPop().intValueSafe();
           int amountArrayOffset = program.stackPop().intValueSafe();
           int witnessArrayLength = program.stackPop().intValueSafe();
@@ -1179,6 +1191,10 @@ public class VM {
         }
         break;
         case WITHDRAWREWARD: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+
           long allowance = program.withdrawReward();
           program.stackPush(new DataWord(allowance));
           program.step();
