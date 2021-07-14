@@ -322,7 +322,7 @@ public class ByteUtil {
     if (i == -1) {
       return bytes.length * 8;
     } else {
-      int byteLeadingZeros = Integer.numberOfLeadingZeros((int) bytes[i] & 0xff) - 24;
+      int byteLeadingZeros = Integer.numberOfLeadingZeros(bytes[i] & 0xff) - 24;
       return i * 8 + byteLeadingZeros;
     }
   }
