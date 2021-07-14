@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,13 +66,16 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
+import stest.tron.wallet.dailybuild.operationupdate.MutiSignSmartContractTest;
 
 
 @Slf4j
@@ -627,6 +631,46 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(
         chainManager.getHead().getBlockId(),
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+  }
+
+  @Test
+  public void getVerifyTxsTest() {
+    TransferContract c1 = TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+            .setAmount(1).build();
+
+    TransferContract c2 = TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+            .setAmount(2).build();
+
+    AccountContract.AccountPermissionUpdateContract c3 =
+            AccountContract.AccountPermissionUpdateContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom("f1".getBytes())).build();
+
+    TransactionCapsule t1 = new TransactionCapsule(c1, ContractType.TransferContract);
+    TransactionCapsule t2 = new TransactionCapsule(c2, ContractType.TransferContract);
+    TransactionCapsule t3 =
+            new TransactionCapsule(c3, ContractType.AccountPermissionUpdateContract);
+
+    List<Transaction> list = new ArrayList<>();
+
+    list.add(t1.getInstance());
+    BlockCapsule capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    List<TransactionCapsule> txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
+
+    dbManager.getPendingTransactions().add(t1);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 0);
+
+    list.add(t2.getInstance());
+    capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
+
+    dbManager.getPendingTransactions().add(t3);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 2);
   }
 
   @Test

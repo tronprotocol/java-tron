@@ -25,7 +25,7 @@ contract OuterContract {
 
     function callInner(address payable addr) payable public returns (uint) {
 
-        return InnerContract(addr).messageI.value(1)();
+        return InnerContract(addr).messageI{value:1}();
 
     }
 

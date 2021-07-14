@@ -3,7 +3,7 @@ package org.tron.core.services.http;
 /*
   Copyright (c) 2009, Orbitz World Wide
   All rights reserved.
-  
+
   Redistribution and use in source and binary forms, with or without modification,
   are permitted provided that the following conditions are met:
 
@@ -117,7 +117,7 @@ public class JsonFormat {
   protected static void print(Message message, JsonGenerator generator, boolean selfType)
       throws IOException {
     Map<FieldDescriptor, Object> fieldsToPrint = new TreeMap<>(message.getAllFields());
-    if (ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS && MESSAGES.contains(message.getClass())) {
+    if (ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS) {
       for (FieldDescriptor field : message.getDescriptorForType().getFields()) {
         if (field.isOptional()) {
           if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE

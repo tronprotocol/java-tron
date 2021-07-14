@@ -77,6 +77,8 @@ public class RepositoryImpl implements Repository {
   @Getter
   private AssetIssueV2Store assetIssueV2Store;
   @Getter
+  private AbiStore abiStore;
+  @Getter
   private CodeStore codeStore;
   @Getter
   private ContractStore contractStore;
@@ -126,6 +128,7 @@ public class RepositoryImpl implements Repository {
       ChainBaseManager manager = storeFactory.getChainBaseManager();
       dynamicPropertiesStore = manager.getDynamicPropertiesStore();
       accountStore = manager.getAccountStore();
+      abiStore = manager.getAbiStore();
       codeStore = manager.getCodeStore();
       contractStore = manager.getContractStore();
       assetIssueStore = manager.getAssetIssueStore();
@@ -798,7 +801,11 @@ public class RepositoryImpl implements Repository {
         if (deposit != null) {
           deposit.putContract(key, value);
         } else {
-          getContractStore().put(key.getData(), value.getContract());
+          ContractCapsule contractCapsule = value.getContract();
+          if (!abiStore.has(key.getData())) {
+            abiStore.put(key.getData(), new AbiCapsule(contractCapsule));
+          }
+          getContractStore().put(key.getData(), contractCapsule);
         }
       }
     }));
@@ -959,4 +966,5 @@ public class RepositoryImpl implements Repository {
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_WEIGHT"));
   }
+
 }

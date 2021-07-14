@@ -11,8 +11,10 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
@@ -74,7 +76,14 @@ public class LogInfoTriggerParser {
         abiMap.put(strContractAddr, ABI.getDefaultInstance());
         continue;
       }
-      ABI abi = contract.getInstance().getAbi();
+      AbiCapsule abiCapsule = StoreFactory.getInstance().getChainBaseManager()
+          .getAbiStore().get(contractAddress);
+      ABI abi;
+      if (abiCapsule == null || abiCapsule.getInstance() == null) {
+        abi = ABI.getDefaultInstance();
+      } else {
+        abi = abiCapsule.getInstance();
+      }
       String creatorAddr = StringUtil.encode58Check(
           TransactionTrace
               .convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));

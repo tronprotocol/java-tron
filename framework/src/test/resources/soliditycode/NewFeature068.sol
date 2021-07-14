@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.6.8;
+//pragma solidity ^0.6.8;
 
 abstract contract testModifier {
     modifier isOwner() virtual;
@@ -94,6 +94,11 @@ contract testMapKey is testModifier{
 
     function getUint8MinAndMax() public pure returns(uint8, uint8) {
         return (type(uint8).min, type(uint8).max);
+    }
+
+    function calldataModifier(bytes calldata a) external returns(bytes calldata) {
+        bytes calldata b = a;
+        return b;
     }
 
 }

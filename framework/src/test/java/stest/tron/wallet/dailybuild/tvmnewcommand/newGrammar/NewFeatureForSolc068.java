@@ -234,6 +234,23 @@ public class NewFeatureForSolc068 {
 
   }
 
+  @Test(enabled = true, description = "solidity 0.6.12 test Reference "
+      + "variable can be marked by calldata")
+  public void test10CalldataModifier() {
+    String hexAdd = ByteArray.toHexString(PublicMethed.getFinalAddress(contractExcKey));
+    String args = "\"0x" + hexAdd + "\"";
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(mapKeyContract,
+            "calldataModifier(bytes)", args, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Protocol.Transaction transaction = transactionExtention.getTransaction();
+    byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+    String trueRes = ByteArray.toHexString(result);
+    logger.info("truerRes: " + trueRes + "   message:" + transaction.getRet(0).getRet());
+    Assert.assertTrue(trueRes.contains(hexAdd));
+  }
+
+
 
   /**
    * constructor.

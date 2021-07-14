@@ -774,7 +774,10 @@ public class Program {
           Hex.toHexString(newAddress),
           createResult.getException());
 
-      internalTx.reject();
+      if(internalTx != null){
+        internalTx.reject();
+      }
+
       createResult.rejectInternalTransactions();
 
       stackPushZero();
@@ -968,7 +971,10 @@ public class Program {
             Hex.toHexString(contextAddress),
             callResult.getException());
 
-        internalTx.reject();
+        if(internalTx != null){
+          internalTx.reject();
+        }
+
         callResult.rejectInternalTransactions();
 
         stackPushZero();
