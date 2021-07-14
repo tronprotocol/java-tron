@@ -330,6 +330,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -360,6 +361,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 

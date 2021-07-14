@@ -88,7 +88,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       }
     }
 
-    if (dynamicPropertiesStore.supportAllowAccountAssetOptimization()) {
+    if (AssetUtil.isAllowAssetOptimization()) {
       Account account = item.getInstance();
       AccountAsset accountAsset = AssetUtil.getAsset(account);
       if (null != accountAsset) {
