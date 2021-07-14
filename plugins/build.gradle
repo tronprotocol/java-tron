@@ -7,7 +7,7 @@ apply plugin: 'application'
 jacoco {
     toolVersion = "0.8.1"
 }
-mainClassName = 'org.tron.plugins.PreOpenLevelDB'
+mainClassName = 'org.tron.plugins.ArchiveManifest'
 group 'org.tron'
 version '1.0.0'
 
@@ -19,6 +19,9 @@ dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    // https://mvnrepository.com/artifact/com.beust/jcommander
+    compile group: 'com.beust', name: 'jcommander', version: '1.78'
+
     compile 'com.github.halibobo1205.leveldb-java:leveldb:v0.12.5'
     compile 'com.github.halibobo1205.leveldb-java:leveldb-api:v0.12.5'
 }
@@ -44,12 +47,12 @@ def createScript(project, mainClass, name) {
     }
 }
 
-createScript(project, 'org.tron.plugins.PreOpenLevelDB', 'PreOpenLevelDB')
+createScript(project, 'org.tron.plugins.ArchiveManifest', 'ArchiveManifest')
 
 def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
 if (releaseBinary == 'true') {
     artifacts {
-        archives(binaryRelease('buildPreOpenLevelDBJar', 'PreOpenLevelDB', 'org.tron.plugins.PreOpenLevelDB'))
+        archives(binaryRelease('buildArchiveManifestJar', 'ArchiveManifest', 'org.tron.plugins.ArchiveManifest'))
     }
 }
 

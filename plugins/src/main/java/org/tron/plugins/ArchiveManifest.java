@@ -3,6 +3,8 @@ package org.tron.plugins;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,8 +32,11 @@ import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Filename;
 
-@Slf4j
-public class PreOpenLevelDB implements Callable<Boolean> {
+@Slf4j(topic = "archive")
+/*
+  a helper to rewrite leveldb manifest.
+ */
+public class ArchiveManifest implements Callable<Boolean> {
 
 
   private static final String KEY_ENGINE = "ENGINE";
@@ -45,29 +50,27 @@ public class PreOpenLevelDB implements Callable<Boolean> {
 
   private static final int CPUS  = Runtime.getRuntime().availableProcessors();
 
-  private static final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
+  private static final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(
       CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
       new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
       new ThreadPoolExecutor.CallerRunsPolicy());
 
   static {
-    esDb.allowCoreThreadTimeOut(true);
+    EXECUTOR.allowCoreThreadTimeOut(true);
   }
 
-  public PreOpenLevelDB(String src, String name, boolean fast,
-                        int maxManifestSize, int maxBatchSize) {
+  public ArchiveManifest(String src, String name, int maxManifestSize, int maxBatchSize) {
     this.name = name;
     this.srcDbPath = Paths.get(src, name);
     this.startTime = System.currentTimeMillis();
     this.options = newDefaultLevelDbOptions();
     this.options.maxManifestSize(maxManifestSize);
     this.options.maxBatchSize(maxBatchSize);
-    this.options.fast(fast);
   }
 
   @Override
   public Boolean call() throws Exception {
-    return doPreOpen();
+    return doArchive();
   }
 
   private static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
@@ -80,81 +83,71 @@ public class PreOpenLevelDB implements Callable<Boolean> {
     dbOptions.writeBufferSize(10 * 1024 * 1024);
     dbOptions.cacheSize(10 * 1024 * 1024L);
     dbOptions.maxOpenFiles(1000);
+    dbOptions.maxBatchSize(64_000);
+    dbOptions.maxManifestSize(128);
+    dbOptions.fast(false);
     return dbOptions;
   }
 
   public static void main(String[] args) {
-    String dbSrc = "output-directory/database";
-    boolean fast = false;
-    int maxManifestSize = 128;
-    int maxBatchSize = 52_000;
-    if (args.length >= 4) {
-      dbSrc = args[0];
-      fast = Boolean.parseBoolean(args[1]);
-      try {
-        maxManifestSize = Integer.parseInt(args[2]);
-      } catch (NumberFormatException e) {
-        maxManifestSize = 128;
-      }
-      try {
-        maxBatchSize = Integer.parseInt(args[3]);
-      } catch (NumberFormatException e) {
-        maxBatchSize = 52_000;
-      }
-    }
-    File dbDirectory = new File(dbSrc);
-    if (!dbDirectory.exists()) {
-      logger.info(" {} does not exist.", dbSrc);
+    Args parameters = new Args();
+    JCommander jc = JCommander.newBuilder()
+        .addObject(parameters)
+        .build();
+    jc.parse(args);
+    if (parameters.help) {
+      jc.usage();
       return;
     }
 
+    File dbDirectory = new File(parameters.databaseDirectory);
+    if (!dbDirectory.exists()) {
+      logger.info("Directory {} does not exist.", parameters.databaseDirectory);
+      return;
+    }
 
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
         .filter(File::isDirectory).collect(
             Collectors.toList());
 
     if (files.isEmpty()) {
-      logger.info("{} does not contain any database.", dbSrc);
+      logger.info("Directory {} does not contain any database.", parameters.databaseDirectory);
       return;
     }
-    long time = System.currentTimeMillis();
+    final long time = System.currentTimeMillis();
     final List<Future<Boolean>> res = new ArrayList<>();
-    int finalMaxManifestSize = maxManifestSize;
-    int finalMaxBatchSize = maxBatchSize;
-    String finalDbSrc = dbSrc;
-    boolean finalFast = fast;
-    files.forEach(f -> res.add(esDb.submit(new PreOpenLevelDB(finalDbSrc, f.getName(), finalFast,
-        finalMaxManifestSize, finalMaxBatchSize))));
+    files.forEach(f -> res.add(
+        EXECUTOR.submit(new ArchiveManifest(parameters.databaseDirectory, f.getName(),
+            parameters.maxManifestSize, parameters.maxBatchSize))));
     int fails = res.size();
 
     for (Future<Boolean> re : res) {
       try {
-        if (re.get()) {
+        if (Boolean.TRUE.equals(re.get())) {
           fails--;
         }
       } catch (InterruptedException e) {
-        logger.error(e.getMessage(), e);
+        logger.error("{}", e);
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        logger.error(e.getMessage(), e);
+        logger.error("{}", e);
       }
     }
 
-    esDb.shutdown();
-    logger.info("dbSrc:{}, fast:{}, maxManifestSize:{}, maxBatchSize:{}," +
-            "database reopen use {} seconds total."
-        , dbSrc, fast, maxManifestSize, maxBatchSize,
+    EXECUTOR.shutdown();
+    logger.info("DatabaseDirectory:{}, maxManifestSize:{}, maxBatchSize:{},"
+            + "database reopen use {} seconds total.",
+        parameters.databaseDirectory, parameters.maxManifestSize, parameters.maxBatchSize,
         (System.currentTimeMillis() - time) / 1000);
     if (fails > 0) {
-      logger.error("failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
+      logger.error("Failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
     }
     System.exit(fails);
   }
 
-  public void openLevelDb() throws IOException {
+  public void open() throws IOException {
     DB database = factory.open(this.srcDbPath.toFile(), this.options);
     database.close();
-
   }
 
   public boolean checkManifest(String dir) throws IOException {
@@ -163,7 +156,6 @@ public class PreOpenLevelDB implements Callable<Boolean> {
     if (!currentFile.exists()) {
       return false;
     }
-
     String currentName = com.google.common.io.Files.asCharSource(currentFile, UTF_8).read();
     if (currentName.isEmpty() || currentName.charAt(currentName.length() - 1) != '\n') {
       return false;
@@ -177,74 +169,66 @@ public class PreOpenLevelDB implements Callable<Boolean> {
     if (maxSize < 0) {
       return false;
     }
-    logger.info("currentName {}/{},size {} kb", dir, currentName, current.length() / 1024);
+    logger.info("CurrentName {}/{},size {} kb", dir, currentName, current.length() / 1024);
     if ("market_pair_price_to_order".equalsIgnoreCase(this.name)) {
-      logger.info("database {} ignore", this.name);
+      logger.info("Db {} ignore", this.name);
       return false;
     }
     return current.length() >= maxSize * 1024 * 1024;
   }
 
-  public boolean doPreOpen() throws IOException {
+  public boolean doArchive() throws IOException {
     File levelDbFile = srcDbPath.toFile();
     if (!levelDbFile.exists()) {
-      logger.info("{},does not exist ignore.", srcDbPath.toString());
+      logger.info("File {},does not exist ignore.", srcDbPath.toString());
       return true;
     }
     if (!checkEngine()) {
-      logger.info("{},not leveldb ignore.", this.name);
+      logger.info("Db {},not leveldb ignore.", this.name);
       return true;
     }
     if (!checkManifest(levelDbFile.toString())) {
-      logger.info("{},no need ignore.", levelDbFile.toString());
+      logger.info("Db {},no need ignore.", levelDbFile.toString());
       return true;
     }
-    openLevelDb();
-    logger.info("{} reopen use {} ms.",this.name, (System.currentTimeMillis() - startTime));
+    open();
+    logger.info("Db {} reopen use {} ms.", this.name, (System.currentTimeMillis() - startTime));
     return true;
   }
 
   public boolean checkEngine() {
     String dir = this.srcDbPath.toString();
     String enginePath = dir + File.separator + "engine.properties";
-
-    // for the first init engine
     String engine = readProperty(enginePath, KEY_ENGINE);
-
     return LEVELDB.equals(engine);
   }
 
   public static String readProperty(String file, String key) {
-    InputStream is = null;
-    FileInputStream fis = null;
-    Properties prop;
-    try {
-      prop = new Properties();
-      fis = new FileInputStream(file);
-      is = new BufferedInputStream(fis);
-      prop.load(is);
+    try (FileInputStream fileInputStream = new FileInputStream(file);
+         InputStream inputStream = new BufferedInputStream(fileInputStream)) {
+      Properties prop = new Properties();
+      prop.load(inputStream);
       return new String(prop.getProperty(key, "").getBytes(StandardCharsets.ISO_8859_1),
           UTF_8);
     } catch (Exception e) {
       logger.error("{}", e);
       return "";
-    } finally {
-      //fis
-      try {
-        if (fis != null) {
-          fis.close();
-        }
-      } catch (Exception e) {
-        logger.warn("{}", e);
-      }
-      //is
-      try {
-        if (is != null) {
-          is.close();
-        }
-      } catch (Exception e) {
-        logger.error("{}", e);
-      }
     }
+  }
+  public static class Args {
+    @Parameter
+    private List<String> parameters = new ArrayList<>();
+
+    @Parameter(names = {"-d", "--database-directory"}, description = "java-tron database directory")
+    private  String databaseDirectory = "output-directory/database";
+
+    @Parameter(names = {"-b", "--batch-size" }, description = "deal manifest batch size")
+    private  int maxBatchSize = 64_000;
+
+    @Parameter(names = {"-m", "--manifest-size" }, description = "manifest  min size(M) to archive")
+    private  int maxManifestSize = 128;
+
+    @Parameter(names = {"-h", "--help"}, help = true)
+    private  boolean help;
   }
 }
