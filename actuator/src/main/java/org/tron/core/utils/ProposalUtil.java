@@ -480,9 +480,9 @@ public class ProposalUtil {
           throw new ContractValidateException(
                   "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
         }
-        if (value != 1 && value != 0) {
+        if (value != 1) {
           throw new ContractValidateException(
-                  "This value[ALLOW_REMOVE_BLACKHOLE] is only allowed to be 1 or 0");
+                  "This value[ALLOW_ACCOUNT_ASSET_OPTIMIZATION] is only allowed to be 1");
         }
         break;
       }
