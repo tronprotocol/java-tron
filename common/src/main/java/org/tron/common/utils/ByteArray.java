@@ -146,6 +146,13 @@ public class ByteArray {
     }
   }
 
+  public static long jsonHexToLong(String x) throws Exception {
+    if (!x.startsWith("0x"))
+      throw new Exception("Incorrect hex syntax");
+    x = x.substring(2);
+    return Long.parseLong(x, 16);
+  }
+
   public static int jsonHexToInt(String x) throws Exception {
     if (!x.startsWith("0x"))
       throw new Exception("Incorrect hex syntax");

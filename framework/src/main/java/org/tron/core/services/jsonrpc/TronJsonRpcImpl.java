@@ -641,7 +641,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
           .setAbi(abiBuilder)
-          .setCallValue(args.callValue)
+          .setCallValue(args.parseCallValue())
           .setConsumeUserResourcePercent(args.consumeUserResourcePercent)
           .setOriginEnergyLimit(args.originEnergyLimit);
 
@@ -734,7 +734,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       build.setCallTokenValue(args.callTokenValue)
           .setTokenId(args.tokenId)
-          .setCallValue(args.callValue);
+          .setCallValue(args.parseCallValue());
 
       TransactionCapsule trxCap = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);

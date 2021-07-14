@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
@@ -20,14 +21,14 @@ public class BuildArguments {
   public String to;
   public String gas; //not used
   public String gasPrice; //not used
-  public String value; //not used
+  public String value;
   public String data;
-  public String nonce;
+  public String nonce; //not used
 
   public Long tokenId = 0L;
   public Long callTokenValue = 0L;
   public String abi = "";
-  public Long callValue = 0L;
+  // public Long callValue = 0L;
   public Long consumeUserResourcePercent = 0L;
   public Long originEnergyLimit = 0L;
   public String name = "";
@@ -68,6 +69,20 @@ public class BuildArguments {
     }
 
     return contractType;
+  }
+
+  public long parseCallValue() {
+    long callValue = 0L;
+
+    if (StringUtils.isNotEmpty(value)) {
+      try {
+        callValue = ByteArray.jsonHexToLong(value);
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParams("invalid hex number");
+      }
+    }
+
+    return callValue;
   }
 
 }
