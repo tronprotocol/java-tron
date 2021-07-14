@@ -33,6 +33,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.JsonRpcInternalError;
+import org.tron.core.exception.JsonRpcInvalidParams;
+import org.tron.core.exception.JsonRpcInvalidRequest;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
@@ -672,7 +675,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       transactionJson.transaction = JSON.parseObject(Util.printCreateTransaction(tx, false));
 
       return transactionJson;
-    } catch(ContractValidateException e) {
+    } catch (ContractValidateException e) {
       throw new JsonRpcInvalidRequest(e.getMessage());
     } catch (Exception e) {
       throw new JsonRpcInternalError(e.getMessage());
@@ -705,7 +708,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       transactionJson.transaction = JSON.parseObject(jsonString);
 
       return transactionJson;
-    } catch(ContractValidateException e) {
+    } catch (ContractValidateException e) {
       throw new JsonRpcInvalidRequest(e.getMessage());
     } catch (Exception e) {
       throw new JsonRpcInternalError(e.getMessage());

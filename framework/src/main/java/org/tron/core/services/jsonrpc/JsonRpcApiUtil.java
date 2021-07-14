@@ -22,6 +22,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.exception.JsonRpcInvalidParams;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -51,8 +52,6 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
-
-  public static String balanceOfTopic = getMethodSign("balanceOf(address)");
 
   // transform the Tron address to Ethereum Address
   public static String tronToEthAddress(String tronAddress) {
@@ -130,9 +129,6 @@ public class JsonRpcApiUtil {
     return newAddress;
   }
 
-  /**
-   * 把byte数组转换为base58编码
-   */
   public static String encode58Check(byte[] input) {
     if (input == null || input.length == 0) {
       return "";
@@ -309,9 +305,6 @@ public class JsonRpcApiUtil {
     return amount;
   }
 
-  /**
-   * 获取交易的 amount
-   */
   public static long getTransactionAmount(Transaction.Contract contract, String hash,
       long blockNum, TransactionInfo transactionInfo, Wallet wallet) {
     long amount = 0;
@@ -342,7 +335,6 @@ public class JsonRpcApiUtil {
         case ParticipateAssetIssueContract:
           // long token = DataImporter.getTokenID(blockNum,
           //     contractParameter.unpack(ParticipateAssetIssueContract.class).getAssetName());
-          // //获取token的比例，计算出10币的数量
           // long trxNum = contractParameter.unpack(ParticipateAssetIssueContract.class)
           // .getAmount();
           // Token10Entity entity = DataImporter.getTokenEntity(token);
@@ -371,7 +363,6 @@ public class JsonRpcApiUtil {
         case ShieldedTransferContract:
           ShieldedTransferContract shieldedTransferContract = contract.getParameter()
               .unpack(ShieldedTransferContract.class);
-          //from_amount 和 to_amount 不可能同时大于0
           if (shieldedTransferContract.getFromAmount() > 0L) {
             amount = shieldedTransferContract.getFromAmount();
           } else if (shieldedTransferContract.getToAmount() > 0L) {

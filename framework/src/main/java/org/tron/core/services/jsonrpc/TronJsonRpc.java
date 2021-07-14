@@ -12,6 +12,9 @@ import lombok.ToString;
 import lombok.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.JsonRpcInternalError;
+import org.tron.core.exception.JsonRpcInvalidParams;
+import org.tron.core.exception.JsonRpcInvalidRequest;
 
 @Component
 public interface TronJsonRpc {

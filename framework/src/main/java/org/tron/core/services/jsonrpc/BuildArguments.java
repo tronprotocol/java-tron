@@ -10,6 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.exception.JsonRpcInvalidParams;
+import org.tron.core.exception.JsonRpcInvalidRequest;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 

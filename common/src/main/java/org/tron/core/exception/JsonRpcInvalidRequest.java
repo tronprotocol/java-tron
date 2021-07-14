@@ -1,4 +1,4 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.exception;
 
 public class JsonRpcInvalidRequest extends RuntimeException {
 
