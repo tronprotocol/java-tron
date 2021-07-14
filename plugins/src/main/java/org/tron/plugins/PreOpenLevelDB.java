@@ -54,12 +54,14 @@ public class PreOpenLevelDB implements Callable<Boolean> {
     esDb.allowCoreThreadTimeOut(true);
   }
 
-  public PreOpenLevelDB(String src, String name, boolean fast, int maxManifestSize) {
+  public PreOpenLevelDB(String src, String name, boolean fast,
+                        int maxManifestSize, int maxBatchSize) {
     this.name = name;
     this.srcDbPath = Paths.get(src, name);
     this.startTime = System.currentTimeMillis();
     this.options = newDefaultLevelDbOptions();
     this.options.maxManifestSize(maxManifestSize);
+    this.options.maxBatchSize(maxBatchSize);
     this.options.fast(fast);
   }
 
@@ -82,19 +84,22 @@ public class PreOpenLevelDB implements Callable<Boolean> {
   }
 
   public static void main(String[] args) {
-    String dbSrc;
-    boolean fast;
+    String dbSrc = "output-directory/database";
+    boolean fast = false;
     int maxManifestSize = 128;
-    if (args.length < 3) {
-      dbSrc = "output-directory/database";
-      fast = false;
-    } else {
+    int maxBatchSize = 52_000;
+    if (args.length >= 4) {
       dbSrc = args[0];
       fast = Boolean.parseBoolean(args[1]);
       try {
         maxManifestSize = Integer.parseInt(args[2]);
       } catch (NumberFormatException e) {
         maxManifestSize = 128;
+      }
+      try {
+        maxBatchSize = Integer.parseInt(args[3]);
+      } catch (NumberFormatException e) {
+        maxBatchSize = 52_000;
       }
     }
     File dbDirectory = new File(dbSrc);
@@ -115,8 +120,11 @@ public class PreOpenLevelDB implements Callable<Boolean> {
     long time = System.currentTimeMillis();
     final List<Future<Boolean>> res = new ArrayList<>();
     int finalMaxManifestSize = maxManifestSize;
-    files.forEach(f -> res.add(esDb.submit(new PreOpenLevelDB(dbSrc, f.getName(), fast,
-        finalMaxManifestSize))));
+    int finalMaxBatchSize = maxBatchSize;
+    String finalDbSrc = dbSrc;
+    boolean finalFast = fast;
+    files.forEach(f -> res.add(esDb.submit(new PreOpenLevelDB(finalDbSrc, f.getName(), finalFast,
+        finalMaxManifestSize, finalMaxBatchSize))));
     int fails = res.size();
 
     for (Future<Boolean> re : res) {
@@ -133,7 +141,9 @@ public class PreOpenLevelDB implements Callable<Boolean> {
     }
 
     esDb.shutdown();
-    logger.info("database reopen use {} seconds total.",
+    logger.info("dbSrc:{}, fast:{}, maxManifestSize:{}, maxBatchSize:{}," +
+            "database reopen use {} seconds total."
+        , dbSrc, fast, maxManifestSize, maxBatchSize,
         (System.currentTimeMillis() - time) / 1000);
     if (fails > 0) {
       logger.error("failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
