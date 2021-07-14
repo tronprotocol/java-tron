@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
@@ -148,14 +149,17 @@ public class JsonRpcApiUtil {
   public static TriggerSmartContract triggerCallContract(byte[] address, byte[] contractAddress,
       long callValue, byte[] data, long tokenValue, String tokenId) {
     TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
+
     builder.setOwnerAddress(ByteString.copyFrom(address));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(data));
     builder.setCallValue(callValue);
-    if (tokenId != null && tokenId != "") {
+
+    if (StringUtils.isNotEmpty(tokenId)) {
       builder.setCallTokenValue(tokenValue);
       builder.setTokenId(Long.parseLong(tokenId));
     }
+
     return builder.build();
   }
 

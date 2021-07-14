@@ -672,8 +672,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       transactionJson.transaction = JSON.parseObject(Util.printCreateTransaction(tx, false));
 
       return transactionJson;
+    } catch(ContractValidateException e) {
+      throw new JsonRpcInvalidRequest(e.getMessage());
     } catch (Exception e) {
-      throw new JsonRpcInvalidParams(e.getMessage());
+      throw new JsonRpcInternalError(e.getMessage());
     }
   }
 
@@ -703,6 +705,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       transactionJson.transaction = JSON.parseObject(jsonString);
 
       return transactionJson;
+    } catch(ContractValidateException e) {
+      throw new JsonRpcInvalidRequest(e.getMessage());
     } catch (Exception e) {
       throw new JsonRpcInternalError(e.getMessage());
     }

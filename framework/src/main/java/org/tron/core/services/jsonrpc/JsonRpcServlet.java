@@ -1,5 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
+import com.googlecode.jsonrpc4j.HttpStatusCodeProvider;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 import java.io.IOException;
@@ -40,6 +41,18 @@ public class JsonRpcServlet extends RateLimiterServlet {
         true);
 
     rpcServer = new JsonRpcServer(compositeService);
+    HttpStatusCodeProvider httpStatusCodeProvider = new HttpStatusCodeProvider() {
+      @Override
+      public int getHttpStatusCode(int resultCode) {
+        return 200;
+      }
+
+      @Override
+      public Integer getJsonRpcCode(int httpStatusCode) {
+        return null;
+      }
+    };
+    rpcServer.setHttpStatusCodeProvider(httpStatusCodeProvider);
   }
 
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {

@@ -1,7 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
@@ -13,8 +12,6 @@ import lombok.ToString;
 import lombok.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
 @Component
 public interface TronJsonRpc {
