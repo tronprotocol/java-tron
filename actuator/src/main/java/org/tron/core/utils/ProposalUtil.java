@@ -476,7 +476,7 @@ public class ProposalUtil {
         break;
       }
       case FREE_NET_LIMIT: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2_3)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException("Bad chain parameter id [FREE_NET_LIMIT]");
         }
         if (value < 0 || value > 100_000L) {
@@ -486,7 +486,7 @@ public class ProposalUtil {
         break;
       }
       case TOTAL_NET_LIMIT: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_2_3)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException("Bad chain parameter id [TOTAL_NET_LIMIT]");
         }
         if (value < 0 || value > 100_000_000_000L) {
