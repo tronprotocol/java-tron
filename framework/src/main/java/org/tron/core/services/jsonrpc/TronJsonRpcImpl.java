@@ -59,6 +59,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
   private final int chainId = 100;
+  private final int networkId = 100;
 
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
@@ -198,8 +199,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getNetVersion() {
-    //network id
-    return ByteArray.toJsonHex(100);
+    // network id
+    return ByteArray.toJsonHex(networkId);
   }
 
   @Override
@@ -571,12 +572,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public BlockResult getUncleByBlockHashAndIndex(String blockHash, int index) {
+  public BlockResult getUncleByBlockHashAndIndex(String blockHash, String index) {
     return null;
   }
 
   @Override
-  public BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, int index) {
+  public BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, String index) {
     return null;
   }
 

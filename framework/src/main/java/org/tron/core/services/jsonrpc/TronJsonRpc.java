@@ -203,6 +203,9 @@ public interface TronJsonRpc {
   String getStorageAt(String address, String storageIdx, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getTransactionCount")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
   String getSendTransactionCountOfAddress(String address, String blockNumOrTag);
 
   @JsonRpcMethod("eth_getCode")
@@ -284,10 +287,10 @@ public interface TronJsonRpc {
   Object getSyncingStatus();
 
   @JsonRpcMethod("eth_getUncleByBlockHashAndIndex")
-  BlockResult getUncleByBlockHashAndIndex(String blockHash, int index);
+  BlockResult getUncleByBlockHashAndIndex(String blockHash, String index);
 
   @JsonRpcMethod("eth_getUncleByBlockNumberAndIndex")
-  BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, int index);
+  BlockResult getUncleByBlockNumberAndIndex(String blockNumOrTag, String index);
 
   @JsonRpcMethod("eth_getUncleCountByBlockHash")
   String getUncleCountByBlockHash(String blockHash);

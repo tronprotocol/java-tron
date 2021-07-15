@@ -57,29 +57,15 @@ public class TransactionReceipt {
     String txid = ByteArray.toHexString(txInfo.getId().toByteArray());
 
     Protocol.Transaction transaction = null;
-    long cumulativeGas = 0;
     long cumulativeLogCount = 0;
-
-    long sunPerEnergy = Constant.SUN_PER_ENERGY;
-    long dynamicEnergyFee = wallet.getEnergyFee();
-    if (dynamicEnergyFee > 0) {
-      sunPerEnergy = dynamicEnergyFee;
-    }
 
     TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockCapsule.getNum());
     for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
       TransactionInfo info = infoList.getTransactionInfo(index);
       ResourceReceipt resourceReceipt = info.getReceipt();
 
-      long energyUsage = resourceReceipt.getEnergyUsage()
-          + resourceReceipt.getOriginEnergyUsage()
-          + resourceReceipt.getEnergyFee() / sunPerEnergy;
-      cumulativeGas += energyUsage;
-
       if (ByteArray.toHexString(info.getId().toByteArray()).equals(txid)) {
         transactionIndex = ByteArray.toJsonHex(index);
-        cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGas);
-        gasUsed = ByteArray.toJsonHex(energyUsage);
         status = resourceReceipt.getResultValue() == 1 ? "0x1" : "0x0";
 
         transaction = block.getTransactions(index);
@@ -89,6 +75,8 @@ public class TransactionReceipt {
       }
     }
 
+    cumulativeGasUsed = null;
+    gasUsed = null;
     blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
@@ -129,9 +117,9 @@ public class TransactionReceipt {
 
       logList.add(transactionLog);
     }
+
     logs = logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]);
     logsBloom = null; // no value
-
     root = null;
   }
 }
