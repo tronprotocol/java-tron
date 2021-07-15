@@ -5,8 +5,6 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,8 +57,6 @@ public class DBConvert implements Callable<Boolean> {
   private final long startTime;
   private static final int CPUS  = Runtime.getRuntime().availableProcessors();
   private static final int BATCH  = 256;
-  private static final DateTimeFormatter formatter = DateTimeFormatter
-      .ofPattern("yyyy-MM-dd HH:mm:ss SS");
   private static final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
       CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
       new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
@@ -109,7 +105,7 @@ public class DBConvert implements Callable<Boolean> {
     }
     File dbDirectory = new File(dbSrc);
     if (!dbDirectory.exists()) {
-      printf(" %s does not exist.", dbSrc);
+      logger.info(" {} does not exist.", dbSrc);
       return;
     }
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
@@ -117,7 +113,7 @@ public class DBConvert implements Callable<Boolean> {
             Collectors.toList());
 
     if (files.isEmpty()) {
-      printf("%s does not contain any database.", dbSrc);
+      logger.info("{} does not contain any database.", dbSrc);
       return;
     }
     final long time = System.currentTimeMillis();
@@ -133,18 +129,18 @@ public class DBConvert implements Callable<Boolean> {
           fails--;
         }
       } catch (InterruptedException e) {
-        logger.error(e.getMessage(), e);
+        logger.error("{}", e);
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        logger.error(e.getMessage(), e);
+        logger.error("{}", e);
       }
     }
 
     esDb.shutdown();
-    printf("database convert use %d seconds total.",
-        (System.currentTimeMillis() - time) / 1000);
+    logger.info("database convert use {} seconds total.",
+            (System.currentTimeMillis() - time) / 1000);
     if (fails > 0) {
-      printf("failed!!!!!!!!!!!!!!!!!!!!!!!! size:%d", fails);
+      logger.error("failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
     }
     System.exit(fails);
   }
@@ -191,41 +187,10 @@ public class DBConvert implements Callable<Boolean> {
     try (Options options = newDefaultRocksDbOptions()) {
       database = RocksDB.open(options, db.toString());
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.error("{}", e);
     }
     return database;
   }
-
-  public boolean convertLevelToRocks(DB level, RocksDB rocks) {
-    // convert
-    try (DBIterator levelIterator = level.iterator()) {
-      JniDBFactory.pushMemoryPool(1024 * 1024);
-      for (levelIterator.seekToFirst(); levelIterator.hasNext(); levelIterator.next()) {
-        byte[] key = levelIterator.peekNext().getKey();
-        byte[] value = levelIterator.peekNext().getValue();
-        srcDbKeyCount++;
-        srcDbKeySum = byteArrayToIntWithOne(srcDbKeySum, key);
-        srcDbValueSum = byteArrayToIntWithOne(srcDbValueSum, value);
-        rocks.put(key, value);
-      }
-      // check
-      check(rocks);
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-      return false;
-    } finally {
-      try {
-        level.close();
-        rocks.close();
-        JniDBFactory.popMemoryPool();
-      } catch (Exception e1) {
-        logger.error(e1.getMessage());
-      }
-    }
-    return dstDbKeyCount == srcDbKeyCount && dstDbKeySum == srcDbKeySum
-        && dstDbValueSum == srcDbValueSum;
-  }
-
 
   private void batchInsert(RocksDB rocks, List<byte[]> keys, List<byte[]> values)
       throws Exception {
@@ -285,7 +250,7 @@ public class DBConvert implements Callable<Boolean> {
           try {
             batchInsert(rocks, keys, values);
           } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            logger.error("{}", e);
             return false;
           }
         }
@@ -295,14 +260,14 @@ public class DBConvert implements Callable<Boolean> {
         try {
           batchInsert(rocks, keys, values);
         } catch (Exception e) {
-          logger.error(e.getMessage(), e);
+          logger.error("{}", e);
           return false;
         }
       }
       // check
       check(rocks);
     }  catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.error("{}", e);
       return false;
     } finally {
       try {
@@ -310,7 +275,7 @@ public class DBConvert implements Callable<Boolean> {
         rocks.close();
         JniDBFactory.popMemoryPool();
       } catch (Exception e1) {
-        logger.error(e1.getMessage());
+        logger.error("{}", e1);
       }
     }
     return dstDbKeyCount == srcDbKeyCount && dstDbKeySum == srcDbKeySum
@@ -318,11 +283,11 @@ public class DBConvert implements Callable<Boolean> {
   }
 
   private void check(RocksDB rocks) throws RocksDBException {
-    printf("check database %s start", this.dbName);
+    logger.info("check database {} start", this.dbName);
     // manually call CompactRange()
-    printf("compact database %s start", this.dbName);
+    logger.info("compact database {} start", this.dbName);
     rocks.compactRange();
-    printf("compact database %s end", this.dbName);
+    logger.info("compact database {} end", this.dbName);
     // check
     try (org.rocksdb.ReadOptions r = new org.rocksdb.ReadOptions().setFillCache(false);
          RocksIterator rocksIterator = rocks.newIterator(r)) {
@@ -334,7 +299,7 @@ public class DBConvert implements Callable<Boolean> {
         dstDbValueSum = byteArrayToIntWithOne(dstDbValueSum, value);
       }
     }
-    printf("check database %s end", this.dbName);
+    logger.info("check database {} end", this.dbName);
   }
 
   public boolean createEngine(String dir) {
@@ -356,69 +321,44 @@ public class DBConvert implements Callable<Boolean> {
   public boolean doConvert() throws Exception {
 
     if (checkDone(this.dstDbPath.toString())) {
-      printf(" %s is done, skip it.", this.dbName);
-      // delete leveldb for space
-      // TODO
-      /*if (this.srcDbPath.toFile().exists()) {
-        printf(" %s begin to delete database directory", this.dbName);
-        FileUtil.deleteDir(this.srcDbPath.toFile());
-        printf(" %s clear database directory done.", this.dbName);
-      }*/
+      logger.info(" {} is done, skip it.", this.dbName);
       return true;
     }
 
     File levelDbFile = srcDbPath.toFile();
     if (!levelDbFile.exists()) {
-      printf(" %s does not exist.", srcDbPath.toString());
+      logger.info(" {} does not exist.", srcDbPath.toString());
       return false;
     }
 
     DB level = newLevelDb(srcDbPath);
 
     if (this.dstDbPath.toFile().exists()) {
-      printf(" %s begin to clear exist database directory", this.dbName);
+      logger.info(" {} begin to clear exist database directory", this.dbName);
       FileUtil.deleteDir(this.dstDbPath.toFile());
-      printf(" %s clear exist database directory done.", this.dbName);
+      logger.info(" {} clear exist database directory done.", this.dbName);
     }
 
     FileUtil.createDirIfNotExists(dstDir);
     RocksDB rocks = newRocksDb(dstDbPath);
 
-    printf("Convert database %s start", this.dbName);
-    // convertLevelToRocksBatchIterator convertLevelToRocks
+    logger.info("Convert database {} start", this.dbName);
     boolean result  = convertLevelToRocksBatchIterator(level, rocks)
         && createEngine(dstDbPath.toString());
     long etime = System.currentTimeMillis();
 
     if (result) {
-      printf("Convert database %s successful end with %d key-value cost %(,.2f minutes",
+      logger.info("Convert database {} successful end with {} key-value {} minutes",
           this.dbName, this.srcDbKeyCount, (etime - this.startTime) / 1000.0 / 60);
-      // TODO
-      /*if (this.srcDbPath.toFile().exists()) {
-        printf(" %s begin to delete database directory", this.srcDbPath.toFile().getName());
-        FileUtil.deleteDir(this.srcDbPath.toFile());
-        printf(" %s clear database directory done.", this.srcDbPath.toFile().getName());
-      }*/
     } else {
-      printf("Convert database %s failure", this.dbName);
+      logger.info("Convert database {} failure", this.dbName);
       if (this.dstDbPath.toFile().exists()) {
-        printf(" %s begin to clear exist database directory", this.dbName);
+        logger.info(" {} begin to clear exist database directory", this.dbName);
         FileUtil.deleteDir(this.dstDbPath.toFile());
-        printf(" %s clear exist database directory done.", this.dbName);
+        logger.info(" {} clear exist database directory done.", this.dbName);
       }
     }
     return result;
-  }
-
-  public static String getTime() {
-    LocalDateTime now = LocalDateTime.now();
-    return  "[" + formatter.format(now) + "] ";
-  }
-
-  public static void printf(String reg, Object... args) {
-    reg = reg + "%n";
-    System.out.printf("%s", getTime());
-    System.out.printf(reg,  args);
   }
 
   public long byteArrayToIntWithOne(long sum, byte[] b) {

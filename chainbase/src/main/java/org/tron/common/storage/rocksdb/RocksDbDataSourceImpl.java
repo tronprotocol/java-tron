@@ -226,7 +226,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         tableCfg.setCacheIndexAndFilterBlocks(true);
         tableCfg.setPinL0FilterAndIndexBlocksInCache(true);
         tableCfg.setFilter(new BloomFilter(10, false));
-        tableCfg.setFormatVersion(3);
 
         // read options
         readOpts = new ReadOptions();
