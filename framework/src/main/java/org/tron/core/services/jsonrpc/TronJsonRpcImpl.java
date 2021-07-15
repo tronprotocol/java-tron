@@ -754,15 +754,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       trxExtBuilder.setTransaction(trx);
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {
-      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-          .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+      throw new JsonRpcInvalidRequest(e.getMessage());
     } catch (Exception e) {
-      String errString = null;
+      String errString = "invalid json request";
       if (e.getMessage() != null) {
         errString = e.getMessage().replaceAll("[\"]", "\'");
       }
-      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
+
+      throw new JsonRpcInvalidRequest(errString);
     }
 
     trxExtBuilder.setResult(retBuilder);
