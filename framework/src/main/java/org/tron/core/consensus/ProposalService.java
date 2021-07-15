@@ -247,7 +247,19 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
           break;
         }
+        case FREE_NET_LIMIT: {
+          manager.getDynamicPropertiesStore().saveFreeNetLimit(entry.getValue());
+          break;
+        }
+        case TOTAL_NET_LIMIT: {
+          manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
+          break;
+        }
 
+        case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

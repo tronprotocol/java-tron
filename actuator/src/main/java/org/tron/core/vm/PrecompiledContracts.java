@@ -799,9 +799,9 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      int cnt = (data.length / WORD_SIZE - 5) / 5;
+      long cnt = (data.length / WORD_SIZE - 5) / 5;
       // one sign 1500, half of ecrecover
-      return (long) (cnt * ENGERYPERSIGN);
+      return cnt * ENGERYPERSIGN;
     }
 
     @Override
@@ -869,9 +869,9 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      int cnt = (data.length / WORD_SIZE - 5) / 6;
+      long cnt = (data.length / WORD_SIZE - 5) / 6;
       // one sign 1500, half of ecrecover
-      return (long) (cnt * ENGERYPERSIGN);
+      return cnt * ENGERYPERSIGN;
     }
 
     @Override
@@ -879,6 +879,9 @@ public class PrecompiledContracts {
       try {
         return doExecute(data);
       } catch (Throwable t) {
+        if (t instanceof InterruptedException){
+          Thread.currentThread().interrupt();
+        }
         return Pair.of(true, new byte[WORD_SIZE]);
       }
     }

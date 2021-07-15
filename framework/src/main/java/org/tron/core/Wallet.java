@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -172,7 +172,6 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -330,6 +329,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -360,6 +360,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -1006,6 +1007,21 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getFreeNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getFreeNetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
+        .build());
+
     return builder.build();
   }
 
@@ -1318,8 +1334,8 @@ public class Wallet {
     }
     TransactionInfoCapsule transactionInfoCapsule;
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-          .get(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
+              .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1327,8 +1343,8 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-          .getTransactionInfo(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
+              .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }

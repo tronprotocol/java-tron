@@ -18,26 +18,68 @@
 
 package org.tron.core.vm.program;
 
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.ByteString;
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Objects;
+import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.*;
-import org.tron.core.capsule.*;
+import org.tron.common.utils.BIUtil;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.*;
+import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.OpCode;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.VM;
+import org.tron.core.vm.VMConstant;
+import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.nativecontract.*;
-import org.tron.core.vm.nativecontract.param.*;
+import org.tron.core.vm.nativecontract.ContractService;
+import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
+import org.tron.core.vm.nativecontract.UnfreezeBalanceProcessor;
+import org.tron.core.vm.nativecontract.VoteWitnessProcessor;
+import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
+import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
+import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
+import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
+import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -54,16 +96,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
-
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.util.*;
-
-import static java.lang.StrictMath.min;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.*;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 /**
  * @author Roman Mandeleil
@@ -773,7 +805,10 @@ public class Program {
           Hex.toHexString(newAddress),
           createResult.getException());
 
-      internalTx.reject();
+      if(internalTx != null){
+        internalTx.reject();
+      }
+
       createResult.rejectInternalTransactions();
 
       stackPushZero();
@@ -967,7 +1002,10 @@ public class Program {
             Hex.toHexString(contextAddress),
             callResult.getException());
 
-        internalTx.reject();
+        if(internalTx != null){
+          internalTx.reject();
+        }
+
         callResult.rejectInternalTransactions();
 
         stackPushZero();

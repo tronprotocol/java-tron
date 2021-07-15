@@ -158,6 +158,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
   private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
+  //This value is only allowed to be 1
+  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -755,6 +758,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       }
     }
 
+    try {
+      this.getAllowAccountAssetOptimization();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAccountAssetOptimization(0L);
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -2202,6 +2210,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowNewResourceModel() == 1L;
   }
 
+  public boolean supportAllowAccountAssetOptimization() {
+    return getAllowAccountAssetOptimization() == 1L;
+  }
+
   public void saveAllowNewResourceModel(long value) {
     this.put(ALLOW_NEW_RESOURCE_MODEL, new BytesCapsule(ByteArray.fromLong(value)));
   }
@@ -2259,6 +2271,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(Long.MAX_VALUE);
+  }
+
+  // 1: enable
+  public long getAllowAccountAssetOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
+  }
+
+  public void setAllowAccountAssetOptimization(long value) {
+    this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {

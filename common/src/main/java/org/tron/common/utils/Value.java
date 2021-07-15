@@ -21,7 +21,7 @@ import com.cedarsoftware.util.DeepEquals;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  * Class to encapsulate an object and provide utilities for conversion
