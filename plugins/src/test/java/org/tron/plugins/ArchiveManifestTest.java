@@ -1,6 +1,5 @@
 package org.tron.plugins;
 
-
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 
 import java.io.BufferedReader;
@@ -14,6 +13,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import java.util.UUID;
+
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DB;
 import org.junit.AfterClass;
@@ -22,7 +23,7 @@ import org.junit.Test;
 @Slf4j
 public class ArchiveManifestTest {
 
-  private static final String OUTPUT_DIRECTORY = "output-directory/database";
+  private static final String OUTPUT_DIRECTORY = "output-directory/database/archiveManifest";
 
   private static final String ENGINE = "ENGINE";
   private static final String LEVELDB = "LEVELDB";
@@ -37,16 +38,15 @@ public class ArchiveManifestTest {
   @BeforeClass
   public static void init() throws IOException {
     File file = new File(OUTPUT_DIRECTORY,ACCOUNT);
-    DB database = factory.open(file,ArchiveManifest.newDefaultLevelDbOptions());
-    database.close();
+    factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
+
     file = new File(OUTPUT_DIRECTORY,MARKET);
-    database = factory.open(file,ArchiveManifest.newDefaultLevelDbOptions());
-    database.close();
+    factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
+
     file = new File(OUTPUT_DIRECTORY,ACCOUNT_ROCKSDB);
-    database = factory.open(file,ArchiveManifest.newDefaultLevelDbOptions());
-    database.close();
+    factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,ROCKSDB);
 
   }
@@ -63,24 +63,35 @@ public class ArchiveManifestTest {
   }
 
   @Test
-  public void testMainH() {
+  public void testHelp() {
     String[] args = new String[] {"-h"};
     ArchiveManifest.main(args);
   }
 
   @Test
-  public void testMainMaxManifest() {
+  public void testMaxManifest() {
     String[] args = new String[] {"-d", OUTPUT_DIRECTORY, "-m", "128"};
     ArchiveManifest.main(args);
   }
+  @Test
+  public void testNotExist() {
+    String[] args = new String[] {"-d", OUTPUT_DIRECTORY + File.separator + UUID.randomUUID()};
+    ArchiveManifest.main(args);
+  }
 
-  public static void writeProperty(String filename, String key, String value) {
+  @Test
+  public void testEmpty() {
+    File file = new File(OUTPUT_DIRECTORY + File.separator + UUID.randomUUID());
+    file.mkdirs();
+    file.deleteOnExit();
+    String[] args = new String[] {"-d", file.toString()};
+    ArchiveManifest.main(args);
+  }
+
+  private static void writeProperty(String filename, String key, String value) throws IOException {
     File file = new File(filename);
     if (!file.exists()) {
-      try {
         file.createNewFile();
-      } catch (IOException e) {
-      }
     }
 
     try (FileInputStream fis = new FileInputStream(file);
@@ -100,7 +111,7 @@ public class ArchiveManifestTest {
   /**
    * delete directory.
    */
-  public static boolean deleteDir(File dir) {
+  private static boolean deleteDir(File dir) {
     if (dir.isDirectory()) {
       String[] children = dir.list();
       assert children != null;

@@ -3,13 +3,25 @@ plugins {
 }
 
 apply plugin: 'application'
+apply plugin: 'checkstyle'
 
 jacoco {
-    toolVersion = "0.8.1"
+    toolVersion = "0.8.4"
 }
+def versions = [
+        checkstyle: '8.7',
+]
 mainClassName = 'org.tron.plugins.ArchiveManifest'
 group 'org.tron'
 version '1.0.0'
+
+configurations {
+    checkstyleConfig
+}
+
+configurations.getByName('checkstyleConfig') {
+    transitive = false
+}
 
 task version(type: Exec) {
     commandLine 'bash', '-c', '../ver.sh'
@@ -28,44 +40,39 @@ dependencies {
     compile 'com.github.halibobo1205.leveldb-java:leveldb-api:v0.12.5'
 }
 
-test {
-    useJUnitPlatform()
+check.dependsOn 'lint'
+
+checkstyle {
+    toolVersion = "${versions.checkstyle}"
+    configFile = file("../framework/config/checkstyle/checkStyleAll.xml")
 }
 
-
-def createScript(project, mainClass, name) {
-    project.tasks.create(name: name, type: CreateStartScripts) {
-        outputDir = new File(project.buildDir, 'scripts')
-        mainClassName = mainClass
-        applicationName = name
-        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
-    }
-    project.tasks[name].dependsOn(project.jar)
-    project.applicationDistribution.with {
-        into("bin") {
-            from(project.tasks[name])
-            fileMode = 0755
-        }
-    }
+checkstyleMain {
+    source = 'src/main/java'
 }
 
-createScript(project, 'org.tron.plugins.ArchiveManifest', 'ArchiveManifest')
-
-def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
-if (releaseBinary == 'true') {
-    artifacts {
-        archives(binaryRelease('buildArchiveManifestJar', 'ArchiveManifest', 'org.tron.plugins.ArchiveManifest'))
-    }
+task lint(type: Checkstyle) {
+    // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
+    delete fileTree(dir: "${project.rootDir}/app/build/reports")
+    source 'src'
+    include '**/*.java'
+    exclude 'main/gen/**'
+    exclude 'test/**'
+    // empty classpath
+    classpath = files()
+    //Failing the build
+    ignoreFailures = false
 }
 
-task copyToParent(type: Copy) {
-    into "../build/distributions"
-    from "$buildDir/distributions"
-    include "*.zip"
+tasks.matching { it instanceof Test }.all {
+    testLogging.events = ["failed", "passed", "skipped"]
+}
+
+if (project.hasProperty("mainClass")) {
+    mainClassName = mainClass
 }
 
 test {
-    useJUnitPlatform()
     testLogging {
         exceptionFormat = 'full'
     }
@@ -73,6 +80,15 @@ test {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+    executionData.from = 'build/jacoco/jacocoTest.exec'
 }
 
 def binaryRelease(taskName, jarName, mainClass) {
@@ -94,5 +110,40 @@ def binaryRelease(taskName, jarName, mainClass) {
         }
     }
 }
+
+def createScript(project, mainClass, name) {
+    project.tasks.create(name: name, type: CreateStartScripts) {
+        outputDir = new File(project.buildDir, 'scripts')
+        mainClassName = mainClass
+        applicationName = name
+        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
+    }
+    project.tasks[name].dependsOn(project.jar)
+    project.applicationDistribution.with {
+        into("bin") {
+            from(project.tasks[name])
+            fileMode = 0755
+        }
+    }
+}
+applicationDistribution.from("../gradle/java-tron.vmoptions") {
+    into "bin"
+}
+createScript(project, 'org.tron.plugins.ArchiveManifest', 'ArchiveManifest')
+
+def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+if (releaseBinary == 'true') {
+    artifacts {
+        archives(binaryRelease('buildArchiveManifestJar', 'ArchiveManifest', 'org.tron.plugins.ArchiveManifest'))
+    }
+}
+
+task copyToParent(type: Copy) {
+    into "../build/distributions"
+    from "$buildDir/distributions"
+    include "*.zip"
+}
+
+
 
 build.finalizedBy(copyToParent)
