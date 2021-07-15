@@ -21,6 +21,8 @@ import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
 import static org.tron.core.vm.OpCode.UNFREEZE;
+import static org.tron.core.vm.OpCode.VOTEWITNESS;
+import static org.tron.core.vm.OpCode.WITHDRAWREWARD;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
