@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+//pragma solidity ^0.6.0;
 interface X {
     function setValue(uint _x) external;
 }

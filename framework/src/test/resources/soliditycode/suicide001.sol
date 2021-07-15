@@ -3,7 +3,7 @@ contract factory {
     }
 
     function create1() payable public returns (address){
-        Caller add = (new Caller).value(0)();
+        Caller add = (new Caller){value:0}();
         return address(add);
     }
 

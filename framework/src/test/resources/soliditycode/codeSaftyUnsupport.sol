@@ -35,11 +35,11 @@ function trigger4(address payable addr) payable public {
 }
 
 function trigger5(address payable addr) payable public {
-  SubC(addr).receiveToken.value(10)();
+  SubC(addr).receiveToken{value:10}();
 }
 
 function trigger6(address payable addr, trcToken tokenId) payable public {
-address(SubC(addr)).call.value(1000)(abi.encodeWithSignature("transferToken(uint256, trcToken)", 10, tokenId));
+address(SubC(addr)).call{value:1000}(abi.encodeWithSignature("transferToken(uint256, trcToken)", 10, tokenId));
 }
 
 function trigger7(address addr) payable public {

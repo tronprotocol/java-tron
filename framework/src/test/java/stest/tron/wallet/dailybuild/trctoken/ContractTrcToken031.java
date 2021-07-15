@@ -82,12 +82,10 @@ public class ContractTrcToken031 {
 
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L, fromAddress,
             testKey002, blockingStubFull));
-
-
     // freeze balance
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
         0, 1, dev001Key, blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
     //Create a new AssetIssue success.
@@ -96,7 +94,7 @@ public class ContractTrcToken031 {
         10000L, 1L, 1L, dev001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
-
+    logger.info("assetId: " + assetAccountId);
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
     String filePath = "src/test/resources/soliditycode/contractTrcToken031.sol";
