@@ -68,4 +68,12 @@ public class AccountStoreTest {
     ;
     Assert.assertTrue(accountStore.has(data));
   }
+
+  @Test
+  public void put() {
+    AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(address),
+            ByteString.copyFrom(accountName),
+            AccountType.forNumber(1));
+    accountStore.put(data, accountCapsule);
+  }
 }
