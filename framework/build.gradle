@@ -79,7 +79,6 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
 
-//    implementation('com.github.briandilley.jsonrpc4j:jsonrpc4j:1.6')
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
     compile group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
 
