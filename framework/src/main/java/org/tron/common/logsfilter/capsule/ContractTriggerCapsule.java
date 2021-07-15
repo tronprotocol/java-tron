@@ -4,13 +4,12 @@ import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.bouncycastle.util.encoders.Hex;
 import org.pf4j.util.StringUtils;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
