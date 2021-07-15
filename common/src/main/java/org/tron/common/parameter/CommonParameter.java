@@ -403,10 +403,10 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
-  public boolean fullNodeHttpJsonRpcEnable = true;
+  public boolean fullNodeHttpJsonRpcEnable = false;
   @Getter
   @Setter
-  public boolean solidityNodeHttpJsonRpcEnable = true;
+  public boolean solidityNodeHttpJsonRpcEnable = false;
   @Getter
   @Setter
   public boolean pBFTNodeHttpJsonRpcEnable = false;
