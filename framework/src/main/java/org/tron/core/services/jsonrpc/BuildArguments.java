@@ -80,7 +80,7 @@ public class BuildArguments {
       try {
         callValue = ByteArray.jsonHexToLong(value);
       } catch (Exception e) {
-        throw new JsonRpcInvalidParams("invalid hex number");
+        throw new JsonRpcInvalidParams("invalid param value: invalid hex number");
       }
     }
 
