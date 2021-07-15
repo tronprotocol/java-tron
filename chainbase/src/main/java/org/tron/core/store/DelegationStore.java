@@ -132,13 +132,12 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void accumulateWitnessVi(long cycle, byte[] address, long voteCount) {
     BigInteger preVi = getWitnessVi(cycle - 1, address);
-    if (BigInteger.ZERO.equals(preVi)) {
-      return;
-    }
     long reward = getReward(cycle, address);
-    if (reward == 0 || voteCount == 0) {
-      setWitnessVi(cycle, address, preVi);
-    } else {
+    if (reward == 0 || voteCount == 0) { // Just forward pre vi
+      if (!BigInteger.ZERO.equals(preVi)) { // Zero vi will not be record
+        setWitnessVi(cycle, address, preVi);
+      }
+    } else { // Accumulate delta vi
       BigInteger deltaVi = BigInteger.valueOf(reward)
           .multiply(DECIMAL_OF_VI_REWARD)
           .divide(BigInteger.valueOf(voteCount));
