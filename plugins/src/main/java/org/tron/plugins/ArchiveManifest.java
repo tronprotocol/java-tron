@@ -73,7 +73,7 @@ public class ArchiveManifest implements Callable<Boolean> {
     return doArchive();
   }
 
-  private static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
+  public static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
     org.iq80.leveldb.Options dbOptions = new org.iq80.leveldb.Options();
     dbOptions.createIfMissing(true);
     dbOptions.paranoidChecks(true);
