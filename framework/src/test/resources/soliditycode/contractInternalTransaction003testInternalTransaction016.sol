@@ -72,7 +72,7 @@
             (new B){value:1}();//1
             (new B){value:1}();//1
             B  b1=(new B){value:1}();//1
-            address payable aaa=address(this);
+            address payable aaa=payable(address(this));
             b1.suicide1(aaa);
         }
         function transfer2()  payable public{
@@ -144,7 +144,7 @@
             (new B){value:1}();//1
             (new B){value:1}();//1
             B  b1=(new B){value:1}();//1
-            address payable aaa=address(this);
+            address payable aaa=payable(address(this));
             b1.suicide1(aaa);
         }
         function getBalance() public  returns(uint256){

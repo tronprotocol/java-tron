@@ -77,7 +77,7 @@ library NameFilter {
             if (_temp[i] > 0x40 && _temp[i] < 0x5b)
             {
                 // convert to lower case a-z
-                _temp[i] = byte(uint8(_temp[i]) + 32);
+                _temp[i] = bytes1(uint8(_temp[i]) + 32);
 
                 // we have a non number
                 if (_hasNonNumber == false)
@@ -1546,7 +1546,7 @@ contract FoMo3Dlong is F3Devents {
 
             // set up player account
             pIDxAddr_[msg.sender] = _pID;
-            plyr_[_pID].addr = msg.sender;
+            plyr_[_pID].addr = payable(msg.sender);
 
             if (_name != "")
             {
@@ -1639,7 +1639,7 @@ contract FoMo3Dlong is F3Devents {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-        address payable add = address(uint160(Jekyll_Island_Inc));
+        address payable add = payable(address(uint160(Jekyll_Island_Inc)));
         if (!add.send(_com))
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
@@ -1657,7 +1657,7 @@ contract FoMo3Dlong is F3Devents {
 
         // send share for p3d to divies
         if (_p3d > 0){
-            address payable addr = address(uint160(Divies));
+            address payable addr = payable(address(uint160(Divies)));
             addr.transfer(_p3d);
         }
         // prepare event data
@@ -1755,7 +1755,7 @@ contract FoMo3Dlong is F3Devents {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
         uint256 _p3d;
-        address payable addr = address(uint160(Jekyll_Island_Inc));
+        address payable addr = payable(address(uint160(Jekyll_Island_Inc)));
         if (!addr.send(_com))
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
@@ -1770,7 +1770,7 @@ contract FoMo3Dlong is F3Devents {
 
         // pay 1% out to FoMo3D short
          _com = _eth / 100;
-        address payable add = address(uint160(otherF3D_));
+        address payable add = payable(address(uint160(otherF3D_)));
         add.transfer(_com);
 
         // distribute share to affiliate
@@ -1790,7 +1790,7 @@ contract FoMo3Dlong is F3Devents {
         if (_p3d > 0)
         {
             // deposit to divies contract
-            address payable add = address(uint160(Divies));
+            address payable add = payable(address(uint160(Divies)));
             add.transfer(_p3d);
 
             // set up event data

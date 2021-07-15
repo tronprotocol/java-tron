@@ -3,7 +3,7 @@ contract CounterConstruct {
      address payable owner;
      event LogResult(bytes32 _hashBefore);
      constructor() public{
-         owner = msg.sender;
+         owner = payable(msg.sender);
          address addr = address(this);
          bytes32 _hashBefore;
          assembly {
