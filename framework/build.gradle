@@ -42,6 +42,7 @@ dependencies {
     testCompile group: 'org.hamcrest', name: 'hamcrest-junit', version: '1.0.0.1'
 
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
+    testCompile project(":plugins")
 
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "com.madgag.spongycastle:prov:1.58.0.0"
