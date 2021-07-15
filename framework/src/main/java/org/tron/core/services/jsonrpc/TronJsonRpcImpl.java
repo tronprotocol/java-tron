@@ -752,7 +752,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
               retBuilder);
       trx = setTransactionPermissionId(args.permissionId, trx);
       trxExtBuilder.setTransaction(trx);
-      retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {
       throw new JsonRpcInvalidRequest(e.getMessage());
     } catch (Exception e) {
@@ -761,12 +760,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         errString = e.getMessage().replaceAll("[\"]", "\'");
       }
 
-      throw new JsonRpcInvalidRequest(errString);
+      throw new JsonRpcInternalError(errString);
     }
 
-    trxExtBuilder.setResult(retBuilder);
-
-    String jsonString = Util.printTransactionExtention(trxExtBuilder.build(), args.visible);
+    String jsonString = Util.printTransaction(trxExtBuilder.build().getTransaction(), args.visible);
     TransactionJson transactionJson = new TransactionJson();
     transactionJson.transaction = JSON.parseObject(jsonString);
 
