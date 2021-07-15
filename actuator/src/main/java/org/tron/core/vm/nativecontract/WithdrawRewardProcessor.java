@@ -68,7 +68,7 @@ public class WithdrawRewardProcessor {
         .setLatestWithdrawTime(param.getNowInMs())
         .build());
 
-    repo.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
+    repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
     return allowance;
   }
 }

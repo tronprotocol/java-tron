@@ -116,6 +116,6 @@ public class VoteRewardUtil {
     AccountCapsule accountCapsule = repository.getAccount(address);
     long allowance = accountCapsule.getAllowance();
     accountCapsule.setAllowance(allowance + amount);
-    repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
+    repository.updateAccount(accountCapsule.createDbKey(), accountCapsule);
   }
 }

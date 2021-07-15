@@ -507,6 +507,7 @@ public class Program {
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
 
     // 该方案总有当前维护期的收益无法提取
+    // 并且该方案会导致合约余额为0但有allowance或未提现收益的情况下，创建新账户没有收费
     // 另一种方案是如果该自杀合约尚有未提现的收益，则不允许其自杀
     if (VMConfig.allowTvmVote()) {
       withdrawRewardAndCancelVote(owner, getContractState());
@@ -612,7 +613,7 @@ public class Program {
           .setAllowance(0)
           .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
           .build());
-      repo.putAccountValue(ownerCapsule.createDbKey(), ownerCapsule);
+      repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
     } catch (ArithmeticException e) {
       throw new BytecodeExecutionException("Suicide: balance and allowance out of long range.");
     }
