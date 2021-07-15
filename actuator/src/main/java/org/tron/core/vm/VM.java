@@ -353,7 +353,6 @@ public class VM {
           word1.add(word2);
           program.stackPush(word1);
           program.step();
-
         }
         break;
         case MUL: {
@@ -1139,7 +1138,7 @@ public class VM {
         }
         break;
         case FREEZE: {
-          if (program.isStaticCall()) {
+          if (VMConfig.allowTvmVote() && program.isStaticCall()) { // after allow vote, check static
             throw new Program.StaticCallModificationException();
           }
 
@@ -1153,7 +1152,7 @@ public class VM {
         }
         break;
         case UNFREEZE: {
-          if (program.isStaticCall()) {
+          if (VMConfig.allowTvmVote() && program.isStaticCall()) { // after allow vote, check static
             throw new Program.StaticCallModificationException();
           }
 
