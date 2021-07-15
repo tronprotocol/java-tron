@@ -1002,11 +1002,6 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowNewRewardAlgorithm")
-        .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowNewRewardAlgorithm())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmVote")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
         .build());

@@ -184,7 +184,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowNewResourceModel = 0;
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmFreeze = 0;
-    PARAMETER.allowNewRewardAlgorithm = 0;
     PARAMETER.allowTvmVote = 0;
     PARAMETER.historyBalanceLookup = false;
     PARAMETER.openPrintLog = true;
@@ -712,10 +711,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmFreeze =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
-
-    PARAMETER.allowNewRewardAlgorithm =
-        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) : 0;
 
     PARAMETER.allowTvmVote =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config

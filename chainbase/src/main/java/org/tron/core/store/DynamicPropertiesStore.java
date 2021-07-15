@@ -156,9 +156,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
-
-  private static final byte[] ALLOW_NEW_REWARD_ALGORITHM = "ALLOW_NEW_REWARD_ALGORITHM".getBytes();
-  private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE = "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
+  private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
+      "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -747,19 +746,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowNewRewardAlgorithm();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowNewRewardAlgorithm(CommonParameter.getInstance().getAllowNewRewardAlgorithm());
-      if (CommonParameter.getInstance().getAllowNewRewardAlgorithm() == 1) {
-        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
-            new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
-      }
-    }
-
-    try {
       this.getAllowTvmVote();
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmVote(CommonParameter.getInstance().getAllowTvmVote());
+      if (CommonParameter.getInstance().getAllowTvmVote() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      }
     }
 
   }
@@ -2249,21 +2242,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
-  public void saveAllowNewRewardAlgorithm(long value) {
-    this.put(ALLOW_NEW_REWARD_ALGORITHM,
-        new BytesCapsule(ByteArray.fromLong(value)));
-  }
-
-  public long getAllowNewRewardAlgorithm() {
-    return Optional.ofNullable(getUnchecked(ALLOW_NEW_REWARD_ALGORITHM))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_NEW_REWARD_ALGORITHM"));
-  }
-
   public boolean useNewRewardAlgorithm() {
-    return getAllowNewRewardAlgorithm() == 1;
+    return getAllowTvmVote() == 1;
   }
 
   public void saveNewRewardAlgorithmEffectiveCycle() {

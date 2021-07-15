@@ -242,13 +242,9 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
           break;
         }
-        case ALLOW_NEW_REWARD_ALGORITHM: {
-          manager.getDynamicPropertiesStore().saveAllowNewRewardAlgorithm(entry.getValue());
-          manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
-          break;
-        }
         case ALLOW_TVM_VOTE: {
           manager.getDynamicPropertiesStore().saveAllowTvmVote(entry.getValue());
+          manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
           break;
         }
 
