@@ -20,6 +20,7 @@ import org.iq80.leveldb.DB;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 @Slf4j
 public class ArchiveManifestTest {
 
@@ -73,6 +74,7 @@ public class ArchiveManifestTest {
     String[] args = new String[] {"-d", OUTPUT_DIRECTORY, "-m", "128"};
     ArchiveManifest.main(args);
   }
+
   @Test
   public void testNotExist() {
     String[] args = new String[] {"-d", OUTPUT_DIRECTORY + File.separator + UUID.randomUUID()};
@@ -91,13 +93,12 @@ public class ArchiveManifestTest {
   private static void writeProperty(String filename, String key, String value) throws IOException {
     File file = new File(filename);
     if (!file.exists()) {
-        file.createNewFile();
+      file.createNewFile();
     }
 
     try (FileInputStream fis = new FileInputStream(file);
          OutputStream out = new FileOutputStream(file);
-         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out
-             , StandardCharsets.UTF_8))){
+         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
       BufferedReader bf = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
       Properties properties = new Properties();
       properties.load(bf);
