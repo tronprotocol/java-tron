@@ -1,4 +1,4 @@
-package org.tron.program;
+package org.tron.plugins;
 
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
@@ -15,18 +15,14 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.DB;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
-import org.tron.plugins.ArchiveManifest;
-
 @Slf4j
 public class ArchiveManifestTest {
 
-  private static final String OUTPUT_DIRECTORY = "output-directory/archiveManifestTest";
+  private static final String OUTPUT_DIRECTORY = "output-directory/database";
 
   private static final String ENGINE = "ENGINE";
   private static final String LEVELDB = "LEVELDB";
@@ -39,15 +35,18 @@ public class ArchiveManifestTest {
 
 
   @BeforeClass
-  public static void init() throws IOException, RocksDBException {
+  public static void init() throws IOException {
     File file = new File(OUTPUT_DIRECTORY,ACCOUNT);
-    factory.open(file, ArchiveManifest.newDefaultLevelDbOptions()).close();
+    DB database = factory.open(file,ArchiveManifest.newDefaultLevelDbOptions());
+    database.close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
     file = new File(OUTPUT_DIRECTORY,MARKET);
-    factory.open(file,ArchiveManifest.newDefaultLevelDbOptions()).close();
+    database = factory.open(file,ArchiveManifest.newDefaultLevelDbOptions());
+    database.close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,LEVELDB);
     file = new File(OUTPUT_DIRECTORY,ACCOUNT_ROCKSDB);
-    RocksDB.open(OUTPUT_DIRECTORY + File.pathSeparator + ACCOUNT_ROCKSDB).close();
+    database = factory.open(file,ArchiveManifest.newDefaultLevelDbOptions());
+    database.close();
     writeProperty(file.toString() + File.separator + ENGINE_FILE,ENGINE,ROCKSDB);
 
   }
@@ -61,21 +60,18 @@ public class ArchiveManifestTest {
   public void testMain() {
     String[] args = new String[] { "-d", OUTPUT_DIRECTORY };
     ArchiveManifest.main(args);
-    Assert.assertNull(null);
   }
 
   @Test
   public void testMainH() {
     String[] args = new String[] {"-h"};
     ArchiveManifest.main(args);
-    Assert.assertNull(null);
   }
 
   @Test
   public void testMainMaxManifest() {
     String[] args = new String[] {"-d", OUTPUT_DIRECTORY, "-m", "128"};
     ArchiveManifest.main(args);
-    Assert.assertNull(null);
   }
 
   public static void writeProperty(String filename, String key, String value) {
@@ -89,8 +85,8 @@ public class ArchiveManifestTest {
 
     try (FileInputStream fis = new FileInputStream(file);
          OutputStream out = new FileOutputStream(file);
-         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out,
-             StandardCharsets.UTF_8))) {
+         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out
+             , StandardCharsets.UTF_8))){
       BufferedReader bf = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
       Properties properties = new Properties();
       properties.load(bf);
