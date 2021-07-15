@@ -150,9 +150,9 @@ public class AssetUpdateHelper {
 
     Iterator<Entry<byte[], AccountCapsule>> iterator =
         chainBaseManager.getAccountStore().iterator();
+
     while (iterator.hasNext()) {
       AccountCapsule accountCapsule = iterator.next().getValue();
-
       accountCapsule.clearAssetV2();
       if (accountCapsule.getAssetMap().size() != 0) {
         HashMap<String, Long> map = new HashMap<>();

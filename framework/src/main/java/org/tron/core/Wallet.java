@@ -329,6 +329,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -359,6 +360,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -1007,6 +1009,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmFreeze")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()

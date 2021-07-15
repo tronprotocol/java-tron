@@ -280,5 +280,7 @@ public class Constant {
   public static final String OPEN_PRINT_LOG = "node.openPrintLog";
   public static final String OPEN_TRANSACTION_SORT = "node.openTransactionSort";
 
+  public static final String  ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
+
   public static final String LOCAL_HOST = "127.0.0.1";
 }

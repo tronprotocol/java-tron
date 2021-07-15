@@ -119,6 +119,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
+import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -380,7 +381,7 @@ public class Manager {
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
-
+    chainBaseManager.init();
     this.initGenesis();
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(
@@ -615,6 +616,10 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return chainBaseManager.getAccountStore();
+  }
+
+  public AccountAssetStore getAccountAssetStore() {
+    return chainBaseManager.getAccountAssetStore();
   }
 
   public AccountIndexStore getAccountIndexStore() {
