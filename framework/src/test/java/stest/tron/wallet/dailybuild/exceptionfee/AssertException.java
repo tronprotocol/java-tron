@@ -130,13 +130,14 @@ public class AssertException {
     logger.info("getContractRet:" + ById.get().getRet(0).getContractRet());
 
     Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
-        contractResult.ILLEGAL_OPERATION_VALUE);
-    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), 8);
-    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.ILLEGAL_OPERATION);
+        contractResult.REVERT.getNumber());
+    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), 2);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.REVERT);
 
     Assert
-        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()), "");
-    Assert.assertEquals(contractResult.ILLEGAL_OPERATION, infoById.get().getReceipt().getResult());
+        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()),
+            "4e487b710000000000000000000000000000000000000000000000000000000000000012");
+    Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
 
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
@@ -159,7 +160,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -222,7 +223,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -285,7 +286,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -349,7 +350,7 @@ public class AssertException {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -478,7 +479,7 @@ public class AssertException {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -541,7 +542,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue((beforeBalance - maxFeeLimit - netFee) == afterBalance);
+    Assert.assertTrue((beforeBalance - fee) == afterBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);

@@ -1,8 +1,6 @@
 package stest.tron.wallet.dailybuild.assetissue.grammar;
 
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.BAD_JUMP_DESTINATION_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.ILLEGAL_OPERATION_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY_VALUE;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_MEMORY_VALUE;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_TIME_VALUE;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT_VALUE;
@@ -270,12 +268,13 @@ public class ContractGrammar004 {
 
     logger.info("infoById:" + infoById);
 
-    Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), OUT_OF_ENERGY_VALUE);
-    Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.OUT_OF_ENERGY);
+    Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), REVERT_VALUE);
+    Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.REVERT);
 
-    Assert
-        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()), "");
-    Assert.assertEquals(contractResult.OUT_OF_ENERGY, infoById.get().getReceipt().getResult());
+    Assert.assertEquals(ByteArray.toHexString(infoById.get()
+            .getContractResult(0).toByteArray()),
+        "4e487b710000000000000000000000000000000000000000000000000000000000000001");
+    Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
 
     Assert.assertEquals(byId.get().getRet(0).getRet().getNumber(), 0);
     Assert.assertEquals(byId.get().getRet(0).getRetValue(), 0);
@@ -314,13 +313,14 @@ public class ContractGrammar004 {
     logger.info("getContractRetValue:" + byId.get().getRet(0).getContractRetValue());
     logger.info("getContractRet:" + byId.get().getRet(0).getContractRet());
 
-    Assert.assertEquals(byId.get().getRet(0).getContractRet().getNumber(), ILLEGAL_OPERATION_VALUE);
-    Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), ILLEGAL_OPERATION_VALUE);
-    Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.ILLEGAL_OPERATION);
+    Assert.assertEquals(byId.get().getRet(0).getContractRet().getNumber(), REVERT_VALUE);
+    Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), REVERT_VALUE);
+    Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.REVERT);
 
     Assert
-        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()), "");
-    Assert.assertEquals(contractResult.ILLEGAL_OPERATION, infoById.get().getReceipt().getResult());
+        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()),
+            "4e487b710000000000000000000000000000000000000000000000000000000000000012");
+    Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
 
   }
 
