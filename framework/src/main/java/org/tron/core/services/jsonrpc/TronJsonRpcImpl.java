@@ -58,6 +58,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 public class TronJsonRpcImpl implements TronJsonRpc {
 
   String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
+  private final int chainId = 100;
 
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
@@ -203,7 +204,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String ethChainId() {
-    return ByteArray.toJsonHex(100);
+    return ByteArray.toJsonHex(chainId);
   }
 
   @Override
@@ -328,7 +329,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       Storage storage = new Storage(addressByte, store);
 
       DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
-      return value == null ? null : ByteArray.toJsonHex(value.getData());
+      return ByteArray.toJsonHex(value == null ? new byte[32] : value.getData());
     } else {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag);
@@ -374,21 +375,19 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
     if (witnessAddress == null || witnessAddress.length != 21) {
-      throw new JsonRpcInvalidParams("invalid witness address");
+      throw new JsonRpcInternalError("invalid witness address");
     }
     return ByteArray.toJsonHexAddress(witnessAddress);
   }
 
+  // return energy fee
   @Override
   public String gasPrice() {
     BigInteger gasPrice;
-    BigInteger multiplier = new BigInteger("1000000000", 10); // Gwei: 10^9
+    // 1sun as 1 Gwei(1 eth = 10^9Gwei), return wei(1 eth=10^18 wei), so 1 sun as 10^9 wei
+    BigInteger multiplier = new BigInteger("1000000000", 10);
 
-    if ("getTransactionFee".equals(wallet.getChainParameters().getChainParameter(3).getKey())) {
-      gasPrice = BigInteger.valueOf(wallet.getChainParameters().getChainParameter(3).getValue());
-    } else {
-      gasPrice = BigInteger.valueOf(140);
-    }
+    gasPrice = BigInteger.valueOf(wallet.getEnergyFee());
     return "0x" + gasPrice.multiply(multiplier).toString(16);
   }
 
