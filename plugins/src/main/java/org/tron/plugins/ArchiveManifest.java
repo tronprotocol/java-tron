@@ -169,9 +169,9 @@ public class ArchiveManifest implements Callable<Boolean> {
     if (maxSize < 0) {
       return false;
     }
-    logger.info("CurrentName {}/{},size {} kb", dir, currentName, current.length() / 1024);
+    logger.info("CurrentName {}/{},size {} kb.", dir, currentName, current.length() / 1024);
     if ("market_pair_price_to_order".equalsIgnoreCase(this.name)) {
-      logger.info("Db {} ignore", this.name);
+      logger.info("Db {} ignored.", this.name);
       return false;
     }
     return current.length() >= maxSize * 1024 * 1024;
@@ -180,19 +180,19 @@ public class ArchiveManifest implements Callable<Boolean> {
   public boolean doArchive() throws IOException {
     File levelDbFile = srcDbPath.toFile();
     if (!levelDbFile.exists()) {
-      logger.info("File {},does not exist ignore.", srcDbPath.toString());
+      logger.info("File {},does not exist, ignored.", srcDbPath.toString());
       return true;
     }
     if (!checkEngine()) {
-      logger.info("Db {},not leveldb ignore.", this.name);
+      logger.info("Db {},not leveldb, ignored.", this.name);
       return true;
     }
     if (!checkManifest(levelDbFile.toString())) {
-      logger.info("Db {},no need ignore.", levelDbFile.toString());
+      logger.info("Db {},no need, ignored.", levelDbFile.toString());
       return true;
     }
     open();
-    logger.info("Db {} reopen use {} ms.", this.name, (System.currentTimeMillis() - startTime));
+    logger.info("Db {} archive use {} ms.", this.name, (System.currentTimeMillis() - startTime));
     return true;
   }
 
@@ -226,7 +226,7 @@ public class ArchiveManifest implements Callable<Boolean> {
     private  int maxBatchSize = 64_000;
 
     @Parameter(names = {"-m", "--manifest-size" }, description = "manifest  min size(M) to archive")
-    private  int maxManifestSize = 128;
+    private  int maxManifestSize = 0;
 
     @Parameter(names = {"-h", "--help"}, help = true)
     private  boolean help;
