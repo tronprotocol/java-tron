@@ -250,6 +250,14 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
           break;
         }
+        case FREE_NET_LIMIT: {
+          manager.getDynamicPropertiesStore().saveFreeNetLimit(entry.getValue());
+          break;
+        }
+        case TOTAL_NET_LIMIT: {
+          manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
+          break;
+        }
 
         default:
           find = false;
