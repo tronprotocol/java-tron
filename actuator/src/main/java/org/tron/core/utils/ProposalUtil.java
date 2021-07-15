@@ -475,6 +475,27 @@ public class ProposalUtil {
         }
         break;
       }
+      case FREE_NET_LIMIT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException("Bad chain parameter id [FREE_NET_LIMIT]");
+        }
+        if (value < 0 || value > 100_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value, valid range is [0,100_000]");
+        }
+        break;
+      }
+      case TOTAL_NET_LIMIT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException("Bad chain parameter id [TOTAL_NET_LIMIT]");
+        }
+        if (value < 0 || value > 1000_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value, valid range is [0, 100_000_000_000L]");
+        }
+        break;
+      }
+
       case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException(
@@ -541,7 +562,9 @@ public class ProposalUtil {
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
     ALLOW_TVM_FREEZE(52), // 0, 1
-    ALLOW_ACCOUNT_ASSET_OPTIMIZATION(53); // 0, 1
+    ALLOW_ACCOUNT_ASSET_OPTIMIZATION(53), // 1
+    FREE_NET_LIMIT(61), // 5000, [0, 100_000]
+    TOTAL_NET_LIMIT(62); // 43_200_000_000L, [0, 1000_000_000_000L]
 
     private long code;
 

@@ -141,7 +141,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now, TransactionTrace trace)
       throws AccountResourceInsufficientException {
-    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
+    boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now, trace);
 
     if (!ret) {
       ret = consumeFeeForCreateNewAccount(accountCapsule, trace);
@@ -152,7 +152,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
-      long now) {
+      long now, TransactionTrace trace) {
 
     long createNewAccountBandwidthRatio = chainBaseManager.getDynamicPropertiesStore()
         .getCreateNewAccountBandwidthRate();
@@ -160,18 +160,20 @@ public class BandwidthProcessor extends ResourceProcessor {
     long netUsage = accountCapsule.getNetUsage();
     long latestConsumeTime = accountCapsule.getLatestConsumeTime();
     long netLimit = calculateGlobalNetLimit(accountCapsule);
-
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
-    if (bytes * createNewAccountBandwidthRatio <= (netLimit - newNetUsage)) {
+    long netCost = bytes * createNewAccountBandwidthRatio;
+    if (netCost <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
-      newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio,
-          latestConsumeTime, now);
+      newNetUsage = increase(newNetUsage, netCost, latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
+
+      trace.setNetBillForCreateNewAccount(netCost, 0);
       chainBaseManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
       return true;
     }
     return false;

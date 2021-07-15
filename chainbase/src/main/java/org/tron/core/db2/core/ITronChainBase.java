@@ -28,6 +28,8 @@ public interface ITronChainBase<T> extends Iterable<Entry<byte[], T>>, Quitable 
 
   boolean has(byte[] key);
 
+  boolean isNotEmpty();
+
   String getName();
 
   String getDbName();

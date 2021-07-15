@@ -172,7 +172,6 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -1017,6 +1016,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getFreeNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getFreeNetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
+        .build());
+
     return builder.build();
   }
 
@@ -1330,7 +1339,7 @@ public class Wallet {
     TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-          .getTransactionInfo(transactionId.toByteArray());
+              .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1339,7 +1348,7 @@ public class Wallet {
     }
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-          .get(transactionId.toByteArray());
+              .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
