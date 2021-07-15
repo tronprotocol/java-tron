@@ -851,7 +851,6 @@ public class PrecompiledContracts {
       } catch (Throwable t) {
         if (t instanceof InterruptedException){
           Thread.currentThread().interrupt();
-          return Pair.of(true, new byte[WORD_SIZE]);
         }
         return Pair.of(true, new byte[WORD_SIZE]);
       }
