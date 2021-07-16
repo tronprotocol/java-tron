@@ -1238,7 +1238,7 @@ public class VM {
             throw new Program.StaticCallModificationException();
           }
 
-          if (VMConfig.allowTvmFreeze() && !program.canSuicide()) {
+          if (!program.canSuicide()) {
             program.getResult().setRevert();
           } else {
             DataWord address = program.stackPop();

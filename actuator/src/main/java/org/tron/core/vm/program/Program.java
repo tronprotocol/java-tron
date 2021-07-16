@@ -60,6 +60,7 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
@@ -537,13 +538,6 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
 
-    // 该方案总有当前维护期的收益无法提取
-    // 并且该方案会导致合约余额为0但有allowance或未提现收益的情况下，创建新账户没有收费
-    // 另一种方案是如果该自杀合约尚有未提现的收益，则不允许其自杀
-    if (VMConfig.allowTvmVote()) {
-      withdrawRewardAndCancelVote(owner, getContractState());
-    }
-
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -622,39 +616,18 @@ public class Program {
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
   }
 
-  private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
-    VoteRewardUtil.withdrawReward(owner, repo);
-
-    AccountCapsule ownerCapsule = repo.getAccount(owner);
-    if (!ownerCapsule.getVotesList().isEmpty()) {
-      VotesCapsule votesCapsule = repo.getVotes(owner);
-      if (votesCapsule == null) {
-        votesCapsule = new VotesCapsule(ByteString.copyFrom(owner),
-            ownerCapsule.getVotesList());
-      }
-      ownerCapsule.clearVotes();
-      votesCapsule.clearNewVotes();
-      repo.updateVotes(owner, votesCapsule);
-    }
-    try {
-      long balance = ownerCapsule.getBalance();
-      long allowance = ownerCapsule.getAllowance();
-      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .setBalance(Math.addExact(balance, allowance))
-          .setAllowance(0)
-          .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
-          .build());
-      repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
-    } catch (ArithmeticException e) {
-      throw new BytecodeExecutionException("Suicide: balance and allowance out of long range.");
-    }
-  }
-
   public boolean canSuicide() {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     AccountCapsule accountCapsule = getContractState().getAccount(owner);
-    return accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
-        && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0;
+    boolean freezeCheck = !VMConfig.allowTvmFreeze()
+        || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
+        && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0);
+    boolean voteCheck = !VMConfig.allowTvmVote()
+        || (accountCapsule.getVotesList().size() == 0
+        && VoteRewardUtil.queryReward(owner, getContractState()) == 0
+        && getContractState().getAccountVote(
+            getContractState().getBeginCycle(owner), owner) == null);
+    return freezeCheck && voteCheck;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1756,9 +1729,9 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("Freeze: validate failure, reason is {}", e.getMessage());
+      logger.error("TVM Freeze: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("Freeze: frozenBalance out of long range.");
+      logger.error("TVM Freeze: frozenBalance out of long range.");
     }
     internalTx.reject();
     return false;
@@ -1785,7 +1758,7 @@ public class Program {
       internalTx.setValue(unfreezeBalance);
       return true;
     } catch (ContractValidateException e) {
-      logger.error("Unfreeze: validate failure, reason is {}", e.getMessage());
+      logger.error("TVM Unfreeze: validate failure. Reason: {}", e.getMessage());
     }
     internalTx.reject();
     return false;
@@ -1853,49 +1826,44 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
 
     increaseNonce();
-    InternalTransaction internalTx = addInternalTx(null, owner, null, 0, null,
-        "voteWitness", nonce, null);
+    InternalTransaction internalTx = addInternalTx(null, owner, null, 0,
+        new byte[2 * witnessArrayLength * DataWord.WORD_SIZE], "voteWitness", nonce, null);
 
     if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength ||
         memoryLoad(amountArrayOffset).intValueSafe() != amountArrayLength) {
-      logger.warn("VoteWitness: memory array length do not match length parameter!");
+      logger.warn("TVM VoteWitness: memory array length do not match length parameter!");
       throw new BytecodeExecutionException(
-          "VoteWitness: memory array length do not match length parameter!");
+          "TVM VoteWitness: memory array length do not match length parameter!");
     }
 
     if (witnessArrayLength != amountArrayLength) {
-      logger.warn("VoteWitness: witness array length {} does not match amount array length {}",
+      logger.warn("TVM VoteWitness: witness array length {} does not match amount array length {}",
           witnessArrayLength, amountArrayLength);
       return false;
     }
 
     try {
       VoteWitnessParam param = new VoteWitnessParam();
-      param.setOwnerAddress(owner);
+      param.setVoterAddress(owner);
 
       byte[] witnessArrayData = memoryChunk(Math.addExact(witnessArrayOffset, DataWord.WORD_SIZE),
           Math.multiplyExact(witnessArrayLength, DataWord.WORD_SIZE));
       byte[] amountArrayData = memoryChunk(Math.addExact(amountArrayOffset, DataWord.WORD_SIZE),
           Math.multiplyExact(amountArrayLength, DataWord.WORD_SIZE));
 
+      byte[] data = internalTx.getData();
       for (int i = 0; i < witnessArrayLength; i++) {
         DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
             i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+        System.arraycopy(witness.getData(), 0,
+            data, 2 * i * DataWord.WORD_SIZE, DataWord.WORD_SIZE);
         DataWord amount = new DataWord(Arrays.copyOfRange(amountArrayData,
             i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+        System.arraycopy(witness.getData(), 0,
+            data, (2 * i + 1) * DataWord.WORD_SIZE, DataWord.WORD_SIZE);
         param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
             amount.sValue().longValueExact());
       }
-
-      long totalAmount = 0;
-      for (int i = 0; i < witnessArrayLength; i++) {
-        Protocol.Vote vote = param.getVotes().get(i);
-        internalTx.getTokenInfo().put(
-            StringUtil.encode58Check(vote.getVoteAddress().toByteArray()),
-            vote.getVoteCount());
-        totalAmount += vote.getVoteCount();
-      }
-      internalTx.setValue(totalAmount * TRX_PRECISION);
 
       VoteWitnessProcessor processor = new VoteWitnessProcessor();
       processor.validate(param, repository);
@@ -1903,9 +1871,11 @@ public class Program {
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("VoteWitness: validate failure, reason is {}", e.getMessage());
+      logger.error("TVM VoteWitness: validate failure. Reason: {}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("TVM VoteWitness: execute failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("VoteWitness: int or long out of range, caused by {}", e.getMessage());
+      logger.error("TVM VoteWitness: int or long out of range. caused by: {}", e.getMessage());
     }
     internalTx.reject();
     return false;
@@ -1930,7 +1900,7 @@ public class Program {
       internalTx.setValue(allowance);
       return allowance;
     } catch (ContractValidateException e) {
-      logger.error("WithdrawReward: validate failure, reason is {}", e.getMessage());
+      logger.error("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
     }
     return 0;
   }

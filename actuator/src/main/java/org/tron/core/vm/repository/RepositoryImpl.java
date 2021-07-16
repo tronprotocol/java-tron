@@ -576,15 +576,10 @@ public class RepositoryImpl implements Repository {
     commitCodeCache(repository);
     commitContractCache(repository);
     commitStorageCache(repository);
-    //TODO proposal needed?
-    if (VMConfig.allowTvmFreeze()) {
-      commitDynamicCache(repository);
-      commitDelegatedResourceCache(repository);
-    }
-    if (VMConfig.allowTvmVote()) {
-      commitVotesCache(repository);
-      commitDelegationCache(repository);
-    }
+    commitDynamicCache(repository);
+    commitDelegatedResourceCache(repository);
+    commitVotesCache(repository);
+    commitDelegationCache(repository);
   }
 
   @Override

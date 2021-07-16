@@ -200,16 +200,15 @@ public class UnfreezeBalanceProcessor {
         break;
     }
 
-    // notice: clear vote code is removed
-    // notice: clear vote code is added
     if (VMConfig.allowTvmVote() && !accountCapsule.getVotesList().isEmpty()) {
       VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
       if (votesCapsule == null) {
         votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
             accountCapsule.getVotesList());
+      } else {
+        votesCapsule.clearNewVotes();
       }
       accountCapsule.clearVotes();
-      votesCapsule.clearNewVotes();
       repo.updateVotes(ownerAddress, votesCapsule);
     }
 

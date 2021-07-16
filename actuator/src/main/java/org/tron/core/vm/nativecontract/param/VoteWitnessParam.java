@@ -6,18 +6,23 @@ import org.tron.protos.Protocol;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Param used by VoteWitnessProcessor
+ */
 public class VoteWitnessParam {
 
-  private byte[] ownerAddress;
+  // Address of voter
+  private byte[] voterAddress;
 
+  // List of voter`s votes. Every entry contains witness address and vote count
   private final List<Protocol.Vote> votes = new ArrayList<>();
 
-  public byte[] getOwnerAddress() {
-    return ownerAddress;
+  public byte[] getVoterAddress() {
+    return voterAddress;
   }
 
-  public void setOwnerAddress(byte[] ownerAddress) {
-    this.ownerAddress = ownerAddress;
+  public void setVoterAddress(byte[] voterAddress) {
+    this.voterAddress = voterAddress;
   }
 
   public List<Protocol.Vote> getVotes() {
