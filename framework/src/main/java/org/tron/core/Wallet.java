@@ -158,7 +158,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInvalidParams;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -663,7 +663,7 @@ public class Wallet {
     return count;
   }
 
-  public Block getByJsonBlockId(String id) {
+  public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
     if ("earliest".equalsIgnoreCase(id)) {
       return getBlockByNum(0);
     } else if ("latest".equalsIgnoreCase(id)) {
@@ -675,14 +675,15 @@ public class Wallet {
       try {
         blockNumber = ByteArray.hexToBigInteger(id).longValue();
       } catch (Exception e) {
-        throw new JsonRpcInvalidParams("invalid block number");
+        throw new JsonRpcInvalidParamsException("invalid block number");
       }
 
       return getBlockByNum(blockNumber);
     }
   }
 
-  public List<Transaction> getTransactionsByJsonBlockId(String id) {
+  public List<Transaction> getTransactionsByJsonBlockId(String id)
+      throws JsonRpcInvalidParamsException {
     if ("pending".equalsIgnoreCase(id)) {
       return null;
     } else {

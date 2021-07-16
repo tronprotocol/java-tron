@@ -10,8 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.exception.JsonRpcInvalidParams;
-import org.tron.core.exception.JsonRpcInvalidRequest;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
@@ -19,6 +19,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @AllArgsConstructor
 @ToString
 public class BuildArguments {
+
   public String from;
   public String to;
   public String gas; //not used
@@ -41,14 +42,15 @@ public class BuildArguments {
 
   public boolean visible = false;
 
-  public ContractType getContractType(Wallet wallet) {
+  public ContractType getContractType(Wallet wallet) throws JsonRpcInvalidRequestException,
+      JsonRpcInvalidParamsException {
     ContractType contractType;
 
     // to is null
     if (StringUtils.isEmpty(to) || to.equals("0x")) {
       // data is null
       if (StringUtils.isEmpty(data) || data.equals("0x")) {
-        throw new JsonRpcInvalidRequest("invalid json request");
+        throw new JsonRpcInvalidRequestException("invalid json request");
       }
 
       contractType = ContractType.CreateSmartContract;
@@ -64,7 +66,7 @@ public class BuildArguments {
         contractType = ContractType.TriggerSmartContract;
       } else {
         if (StringUtils.isEmpty(value)) {
-          throw new JsonRpcInvalidRequest("invalid json request");
+          throw new JsonRpcInvalidRequestException("invalid json request");
         }
         contractType = ContractType.TransferContract;
       }
@@ -73,14 +75,14 @@ public class BuildArguments {
     return contractType;
   }
 
-  public long parseCallValue() {
+  public long parseCallValue() throws JsonRpcInvalidParamsException {
     long callValue = 0L;
 
     if (StringUtils.isNotEmpty(value)) {
       try {
         callValue = ByteArray.jsonHexToLong(value);
       } catch (Exception e) {
-        throw new JsonRpcInvalidParams("invalid param value: invalid hex number");
+        throw new JsonRpcInvalidParamsException("invalid param value: invalid hex number");
       }
     }
 

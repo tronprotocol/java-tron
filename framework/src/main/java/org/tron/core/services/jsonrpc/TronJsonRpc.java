@@ -12,9 +12,9 @@ import lombok.ToString;
 import lombok.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.JsonRpcInternalError;
-import org.tron.core.exception.JsonRpcInvalidParams;
-import org.tron.core.exception.JsonRpcInvalidRequest;
+import org.tron.core.exception.JsonRpcInternalException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.JsonRpcInvalidRequestException;
 
 @Component
 public interface TronJsonRpc {
@@ -80,6 +80,7 @@ public interface TronJsonRpc {
   @NoArgsConstructor
   @AllArgsConstructor
   class CallArguments {
+
     public String from;
     public String to;
     public String gas; //not used
@@ -103,6 +104,7 @@ public interface TronJsonRpc {
   }
 
   class CompilationResult {
+
     public String code;
     public CompilationInfo info;
 
@@ -116,6 +118,7 @@ public interface TronJsonRpc {
   }
 
   class CompilationInfo {
+
     public String source;
     public String language;
     public String languageVersion;
@@ -139,6 +142,7 @@ public interface TronJsonRpc {
   }
 
   class TransactionJson {
+
     public JSONObject transaction;
   }
 
@@ -147,33 +151,35 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("web3_sha3")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String web3Sha3(String data) throws Exception;
+  String web3Sha3(String data) throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getBlockTransactionCountByHash")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String ethGetBlockTransactionCountByHash(String blockHash) throws Exception;
+  String ethGetBlockTransactionCountByHash(String blockHash) throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getBlockTransactionCountByNumber")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String ethGetBlockTransactionCountByNumber(String bnOrId) throws Exception;
+  String ethGetBlockTransactionCountByNumber(String bnOrId) throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getBlockByHash")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception;
+  BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getBlockByNumber")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
+  BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("net_version")
   String getNetVersion();
@@ -192,15 +198,17 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_getBalance")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException;
+  String getTrxBalance(String address, String blockNumOrTag) throws ItemNotFoundException,
+      JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getStorageAt")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String getStorageAt(String address, String storageIdx, String blockNumOrTag);
+  String getStorageAt(String address, String storageIdx, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getTransactionCount")
   @JsonRpcErrors({
@@ -210,15 +218,16 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_getCode")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String getABIofSmartContract(String contractAddress, String bnOrId);
+  String getABIofSmartContract(String contractAddress, String bnOrId)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_coinbase")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String getCoinbase() throws Exception;
+  String getCoinbase() throws JsonRpcInternalException;
 
   @JsonRpcMethod("eth_gasPrice")
   String gasPrice();
@@ -252,33 +261,36 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_getTransactionByHash")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  TransactionResult getTransactionByHash(String txid);
+  TransactionResult getTransactionByHash(String txid) throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getTransactionByBlockHashAndIndex")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index);
+  TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getTransactionByBlockNumberAndIndex")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index);
+  TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getTransactionReceipt")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  TransactionReceipt getTransactionReceipt(String txid);
+  TransactionReceipt getTransactionReceipt(String txid) throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_call")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  String getCall(CallArguments transactionCall, String blockNumOrTag);
+  String getCall(CallArguments transactionCall, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("net_peerCount")
   String getPeerCount();
@@ -312,11 +324,13 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("buildTransaction")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidRequest.class, code = -32600, data = "{}"),
-      @JsonRpcError(exception = JsonRpcInvalidParams.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = JsonRpcInternalError.class, code = -32603, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidRequestException.class, code = -32600, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32603, data = "{}"),
   })
-  TransactionJson buildTransaction(BuildArguments args);
+  TransactionJson buildTransaction(BuildArguments args)
+      throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException;
 
   // not supported
   @JsonRpcMethod("eth_submitWork")

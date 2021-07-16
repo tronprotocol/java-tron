@@ -33,9 +33,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.JsonRpcInternalError;
-import org.tron.core.exception.JsonRpcInvalidParams;
-import org.tron.core.exception.JsonRpcInvalidRequest;
+import org.tron.core.exception.JsonRpcInternalException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
@@ -86,12 +86,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String web3Sha3(String data) {
+  public String web3Sha3(String data) throws JsonRpcInvalidParamsException {
     byte[] input;
     try {
       input = ByteArray.fromHexString(data);
     } catch (Exception e) {
-      throw new JsonRpcInvalidParams("invalid input value");
+      throw new JsonRpcInvalidParamsException("invalid input value");
     }
 
     byte[] result = Hash.sha3(input);
@@ -99,7 +99,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String ethGetBlockTransactionCountByHash(String blockHash) throws Exception {
+  public String ethGetBlockTransactionCountByHash(String blockHash)
+      throws JsonRpcInvalidParamsException {
     Block b = getBlockByJsonHash(blockHash);
     if (b == null) {
       return null;
@@ -110,7 +111,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String ethGetBlockTransactionCountByNumber(String blockNumOrTag) throws Exception {
+  public String ethGetBlockTransactionCountByNumber(String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
     List<Transaction> list = wallet.getTransactionsByJsonBlockId(blockNumOrTag);
     if (list == null) {
       return null;
@@ -122,32 +124,33 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects)
-      throws Exception {
+      throws JsonRpcInvalidParamsException {
     final Block b = getBlockByJsonHash(blockHash);
     return getBlockResult(b, fullTransactionObjects);
   }
 
   @Override
-  public BlockResult ethGetBlockByNumber(String blockNumOrTag, Boolean fullTransactionObjects) {
+  public BlockResult ethGetBlockByNumber(String blockNumOrTag, Boolean fullTransactionObjects)
+      throws JsonRpcInvalidParamsException {
     final Block b = wallet.getByJsonBlockId(blockNumOrTag);
     return (b == null ? null : getBlockResult(b, fullTransactionObjects));
   }
 
-  private byte[] hashToByteArray(String hash) {
+  private byte[] hashToByteArray(String hash) throws JsonRpcInvalidParamsException {
     if (!Pattern.matches(regexHash, hash)) {
-      throw new JsonRpcInvalidParams("invalid hash value");
+      throw new JsonRpcInvalidParamsException("invalid hash value");
     }
 
     byte[] bHash;
     try {
       bHash = ByteArray.fromHexString(hash);
     } catch (Exception e) {
-      throw new JsonRpcInvalidParams(e.getMessage());
+      throw new JsonRpcInvalidParamsException(e.getMessage());
     }
     return bHash;
   }
 
-  private Block getBlockByJsonHash(String blockHash) {
+  private Block getBlockByJsonHash(String blockHash) throws JsonRpcInvalidParamsException {
     byte[] bHash = hashToByteArray(blockHash);
     return wallet.getBlockById(ByteString.copyFrom(bHash));
   }
@@ -225,10 +228,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getTrxBalance(String address, String blockNumOrTag) {
+  public String getTrxBalance(String address, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressHashToByteArray(address);
 
@@ -244,16 +248,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
-        throw new JsonRpcInvalidParams("invalid block number");
+        throw new JsonRpcInvalidParamsException("invalid block number");
       }
 
-      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParamsException("QUANTITY not supported, just support TAG as latest");
     }
   }
 
   /**
-   * @param data Hash of the method signature and encoded parameters.
-   * for example: getMethodSign(methodName(uint256,uint256)) || data1 || data2
+   * @param data Hash of the method signature and encoded parameters. for example:
+   * getMethodSign(methodName(uint256,uint256)) || data1 || data2
    */
   private String call(byte[] ownerAddressByte, byte[] contractAddressByte, byte[] data) {
 
@@ -319,10 +323,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getStorageAt(String address, String storageIdx, String blockNumOrTag) {
+  public String getStorageAt(String address, String storageIdx, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressByte = addressHashToByteArray(address);
 
@@ -335,18 +340,19 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
-        throw new JsonRpcInvalidParams("invalid block number");
+        throw new JsonRpcInvalidParamsException("invalid block number");
       }
 
-      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParamsException("QUANTITY not supported, just support TAG as latest");
     }
   }
 
   @Override
-  public String getABIofSmartContract(String contractAddress, String blockNumOrTag) {
+  public String getABIofSmartContract(String contractAddress, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressData = addressHashToByteArray(contractAddress);
 
@@ -364,19 +370,19 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
-        throw new JsonRpcInvalidParams("invalid block number");
+        throw new JsonRpcInvalidParamsException("invalid block number");
       }
 
-      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParamsException("QUANTITY not supported, just support TAG as latest");
     }
   }
 
   @Override
-  public String getCoinbase() {
+  public String getCoinbase() throws JsonRpcInternalException {
     byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
         .toByteArray();
     if (witnessAddress == null || witnessAddress.length != 21) {
-      throw new JsonRpcInternalError("invalid witness address");
+      throw new JsonRpcInternalException("invalid witness address");
     }
     return ByteArray.toJsonHexAddress(witnessAddress);
   }
@@ -429,7 +435,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionResult getTransactionByHash(String txid) {
+  public TransactionResult getTransactionByHash(String txid) throws JsonRpcInvalidParamsException {
     byte[] txHash = hashToByteArray(txid);
 
     TransactionInfo transactionInfo = wallet
@@ -469,12 +475,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return new TransactionResult(block, transactionIndex, transaction, wallet);
   }
 
-  public TransactionResult getTransactionByBlockAndIndex(Block block, String index) {
+  public TransactionResult getTransactionByBlockAndIndex(Block block, String index)
+      throws JsonRpcInvalidParamsException {
     int txIndex;
     try {
       txIndex = ByteArray.jsonHexToInt(index);
     } catch (Exception e) {
-      throw new JsonRpcInvalidParams("invalid index value");
+      throw new JsonRpcInvalidParamsException("invalid index value");
     }
 
     if (txIndex >= block.getTransactionsCount()) {
@@ -485,7 +492,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index) {
+  public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index)
+      throws JsonRpcInvalidParamsException {
     final Block block = getBlockByJsonHash(blockHash);
 
     if (block == null) {
@@ -496,7 +504,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index) {
+  public TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index)
+      throws JsonRpcInvalidParamsException {
     Block block = wallet.getByJsonBlockId(blockNumOrTag);
     if (block == null) {
       return null;
@@ -506,7 +515,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionReceipt getTransactionReceipt(String txid) {
+  public TransactionReceipt getTransactionReceipt(String txid)
+      throws JsonRpcInvalidParamsException {
     byte[] txHash = hashToByteArray(txid);
 
     TransactionInfo transactionInfo = wallet.getTransactionInfoById(ByteString.copyFrom(txHash));
@@ -524,10 +534,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getCall(CallArguments transactionCall, String blockNumOrTag) {
+  public String getCall(CallArguments transactionCall, String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcInvalidParams("TAG [earliest | pending] not supported");
+      throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       //静态调用合约方法。
       byte[] addressData = addressHashToByteArray(transactionCall.from);
@@ -538,10 +549,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag).longValue();
       } catch (Exception e) {
-        throw new JsonRpcInvalidParams("invalid block number");
+        throw new JsonRpcInvalidParamsException("invalid block number");
       }
 
-      throw new JsonRpcInvalidParams("QUANTITY not supported, just support TAG as latest");
+      throw new JsonRpcInvalidParamsException("QUANTITY not supported, just support TAG as latest");
     }
   }
 
@@ -623,7 +634,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private TransactionJson buildCreateSmartContractTransaction(byte[] ownerAddress,
-      BuildArguments args) {
+      BuildArguments args) throws JsonRpcInvalidRequestException, JsonRpcInternalException {
     try {
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
 
@@ -676,19 +687,20 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       return transactionJson;
     } catch (ContractValidateException e) {
-      throw new JsonRpcInvalidRequest(e.getMessage());
+      throw new JsonRpcInvalidRequestException(e.getMessage());
     } catch (Exception e) {
-      throw new JsonRpcInternalError(e.getMessage());
+      throw new JsonRpcInternalException(e.getMessage());
     }
   }
 
   private TransactionJson buildTransferContractTransaction(byte[] ownerAddress,
-      BuildArguments args) {
+      BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException {
     long amount;
     try {
       amount = ByteArray.hexToBigInteger(args.value).longValue();
     } catch (Exception e) {
-      throw new JsonRpcInvalidParams("invalid input value");
+      throw new JsonRpcInvalidParamsException("invalid input value");
     }
 
     TransferContract.Builder build = TransferContract.newBuilder();
@@ -709,15 +721,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       return transactionJson;
     } catch (ContractValidateException e) {
-      throw new JsonRpcInvalidRequest(e.getMessage());
+      throw new JsonRpcInvalidRequestException(e.getMessage());
     } catch (Exception e) {
-      throw new JsonRpcInternalError(e.getMessage());
+      throw new JsonRpcInternalException(e.getMessage());
     }
   }
 
   // from and to should not be null
   private TransactionJson buildTriggerSmartContractTransaction(byte[] ownerAddress,
-      BuildArguments args) {
+      BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException {
     byte[] contractAddress = addressHashToByteArray(args.to);
 
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
@@ -753,14 +766,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       trx = setTransactionPermissionId(args.permissionId, trx);
       trxExtBuilder.setTransaction(trx);
     } catch (ContractValidateException e) {
-      throw new JsonRpcInvalidRequest(e.getMessage());
+      throw new JsonRpcInvalidRequestException(e.getMessage());
     } catch (Exception e) {
       String errString = "invalid json request";
       if (e.getMessage() != null) {
         errString = e.getMessage().replaceAll("[\"]", "\'");
       }
 
-      throw new JsonRpcInternalError(errString);
+      throw new JsonRpcInternalException(errString);
     }
 
     String jsonString = Util.printTransaction(trxExtBuilder.build().getTransaction(), args.visible);
@@ -771,12 +784,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionJson buildTransaction(BuildArguments args) {
+  public TransactionJson buildTransaction(BuildArguments args)
+      throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException {
     byte[] fromAddressData;
     try {
       fromAddressData = addressHashToByteArray(args.from);
-    } catch (JsonRpcInvalidParams e) {
-      throw new JsonRpcInvalidRequest("invalid json request");
+    } catch (JsonRpcInvalidParamsException e) {
+      throw new JsonRpcInvalidRequestException("invalid json request");
     }
 
     // check possible ContractType

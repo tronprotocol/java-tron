@@ -22,7 +22,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.exception.JsonRpcInvalidParams;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -473,20 +473,20 @@ public class JsonRpcApiUtil {
     }
   }
 
-  public static byte[] addressHashToByteArray(String hash) {
+  public static byte[] addressHashToByteArray(String hash) throws JsonRpcInvalidParamsException {
     byte[] bHash;
     try {
       bHash = ByteArray.fromHexString(hash);
       if (bHash.length != DecodeUtil.ADDRESS_SIZE / 2
           && bHash.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
-        throw new JsonRpcInvalidParams("invalid address hash value");
+        throw new JsonRpcInvalidParamsException("invalid address hash value");
       }
 
       if (bHash.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
         bHash = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, bHash);
       }
     } catch (Exception e) {
-      throw new JsonRpcInvalidParams(e.getMessage());
+      throw new JsonRpcInvalidParamsException(e.getMessage());
     }
     return bHash;
   }
