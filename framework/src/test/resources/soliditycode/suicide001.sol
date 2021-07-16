@@ -8,7 +8,7 @@ contract factory {
     }
 
     function kill() payable public{
-             selfdestruct(msg.sender);
+             selfdestruct(payable(msg.sender));
      }
 
     function create2(bytes memory code, uint256 salt) public returns(address){
