@@ -224,7 +224,7 @@ public class ArchiveManifest implements Callable<Boolean> {
     private  String databaseDirectory = "output-directory/database";
 
     @Parameter(names = {"-b", "--batch-size" }, description = "deal manifest batch size")
-    private  int maxBatchSize = 64_000;
+    private  int maxBatchSize = 80_000;
 
     @Parameter(names = {"-m", "--manifest-size" }, description = "manifest  min size(M) to archive")
     private  int maxManifestSize = 0;
