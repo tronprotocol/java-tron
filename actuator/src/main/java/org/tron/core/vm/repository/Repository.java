@@ -18,19 +18,17 @@ public interface Repository {
 
   DelegationStore getDelegationStore();
 
-  WitnessStore getWitnessStore();
-
   AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
   AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
 
   AccountCapsule getAccount(byte[] address);
 
-    BytesCapsule getDynamic(byte[] bytesKey);
+  BytesCapsule getDynamicProperty(byte[] bytesKey);
 
   DelegatedResourceCapsule getDelegatedResource(byte[] key);
 
-  VotesCapsule getVotesCapsule(byte[] address);
+  VotesCapsule getVotes(byte[] address);
 
   long getBeginCycle(byte[] address);
 
@@ -38,7 +36,7 @@ public interface Repository {
 
   AccountCapsule getAccountVote(long cycle, byte[] address);
 
-  BytesCapsule getDelegationCache(Key key);
+  BytesCapsule getDelegation(Key key);
 
   void deleteContract(byte[] address);
 
@@ -50,11 +48,11 @@ public interface Repository {
 
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
-  void updateDynamic(byte[] word, BytesCapsule bytesCapsule);
+  void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule);
 
   void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule);
 
-  void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule);
+  void updateVotes(byte[] word, VotesCapsule votesCapsule);
 
   void updateBeginCycle(byte[] word, long cycle);
 
@@ -62,11 +60,7 @@ public interface Repository {
 
   void updateAccountVote(byte[] word, long cycle, AccountCapsule accountCapsule);
 
-  void updateRemark(byte[] word, long cycle);
-
   void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
-
-  void updateLastWithdrawCycle(byte[] address, long cycle);
 
   void saveCode(byte[] address, byte[] code);
 
@@ -98,15 +92,11 @@ public interface Repository {
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
 
-  void putDynamic(Key key, Value value);
-
-  void putAssetIssue(Key key, Value value);
+  void putDynamicProperty(Key key, Value value);
 
   void putDelegatedResource(Key key, Value value);
 
-  void putVotesCapsule(Key key, Value value);
-
-  void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule);
+  void putVotes(Key key, Value value);
 
   void putDelegation(Key key, Value value);
 
@@ -124,11 +114,7 @@ public interface Repository {
 
   AccountCapsule createNormalAccount(byte[] address);
 
-  WitnessCapsule getWitnessCapsule(byte[] address);
-
-  void saveTokenIdNum(long num);
-
-  long getTokenIdNum();
+  WitnessCapsule getWitness(byte[] address);
 
   void addTotalNetWeight(long amount);
 
