@@ -1,6 +1,8 @@
 package org.tron.core.service;
 
 import com.google.protobuf.ByteString;
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -120,7 +122,7 @@ public class MortgageService {
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
-        reward = computeReward(beginCycle, account);
+        reward = computeReward(beginCycle, endCycle, account);
         adjustAllowance(address, reward);
         reward = 0;
         logger.info("latest cycle reward {},{}", beginCycle, account.getVotesList());
@@ -134,9 +136,7 @@ public class MortgageService {
       return;
     }
     if (beginCycle < endCycle) {
-      for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-        reward += computeReward(cycle, accountCapsule);
-      }
+      reward += computeReward(beginCycle, endCycle, accountCapsule);
       adjustAllowance(address, reward);
     }
     delegationStore.setBeginCycle(address, endCycle);
@@ -167,7 +167,7 @@ public class MortgageService {
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
-        reward = computeReward(beginCycle, account);
+        reward = computeReward(beginCycle, endCycle, accountCapsule);
       }
       beginCycle += 1;
     }
@@ -177,9 +177,7 @@ public class MortgageService {
       return reward + accountCapsule.getAllowance();
     }
     if (beginCycle < endCycle) {
-      for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-        reward += computeReward(cycle, accountCapsule);
-      }
+      reward += computeReward(beginCycle, endCycle, accountCapsule);
     }
     return reward + accountCapsule.getAllowance();
   }
@@ -199,6 +197,46 @@ public class MortgageService {
       logger.debug("computeReward {} {} {} {},{},{},{}", cycle,
           Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
           userVote, totalVote, totalReward, reward);
+    }
+    return reward;
+  }
+
+  /**
+   * Compute reward from begin cycle to end cycle, which endCycle must greater than beginCycle.
+   * While computing reward after new reward algorithm taking effective cycle number,
+   * it will use new algorithm instead of old way.
+   * @param beginCycle begin cycle (include)
+   * @param endCycle end cycle (exclude)
+   * @param accountCapsule account capsule
+   * @return total reward
+   */
+  private long computeReward(long beginCycle, long endCycle, AccountCapsule accountCapsule) {
+    if (beginCycle >= endCycle) {
+      return 0;
+    }
+
+    long reward = 0;
+    long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
+    if (beginCycle < newAlgorithmCycle) {
+      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
+      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+        reward += computeReward(cycle, accountCapsule);
+      }
+      beginCycle = oldEndCycle;
+    }
+    if (beginCycle < endCycle) {
+      for (Vote vote : accountCapsule.getVotesList()) {
+        byte[] srAddress = vote.getVoteAddress().toByteArray();
+        BigInteger beginVi = delegationStore.getWitnessVi(beginCycle - 1, srAddress);
+        BigInteger endVi = delegationStore.getWitnessVi(endCycle - 1, srAddress);
+        BigInteger deltaVi = endVi.subtract(beginVi);
+        if (deltaVi.signum() <= 0) {
+          continue;
+        }
+        long userVote = vote.getVoteCount();
+        reward += deltaVi.multiply(BigInteger.valueOf(userVote))
+            .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
+      }
     }
     return reward;
   }

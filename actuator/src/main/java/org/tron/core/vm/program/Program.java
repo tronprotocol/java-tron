@@ -50,12 +50,14 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
@@ -70,20 +72,13 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.nativecontract.ContractService;
 import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
-import org.tron.core.vm.nativecontract.StakeProcessor;
-import org.tron.core.vm.nativecontract.TokenIssueProcessor;
 import org.tron.core.vm.nativecontract.UnfreezeBalanceProcessor;
-import org.tron.core.vm.nativecontract.UnstakeProcessor;
-import org.tron.core.vm.nativecontract.UpdateAssetProcessor;
+import org.tron.core.vm.nativecontract.VoteWitnessProcessor;
 import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
-import org.tron.core.vm.nativecontract.param.StakeParam;
-import org.tron.core.vm.nativecontract.param.TokenIssueParam;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
-import org.tron.core.vm.nativecontract.param.UnstakeParam;
-import org.tron.core.vm.nativecontract.param.UpdateAssetParam;
+import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
@@ -95,6 +90,7 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
 import org.tron.core.vm.utils.MUtil;
+import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.Common;
@@ -623,8 +619,15 @@ public class Program {
   public boolean canSuicide() {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     AccountCapsule accountCapsule = getContractState().getAccount(owner);
-    return accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
-        && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0;
+    boolean freezeCheck = !VMConfig.allowTvmFreeze()
+        || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
+        && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0);
+    boolean voteCheck = !VMConfig.allowTvmVote()
+        || (accountCapsule.getVotesList().size() == 0
+        && VoteRewardUtil.queryReward(owner, getContractState()) == 0
+        && getContractState().getAccountVote(
+            getContractState().getBeginCycle(owner), owner) == null);
+    return freezeCheck && voteCheck;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1153,9 +1156,8 @@ public class Program {
   }
 
   public DataWord getRewardBalance(DataWord address) {
-    ContractService contractService = ContractService.getInstance();
-    long rewardBalance = contractService
-            .queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
+    long rewardBalance = VoteRewardUtil.queryReward(
+        TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
     return new DataWord(rewardBalance);
   }
 
@@ -1167,7 +1169,7 @@ public class Program {
 
   public DataWord isSRCandidate(DataWord address) {
     WitnessCapsule witnessCapsule = getContractState()
-            .getWitnessCapsule(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
+            .getWitness(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return witnessCapsule != null ? new DataWord(1) : new DataWord(0);
   }
 
@@ -1703,50 +1705,62 @@ public class Program {
 
   public boolean freeze(DataWord receiverAddress, DataWord frozenBalance, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
-    FreezeBalanceProcessor processor = new FreezeBalanceProcessor();
-    FreezeBalanceParam param = new FreezeBalanceParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] receiver = TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes());
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver,
+        frozenBalance.longValue(), null,
+        "freezeFor" + convertResourceToString(resourceType), nonce, null);
+
+    FreezeBalanceParam param = new FreezeBalanceParam();
     param.setOwnerAddress(owner);
-    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    param.setReceiverAddress(receiver);
     boolean needCheckFrozenTime = CommonParameter.getInstance()
-        .getCheckFrozenTime() == 1;//for test
+        .getCheckFrozenTime() == 1; // for test
     param.setFrozenDuration(needCheckFrozenTime ?
         repository.getDynamicPropertiesStore().getMinFrozenTime() : 0);
     param.setResourceType(parseResourceCode(resourceType));
     try {
+      FreezeBalanceProcessor processor = new FreezeBalanceProcessor();
       param.setFrozenBalance(frozenBalance.sValue().longValueExact());
       processor.validate(param, repository);
       processor.execute(param, repository);
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("validateForFreeze failure:{}", e.getMessage());
-    } catch (ContractExeException e) {
-      logger.error("executeForFreeze failure:{}", e.getMessage());
+      logger.error("TVM Freeze: validate failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("frozenBalance out of long range");
+      logger.error("TVM Freeze: frozenBalance out of long range.");
     }
+    internalTx.reject();
     return false;
   }
 
   public boolean unfreeze(DataWord receiverAddress, DataWord resourceType) {
     Repository repository = getContractState().newRepositoryChild();
-    UnfreezeBalanceProcessor processor = new UnfreezeBalanceProcessor();
-    UnfreezeBalanceParam param = new UnfreezeBalanceParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] receiver = TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes());
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver, 0, null,
+        "unfreezeFor" + convertResourceToString(resourceType), nonce, null);
+
+    UnfreezeBalanceParam param = new UnfreezeBalanceParam();
     param.setOwnerAddress(owner);
-    param.setReceiverAddress(TransactionTrace.convertToTronAddress(receiverAddress.getLast20Bytes()));
+    param.setReceiverAddress(receiver);
     param.setResourceType(parseResourceCode(resourceType));
     try {
+      UnfreezeBalanceProcessor processor = new UnfreezeBalanceProcessor();
       processor.validate(param, repository);
-      processor.execute(param, repository);
+      long unfreezeBalance = processor.execute(param, repository);
       repository.commit();
+      internalTx.setValue(unfreezeBalance);
       return true;
     } catch (ContractValidateException e) {
-      logger.error("validateForUnfreeze failure:{}", e.getMessage());
-    } catch (ContractExeException e) {
-      logger.error("executeForUnfreeze failure:{}", e.getMessage());
+      logger.error("TVM Unfreeze: validate failure. Reason: {}", e.getMessage());
     }
+    internalTx.reject();
     return false;
   }
 
@@ -1795,112 +1809,100 @@ public class Program {
     }
   }
 
-  public boolean stake(DataWord srAddress, DataWord stakeAmount) {
+  private String convertResourceToString(DataWord resourceType) {
+    switch (resourceType.intValue()) {
+      case 0:
+        return "Bandwidth";
+      case 1:
+        return "Energy";
+      default:
+        return "UnknownType";
+    }
+  }
+
+  public boolean voteWitness(int witnessArrayOffset, int witnessArrayLength,
+                             int amountArrayOffset, int amountArrayLength) {
     Repository repository = getContractState().newRepositoryChild();
-    StakeProcessor stakeProcessor = new StakeProcessor();
-    StakeParam stakeParam = new StakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    stakeParam.setOwnerAddress(owner);
-    stakeParam.setSrAddress(TransactionTrace.convertToTronAddress(srAddress.getLast20Bytes()));
-    stakeParam.setNow(getTimestamp().longValue() * 1000);
+
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, null, 0,
+        new byte[2 * witnessArrayLength * DataWord.WORD_SIZE], "voteWitness", nonce, null);
+
+    if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength ||
+        memoryLoad(amountArrayOffset).intValueSafe() != amountArrayLength) {
+      logger.warn("TVM VoteWitness: memory array length do not match length parameter!");
+      throw new BytecodeExecutionException(
+          "TVM VoteWitness: memory array length do not match length parameter!");
+    }
+
+    if (witnessArrayLength != amountArrayLength) {
+      logger.warn("TVM VoteWitness: witness array length {} does not match amount array length {}",
+          witnessArrayLength, amountArrayLength);
+      return false;
+    }
+
     try {
-      stakeParam.setStakeAmount(stakeAmount.sValue().longValueExact());
-      stakeProcessor.process(stakeParam, repository);
+      VoteWitnessParam param = new VoteWitnessParam();
+      param.setVoterAddress(owner);
+
+      byte[] witnessArrayData = memoryChunk(Math.addExact(witnessArrayOffset, DataWord.WORD_SIZE),
+          Math.multiplyExact(witnessArrayLength, DataWord.WORD_SIZE));
+      byte[] amountArrayData = memoryChunk(Math.addExact(amountArrayOffset, DataWord.WORD_SIZE),
+          Math.multiplyExact(amountArrayLength, DataWord.WORD_SIZE));
+
+      byte[] data = internalTx.getData();
+      for (int i = 0; i < witnessArrayLength; i++) {
+        DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
+            i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+        System.arraycopy(witness.getData(), 0,
+            data, 2 * i * DataWord.WORD_SIZE, DataWord.WORD_SIZE);
+        DataWord amount = new DataWord(Arrays.copyOfRange(amountArrayData,
+            i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
+        System.arraycopy(witness.getData(), 0,
+            data, (2 * i + 1) * DataWord.WORD_SIZE, DataWord.WORD_SIZE);
+        param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
+            amount.sValue().longValueExact());
+      }
+
+      VoteWitnessProcessor processor = new VoteWitnessProcessor();
+      processor.validate(param, repository);
+      processor.execute(param, repository);
       repository.commit();
       return true;
     } catch (ContractValidateException e) {
-      logger.error("validateForStake failure:{}", e.getMessage());
+      logger.error("TVM VoteWitness: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
-      logger.error("executeForStake failure:{}", e.getMessage());
+      logger.error("TVM VoteWitness: execute failure. Reason: {}", e.getMessage());
     } catch (ArithmeticException e) {
-      logger.error("stakeAmount out of long range");
+      logger.error("TVM VoteWitness: int or long out of range. caused by: {}", e.getMessage());
     }
+    internalTx.reject();
     return false;
   }
 
-  public boolean unstake() {
+  public long withdrawReward() {
     Repository repository = getContractState().newRepositoryChild();
-    UnstakeProcessor unstakeProcessor = new UnstakeProcessor();
-    UnstakeParam unstakeParam = new UnstakeParam();
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    unstakeParam.setOwnerAddress(owner);
-    unstakeParam.setNow(getTimestamp().longValue() * 1000);
-    try {
-      unstakeProcessor.validate(unstakeParam, repository);
-      unstakeProcessor.execute(unstakeParam, repository);
-      repository.commit();
-      return true;
-    } catch (ContractValidateException e) {
-      logger.error("validateForUnstake failure:{}", e.getMessage());
-    } catch (ContractExeException e) {
-      logger.error("executeForUnstake failure:{}", e.getMessage());
-    }
-    return false;
-  }
 
-  public void withdrawReward() {
-    Repository repository = getContractState().newRepositoryChild();
-    WithdrawRewardProcessor withdrawRewardContractProcessor = new WithdrawRewardProcessor();
-    WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
-    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    withdrawRewardParam.setTargetAddress(ownerAddress);
-    try {
-      withdrawRewardContractProcessor.validate(withdrawRewardParam, repository,
-          getTimestamp().longValue() * 1000);
-      long allowance = withdrawRewardContractProcessor.execute(withdrawRewardParam, repository,
-          getTimestamp().longValue() * 1000);
-      stackPush(new DataWord(allowance));
-      repository.commit();
-    } catch (ContractValidateException e) {
-      logger.error("validateForWithdrawReward failure:{}", e.getMessage());
-      stackPushZero();
-    }
-  }
+    increaseNonce();
+    InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
+        "withdrawReward", nonce, null);
 
-  public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
-    Repository repository = getContractState().newRepositoryChild();
-    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    TokenIssueProcessor tokenIssueProcessor = new TokenIssueProcessor();
-    TokenIssueParam tokenIssueParam = new TokenIssueParam();
-    tokenIssueParam.setName(name.getNoEndZeroesData());
-    tokenIssueParam.setAbbr(abbr.getNoEndZeroesData());
-    tokenIssueParam.setTotalSupply(totalSupply.sValue().longValueExact());
-    tokenIssueParam.setPrecision(precision.sValue().intValueExact());
-    tokenIssueParam.setOwnerAddress(ownerAddress);
+    WithdrawRewardParam param = new WithdrawRewardParam();
+    param.setOwnerAddress(owner);
+    param.setNowInMs(getTimestamp().longValue() * 1000);
     try {
-      tokenIssueProcessor.validate(tokenIssueParam, repository);
-      tokenIssueProcessor.execute(tokenIssueParam, repository);
-      stackPush(new DataWord(repository.getTokenIdNum()));
+      WithdrawRewardProcessor processor = new WithdrawRewardProcessor();
+      processor.validate(param, repository);
+      long allowance = processor.execute(param, repository);
       repository.commit();
+      internalTx.setValue(allowance);
+      return allowance;
     } catch (ContractValidateException e) {
-      logger.error("validateForAssetIssue failure:{}", e.getMessage());
-      stackPushZero();
+      logger.error("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
     }
-  }
-
-  public void updateAsset(DataWord urlDataOffs, DataWord descriptionDataOffs) {
-    Repository repository = getContractState().newRepositoryChild();
-    byte[] ownerAddress = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    DataWord urlSize = memoryLoad(urlDataOffs);
-    DataWord descriptionSize = memoryLoad(descriptionDataOffs);
-    byte[] urlData = memoryChunk(urlDataOffs.intValueSafe() + DataWord.WORD_SIZE,
-            urlSize.intValueSafe());
-    byte[] descriptionData = memoryChunk(descriptionDataOffs.intValueSafe() + DataWord.WORD_SIZE,
-            descriptionSize.intValueSafe());
-    UpdateAssetParam updateAssetParam = new UpdateAssetParam();
-    updateAssetParam.setOwnerAddress(ownerAddress);
-    updateAssetParam.setNewUrl(urlData);
-    updateAssetParam.setNewDesc(descriptionData);
-    UpdateAssetProcessor updateAssetProcessor = new UpdateAssetProcessor();
-    try {
-      updateAssetProcessor.validate(updateAssetParam, repository);
-      updateAssetProcessor.execute(updateAssetParam, repository);
-      stackPushOne();
-      repository.commit();
-    } catch (ContractValidateException e) {
-      logger.error("validateForUpdateAsset failure:{}", e.getMessage());
-      stackPushZero();
-    }
+    return 0;
   }
 
   /**
