@@ -27,7 +27,7 @@ contract transferTokenTestA {
     function createContractTest(uint256 tokenValue, trcToken id) payable public returns(address){
         Simple s = new Simple();
         require(address(s).tokenBalance(id)==0, "tokenBalance should be 0");
-        address(s).transferToken(tokenValue, id);
+        payable(address(s)).transferToken(tokenValue, id);
         require(address(s).tokenBalance(id)==tokenValue, "tokenBalance should not be 0");
         return address(s);
     }
@@ -35,7 +35,7 @@ contract transferTokenTestA {
     // revert transfer to a new contract
     function revertCreateContractTest(uint256 tokenValue, trcToken id) payable public {
         Simple s = new Simple();
-        address(s).transferToken(tokenValue, id);
+        payable(address(s)).transferToken(tokenValue, id);
         revert();
     }
 }
@@ -64,7 +64,7 @@ contract transferTokenTestB {
     function createContractTest(uint256 tokenValue, trcToken id) payable public returns(address){
         Simple s = new Simple();
         require(address(s).tokenBalance(id)==0, "tokenBalance should be 0");
-        address(s).transferToken(tokenValue, id);
+        payable(address(s)).transferToken(tokenValue, id);
         require(address(s).tokenBalance(id)==tokenValue, "tokenBalance should not be 0");
         return address(s);
     }
@@ -72,7 +72,7 @@ contract transferTokenTestB {
     // revert transfer to a new contract
     function revertCreateContractTest(uint256 tokenValue, trcToken id) payable public {
         Simple s = new Simple();
-        address(s).transferToken(tokenValue, id);
+        payable(address(s)).transferToken(tokenValue, id);
         revert();
     }
 }

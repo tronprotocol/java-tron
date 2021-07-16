@@ -95,7 +95,7 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Assert.assertEquals("NoErrorMsg", PublicMethed
         .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
@@ -115,7 +115,7 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Assert.assertEquals("Revert Msg.", PublicMethed
         .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
@@ -133,7 +133,7 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Assert.assertEquals("NoErrorMsg", PublicMethed
         .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
@@ -152,7 +152,7 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Assert.assertEquals("Require Msg.", PublicMethed
         .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
@@ -170,9 +170,8 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(1,transactionInfo.get().getResultValue());
-    Assert.assertEquals(transactionInfo.get().getFee(), maxFeeLimit.longValue());
-    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
+    Assert.assertEquals(contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
 
   }
@@ -189,7 +188,7 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Assert.assertEquals("NoErrorMsg", PublicMethed
         .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
@@ -208,7 +207,7 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
     Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
     Assert.assertEquals("success", PublicMethed
         .getContractStringMsg(transactionInfo.get().getContractResult(0).toByteArray()));
@@ -227,9 +226,8 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(1,transactionInfo.get().getResultValue());
-    Assert.assertEquals(transactionInfo.get().getFee(), maxFeeLimit.longValue());
-    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
+    Assert.assertEquals(contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
 
   }
@@ -246,9 +244,8 @@ public class tryCatchTest001 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(1,transactionInfo.get().getResultValue());
-    Assert.assertEquals(transactionInfo.get().getFee(), maxFeeLimit.longValue());
-    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+    Assert.assertEquals(0, transactionInfo.get().getResultValue());
+    Assert.assertEquals(contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
 
   }
