@@ -58,6 +58,6 @@ contract C {
 
 contract D {
     constructor() public payable {
-        msg.sender.freeze(msg.value, 1);
+        payable(msg.sender).freeze(msg.value, 1);
     }
 }
