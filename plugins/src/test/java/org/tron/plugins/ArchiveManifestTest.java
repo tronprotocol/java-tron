@@ -98,7 +98,8 @@ public class ArchiveManifestTest {
 
     try (FileInputStream fis = new FileInputStream(file);
          OutputStream out = new FileOutputStream(file);
-         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
+         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out,
+             StandardCharsets.UTF_8))) {
       BufferedReader bf = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
       Properties properties = new Properties();
       properties.load(bf);
