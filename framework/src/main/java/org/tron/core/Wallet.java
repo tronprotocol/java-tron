@@ -506,13 +506,15 @@ public class Wallet {
       if (dbManager.isTooManyPending()) {
         logger
             .warn("Broadcast transaction {} has failed, too many pending.", trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY)
+            .setMessage(ByteString.copyFromUtf8("Server busy")).build();
       }
 
       if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
         logger.warn("Broadcast transaction {} has failed, it already exists.",
             trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
+        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
+            .setMessage(ByteString.copyFromUtf8("Duplicate transaction")).build();
       } else {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
@@ -546,7 +548,7 @@ public class Wallet {
     } catch (DupTransactionException e) {
       logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("dup transaction"))
+          .setMessage(ByteString.copyFromUtf8("Duplicate transaction"))
           .build();
     } catch (TaposException e) {
       logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
@@ -556,12 +558,12 @@ public class Wallet {
     } catch (TooBigTransactionException e) {
       logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
+          .setMessage(ByteString.copyFromUtf8("Transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
       logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction expired"))
+          .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
     } catch (Exception e) {
       logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
