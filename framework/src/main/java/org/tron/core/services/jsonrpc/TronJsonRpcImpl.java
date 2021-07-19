@@ -435,6 +435,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
+  public CompilationResult ethSubmitHashrate(String hashrate, String id) {
+    throw new UnsupportedOperationException(
+        "the method eth_submitHashrate does not exist/is not available");
+  }
+
+  @Override
   public TransactionResult getTransactionByHash(String txid) throws JsonRpcInvalidParamsException {
     byte[] txHash = hashToByteArray(txid);
 

@@ -210,12 +210,6 @@ public interface TronJsonRpc {
   String getStorageAt(String address, String storageIdx, String blockNumOrTag)
       throws JsonRpcInvalidParamsException;
 
-  @JsonRpcMethod("eth_getTransactionCount")
-  @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
-  })
-  String getSendTransactionCountOfAddress(String address, String blockNumOrTag);
-
   @JsonRpcMethod("eth_getCode")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
@@ -234,30 +228,6 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_estimateGas")
   String estimateGas(CallArguments args);
-
-  @JsonRpcMethod("eth_getCompilers")
-  @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
-  })
-  String[] getCompilers();
-
-  @JsonRpcMethod("eth_compileSolidity")
-  @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
-  })
-  CompilationResult ethCompileSolidity(String contract) throws Exception;
-
-  @JsonRpcMethod("eth_compileLLL")
-  @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
-  })
-  CompilationResult ethCompileLLL(String contract);
-
-  @JsonRpcMethod("eth_compileSerpent")
-  @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
-  })
-  CompilationResult ethCompileSerpent(String contract);
 
   @JsonRpcMethod("eth_getTransactionByHash")
   @JsonRpcErrors({
@@ -368,4 +338,40 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
   })
   String parityNextNonce(String address);
+
+  @JsonRpcMethod("eth_getTransactionCount")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  String getSendTransactionCountOfAddress(String address, String blockNumOrTag);
+
+  @JsonRpcMethod("eth_getCompilers")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  String[] getCompilers();
+
+  @JsonRpcMethod("eth_compileSolidity")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  CompilationResult ethCompileSolidity(String contract) throws Exception;
+
+  @JsonRpcMethod("eth_compileLLL")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  CompilationResult ethCompileLLL(String contract);
+
+  @JsonRpcMethod("eth_compileSerpent")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  CompilationResult ethCompileSerpent(String contract);
+
+  @JsonRpcMethod("eth_submitHashrate")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+  })
+  CompilationResult ethSubmitHashrate(String hashrate, String id);
 }
