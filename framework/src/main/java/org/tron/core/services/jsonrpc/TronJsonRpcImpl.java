@@ -646,7 +646,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
 
-      build.setCallTokenValue(args.callTokenValue)
+      build.setCallTokenValue(args.tokenValue)
           .setTokenId(args.tokenId);
 
       ABI.Builder abiBuilder = ABI.newBuilder();
@@ -754,7 +754,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         build.setData(ByteString.copyFrom(new byte[0]));
       }
 
-      build.setCallTokenValue(args.callTokenValue)
+      build.setCallTokenValue(args.tokenValue)
           .setTokenId(args.tokenId)
           .setCallValue(args.parseCallValue());
 

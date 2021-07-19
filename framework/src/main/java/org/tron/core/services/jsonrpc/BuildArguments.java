@@ -29,7 +29,7 @@ public class BuildArguments {
   public String nonce; //not used
 
   public Long tokenId = 0L;
-  public Long callTokenValue = 0L;
+  public Long tokenValue = 0L;
   public String abi = "";
   // public Long callValue = 0L;
   public Long consumeUserResourcePercent = 0L;
