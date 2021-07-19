@@ -105,8 +105,6 @@ public class UnfreezeBalanceProcessor {
     byte[] ownerAddress = param.getOwnerAddress();
     byte[] receiverAddress = param.getReceiverAddress();
 
-    VoteRewardUtil.withdrawReward(ownerAddress, repo);
-
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
     long unfreezeBalance = 0L;
@@ -200,19 +198,28 @@ public class UnfreezeBalanceProcessor {
         break;
     }
 
+    repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
+
     if (VMConfig.allowTvmVote() && !accountCapsule.getVotesList().isEmpty()) {
-      VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
-      if (votesCapsule == null) {
-        votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
-            accountCapsule.getVotesList());
-      } else {
-        votesCapsule.clearNewVotes();
+      long usedTronPower = 0;
+      for (Protocol.Vote vote : accountCapsule.getVotesList()) {
+        usedTronPower += vote.getVoteCount();
       }
-      accountCapsule.clearVotes();
-      repo.updateVotes(ownerAddress, votesCapsule);
+      if (accountCapsule.getTronPower() < usedTronPower * TRX_PRECISION) {
+        VoteRewardUtil.withdrawReward(ownerAddress, repo);
+        VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
+        if (votesCapsule == null) {
+          votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
+              accountCapsule.getVotesList());
+        } else {
+          votesCapsule.clearNewVotes();
+        }
+        accountCapsule.clearVotes();
+        repo.updateVotes(ownerAddress, votesCapsule);
+        repo.updateAccount(ownerAddress, accountCapsule);
+      }
     }
 
-    repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
     return unfreezeBalance;
   }
 }
