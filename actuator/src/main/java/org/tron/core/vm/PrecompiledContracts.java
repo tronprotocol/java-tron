@@ -72,6 +72,7 @@ import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Permission;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 /**
  * @author Roman Mandeleil
@@ -102,8 +103,9 @@ public class PrecompiledContracts {
   private static final RewardBalance rewardBalance = new RewardBalance();
   private static final IsSrCandidate isSrCandidate = new IsSrCandidate();
   private static final VoteCount voteCount = new VoteCount();
-  private static final TotalVoteCount totalVoteCount = new TotalVoteCount();
+  private static final TotalUsedVoteCount totalUsedVoteCount = new TotalUsedVoteCount();
   private static final TotalReceivedVoteCount totalReceivedVoteCount = new TotalReceivedVoteCount();
+  private static final TotalVoteCount totalVoteCount = new TotalVoteCount();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -139,10 +141,12 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000001000006");
   private static final DataWord voteCountAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000007");
-  private static final DataWord totalVoteCountAddr = new DataWord(
+  private static final DataWord totalUsedVoteCountAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000008");
   private static final DataWord totalReceivedVoteCountAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000009");
+  private static final DataWord totalVoteCountAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000100000a");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -201,11 +205,14 @@ public class PrecompiledContracts {
     if (VMConfig.allowTvmVote() && address.equals(voteCountAddr)) {
       return voteCount;
     }
-    if (VMConfig.allowTvmVote() && address.equals(totalVoteCountAddr)) {
-      return totalVoteCount;
+    if (VMConfig.allowTvmVote() && address.equals(totalUsedVoteCountAddr)) {
+      return totalUsedVoteCount;
     }
     if (VMConfig.allowTvmVote() && address.equals(totalReceivedVoteCountAddr)) {
       return totalReceivedVoteCount;
+    }
+    if (VMConfig.allowTvmVote() && address.equals(totalVoteCountAddr)) {
+      return totalVoteCount;
     }
 
     return null;
@@ -1626,7 +1633,7 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class TotalVoteCount extends PrecompiledContract {
+  public static class TotalUsedVoteCount extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -1683,6 +1690,34 @@ public class PrecompiledContracts {
       }
 
       return Pair.of(true, longTo32Bytes(voteCount));
+
+    }
+  }
+
+  public static class TotalVoteCount extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 20;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null || data.length != WORD_SIZE) {
+        return Pair.of(true, longTo32Bytes(0L));
+      }
+
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] voteTronAddr = convertToTronAddress(words[0].getLast20Bytes());
+
+      AccountCapsule accountCapsule = this.getDeposit().getAccount(voteTronAddr);
+      if (accountCapsule != null) {
+        return Pair.of(true,
+            longTo32Bytes(accountCapsule.getTronPower() / TRX_PRECISION));
+      }
+
+      return Pair.of(true, longTo32Bytes(0L));
 
     }
   }
