@@ -1902,6 +1902,7 @@ public class Program {
     } catch (ContractValidateException e) {
       logger.error("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
     }
+    internalTx.reject();
     return 0;
   }
 

@@ -167,7 +167,7 @@ public class MortgageService {
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
-        reward = computeReward(beginCycle, endCycle, accountCapsule);
+        reward = computeReward(beginCycle, endCycle, account);
       }
       beginCycle += 1;
     }
