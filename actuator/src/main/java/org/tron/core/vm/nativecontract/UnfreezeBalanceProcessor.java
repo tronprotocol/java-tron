@@ -208,6 +208,7 @@ public class UnfreezeBalanceProcessor {
       if (accountCapsule.getTronPower() < usedTronPower * TRX_PRECISION) {
         VoteRewardUtil.withdrawReward(ownerAddress, repo);
         VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
+        accountCapsule = repo.getAccount(ownerAddress);
         if (votesCapsule == null) {
           votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
               accountCapsule.getVotesList());
