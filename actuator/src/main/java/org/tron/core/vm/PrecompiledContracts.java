@@ -103,8 +103,8 @@ public class PrecompiledContracts {
   private static final RewardBalance rewardBalance = new RewardBalance();
   private static final IsSrCandidate isSrCandidate = new IsSrCandidate();
   private static final VoteCount voteCount = new VoteCount();
-  private static final TotalUsedVoteCount totalUsedVoteCount = new TotalUsedVoteCount();
-  private static final TotalReceivedVoteCount totalReceivedVoteCount = new TotalReceivedVoteCount();
+  private static final UsedVoteCount usedVoteCount = new UsedVoteCount();
+  private static final ReceivedVoteCount receivedVoteCount = new ReceivedVoteCount();
   private static final TotalVoteCount totalVoteCount = new TotalVoteCount();
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -141,9 +141,9 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000001000006");
   private static final DataWord voteCountAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000007");
-  private static final DataWord totalUsedVoteCountAddr = new DataWord(
+  private static final DataWord usedVoteCountAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000008");
-  private static final DataWord totalReceivedVoteCountAddr = new DataWord(
+  private static final DataWord receivedVoteCountAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000001000009");
   private static final DataWord totalVoteCountAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000a");
@@ -205,11 +205,11 @@ public class PrecompiledContracts {
     if (VMConfig.allowTvmVote() && address.equals(voteCountAddr)) {
       return voteCount;
     }
-    if (VMConfig.allowTvmVote() && address.equals(totalUsedVoteCountAddr)) {
-      return totalUsedVoteCount;
+    if (VMConfig.allowTvmVote() && address.equals(usedVoteCountAddr)) {
+      return usedVoteCount;
     }
-    if (VMConfig.allowTvmVote() && address.equals(totalReceivedVoteCountAddr)) {
-      return totalReceivedVoteCount;
+    if (VMConfig.allowTvmVote() && address.equals(receivedVoteCountAddr)) {
+      return receivedVoteCount;
     }
     if (VMConfig.allowTvmVote() && address.equals(totalVoteCountAddr)) {
       return totalVoteCount;
@@ -1633,7 +1633,7 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class TotalUsedVoteCount extends PrecompiledContract {
+  public static class UsedVoteCount extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -1665,7 +1665,7 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class TotalReceivedVoteCount extends PrecompiledContract {
+  public static class ReceivedVoteCount extends PrecompiledContract {
 
     @Override
     public long getEnergyForData(byte[] data) {
