@@ -46,137 +46,145 @@ import stest.tron.wallet.common.client.utils.DataWord;
 @Slf4j
 public class VoteTest {
 
-  /**
-   * contract TestVote {
-   *
-   *     constructor() public payable {}
-   *
-   *     function freeze(address payable receiver, uint amount, uint res) external {
-   *         receiver.freeze(amount, res);
-   *     }
-   *
-   *     function unfreeze(address payable receiver, uint res) external {
-   *         receiver.unfreeze(res);
-   *     }
-   *
-   *     function voteWitness(address[] calldata sr, uint[] calldata tp) external returns(bool) {
-   *         return vote(sr, tp);
-   *     }
-   *
-   *     function withdrawReward() external returns(uint) {
-   *         return withdrawreward();
-   *     }
-   *
-   *     function rewardBalance() external view returns(uint) {
-   *         return rewardBalance();
-   *     }
-   *
-   *     function isSR(address sr) external view returns(bool) {
-   *         return isSrCandidate(sr);
-   *     }
-   *
-   *     function voteCount(address from, address to) external view returns(uint) {
-   *         return voteCount(from, to);
-   *     }
-   *
-   *     function totalVoteCount(address owner) external view returns(uint) {
-   *         return totalVoteCount(owner);
-   *     }
-   *
-   *     function totalReceivedVoteCount(address owner) external view returns(uint) {
-   *         return totalReceivedVoteCount(owner);
-   *     }
-   *
-   *     function killSelf(address payable target) external {
-   *         selfdestruct(target);
-   *     }
-   * }
-   */
+  /*contract TestVote {
+    constructor() public payable {}
+    function freeze(address payable receiver, uint amount, uint res) external {
+      receiver.freeze(amount, res);
+    }
+    function unfreeze(address payable receiver, uint res) external {
+      receiver.unfreeze(res);
+    }
+    function voteWitness(address[] calldata srList, uint[] calldata tpList) external returns(bool) {
+    return vote(srList, tpList);
+    }
+    function withdrawReward() external returns(uint) {
+    return withdrawreward();
+    }
+    function queryRewardBalance() external view returns(uint) {
+      return rewardBalance();
+    }
+    function isWitness(address sr) external view returns(bool) {
+      return isSrCandidate(sr);
+    }
+    function queryVoteCount(address from, address to) external view returns(uint) {
+      return voteCount(from, to);
+    }
+    function queryTotalVoteCount(address owner) external view returns(uint) {
+      return totalVoteCount(owner);
+    }
+    function queryReceivedVoteCount(address owner) external view returns(uint) {
+      return receivedVoteCount(owner);
+    }
+    function queryUsedVoteCount(address owner) external view returns(uint) {
+      return usedVoteCount(owner);
+    }
+    function killme(address payable target) external {
+      selfdestruct(target);
+    }
+  }*/
 
-  private static final String CODE = "608060405261085d806100136000396000f3fe608060405234801561001"
-      + "057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100b8576000356"
-      + "0e01c80638ee66331116100805780638ee6633114610257578063aa5c3ab4146102b3578063bd73f07c146102d"
-      + "1578063c885bc5814610349578063df12677114610367576100b8565b8063051d3f43146100bd5780630f761ab"
-      + "c1461011557806330e1e4e51461016d5780633a507d7d146101c55780637b46b80b14610209575b600080fd5b6"
-      + "100ff600480360360208110156100d357600080fd5b81019080803573fffffffffffffffffffffffffffffffff"
-      + "fffffff16906020019092919050505061044d565b6040518082815260200191505060405180910390f35b61015"
-      + "76004803603602081101561012b57600080fd5b81019080803573fffffffffffffffffffffffffffffffffffff"
-      + "fff1690602001909291905050506104d8565b6040518082815260200191505060405180910390f35b6101c3600"
-      + "4803603606081101561018357600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1"
-      + "690602001909291908035906020019092919080359060200190929190505050610563565b005b6102076004803"
-      + "60360208110156101db57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906"
-      + "0200190929190505050610594565b005b6102556004803603604081101561021f57600080fd5b8101908080357"
-      + "3ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506105a"
-      + "d565b005b6102996004803603602081101561026d57600080fd5b81019080803573fffffffffffffffffffffff"
-      + "fffffffffffffffff1690602001909291905050506105dc565b604051808215151515815260200191505060405"
-      + "180910390f35b6102bb610667565b6040518082815260200191505060405180910390f35b61033360048036036"
-      + "0408110156102e757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200"
-      + "190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506106b9565b6"
-      + "040518082815260200191505060405180910390f35b610351610779565b6040518082815260200191505060405"
-      + "180910390f35b6104336004803603604081101561037d57600080fd5b810190808035906020019064010000000"
-      + "081111561039a57600080fd5b8201836020820111156103ac57600080fd5b80359060200191846020830284011"
-      + "1640100000000831117156103ce57600080fd5b909192939192939080359060200190640100000000811115610"
-      + "3ef57600080fd5b82018360208201111561040157600080fd5b803590602001918460208302840111640100000"
-      + "0008311171561042357600080fd5b9091929391929390505050610781565b60405180821515151581526020019"
-      + "1505060405180910390f35b6000630100000982604051808273fffffffffffffffffffffffffffffffffffffff"
-      + "f1673ffffffffffffffffffffffffffffffffffffffff168152602001915050602060405180830381855afa158"
-      + "0156104ab573d6000803e3d6000fd5b5050506040513d60208110156104c057600080fd5b81019080805190602"
-      + "001909291905050509050919050565b6000630100000882604051808273fffffffffffffffffffffffffffffff"
-      + "fffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506020604051808303818"
-      + "55afa158015610536573d6000803e3d6000fd5b5050506040513d602081101561054b57600080fd5b810190808"
-      + "05190602001909291905050509050919050565b8273ffffffffffffffffffffffffffffffffffffffff168282d"
-      + "515801561058e573d6000803e3d6000fd5b50505050565b8073fffffffffffffffffffffffffffffffffffffff"
-      + "f16ff5b8173ffffffffffffffffffffffffffffffffffffffff1681d61580156105d7573d6000803e3d6000fd5"
-      + "b505050565b6000630100000682604051808273ffffffffffffffffffffffffffffffffffffffff1673fffffff"
-      + "fffffffffffffffffffffffffffffffff168152602001915050602060405180830381855afa15801561063a573"
-      + "d6000803e3d6000fd5b5050506040513d602081101561064f57600080fd5b81019080805190602001909291905"
-      + "050509050919050565b60006301000005604051602060405180830381855afa15801561068e573d6000803e3d6"
-      + "000fd5b5050506040513d60208110156106a357600080fd5b81019080805190602001909291905050509050905"
-      + "65b600063010000078383604051808373ffffffffffffffffffffffffffffffffffffffff1673fffffffffffff"
-      + "fffffffffffffffffffffffffff1681526020018273ffffffffffffffffffffffffffffffffffffffff1673fff"
-      + "fffffffffffffffffffffffffffffffffffff16815260200192505050602060405180830381855afa158015610"
-      + "74b573d6000803e3d6000fd5b5050506040513d602081101561076057600080fd5b81019080805190602001909"
-      + "29190505050905092915050565b6000d9905090565b60008484808060200260200160405190810160405280939"
-      + "29190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050508"
-      + "051848480806020026020016040519081016040528093929190818152602001838360200280828437600081840"
-      + "152601f19601f820116905080830192505050505050508051d88015801561081e573d6000803e3d6000fd5b509"
-      + "05094935050505056fea26474726f6e5820d58546d265e589480cf936c65e3276a8ec620e484350233252dbd63"
-      + "cecb2fb0164736f6c63430005120031";
+  private static final String CODE = "608060405261094b806100136000396000f3fe608060405234801561001"
+      + "057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100c3576000356"
+      + "0e01c80637b46b80b1161008b5780637b46b80b1461028c5780637d7586d0146102da578063c885bc581461033"
+      + "2578063df12677114610350578063e30ef0e614610436578063fa7643f414610454576100c3565b8063073bfa3"
+      + "5146100c8578063212743c9146101405780632fdf78cb1461018457806330e1e4e5146101dc578063697ced141"
+      + "4610234575b600080fd5b61012a600480360360408110156100de57600080fd5b81019080803573fffffffffff"
+      + "fffffffffffffffffffffffffffff169060200190929190803573fffffffffffffffffffffffffffffffffffff"
+      + "fff1690602001909291905050506104b0565b6040518082815260200191505060405180910390f35b610182600"
+      + "4803603602081101561015657600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1"
+      + "69060200190929190505050610570565b005b6101c66004803603602081101561019a57600080fd5b810190808"
+      + "03573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610589565b60405180828"
+      + "15260200191505060405180910390f35b610232600480360360608110156101f257600080fd5b8101908080357"
+      + "3ffffffffffffffffffffffffffffffffffffffff1690602001909291908035906020019092919080359060200"
+      + "190929190505050610614565b005b6102766004803603602081101561024a57600080fd5b81019080803573fff"
+      + "fffffffffffffffffffffffffffffffffffff169060200190929190505050610645565b6040518082815260200"
+      + "191505060405180910390f35b6102d8600480360360408110156102a257600080fd5b81019080803573fffffff"
+      + "fffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506106d0565b005"
+      + "b61031c600480360360208110156102f057600080fd5b81019080803573fffffffffffffffffffffffffffffff"
+      + "fffffffff1690602001909291905050506106ff565b6040518082815260200191505060405180910390f35b610"
+      + "33a61078a565b6040518082815260200191505060405180910390f35b61041c600480360360408110156103665"
+      + "7600080fd5b810190808035906020019064010000000081111561038357600080fd5b820183602082011115610"
+      + "39557600080fd5b803590602001918460208302840111640100000000831117156103b757600080fd5b9091929"
+      + "391929390803590602001906401000000008111156103d857600080fd5b8201836020820111156103ea5760008"
+      + "0fd5b8035906020019184602083028401116401000000008311171561040c57600080fd5b90919293919293905"
+      + "05050610792565b604051808215151515815260200191505060405180910390f35b61043e61083a565b6040518"
+      + "082815260200191505060405180910390f35b6104966004803603602081101561046a57600080fd5b810190808"
+      + "03573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505061088c565b60405180821"
+      + "5151515815260200191505060405180910390f35b600063010000078383604051808373fffffffffffffffffff"
+      + "fffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018273fffffffff"
+      + "fffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001925"
+      + "05050602060405180830381855afa158015610542573d6000803e3d6000fd5b5050506040513d6020811015610"
+      + "55757600080fd5b8101908080519060200190929190505050905092915050565b8073fffffffffffffffffffff"
+      + "fffffffffffffffffff16ff5b6000630100000882604051808273fffffffffffffffffffffffffffffffffffff"
+      + "fff1673ffffffffffffffffffffffffffffffffffffffff168152602001915050602060405180830381855afa1"
+      + "580156105e7573d6000803e3d6000fd5b5050506040513d60208110156105fc57600080fd5b810190808051906"
+      + "02001909291905050509050919050565b8273ffffffffffffffffffffffffffffffffffffffff168282d515801"
+      + "561063f573d6000803e3d6000fd5b50505050565b6000630100000982604051808273fffffffffffffffffffff"
+      + "fffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001915050602060405"
+      + "180830381855afa1580156106a3573d6000803e3d6000fd5b5050506040513d60208110156106b857600080fd5"
+      + "b81019080805190602001909291905050509050919050565b8173fffffffffffffffffffffffffffffffffffff"
+      + "fff1681d61580156106fa573d6000803e3d6000fd5b505050565b6000630100000a82604051808273fffffffff"
+      + "fffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001915"
+      + "050602060405180830381855afa15801561075d573d6000803e3d6000fd5b5050506040513d602081101561077"
+      + "257600080fd5b81019080805190602001909291905050509050919050565b6000d9905090565b6000848480806"
+      + "020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601"
+      + "f82011690508083019250505050505050805184848080602002602001604051908101604052809392919081815"
+      + "2602001838360200280828437600081840152601f19601f820116905080830192505050505050508051d880158"
+      + "01561082f573d6000803e3d6000fd5b509050949350505050565b6000630100000560405160206040518083038"
+      + "1855afa158015610861573d6000803e3d6000fd5b5050506040513d602081101561087657600080fd5b8101908"
+      + "080519060200190929190505050905090565b6000630100000682604051808273fffffffffffffffffffffffff"
+      + "fffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019150506020604051808"
+      + "30381855afa1580156108ea573d6000803e3d6000fd5b5050506040513d60208110156108ff57600080fd5b810"
+      + "1908080519060200190929190505050905091905056fea26474726f6e582013497dc9c63cae83ad2af71e86318"
+      + "aa2f510b4d6c174ae034c28ba0a59bd124364736f6c63430005120031";
 
-  private static final String ABI = "[{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payab"
-      + "le\",\"type\":\"constructor\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address"
-      + " payable\",\"name\":\"receiver\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"na"
-      + "me\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"res\",\"ty"
-      + "pe\":\"uint256\"}],\"name\":\"freeze\",\"outputs\":[],\"payable\":false,\"stateMutability"
-      + "\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\""
-      + ":\"address\",\"name\":\"sr\",\"type\":\"address\"}],\"name\":\"isSR\",\"outputs\":[{\"int"
-      + "ernalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutabilit"
-      + "y\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"a"
-      + "ddress payable\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"killSelf\",\"outpu"
-      + "ts\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"co"
-      + "nstant\":true,\"inputs\":[],\"name\":\"rewardBalance\",\"outputs\":[{\"internalType\":\"u"
-      + "int256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"vie"
-      + "w\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\""
-      + "name\":\"owner\",\"type\":\"address\"}],\"name\":\"totalReceivedVoteCount\",\"outputs\":["
-      + "{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"st"
-      + "ateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"interna"
-      + "lType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"totalVoteCount\""
-      + ",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payabl"
-      + "e\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"input"
-      + "s\":[{\"internalType\":\"address payable\",\"name\":\"receiver\",\"type\":\"address\"},{\""
-      + "internalType\":\"uint256\",\"name\":\"res\",\"type\":\"uint256\"}],\"name\":\"unfreeze\","
-      + "\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\""
-      + "},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\""
-      + ":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name"
-      + "\":\"voteCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint"
-      + "256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant"
-      + "\":false,\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"sr\",\"type\":\"address[]"
-      + "\"},{\"internalType\":\"uint256[]\",\"name\":\"tp\",\"type\":\"uint256[]\"}],\"name\":\"v"
-      + "oteWitness\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\""
-      + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":f"
-      + "alse,\"inputs\":[],\"name\":\"withdrawReward\",\"outputs\":[{\"internalType\":\"uint256\""
-      + ",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\""
-      + ",\"type\":\"function\"}]\n";
+  private static final String ABI = "[{\"inputs\":[],\"payable\":true,"
+      + "\"stateMutability\":\"payable\",\"type\":\"constructor\"},{\"constant\":false,"
+      + "\"inputs\":[{\"internalType\":\"address payable\",\"name\":\"receiver\","
+      + "\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\","
+      + "\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"res\","
+      + "\"type\":\"uint256\"}],\"name\":\"freeze\",\"outputs\":[],\"payable\":false,"
+      + "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,"
+      + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"sr\",\"type\":\"address\"}],"
+      + "\"name\":\"isWitness\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\","
+      + "\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\","
+      + "\"type\":\"function\"},"
+      + "{\"constant\":false,\"inputs\":[{\"internalType\":\"address payable\","
+      + "\"name\":\"target\","
+      + "\"type\":\"address\"}],\"name\":\"killme\",\"outputs\":[],\"payable\":false,"
+      + "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,"
+      + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],"
+      + "\"name\":\"queryReceivedVoteCount\",\"outputs\":[{\"internalType\":\"uint256\","
+      + "\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\","
+      + "\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"queryRewardBalance\","
+      + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],"
+      + "\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},"
+      + "{\"constant\":true,"
+      + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],"
+      + "\"name\":\"queryTotalVoteCount\",\"outputs\":[{\"internalType\":\"uint256\","
+      + "\"name\":\"\","
+      + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\","
+      + "\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\","
+      + "\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"queryUsedVoteCount\","
+      + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],"
+      + "\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},"
+      + "{\"constant\":true,"
+      + "\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},"
+      + "{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],"
+      + "\"name\":\"queryVoteCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\","
+      + "\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\","
+      + "\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address "
+      + "payable\",\"name\":\"receiver\",\"type\":\"address\"},{\"internalType\":\"uint256\","
+      + "\"name\":\"res\",\"type\":\"uint256\"}],\"name\":\"unfreeze\",\"outputs\":[],"
+      + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+      + "{\"constant\":false,\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"srList\","
+      + "\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"tpList\","
+      + "\"type\":\"uint256[]\"}],\"name\":\"voteWitness\","
+      + "\"outputs\":[{\"internalType\":\"bool\","
+      + "\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+      + "\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawReward\","
+      + "\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],"
+      + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
   private static final long value = 100_000_000_000_000_000L;
   private static final long fee = 1_000_000_000;
@@ -196,11 +204,12 @@ public class VoteTest {
   private static final String unfreezeMethod = "unfreeze(address,uint256)";
   private static final String voteMethod = "voteWitness(address[],uint256[])";
   private static final String withdrawRewardMethod = "withdrawReward()";
-  private static final String rewardBalanceMethod = "rewardBalance()";
-  private static final String isSRMethod = "isSR(address)";
-  private static final String voteCountMethod = "voteCount(address,address)";
-  private static final String totalVoteMethod = "totalVoteCount(address)";
-  private static final String totalReceivedVoteMethod = "totalReceivedVoteCount(address)";
+  private static final String queryRewardBalanceMethod = "queryRewardBalance()";
+  private static final String isWitnessMethod = "isWitness(address)";
+  private static final String queryVoteCountMethod = "queryVoteCount(address,address)";
+  private static final String queryTotalVoteCountMethod = "queryTotalVoteCount(address)";
+  private static final String queryReceivedVoteCountMethod = "queryReceivedVoteCount(address)";
+  private static final String queryUsedVoteCountMethod = "queryUsedVoteCount(address)";
 
   private static String dbPath;
   private static TronApplicationContext context;
@@ -304,6 +313,13 @@ public class VoteTest {
 
     long freezeUnit = 1000_000_000L;
 
+    // query total vote count
+    triggerContract(voteContractAddr, SUCCESS, data -> {
+      Assert.assertNotNull(data);
+      Assert.assertEquals(32, data.length);
+      Assert.assertEquals(0, new DataWord(data).longValue());
+    }, queryTotalVoteCountMethod, StringUtil.encode58Check(voteContractAddr));
+
     triggerContract(voteContractAddr, SUCCESS, null, freezeMethod,
         StringUtil.encode58Check(voteContractAddr), freezeUnit, 0);
 
@@ -318,14 +334,14 @@ public class VoteTest {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertEquals(1, new DataWord(data).longValue());
-    }, isSRMethod, witnessAStr);
+    }, isWitnessMethod, witnessAStr);
 
     // common user
     triggerContract(voteContractAddr, SUCCESS, data -> {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertEquals(0, new DataWord(data).longValue());
-    }, isSRMethod, userAStr);
+    }, isWitnessMethod, userAStr);
 
     // query witness vote
     long oldVoteCount = manager.getWitnessStore().get(witnessA).getVoteCount();
@@ -333,7 +349,14 @@ public class VoteTest {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertEquals(oldVoteCount, new DataWord(data).longValue());
-    }, totalReceivedVoteMethod, witnessAStr);
+    }, queryReceivedVoteCountMethod, witnessAStr);
+
+    // query total vote count
+    triggerContract(voteContractAddr, SUCCESS, data -> {
+      Assert.assertNotNull(data);
+      Assert.assertEquals(32, data.length);
+      Assert.assertEquals(2000, new DataWord(data).longValue());
+    }, queryTotalVoteCountMethod, StringUtil.encode58Check(voteContractAddr));
 
     // do vote
     triggerContract(voteContractAddr, SUCCESS, data -> {
@@ -350,33 +373,33 @@ public class VoteTest {
     long newVoteCount = oldVoteCount + 1000;
     Assert.assertEquals(newVoteCount, manager.getWitnessStore().get(witnessA).getVoteCount());
 
-    // query user total vote
+    // query used total vote
     triggerContract(voteContractAddr, SUCCESS, data -> {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertEquals(2000, new DataWord(data).longValue());
-    }, totalVoteMethod, StringUtil.encode58Check(voteContractAddr));
+    }, queryUsedVoteCountMethod, StringUtil.encode58Check(voteContractAddr));
 
     // query user vote to witness
     triggerContract(voteContractAddr, SUCCESS, data -> {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertEquals(1000, new DataWord(data).longValue());
-    }, voteCountMethod, StringUtil.encode58Check(voteContractAddr), witnessAStr);
+    }, queryVoteCountMethod, StringUtil.encode58Check(voteContractAddr), witnessAStr);
 
     // query witness vote
     triggerContract(voteContractAddr, SUCCESS, data -> {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertEquals(newVoteCount, new DataWord(data).longValue());
-    }, totalReceivedVoteMethod, witnessAStr);
+    }, queryReceivedVoteCountMethod, witnessAStr);
 
     // query reward
     triggerContract(voteContractAddr, SUCCESS, data -> {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertEquals(0, new DataWord(data).longValue());
-    }, rewardBalanceMethod);
+    }, queryRewardBalanceMethod);
 
     manager.getDelegationStore().addReward(
         manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessA, 1000_000_000);
@@ -388,7 +411,7 @@ public class VoteTest {
       Assert.assertNotNull(data);
       Assert.assertEquals(32, data.length);
       Assert.assertTrue(new DataWord(data).intValue() > 0);
-    }, rewardBalanceMethod);
+    }, queryRewardBalanceMethod);
 
     // withdraw reward to balance
     long oldBalance = manager.getAccountStore().get(voteContractAddr).getBalance();

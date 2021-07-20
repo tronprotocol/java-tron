@@ -23,14 +23,13 @@ public class WithdrawRewardProcessor {
     }
 
     byte[] ownerAddress = param.getOwnerAddress();
-    String readableOwnerAddress = StringUtil.encode58Check(ownerAddress);
 
     boolean isGP = CommonParameter.getInstance()
         .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
             Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress
+          ACCOUNT_EXCEPTION_STR + StringUtil.encode58Check(ownerAddress)
               + "] is a guard representative and is not allowed to withdraw Balance");
     }
 

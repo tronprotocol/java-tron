@@ -2566,7 +2566,7 @@ public class Wallet {
     }
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
-
+    builder.setEnergyUsed(result.getEnergyUsed());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
