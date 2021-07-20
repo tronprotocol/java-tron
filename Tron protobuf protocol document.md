@@ -6,21 +6,21 @@ This is the description of  Google Protobuf implementation of Tron's protocol.
 
 ## Contents 
 
-#### [1.Account](#account)
+#### [1. Account](#account)
 
-#### [2.Witness](#witness)
+#### [2. Witness](#witness)
 
-#### [3.Block](#block)
+#### [3. Block](#block)
 
-#### [4.Transaction](#trans)
+#### [4. Transaction](#trans)
 
-#### [5.Contract](#contract)
+#### [5. Contract](#contract)
 
-#### [6.Network](#net)
+#### [6. Network](#net)
 
 ## Protocols
 
-### <span id="account">1.Account</span>
+### <span id="account">1. Account</span>
 
 Account and account-related messages.
 
@@ -186,7 +186,7 @@ message Account {
     
   - Message `AccountId`
   
-    `name`: the name ofthis account.
+    `name`: the name of this account.
   
     `address`: the address of this account.
   
@@ -202,7 +202,7 @@ message Account {
     
   
 
-### <span id="witness"> 2.Witness</span>
+### <span id="witness"> 2. Witness</span>
 
 Witness and witness-related messages.
 
@@ -241,7 +241,7 @@ Witness and witness-related messages.
   ```
 
 
-### <span id="block"> 3.Block</span>
+### <span id="block"> 3. Block</span>
 
 - message `Block`
 
@@ -314,7 +314,7 @@ message BlockHeader {
   
 
 
-### <span id="trans"> 4.Transaction</span>
+### <span id="trans"> 4. Transaction</span>
 
 Transaction and transaction-related messages.
 
@@ -412,7 +412,7 @@ Transaction and transaction-related messages.
 
     `net_fee`: consume yourself trx of net usage.
 
-    `result`: he result of executing transaction.
+    `result`: the result of executing transaction.
 
     ```java
     message ResourceReceipt {
@@ -817,7 +817,7 @@ Transaction and transaction-related messages.
   
 
 
-### <span id="contract"> 5.Contract</span>
+### <span id="contract"> 5. Contract</span>
 
 Contract and contract-related messages.
 
@@ -1853,7 +1853,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
     }
     ```
 
-### <span id="net"> 6.Network</span>
+### <span id="net"> 6. Network</span>
 
 - #### Inventory
 

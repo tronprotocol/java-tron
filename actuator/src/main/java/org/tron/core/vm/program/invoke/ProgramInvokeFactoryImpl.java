@@ -22,7 +22,7 @@ import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_C
 import static org.tron.common.utils.WalletUtil.generateContractAddress;
 
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.Arrays;
+import org.bouncycastle.util.Arrays;
 import org.springframework.stereotype.Component;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.vm.DataWord;

@@ -20,6 +20,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -109,6 +110,11 @@ public class ExchangeWithdrawActuatorTest {
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
+
+    dbManager.getAccountAssetStore().put(ownerAccountFirstCapsule.getAddress().toByteArray(),
+            new AccountAssetCapsule(ownerAccountFirstCapsule.getAddress()));
+    dbManager.getAccountAssetStore().put(ownerAccountSecondCapsule.getAddress().toByteArray(),
+            new AccountAssetCapsule(ownerAccountSecondCapsule.getAddress()));
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);

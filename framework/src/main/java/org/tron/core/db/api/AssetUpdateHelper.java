@@ -45,11 +45,11 @@ public class AssetUpdateHelper {
   }
 
   public void init() {
-    if (chainBaseManager.getAssetIssueV2Store().iterator().hasNext()) {
+    if (chainBaseManager.getAssetIssueV2Store().isNotEmpty()) {
       logger.warn("AssetIssueV2Store is not empty");
     }
     chainBaseManager.getAssetIssueV2Store().reset();
-    if (chainBaseManager.getExchangeV2Store().iterator().hasNext()) {
+    if (chainBaseManager.getExchangeV2Store().isNotEmpty()) {
       logger.warn("ExchangeV2Store is not empty");
     }
     chainBaseManager.getExchangeV2Store().reset();
@@ -150,9 +150,9 @@ public class AssetUpdateHelper {
 
     Iterator<Entry<byte[], AccountCapsule>> iterator =
         chainBaseManager.getAccountStore().iterator();
+
     while (iterator.hasNext()) {
       AccountCapsule accountCapsule = iterator.next().getValue();
-
       accountCapsule.clearAssetV2();
       if (accountCapsule.getAssetMap().size() != 0) {
         HashMap<String, Long> map = new HashMap<>();

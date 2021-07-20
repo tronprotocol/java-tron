@@ -1,6 +1,6 @@
 contract Factory {
     event Deployed(address addr, trcToken salt, address sender);
-    event Deployed1(address addr, uint8 salt, address sender);
+    event Deployed1(address addr, uint256 salt, address sender);
     event Deployed2(address addr, address salt, address sender);
     event Deployed3(address addr, string salt, address sender);
 
@@ -17,7 +17,7 @@ contract Factory {
         return addr;
     }
 
-    function deploy1(bytes memory code, uint8 salt) public returns(address){
+    function deploy1(bytes memory code, uint256 salt) public returns(address){
             address addr;
             assembly {
                 addr := create2(0, add(code, 0x20), mload(code), salt)
@@ -59,10 +59,10 @@ contract Factory {
 contract TestConstract {
     uint public i=1;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+          payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
@@ -72,10 +72,10 @@ contract TestConstract {
 contract TestConstract1 {
     uint public i=2;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+        payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
@@ -85,10 +85,10 @@ contract TestConstract1 {
 contract TestConstract2 {
     uint public i=3;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+        payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
@@ -98,10 +98,10 @@ contract TestConstract2 {
 contract TestConstract3 {
     uint public i=4;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+        payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
