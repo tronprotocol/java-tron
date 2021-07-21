@@ -228,7 +228,7 @@ public class ArchiveManifest implements Callable<Boolean> {
   public static boolean writeProperty(String file, String key, String value) {
     try (OutputStream out = new FileOutputStream(file);
          FileInputStream fis = new FileInputStream(file);
-         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, UTF_8))){
+         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, UTF_8))) {
       BufferedReader bf = new BufferedReader(new InputStreamReader(fis, UTF_8));
       Properties properties = new Properties();
       properties.load(bf);
