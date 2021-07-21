@@ -116,7 +116,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
       }
     }
+
     super.delete(key);
+
+    if (AssetUtil.isAllowAssetOptimization()) {
+      accountAssetStore.delete(key);
+    }
   }
 
   /**
