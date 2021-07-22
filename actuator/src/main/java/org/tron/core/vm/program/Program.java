@@ -50,14 +50,12 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
-import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
@@ -1826,8 +1824,8 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
 
     increaseNonce();
-    InternalTransaction internalTx = addInternalTx(null, owner, null, 0,
-        new byte[2 * witnessArrayLength * DataWord.WORD_SIZE], "voteWitness", nonce, null);
+    InternalTransaction internalTx = addInternalTx(null, owner, null, 0, null,
+        "voteWitness", nonce, null);
 
     if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength ||
         memoryLoad(amountArrayOffset).intValueSafe() != amountArrayLength) {
@@ -1851,19 +1849,15 @@ public class Program {
       byte[] amountArrayData = memoryChunk(Math.addExact(amountArrayOffset, DataWord.WORD_SIZE),
           Math.multiplyExact(amountArrayLength, DataWord.WORD_SIZE));
 
-      byte[] data = internalTx.getData();
       for (int i = 0; i < witnessArrayLength; i++) {
         DataWord witness = new DataWord(Arrays.copyOfRange(witnessArrayData,
             i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
-        System.arraycopy(witness.getData(), 0,
-            data, 2 * i * DataWord.WORD_SIZE, DataWord.WORD_SIZE);
         DataWord amount = new DataWord(Arrays.copyOfRange(amountArrayData,
             i * DataWord.WORD_SIZE, (i + 1) * DataWord.WORD_SIZE));
-        System.arraycopy(witness.getData(), 0,
-            data, (2 * i + 1) * DataWord.WORD_SIZE, DataWord.WORD_SIZE);
         param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
             amount.sValue().longValueExact());
       }
+      internalTx.setExtra(param.toJsonStr());
 
       VoteWitnessProcessor processor = new VoteWitnessProcessor();
       processor.validate(param, repository);

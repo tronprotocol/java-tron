@@ -66,6 +66,11 @@ public class InternalTransaction {
   private String note;
   private byte[] protoEncoded;
 
+  /*
+   * extra data field for recording parameters of vote witness opcode
+   */
+  private String extra;
+
 
   /**
    * Construct a root InternalTransaction
@@ -204,6 +209,14 @@ public class InternalTransaction {
       return EMPTY_BYTE_ARRAY;
     }
     return data.clone();
+  }
+
+  public void setExtra(String extra) {
+    this.extra = extra;
+  }
+
+  public String getExtra() {
+    return extra == null ? "" : extra;
   }
 
   public final byte[] getHash() {

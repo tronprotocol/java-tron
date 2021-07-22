@@ -638,6 +638,7 @@ message InternalTransaction {
   repeated CallValueInfo callValueInfo = 4;
   bytes note = 5;
   bool rejected = 6;
+  string extra = 7;
 }
 
 message DelegatedResourceAccountIndex {

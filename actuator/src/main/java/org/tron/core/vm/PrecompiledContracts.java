@@ -1622,8 +1622,7 @@ public class PrecompiledContracts {
             voteAccountCapsule.getVotesList();
         for (Protocol.Vote vote : voteList) {
           if (ByteString.copyFrom(targetTronAddr).equals(vote.getVoteAddress())) {
-            voteCount = vote.getVoteCount();
-            break;
+            voteCount += vote.getVoteCount();
           }
         }
       }
