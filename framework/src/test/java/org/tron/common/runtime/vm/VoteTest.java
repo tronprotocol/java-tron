@@ -224,6 +224,7 @@ public class VoteTest {
   private static final String queryUsedVoteCountMethod = "queryUsedVoteCount(address)";
 
   private static final Map<String, Consumer<byte[]>> consumerCache = new HashMap<>();
+
   private static Consumer<byte[]> getConsumer(String operator, long expected) {
     consumerCache.putIfAbsent(operator + expected, data -> {
       Assert.assertNotNull(data);
@@ -244,16 +245,21 @@ public class VoteTest {
         case "<=":
           Assert.assertTrue(new DataWord(data).longValue() <= expected);
           break;
+        default:
+          break;
       }
     });
     return consumerCache.get(operator + expected);
   }
+
   private static Consumer<byte[]> getEqualConsumer(long expected) {
     return getConsumer("=", expected);
   }
+
   private static Consumer<byte[]> getBiggerConsumer(long expected) {
     return getConsumer(">", expected);
   }
+
   private static Consumer<byte[]> getSmallerConsumer(long expected) {
     return getConsumer("<", expected);
   }
