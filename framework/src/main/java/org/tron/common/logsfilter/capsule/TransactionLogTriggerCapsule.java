@@ -167,6 +167,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       item.setData(Hex.toHexString(internalTransaction.getData()));
       item.setRejected(internalTransaction.isRejected());
       item.setNote(internalTransaction.getNote());
+      item.setExtra(internalTransaction.getExtra());
 
       pojoList.add(item);
     });

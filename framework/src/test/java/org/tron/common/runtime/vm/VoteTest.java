@@ -5,7 +5,12 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +18,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
@@ -36,6 +42,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.service.MortgageService;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
@@ -46,42 +53,45 @@ import stest.tron.wallet.common.client.utils.DataWord;
 @Slf4j
 public class VoteTest {
 
-  /*contract TestVote {
-    constructor() public payable {}
-    function freeze(address payable receiver, uint amount, uint res) external {
-      receiver.freeze(amount, res);
-    }
-    function unfreeze(address payable receiver, uint res) external {
-      receiver.unfreeze(res);
-    }
-    function voteWitness(address[] calldata srList, uint[] calldata tpList) external returns(bool) {
-    return vote(srList, tpList);
-    }
-    function withdrawReward() external returns(uint) {
-    return withdrawreward();
-    }
-    function queryRewardBalance() external view returns(uint) {
-      return rewardBalance();
-    }
-    function isWitness(address sr) external view returns(bool) {
-      return isSrCandidate(sr);
-    }
-    function queryVoteCount(address from, address to) external view returns(uint) {
-      return voteCount(from, to);
-    }
-    function queryTotalVoteCount(address owner) external view returns(uint) {
-      return totalVoteCount(owner);
-    }
-    function queryReceivedVoteCount(address owner) external view returns(uint) {
-      return receivedVoteCount(owner);
-    }
-    function queryUsedVoteCount(address owner) external view returns(uint) {
-      return usedVoteCount(owner);
-    }
-    function killme(address payable target) external {
-      selfdestruct(target);
-    }
-  }*/
+  /**
+   * contract TestVote {
+   *     constructor() public payable {}
+   *     function freeze(address payable receiver, uint amount, uint res) external {
+   *       receiver.freeze(amount, res);
+   *     }
+   *     function unfreeze(address payable receiver, uint res) external {
+   *       receiver.unfreeze(res);
+   *     }
+   *     function voteWitness(address[] calldata srList,
+   *         uint[] calldata tpList) external returns(bool) {
+   *       return vote(srList, tpList);
+   *     }
+   *     function withdrawReward() external returns(uint) {
+   *       return withdrawreward();
+   *     }
+   *     function queryRewardBalance() external view returns(uint) {
+   *       return rewardBalance();
+   *     }
+   *     function isWitness(address sr) external view returns(bool) {
+   *       return isSrCandidate(sr);
+   *     }
+   *     function queryVoteCount(address from, address to) external view returns(uint) {
+   *       return voteCount(from, to);
+   *     }
+   *     function queryTotalVoteCount(address owner) external view returns(uint) {
+   *       return totalVoteCount(owner);
+   *     }
+   *     function queryReceivedVoteCount(address owner) external view returns(uint) {
+   *       return receivedVoteCount(owner);
+   *     }
+   *     function queryUsedVoteCount(address owner) external view returns(uint) {
+   *       return usedVoteCount(owner);
+   *     }
+   *     function killme(address payable target) external {
+   *       selfdestruct(target);
+   *     }
+   *   }
+   */
 
   private static final String CODE = "608060405261094b806100136000396000f3fe608060405234801561001"
       + "057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b50600436106100c3576000356"
@@ -187,7 +197,9 @@ public class VoteTest {
       + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
 
   private static final long value = 100_000_000_000_000_000L;
-  private static final long fee = 1_000_000_000;
+  private static final long fee = 1_000_000_000L;
+  private static final long freezeUnit = 1_000_000_000_000L;
+  private static final long trx_precision = 1_000_000L;
   private static final String userAStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
   private static final byte[] userA = Commons.decode58Check(userAStr);
   private static final String userBStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
@@ -211,11 +223,53 @@ public class VoteTest {
   private static final String queryReceivedVoteCountMethod = "queryReceivedVoteCount(address)";
   private static final String queryUsedVoteCountMethod = "queryUsedVoteCount(address)";
 
+  private static final Map<String, Consumer<byte[]>> consumerCache = new HashMap<>();
+
+  private static Consumer<byte[]> getConsumer(String operator, long expected) {
+    consumerCache.putIfAbsent(operator + expected, data -> {
+      Assert.assertNotNull(data);
+      Assert.assertEquals(32, data.length);
+      switch (operator) {
+        case "=":
+          Assert.assertEquals(expected, new DataWord(data).longValue());
+          break;
+        case ">":
+          Assert.assertTrue(new DataWord(data).longValue() > expected);
+          break;
+        case "<":
+          Assert.assertTrue(new DataWord(data).longValue() < expected);
+          break;
+        case ">=":
+          Assert.assertTrue(new DataWord(data).longValue() >= expected);
+          break;
+        case "<=":
+          Assert.assertTrue(new DataWord(data).longValue() <= expected);
+          break;
+        default:
+          break;
+      }
+    });
+    return consumerCache.get(operator + expected);
+  }
+
+  private static Consumer<byte[]> getEqualConsumer(long expected) {
+    return getConsumer("=", expected);
+  }
+
+  private static Consumer<byte[]> getBiggerConsumer(long expected) {
+    return getConsumer(">", expected);
+  }
+
+  private static Consumer<byte[]> getSmallerConsumer(long expected) {
+    return getConsumer("<", expected);
+  }
+
   private static String dbPath;
   private static TronApplicationContext context;
   private static Manager manager;
   private static MaintenanceManager maintenanceManager;
   private static ConsensusService consensusService;
+  private static MortgageService mortgageService;
   private static byte[] owner;
   private static Deposit rootDeposit;
 
@@ -229,6 +283,7 @@ public class VoteTest {
     maintenanceManager = context.getBean(MaintenanceManager.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
+    mortgageService = context.getBean(MortgageService.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()
         + "abd4b9367799eaa3197fecb144eb71de1e049abc");
     rootDeposit = DepositImpl.createRoot(manager);
@@ -309,148 +364,114 @@ public class VoteTest {
 
   @Test
   public void testVote() throws Exception {
-    byte[] voteContractAddr = deployContract("Vote", ABI, CODE);
+    byte[] voteContract = deployContract("Vote", ABI, CODE);
+    String voteContractStr = StringUtil.encode58Check(voteContract);
 
-    long freezeUnit = 1000_000_000L;
+    long oldReceivedVoteCount = 0;
+    long newVoteReceivedCount = 0;
+    // cycle-1
+    {
+      // query tron power, is zero
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(0),
+          queryTotalVoteCountMethod, voteContractStr);
 
-    // query total vote count
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(0, new DataWord(data).longValue());
-    }, queryTotalVoteCountMethod, StringUtil.encode58Check(voteContractAddr));
+      // get tron power: bandwidth
+      triggerContract(voteContract, SUCCESS, null,
+          freezeMethod, voteContractStr, freezeUnit, 0);
+      // get tron power: energy
+      triggerContract(voteContract, SUCCESS, null,
+          freezeMethod, voteContractStr, freezeUnit, 1);
 
-    triggerContract(voteContractAddr, SUCCESS, null, freezeMethod,
-        StringUtil.encode58Check(voteContractAddr), freezeUnit, 0);
+      // query tron power, not zero
+      long totalTronPower = 2 * freezeUnit / trx_precision;
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(totalTronPower),
+          queryTotalVoteCountMethod, voteContractStr);
 
-    triggerContract(voteContractAddr, SUCCESS, null, freezeMethod,
-        StringUtil.encode58Check(voteContractAddr), freezeUnit, 1);
+      // check witness: true
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(1),
+          isWitnessMethod, witnessAStr);
 
-    AccountCapsule contractCapsule = manager.getAccountStore().get(voteContractAddr);
-    Assert.assertEquals(value - 2 * freezeUnit, contractCapsule.getBalance());
+      // check witness: false
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(0),
+          isWitnessMethod, userAStr);
 
-    // validate witness
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(1, new DataWord(data).longValue());
-    }, isWitnessMethod, witnessAStr);
+      // query witness received vote
+      oldReceivedVoteCount = manager.getWitnessStore().get(witnessA).getVoteCount();
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(oldReceivedVoteCount),
+          queryReceivedVoteCountMethod, witnessAStr);
 
-    // common user
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(0, new DataWord(data).longValue());
-    }, isWitnessMethod, userAStr);
+      // do vote
+      voteWitness(voteContract,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1000L, 1000L));
 
-    // query witness vote
-    long oldVoteCount = manager.getWitnessStore().get(witnessA).getVoteCount();
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(oldVoteCount, new DataWord(data).longValue());
-    }, queryReceivedVoteCountMethod, witnessAStr);
+      // query witness received vote: not changed
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(oldReceivedVoteCount),
+          queryReceivedVoteCountMethod, witnessAStr);
 
-    // query total vote count
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(2000, new DataWord(data).longValue());
-    }, queryTotalVoteCountMethod, StringUtil.encode58Check(voteContractAddr));
+      payRewardAndDoMaintenance(1);
+    }
 
-    // do vote
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(1, new DataWord(data).longValue());
-    }, voteMethod, Arrays.asList(witnessAStr, witnessBStr), Arrays.asList(1000, 1000));
+    // cycle-2
+    {
+      // query witness received vote: increased
+      newVoteReceivedCount = oldReceivedVoteCount + 1000;
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(newVoteReceivedCount),
+          queryReceivedVoteCountMethod, witnessAStr);
 
-    contractCapsule = manager.getAccountStore().get(voteContractAddr);
-    Assert.assertEquals(2, contractCapsule.getVotesList().size());
+      // query contract used vote
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(2000),
+          queryUsedVoteCountMethod, voteContractStr);
 
-    maintenanceManager.doMaintenance();
+      // query contract vote to special witness
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(1000),
+          queryVoteCountMethod, StringUtil.encode58Check(voteContract), witnessAStr);
 
-    long newVoteCount = oldVoteCount + 1000;
-    Assert.assertEquals(newVoteCount, manager.getWitnessStore().get(witnessA).getVoteCount());
+      // query reward
+      triggerContract(voteContract, SUCCESS, getEqualConsumer(0),
+          queryRewardBalanceMethod);
 
-    // query used total vote
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(2000, new DataWord(data).longValue());
-    }, queryUsedVoteCountMethod, StringUtil.encode58Check(voteContractAddr));
+      payRewardAndDoMaintenance(1);
+    }
 
-    // query user vote to witness
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(1000, new DataWord(data).longValue());
-    }, queryVoteCountMethod, StringUtil.encode58Check(voteContractAddr), witnessAStr);
+    // cycle-3
+    {
+      checkRewardAndWithdraw(voteContract, false);
+      payRewardAndDoMaintenance(1);
+    }
 
-    // query witness vote
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(newVoteCount, new DataWord(data).longValue());
-    }, queryReceivedVoteCountMethod, witnessAStr);
+    // cycle-4
+    {
+      // unfreeze bandwidth, not clear vote
+      triggerContract(voteContract, SUCCESS, null, unfreezeMethod,
+          StringUtil.encode58Check(voteContract), 0);
 
-    // query reward
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(0, new DataWord(data).longValue());
-    }, queryRewardBalanceMethod);
+      AccountCapsule contractCapsule = manager.getAccountStore().get(voteContract);
+      Assert.assertEquals(2, contractCapsule.getVotesList().size());
 
-    manager.getDelegationStore().addReward(
-        manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessA, 1000_000_000);
+      // unfreeze energy, clear vote
+      triggerContract(voteContract, SUCCESS, null, unfreezeMethod,
+          StringUtil.encode58Check(voteContract), 1);
 
-    maintenanceManager.doMaintenance();
+      contractCapsule = manager.getAccountStore().get(voteContract);
+      Assert.assertEquals(0, contractCapsule.getVotesList().size());
 
-    // query reward
-    TVMTestResult result = triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertTrue(new DataWord(data).intValue() > 0);
-    }, queryRewardBalanceMethod);
+      checkRewardAndWithdraw(voteContract, false);
+      payRewardAndDoMaintenance(1);
+    }
 
-    // withdraw reward to balance
-    long oldBalance = manager.getAccountStore().get(voteContractAddr).getBalance();
-    long reward = new DataWord(result.getRuntime().getResult().getHReturn()).longValue();
-    triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertEquals(reward, new DataWord(data).longValue());
-    }, withdrawRewardMethod);
+    // cycle-5
+    {
+      checkRewardAndWithdraw(voteContract, false);
+      payRewardAndDoMaintenance(1);
+    }
 
-    Assert.assertEquals(oldBalance + reward,
-        manager.getAccountStore().get(voteContractAddr).getBalance());
-
-    manager.getDelegationStore().addReward(
-        manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessA, 1000_000_000);
-
-    maintenanceManager.doMaintenance();
-
-    triggerContract(voteContractAddr, SUCCESS, null, unfreezeMethod,
-        StringUtil.encode58Check(voteContractAddr), 0);
-
-    contractCapsule = manager.getAccountStore().get(voteContractAddr);
-    Assert.assertEquals(0, contractCapsule.getVotesList().size());
-    Assert.assertTrue(contractCapsule.getAllowance() > 0);
-
-    manager.getDelegationStore().addReward(
-        manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessA, 1000_000_000);
-
-    maintenanceManager.doMaintenance();
-
-    result = triggerContract(voteContractAddr, SUCCESS, data -> {
-      Assert.assertNotNull(data);
-      Assert.assertEquals(32, data.length);
-      Assert.assertTrue(new DataWord(data).intValue() > 0);
-    }, withdrawRewardMethod);
-
-    long newReward = new DataWord(result.getRuntime().getResult().getHReturn()).longValue();
-    Assert.assertEquals(contractCapsule.getBalance() + newReward,
-        manager.getAccountStore().get(voteContractAddr).getBalance());
+    // cycle-6
+    {
+      // no reward
+      checkRewardAndWithdraw(voteContract, true);
+      payRewardAndDoMaintenance(1);
+    }
   }
 
   @Test
@@ -464,6 +485,411 @@ public class VoteTest {
     // Not witness
     triggerContract(voteContractAddr, REVERT, null, voteMethod,
         Arrays.asList(userAStr, witnessBStr), Arrays.asList(1000, 1000));
+
+    // List size not match
+    triggerContract(voteContractAddr, REVERT, null, voteMethod,
+        Arrays.asList(userAStr, witnessBStr), Arrays.asList(1000));
   }
 
+  /**
+   *   F - Freeze, U - Unfreeze
+   *   V - Vote, W - Withdraw, C - Clear Vote
+   *   C* - Cycle-*, M* - Maintenance-*
+   *
+   *  M0    C1    M1    C2    M2    C3    M3    C4    M4    C5    M5    C6    M6    C7    M7
+   *  ||__________||__________||__________||__________||__________||__________||__________||
+   *    |  |  |     |           |                                   |
+   *    F  V  W     W           W                                   W
+   *
+   * @throws Exception throw all kinds of exception
+   */
+  @Test
+  public void testRewardAlgorithmNo1() throws Exception {
+    byte[] voteContractA = deployContract("VoteA", ABI, CODE);
+    byte[] voteContractB = deployContract("VoteB", ABI, CODE);
+
+    // cycle-1
+    {
+      // freeze balance to get tron power
+      freezeBalance(voteContractA);
+      freezeBalance(voteContractB);
+
+      // vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1234L, 4321L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(12L, 21L));
+
+      // no reward yet
+      checkRewardAndWithdraw(voteContractA, true);
+      checkRewardAndWithdraw(voteContractB, true);
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-2
+    {
+      // no reward yet
+      checkRewardAndWithdraw(voteContractA, true);
+      checkRewardAndWithdraw(voteContractB, true);
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-3
+    {
+      // cycle-2 reward
+      checkRewardAndWithdraw(voteContractA, false);
+      checkRewardAndWithdraw(voteContractB, false);
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-4 ~ cycle-5 (do nothing)
+    {
+      payRewardAndDoMaintenance(2);
+    }
+
+    // cycle-6
+    {
+      // cycle-3 ~ cycle-5 reward
+      checkRewardAndWithdraw(voteContractA, false);
+      checkRewardAndWithdraw(voteContractB, false);
+      payRewardAndDoMaintenance(1);
+    }
+  }
+
+  /**
+   *   F - Freeze, U - Unfreeze
+   *   V - Vote, W - Withdraw, C - Clear Vote
+   *   C* - Cycle-*, M* - Maintenance-*
+   *
+   *  M0    C1    M1    C2    M2    C3    M3    C4    M4    C5    M5    C6    M6    C7    M7
+   *  ||__________||__________||__________||__________||__________||__________||__________||
+   *    |  |        |           |  |  |     |  |                    |           |
+   *    F  V        V           W  V  W     V  V                    W           V
+   *
+   * @throws Exception throw all kinds of exception
+   */
+  @Test
+  public void testRewardAlgorithmNo2() throws Exception {
+    byte[] voteContractA = deployContract("VoteA", ABI, CODE);
+    byte[] voteContractB = deployContract("VoteB", ABI, CODE);
+
+    // cycle-1
+    {
+      // freeze balance to get tron power
+      freezeBalance(voteContractA);
+      freezeBalance(voteContractB);
+
+      // vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1234L, 4321L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(12L, 21L));
+
+      // no reward yet
+      checkRewardAndWithdraw(voteContractA, true);
+      checkRewardAndWithdraw(voteContractB, true);
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-2
+    {
+      // change vote through smart contract
+      voteWitness(voteContractA,
+          Collections.singletonList(witnessCStr),
+          Collections.singletonList(2333L));
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-3
+    {
+      checkRewardAndWithdraw(voteContractA, false);
+      checkRewardAndWithdraw(voteContractB, false);
+
+      // change vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(4321L, 1234L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(21L, 12L));
+
+      // no reward yet
+      checkRewardAndWithdraw(voteContractA, true);
+      checkRewardAndWithdraw(voteContractB, true);
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-4
+    {
+      // change vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(12L, 21L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1234L, 4321L));
+
+      // change vote through smart contract
+      voteWitness(voteContractA,
+          Collections.singletonList(witnessCStr),
+          Collections.singletonList(12L));
+      voteWitness(voteContractB,
+          Collections.singletonList(witnessCStr),
+          Collections.singletonList(1234L));
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-5 (do nothing)
+    {
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-6
+    {
+      checkRewardAndWithdraw(voteContractA, false);
+      checkRewardAndWithdraw(voteContractB, false);
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-7
+    {
+      // vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1234L, 4321L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(12L, 21L));
+
+      payRewardAndDoMaintenance(1);
+    }
+  }
+
+  /**
+   *   F - Freeze, U - Unfreeze
+   *   V - Vote, W - Withdraw, C - Clear Vote
+   *   C* - Cycle-*, M* - Maintenance-*
+   *
+   *  M0    C1    M1    C2    M2    C3    M3    C4    M4    C5    M5    C6    M6    C7    M7
+   *  ||__________||__________||__________||__________||__________||__________||__________||
+   *    |  |                    |           |           |  |        |           |
+   *    F  V                    C           W           W  V        C           W
+   *
+   * @throws Exception throw all kinds of exception
+   */
+  @Test
+  public void testRewardAlgorithmNo3() throws Exception {
+    byte[] voteContractA = deployContract("VoteA", ABI, CODE);
+    byte[] voteContractB = deployContract("VoteB", ABI, CODE);
+
+    // cycle-1
+    {
+      // freeze balance to get tron power
+      freezeBalance(voteContractA);
+      freezeBalance(voteContractB);
+
+      // vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1234L, 4321L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(12L, 21L));
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-2 (do nothing)
+    {
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-3
+    {
+      // clear vote through smart contract
+      clearVote(voteContractA);
+      clearVote(voteContractB);
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-4
+    {
+      checkRewardAndWithdraw(voteContractA, false);
+      checkRewardAndWithdraw(voteContractB, false);
+
+      // beginCycle == currentCycle + 1 (special case if has no vote while withdrawing)
+      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          manager.getDelegationStore().getBeginCycle(voteContractA));
+      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          manager.getDelegationStore().getBeginCycle(voteContractB));
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-5
+    {
+      // no reward
+      checkRewardAndWithdraw(voteContractA, true);
+      checkRewardAndWithdraw(voteContractB, true);
+
+      // vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1234L, 4321L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(12L, 21L));
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-6
+    {
+      // clear vote through smart contract
+      clearVote(voteContractA);
+      clearVote(voteContractB);
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-7
+    {
+      checkRewardAndWithdraw(voteContractA, false);
+      checkRewardAndWithdraw(voteContractB, false);
+
+      // beginCycle == currentCycle + 1 (special case if has no vote while withdrawing)
+      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          manager.getDelegationStore().getBeginCycle(voteContractA));
+      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          manager.getDelegationStore().getBeginCycle(voteContractB));
+
+      payRewardAndDoMaintenance(1);
+    }
+  }
+
+  /**
+   *   F - Freeze, U - Unfreeze
+   *   V - Vote, W - Withdraw, C - Clear Vote
+   *   C* - Cycle-*, M* - Maintenance-*
+   *
+   *  M0    C1    M1    C2    M2    C3    M3              C73000
+   *  ||__________||__________||__________||   ~~~~   ||__________||
+   *    |  |                                            |
+   *    F  V                                            W
+   *
+   * @throws Exception throw all kinds of exception
+   */
+  @Ignore
+  @Test
+  public void testRewardAlgorithmBenchmark() throws Exception {
+    byte[] voteContractA = deployContract("VoteA", ABI, CODE);
+    byte[] voteContractB = deployContract("VoteB", ABI, CODE);
+
+    // cycle-1
+    {
+      // freeze balance to get tron power
+      freezeBalance(voteContractA);
+      freezeBalance(voteContractB);
+
+      // vote through smart contract
+      voteWitness(voteContractA,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(1234L, 4321L));
+      voteWitness(voteContractB,
+          Arrays.asList(witnessAStr, witnessBStr),
+          Arrays.asList(12L, 21L));
+
+      payRewardAndDoMaintenance(1);
+    }
+
+    // cycle-2 ~ cycle-72999
+    {
+      payRewardAndDoMaintenance(72999);
+    }
+
+    // cycle-73000
+    {
+      int oldTimes = 50;
+      long start = System.nanoTime();
+      for (int i = 1; i <= oldTimes; i++) {
+        if (i % 5 == 0) {
+          logger.info("Old-{}: {}", i, (System.nanoTime() - start) / 1000 / i);
+        }
+        mortgageService.queryReward(voteContractA);
+      }
+      logger.info("Old-total: {}", (System.nanoTime() - start) / 1000 / oldTimes);
+
+      int newTimes = 10000;
+      start = System.nanoTime();
+      for (int i = 1; i <= newTimes; i++) {
+        if (i % 1000 == 0) {
+          logger.info("New-{}: {}", i, (System.nanoTime() - start) / 1000 / i);
+        }
+        triggerContract(voteContractA, SUCCESS, null, queryRewardBalanceMethod);
+      }
+      logger.info("New-total: {}", (System.nanoTime() - start) / 1000 / newTimes);
+    }
+  }
+
+  private void freezeBalance(byte[] contract) throws Exception {
+    triggerContract(contract, SUCCESS, null,
+        freezeMethod, StringUtil.encode58Check(contract), freezeUnit, 1);
+  }
+
+  private void voteWitness(byte[] contract,
+                           List<String> witnessList,
+                           List<Long> tronPowerList) throws Exception {
+    triggerContract(contract, SUCCESS, getEqualConsumer(1),
+        voteMethod, witnessList, tronPowerList);
+  }
+
+  private void clearVote(byte[] contract) throws Exception {
+    voteWitness(contract, new ArrayList<>(), new ArrayList<>());
+  }
+
+  private void checkVote(byte[] contract,
+                         List<String> witnessList,
+                         List<Long> tronPowerList) {
+
+  }
+
+  private void checkRewardAndWithdraw(byte[] contract, boolean isZero) throws Exception {
+    long rewardBySystem = mortgageService.queryReward(contract);
+    long beginCycle = manager.getDelegationStore().getBeginCycle(contract);
+    long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
+    long passedCycle = Math.max(0, currentCycle - beginCycle);
+    Assert.assertTrue(isZero ? rewardBySystem == 0 : rewardBySystem > 0);
+    triggerContract(contract, SUCCESS,
+        getConsumer(">=", rewardBySystem)
+            .andThen(getConsumer("<=", rewardBySystem + passedCycle)),
+        queryRewardBalanceMethod);
+
+    long oldBalance = manager.getAccountStore().get(contract).getBalance();
+    long rewardByContract = new DataWord(triggerContract(contract, SUCCESS,
+        getConsumer(">=", rewardBySystem)
+            .andThen(getConsumer("<=", rewardBySystem + passedCycle)),
+        withdrawRewardMethod).getRuntime().getResult().getHReturn()).longValue();
+    long newBalance = manager.getAccountStore().get(contract).getBalance();
+    Assert.assertEquals(oldBalance + rewardByContract, newBalance);
+  }
+
+  private void payRewardAndDoMaintenance(int cycle) {
+    while (cycle-- > 0) {
+      manager.getDelegationStore().addReward(
+          manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessA, 1000_000_000);
+      manager.getDelegationStore().addReward(
+          manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessB, 1000_000_000);
+      manager.getDelegationStore().addReward(
+          manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessC, 1000_000_000);
+
+      maintenanceManager.doMaintenance();
+    }
+  }
 }

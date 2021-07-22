@@ -7,7 +7,11 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
+
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import static org.tron.core.actuator.ActuatorConstant.*;
@@ -49,6 +53,7 @@ public class VoteWitnessProcessor {
     accountCapsule.clearVotes();
     votesCapsule.clearNewVotes();
 
+    Map<ByteString, Long> voteMap = new HashMap<>();
     Iterator<Protocol.Vote> iterator = param.getVotes().iterator();
     try {
       long sum = 0;
@@ -76,8 +81,9 @@ public class VoteWitnessProcessor {
           iterator.remove();
         } else {
           sum = LongMath.checkedAdd(sum, voteCount);
-          accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
-          votesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount());
+          // merge vote for same witness
+          voteMap.put(vote.getVoteAddress(),
+              LongMath.checkedAdd(voteMap.getOrDefault(vote.getVoteAddress(), 0L), voteCount));
         }
       }
 
@@ -92,6 +98,10 @@ public class VoteWitnessProcessor {
       throw new ContractExeException(e.getMessage());
     }
 
+    for (Map.Entry<ByteString, Long> entry : voteMap.entrySet()) {
+      accountCapsule.addVotes(entry.getKey(), entry.getValue());
+      votesCapsule.addNewVotes(entry.getKey(), entry.getValue());
+    }
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
     repo.updateVotes(ownerAddress, votesCapsule);
   }
