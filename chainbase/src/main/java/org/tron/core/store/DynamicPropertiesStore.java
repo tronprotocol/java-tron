@@ -763,11 +763,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.setAllowAccountAssetOptimization(CommonParameter
               .getInstance().getAllowAccountAssetOptimization());
-      if (CommonParameter.getInstance()
-              .allowAccountAssetOptimization == 1) {
-        this.setAllowAccountAssetOptimization(CommonParameter
-                .getInstance().getAllowAccountAssetOptimization());
-      }
     }
   }
 
