@@ -62,7 +62,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       throw new RuntimeException("db version is not supported.");
     }
     // init cache from persistent store
-    init();
+//    init();
   }
 
   /**

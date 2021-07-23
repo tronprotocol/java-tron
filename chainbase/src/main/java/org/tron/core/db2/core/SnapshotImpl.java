@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
@@ -40,15 +41,25 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   private byte[] get(Snapshot head, byte[] key) {
     Snapshot snapshot = head;
     Value value;
+    int m = 0;
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
+        if(getDbName().equals("properties") && m != 0) {
+          put(key, value.getBytes());
+        }
         return value.getBytes();
       }
-
+      m++;
       snapshot = snapshot.getPrevious();
     }
-
-    return snapshot == null ? null : snapshot.get(key);
+    if(snapshot == null){
+      return null;
+    }
+    byte[] bytes = snapshot.get(key);
+    if(getDbName().equals("properties") && !ByteUtil.isNullOrZeroArray(bytes)) {
+      put(key, bytes);
+    }
+    return bytes;
   }
 
   @Override

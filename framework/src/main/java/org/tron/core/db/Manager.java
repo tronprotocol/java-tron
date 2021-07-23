@@ -989,35 +989,35 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
     List<TransactionCapsule> txs = getVerifyTxs(block);
-    logger.info("Block num: {}, re-push-size: {}, pending-size: {}, "
-                    + "block-tx-size: {}, verify-tx-size: {}",
-            block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
-            block.getTransactions().size(), txs.size());
+//    logger.info("Block num: {}, re-push-size: {}, pending-size: {}, "
+//                    + "block-tx-size: {}, verify-tx-size: {}",
+//            block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
+//            block.getTransactions().size(), txs.size());
     try (PendingManager pm = new PendingManager(this)) {
 
-      if (!block.generatedByMyself) {
-        if (!block.validateSignature(chainBaseManager.getDynamicPropertiesStore(),
-            chainBaseManager.getAccountStore())) {
-          logger.warn("The signature is not validated.");
-          throw new BadBlockException("The signature is not validated");
-        }
-
-        if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
-          logger.warn(
-              "The merkle root doesn't match, Calc result is "
-                  + block.calcMerkleRoot()
-                  + " , the headers is "
-                  + block.getMerkleRoot());
-          throw new BadBlockException("The merkle hash is not validated");
-        }
-        consensus.receiveBlock(block);
-      }
-
-      if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
-          .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
-        throw new BadBlockException(
-            "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
-      }
+//      if (!block.generatedByMyself) {
+//        if (!block.validateSignature(chainBaseManager.getDynamicPropertiesStore(),
+//            chainBaseManager.getAccountStore())) {
+//          logger.warn("The signature is not validated.");
+//          throw new BadBlockException("The signature is not validated");
+//        }
+//
+//        if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
+//          logger.warn(
+//              "The merkle root doesn't match, Calc result is "
+//                  + block.calcMerkleRoot()
+//                  + " , the headers is "
+//                  + block.getMerkleRoot());
+//          throw new BadBlockException("The merkle hash is not validated");
+//        }
+//        consensus.receiveBlock(block);
+//      }
+//
+//      if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
+//          .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+//        throw new BadBlockException(
+//            "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
+//      }
 
       BlockCapsule newBlock;
       try {
@@ -1189,21 +1189,21 @@ public class Manager {
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
     }
+//
+//    validateTapos(trxCap);
+//    validateCommon(trxCap);
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+//    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
+//      throw new ContractSizeNotEqualToOneException(
+//          "act size should be exactly 1, this is extend feature");
+//    }
 
-    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-      throw new ContractSizeNotEqualToOneException(
-          "act size should be exactly 1, this is extend feature");
-    }
+//    validateDup(trxCap);
 
-    validateDup(trxCap);
-
-    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
-        chainBaseManager.getDynamicPropertiesStore())) {
-      throw new ValidateSignatureException("transaction signature validate failed");
-    }
+//    if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
+//        chainBaseManager.getDynamicPropertiesStore())) {
+//      throw new ValidateSignatureException("transaction signature validate failed");
+//    }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
@@ -1238,10 +1238,10 @@ public class Manager {
       trxCap.setResult(trace.getTransactionContext());
     }
     chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
-
-    Optional.ofNullable(transactionCache)
-        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
-            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+//
+//    Optional.ofNullable(transactionCache)
+//        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+//           new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
     TransactionInfoCapsule transactionInfo = TransactionUtil
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
@@ -1438,9 +1438,9 @@ public class Manager {
     // todo set revoking db max size.
 
     // checkWitness
-    if (!consensus.validBlock(block)) {
-      throw new ValidateScheduleException("validateWitnessSchedule error");
-    }
+//    if (!consensus.validBlock(block)) {
+//      throw new ValidateScheduleException("validateWitnessSchedule error");
+//    }
 
     chainBaseManager.getBalanceTraceStore().initCurrentBlockBalanceTrace(block);
 
@@ -1460,22 +1460,22 @@ public class Manager {
         new TransactionRetCapsule(block);
     try {
       merkleContainer.resetCurrentMerkleTree();
-      accountStateCallBack.preExecute(block);
+//      accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
-        accountStateCallBack.preExeTrans();
+//        accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        accountStateCallBack.exeTransFinish();
+//        accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
         }
       }
-      accountStateCallBack.executePushFinish();
+//      accountStateCallBack.executePushFinish();
     } finally {
-      accountStateCallBack.exceptionFinish();
+//      accountStateCallBack.exceptionFinish();
     }
     merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
     block.setResult(transactionRetCapsule);
