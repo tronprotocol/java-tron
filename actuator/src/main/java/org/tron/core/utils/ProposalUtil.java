@@ -486,7 +486,7 @@ public class ProposalUtil {
         }
         if (value < 0 || value > 1000_000_000_000L) {
           throw new ContractValidateException(
-              "Bad chain parameter value, valid range is [0, 100_000_000_000L]");
+              "Bad chain parameter value, valid range is [0, 1000_000_000_000L]");
         }
         break;
       }

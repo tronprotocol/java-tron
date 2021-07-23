@@ -474,7 +474,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowAccountAssetOptimization = 0;
+  public long allowAccountAssetOptimization;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
