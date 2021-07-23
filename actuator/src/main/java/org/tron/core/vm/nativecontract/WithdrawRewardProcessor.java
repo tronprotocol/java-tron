@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.repository.Repository;
@@ -32,22 +33,9 @@ public class WithdrawRewardProcessor {
           ACCOUNT_EXCEPTION_STR + StringUtil.encode58Check(ownerAddress)
               + "] is a guard representative and is not allowed to withdraw Balance");
     }
-
-    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
-    long reward = VoteRewardUtil.queryReward(ownerAddress, repo);
-
-    try {
-      LongMath.checkedAdd(LongMath.checkedAdd(
-          accountCapsule.getBalance(),
-          accountCapsule.getAllowance()),
-          reward);
-    } catch (ArithmeticException e) {
-      logger.debug(e.getMessage(), e);
-      throw new ContractValidateException(e.getMessage());
-    }
   }
 
-  public long execute(WithdrawRewardParam param, Repository repo) {
+  public long execute(WithdrawRewardParam param, Repository repo) throws ContractExeException {
     byte[] ownerAddress = param.getOwnerAddress();
 
     VoteRewardUtil.withdrawReward(ownerAddress, repo);
@@ -55,6 +43,14 @@ public class WithdrawRewardProcessor {
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
+    long newBalance = 0;
+
+    try {
+      newBalance = LongMath.checkedAdd(oldBalance, allowance);
+    } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractExeException(e.getMessage());
+    }
 
     // If no allowance, do nothing and just return zero.
     if (allowance <= 0) {
@@ -62,7 +58,7 @@ public class WithdrawRewardProcessor {
     }
 
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-        .setBalance(oldBalance + allowance)
+        .setBalance(newBalance)
         .setAllowance(0L)
         .setLatestWithdrawTime(param.getNowInMs())
         .build());

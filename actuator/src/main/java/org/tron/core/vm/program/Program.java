@@ -56,6 +56,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
@@ -536,6 +537,10 @@ public class Program {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] obtainer = TransactionTrace.convertToTronAddress(obtainerAddress.getLast20Bytes());
 
+    if (VMConfig.allowTvmVote()) {
+      withdrawRewardAndCancelVote(owner, getContractState());
+    }
+
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -614,18 +619,47 @@ public class Program {
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
   }
 
+  private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
+    VoteRewardUtil.withdrawReward(owner, repo);
+
+    AccountCapsule ownerCapsule = repo.getAccount(owner);
+    if (!ownerCapsule.getVotesList().isEmpty()) {
+      VotesCapsule votesCapsule = repo.getVotes(owner);
+      if (votesCapsule == null) {
+        votesCapsule = new VotesCapsule(ByteString.copyFrom(owner),
+            ownerCapsule.getVotesList());
+      } else {
+        votesCapsule.clearNewVotes();
+      }
+      ownerCapsule.clearVotes();
+      repo.updateVotes(owner, votesCapsule);
+    }
+    try {
+      long balance = ownerCapsule.getBalance();
+      long allowance = ownerCapsule.getAllowance();
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+          .setBalance(Math.addExact(balance, allowance))
+          .setAllowance(0)
+          .setLatestWithdrawTime(getTimestamp().longValue() * 1000)
+          .build());
+      repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
+    } catch (ArithmeticException e) {
+      throw new BytecodeExecutionException("Suicide: balance and allowance out of long range.");
+    }
+  }
+
   public boolean canSuicide() {
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     AccountCapsule accountCapsule = getContractState().getAccount(owner);
-    boolean freezeCheck = !VMConfig.allowTvmFreeze()
+    return !VMConfig.allowTvmFreeze()
         || (accountCapsule.getDelegatedFrozenBalanceForBandwidth() == 0
         && accountCapsule.getDelegatedFrozenBalanceForEnergy() == 0);
-    boolean voteCheck = !VMConfig.allowTvmVote()
-        || (accountCapsule.getVotesList().size() == 0
-        && VoteRewardUtil.queryReward(owner, getContractState()) == 0
-        && getContractState().getAccountVote(
-            getContractState().getBeginCycle(owner), owner) == null);
-    return freezeCheck && voteCheck;
+//    boolean voteCheck = !VMConfig.allowTvmVote()
+//        || (accountCapsule.getVotesList().size() == 0
+//        && VoteRewardUtil.queryReward(owner, getContractState()) == 0
+//        && getContractState().getAccountVote(
+//            getContractState().getBeginCycle(owner), owner) == null);
+//    return freezeCheck && voteCheck;
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -1895,6 +1929,8 @@ public class Program {
       return allowance;
     } catch (ContractValidateException e) {
       logger.error("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
+    } catch (ContractExeException e) {
+      logger.error("TVM WithdrawReward: execute failure. Reason: {}", e.getMessage());
     }
     internalTx.reject();
     return 0;
