@@ -1,5 +1,7 @@
 package stest.tron.wallet.onlinestress.sun20;
 
+import java.math.BigInteger;
+
 public class zz {
 
   public static void main(String[] args) {
@@ -19,14 +21,18 @@ public class zz {
 //    System.out.println("nextHalfAHourTimestamp is:" + l);
 //    System.out.println("date is:" + new Date(l));
 
-    boolean s = 1626064488 >= 1625835600;
-    if (1626064488 >= 1625835600) {
+//    boolean s = 1626064488 >= 1625835600;
+//    if (1626064488 >= 1625835600) {
+//
+//    System.out.println("currentTimestamp >= lockEndTimestamp");
+//    } else {
+//      System.out.println("currentTimestamp < lockEndTimestamp");
+//
+//    }
 
-    System.out.println("currentTimestamp >= lockEndTimestamp");
-    } else {
-      System.out.println("currentTimestamp < lockEndTimestamp");
+    BigInteger bint=new BigInteger("12000000000000000000");
+    System.out.println(bint.toString(16));//16表示16进制
 
-    }
 
   }
 }

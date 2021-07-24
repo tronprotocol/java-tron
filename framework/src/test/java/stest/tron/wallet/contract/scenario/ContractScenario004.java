@@ -26,6 +26,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
@@ -92,6 +93,39 @@ public class ContractScenario004 {
         .getTransactionInfoById(txid, blockingStubFull);
     System.out.println(info);
     Assert.assertTrue(info.get().getResultValue() == 1);
+  }
+
+  @Test(enabled = true)
+  public void deployErc20TronTokenWithData() {
+    PublicMethed.printAddress(contract004Key);
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contract004Address, 200000000L, fromAddress, testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract004Address, 100000000L,
+        3, 1, contract004Key, blockingStubFull));
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract004Address,
+        blockingStubFull);
+    Long energyLimit = accountResource.getEnergyLimit();
+    Long energyUsage = accountResource.getEnergyUsed();
+
+    logger.info("before energy limit is " + Long.toString(energyLimit));
+    logger.info("before energy usage is " + Long.toString(energyUsage));
+
+    String filePath = "./src/test/resources/soliditycode//contractScenario004.sol";
+    String contractName = "TronToken";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    String constructorStr = "constructor(address)";
+    String data = "\"" + Base58.encode58Check(contract004Address) + "\"";
+    String txid = PublicMethed
+        .deployContractWithConstantParame(contractName, abi, code, constructorStr, data, "",
+            maxFeeLimit, 0L, 100, null, contract004Key, contract004Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> info = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    System.out.println(info);
+    Assert.assertTrue(info.get().getResultValue() == 0);
   }
 
   /**
