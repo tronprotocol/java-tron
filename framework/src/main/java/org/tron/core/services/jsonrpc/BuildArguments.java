@@ -31,7 +31,6 @@ public class BuildArguments {
   public Long tokenId = 0L;
   public Long tokenValue = 0L;
   public String abi = "";
-  // public Long callValue = 0L;
   public Long consumeUserResourcePercent = 0L;
   public Long originEnergyLimit = 0L;
   public String name = "";
@@ -65,10 +64,16 @@ public class BuildArguments {
       if (smartContract != null) {
         contractType = ContractType.TriggerSmartContract;
       } else {
-        if (StringUtils.isEmpty(value)) {
-          throw new JsonRpcInvalidRequestException("invalid json request");
+        // tokenId and tokenValue: trc10, value: TRX
+        if (tokenId > 0 && tokenValue > 0 && StringUtils.isEmpty(value)) {
+          contractType = ContractType.TransferAssetContract;
+        } else {
+          if (StringUtils.isNotEmpty(value)) {
+            contractType = ContractType.TransferContract;
+          } else {
+            throw new JsonRpcInvalidRequestException("invalid json request");
+          }
         }
-        contractType = ContractType.TransferContract;
       }
     }
 
