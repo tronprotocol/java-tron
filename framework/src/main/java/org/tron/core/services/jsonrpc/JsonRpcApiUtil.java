@@ -454,8 +454,11 @@ public class JsonRpcApiUtil {
     return amount;
   }
 
+  /**
+   * [blockNumTag:energyFee] when blockNum < blockNumTag, use energyFee value
+   * */
   public static long calEngergyFee(long blockNum, Wallet wallet) {
-    String energyCost = CommonParameter.getInstance().getEnergyCost();
+    String energyCost = CommonParameter.getInstance().getEnergyCostHistory();
     if (energyCost.isEmpty()) {
       return wallet.getEnergyFee();
     } else {
@@ -464,7 +467,7 @@ public class JsonRpcApiUtil {
         String[] costStrArray = data.split(":");
         long num = Long.parseLong(costStrArray[0]);
         long cost = Long.parseLong(costStrArray[1]);
-        if (blockNum >= num) {
+        if (blockNum < num) {
           return cost;
         }
       }

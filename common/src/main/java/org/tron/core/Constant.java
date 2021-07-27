@@ -94,7 +94,7 @@ public class Constant {
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
-  public static final String NODE_ENERGY_COST = "node.http.energyCost";
+  public static final String NODE_ENERGY_COST_HISTORY = "node.http.energyCostHistory";
 
   public static final String NODE_HTTP_JSONRPC_FULLNODE_ENABLE = "node.http.jsonRpcFullNodeEnable";
   public static final String NODE_HTTP_JSONRPC_FULLNODE_PORT = "node.http.jsonRpcFullNodePort";

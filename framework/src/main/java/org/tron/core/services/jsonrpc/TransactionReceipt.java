@@ -1,6 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.calEngergyFee;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,17 +56,33 @@ public class TransactionReceipt {
   public TransactionReceipt(Protocol.Block block, TransactionInfo txInfo, Wallet wallet) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     String txid = ByteArray.toHexString(txInfo.getId().toByteArray());
+    long blockNum = blockCapsule.getNum();
 
     Protocol.Transaction transaction = null;
+    long cumulativeGas = 0;
     long cumulativeLogCount = 0;
 
-    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockCapsule.getNum());
+    long sunPerEnergy = Constant.SUN_PER_ENERGY;
+    long dynamicEnergyFee = calEngergyFee(blockNum, wallet);
+    if (dynamicEnergyFee > 0) {
+      sunPerEnergy = dynamicEnergyFee;
+    }
+
+    TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
     for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
       TransactionInfo info = infoList.getTransactionInfo(index);
       ResourceReceipt resourceReceipt = info.getReceipt();
 
+      // the sum of energy usage by origin, energy(by freeze) and trx
+      long energyUsage = resourceReceipt.getOriginEnergyUsage()
+          + resourceReceipt.getEnergyUsage()
+          + resourceReceipt.getEnergyFee() / sunPerEnergy;
+      cumulativeGas += energyUsage;
+
       if (ByteArray.toHexString(info.getId().toByteArray()).equals(txid)) {
         transactionIndex = ByteArray.toJsonHex(index);
+        cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGas);
+        gasUsed = ByteArray.toJsonHex(energyUsage);
         status = resourceReceipt.getResultValue() == 1 ? "0x1" : "0x0";
 
         transaction = block.getTransactions(index);
@@ -75,8 +92,6 @@ public class TransactionReceipt {
       }
     }
 
-    cumulativeGasUsed = null;
-    gasUsed = null;
     blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());

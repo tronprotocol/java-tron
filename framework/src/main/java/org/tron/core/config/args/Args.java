@@ -135,7 +135,7 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeJsonRpcHttpPort = 0;
     PARAMETER.solidityJsonRpcHttpPort = 0;
     PARAMETER.pBFTJsonRpcHttpPort = 0;
-    PARAMETER.energyCost = "";
+    PARAMETER.energyCostHistory = "";
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -484,9 +484,9 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_HTTP_JSONRPC_PBFT_PORT)
             ? config.getInt(Constant.NODE_HTTP_JSONRPC_PBFT_PORT) : 8095;
 
-    PARAMETER.energyCost =
-        config.hasPath(Constant.NODE_ENERGY_COST)
-            ? config.getString(Constant.NODE_ENERGY_COST) : "27553334:140,25304425:40,0:10";
+    PARAMETER.energyCostHistory =
+        config.hasPath(Constant.NODE_ENERGY_COST_HISTORY)
+            ? config.getString(Constant.NODE_ENERGY_COST_HISTORY) : "25304425:10,27553334:40";
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
