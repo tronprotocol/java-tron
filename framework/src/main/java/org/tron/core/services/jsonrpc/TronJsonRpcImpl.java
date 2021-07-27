@@ -443,16 +443,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public TransactionResult getTransactionByHash(String txid) throws JsonRpcInvalidParamsException {
-    byte[] txHash = hashToByteArray(txid);
-
     TransactionInfo transactionInfo = wallet
-        .getTransactionInfoById(ByteString.copyFrom(txHash));
+        .getTransactionInfoById(ByteString.copyFrom(hashToByteArray(txid)));
     if (transactionInfo == null) {
       return null;
     }
 
-    long blockNum = transactionInfo.getBlockNumber();
-    Block block = wallet.getBlockByNum(blockNum);
+    Block block = wallet.getBlockByNum(transactionInfo.getBlockNumber());
     if (block == null) {
       return null;
     }
@@ -524,15 +521,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public TransactionReceipt getTransactionReceipt(String txid)
       throws JsonRpcInvalidParamsException {
-    byte[] txHash = hashToByteArray(txid);
-
-    TransactionInfo transactionInfo = wallet.getTransactionInfoById(ByteString.copyFrom(txHash));
+    TransactionInfo transactionInfo =
+        wallet.getTransactionInfoById(ByteString.copyFrom(hashToByteArray(txid)));
     if (transactionInfo == null) {
       return null;
     }
 
-    long blockNum = transactionInfo.getBlockNumber();
-    Block block = wallet.getBlockByNum(blockNum);
+    Block block = wallet.getBlockByNum(transactionInfo.getBlockNumber());
     if (block == null) {
       return null;
     }
