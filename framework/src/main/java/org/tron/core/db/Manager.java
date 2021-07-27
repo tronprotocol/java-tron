@@ -971,6 +971,8 @@ public class Manager {
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
       if (multiAddresses.contains(address) || !txIds.contains(txId)) {
         txs.add(capsule);
+      } else {
+        capsule.setVerified(true);
       }
     });
 
