@@ -1,7 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.calEngergyFee;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -62,21 +60,12 @@ public class TransactionReceipt {
     long cumulativeGas = 0;
     long cumulativeLogCount = 0;
 
-    long sunPerEnergy = Constant.SUN_PER_ENERGY;
-    long dynamicEnergyFee = calEngergyFee(blockNum, wallet);
-    if (dynamicEnergyFee > 0) {
-      sunPerEnergy = dynamicEnergyFee;
-    }
-
     TransactionInfoList infoList = wallet.getTransactionInfoByBlockNum(blockNum);
     for (int index = 0; index < infoList.getTransactionInfoCount(); index++) {
       TransactionInfo info = infoList.getTransactionInfo(index);
       ResourceReceipt resourceReceipt = info.getReceipt();
 
-      // the sum of energy usage by origin, energy(by freeze) and trx
-      long energyUsage = resourceReceipt.getOriginEnergyUsage()
-          + resourceReceipt.getEnergyUsage()
-          + resourceReceipt.getEnergyFee() / sunPerEnergy;
+      long energyUsage = resourceReceipt.getEnergyUsageTotal();
       cumulativeGas += energyUsage;
 
       if (ByteArray.toHexString(info.getId().toByteArray()).equals(txid)) {

@@ -454,28 +454,6 @@ public class JsonRpcApiUtil {
     return amount;
   }
 
-  /**
-   * [blockNumTag:energyFee] when blockNum < blockNumTag, use energyFee value
-   * */
-  public static long calEngergyFee(long blockNum, Wallet wallet) {
-    String energyCost = CommonParameter.getInstance().getEnergyCostHistory();
-    if (energyCost.isEmpty()) {
-      return wallet.getEnergyFee();
-    } else {
-      String[] costList = energyCost.split(",");
-      for (String data : costList) {
-        String[] costStrArray = data.split(":");
-        long num = Long.parseLong(costStrArray[0]);
-        long cost = Long.parseLong(costStrArray[1]);
-        if (blockNum < num) {
-          return cost;
-        }
-      }
-
-      return wallet.getEnergyFee();
-    }
-  }
-
   public static byte[] addressHashToByteArray(String hash) throws JsonRpcInvalidParamsException {
     byte[] bHash;
     try {

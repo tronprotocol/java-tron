@@ -179,9 +179,6 @@ public class CommonParameter {
   public int pBFTJsonRpcHttpPort;
   @Getter
   @Setter
-  public String energyCostHistory;
-  @Getter
-  @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   public int rpcThreadNum;
   @Getter
