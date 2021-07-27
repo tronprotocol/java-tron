@@ -65,7 +65,7 @@ public class BuildArguments {
         contractType = ContractType.TriggerSmartContract;
       } else {
         // tokenId and tokenValue: trc10, value: TRX
-        if (tokenId > 0 && tokenValue > 0 && StringUtils.isEmpty(value)) {
+        if (tokenId > 0 && tokenValue > 0 && (StringUtils.isEmpty(value) || value.equals("0x0"))) {
           contractType = ContractType.TransferAssetContract;
         } else {
           if (StringUtils.isNotEmpty(value)) {
@@ -80,7 +80,7 @@ public class BuildArguments {
     return contractType;
   }
 
-  public long parseCallValue() throws JsonRpcInvalidParamsException {
+  public long parseValue() throws JsonRpcInvalidParamsException {
     long callValue = 0L;
 
     if (StringUtils.isNotEmpty(value)) {

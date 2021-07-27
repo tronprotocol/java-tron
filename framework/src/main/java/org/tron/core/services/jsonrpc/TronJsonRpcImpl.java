@@ -657,7 +657,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
           .setAbi(abiBuilder)
-          .setCallValue(args.parseCallValue())
+          .setCallValue(args.parseValue())
           .setConsumeUserResourcePercent(args.consumeUserResourcePercent)
           .setOriginEnergyLimit(args.originEnergyLimit);
 
@@ -715,7 +715,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       build.setCallTokenValue(args.tokenValue)
           .setTokenId(args.tokenId)
-          .setCallValue(args.parseCallValue());
+          .setCallValue(args.parseValue());
 
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract).getInstance();
@@ -774,12 +774,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private TransactionJson buildTransferContractTransaction(byte[] ownerAddress,
       BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
-    long amount;
-    try {
-      amount = ByteArray.hexToBigInteger(args.value).longValue();
-    } catch (Exception e) {
-      throw new JsonRpcInvalidParamsException("invalid input value");
-    }
+    long amount = args.parseValue();
 
     TransferContract.Builder build = TransferContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
