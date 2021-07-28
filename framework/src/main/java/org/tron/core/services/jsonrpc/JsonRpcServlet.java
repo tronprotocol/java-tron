@@ -41,6 +41,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
         true);
 
     rpcServer = new JsonRpcServer(compositeService);
+
     HttpStatusCodeProvider httpStatusCodeProvider = new HttpStatusCodeProvider() {
       @Override
       public int getHttpStatusCode(int resultCode) {
@@ -53,6 +54,8 @@ public class JsonRpcServlet extends RateLimiterServlet {
       }
     };
     rpcServer.setHttpStatusCodeProvider(httpStatusCodeProvider);
+
+    rpcServer.setShouldLogInvocationErrors(false);
   }
 
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
