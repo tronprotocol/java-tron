@@ -123,7 +123,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     Set<byte[]> result = Sets.newHashSet();
-    try (final RocksIterator iter = database.newIterator()) {
+    try (final RocksIterator iter = getRocksIterator()) {
       for (iter.seekToFirst(); iter.isValid(); iter.next()) {
         result.add(iter.key());
       }
@@ -222,7 +222,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         final BlockBasedTableConfig tableCfg;
         options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
         tableCfg.setBlockSize(settings.getBlockSize());
-        tableCfg.setBlockCacheSize(32 * 1024 * 1024);
+        tableCfg.setBlockCache(RocksDbSettings.getCache());
         tableCfg.setCacheIndexAndFilterBlocks(true);
         tableCfg.setPinL0FilterAndIndexBlocksInCache(true);
         tableCfg.setFilter(new BloomFilter(10, false));
@@ -314,7 +314,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public org.tron.core.db.common.iterator.DBIterator iterator() {
-    return new RockStoreIterator(database.newIterator());
+    return new RockStoreIterator(getRocksIterator());
   }
 
   private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
@@ -396,7 +396,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       return new ArrayList<>();
     }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = database.newIterator()) {
+    try (RocksIterator iter = getRocksIterator()) {
       List<byte[]> result = new ArrayList<>();
       long i = 0;
       for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
@@ -416,7 +416,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Collections.emptyMap();
     }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = database.newIterator()) {
+    try (RocksIterator iter = getRocksIterator()) {
       Map<byte[], byte[]> result = new HashMap<>();
       long i = 0;
       for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
@@ -436,7 +436,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = database.newIterator()) {
+    try (RocksIterator iter = getRocksIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       for (iter.seekToLast(); iter.isValid() && i < limit; iter.prev(), i++) {
@@ -456,7 +456,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = database.newIterator()) {
+    try (RocksIterator iter = getRocksIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       byte[] data = getData(key);
@@ -481,7 +481,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
-    try (RocksIterator iter = database.newIterator()) {
+    try (RocksIterator iter = getRocksIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
@@ -496,6 +496,12 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   public void backup(String dir) throws RocksDBException {
     Checkpoint cp = Checkpoint.create(database);
     cp.createCheckpoint(dir + this.getDBName());
+  }
+
+  private RocksIterator getRocksIterator() {
+    try ( ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
+      return  database.newIterator(readOptions);
+    }
   }
 
   public boolean deleteDbBakPath(String dir) {

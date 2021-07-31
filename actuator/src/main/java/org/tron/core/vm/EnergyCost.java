@@ -62,10 +62,8 @@ public class EnergyCost {
   private final int FREEZE = 20000;
   private final int UNFREEZE = 20000;
   private final int FREEZE_EXPIRE_TIME = 50;
-  private final int STAKE_UNSTAKE = 35000;
-  private final int WITHDRAW_REWARD = 25000;
-  private final int TOKEN_ISSUE = 25000;
-  private final int UPDATE_ASSET = 5000;
+  private final int VOTE_WITNESS = 30000;
+  private final int WITHDRAW_REWARD = 20000;
 
   public static EnergyCost getInstance() {
     if (instance == null) {
@@ -299,19 +297,11 @@ public class EnergyCost {
     return FREEZE_EXPIRE_TIME;
   }
 
-  public int getStakeAndUnstake() {
-    return STAKE_UNSTAKE;
+  public int getVOTE_WITNESS() {
+    return VOTE_WITNESS;
   }
 
-  public int getWithdrawReward() {
+  public int getWITHDRAW_REWARD() {
     return WITHDRAW_REWARD;
-  }
-
-  public int getTokenIssue() {
-    return TOKEN_ISSUE;
-  }
-
-  public int getUpdateAsset() {
-    return UPDATE_ASSET;
   }
 }

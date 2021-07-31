@@ -12,7 +12,7 @@ contract Dest {
 
  function getTokenLongMin() payable public{
         // long.min - 1000020
- emit logGetToken(msg.sender.tokenBalance(trcToken(-9223372036855775828)), msg.tokenid, msg.tokenvalue, msg.value);
+ emit logGetToken(msg.sender.tokenBalance(trcToken(uint256(int256(-9223372036855775828)))), msg.tokenid, msg.tokenvalue, msg.value);
  }
 
  function getTokenLongMax() payable public{

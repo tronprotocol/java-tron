@@ -12,7 +12,6 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile "com.madgag.spongycastle:core:1.58.0.0"
-    compile "com.madgag.spongycastle:prov:1.58.0.0"
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
     compile project(":common")
 }

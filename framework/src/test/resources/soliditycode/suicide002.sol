@@ -13,7 +13,7 @@ contract Factory {
             }
         }
 
-        addr.testSuicideNonexistentTarget(msg.sender);
+        addr.testSuicideNonexistentTarget(payable(msg.sender));
         addr.set();
 
                 assembly {
