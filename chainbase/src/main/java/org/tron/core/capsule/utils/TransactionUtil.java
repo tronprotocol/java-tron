@@ -150,6 +150,7 @@ public class TransactionUtil {
         // Token for loop end here
         internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));
         internalTrxBuilder.setRejected(internalTransaction.isRejected());
+        internalTrxBuilder.setExtra(internalTransaction.getExtra());
         builder.addInternalTransactions(internalTrxBuilder);
       }
     }

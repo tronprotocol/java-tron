@@ -3,17 +3,35 @@ package org.tron.core.vm;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
-import static org.tron.core.vm.OpCode.*;
+import static org.tron.core.vm.OpCode.CALL;
+import static org.tron.core.vm.OpCode.CALLTOKEN;
+import static org.tron.core.vm.OpCode.CALLTOKENID;
+import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
+import static org.tron.core.vm.OpCode.CHAINID;
+import static org.tron.core.vm.OpCode.CREATE2;
+import static org.tron.core.vm.OpCode.EXTCODEHASH;
+import static org.tron.core.vm.OpCode.FREEZE;
+import static org.tron.core.vm.OpCode.FREEZEEXPIRETIME;
+import static org.tron.core.vm.OpCode.ISCONTRACT;
+import static org.tron.core.vm.OpCode.PUSH1;
+import static org.tron.core.vm.OpCode.REVERT;
+import static org.tron.core.vm.OpCode.SAR;
+import static org.tron.core.vm.OpCode.SELFBALANCE;
+import static org.tron.core.vm.OpCode.SHL;
+import static org.tron.core.vm.OpCode.SHR;
+import static org.tron.core.vm.OpCode.TOKENBALANCE;
+import static org.tron.core.vm.OpCode.UNFREEZE;
+import static org.tron.core.vm.OpCode.VOTEWITNESS;
+import static org.tron.core.vm.OpCode.WITHDRAWREWARD;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -25,14 +43,8 @@ import org.tron.core.vm.program.Stack;
 @Slf4j(topic = "VM")
 public class VM {
 
-  public static final String ADDRESS_LOG = "address: ";
-  private static final String DATA_LOG = "data: ";
-  private static final String SIZE_LOG = "size: ";
-  private static final String VALUE_LOG = " value: ";
   private static final BigInteger _32_ = BigInteger.valueOf(32);
-  private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
-  // 3MB
-  private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
+  private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024); // 3MB
   private final VMConfig config;
 
   public VM() {
@@ -94,15 +106,20 @@ public class VM {
       OpCode op = OpCode.code(program.getCurrentOp());
       if (op == null
           || (!VMConfig.allowTvmTransferTrc10()
-              && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE
-          || op == CALLTOKENID))
+              && (op == CALLTOKEN || op == TOKENBALANCE
+                  || op == CALLTOKENVALUE || op == CALLTOKENID))
           || (!VMConfig.allowTvmConstantinople()
-              && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH))
-          || (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT)
-          || (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID))
+              && (op == SHL || op == SHR || op == SAR
+                  || op == CREATE2 || op == EXTCODEHASH))
+          || (!VMConfig.allowTvmSolidity059()
+              && op == ISCONTRACT)
+          || (!VMConfig.allowTvmIstanbul()
+              && (op == SELFBALANCE || op == CHAINID))
           || (!VMConfig.allowTvmFreeze()
               && (op == FREEZE || op == UNFREEZE || op == FREEZEEXPIRETIME))
-          ) {
+          || (!VMConfig.allowTvmVote()
+              && (op == VOTEWITNESS || op == WITHDRAWREWARD))
+      ) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
@@ -113,7 +130,6 @@ public class VM {
       long oldMemSize = program.getMemSize();
       Stack stack = program.getStack();
 
-      String hint = "";
       long energyCost = op.getTier().asInt();
       EnergyCost energyCosts = EnergyCost.getInstance();
       DataWord adjustedCallEnergy = null;
@@ -169,6 +185,28 @@ public class VM {
           break;
         case FREEZEEXPIRETIME:
           energyCost = energyCosts.getFREEZE_EXPIRE_TIME();
+          break;
+        case VOTEWITNESS:
+          energyCost = energyCosts.getVOTE_WITNESS();
+          DataWord amountArrayLength = stack.get(stack.size() - 1).clone();
+          DataWord amountArrayOffset = stack.get(stack.size() - 2);
+          DataWord witnessArrayLength = stack.get(stack.size() - 3).clone();
+          DataWord witnessArrayOffset = stack.get(stack.size() - 4);
+
+          DataWord wordSize = new DataWord(DataWord.WORD_SIZE);
+
+          amountArrayLength.mul(wordSize);
+          BigInteger amountArrayMemoryNeeded = memNeeded(amountArrayOffset, amountArrayLength);
+
+          witnessArrayLength.mul(wordSize);
+          BigInteger witnessArrayMemoryNeeded = memNeeded(witnessArrayOffset, witnessArrayLength);
+
+          energyCost += calcMemEnergy(energyCosts, oldMemSize,
+              (amountArrayMemoryNeeded.compareTo(witnessArrayMemoryNeeded) > 0 ?
+                  amountArrayMemoryNeeded : witnessArrayMemoryNeeded), 0, op);
+          break;
+        case WITHDRAWREWARD:
+          energyCost = energyCosts.getWITHDRAW_REWARD();
           break;
 
         // These all operate on memory and therefore potentially expand it:
@@ -333,7 +371,6 @@ public class VM {
           word1.add(word2);
           program.stackPush(word1);
           program.step();
-
         }
         break;
         case MUL: {
@@ -420,7 +457,6 @@ public class VM {
         }
         break;
         case LT: {
-          // TODO: can be improved by not using BigInteger
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
 
@@ -435,7 +471,6 @@ public class VM {
         }
         break;
         case SLT: {
-          // TODO: can be improved by not using BigInteger
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
 
@@ -450,7 +485,6 @@ public class VM {
         }
         break;
         case SGT: {
-          // TODO: can be improved by not using BigInteger
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
 
@@ -465,7 +499,6 @@ public class VM {
         }
         break;
         case GT: {
-          // TODO: can be improved by not using BigInteger
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
 
@@ -539,6 +572,7 @@ public class VM {
         case BYTE: {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
+
           final DataWord result;
           if (word1.value().compareTo(_32_) < 0) {
             byte tmp = word2.getData()[word1.intValue()];
@@ -556,8 +590,8 @@ public class VM {
         case SHL: {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
-          final DataWord result = word2.shiftLeft(word1);
 
+          final DataWord result = word2.shiftLeft(word1);
           program.stackPush(result);
           program.step();
         }
@@ -565,8 +599,8 @@ public class VM {
         case SHR: {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
-          final DataWord result = word2.shiftRight(word1);
 
+          final DataWord result = word2.shiftRight(word1);
           program.stackPush(result);
           program.step();
         }
@@ -574,8 +608,8 @@ public class VM {
         case SAR: {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
-          final DataWord result = word2.shiftRightSigned(word1);
 
+          final DataWord result = word2.shiftRightSigned(word1);
           program.stackPush(result);
           program.step();
         }
@@ -584,6 +618,7 @@ public class VM {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
           DataWord word3 = program.stackPop();
+
           word1.addmod(word2, word3);
           program.stackPush(word1);
           program.step();
@@ -593,6 +628,7 @@ public class VM {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
           DataWord word3 = program.stackPop();
+
           word1.mulmod(word2, word3);
           program.stackPush(word1);
           program.step();
@@ -675,18 +711,20 @@ public class VM {
           program.step();
         }
         break;
-        case CALLTOKENVALUE:
+        case CALLTOKENVALUE: {
           DataWord tokenValue = program.getTokenValue();
 
           program.stackPush(tokenValue);
           program.step();
-          break;
-        case CALLTOKENID:
+        }
+        break;
+        case CALLTOKENID: {
           DataWord _tokenId = program.getTokenId();
 
           program.stackPush(_tokenId);
           program.step();
-          break;
+        }
+        break;
         case CALLDATALOAD: {
           DataWord dataOffs = program.stackPop();
           DataWord value = program.getDataValue(dataOffs);
@@ -749,11 +787,10 @@ public class VM {
 
           program.stackPush(codeLength);
           program.step();
-          break;
         }
+        break;
         case CODECOPY:
         case EXTCODECOPY: {
-
           byte[] fullCode = EMPTY_BYTE_ARRAY;
           if (op == OpCode.CODECOPY) {
             fullCode = program.getCode();
@@ -781,8 +818,8 @@ public class VM {
 
           program.memorySave(memOffset, codeCopy);
           program.step();
-          break;
         }
+        break;
         case EXTCODEHASH: {
           DataWord address = program.stackPop();
           byte[] codeHash = program.getCodeHashAt(address);
@@ -802,9 +839,7 @@ public class VM {
          * Block Information
          */
         case BLOCKHASH: {
-
           int blockIndex = program.stackPop().intValueSafe();
-
           DataWord blockHash = program.getBlockHash(blockIndex);
 
           program.stackPush(blockHash);
@@ -849,73 +884,45 @@ public class VM {
         break;
         case CHAINID: {
           DataWord chainId = program.getChainId();
+
           program.stackPush(chainId);
           program.step();
-          break;
         }
+        break;
         case SELFBALANCE: {
           DataWord selfBalance = program.getBalance(program.getContractAddress());
+
           program.stackPush(selfBalance);
           program.step();
-          break;
         }
+        break;
         case POP: {
           program.stackPop();
           program.step();
         }
         break;
-        case DUP1:
-        case DUP2:
-        case DUP3:
-        case DUP4:
-        case DUP5:
-        case DUP6:
-        case DUP7:
-        case DUP8:
-        case DUP9:
-        case DUP10:
-        case DUP11:
-        case DUP12:
-        case DUP13:
-        case DUP14:
-        case DUP15:
-        case DUP16: {
-
+        case DUP1: case DUP2: case DUP3: case DUP4:
+        case DUP5: case DUP6: case DUP7: case DUP8:
+        case DUP9: case DUP10: case DUP11: case DUP12:
+        case DUP13: case DUP14: case DUP15: case DUP16: {
           int n = op.val() - OpCode.DUP1.val() + 1;
           DataWord word_1 = stack.get(stack.size() - n);
+
           program.stackPush(word_1.clone());
           program.step();
-
-          break;
         }
-        case SWAP1:
-        case SWAP2:
-        case SWAP3:
-        case SWAP4:
-        case SWAP5:
-        case SWAP6:
-        case SWAP7:
-        case SWAP8:
-        case SWAP9:
-        case SWAP10:
-        case SWAP11:
-        case SWAP12:
-        case SWAP13:
-        case SWAP14:
-        case SWAP15:
-        case SWAP16: {
-
+        break;
+        case SWAP1: case SWAP2: case SWAP3: case SWAP4:
+        case SWAP5: case SWAP6: case SWAP7: case SWAP8:
+        case SWAP9: case SWAP10: case SWAP11: case SWAP12:
+        case SWAP13: case SWAP14: case SWAP15: case SWAP16: {
           int n = op.val() - OpCode.SWAP1.val() + 2;
           stack.swap(stack.size() - 1, stack.size() - n);
-          program.step();
-          break;
-        }
-        case LOG0:
-        case LOG1:
-        case LOG2:
-        case LOG3:
-        case LOG4: {
 
+          program.step();
+        }
+        break;
+        case LOG0: case LOG1: case LOG2: case LOG3: case LOG4: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
@@ -939,8 +946,8 @@ public class VM {
 
           program.getResult().addLogInfo(logInfo);
           program.step();
-          break;
         }
+        break;
         case MLOAD: {
           DataWord addr = program.stackPop();
           DataWord data = program.memoryLoad(addr);
@@ -960,6 +967,7 @@ public class VM {
         case MSTORE8: {
           DataWord addr = program.stackPop();
           DataWord value = program.stackPop();
+
           byte[] byteVal = {value.getData()[31]};
           program.memorySave(addr.intValueSafe(), byteVal);
           program.step();
@@ -1031,39 +1039,14 @@ public class VM {
           program.step();
         }
         break;
-
-        case PUSH1:
-        case PUSH2:
-        case PUSH3:
-        case PUSH4:
-        case PUSH5:
-        case PUSH6:
-        case PUSH7:
-        case PUSH8:
-        case PUSH9:
-        case PUSH10:
-        case PUSH11:
-        case PUSH12:
-        case PUSH13:
-        case PUSH14:
-        case PUSH15:
-        case PUSH16:
-        case PUSH17:
-        case PUSH18:
-        case PUSH19:
-        case PUSH20:
-        case PUSH21:
-        case PUSH22:
-        case PUSH23:
-        case PUSH24:
-        case PUSH25:
-        case PUSH26:
-        case PUSH27:
-        case PUSH28:
-        case PUSH29:
-        case PUSH30:
-        case PUSH31:
-        case PUSH32: {
+        case PUSH1: case PUSH2: case PUSH3: case PUSH4:
+        case PUSH5: case PUSH6: case PUSH7: case PUSH8:
+        case PUSH9: case PUSH10: case PUSH11: case PUSH12:
+        case PUSH13: case PUSH14: case PUSH15: case PUSH16:
+        case PUSH17: case PUSH18: case PUSH19: case PUSH20:
+        case PUSH21: case PUSH22: case PUSH23: case PUSH24:
+        case PUSH25: case PUSH26: case PUSH27: case PUSH28:
+        case PUSH29: case PUSH30: case PUSH31: case PUSH32: {
           program.step();
           int nPush = op.val() - PUSH1.val() + 1;
 
@@ -1080,11 +1063,12 @@ public class VM {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
+
           DataWord value = program.stackPop();
           DataWord inOffset = program.stackPop();
           DataWord inSize = program.stackPop();
-          program.createContract(value, inOffset, inSize);
 
+          program.createContract(value, inOffset, inSize);
           program.step();
         }
         break;
@@ -1092,10 +1076,12 @@ public class VM {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
+
           DataWord value = program.stackPop();
           DataWord inOffset = program.stackPop();
           DataWord inSize = program.stackPop();
           DataWord salt = program.stackPop();
+
           program.createContract2(value, inOffset, inSize, salt);
           program.step();
         }
@@ -1104,8 +1090,8 @@ public class VM {
           DataWord tokenId = program.stackPop();
           DataWord address = program.stackPop();
           DataWord tokenBalance = program.getTokenBalance(address, tokenId);
-          program.stackPush(tokenBalance);
 
+          program.stackPush(tokenBalance);
           program.step();
         }
         break;
@@ -1147,17 +1133,6 @@ public class VM {
           DataWord outDataOffs = program.stackPop();
           DataWord outDataSize = program.stackPop();
 
-          if (logger.isDebugEnabled()) {
-            hint = "addr: " + Hex.toHexString(codeAddress.getLast20Bytes())
-                + " energy: " + adjustedCallEnergy.shortHex()
-                + " inOff: " + inDataOffs.shortHex()
-                + " inSize: " + inDataSize.shortHex();
-            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
-                String.format("%-12s", op.name()),
-                program.getEnergyLimitLeft().value(),
-                program.getCallDeep(), hint);
-          }
-
           program.memoryExpand(outDataOffs, outDataSize);
 
           MessageCall msg = new MessageCall(
@@ -1178,36 +1153,70 @@ public class VM {
           }
 
           program.step();
-          break;
         }
+        break;
         case FREEZE: {
+          if (VMConfig.allowTvmVote() && program.isStaticCall()) { // after allow vote, check static
+            throw new Program.StaticCallModificationException();
+          }
+
           DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
           DataWord frozenBalance = program.stackPop();
           DataWord receiverAddress = program.stackPop();
+
           boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
           program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
-
           program.step();
-          break;
         }
+        break;
         case UNFREEZE: {
+          if (VMConfig.allowTvmVote() && program.isStaticCall()) { // after allow vote, check static
+            throw new Program.StaticCallModificationException();
+          }
+
           DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
           DataWord receiverAddress = program.stackPop();
+
           boolean result = program.unfreeze(receiverAddress, resourceType);
           program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
-
           program.step();
-          break;
         }
+        break;
         case FREEZEEXPIRETIME: {
           DataWord resourceType = program.stackPop(); // 0 as bandwidth, 1 as energy.
           DataWord targetAddress = program.stackPop();
+
           long expireTime = program.freezeExpireTime(targetAddress, resourceType);
           program.stackPush(new DataWord(expireTime / 1000));
-
           program.step();
-          break;
         }
+        break;
+        case VOTEWITNESS: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+
+          int amountArrayLength = program.stackPop().intValueSafe();
+          int amountArrayOffset = program.stackPop().intValueSafe();
+          int witnessArrayLength = program.stackPop().intValueSafe();
+          int witnessArrayOffset = program.stackPop().intValueSafe();
+
+          boolean result = program.voteWitness(witnessArrayOffset, witnessArrayLength,
+              amountArrayOffset, amountArrayLength);
+          program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+          program.step();
+        }
+        break;
+        case WITHDRAWREWARD: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+
+          long allowance = program.withdrawReward();
+          program.stackPush(new DataWord(allowance));
+          program.step();
+        }
+        break;
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
@@ -1222,13 +1231,14 @@ public class VM {
           if (op == REVERT) {
             program.getResult().setRevert();
           }
-          break;
         }
+        break;
         case SUICIDE: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
-          if (VMConfig.allowTvmFreeze() && !program.canSuicide()) {
+
+          if (!program.canSuicide()) {
             program.getResult().setRevert();
           } else {
             DataWord address = program.stackPop();
@@ -1278,8 +1288,7 @@ public class VM {
         program.setRuntimeFailure(e);
       }
     } catch (StackOverflowError soe) {
-      logger
-          .info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
+      logger.info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
       throw new JVMStackOverFlowException();
     }
   }

@@ -3,10 +3,10 @@ package org.tron.common.runtime.vm;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -17,6 +17,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -50,6 +51,7 @@ public class TransferTokenTest {
   private static Application appT;
   private static DepositImpl deposit;
   private static AccountCapsule ownerCapsule;
+
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
@@ -173,6 +175,7 @@ public class TransferTokenTest {
     //TRANSFER_TO
     String params2 = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc";
     byte[] triggerData2 = TvmTestUtils.parseAbi(selectorStr2, params2);
+
     Transaction transaction2 = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             triggerData2,

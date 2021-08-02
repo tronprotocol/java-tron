@@ -2,8 +2,8 @@ package org.tron.common.runtime.vm;
 
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.TvmTestUtils;
@@ -81,7 +81,7 @@ public class IsSRCandidateTest extends VMTestBase {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmStake(1);
+    VMConfig.initAllowTvmVote(1);
     String contractName = "TestIsSRCandidate";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi =

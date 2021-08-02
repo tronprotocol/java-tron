@@ -44,6 +44,7 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.iq80.leveldb.ReadOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
@@ -233,7 +234,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   @Override
   public Set<byte[]> allKeys() {
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
         result.add(iterator.peekNext().getKey());
@@ -250,7 +251,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   @Override
   public Set<byte[]> allValues() {
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
         result.add(iterator.peekNext().getValue());
@@ -268,7 +269,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       iterator.seekToLast();
@@ -292,7 +293,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
@@ -311,7 +312,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       return new ArrayList<>();
     }
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       List<byte[]> result = new ArrayList<>();
       long i = 0;
       for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
@@ -330,7 +331,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Collections.emptyMap();
     }
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       Map<byte[], byte[]> result = new HashMap<>();
       long i = 0;
       for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
@@ -350,7 +351,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       return Sets.newHashSet();
     }
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       Set<byte[]> result = Sets.newHashSet();
       long i = 0;
       byte[] data = getData(key);
@@ -372,7 +373,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   @Override
   public long getTotal() throws RuntimeException {
     resetDbLock.readLock().lock();
-    try (DBIterator iterator = database.iterator()) {
+    try (DBIterator iterator = getDBIterator()) {
       long total = 0;
       for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
         total++;
@@ -398,7 +399,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       database.write(batch, options);
     }
   }
-  
+
   private void innerBatchUpdate(Map<byte[], byte[]> rows, WriteBatch batch) {
     rows.forEach((key, value) -> {
       if (value == null) {
@@ -407,7 +408,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
         batch.put(key, value);
       }
     });
-  }      
+  }
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper options) {
@@ -464,7 +465,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public org.tron.core.db.common.iterator.DBIterator iterator() {
-    return new StoreIterator(database.iterator());
+    return new StoreIterator(getDBIterator());
   }
 
   public Stream<Entry<byte[], byte[]>> stream() {
@@ -480,4 +481,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     return new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dataBaseName),
         dataBaseName, options, writeOptions);
   }
+
+  private DBIterator getDBIterator() {
+    ReadOptions readOptions = new ReadOptions().fillCache(false);
+    return  database.iterator(readOptions);
+  }
+
 }

@@ -5,7 +5,7 @@ interface token {
 }
 
 contract Crowdsale {
-    address payable public beneficiary = 0x1b228F5D9f934c7bb18Aaa86F90418932888E7b4;  // 募资成功后的收款方
+    address payable public beneficiary = payable(address(uint160(0x1b228F5D9f934c7bb18Aaa86F90418932888E7b4)));  // 募资成功后的收款方
     uint public fundingGoal = 10000000;   // 募资额度
     uint public amountRaised = 1000000;   // 参与数量
     uint public deadline;      // 募资截止期
@@ -83,7 +83,7 @@ contract Crowdsale {
             uint amount = balanceOf[msg.sender];
             balanceOf[msg.sender] = 0;
             if (amount > 0) {
-                if (msg.sender.send(amount)) {
+                if (payable(msg.sender).send(amount)) {
                     emit FundTransfer(msg.sender, amount, false);
                 } else {
                     balanceOf[msg.sender] = amount;

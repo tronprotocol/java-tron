@@ -8,7 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;

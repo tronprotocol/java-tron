@@ -92,7 +92,7 @@ public class StorageMarket {
   public long calculateTax(long duration, long limit) {
     // todo: Support for change by the committee
     double ratePerYear = dynamicPropertiesStore.getStorageExchangeTaxRate() / 100.0;
-    double millisecondPerYear = (double) MS_PER_YEAR;
+    double millisecondPerYear = MS_PER_YEAR;
     double feeRate = duration / millisecondPerYear * ratePerYear;
     long storageTax = (long) (limit * feeRate);
     logger.info("storageTax: " + storageTax);

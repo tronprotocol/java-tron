@@ -4,7 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.security.SignatureException;
 import java.util.stream.Collectors;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;

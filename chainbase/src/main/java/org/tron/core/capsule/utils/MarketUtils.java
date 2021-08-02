@@ -18,7 +18,6 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -338,7 +337,7 @@ public class MarketUtils {
     System.arraycopy(o1, 0, pair1, 0, TOKEN_ID_LENGTH * 2);
     System.arraycopy(o2, 0, pair2, 0, TOKEN_ID_LENGTH * 2);
 
-    int pairResult = org.spongycastle.util.Arrays.compareUnsigned(pair1, pair2);
+    int pairResult = org.bouncycastle.util.Arrays.compareUnsigned(pair1, pair2);
     if (pairResult != 0) {
       return pairResult;
     }

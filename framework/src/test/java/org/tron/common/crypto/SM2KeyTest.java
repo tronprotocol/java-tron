@@ -12,9 +12,9 @@ import java.security.KeyPairGenerator;
 import java.security.SignatureException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.crypto.digests.SM3Digest;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
-import org.spongycastle.crypto.digests.SM3Digest;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2Signer;
 import org.tron.core.Wallet;
@@ -105,7 +105,6 @@ public class SM2KeyTest {
 
   @Test
   public void testSM3Hash() {
-    //SM2 key = SM2.fromPrivate(privateKey);
     SM2 key = SM2.fromPublicOnly(pubKey);
     SM2Signer signer = key.getSM2SignerForHash();
     String message = "message digest";
@@ -122,8 +121,6 @@ public class SM2KeyTest {
         + "19A87E6FC682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     byte[] pubKeys = SM2.signatureToKeyBytes(hash, sign);
-    //        System.out.println(Hex.toHexString(pubKeys));
-    //        System.out.println(Hex.toHexString(pubKey));
     assertEquals(Hex.toHexString(pubKey), Hex.toHexString(pubKeys));
   }
 
@@ -145,8 +142,6 @@ public class SM2KeyTest {
     SM2.SM2Signature sign = key.sign(hash);
     byte[] addr = SM2.signatureToAddress(hash, sign);
     addr = Arrays.copyOfRange(addr, 1, addr.length);
-    //        System.out.println(Hex.toHexString(addr));
-    //        System.out.println(address);
     assertEquals(address, Hex.toHexString(addr));
   }
 
@@ -159,17 +154,14 @@ public class SM2KeyTest {
   @Test
   public void testPublicKeyFromPrivateCompressed() {
     byte[] pubFromPriv = SM2.publicKeyFromPrivate(privateKey, true);
-    //System.out.println(Hex.toHexString(pubFromPriv));
     assertArrayEquals(compressedPubKey, pubFromPriv);
   }
 
   @Test
   public void testGetAddress() {
     SM2 key = SM2.fromPublicOnly(pubKey);
-    // Addresses are prefixed with a constant.
     byte[] prefixedAddress = key.getAddress();
     byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
-    //System.out.println(Hex.toHexString(unprefixedAddress));
     assertArrayEquals(Hex.decode(address), unprefixedAddress);
     assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
   }
@@ -177,7 +169,6 @@ public class SM2KeyTest {
   @Test
   public void testGetAddressFromPrivateKey() {
     SM2 key = SM2.fromPrivate(privateKey);
-    // Addresses are prefixed with a constant.
     byte[] prefixedAddress = key.getAddress();
     byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
     assertArrayEquals(Hex.decode(address), unprefixedAddress);
@@ -255,14 +246,6 @@ public class SM2KeyTest {
     assertTrue(key1.equals(key2));
   }
 
-  //  @Test
-  //  public void decryptAECSIC() {
-  //    SM2 key = SM2.fromPrivate(
-  //            Hex.decode("abb51256c1324a1350598653f46aa3ad693ac3cf5d05f36eba3f495a1f51590f"));
-  //    byte[] payload = key.decryptAES(Hex.decode("84a727bc81fa4b13947dc9728b88fd08"));
-  //    System.out.println(Hex.toHexString(payload));
-  //  }
-
   @Test
   public void testNodeId() {
     SM2 key = SM2.fromPublicOnly(pubKey);
@@ -285,5 +268,4 @@ public class SM2KeyTest {
     assertEquals("b524f552cd82b8b028476e005c377fb19a87e6fc682d48bb5d42e3d9b9effe76",
         Hex.toHexString(eHash));
   }
-
 }

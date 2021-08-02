@@ -162,11 +162,13 @@ public class tryCatchTest002 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(1,transactionInfo.get().getResultValue());
-    Assert.assertEquals(maxFeeLimit.longValue(), transactionInfo.get().getFee());
-    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertEquals(contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
-
+    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
+    Assert.assertEquals(
+        "0000000000000000000000000000000000000000000000000000000000000000",
+        ByteArray.toHexString(transactionInfo.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "try catch [new] transfer fail")
@@ -221,9 +223,9 @@ public class tryCatchTest002 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(1,transactionInfo.get().getResultValue());
-    Assert.assertEquals(maxFeeLimit.longValue(), transactionInfo.get().getFee());
-    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
+    Assert.assertEquals(contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
 
   }
@@ -240,9 +242,9 @@ public class tryCatchTest002 {
         .getTransactionInfoById(TriggerTxid, blockingStubFull);
 
     logger.info("transactionInfo: " + transactionInfo.get());
-    Assert.assertEquals(1,transactionInfo.get().getResultValue());
-    Assert.assertEquals(maxFeeLimit.longValue(), transactionInfo.get().getFee());
-    Assert.assertEquals(contractResult.OUT_OF_ENERGY,
+    Assert.assertEquals(0,transactionInfo.get().getResultValue());
+    Assert.assertTrue(transactionInfo.get().getFee() < maxFeeLimit);
+    Assert.assertEquals(contractResult.SUCCESS,
         transactionInfo.get().getReceipt().getResult());
 
   }

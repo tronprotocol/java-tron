@@ -31,7 +31,7 @@ contract testD {
 
 contract A {
     constructor() public payable{
-        selfdestruct(msg.sender);
+        selfdestruct(payable(msg.sender));
     }
     function fun() public {
     }
