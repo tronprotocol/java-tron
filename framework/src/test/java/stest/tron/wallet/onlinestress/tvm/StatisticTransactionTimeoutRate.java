@@ -151,30 +151,31 @@ public class StatisticTransactionTimeoutRate {
 
   @Test(enabled = true,threadPoolSize = 1, invocationCount = 1)
   public void scanBlock() {
-    String addressStr = toStr();
-    Long startNum = 31165351L;
-    Long endNum = 31165543L;
+//    String addressStr = toStr();
+    Long startNum = 32390145L;
+    Long endNum = 32390435L;
     Integer totalNum = 0;
     Integer successNum = 0;
     Integer failedNum = 0;
     NumberMessage.Builder builder = NumberMessage.newBuilder();
-    String contractAddresses = "TPSxiJuCgyZUjLs8PhV9L3vM2ZUqkxqoee,\n"
-        + "TPu8gN2jBKakVtK1tRZE1fzF4ugV5S8emr,\n"
-        + "TTScnCpJ4rvDYTAYLQSb1TfUe6n9rNVV5r,\n"
-        + "TQTfdhUbX6CYMjdJeMRNEwatibF8jiPsFt,\n"
-        + "TBG8YFY23a6pd47BKw1TDYJqeW1TTy9HZp,\n"
-        + "TM5fhZbqth2Cbr1Z8TEWZMFCJqXUJQYp8Z,\n"
-        + "TNyBXHVbgUjF9zB7NGpcJ2suq7os1UByDC,\n"
-        + "TVmD8sH38KvBWH6N4rnSFjmxbTmPEmiTMo,\n"
-        + "TVx8jELiVpNvgj2mxd6nbQ8EQV59ovgE3f,\n"
-        + "TTuzqgesoQAd5VkTHXtVahM3sJApaEbLNs,\n"
-        + "TQYaDoPzAUUs5eCBbM2PrLMbNSRXqQvmkh,\n"
-        + "TYTeYCQWpg49TV7VogNw38KvpxzHoQ37yz,\n"
-        + "TLiNbBysgaA4V84HaUttczRXP4coGurbnM,\n"
-        + "TDs6Eh6XjcCV91gpUWAF7tzCW2wrJv3gd3";
-//    String contractAddresses = "TUeun3aBssMSLhrqBV9XQM1DkT9jYzGYY9";
-//    String contractAddresses = "TQ7bt9bdEFfMkuY3MAnLekvndLdev7r3un";
-//    String contractAddresses = "TUeun3aBssMSLhrqBV9XQM1DkT9jYzGYY9,TQ7bt9bdEFfMkuY3MAnLekvndLdev7r3un";
+    String contractAddresses = "THQmoKzJxEvaTitWkRQbQLhTxEzWS7CUNZ\n"
+        + "TW4bNknCSZAPzWY5XUYXLcJq22Gbrv8Vug\n"
+        + "TTXBBgL5SyssAW9FVXtLLeWhkUcRc4GwFD\n"
+        + "TSovuV9eHF3EuDncAy9cTmGQyx1S3fj7Rr\n"
+        + "TMVGAVCQKBsYGRPwr6UemjsTTdDzWc6Ve6\n"
+        + "TBwUUJmVb3tkMZ8vzTPM2NoNZRiKD5eRgM\n"
+        + "TGDpoCzdJPb4P1w8BxX9MnYEjYrfH3BKV9\n"
+        + "TCdMxEmvt53Lt57vkUC1MJkRycSjkv7XUk\n"
+        + "TWzwVjhJDuq8HwCw7Hn73pjXH5rSErSrS3\n"
+        + "TNtAfshWu1722j4L1NZqYi7LRijqr8LeFc\n"
+        + "TQX7q8Wxh8Hri9yYbJ7K2YShxfPwDiBc9X\n"
+        + "THPe3RGQeXEvuTcKMeSSWVjoUz5Y4ZoP5g\n"
+        + "TXnfCfMEsuR87LoFHNsniLyS24kNv7Crrr\n"
+        + "TSHDQyhQ5MtNC1UTNhzG7CBUP4vHm4c78D";
+//    String contractAddresses = "TDkRNrc8bdF2LoGwqfwWba3t6nr7anwTJw,\n"
+//          + "TAiZLbKGaANQsWhQBjNRbbukThTZVkusXB,\n"
+//          + "TKvBzPLzqaZdpkai5ocPxZJ3QGjirYq41g";
+
     while (startNum <= endNum) {
       logger.info("scan block num:" + startNum);
       builder.setNum(startNum);
@@ -191,9 +192,12 @@ public class StatisticTransactionTimeoutRate {
 //          System.out.println("Base58.encode58Check(infoById.get().getContractAddress().toByteArray()):  "+Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
           if (contractAddresses.contains(Base58.encode58Check(infoById.get().getContractAddress().toByteArray()))) {
             totalNum ++;
+            // Justlend
             if (transaction.getRet(0).getContractRet().name().equals("SUCCESS") && infoById.get().getReceipt().getResult().equals(
                 contractResult.SUCCESS) && (ByteArray.toInt(infoById.get().getContractResult(0).toByteArray())==0)) {
-            /*if (transaction.getRet(0).getContractRet().name().equals("SUCCESS") && infoById.get().getReceipt().getResult().equals(
+            /*
+            // link&swap
+            if (transaction.getRet(0).getContractRet().name().equals("SUCCESS") && infoById.get().getReceipt().getResult().equals(
                 contractResult.SUCCESS)) {*/
               successNum ++;
 //              System.out.println("contractAddress: "+Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));

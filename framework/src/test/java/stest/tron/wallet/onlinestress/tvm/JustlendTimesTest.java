@@ -34,7 +34,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class JustlendTimesTest {
 
-  private final String testAccountKey = "44FE180410D7BF05E41388A881C3C5566C6667840116EC25C6FC924CE678FC4A";
+  private final String testAccountKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
   private final byte[] testAccountAddress = PublicMethed.getFinalAddress(testAccountKey);
   private final String testAccountKey2 = "553c7b0dee17d3f5b334925f5a90fe99fb0b93d47073d69ec33eead8459d171e";
   private final byte[] testAccountAddress2 = PublicMethed.getFinalAddress(testAccountKey2);
@@ -44,7 +44,7 @@ public class JustlendTimesTest {
   private final byte[] testAccountAddress4 = PublicMethed.getFinalAddress(testAccountKey4);
   private final String testAccountKey5 = "2925e186bb1e88988855f11ebf20ea3a6e19ed92328b0ffb576122e769d45b68";
   private final byte[] testAccountAddress5 = PublicMethed.getFinalAddress(testAccountKey5);
-  private final String accountKey = "7d5a7396d6430edb7f66aa5736ef388f2bea862c9259de8ad8c2cfe080f6f5a0";
+  private final String accountKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
   private final byte[] accountAddress = PublicMethed.getFinalAddress(accountKey);
 
   private final String ownerKey = "44FE180410D7BF05E41388A881C3C5566C6667840116EC25C6FC924CE678FC4A";
@@ -62,37 +62,52 @@ public class JustlendTimesTest {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private static byte[] unitrAddress =
-      WalletClient.decodeFromBase58Check("TAWHLaa4UjkDffo9SfCq3eMpqpmufapA7w");
+      WalletClient.decodeFromBase58Check("TTA4zDp1YWhEaP33x6WDVULXYUHeoyMrU3");
+  // oracle real PriceOracle,not PriceOracleProxy
   private static byte[] priceAddress =
-      WalletClient.decodeFromBase58Check("TDx47dU6YYySHvx9nCotgtvwX5RPMPsXjz");
+      WalletClient.decodeFromBase58Check("TZ4LG8K77aApJGeDM3XSPdpNDtuRAkNjzA");
   private static byte[] trxAddress =
-      WalletClient.decodeFromBase58Check("TPSxiJuCgyZUjLs8PhV9L3vM2ZUqkxqoee");
+      WalletClient.decodeFromBase58Check("TSHDQyhQ5MtNC1UTNhzG7CBUP4vHm4c78D");
   private static byte[] sunAddress =
-      WalletClient.decodeFromBase58Check("TTScnCpJ4rvDYTAYLQSb1TfUe6n9rNVV5r");
+      WalletClient.decodeFromBase58Check("TMVGAVCQKBsYGRPwr6UemjsTTdDzWc6Ve6");
   private static byte[] usdtAddress =
-      WalletClient.decodeFromBase58Check("TYTeYCQWpg49TV7VogNw38KvpxzHoQ37yz");
+      WalletClient.decodeFromBase58Check("THPe3RGQeXEvuTcKMeSSWVjoUz5Y4ZoP5g");
   private static byte[] usdjAddress =
-      WalletClient.decodeFromBase58Check("TQTfdhUbX6CYMjdJeMRNEwatibF8jiPsFt");
+      WalletClient.decodeFromBase58Check("TTXBBgL5SyssAW9FVXtLLeWhkUcRc4GwFD");
   private static byte[] winAddress =
-      WalletClient.decodeFromBase58Check("TPu8gN2jBKakVtK1tRZE1fzF4ugV5S8emr");
+      WalletClient.decodeFromBase58Check("THQmoKzJxEvaTitWkRQbQLhTxEzWS7CUNZ");
   private static byte[] btcAddress =
-      WalletClient.decodeFromBase58Check("TQYaDoPzAUUs5eCBbM2PrLMbNSRXqQvmkh");
+      WalletClient.decodeFromBase58Check("TW4bNknCSZAPzWY5XUYXLcJq22Gbrv8Vug");
   private static byte[] jstAddress =
-      WalletClient.decodeFromBase58Check("TBG8YFY23a6pd47BKw1TDYJqeW1TTy9HZp");
+      WalletClient.decodeFromBase58Check("TSovuV9eHF3EuDncAy9cTmGQyx1S3fj7Rr");
   private static byte[] wbttAddress =
-      WalletClient.decodeFromBase58Check("TDs6Eh6XjcCV91gpUWAF7tzCW2wrJv3gd3");
+      WalletClient.decodeFromBase58Check("TQX7q8Wxh8Hri9yYbJ7K2YShxfPwDiBc9X");
   private static byte[] ethAddress =
-      WalletClient.decodeFromBase58Check("TM5fhZbqth2Cbr1Z8TEWZMFCJqXUJQYp8Z");
+      WalletClient.decodeFromBase58Check("TBwUUJmVb3tkMZ8vzTPM2NoNZRiKD5eRgM");
   private static byte[] eth2Address =
-      WalletClient.decodeFromBase58Check("TNyBXHVbgUjF9zB7NGpcJ2suq7os1UByDC");
+      WalletClient.decodeFromBase58Check("TGDpoCzdJPb4P1w8BxX9MnYEjYrfH3BKV9");
   private static byte[] eth3Address =
-      WalletClient.decodeFromBase58Check("TVmD8sH38KvBWH6N4rnSFjmxbTmPEmiTMo");
+      WalletClient.decodeFromBase58Check("TCdMxEmvt53Lt57vkUC1MJkRycSjkv7XUk");
   private static byte[] eth4Address =
-      WalletClient.decodeFromBase58Check("TVx8jELiVpNvgj2mxd6nbQ8EQV59ovgE3f");
+      WalletClient.decodeFromBase58Check("TWzwVjhJDuq8HwCw7Hn73pjXH5rSErSrS3");
   private static byte[] eth5Address =
-      WalletClient.decodeFromBase58Check("TTuzqgesoQAd5VkTHXtVahM3sJApaEbLNs");
+      WalletClient.decodeFromBase58Check("TNtAfshWu1722j4L1NZqYi7LRijqr8LeFc");
   private static byte[] eth6Address =
-      WalletClient.decodeFromBase58Check("TLiNbBysgaA4V84HaUttczRXP4coGurbnM");
+      WalletClient.decodeFromBase58Check("TXnfCfMEsuR87LoFHNsniLyS24kNv7Crrr");
+  String usdjTokenAddress= "TFYur8jvdRWqfAjpEbGrN9R4jiqJehPHbr";
+  String jstTokenAddress= "TJ37WKR5FmymxbyXTPhvpqJva5VPmbtCgM";
+  String usdtTokenAddress= "TXh43XybYbki6oHg5jZaAMXYDSS8Z8qDr8";// 6
+  String sunTokenAddress= "TS9L5A2VUU6Ew1z3aSiTQfcGwkCc3dYem7";
+  String winTokenAddress= "TXmCiGhZZwHQo5XQH5u5oCrsWUoToGexKP";// 6
+  String btcTokenAddress= "THtV7TxKxgi8k3ki8VDEe52RgqAqkeFKD1";// 8
+  String wbttTokenAddress= "TPxynQow3siB1xLPKEB1SLk8teexGukDBV";// 6
+  String ethTokenAddress= "TJnQg55WKbT5fkS8YS8srpBmHZutYidrCe";
+  String eth2TokenAddress= "TNgtM3opjaELAXRhbMcY8tmo41KRRbTmpc";
+  String eth3TokenAddress= "TEogNoHkjwMbyZhEZ2H9NntmHUwPSDUChY";
+  String eth4TokenAddress= "TW3vQdqKtwKwsPndyo52VU343GXjJecAoi";
+  String eth5TokenAddress= "TEofszusKR8Sp6wNffjwTikikDCzdg4rog";
+  String eth6TokenAddress= "TZCdTKCyL1ubF53WRc4aiFhBmHFU8r9Zyn";
+
   private static byte[] eth7Address =
       WalletClient.decodeFromBase58Check("TKogFfhggBV9PkrUT9vd5Vjc2x9dQs9B1E");
   private static byte[] eth8Address =
@@ -101,19 +116,6 @@ public class JustlendTimesTest {
       WalletClient.decodeFromBase58Check("TSdxbcvDiwassY8pyiz8Jphd4tpid4xYZF");
   private static byte[] eth10Address =
       WalletClient.decodeFromBase58Check("TVu1viG4cTBHxhdeekK1fgNnxPbn3Ktctx");
-  String usdjTokenAddress= "TNczdrmjcngC7AaUAqW5eboq9bW9tkiSjo";
-  String jstTokenAddress= "TQrW33CF7kWXdrXVJaerGx7HqDFtPUwcG8";
-  String usdtTokenAddress= "TDazaUcwSPEPb3cKevmitaKN8t9ywAaCK4";// 6
-  String sunTokenAddress= "TR1DN8iHvN57ijjaoBNeooHgh6ARNq9vAs";
-  String winTokenAddress= "TRkLU4tTRH25cuEhCigb1X7yBkf7iUm2zL";// 6
-  String btcTokenAddress= "TFJrYkkHuZ4Q8jsoCmXMDuz3ywPUrbBLAd";// 8
-  String wbttTokenAddress= "TLNnfDffmXiWPMQahuaVNYSo6UoTp1xYzk";// 6
-  String ethTokenAddress= "TTyKk4az3Mqi5Sy2rWrzQZ5mhbctDHUNtZ";
-  String eth2TokenAddress= "TCUknHwUG3HemAWtiC99NFy4cr3HuqMLoA";
-  String eth3TokenAddress= "TDyaza138icmrEGUNhVCno7T5oqDyvXxHV";
-  String eth4TokenAddress= "TNWoemzg54N8ugitMHWkwW4H2rYw9CW13b";
-  String eth5TokenAddress= "TBesWEKHWVi9Jp26E8pHrAaYbxMjjX9bHj";
-  String eth6TokenAddress= "TTrDQt2CvFWo161h237gKxPeUDnjMW5wBc";
 
   private static int borrowtimeoutTimes = 0;
   private static int redeemTimes = 0;
@@ -147,7 +149,7 @@ public class JustlendTimesTest {
 
   @Test(enabled = true, description = "price")
   public void price() {
-    String priceOracleAddressReal = "TVcMFj9JL5xNJ2BNkbvwRHFWboqjQvW9vc";
+    String priceOracleAddressReal = "TGZPFmfAzW2g2pyfwWzzt4P8cWgXjwsUWh";
     String cEtherAddress = "TSdrSvYpeuNuxFFR8fhHfTcvFKCY6hvL5D";
     String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL";
     String jstAddress = "TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3";
@@ -727,6 +729,13 @@ public class JustlendTimesTest {
   }
 
 
+  /**
+   * justlend stress:
+   * 1.approve
+   * 2.entermarketAll
+   * 3.mintAndBorrow
+   * 4.checkMarketConditions
+   */
   @Test(enabled = true)
   public void checkMarketConditions() {
     HashMap<String, byte[]> addressMap = new HashMap<>();
@@ -744,7 +753,6 @@ public class JustlendTimesTest {
     addressMap.put("eth4", eth4Address);
     addressMap.put("eth5", eth5Address);
     addressMap.put("eth6", eth6Address);
-//    addressMap.put("eth7", eth7Address);
     for (String ctoken:addressMap.keySet()) {
       TransactionExtention transactionExtention = PublicMethed
           .triggerConstantContractForExtention(addressMap.get(ctoken), "getCash()", "#", false, 0,
@@ -1280,17 +1288,26 @@ public class JustlendTimesTest {
     addressMap.put("btc", btcAddress);
     addressMap.put("wbtt", wbttAddress);
     addressMap.put("eth", ethAddress);
+    addressMap.put("eth1", eth2Address);
+    addressMap.put("eth2", eth3Address);
+    addressMap.put("eth3", eth4Address);
+    addressMap.put("eth4", eth5Address);
+    addressMap.put("et5", eth6Address);
+    String params = "[";
     for (String ctoken:addressMap.keySet()) {
       System.out.println(ctoken + ":" + addressMap.get(ctoken));
       String param = "\"" + Base58.encode58Check(addressMap.get(ctoken)) + "\"";
-      String txid = PublicMethed.triggerContract(unitrAddress,
-          "enterMarket(address)", param, false,
-          0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
-      Optional<TransactionInfo> infoById = null;
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-      Assert.assertTrue(infoById.get().getResultValue() == 0);
+      params += param+",";
     }
+    params = params.substring(0,params.length()-1)+"]";
+    System.out.println("params:"+params);
+    String txid = PublicMethed.triggerContract(unitrAddress,
+        "enterMarkets(address[])", params, false,
+        0, maxFeeLimit, testAccountAddress, testAccountKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
 
   public void setprice(String add, String price) {
