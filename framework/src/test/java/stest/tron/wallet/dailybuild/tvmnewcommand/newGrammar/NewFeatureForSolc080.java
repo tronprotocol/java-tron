@@ -105,7 +105,7 @@ public class NewFeatureForSolc080 {
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
-    Assert.assertTrue(transactionExtention.getEnergyUsed()>300);
+    Assert.assertTrue(transactionExtention.getEnergyUsed() > 300);
 
   }
 
