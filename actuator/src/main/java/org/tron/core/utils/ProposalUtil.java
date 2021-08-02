@@ -484,9 +484,9 @@ public class ProposalUtil {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException("Bad chain parameter id [TOTAL_NET_LIMIT]");
         }
-        if (value < 0 || value > 1000_000_000_000L) {
+        if (value < 0 || value > 1_000_000_000_000L) {
           throw new ContractValidateException(
-              "Bad chain parameter value, valid range is [0, 1000_000_000_000L]");
+              "Bad chain parameter value, valid range is [0, 1_000_000_000_000L]");
         }
         break;
       }

@@ -1765,7 +1765,9 @@ public class Program {
     } catch (ArithmeticException e) {
       logger.error("TVM Freeze: frozenBalance out of long range.");
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return false;
   }
 
@@ -1787,12 +1789,16 @@ public class Program {
       processor.validate(param, repository);
       long unfreezeBalance = processor.execute(param, repository);
       repository.commit();
-      internalTx.setValue(unfreezeBalance);
+      if (internalTx != null) {
+        internalTx.setValue(unfreezeBalance);
+      }
       return true;
     } catch (ContractValidateException e) {
       logger.error("TVM Unfreeze: validate failure. Reason: {}", e.getMessage());
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return false;
   }
 
@@ -1891,7 +1897,9 @@ public class Program {
         param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
             amount.sValue().longValueExact());
       }
-      internalTx.setExtra(param.toJsonStr());
+      if (internalTx != null) {
+        internalTx.setExtra(param.toJsonStr());
+      }
 
       VoteWitnessProcessor processor = new VoteWitnessProcessor();
       processor.validate(param, repository);
@@ -1905,7 +1913,9 @@ public class Program {
     } catch (ArithmeticException e) {
       logger.error("TVM VoteWitness: int or long out of range. caused by: {}", e.getMessage());
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return false;
   }
 
@@ -1925,14 +1935,18 @@ public class Program {
       processor.validate(param, repository);
       long allowance = processor.execute(param, repository);
       repository.commit();
-      internalTx.setValue(allowance);
+      if (internalTx != null) {
+        internalTx.setValue(allowance);
+      }
       return allowance;
     } catch (ContractValidateException e) {
       logger.error("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
       logger.error("TVM WithdrawReward: execute failure. Reason: {}", e.getMessage());
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return 0;
   }
 

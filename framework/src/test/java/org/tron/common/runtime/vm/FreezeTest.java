@@ -334,7 +334,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountA = freezeForOther(contract, userA, frozenBalance, 0)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getInstance().getNEW_ACCT_CALL(),
+    Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getInstance().getNewAcctCall(),
         energyWithoutCreatingAccountA);
 
     freezeForOther(contract, userA, frozenBalance, 1);
@@ -344,7 +344,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountB = freezeForOther(contract, userB, frozenBalance, 1)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getInstance().getNEW_ACCT_CALL(),
+    Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getInstance().getNewAcctCall(),
         energyWithoutCreatingAccountB);
 
     freezeForOther(contract, userB, frozenBalance, 0);
