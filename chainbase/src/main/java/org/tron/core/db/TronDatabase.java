@@ -75,6 +75,12 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   public abstract T get(byte[] key)
       throws InvalidProtocolBufferException, ItemNotFoundException, BadItemException;
 
+  @Override
+  public T getFromRoot(byte[] key)
+      throws InvalidProtocolBufferException, BadItemException, ItemNotFoundException {
+    return get(key);
+  }
+
   public T getUnchecked(byte[] key) {
     return null;
   }

@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -225,6 +226,9 @@ public class Manager {
   // log filter
   private boolean isRunFilterProcessThread = true;
   private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
+
+  @Getter
+  private volatile long latestSolidityNumShutDown;
 
   /**
    * Cycle thread to rePush Transactions
@@ -494,6 +498,22 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
+
+
+    long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
+    long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
+
+    if (exitCount > 0 && (exitHeight < 0 || exitHeight > headNum + exitCount)) {
+      CommonParameter.getInstance().setShutdownBlockHeight(headNum + exitCount);
+    }
+
+    if (CommonParameter.getInstance().getShutdownBlockHeight() < headNum) {
+      logger.info("ShutDownBlockHeight {} is less than headNum {},ignored.",
+          CommonParameter.getInstance().getShutdownBlockHeight(), headNum);
+      CommonParameter.getInstance().setShutdownBlockHeight(-1);
+    }
+    // init
+    latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
   }
 
   /**
@@ -842,6 +862,17 @@ public class Manager {
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+      if (Args.getInstance().getShutdownBlockTime() != null) {
+        if (Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
+            new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
+            .compareTo(new Date(block.getTimeStamp())) <= 0) {
+          revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+        }
+      }
+      if (latestSolidityNumShutDown > 0 && latestSolidityNumShutDown - block.getNum()
+          <= SnapshotManager.DEFAULT_MAX_FLUSH_COUNT) {
+        revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      }
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
@@ -1004,6 +1035,14 @@ public class Manager {
             + "block-tx-size: {}, verify-tx-size: {}",
         block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
         block.getTransactions().size(), txs.size());
+
+    if (CommonParameter.getInstance().getShutdownBlockTime() != null
+        && CommonParameter.getInstance().getShutdownBlockTime()
+        .isSatisfiedBy(new Date(block.getTimeStamp()))) {
+      latestSolidityNumShutDown = block.getNum();
+      CommonParameter.getInstance().setShutdownBlockTime(null);
+    }
+
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {

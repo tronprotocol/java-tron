@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.LockSupport;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -87,6 +89,25 @@ public class TronNetDelegate {
   private int blockIdCacheSize = 100;
 
   private long timeout = 1000;
+
+  private volatile boolean  hitDown = false;
+
+  private Thread hitThread;
+
+  @PostConstruct
+  public void init() {
+    hitThread =  new Thread(() -> {
+      LockSupport.park();
+      // to Guarantee Some other thread invokes unpark with the current thread as the target
+      if (hitDown) {
+        System.exit(0);
+      }
+    });
+    hitThread.setName("hit-thread");
+    hitThread.start();
+  }
+
+
 
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
@@ -192,6 +213,21 @@ public class TronNetDelegate {
   }
 
   public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
+    if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
+        && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
+        .getLatestBlockHeaderNumberFromDB()) {
+
+      logger.info("begin shutdown, currentBlockNum:{}, DbBlockNum:{} ,solidifiedBlockNum:{}.",
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
+          dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+      hitDown = true;
+      LockSupport.unpark(hitThread);
+      return;
+    }
+    if (hitDown) {
+      return;
+    }
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
