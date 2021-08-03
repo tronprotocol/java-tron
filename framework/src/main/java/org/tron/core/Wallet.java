@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -172,7 +172,6 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.store.AbiStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -330,6 +329,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -360,6 +360,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -976,20 +977,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
         .build());
 
-    //builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-    //    .setKey("getAllowTvmStake")
-    //    .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmStake())
-    //    .build());
-
-    //builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-    //        .setKey("getAllowTvmAssetIssue")
-    //        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
-    //        .build());
-
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTransactionFeePool")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTransactionFeePool())
         .build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMaxFeeLimit")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxFeeLimit())
@@ -1008,6 +1000,26 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmFreeze")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmVote")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getFreeNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getFreeNetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
         .build());
 
     return builder.build();
@@ -2554,7 +2566,7 @@ public class Wallet {
     }
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
-
+    builder.setEnergyUsed(result.getEnergyUsed());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {

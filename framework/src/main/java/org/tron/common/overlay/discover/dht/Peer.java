@@ -19,8 +19,8 @@
 package org.tron.common.overlay.discover.dht;
 
 import java.math.BigInteger;
-import org.spongycastle.util.BigIntegers;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.BigIntegers;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 

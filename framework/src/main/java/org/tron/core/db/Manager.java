@@ -45,7 +45,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.GenesisBlock;
@@ -119,6 +119,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
+import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -228,10 +229,7 @@ public class Manager {
           TransactionCapsule tx = null;
           try {
             tx = getRePushTransactions().peek();
-            if (tx != null && System.currentTimeMillis() - tx.getTime() >= Args.getInstance()
-                .getPendingTransactionTimeout()) {
-              logger.warn("[timeout] remove tx from rePush, txId:{}", tx.getTransactionId());
-            } else if (tx != null) {
+            if (tx != null) {
               this.rePush(tx);
             } else {
               TimeUnit.MILLISECONDS.sleep(SLEEP_TIME_OUT);
@@ -239,7 +237,6 @@ public class Manager {
           } catch (Throwable ex) {
             if (ex instanceof InterruptedException) {
               Thread.currentThread().interrupt();
-              logger.error("unknown exception happened in rePush loop", ex);
             }
             logger.error("unknown exception happened in rePush loop", ex);
           } finally {
@@ -381,7 +378,7 @@ public class Manager {
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
-
+    chainBaseManager.init();
     this.initGenesis();
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(
@@ -416,7 +413,7 @@ public class Manager {
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
-    initCacheTxs();
+    // initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -616,6 +613,10 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return chainBaseManager.getAccountStore();
+  }
+
+  public AccountAssetStore getAccountAssetStore() {
+    return chainBaseManager.getAccountAssetStore();
   }
 
   public AccountIndexStore getAccountIndexStore() {
@@ -970,6 +971,8 @@ public class Manager {
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
       if (multiAddresses.contains(address) || !txIds.contains(txId)) {
         txs.add(capsule);
+      } else {
+        capsule.setVerified(true);
       }
     });
 

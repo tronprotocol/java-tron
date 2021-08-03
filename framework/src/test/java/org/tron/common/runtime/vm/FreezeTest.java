@@ -6,17 +6,15 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
 import com.google.protobuf.ByteString;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.function.Consumer;
-
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
@@ -142,7 +140,7 @@ public class FreezeTest {
     rootDeposit.commit();
 
     ConfigLoader.disable = true;
-    manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
+    //manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
     VMConfig.initVmHardFork(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -336,7 +334,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountA = freezeForOther(contract, userA, frozenBalance, 0)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getInstance().getNEW_ACCT_CALL(),
+    Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getInstance().getNewAcctCall(),
         energyWithoutCreatingAccountA);
 
     freezeForOther(contract, userA, frozenBalance, 1);
@@ -346,7 +344,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountB = freezeForOther(contract, userB, frozenBalance, 1)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getInstance().getNEW_ACCT_CALL(),
+    Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getInstance().getNewAcctCall(),
         energyWithoutCreatingAccountB);
 
     freezeForOther(contract, userB, frozenBalance, 0);
