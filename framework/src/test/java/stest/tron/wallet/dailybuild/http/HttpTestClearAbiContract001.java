@@ -116,9 +116,7 @@ public class HttpTestClearAbiContract001 {
 
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
-    //Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
-    Assert.assertEquals(responseContent.getString("result"),
-        "{\"result\":true,\"code\":\"SUCCESS\",\"message\":\"\"}");
+    Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
     Assert.assertEquals(responseContent.getString("constant_result"),
         "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
 
@@ -130,8 +128,7 @@ public class HttpTestClearAbiContract001 {
 
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"),
-        "{\"result\":true,\"code\":\"SUCCESS\",\"message\":\"\"}");
+    Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
     Assert.assertEquals(responseContent.getString("constant_result"),
             "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
 
@@ -140,8 +137,7 @@ public class HttpTestClearAbiContract001 {
 
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"),
-        "{\"result\":true,\"code\":\"SUCCESS\",\"message\":\"\"}");
+    Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
     Assert.assertEquals(responseContent.getString("constant_result"),
             "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
   }
@@ -173,7 +169,7 @@ public class HttpTestClearAbiContract001 {
     Assert.assertEquals(responseContent.getString("contract_address"), contractAddress);
     Assert.assertEquals(responseContent.getString("origin_address"),
         ByteArray.toHexString(assetOwnerAddress));
-    Assert.assertEquals(responseContent.getString("abi"), "{\"entrys\":[]}");
+    Assert.assertEquals(responseContent.getString("abi"), "{}");
     Assert.assertEquals(responseContent.getString("origin_energy_limit"), "11111111111111");
     Assert.assertEquals(responseContent.getString("name"), contractName);
   }

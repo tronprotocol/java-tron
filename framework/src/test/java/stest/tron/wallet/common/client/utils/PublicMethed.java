@@ -3183,6 +3183,8 @@ public class PublicMethed {
         return SmartContract.ABI.Entry.EntryType.Event;
       case "fallback":
         return SmartContract.ABI.Entry.EntryType.Fallback;
+      case "error":
+        return SmartContract.ABI.Entry.EntryType.Error;
       default:
         return SmartContract.ABI.Entry.EntryType.UNRECOGNIZED;
     }
