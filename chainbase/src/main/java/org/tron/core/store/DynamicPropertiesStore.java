@@ -17,6 +17,8 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "DB")
 @Component
@@ -1981,6 +1983,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found latest block header number"));
+  }
+
+  public long getLatestBlockHeaderNumberFromDB() {
+    try {
+      return Optional.ofNullable(getFromRoot(LATEST_BLOCK_HEADER_NUMBER))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+              () -> new IllegalArgumentException("not found latest block header number"));
+    } catch (ItemNotFoundException | BadItemException e) {
+     logger.error("{}", e);
+    }
+    return -1;
   }
 
   public int getStateFlag() {

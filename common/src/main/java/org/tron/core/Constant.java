@@ -300,4 +300,8 @@ public class Constant {
   public static final String  ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
 
   public static final String LOCAL_HOST = "127.0.0.1";
+
+  public static final String NODE_SHUTDOWN_BLOCK_TIME = "node.shutdown.BlockTime";
+  public static final String NODE_SHUTDOWN_BLOCK_HEIGHT = "node.shutdown.BlockHeight";
+  public static final String NODE_SHUTDOWN_BLOCK_COUNT = "node.shutdown.BlockCount";
 }
