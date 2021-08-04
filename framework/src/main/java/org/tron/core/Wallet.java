@@ -509,13 +509,13 @@ public class Wallet {
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
-      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-        logger.warn("Broadcast transaction {} has failed, it already exists.",
-            trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
-      } else {
-        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
-      }
+//      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
+//        logger.warn("Broadcast transaction {} has failed, it already exists.",
+//            trx.getTransactionId());
+//        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
+//      } else {
+//        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+//      }
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
