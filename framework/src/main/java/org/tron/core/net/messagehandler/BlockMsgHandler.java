@@ -106,28 +106,33 @@ public class BlockMsgHandler implements TronMsgHandler {
       advService.addInvToCache(item);
     }
 
-    if (fastForward) {
-      if (block.getNum() < tronNetDelegate.getHeadBlockId().getNum()) {
-        logger.warn("Receive a low block {}, head {}",
-            blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
-        return;
-      }
-      if (tronNetDelegate.validBlock(block)) {
-        advService.fastForward(new BlockMessage(block));
-        tronNetDelegate.trustNode(peer);
-      }
+    if (block.getNum() < tronNetDelegate.getHeadBlockId().getNum()) {
+      logger.warn("Receive a low block {}, head {}",
+              blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
+      return;
     }
 
-    tronNetDelegate.processBlock(block, false);
-    witnessProductBlockService.validWitnessProductTwoBlock(block);
-    tronNetDelegate.getActivePeer().forEach(p -> {
-      if (p.getAdvInvReceive().getIfPresent(blockId) != null) {
-        p.setBlockBothHave(blockId);
-      }
-    });
+    tronNetDelegate.validBlock(block);
 
-    if (!fastForward) {
+    if (fastForward) {
+      advService.fastForward(new BlockMessage(block));
+      tronNetDelegate.trustNode(peer);
+    } else {
       advService.broadcast(new BlockMessage(block));
+    }
+
+    try {
+      tronNetDelegate.processBlock(block, false);
+
+      witnessProductBlockService.validWitnessProductTwoBlock(block);
+
+      tronNetDelegate.getActivePeer().forEach(p -> {
+        if (p.getAdvInvReceive().getIfPresent(blockId) != null) {
+          p.setBlockBothHave(blockId);
+        }
+      });
+    } catch (Exception e) {
+      logger.warn("Process block {} from peer {} failed.", blockId, peer.getInetAddress());
     }
   }
 
