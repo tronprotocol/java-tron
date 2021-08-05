@@ -3,6 +3,8 @@ package org.tron.common.setting;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.rocksdb.LRUCache;
+import org.rocksdb.RocksDB;
 
 @Slf4j
 public class RocksDbSettings {
@@ -32,6 +34,12 @@ public class RocksDbSettings {
   @Getter
   private boolean enableStatistics;
 
+  static {
+    RocksDB.loadLibrary();
+  }
+
+  private static final LRUCache cache = new LRUCache(1 * 1024 * 1024 * 1024L);
+
   private RocksDbSettings() {
 
   }
@@ -41,7 +49,7 @@ public class RocksDbSettings {
     return defaultSettings.withLevelNumber(7).withBlockSize(64).withCompactThreads(32)
         .withTargetFileSizeBase(256).withMaxBytesForLevelMultiplier(10)
         .withTargetFileSizeMultiplier(1)
-        .withMaxBytesForLevelBase(256).withMaxOpenFiles(-1).withEnableStatistics(false);
+        .withMaxBytesForLevelBase(256).withMaxOpenFiles(5000).withEnableStatistics(false);
   }
 
   public static RocksDbSettings getSettings() {
@@ -54,7 +62,7 @@ public class RocksDbSettings {
       long targetFileSizeBase,
       int targetFileSizeMultiplier) {
     rocksDbSettings = new RocksDbSettings()
-        .withMaxOpenFiles(-1)
+        .withMaxOpenFiles(5000)
         .withEnableStatistics(false)
         .withLevelNumber(levelNumber)
         .withCompactThreads(compactThreads)
@@ -128,5 +136,8 @@ public class RocksDbSettings {
   public RocksDbSettings withTargetFileSizeMultiplier(int targetFileSizeMultiplier) {
     this.targetFileSizeMultiplier = targetFileSizeMultiplier;
     return this;
+  }
+  public static LRUCache getCache() {
+    return cache;
   }
 }

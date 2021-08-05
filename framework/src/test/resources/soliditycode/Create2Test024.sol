@@ -10,7 +10,7 @@ contract Factory {
             }
         }
 
-        addr.testSuicideNonexistentTarget(msg.sender);
+        addr.testSuicideNonexistentTarget(payable(msg.sender));
         addr.set();
         emit Deployed(address(addr), salt, msg.sender);
         return address(addr);

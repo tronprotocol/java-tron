@@ -19,7 +19,7 @@ contract factory {
     }
 
     function kill(  ) payable public{
-        selfdestruct(msg.sender);
+        selfdestruct(payable(msg.sender));
     }
 }
 

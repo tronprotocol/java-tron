@@ -25,13 +25,13 @@ public class ReceiptCapsule {
   private long multiSignFee;
 
   /**
-   * 执行交易之前合约部署账户上可用的能量
+   * Available energy of contract deployer before executing transaction
    */
   @Setter
   private long originEnergyLeft;
 
   /**
-   * 执行交易之前调用者账户上可用的能量
+   * Available energy of caller before executing transaction
    */
   @Setter
   private long callerEnergyLeft;
@@ -140,7 +140,7 @@ public class ReceiptCapsule {
       return;
     }
 
-    if (caller.getAddress().equals(origin.getAddress())) {
+    if ((!Objects.isNull(origin))&&caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
           receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
     } else {
