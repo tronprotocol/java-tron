@@ -1,13 +1,14 @@
 #!/bin/bash
 APP=$1
-MANIFEST_OPT=$2
 ALL_OPT=$*
 NEED_REBUILD=0
+ALL_ARR_OPT=($@)
+ALL_OPT_NUM=$#
 
 if [[ $1 == '--rewrite--manifest' ]] || [[ $1 == '--r' ]]  ; then
    APP=''
    NEED_REBUILD=1
- elif [[ $1 == '--rewrite--manifest' ]] || [[ $1 == '--r' ]]  ; then
+ elif [[ $2 == '--rewrite--manifest' ]] || [[ $2 == '--r' ]]  ; then
    NEED_REBUILD=1
 fi
 
@@ -17,10 +18,19 @@ rebuildManifest() {
  fi
 }
 
-
 buildManifest() {
  ARCHIVE_JAR='ArchiveManifest.jar'
- java -jar $ARCHIVE_JAR $ALL_OPT
+ if [[ -f $archive_jar ]] ; then
+  java -jar $archive_jar $all_opt
+ else
+  echo 'download archivemanifest.jar'
+  download=`wget https://github.com/tronprotocol/java-tron/releases/download/greatvoyage-v4.3.0/archivemanifest.jar`
+  if [[ $download == 0 ]] ; then
+   echo 'download success, rebuild manifest'
+   java -jar $archive_jar $all_opt
+  fi
+ fi
+
  ret=$?
  if [[ $ret == 0 ]] ; then
      echo 'rebuild manifest success'
@@ -30,25 +40,49 @@ buildManifest() {
  return ret
 }
 
-checkMemory() {
- ALLOW_MEMORY=16000000
- ALLOW_MAX_MEMORY=32000000
- MAX_MATESPACE_SIZE=' -XX:MaxMetaspaceSize=512m '
- total=`cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print $2}'`
- # total < ALLOW_MEN
- if [ $total -lt $ALLOW_MEMORY ] ; then
-    echo "Direct memory must be greater than $ALLOW_MEMORY!, current memory: $total!!"
-    exit
- fi
- if [[ $total -gt $ALLOW_MEMORY ]] && [[ $total -lt $ALLOW_MAX_MEMORY ]] ; then
-echo 1 $total
-    MAX_NEW_SIZE=' -XX:NewSize=3072m -XX:MaxNewSize=3072m '
-    MEM_OPT="$MAX_MATESPACE_SIZE $MAX_NEW_SIZE"
+checkmemory() {
+ allow_memory=8000000
+ allow_max_memory=48000000
+ max_matespace_size=' -xx:maxmetaspacesize=512m '
+ total=`cat /proc/meminfo  |grep memtotal |awk -f ' ' '{print $2}'`
+ default_memory=true
 
- elif [[ $total -gt $ALLOW_MEMORY ]] ; then
-echo 2 $total
-    NEW_RATIO=' -XX:NewSize=6144m -XX:MaxNewSize=6144m '
-    MEM_OPT="$MAX_MATESPACE_SIZE $NEW_RATIO"
+ position=0
+ for param in $ALL_ARR_OPT
+  do
+   if [[ $param == '-mem' ]]; then
+    arr_index=$[position+1]
+    memory=${ALL_ARR_OPT[position+1]}
+    echo 'input direct memory:' $memory'MB'
+    memory=$[memory * 1000]
+    if [[ $memory =~ ^[0-9]*$ ]] && [[ $memory -gt $allow_memory ]]; then
+      allow_memory=$memory
+      default_memory=false
+    else
+     echo "direct memory must be greater than1111 $allow_memory!, current memory: $total!!"
+    fi
+   fi
+   position=$[position+1]
+ done
+
+ if [ $default_memory == true ]; then
+  # total < allow_mem
+  if [ $total -lt $allow_memory ] ; then
+     echo "direct memory must be greater than $allow_memory!, current memory: $total!!"
+     exit
+  fi
+  if [[ $total -gt $allow_memory ]] && [[ $total -lt $allow_max_memory ]] ; then
+     MAX_NEW_SIZE=' -XX:NewSize=3072m -XX:MaxNewSize=3072m '
+     MEM_OPT="$max_matespace_size $max_new_size"
+
+  elif [[ $total -gt $allow_memory ]] ; then
+     NEW_RATIO=' -XX:NewSize=6144m -XX:MaxNewSize=6144m '
+     MEM_OPT="$max_matespace_size $new_ratio"
+  fi
+else
+  NEW_RATIO=2
+  max_matespace_size=$allow_memory / 16
+  MEM_OPT="$max_matespace_size $new_ratio"
  fi
 }
 
@@ -134,5 +168,5 @@ else
  exit -1
 fi
 sleep 5
-checkMemory
+checkmemory
 startService
