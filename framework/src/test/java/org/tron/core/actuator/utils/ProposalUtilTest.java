@@ -1,6 +1,10 @@
 package org.tron.core.actuator.utils;
 
+import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -9,10 +13,12 @@ import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
@@ -83,7 +89,7 @@ public class ProposalUtilTest {
   public void validateCheck() {
     ProposalUtil actuatorUtil = new ProposalUtil();
     DynamicPropertiesStore dynamicPropertiesStore = null;
-    ForkController forkUtils = null;
+    ForkController forkUtils = ForkController.instance();
     long invalidValue = -1;
 
     try {
@@ -299,6 +305,56 @@ public class ProposalUtilTest {
           + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed", e.getMessage());
     }
 
-  }
+    forkUtils.init(dbManager.getChainBaseManager());
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_0_1.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_0_1.getValue(), stats);
+    ByteString address = ByteString
+        .copyFrom(ByteArray.fromHexString("a0ec6525979a351a54fa09fea64beb4cce33ffbb7a"));
+    List<ByteString> w = new ArrayList<>();
+    w.add(address);
+    forkUtils.getManager().getWitnessScheduleStore().saveActiveWitnesses(w);
+    try {
+      actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_SHIELDED_TRC20_TRANSACTION
+              .getCode(), 2);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("This value[ALLOW_SHIELDED_TRC20_TRANSACTION] is only allowed"
+          + " to be 1 or 0", e.getMessage());
+    }
 
+    hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_3.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_3.getValue(), stats);
+    try {
+      actuatorUtil.validator(dynamicPropertiesStore, forkUtils, ProposalType.FREE_NET_LIMIT
+          .getCode(), -1);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter value, valid range is [0,100_000]",
+          e.getMessage());
+    }
+
+    try {
+      actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.TOTAL_NET_LIMIT.getCode(), -1);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals("Bad chain parameter value, valid range is [0, 1_000_000_000_000L]",
+          e.getMessage());
+    }
+  }
 }
