@@ -127,7 +127,7 @@ public class TransactionReceipt {
     }
 
     logs = logList.toArray(new TransactionReceipt.TransactionLog[logList.size()]);
-    logsBloom = null; // no value
+    logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
     root = null;
   }
 }
