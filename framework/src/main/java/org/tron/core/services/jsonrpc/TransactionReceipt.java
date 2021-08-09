@@ -106,7 +106,7 @@ public class TransactionReceipt {
       TransactionReceipt.TransactionLog transactionLog = new TransactionReceipt.TransactionLog();
       // index is the index in the block
       transactionLog.logIndex = ByteArray.toJsonHex(index + cumulativeLogCount);
-      transactionLog.transactionHash = txid;
+      transactionLog.transactionHash = transactionHash;
       transactionLog.transactionIndex = transactionIndex;
       transactionLog.blockHash = blockHash;
       transactionLog.blockNumber = blockNumber;
