@@ -261,12 +261,9 @@ public class TronNetDelegate {
     }
   }
 
-  public void validBlock(BlockCapsule block) throws P2pException {
+  public boolean validBlock(BlockCapsule block) throws P2pException {
     try {
-      if (dbManager.validBlock(block)) {
-        throw new P2pException(TypeEnum.BAD_BLOCK,
-                "Valid block failed: " + block.getBlockId().toString());
-      }
+      return dbManager.validBlock(block);
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }

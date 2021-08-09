@@ -112,17 +112,26 @@ public class BlockMsgHandler implements TronMsgHandler {
       return;
     }
 
-    tronNetDelegate.validBlock(block);
-
-    if (fastForward) {
-      advService.fastForward(new BlockMessage(block));
-      tronNetDelegate.trustNode(peer);
-    } else {
-      advService.broadcast(new BlockMessage(block));
+    boolean flag = tronNetDelegate.validBlock(block);
+    if (flag) {
+      if (fastForward) {
+        advService.fastForward(new BlockMessage(block));
+        tronNetDelegate.trustNode(peer);
+      } else {
+        advService.broadcast(new BlockMessage(block));
+      }
     }
 
     try {
       tronNetDelegate.processBlock(block, false);
+      if (!flag) {
+        if (fastForward) {
+          advService.fastForward(new BlockMessage(block));
+          tronNetDelegate.trustNode(peer);
+        } else {
+          advService.broadcast(new BlockMessage(block));
+        }
+      }
 
       witnessProductBlockService.validWitnessProductTwoBlock(block);
 

@@ -980,16 +980,8 @@ public class Manager {
   }
 
   public boolean validBlock(final BlockCapsule block) throws ValidateSignatureException {
-    if (!block.validateSignature(chainBaseManager.getDynamicPropertiesStore(),
-            chainBaseManager.getAccountStore())) {
-      logger.warn("Validate signature failed. {}", block.getInstance());
-      return false;
-    }
-    if (!consensus.validBlock(block)) {
-      logger.warn("Validate witness failed. {}", block.getInstance());
-      return false;
-    }
-    return true;
+    return block.validateSignature(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getAccountStore()) && consensus.validBlock(block);
   }
 
   /**
