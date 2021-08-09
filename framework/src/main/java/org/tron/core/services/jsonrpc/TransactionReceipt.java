@@ -113,6 +113,10 @@ public class TransactionReceipt {
       byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
       transactionLog.address = ByteArray.toJsonHexAddress(addressByte);
       transactionLog.data = ByteArray.toJsonHex(log.getData().toByteArray());
+      if (transactionLog.data == null) {
+        transactionLog.data = "0x";
+      }
+
       String[] topics = new String[log.getTopicsCount()];
       for (int i = 0; i < log.getTopicsCount(); i++) {
         topics[i] = ByteArray.toJsonHex(log.getTopics(i).toByteArray());
