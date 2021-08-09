@@ -323,10 +323,10 @@ public class ProposalUtilTest {
     w.add(address);
     forkUtils.getManager().getWitnessScheduleStore().saveActiveWitnesses(w);
     try {
-      actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.ALLOW_SHIELDED_TRC20_TRANSACTION
               .getCode(), 2);
-      Assert.assertTrue(false);
+      Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals("This value[ALLOW_SHIELDED_TRC20_TRANSACTION] is only allowed"
           + " to be 1 or 0", e.getMessage());
@@ -340,18 +340,18 @@ public class ProposalUtilTest {
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_3.getValue(), stats);
     try {
-      actuatorUtil.validator(dynamicPropertiesStore, forkUtils, ProposalType.FREE_NET_LIMIT
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, ProposalType.FREE_NET_LIMIT
           .getCode(), -1);
-      Assert.assertTrue(false);
+      Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals("Bad chain parameter value, valid range is [0,100_000]",
           e.getMessage());
     }
 
     try {
-      actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.TOTAL_NET_LIMIT.getCode(), -1);
-      Assert.assertTrue(false);
+      Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals("Bad chain parameter value, valid range is [0, 1_000_000_000_000L]",
           e.getMessage());
