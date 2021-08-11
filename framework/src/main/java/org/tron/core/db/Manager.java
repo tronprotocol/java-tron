@@ -979,9 +979,8 @@ public class Manager {
     return txs;
   }
 
-  public boolean validBlock(final BlockCapsule block) throws ValidateSignatureException {
-    return block.validateSignature(chainBaseManager.getDynamicPropertiesStore(),
-            chainBaseManager.getAccountStore()) && consensus.validBlock(block);
+  public boolean validWitness(final BlockCapsule block) {
+    return consensus.validBlock(block);
   }
 
   /**

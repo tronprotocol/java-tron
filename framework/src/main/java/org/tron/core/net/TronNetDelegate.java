@@ -261,12 +261,20 @@ public class TronNetDelegate {
     }
   }
 
-  public boolean validBlock(BlockCapsule block) throws P2pException {
+  public void validSignature(BlockCapsule block) throws P2pException {
     try {
-      return dbManager.validBlock(block);
+      if (!block.validateSignature(dbManager.getDynamicPropertiesStore(),
+              dbManager.getAccountStore())) {
+        throw new P2pException(TypeEnum.BAD_BLOCK, "valid signature failed.");
+      }
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public boolean preValid(BlockCapsule block) throws P2pException {
+    validSignature(block);
+    return dbManager.validWitness(block);
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {
