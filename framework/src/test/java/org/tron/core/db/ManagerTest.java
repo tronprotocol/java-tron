@@ -232,20 +232,20 @@ public class ManagerTest extends BlockGenerate {
   }
 
 
-  @Test
-  public void pushBlockInvalidSignature() {
-    // invalid witness address cause invalid signature
-    String invalidWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
-    blockCapsule2.setWitness(invalidWitness);
-    try {
-      dbManager.pushBlock(blockCapsule2);
-      Assert.assertTrue(false);
-    } catch (BadBlockException e) {
-      Assert.assertEquals("The signature is not validated", e.getMessage());
-    } catch (Exception e) {
-      Assert.assertFalse(e instanceof Exception);
-    }
-  }
+//  @Test
+//  public void pushBlockInvalidSignature() {
+//    // invalid witness address cause invalid signature
+//    String invalidWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
+//    blockCapsule2.setWitness(invalidWitness);
+//    try {
+//      dbManager.pushBlock(blockCapsule2);
+//      Assert.assertTrue(false);
+//    } catch (BadBlockException e) {
+//      Assert.assertEquals("The signature is not validated", e.getMessage());
+//    } catch (Exception e) {
+//      Assert.assertFalse(e instanceof Exception);
+//    }
+//  }
 
 
   @Test
