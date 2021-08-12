@@ -88,11 +88,6 @@ public class AssetUtilTest {
     com.google.protobuf.ByteString address = ByteString.copyFrom(randomBytes(32));
     Protocol.AccountType accountType = Protocol.AccountType.forNumber(1);
     AccountCapsule accountCapsule = new AccountCapsule(accountName, address, accountType);
-//    Protocol.Account build = accountCapsule.getInstance().toBuilder()
-//            .addAllFrozenSupply(getFrozenList())
-//            .build();
-//    accountCapsule.setInstance(build);
-
     Protocol.AccountAsset accountAsset =
             Protocol.AccountAsset.newBuilder()
             .setAddress(accountCapsule.getInstance().getAddress())
