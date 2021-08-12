@@ -140,7 +140,8 @@ public class BlockMsgHandler implements TronMsgHandler {
         }
       });
     } catch (Exception e) {
-      logger.warn("Process adv block {} from peer {} failed.", blockId, peer.getInetAddress());
+      logger.warn("Process adv block {} from peer {} failed. reason: {}",
+              blockId, peer.getInetAddress(), e.getMessage());
     }
   }
 
