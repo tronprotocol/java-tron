@@ -2,8 +2,8 @@ package org.tron.core.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
