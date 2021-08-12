@@ -7,8 +7,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Test;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -56,7 +56,7 @@ public class ValidateMultiSignContractTest {
   ValidateMultiSign contract = new ValidateMultiSign();
 
   @Test
-  void testAddressNonExist() {
+  public void testAddressNonExist() {
     byte[] hash = Hash.sha3(longData);
     ECKey key = new ECKey();
     byte[] sign = key.sign(hash).toByteArray();
@@ -70,7 +70,7 @@ public class ValidateMultiSignContractTest {
   }
 
   @Test
-  void testDifferentCase() {
+  public void testDifferentCase() {
     //Create an account with permission
 
     ECKey key = new ECKey();

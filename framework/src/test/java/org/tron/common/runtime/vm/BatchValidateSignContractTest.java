@@ -6,8 +6,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Test;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.StringUtil;
@@ -33,7 +33,7 @@ public class BatchValidateSignContractTest {
   PrecompiledContracts.BatchValidateSign contract = new BatchValidateSign();
 
   @Test
-  void staticCallTest() {
+  public void staticCallTest() {
     contract.setConstantCall(true);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -87,7 +87,7 @@ public class BatchValidateSignContractTest {
   }
 
   @Test
-  void correctionTest() {
+  public void correctionTest() {
     contract.setConstantCall(false);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
