@@ -23,13 +23,21 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   protected Snapshot root;
 
   SnapshotImpl(Snapshot snapshot) {
-    synchronized (this) {
-      db = new HashDB(SnapshotImpl.class.getSimpleName());
-    }
-
     root = snapshot.getRoot();
+    synchronized (this) {
+      db = new HashDB(SnapshotImpl.class.getSimpleName() + ":" + root.getDbName());
+    }
     previous = snapshot;
     snapshot.setNext(this);
+
+    // merge for DynamicPropertiesStore，100 keys
+    if ("properties".equalsIgnoreCase(root.getDbName())) {
+      if (root == previous ){
+        Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
+      }else {
+        merge(previous);
+      }
+    }
   }
 
   @Override
@@ -40,6 +48,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   private byte[] get(Snapshot head, byte[] key) {
     Snapshot snapshot = head;
     Value value;
+    if ("properties".equalsIgnoreCase(root.getDbName())) {
+      value = db.get(Key.of(key));
+      return value == null ? null: value.getBytes();
+    }
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
         return value.getBytes();
