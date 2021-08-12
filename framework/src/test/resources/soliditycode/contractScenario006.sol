@@ -77,7 +77,7 @@ library NameFilter {
             if (_temp[i] > 0x40 && _temp[i] < 0x5b)
             {
                 // convert to lower case a-z
-                _temp[i] = byte(uint8(_temp[i]) + 32);
+                _temp[i] = bytes1(uint8(_temp[i]) + 32);
 
                 // we have a non number
                 if (_hasNonNumber == false)
@@ -882,7 +882,7 @@ contract FoMo3Dlong is F3Devents {
         uint256 _rID = rID_;
 
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -973,12 +973,12 @@ contract FoMo3Dlong is F3Devents {
         bytes32 _name = _nameString.nameFilter();
         address _addr = msg.sender;
         uint256 _paid = msg.value;
-        (bool _isNewPlayer, uint256 _affID) = playerBook.registerNameXIDFromDapp.value(_paid)(_addr, _name, _affCode, _all);
+        (bool _isNewPlayer, uint256 _affID) = playerBook.registerNameXIDFromDapp{value:_paid}(_addr, _name, _affCode, _all);
 
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, block.timestamp);
     }
 
     function registerNameXaddr(string memory _nameString, address _affCode, bool _all)
@@ -989,12 +989,12 @@ contract FoMo3Dlong is F3Devents {
         bytes32 _name = _nameString.nameFilter();
         address _addr = msg.sender;
         uint256 _paid = msg.value;
-        (bool _isNewPlayer, uint256 _affID) = playerBook.registerNameXaddrFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
+        (bool _isNewPlayer, uint256 _affID) = playerBook.registerNameXaddrFromDapp{value:msg.value}(msg.sender, _name, _affCode, _all);
 
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, block.timestamp);
     }
 
     function registerNameXname(string memory _nameString, bytes32 _affCode, bool _all)
@@ -1005,12 +1005,12 @@ contract FoMo3Dlong is F3Devents {
         bytes32 _name = _nameString.nameFilter();
         address _addr = msg.sender;
         uint256 _paid = msg.value;
-        (bool _isNewPlayer, uint256 _affID) = playerBook.registerNameXnameFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
+        (bool _isNewPlayer, uint256 _affID) = playerBook.registerNameXnameFromDapp{value:msg.value}(msg.sender, _name, _affCode, _all);
 
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, block.timestamp);
     }
     //==============================================================================
     //     _  _ _|__|_ _  _ _  .
@@ -1030,7 +1030,7 @@ contract FoMo3Dlong is F3Devents {
         uint256 _rID = rID_;
 
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         // are we in a round?
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
@@ -1055,7 +1055,7 @@ contract FoMo3Dlong is F3Devents {
         uint256 _rID = rID_;
 
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         if (_now < round_[_rID].end)
             if (_now > round_[_rID].strt + rndGap_)
@@ -1082,7 +1082,7 @@ contract FoMo3Dlong is F3Devents {
         uint256 _rID = rID_;
 
         // if round has ended.  but round end has not been run (so contract has not distributed winnings)
-        if (now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
+        if (block.timestamp > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
         {
             // if player is winner
             if (round_[_rID].plyr == _pID)
@@ -1224,7 +1224,7 @@ contract FoMo3Dlong is F3Devents {
         uint256 _rID = rID_;
 
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         // if round is active
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
@@ -1278,7 +1278,7 @@ contract FoMo3Dlong is F3Devents {
         uint256 _rID = rID_;
 
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         // if round is active
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
@@ -1459,7 +1459,7 @@ contract FoMo3Dlong is F3Devents {
     returns (uint256)
     {
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         // are we in a round?
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
@@ -1483,7 +1483,7 @@ contract FoMo3Dlong is F3Devents {
         uint256 _rID = rID_;
 
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         // are we in a round?
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
@@ -1546,7 +1546,7 @@ contract FoMo3Dlong is F3Devents {
 
             // set up player account
             pIDxAddr_[msg.sender] = _pID;
-            plyr_[_pID].addr = msg.sender;
+            plyr_[_pID].addr = payable(msg.sender);
 
             if (_name != "")
             {
@@ -1639,7 +1639,7 @@ contract FoMo3Dlong is F3Devents {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-        address payable add = address(uint160(Jekyll_Island_Inc));
+        address payable add = payable(address(uint160(Jekyll_Island_Inc)));
         if (!add.send(_com))
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
@@ -1657,7 +1657,7 @@ contract FoMo3Dlong is F3Devents {
 
         // send share for p3d to divies
         if (_p3d > 0){
-            address payable addr = address(uint160(Divies));
+            address payable addr = payable(address(uint160(Divies)));
             addr.transfer(_p3d);
         }
         // prepare event data
@@ -1673,8 +1673,8 @@ contract FoMo3Dlong is F3Devents {
         // start next round
         rID_++;
         _rID++;
-        round_[_rID].strt = now;
-        round_[_rID].end = now.add(rndInit_).add(rndGap_);
+        round_[_rID].strt = block.timestamp;
+        round_[_rID].end = block.timestamp.add(rndInit_).add(rndGap_);
         round_[_rID].pot = _res;
 
         return (_eventData_);
@@ -1703,7 +1703,7 @@ contract FoMo3Dlong is F3Devents {
     private
     {
         // grab time
-        uint256 _now = now;
+        uint256 _now = block.timestamp;
 
         // calculate time based on number of keys bought
         uint256 _newTime;
@@ -1733,9 +1733,9 @@ contract FoMo3Dlong is F3Devents {
 
                 (block.timestamp).add
                 (block.difficulty).add
-                ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (now)).add
+                ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (block.timestamp)).add
                 (block.gaslimit).add
-                ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (now)).add
+                ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (block.timestamp)).add
                 (block.number)
 
             )));
@@ -1755,7 +1755,7 @@ contract FoMo3Dlong is F3Devents {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
         uint256 _p3d;
-        address payable addr = address(uint160(Jekyll_Island_Inc));
+        address payable addr = payable(address(uint160(Jekyll_Island_Inc)));
         if (!addr.send(_com))
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
@@ -1770,7 +1770,7 @@ contract FoMo3Dlong is F3Devents {
 
         // pay 1% out to FoMo3D short
          _com = _eth / 100;
-        address payable add = address(uint160(otherF3D_));
+        address payable add = payable(address(uint160(otherF3D_)));
         add.transfer(_com);
 
         // distribute share to affiliate
@@ -1780,7 +1780,7 @@ contract FoMo3Dlong is F3Devents {
         // affiliate must not be self, and must have a name registered
         if (_affID != _pID && plyr_[_affID].name != '') {
             plyr_[_affID].aff = _com.add(plyr_[_affID].aff);
-            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _com, now);
+            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _com, block.timestamp);
         } else {
             _p3d = _com;
         }
@@ -1790,7 +1790,7 @@ contract FoMo3Dlong is F3Devents {
         if (_p3d > 0)
         {
             // deposit to divies contract
-            address payable add = address(uint160(Divies));
+            address payable add = payable(address(uint160(Divies)));
             add.transfer(_p3d);
 
             // set up event data
@@ -1908,7 +1908,7 @@ contract FoMo3Dlong is F3Devents {
     function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
     private
     {
-        _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (_team * 100000000000000000000000000000);
+        _eventData_.compressedData = _eventData_.compressedData + (block.timestamp * 1000000000000000000) + (_team * 100000000000000000000000000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
 
         emit F3Devents.onEndTx
@@ -1955,8 +1955,8 @@ contract FoMo3Dlong is F3Devents {
 
         // lets start first round
         rID_ = 1;
-        round_[1].strt = now + rndExtra_ - rndGap_;
-        round_[1].end = now + rndInit_ + rndExtra_;
+        round_[1].strt = block.timestamp + rndExtra_ - rndGap_;
+        round_[1].end = block.timestamp + rndInit_ + rndExtra_;
     }
 
 

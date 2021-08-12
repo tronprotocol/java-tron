@@ -353,6 +353,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
         }
       } catch (Exception e) {
+        if (e instanceof InterruptedException){
+          Thread.currentThread().interrupt();
+        }
         throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
       }
     }

@@ -1,14 +1,29 @@
 package org.tron.core.vm.nativecontract.param;
 
+/**
+ * Param used by WithdrawRewardProcessor
+ */
 public class WithdrawRewardParam {
 
-  private byte[] targetAddress;
+  // Account address which want to withdraw its reward
+  private byte[] ownerAddress;
 
-  public byte[] getTargetAddress() {
-    return targetAddress;
+  // Latest block timestamp
+  private long nowInMs;
+
+  public byte[] getOwnerAddress() {
+    return ownerAddress;
   }
 
-  public void setTargetAddress(byte[] targetAddress) {
-    this.targetAddress = targetAddress;
+  public void setOwnerAddress(byte[] ownerAddress) {
+    this.ownerAddress = ownerAddress;
+  }
+
+  public long getNowInMs() {
+    return nowInMs;
+  }
+
+  public void setNowInMs(long nowInMs) {
+    this.nowInMs = nowInMs;
   }
 }

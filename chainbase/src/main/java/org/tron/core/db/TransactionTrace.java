@@ -7,9 +7,8 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
@@ -30,7 +29,12 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.store.*;
+import org.tron.core.store.AbiStore;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -53,6 +57,8 @@ public class TransactionTrace {
   private AccountStore accountStore;
 
   private CodeStore codeStore;
+
+  private AbiStore abiStore;
 
   private EnergyProcessor energyProcessor;
 
@@ -92,6 +98,7 @@ public class TransactionTrace {
     this.dynamicPropertiesStore = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
     this.contractStore = storeFactory.getChainBaseManager().getContractStore();
     this.codeStore = storeFactory.getChainBaseManager().getCodeStore();
+    this.abiStore = storeFactory.getChainBaseManager().getAbiStore();
     this.accountStore = storeFactory.getChainBaseManager().getAccountStore();
 
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
@@ -297,6 +304,7 @@ public class TransactionTrace {
   }
 
   public void deleteContract(byte[] address) {
+    abiStore.delete(address);
     codeStore.delete(address);
     accountStore.delete(address);
     contractStore.delete(address);

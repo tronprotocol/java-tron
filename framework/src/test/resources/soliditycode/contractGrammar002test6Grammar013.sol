@@ -4,7 +4,7 @@ uint count = 0;
 address payable owner;
 //function Counter() public{
 constructor() public{
-owner = msg.sender;
+owner = payable(msg.sender);
 }
 function increment() public {
 uint step = 10;

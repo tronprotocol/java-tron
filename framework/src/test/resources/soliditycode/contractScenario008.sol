@@ -173,7 +173,7 @@ contract KittyBase is KittyAccessControl {
 
     /// @dev Transfer event as defined in current draft of ERC721. Emitted every time a kitten
     ///  ownership is assigned, including births.
-    event Transfer(address from, address to, uint256 tokenId);
+    event Transfer1(address from, address to, uint256 tokenId);
 
     /*** DATA TYPES ***/
 
@@ -305,7 +305,7 @@ contract KittyBase is KittyAccessControl {
             delete kittyIndexToApproved[_tokenId];
         }
         // Emit the transfer event.
-        emit Transfer(_from, _to, _tokenId);
+        emit Transfer1(_from, _to, _tokenId);
     }
 
     /// @dev An internal method that creates a new kitty and stores it. This
@@ -343,7 +343,7 @@ contract KittyBase is KittyAccessControl {
 
         Kitty memory _kitty = Kitty({
             genes: _genes,
-            birthTime: uint64(now),
+            birthTime: uint64(block.timestamp),
             cooldownEndBlock: 0,
             matronId: uint32(_matronId),
             sireId: uint32(_sireId),
@@ -1008,7 +1008,7 @@ contract KittyBreeding is KittyOwnership {
         pregnantKitties--;
 
         // Send the balance fee to the person who made birth happen.
-        msg.sender.transfer(autoBirthFee);
+        payable(msg.sender).transfer(autoBirthFee);
 
         // return the new kitten's ID
         return kittenId;
@@ -1078,7 +1078,7 @@ contract KittyAuction is KittyBreeding {
             _startingPrice,
             _endingPrice,
             _duration,
-            msg.sender
+            payable(msg.sender)
         );
     }
 
@@ -1107,7 +1107,7 @@ contract KittyAuction is KittyBreeding {
             _startingPrice,
             _endingPrice,
             _duration,
-            msg.sender
+            payable(msg.sender)
         );
     }
 
@@ -1133,7 +1133,7 @@ contract KittyAuction is KittyBreeding {
         require(msg.value >= currentPrice + autoBirthFee);
 
         // Siring auction will throw if the bid fails.
-        siringAuction.bid.value(msg.value - autoBirthFee)(_sireId);
+        siringAuction.bid{value:(msg.value - autoBirthFee)}(_sireId);
         _breedWith(uint32(_matronId), uint32(_sireId));
     }
 
@@ -1189,7 +1189,7 @@ contract KittyMinting is KittyAuction {
             _computeNextGen0Price(),
             0,
             GEN0_AUCTION_DURATION,
-            address(uint160(address(this)))
+            payable(address(uint160(address(this))))
         );
 
         gen0CreatedCount++;
@@ -1274,7 +1274,7 @@ contract KittyCore is KittyMinting {
         cooAddress = msg.sender;
 
         // start with the mythical kitten 0 - so we don't have generation-0 parent issues
-        _createKitty(0, 0, 0, uint256(-1), address(0));
+        _createKitty(0, 0, 0, uint256(int256(-1)), address(0));
     }
 
     /// @dev Used to mark the smart contract as upgraded, in case there is a serious
@@ -1592,7 +1592,7 @@ uint256 bidExcess = _bidAmount - price;
 // Return the funds. Similar to the previous transfer, this is
 // not susceptible to a re-entry attack because the auction is
 // removed before any transfers occur.
-msg.sender.transfer(bidExcess);
+    payable(msg.sender).transfer(bidExcess);
 
 // Tell the world!
 emit AuctionSuccessful(_tokenId, price, msg.sender);
@@ -1626,8 +1626,8 @@ uint256 secondsPassed = 0;
 // A bit of insurance against negative values (or wraparound).
 // Probably not necessary (since Ethereum guarnatees that the
 // now variable doesn't ever go backwards).
-if (now > _auction.startedAt) {
-secondsPassed = now - _auction.startedAt;
+if (block.timestamp > _auction.startedAt) {
+secondsPassed = block.timestamp - _auction.startedAt;
 }
 
 return _computeCurrentPrice(
@@ -1774,7 +1774,7 @@ nonFungibleContract = candidateContract;
 ///  Always transfers to the NFT contract, but can be called either by
 ///  the owner or the NFT contract.
 function withdrawBalance() external {
-address payable nftAddress = address(uint160(address(nonFungibleContract)));
+address payable nftAddress = payable(address(uint160(address(nonFungibleContract))));
 
 require(
 msg.sender == owner ||
@@ -1815,7 +1815,7 @@ _seller,
 uint128(_startingPrice),
 uint128(_endingPrice),
 uint64(_duration),
-uint64(now)
+uint64(block.timestamp)
 );
 _addAuction(_tokenId, auction);
 }
@@ -1944,7 +1944,7 @@ _seller,
 uint128(_startingPrice),
 uint128(_endingPrice),
 uint64(_duration),
-uint64(now)
+uint64(block.timestamp)
 );
 _addAuction(_tokenId, auction);
 }
@@ -2018,7 +2018,7 @@ _seller,
 uint128(_startingPrice),
 uint128(_endingPrice),
 uint64(_duration),
-uint64(now)
+uint64(block.timestamp)
 );
 _addAuction(_tokenId, auction);
 }

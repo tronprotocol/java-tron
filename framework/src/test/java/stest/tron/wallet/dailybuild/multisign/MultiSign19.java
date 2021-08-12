@@ -498,8 +498,8 @@ public class MultiSign19 {
     try {
       PublicMethed.accountPermissionUpdateForResponse(
           accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
-    } catch (org.spongycastle.util.encoders.DecoderException e) {
-      logger.info("org.spongycastle.util.encoders.DecoderException !");
+    } catch (org.bouncycastle.util.encoders.DecoderException e) {
+      logger.info("org.bouncycastle.util.encoders.DecoderException !");
       ret = true;
     }
     Assert.assertTrue(ret);

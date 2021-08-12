@@ -1,14 +1,14 @@
 
 contract testA {
     constructor() public payable {
-        A a = (new A).value(10)();
+        A a = (new A){value:10}();
         a.fun();
     }
 }
 
 contract testB {
     constructor() public payable {
-        B b = (new B).value(10)();
+        B b = (new B){value:10}();
         b.fun();
     }
 }
@@ -16,14 +16,14 @@ contract testB {
 
 contract testC {
     constructor() public payable{
-        C c = (new C).value(10)();
+        C c = (new C){value:10}();
         c.fun();
     }
 }
 
 contract testD {
     constructor() public payable{
-        D d = (new D).value(10)();
+        D d = (new D){value:10}();
         d.fun();
     }
 }
@@ -31,7 +31,7 @@ contract testD {
 
 contract A {
     constructor() public payable{
-        selfdestruct(msg.sender);
+        selfdestruct(payable(msg.sender));
     }
     function fun() public {
     }

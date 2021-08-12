@@ -19,8 +19,8 @@
 package org.tron.core.vm.program.invoke;
 
 import com.google.protobuf.ByteString;
-import org.spongycastle.util.Arrays;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;

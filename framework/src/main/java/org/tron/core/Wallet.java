@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -121,6 +121,7 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -329,6 +330,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -359,6 +361,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -1004,20 +1007,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
         .build());
 
-    //builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-    //    .setKey("getAllowTvmStake")
-    //    .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmStake())
-    //    .build());
-
-    //builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-    //        .setKey("getAllowTvmAssetIssue")
-    //        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
-    //        .build());
-
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTransactionFeePool")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTransactionFeePool())
         .build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMaxFeeLimit")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxFeeLimit())
@@ -1036,6 +1030,26 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmFreeze")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmVote")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getFreeNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getFreeNetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
         .build());
 
     return builder.build();
@@ -1350,8 +1364,8 @@ public class Wallet {
     }
     TransactionInfoCapsule transactionInfoCapsule;
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-          .get(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
+              .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1359,8 +1373,8 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-          .getTransactionInfo(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
+              .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
@@ -2499,13 +2513,19 @@ public class Wallet {
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = chainBaseManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    SmartContract.ABI abi = contractStore.getABI(contractAddress);
-    if (abi == null) {
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(contractAddress);
+    if (contractCapsule == null) {
       throw new ContractValidateException(
           "No contract or not a valid smart contract");
+    }
+    AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(contractAddress);
+    SmartContract.ABI abi;
+    if (abiCapsule == null || abiCapsule.getData() == null) {
+      abi = SmartContract.ABI.getDefaultInstance();
+    } else {
+      abi = abiCapsule.getInstance();
     }
 
     byte[] selector = WalletUtil.getSelector(
@@ -2576,7 +2596,7 @@ public class Wallet {
     }
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
-
+    builder.setEnergyUsed(result.getEnergyUsed());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
@@ -2604,9 +2624,13 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = chainBaseManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
+      }
       return contractCapsule.getInstance();
     }
     return null;
@@ -2621,7 +2645,7 @@ public class Wallet {
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
           "Get contract failed, the account does not exist or the account does not have a code "
@@ -2629,14 +2653,20 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = dbManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
-      CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
-      if (Objects.nonNull(codeCapsule)) {
-        contractCapsule.setRuntimecode(codeCapsule.getData());
-        return contractCapsule.generateWrapper();
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
       }
+      CodeCapsule codeCapsule = chainBaseManager.getCodeStore().get(address);
+      if (Objects.nonNull(codeCapsule) && Objects.nonNull(codeCapsule.getData())) {
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+      } else {
+        contractCapsule.setRuntimecode(new byte[0]);
+      }
+      return contractCapsule.generateWrapper();
     }
     return null;
   }

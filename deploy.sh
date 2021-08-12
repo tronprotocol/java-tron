@@ -1,5 +1,5 @@
 #!/bin/bash
-if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
+if [[ "$TRAVIS_BRANCH" = "develop_1" || "$TRAVIS_BRANCH" = "master_1" ]];then
     stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
     echo "Trying to connect to stest_server network"
     timeout 10 ping -c 5  47.93.42.145 > /dev/null || exit 1

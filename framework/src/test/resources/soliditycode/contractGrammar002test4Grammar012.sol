@@ -11,12 +11,12 @@ function info() public payable returns (uint,address,bytes4,uint,uint,uint,addre
 //var f = block.timestamp;
 //bytes memory g = msg.data;
 uint256 h = gasleft();
-address payable i = msg.sender;
+address payable i = payable(msg.sender);
 bytes4 j = msg.sig;
 uint256 k = msg.value;
-uint256 l = now;
+uint256 l = block.timestamp;
 uint256 m = tx.gasprice;
-address payable n = tx.origin;
+address payable n = payable(tx.origin);
 uint256 o = address(this).balance;
 return (h,i,j,k,l,m,n,o);
 //return (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o);

@@ -3,10 +3,10 @@ package org.tron.common.runtime.vm;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -198,7 +198,7 @@ public class TransferToAccountTest {
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        EnergyCost.getInstance().getNEW_ACCT_CALL());
+        EnergyCost.getInstance().getNewAcctCall());
     //5. Test transfer Trx with exsit account
 
     selectorStr = "transferTo(address,uint256)";
@@ -233,7 +233,7 @@ public class TransferToAccountTest {
 
     //7.test energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        EnergyCost.getInstance().getNEW_ACCT_CALL());
+        EnergyCost.getInstance().getNewAcctCall());
 
     //8.test transfer to itself
     selectorStr = "transferTo(address,uint256)";

@@ -464,15 +464,11 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowTvmStake;
-
-  @Getter
-  @Setter
-  public long allowTvmAssetIssue;
-
-  @Getter
-  @Setter
   public long allowTvmFreeze;
+
+  @Getter
+  @Setter
+  public long allowTvmVote;
 
   @Getter
   @Setter
@@ -493,6 +489,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean openTransactionSort = false;
+
+  @Getter
+  @Setter
+  public long allowAccountAssetOptimization;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

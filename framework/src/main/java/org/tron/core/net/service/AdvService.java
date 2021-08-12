@@ -83,7 +83,7 @@ public class AdvService {
       try {
         consumerInvToSpread();
       } catch (Exception exception) {
-        logger.error("Spread thread error.", exception.getMessage());
+        logger.error("Spread thread error. {}", exception.getMessage());
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
@@ -91,7 +91,7 @@ public class AdvService {
       try {
         consumerInvToFetch();
       } catch (Exception exception) {
-        logger.error("Fetch thread error.", exception.getMessage());
+        logger.error("Fetch thread error. {}", exception.getMessage());
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
