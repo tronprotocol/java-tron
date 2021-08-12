@@ -17,6 +17,9 @@ package org.tron.core.capsule.utils;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import java.io.File;
+import java.util.List;
+import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -33,9 +36,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.protos.Protocol;
 
-import java.io.File;
-import java.util.List;
-import java.util.Random;
+
 
 
 @Slf4j
@@ -87,10 +88,10 @@ public class AssetUtilTest {
     com.google.protobuf.ByteString address = ByteString.copyFrom(randomBytes(32));
     Protocol.AccountType accountType = Protocol.AccountType.forNumber(1);
     AccountCapsule accountCapsule = new AccountCapsule(accountName, address, accountType);
-    Protocol.Account build = accountCapsule.getInstance().toBuilder()
-            .addAllFrozenSupply(getFrozenList())
-            .build();
-    accountCapsule.setInstance(build);
+//    Protocol.Account build = accountCapsule.getInstance().toBuilder()
+//            .addAllFrozenSupply(getFrozenList())
+//            .build();
+//    accountCapsule.setInstance(build);
 
     Protocol.AccountAsset accountAsset =
             Protocol.AccountAsset.newBuilder()
