@@ -15,9 +15,8 @@
 
 package org.tron.core.capsule.utils;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -34,6 +33,9 @@ import org.tron.core.db.Manager;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.protos.Protocol;
 
+import java.io.File;
+import java.util.List;
+import java.util.Random;
 
 
 @Slf4j
@@ -70,6 +72,11 @@ public class AssetUtilTest {
     Protocol.AccountType accountType = Protocol.AccountType.forNumber(1);
     AccountCapsule accountCapsule = new AccountCapsule(accountName, address, accountType);
     accountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(1)), 1000L);
+    Protocol.Account build = accountCapsule.getInstance().toBuilder()
+            .addAllFrozenSupply(getFrozenList())
+            .build();
+    accountCapsule.setInstance(build);
+
     return accountCapsule;
   }
 
@@ -80,6 +87,10 @@ public class AssetUtilTest {
     com.google.protobuf.ByteString address = ByteString.copyFrom(randomBytes(32));
     Protocol.AccountType accountType = Protocol.AccountType.forNumber(1);
     AccountCapsule accountCapsule = new AccountCapsule(accountName, address, accountType);
+    Protocol.Account build = accountCapsule.getInstance().toBuilder()
+            .addAllFrozenSupply(getFrozenList())
+            .build();
+    accountCapsule.setInstance(build);
 
     Protocol.AccountAsset accountAsset =
             Protocol.AccountAsset.newBuilder()
@@ -105,6 +116,28 @@ public class AssetUtilTest {
     AccountCapsule account = createAccount2();
     Protocol.Account asset = AssetUtil.importAsset(account.getInstance());
     Assert.assertNotNull(asset);
+  }
+
+  @Test
+  public void tetGetFrozen() {
+    AccountCapsule account = createAccount2();
+    Protocol.Account build = account.getInstance().toBuilder()
+            .addAllFrozenSupply(getFrozenList())
+            .build();
+    account.setInstance(build);
+    Assert.assertNotNull(account.getFrozenSupplyList());
+  }
+
+  private static List<Protocol.Account.Frozen> getFrozenList() {
+    List<Protocol.Account.Frozen> frozenList = Lists.newArrayList();
+    for (int i = 0; i < 3; i++) {
+      Protocol.Account.Frozen newFrozen = Protocol.Account.Frozen.newBuilder()
+              .setFrozenBalance(i * 1000 + 1)
+              .setExpireTime(1000)
+              .build();
+      frozenList.add(newFrozen);
+    }
+    return frozenList;
   }
 
 }
