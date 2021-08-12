@@ -85,6 +85,8 @@ public class TronNetDelegate {
 
   private int blockIdCacheSize = 100;
 
+  private long timeout = 1000;
+
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
     public boolean offer(BlockId blockId) {
@@ -272,9 +274,20 @@ public class TronNetDelegate {
     }
   }
 
-  public boolean preValid(BlockCapsule block) throws P2pException {
+  public boolean validBlock(BlockCapsule block) throws P2pException {
+    long time = System.currentTimeMillis();
+    if (block.getTimeStamp() - time > timeout) {
+      throw new P2pException(TypeEnum.BAD_BLOCK,
+              "time:" + time + ",block time:" + block.getTimeStamp());
+    }
     validSignature(block);
-    return dbManager.validWitness(block);
+    long headNum = getHeadBlockId().getNum();
+    boolean flag = dbManager.validWitness(block);
+    if (!flag && block.getNum() - headNum <= 1) {
+      throw new P2pException(TypeEnum.BAD_BLOCK,
+              "block num:" + block.getNum() + ",head num:" + headNum);
+    }
+    return flag;
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {

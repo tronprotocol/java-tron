@@ -106,13 +106,13 @@ public class BlockMsgHandler implements TronMsgHandler {
       advService.addInvToCache(item);
     }
 
-    if (block.getNum() < tronNetDelegate.getHeadBlockId().getNum()) {
-      logger.warn("Receive a low block {}, head {}",
-              blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
+    long headNum = tronNetDelegate.getHeadBlockId().getNum();
+    if (block.getNum() < headNum) {
+      logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
       return;
     }
 
-    boolean flag = tronNetDelegate.preValid(block);
+    boolean flag = tronNetDelegate.validBlock(block);
     if (flag) {
       if (fastForward) {
         advService.fastForward(new BlockMessage(block));
@@ -140,7 +140,7 @@ public class BlockMsgHandler implements TronMsgHandler {
         }
       });
     } catch (Exception e) {
-      logger.warn("Process block {} from peer {} failed.", blockId, peer.getInetAddress());
+      logger.warn("Process adv block {} from peer {} failed.", blockId, peer.getInetAddress());
     }
   }
 
