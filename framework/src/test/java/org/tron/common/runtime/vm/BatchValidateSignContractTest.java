@@ -25,7 +25,7 @@ public class BatchValidateSignContractTest {
 
   static {
     smellData = new byte[10];
-    longData = new byte[100000000];
+    longData = new byte[1000000];
     Arrays.fill(smellData, (byte) 1);
     Arrays.fill(longData, (byte) 2);
   }

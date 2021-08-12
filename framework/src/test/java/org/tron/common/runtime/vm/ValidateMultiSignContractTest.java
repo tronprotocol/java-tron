@@ -49,7 +49,7 @@ public class ValidateMultiSignContractTest {
     dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
     dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
 
-    longData = new byte[100000000];
+    longData = new byte[1000000];
     Arrays.fill(longData, (byte) 2);
   }
 
