@@ -34,7 +34,7 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 @Slf4j
 public class ValidateMultiSignContractTest {
 
-  private static final String dbPath = "output_PrecompiledContracts_test";
+  private static final String dbPath = "output_ValidateMultiSignContract_test";
   private static final String METHOD_SIGN = "validatemultisign(address,uint256,bytes32,bytes[])";
   private static final byte[] longData;
   private static TronApplicationContext context;
