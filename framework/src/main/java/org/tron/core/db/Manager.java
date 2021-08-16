@@ -220,6 +220,9 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
+  private float processCostAvg = 0.0F;
+  private long processBlockTotal = 0;
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -1129,6 +1132,11 @@ public class Manager {
         block.getNum(),
         System.currentTimeMillis() - start,
         block.getTransactions().size());
+    processCostAvg = (processCostAvg * (processBlockTotal++)
+        + (System.currentTimeMillis() - start)) / processBlockTotal;
+
+    logger.info("##pushBlockTotal## block total:{}, avg: {}",
+        processBlockTotal,String.format("%.2f",processCostAvg));
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
