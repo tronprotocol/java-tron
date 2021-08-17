@@ -132,9 +132,9 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
     PARAMETER.pBFTHttpPort = 0;
-    PARAMETER.fullNodeJsonRpcHttpPort = 0;
-    PARAMETER.solidityJsonRpcHttpPort = 0;
-    PARAMETER.pBFTJsonRpcHttpPort = 0;
+    PARAMETER.jsonRpcHttpFullNodePort = 0;
+    PARAMETER.jsonRpcHttpSolidityPort = 0;
+    PARAMETER.jsonRpcHttpPBFTPort = 0;
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -176,9 +176,9 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
-    PARAMETER.fullNodeHttpJsonRpcEnable = true;
-    PARAMETER.solidityNodeHttpJsonRpcEnable = true;
-    PARAMETER.pBFTNodeHttpJsonRpcEnable = false;
+    PARAMETER.jsonRpcHttpFullNodeEnable = false;
+    PARAMETER.jsonRpcHttpSolidityNodeEnable = false;
+    PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
@@ -296,19 +296,19 @@ public class Args extends CommonParameter {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
     }
 
-    if (config.hasPath(Constant.NODE_HTTP_JSONRPC_FULLNODE_ENABLE)) {
-      PARAMETER.fullNodeHttpJsonRpcEnable =
-          config.getBoolean(Constant.NODE_HTTP_JSONRPC_FULLNODE_ENABLE);
+    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_FULLNODE_ENABLE)) {
+      PARAMETER.jsonRpcHttpFullNodeEnable =
+          config.getBoolean(Constant.NODE_JSONRPC_HTTP_FULLNODE_ENABLE);
     }
 
-    if (config.hasPath(Constant.NODE_HTTP_JSONRPC_SOLIDITY_ENABLE)) {
-      PARAMETER.solidityNodeHttpJsonRpcEnable =
-          config.getBoolean(Constant.NODE_HTTP_JSONRPC_SOLIDITY_ENABLE);
+    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_SOLIDITY_ENABLE)) {
+      PARAMETER.jsonRpcHttpSolidityNodeEnable =
+          config.getBoolean(Constant.NODE_JSONRPC_HTTP_SOLIDITY_ENABLE);
     }
 
-    if (config.hasPath(Constant.NODE_HTTP_JSONRPC_PBFT_ENABLE)) {
-      PARAMETER.pBFTNodeHttpJsonRpcEnable =
-          config.getBoolean(Constant.NODE_HTTP_JSONRPC_PBFT_ENABLE);
+    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE)) {
+      PARAMETER.jsonRpcHttpPBFTNodeEnable =
+          config.getBoolean(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
@@ -472,17 +472,17 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
             ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
 
-    PARAMETER.fullNodeJsonRpcHttpPort =
-        config.hasPath(Constant.NODE_HTTP_JSONRPC_FULLNODE_PORT)
-            ? config.getInt(Constant.NODE_HTTP_JSONRPC_FULLNODE_PORT) : 8093;
+    PARAMETER.jsonRpcHttpFullNodePort =
+        config.hasPath(Constant.NODE_JSONRPC_HTTP_FULLNODE_PORT)
+            ? config.getInt(Constant.NODE_JSONRPC_HTTP_FULLNODE_PORT) : 8545;
 
-    PARAMETER.solidityJsonRpcHttpPort =
-        config.hasPath(Constant.NODE_HTTP_JSONRPC_SOLIDITY_PORT)
-            ? config.getInt(Constant.NODE_HTTP_JSONRPC_SOLIDITY_PORT) : 8094;
+    PARAMETER.jsonRpcHttpSolidityPort =
+        config.hasPath(Constant.NODE_JSONRPC_HTTP_SOLIDITY_PORT)
+            ? config.getInt(Constant.NODE_JSONRPC_HTTP_SOLIDITY_PORT) : 8555;
 
-    PARAMETER.pBFTJsonRpcHttpPort =
-        config.hasPath(Constant.NODE_HTTP_JSONRPC_PBFT_PORT)
-            ? config.getInt(Constant.NODE_HTTP_JSONRPC_PBFT_PORT) : 8095;
+    PARAMETER.jsonRpcHttpPBFTPort =
+        config.hasPath(Constant.NODE_JSONRPC_HTTP_PBFT_PORT)
+            ? config.getInt(Constant.NODE_JSONRPC_HTTP_PBFT_PORT) : 8565;
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)

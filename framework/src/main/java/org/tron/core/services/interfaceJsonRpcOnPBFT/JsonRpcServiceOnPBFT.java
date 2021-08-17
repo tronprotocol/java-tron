@@ -14,7 +14,7 @@ import org.tron.common.parameter.CommonParameter;
 @Slf4j(topic = "API")
 public class JsonRpcServiceOnPBFT implements Service {
 
-  private int port = CommonParameter.getInstance().getPBFTJsonRpcHttpPort();
+  private int port = CommonParameter.getInstance().getJsonRpcHttpPBFTPort();
 
   private Server server;
 

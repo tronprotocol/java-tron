@@ -20,7 +20,7 @@ import org.tron.core.services.filter.HttpInterceptor;
 @Slf4j(topic = "API")
 public class FullNodeJsonRpcHttpService implements Service {
 
-  private int port = CommonParameter.getInstance().getFullNodeJsonRpcHttpPort();
+  private int port = CommonParameter.getInstance().getJsonRpcHttpFullNodePort();
 
   private Server server;
 

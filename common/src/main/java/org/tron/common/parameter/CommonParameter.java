@@ -170,13 +170,13 @@ public class CommonParameter {
   public int solidityHttpPort;
   @Getter
   @Setter
-  public int fullNodeJsonRpcHttpPort;
+  public int jsonRpcHttpFullNodePort;
   @Getter
   @Setter
-  public int solidityJsonRpcHttpPort;
+  public int jsonRpcHttpSolidityPort;
   @Getter
   @Setter
-  public int pBFTJsonRpcHttpPort;
+  public int jsonRpcHttpPBFTPort;
   @Getter
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
@@ -400,13 +400,13 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
-  public boolean fullNodeHttpJsonRpcEnable = false;
+  public boolean jsonRpcHttpFullNodeEnable = false;
   @Getter
   @Setter
-  public boolean solidityNodeHttpJsonRpcEnable = false;
+  public boolean jsonRpcHttpSolidityNodeEnable = false;
   @Getter
   @Setter
-  public boolean pBFTNodeHttpJsonRpcEnable = false;
+  public boolean jsonRpcHttpPBFTNodeEnable = false;
   @Getter
   @Setter
   public int maxTransactionPendingSize;

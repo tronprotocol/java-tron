@@ -86,7 +86,7 @@ public class FullNode {
     }
 
     // JSON-RPC http server
-    if (CommonParameter.getInstance().fullNodeHttpJsonRpcEnable) {
+    if (CommonParameter.getInstance().jsonRpcHttpFullNodeEnable) {
       FullNodeJsonRpcHttpService jsonRpcHttpService =
           context.getBean(FullNodeJsonRpcHttpService.class);
       appT.addService(jsonRpcHttpService);
@@ -105,7 +105,7 @@ public class FullNode {
       }
 
       // JSON-RPC on solidity
-      if (CommonParameter.getInstance().solidityNodeHttpJsonRpcEnable) {
+      if (CommonParameter.getInstance().jsonRpcHttpSolidityNodeEnable) {
         JsonRpcServiceOnSolidity jsonRpcServiceOnSolidity = context
             .getBean(JsonRpcServiceOnSolidity.class);
         appT.addService(jsonRpcServiceOnSolidity);
@@ -113,7 +113,7 @@ public class FullNode {
     }
 
     // PBFT API (HTTP and GRPC)
-    if (Args.getInstance().getStorage().getDbVersion() == dbVersion) {
+    if (CommonParameter.getInstance().getStorage().getDbVersion() == dbVersion) {
       RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
           .getBean(RpcApiServiceOnPBFT.class);
       appT.addService(rpcApiServiceOnPBFT);
@@ -122,7 +122,7 @@ public class FullNode {
       appT.addService(httpApiOnPBFTService);
 
       // JSON-RPC on PBFT
-      if (CommonParameter.getInstance().pBFTNodeHttpJsonRpcEnable) {
+      if (CommonParameter.getInstance().jsonRpcHttpPBFTNodeEnable) {
         JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
         appT.addService(jsonRpcServiceOnPBFT);
       }
