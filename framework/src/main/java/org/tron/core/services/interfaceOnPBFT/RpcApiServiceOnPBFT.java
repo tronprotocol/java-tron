@@ -40,6 +40,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
+import org.tron.core.services.ratelimiter.ApiAccessInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -74,6 +75,9 @@ public class RpcApiServiceOnPBFT implements Service {
 
   @Autowired
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
+
+  @Autowired
+  private ApiAccessInterceptor apiAccessInterceptor;
 
   @Override
   public void init() {
@@ -113,6 +117,9 @@ public class RpcApiServiceOnPBFT implements Service {
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);

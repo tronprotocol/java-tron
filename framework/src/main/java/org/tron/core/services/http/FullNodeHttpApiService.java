@@ -22,6 +22,7 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.filter.HttpAccessFilter;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 
@@ -542,10 +543,18 @@ public class FullNodeHttpApiService implements Service {
 
       // filter
       ServletHandler handler = new ServletHandler();
-      FilterHolder fh = handler
+      FilterHolder fh = handler.addFilterWithMapping((Class<? extends Filter>) HttpAccessFilter.class, "/*",
+          EnumSet.of(DispatcherType.REQUEST));
+      context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+
+      handler = new ServletHandler();
+      fh = handler
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+
+
+
 
       server.start();
     } catch (Exception e) {

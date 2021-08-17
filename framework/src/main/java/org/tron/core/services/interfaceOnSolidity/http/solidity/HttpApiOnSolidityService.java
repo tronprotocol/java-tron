@@ -2,16 +2,19 @@ package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.HttpAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
@@ -147,6 +150,9 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
+  // @Autowired
+  // private HttpAccessFilter httpAccessFilter;
+
   @Override
   public void init() {
 
@@ -249,6 +255,12 @@ public class HttpApiOnSolidityService implements Service {
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
           EnumSet.allOf(DispatcherType.class));
+
+      // filter
+      ServletHandler handler = new ServletHandler();
+      FilterHolder fh = handler.addFilterWithMapping((Class<? extends Filter>) HttpAccessFilter.class, "/*",
+          EnumSet.of(DispatcherType.REQUEST));
+      context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
