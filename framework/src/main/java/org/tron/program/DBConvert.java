@@ -57,14 +57,7 @@ public class DBConvert implements Callable<Boolean> {
   private final long startTime;
   private static final int CPUS  = Runtime.getRuntime().availableProcessors();
   private static final int BATCH  = 256;
-  private static final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
-      CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
-      new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
-      new ThreadPoolExecutor.CallerRunsPolicy());
 
-  static {
-    esDb.allowCoreThreadTimeOut(true);
-  }
 
   @Override
   public Boolean call() throws Exception {
@@ -80,7 +73,7 @@ public class DBConvert implements Callable<Boolean> {
     this.startTime = System.currentTimeMillis();
   }
 
-  private static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
+  public static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
     org.iq80.leveldb.Options dbOptions = new org.iq80.leveldb.Options();
     dbOptions.createIfMissing(true);
     dbOptions.paranoidChecks(true);
@@ -94,6 +87,13 @@ public class DBConvert implements Callable<Boolean> {
   }
 
   public static void main(String[] args) {
+    int code = run(args);
+    logger.info("exit code {}.", code);
+    System.out.printf("exit code %d.\n", code);
+    System.exit(code);
+  }
+
+  public static int run(String[] args) {
     String dbSrc;
     String dbDst;
     if (args.length < 2) {
@@ -106,7 +106,7 @@ public class DBConvert implements Callable<Boolean> {
     File dbDirectory = new File(dbSrc);
     if (!dbDirectory.exists()) {
       logger.info(" {} does not exist.", dbSrc);
-      return;
+      return 404;
     }
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
         .filter(File::isDirectory).collect(
@@ -114,10 +114,17 @@ public class DBConvert implements Callable<Boolean> {
 
     if (files.isEmpty()) {
       logger.info("{} does not contain any database.", dbSrc);
-      return;
+      return 0;
     }
     final long time = System.currentTimeMillis();
     final List<Future<Boolean>> res = new ArrayList<>();
+
+    final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
+        CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
+        new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
+        new ThreadPoolExecutor.CallerRunsPolicy());
+
+    esDb.allowCoreThreadTimeOut(true);
 
     files.forEach(f -> res.add(esDb.submit(new DBConvert(dbSrc, dbDst, f.getName()))));
 
@@ -142,7 +149,7 @@ public class DBConvert implements Callable<Boolean> {
     if (fails > 0) {
       logger.error("failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
     }
-    System.exit(fails);
+    return fails;
   }
 
   public DB newLevelDb(Path db) throws Exception {
