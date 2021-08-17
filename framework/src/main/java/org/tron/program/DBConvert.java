@@ -30,6 +30,7 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.Status;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
 import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
@@ -213,18 +214,35 @@ public class DBConvert implements Callable<Boolean> {
     values.clear();
   }
 
+  /**
+   * https://github.com/facebook/rocksdb/issues/6625
+   * @param rocks db
+   * @param batch write batch
+   * @throws Exception
+   */
   private void write(RocksDB rocks, org.rocksdb.WriteBatch batch) throws Exception {
     try {
       rocks.write(new org.rocksdb.WriteOptions(), batch);
     } catch (RocksDBException e) {
       // retry
-      if (e.getMessage() != null && "Write stall".equalsIgnoreCase(e.getMessage())) {
+      if (maybeRetry(e)) {
         TimeUnit.MILLISECONDS.sleep(1);
         write(rocks, batch);
       } else {
         throw e;
       }
     }
+  }
+
+  private boolean maybeRetry(RocksDBException e) {
+    boolean retry = false;
+    if (e.getStatus() != null) {
+      retry = e.getStatus().getCode() == Status.Code.TryAgain
+          || e.getStatus().getCode() == Status.Code.Busy
+          || e.getStatus().getCode() == Status.Code.Incomplete;
+    }
+    return retry || (e.getMessage() != null && ("Write stall".equalsIgnoreCase(e.getMessage())
+        || ("Incomplete").equalsIgnoreCase(e.getMessage())));
   }
 
   /**
