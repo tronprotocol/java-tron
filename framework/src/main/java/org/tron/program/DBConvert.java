@@ -218,7 +218,7 @@ public class DBConvert implements Callable<Boolean> {
    * https://github.com/facebook/rocksdb/issues/6625
    * @param rocks db
    * @param batch write batch
-   * @throws Exception
+   * @throws Exception RocksDBException
    */
   private void write(RocksDB rocks, org.rocksdb.WriteBatch batch) throws Exception {
     try {
