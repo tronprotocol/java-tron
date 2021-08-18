@@ -82,6 +82,7 @@ public class BatchValidateSignContractTest {
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
     Assert.assertEquals(ret.getValue(), new byte[32]);
+    System.gc(); // force triggering full gc to avoid timeout for next test
   }
 
   @Test
@@ -144,8 +145,7 @@ public class BatchValidateSignContractTest {
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
     Assert.assertEquals(ret.getValue(), new byte[32]);
-
-
+    System.gc(); // force triggering full gc to avoid timeout for next test
   }
 
   Pair<Boolean, byte[]> validateMultiSign(byte[] hash, List<Object> signatures,
