@@ -57,9 +57,7 @@ public class BatchValidateSignContractTest {
     Pair<Boolean, byte[]> ret;
     ret = validateMultiSign(hash, signatures, addresses);
     for (int i = 0; i < 16; i++) {
-      if (i >= 27) {
-        Assert.assertEquals(ret.getValue()[i], 0);
-      } else if (i % 5 == 0) {
+      if (i % 5 == 0) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else if (i == 13) {
         Assert.assertEquals(ret.getValue()[i], 0);
@@ -71,7 +69,7 @@ public class BatchValidateSignContractTest {
     addresses = new ArrayList<>();
 
     //test when length >= 16
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 17; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i == 11) {
@@ -133,7 +131,7 @@ public class BatchValidateSignContractTest {
     //test when length >= 32
     signatures = new ArrayList<>();
     addresses = new ArrayList<>();
-    for (int i = 0; i < 80; i++) {
+    for (int i = 0; i < 33; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i == 13) {
