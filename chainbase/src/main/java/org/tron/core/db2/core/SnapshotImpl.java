@@ -28,9 +28,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     }
     previous = snapshot;
     snapshot.setNext(this);
-
-    // merge for DynamicPropertiesStore，100 keys
-    if ("properties".equalsIgnoreCase(root.getDbName())) {
+    // inherit
+    isOptimized = snapshot.isOptimized();
+    // merge for DynamicPropertiesStore，about 100 keys
+    if (isOptimized) {
       if (root == previous ){
         Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
       }else {
@@ -47,7 +48,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   private byte[] get(Snapshot head, byte[] key) {
     Snapshot snapshot = head;
     Value value;
-    if ("properties".equalsIgnoreCase(root.getDbName())) {
+    if (isOptimized) {
       value = db.get(Key.of(key));
       return value == null ? null: value.getBytes();
     }
