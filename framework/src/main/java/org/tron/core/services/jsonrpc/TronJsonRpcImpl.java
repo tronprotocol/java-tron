@@ -11,7 +11,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +31,9 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
@@ -208,8 +209,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String ethChainId() {
-    return ByteArray.toJsonHex(chainId);
+  public String ethChainId() throws JsonRpcInternalException {
+    // return hash of genesis block
+    try {
+      return ByteArray.toJsonHex(wallet.getBlockCapsuleByNum(0).getBlockId().getBytes());
+    } catch (Exception e) {
+      throw new JsonRpcInternalException(e.getMessage());
+    }
   }
 
   @Override
@@ -256,11 +262,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
   }
 
-  /**
-   * @param data Hash of the method signature and encoded parameters. for example:
-   * getMethodSign(methodName(uint256,uint256)) || data1 || data2
-   */
-  private String call(byte[] ownerAddressByte, byte[] contractAddressByte, byte[] data) {
+  private void callTriggerConstantContract(byte[] ownerAddressByte, byte[] contractAddressByte,
+      byte[] data, TransactionExtention.Builder trxExtBuilder, Return.Builder retBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     TriggerSmartContract triggerContract = triggerCallContract(
         ownerAddressByte,
@@ -271,23 +275,31 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         null
     );
 
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
+        ContractType.TriggerSmartContract);
+    Transaction trx =
+        wallet.triggerConstantContract(triggerContract, trxCap, trxExtBuilder, retBuilder);
+
+    trxExtBuilder.setTransaction(trx);
+    trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+    trxExtBuilder.setResult(retBuilder);
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+  }
+
+  /**
+   * @param data Hash of the method signature and encoded parameters. for example:
+   * getMethodSign(methodName(uint256,uint256)) || data1 || data2
+   */
+  private String call(byte[] ownerAddressByte, byte[] contractAddressByte, byte[] data) {
+
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     TransactionExtention trxExt;
 
     try {
-      TransactionCapsule trxCap = wallet.createTransactionCapsule(triggerContract,
-          ContractType.TriggerSmartContract);
-      Transaction trx = wallet.triggerConstantContract(
-          triggerContract,
-          trxCap,
-          trxExtBuilder,
+      callTriggerConstantContract(ownerAddressByte, contractAddressByte, data, trxExtBuilder,
           retBuilder);
 
-      retBuilder.setResult(true).setCode(response_code.SUCCESS);
-      trxExtBuilder.setTransaction(trx);
-      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
-      trxExtBuilder.setResult(retBuilder);
     } catch (ContractValidateException | VMIllegalException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
@@ -349,7 +361,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getABIofSmartContract(String contractAddress, String blockNumOrTag)
+  public String getABIOfSmartContract(String contractAddress, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if ("earliest".equalsIgnoreCase(blockNumOrTag)
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
@@ -391,23 +403,35 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   // return energy fee
   @Override
   public String gasPrice() {
-    BigInteger gasPrice;
-    // 1sun as 1 Gwei(1 eth = 10^9Gwei), return wei(1 eth=10^18 wei), so 1 sun as 10^9 wei
-    BigInteger multiplier = new BigInteger("1000000000", 10);
-
-    gasPrice = BigInteger.valueOf(wallet.getEnergyFee());
-    return "0x" + gasPrice.multiply(multiplier).toString(16);
+    return ByteArray.toJsonHex(wallet.getEnergyFee());
   }
 
   @Override
-  public String estimateGas(CallArguments args) {
-    BigInteger feeLimit = BigInteger.valueOf(100);  // set fee limit: 100 trx
-    BigInteger precision = new BigInteger("1000000000000000000"); // 1ether = 10^18 wei
-    BigInteger gasPrice = new BigInteger(gasPrice().substring(2), 16);
-    if (gasPrice.compareTo(BigInteger.ZERO) > 0) {
-      return "0x" + feeLimit.multiply(precision).divide(gasPrice).toString(16);
-    } else {
+  public String estimateGas(CallArguments args) throws JsonRpcInvalidRequestException,
+      JsonRpcInvalidParamsException, JsonRpcInternalException {
+    byte[] ownerAddress = addressHashToByteArray(args.from);
+
+    ContractType contractType = args.getContractType(wallet);
+    if (contractType == ContractType.TransferContract) {
+      buildTransferContractTransaction(ownerAddress, new BuildArguments(args));
       return "0x0";
+    }
+
+    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    Return.Builder retBuilder = Return.newBuilder();
+
+    try {
+      callTriggerConstantContract(ownerAddress,
+          addressHashToByteArray(args.to),
+          ByteArray.fromHexString(args.data),
+          trxExtBuilder,
+          retBuilder);
+
+      return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
+    } catch (ContractValidateException e) {
+      throw new JsonRpcInvalidRequestException(e.getMessage());
+    } catch (Exception e) {
+      throw new JsonRpcInternalException(e.getMessage());
     }
   }
 

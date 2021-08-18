@@ -12,6 +12,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
+import org.tron.core.services.jsonrpc.TronJsonRpc.CallArguments;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
@@ -22,11 +23,11 @@ public class BuildArguments {
 
   public String from;
   public String to;
-  public String gas; //not used
-  public String gasPrice; //not used
+  public String gas = ""; //not used
+  public String gasPrice = ""; //not used
   public String value;
   public String data;
-  public String nonce; //not used
+  public String nonce = ""; //not used
 
   public Long tokenId = 0L;
   public Long tokenValue = 0L;
@@ -40,6 +41,15 @@ public class BuildArguments {
   public String extraData = "";
 
   public boolean visible = false;
+
+  public BuildArguments(CallArguments args) {
+    from = args.from;
+    to = args.to;
+    gas = args.gas;
+    gasPrice = args.gasPrice;
+    value = args.value;
+    data = args.data;
+  }
 
   public ContractType getContractType(Wallet wallet) throws JsonRpcInvalidRequestException,
       JsonRpcInvalidParamsException {

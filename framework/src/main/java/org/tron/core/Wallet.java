@@ -653,6 +653,15 @@ public class Wallet {
     }
   }
 
+  public BlockCapsule getBlockCapsuleByNum(long blockNum) {
+    try {
+      return chainBaseManager.getBlockByNum(blockNum);
+    } catch (StoreException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
   public long getTransactionCountByBlockNum(long blockNum) {
     long count = 0;
 
