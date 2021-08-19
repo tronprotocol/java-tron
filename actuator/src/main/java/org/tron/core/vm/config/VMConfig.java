@@ -51,6 +51,10 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_VOTE = false;
 
+  private static boolean ALLOW_TVM_LONDON = false;
+
+  private static boolean ALLOW_TVM_COMPATIBLE_EVM = false;
+
   private VMConfig() {
   }
 
@@ -102,6 +106,14 @@ public class VMConfig {
     ALLOW_TVM_VOTE = allow == 1;
   }
 
+  public static void initAllowTvmLondon(long allow) {
+    ALLOW_TVM_LONDON = allow == 1;
+  }
+
+  public static void initAllowTvmCompatibleEvm(long allow) {
+    ALLOW_TVM_COMPATIBLE_EVM = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -134,6 +146,14 @@ public class VMConfig {
 
   public static boolean allowTvmVote() {
     return ALLOW_TVM_VOTE;
+  }
+
+  public static boolean allowTvmLondon() {
+    return ALLOW_TVM_LONDON;
+  }
+
+  public static boolean allowTvmCompatibleEvm() {
+    return ALLOW_TVM_COMPATIBLE_EVM;
   }
 
   private static class SystemPropertiesInstance {

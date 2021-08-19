@@ -267,6 +267,9 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
   public static final String COMMITTEE_ALLOW_TVM_VOTE = "committee.allowTvmVote";
 
+  public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
+  public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
+
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";

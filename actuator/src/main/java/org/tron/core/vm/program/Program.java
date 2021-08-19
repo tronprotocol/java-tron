@@ -25,6 +25,7 @@ import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.tron.common.utils.ByteUtil.intToBytes;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -786,6 +787,13 @@ public class Program {
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
+
+    if (config.allowTvmLondon() && code[0] == (byte) 0xEF) {
+      if (null == createResult.getException()) {
+        createResult.setException(Program.Exception
+            .invalidOpCode((byte) 0xEF));
+      }
+    }
 
     long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
@@ -1650,6 +1658,11 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
+    // todo version fork
+    if (VMConfig.allowTvmCompatibleEvm()) {
+      availableEnergy.div(new DataWord(intToBytes(64)));
+      availableEnergy.sub(availableEnergy);
+    }
     return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
   }
 

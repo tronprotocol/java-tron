@@ -454,6 +454,14 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowTvmLondon;
+
+  @Getter
+  @Setter
+  public long allowTvmCompatibleEvm;
+
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter
