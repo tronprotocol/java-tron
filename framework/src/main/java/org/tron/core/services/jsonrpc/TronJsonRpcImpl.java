@@ -209,13 +209,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String ethChainId() throws JsonRpcInternalException {
-    // return hash of genesis block
-    try {
-      return ByteArray.toJsonHex(wallet.getBlockCapsuleByNum(0).getBlockId().getBytes());
-    } catch (Exception e) {
-      throw new JsonRpcInternalException(e.getMessage());
-    }
+  public String ethChainId() {
+    return ByteArray.toJsonHex(chainId);
   }
 
   @Override
@@ -431,7 +426,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     } catch (ContractValidateException e) {
       throw new JsonRpcInvalidRequestException(e.getMessage());
     } catch (Exception e) {
-      throw new JsonRpcInternalException(e.getMessage());
+      String errString = "invalid json request";
+      if (e.getMessage() != null) {
+        errString = e.getMessage().replaceAll("[\"]", "\'");
+      }
+
+      throw new JsonRpcInternalException(errString);
     }
   }
 
@@ -660,7 +660,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private TransactionJson buildCreateSmartContractTransaction(byte[] ownerAddress,
-      BuildArguments args) throws JsonRpcInvalidRequestException, JsonRpcInternalException {
+      BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException {
     try {
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
 
@@ -671,11 +672,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       ABI.Builder abiBuilder = ABI.newBuilder();
       if (StringUtils.isNotEmpty(args.abi)) {
-        StringBuffer abiSB = new StringBuffer("{");
-        abiSB.append("\"entrys\":");
-        abiSB.append(args.abi);
-        abiSB.append("}");
-        JsonFormat.merge(abiSB.toString(), abiBuilder, args.visible);
+        String abiStr = "{" + "\"entrys\":" + args.abi + "}";
+        JsonFormat.merge(abiStr, abiBuilder, args.visible);
       }
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
@@ -700,7 +698,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
-      rawBuilder.setFeeLimit(args.feeLimit);
+      rawBuilder.setFeeLimit(args.parseGas() * wallet.getEnergyFee());
 
       txBuilder.setRawData(rawBuilder);
       tx = setTransactionPermissionId(args.permissionId, txBuilder.build());
@@ -709,6 +707,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       transactionJson.transaction = JSON.parseObject(Util.printCreateTransaction(tx, false));
 
       return transactionJson;
+    } catch (JsonRpcInvalidParamsException e) {
+      throw new JsonRpcInvalidParamsException(e.getMessage());
     } catch (ContractValidateException e) {
       throw new JsonRpcInvalidRequestException(e.getMessage());
     } catch (Exception e) {
@@ -746,7 +746,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
-      rawBuilder.setFeeLimit(args.feeLimit);
+      rawBuilder.setFeeLimit(args.parseGas() * wallet.getEnergyFee());
       txBuilder.setRawData(rawBuilder);
 
       Transaction trx = wallet
@@ -754,6 +754,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
               retBuilder);
       trx = setTransactionPermissionId(args.permissionId, trx);
       trxExtBuilder.setTransaction(trx);
+    } catch (JsonRpcInvalidParamsException e) {
+      throw new JsonRpcInvalidParamsException(e.getMessage());
     } catch (ContractValidateException e) {
       throw new JsonRpcInvalidRequestException(e.getMessage());
     } catch (Exception e) {
@@ -808,13 +810,19 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return createTransactionJson(build, ContractType.TransferContract, args);
   }
 
+  // tokenId and tokenValue should not be null
   private TransactionJson buildTransferAssetContractTransaction(byte[] ownerAddress,
       BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
+    byte[] tokenIdArr = ByteArray.fromString(String.valueOf(args.tokenId));
+    if (tokenIdArr == null) {
+      throw new JsonRpcInvalidParamsException("invalid param value: invalid tokenId");
+    }
+
     TransferAssetContract.Builder build = TransferAssetContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
         .setToAddress(ByteString.copyFrom(addressHashToByteArray(args.to)))
-        .setAssetName(ByteString.copyFrom(ByteArray.fromString(String.valueOf(args.tokenId))))
+        .setAssetName(ByteString.copyFrom(tokenIdArr))
         .setAmount(args.tokenValue);
 
     return createTransactionJson(build, ContractType.TransferAssetContract, args);

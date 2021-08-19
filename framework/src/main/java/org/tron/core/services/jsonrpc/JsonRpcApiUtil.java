@@ -470,4 +470,26 @@ public class JsonRpcApiUtil {
     }
     return bHash;
   }
+
+  public static boolean paramStringIsNull(String string) {
+    return StringUtils.isEmpty(string) || string.equals("0x");
+  }
+
+  public static boolean paramQuantityIsNull(String quantity) {
+    return StringUtils.isEmpty(quantity) || quantity.equals("0x0");
+  }
+
+  public static long parseQuantityValue(String value) throws JsonRpcInvalidParamsException {
+    long callValue = 0L;
+
+    if (StringUtils.isNotEmpty(value)) {
+      try {
+        callValue = ByteArray.jsonHexToLong(value);
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException("invalid param value: invalid hex number");
+      }
+    }
+
+    return callValue;
+  }
 }

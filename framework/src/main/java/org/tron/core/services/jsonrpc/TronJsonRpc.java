@@ -84,64 +84,6 @@ public interface TronJsonRpc {
     }
   }
 
-  @NoArgsConstructor
-  @AllArgsConstructor
-  class CallArguments {
-
-    public String from;
-    public String to;
-    public String gas = ""; //not used
-    public String gasPrice = ""; //not used
-    public String value = ""; //not used
-    public String data;
-    public String nonce;
-
-    @Override
-    public String toString() {
-      return "CallArguments{"
-          + "from='" + from + '\''
-          + ", to='" + to + '\''
-          + ", gas='" + gas + '\''
-          + ", gasPrice='" + gasPrice + '\''
-          + ", value='" + value + '\''
-          + ", data='" + data + '\''
-          + ", nonce='" + nonce + '\''
-          + '}';
-    }
-
-    /**
-     * just support TransferContract and TriggerSmartContract
-     * */
-    public ContractType getContractType(Wallet wallet) throws JsonRpcInvalidRequestException,
-        JsonRpcInvalidParamsException {
-      ContractType contractType;
-
-      // from or to is null
-      if (StringUtils.isEmpty(from) || from.equals("0x")
-          || StringUtils.isEmpty(to) || to.equals("0x")) {
-        throw new JsonRpcInvalidRequestException("invalid json request");
-      } else {
-        byte[] contractAddressData = addressHashToByteArray(to);
-        BytesMessage.Builder build = BytesMessage.newBuilder();
-        BytesMessage bytesMessage =
-            build.setValue(ByteString.copyFrom(contractAddressData)).build();
-        SmartContract smartContract = wallet.getContract(bytesMessage);
-
-        // check if to is smart contract
-        if (smartContract != null) {
-          contractType = ContractType.TriggerSmartContract;
-        } else {
-          if (StringUtils.isNotEmpty(value)) {
-            contractType = ContractType.TransferContract;
-          } else {
-            throw new JsonRpcInvalidRequestException("invalid json request");
-          }
-        }
-      }
-      return contractType;
-    }
-  }
-
   class CompilationResult {
 
     public String code;
@@ -224,10 +166,7 @@ public interface TronJsonRpc {
   String getNetVersion();
 
   @JsonRpcMethod("eth_chainId")
-  @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32603, data = "{}"),
-  })
-  String ethChainId() throws JsonRpcInternalException;
+  String ethChainId();
 
   @JsonRpcMethod("net_listening")
   boolean isListening();

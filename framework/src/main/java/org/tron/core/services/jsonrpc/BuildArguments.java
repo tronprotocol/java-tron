@@ -1,6 +1,9 @@
 package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramQuantityIsNull;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 
 import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
@@ -8,11 +11,9 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
-import org.tron.core.services.jsonrpc.TronJsonRpc.CallArguments;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
@@ -23,7 +24,7 @@ public class BuildArguments {
 
   public String from;
   public String to;
-  public String gas = ""; //not used
+  public String gas = "0x0";
   public String gasPrice = ""; //not used
   public String value;
   public String data;
@@ -35,7 +36,6 @@ public class BuildArguments {
   public Long consumeUserResourcePercent = 0L;
   public Long originEnergyLimit = 0L;
   public String name = "";
-  public Long feeLimit = 0L;
 
   public Integer permissionId = 0;
   public String extraData = "";
@@ -56,9 +56,9 @@ public class BuildArguments {
     ContractType contractType;
 
     // to is null
-    if (StringUtils.isEmpty(to) || to.equals("0x")) {
+    if (paramStringIsNull(to)) {
       // data is null
-      if (StringUtils.isEmpty(data) || data.equals("0x")) {
+      if (paramStringIsNull(data)) {
         throw new JsonRpcInvalidRequestException("invalid json request");
       }
 
@@ -75,7 +75,7 @@ public class BuildArguments {
         contractType = ContractType.TriggerSmartContract;
       } else {
         // tokenId and tokenValue: trc10, value: TRX
-        if (tokenId > 0 && tokenValue > 0 && (StringUtils.isEmpty(value) || value.equals("0x0"))) {
+        if (availableTransferAsset()) {
           contractType = ContractType.TransferAssetContract;
         } else {
           if (StringUtils.isNotEmpty(value)) {
@@ -91,17 +91,15 @@ public class BuildArguments {
   }
 
   public long parseValue() throws JsonRpcInvalidParamsException {
-    long callValue = 0L;
+    return parseQuantityValue(value);
+  }
 
-    if (StringUtils.isNotEmpty(value)) {
-      try {
-        callValue = ByteArray.jsonHexToLong(value);
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException("invalid param value: invalid hex number");
-      }
-    }
+  public long parseGas() throws JsonRpcInvalidParamsException {
+    return parseQuantityValue(gas);
+  }
 
-    return callValue;
+  private boolean availableTransferAsset() {
+    return tokenId > 0 && tokenValue > 0 && paramQuantityIsNull(value);
   }
 
 }
