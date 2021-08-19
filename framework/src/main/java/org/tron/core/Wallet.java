@@ -226,6 +226,7 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import sun.awt.image.PixelConverter;
 
 @Slf4j
 @Component
@@ -263,6 +264,7 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
+  private boolean trxCacheEnable = Args.getInstance().isTrxCacheEnable();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
 
@@ -478,8 +480,9 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     trx.setTime(System.currentTimeMillis());
+    Sha256Hash txID = trx.getTransactionId();
     try {
-      Message message = new TransactionMessage(signedTransaction.toByteArray());
+      TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger
@@ -509,22 +512,30 @@ public class Wallet {
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
-      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-        logger.warn("Broadcast transaction {} has failed, it already exists.",
-            trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
-      } else {
-        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+      if (trxCacheEnable) {
+        if (dbManager.getTransactionIdCache().getIfPresent(txID) != null) {
+          logger.warn("Broadcast transaction {} has failed, it already exists.", txID);
+          return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
+        } else {
+          dbManager.getTransactionIdCache().put(txID, true);
+        }
       }
+
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      tronNetService.broadcast(message);
-      logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
-      return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      int n = tronNetService.fastBroadcastTransaction(message);
+      if (n == 0) {
+        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+                .setMessage(ByteString.copyFromUtf8("p2p broadcast failed.")).build();
+      } else {
+        logger.info("Broadcast transaction {} to {} peers successfully.",
+                trx.getTransactionId(), n);
+        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      }
     } catch (ValidateSignatureException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
           .build();

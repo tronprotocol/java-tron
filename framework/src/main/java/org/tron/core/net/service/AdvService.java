@@ -6,11 +6,8 @@ import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -19,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
@@ -139,6 +137,40 @@ public class AdvService {
     } else {
       return blockCache.getIfPresent(item);
     }
+  }
+
+  public int fastBroadcastTransaction(TransactionMessage msg) {
+
+    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+            .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+            .collect(Collectors.toList());
+
+    if (peers.size() == 0) {
+      logger.warn("Broadcast transaction {} failed, no connection.", msg.getMessageId());
+      return 0;
+    }
+
+    Item item = new Item(msg.getMessageId(), InventoryType.TRX);
+    trxCount.add();
+    trxCache.put(item, new TransactionMessage(msg.getTransactionCapsule().getInstance()));
+
+    List<Sha256Hash> list = new ArrayList<>();
+    list.add(msg.getMessageId());
+    InventoryMessage inventoryMessage = new InventoryMessage(list, InventoryType.TRX);
+
+    int peersCount = 0;
+    for (PeerConnection peer: peers) {
+      if (peer.getAdvInvReceive().getIfPresent(item) == null
+              && peer.getAdvInvSpread().getIfPresent(item) == null) {
+        peersCount++;
+        peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
+        peer.fastSend(inventoryMessage);
+      }
+    }
+    if (peersCount == 0) {
+      logger.warn("Broadcast transaction {} failed, no peers.", msg.getMessageId());
+    }
+    return peersCount;
   }
 
   public void broadcast(Message msg) {
