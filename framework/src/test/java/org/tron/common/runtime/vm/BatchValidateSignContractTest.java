@@ -66,27 +66,17 @@ public class BatchValidateSignContractTest {
         Assert.assertEquals(ret.getValue()[i], 1);
       }
     }
-    signatures = new ArrayList<>();
-    addresses = new ArrayList<>();
 
     //test when length >= 16
-    for (int i = 0; i < 17; i++) {
-      ECKey key = new ECKey();
-      byte[] sign = key.sign(hash).toByteArray();
-      if (i == 11) {
-        signatures.add(Hex.toHexString(DataWord.ONE().getData()));
-      } else {
-        signatures.add(Hex.toHexString(sign));
-      }
-      addresses.add(StringUtil.encode58Check(key.getAddress()));
-    }
+    signatures.add(Hex.toHexString(DataWord.ONE().getData()));
+    addresses
+        .add(StringUtil.encode58Check(TransactionTrace.convertToTronAddress(new byte[20])));
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
     Assert.assertEquals(ret.getValue(), new byte[32]);
     System.gc(); // force triggering full gc to avoid timeout for next test
   }
-
-  @Ignore
+  
   @Test
   public void correctionTest() {
     contract.setConstantCall(false);
@@ -130,23 +120,6 @@ public class BatchValidateSignContractTest {
     incorrectSigns.remove(incorrectSigns.size() - 1);
     ret = validateMultiSign(hash, incorrectSigns, addresses);
     Assert.assertEquals(ret.getValue(), DataWord.ZERO().getData());
-
-    //test when length >= 32
-    signatures = new ArrayList<>();
-    addresses = new ArrayList<>();
-    for (int i = 0; i < 33; i++) {
-      ECKey key = new ECKey();
-      byte[] sign = key.sign(hash).toByteArray();
-      if (i == 13) {
-        signatures.add(Hex.toHexString(DataWord.ONE().getData()));
-      } else {
-        signatures.add(Hex.toHexString(sign));
-      }
-      addresses.add(StringUtil.encode58Check(key.getAddress()));
-    }
-    ret = validateMultiSign(hash, signatures, addresses);
-    Assert.assertEquals(ret.getValue().length, 32);
-    Assert.assertEquals(ret.getValue(), new byte[32]);
     System.gc(); // force triggering full gc to avoid timeout for next test
   }
 
