@@ -265,7 +265,7 @@ public class Wallet {
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
   private boolean trxCacheEnable = Args.getInstance().isTrxCacheEnable();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
-  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
+  public static final String CONTRACT_VALIDATE_ERROR = "Contract validate error : ";
 
   @Autowired
   private TransactionUtil transactionUtil;
@@ -486,7 +486,7 @@ public class Wallet {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} has failed, no connection.", txID);
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
-              .setMessage(ByteString.copyFromUtf8("no connection"))
+              .setMessage(ByteString.copyFromUtf8("No connection."))
               .build();
         }
 
@@ -495,9 +495,9 @@ public class Wallet {
             .count();
 
         if (count < minEffectiveConnection) {
-          String info = "effective connection:" + count + " lt minEffectiveConnection:"
+          String info = "Effective connection:" + count + " lt minEffectiveConnection:"
               + minEffectiveConnection;
-          logger.warn("Broadcast transaction {} has failed, {}.", txID, info);
+          logger.warn("Broadcast transaction {} has failed. {}.", txID, info);
           return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
               .setMessage(ByteString.copyFromUtf8(info))
               .build();
@@ -506,13 +506,15 @@ public class Wallet {
 
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} has failed, too many pending.", txID);
-        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY)
+                .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
       }
 
       if (trxCacheEnable) {
         if (dbManager.getTransactionIdCache().getIfPresent(txID) != null) {
           logger.warn("Broadcast transaction {} has failed, it already exists.", txID);
-          return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
+          return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
+                  .setMessage(ByteString.copyFromUtf8("Transaction already exists.")).build();
         } else {
           dbManager.getTransactionIdCache().put(txID, true);
         }
@@ -525,7 +527,7 @@ public class Wallet {
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0) {
         return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-                .setMessage(ByteString.copyFromUtf8("p2p broadcast failed.")).build();
+                .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
       } else {
         logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
         return builder.setResult(true).setCode(response_code.SUCCESS).build();
@@ -533,7 +535,7 @@ public class Wallet {
     } catch (ValidateSignatureException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
-          .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Validate signature error: " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
@@ -543,37 +545,37 @@ public class Wallet {
     } catch (ContractExeException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
-          .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
+          .setMessage(ByteString.copyFromUtf8("Account resource insufficient error."))
           .build();
     } catch (DupTransactionException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("dup transaction"))
+          .setMessage(ByteString.copyFromUtf8("Dup transaction."))
           .build();
     } catch (TaposException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
-          .setMessage(ByteString.copyFromUtf8("Tapos check error"))
+          .setMessage(ByteString.copyFromUtf8("Tapos check error."))
           .build();
     } catch (TooBigTransactionException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
+          .setMessage(ByteString.copyFromUtf8("Transaction size is too big."))
           .build();
     } catch (TransactionExpirationException e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction expired"))
+          .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
     } catch (Exception e) {
       logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Error: " + e.getMessage()))
           .build();
     }
   }
