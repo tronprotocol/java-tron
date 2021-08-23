@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
@@ -491,5 +492,34 @@ public class JsonRpcApiUtil {
     }
 
     return callValue;
+  }
+
+  public static long getEnergyUsageTotal(Transaction transaction, Wallet wallet) {
+    long energyUsageTotal = 0;
+
+    String txID = ByteArray.toHexString(Sha256Hash
+        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transaction.getRawData().toByteArray()));
+    TransactionInfo transactionInfo = wallet
+        .getTransactionInfoById(ByteString.copyFrom(txID.getBytes()));
+    if (transactionInfo != null) {
+      energyUsageTotal = transactionInfo.getReceipt().getEnergyUsageTotal();
+    }
+
+    return energyUsageTotal;
+  }
+
+  public static long getEnergyUsageTotal(List<TransactionInfo> transactionInfoList, int i,
+      long blockNum) {
+    long energyUsageTotal = 0;
+    try {
+      energyUsageTotal = transactionInfoList.get(i).getReceipt().getEnergyUsageTotal();
+    } catch (Exception e) {
+      logger.warn(
+          "getBlockResult cannot get energy from transactionInfo, block.num={}, error is {}",
+          blockNum, e.getMessage());
+    }
+
+    return energyUsageTotal;
   }
 }

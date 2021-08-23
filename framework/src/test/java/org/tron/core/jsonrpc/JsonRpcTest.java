@@ -3,6 +3,7 @@ package org.tron.core.jsonrpc;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
@@ -77,6 +78,32 @@ public class JsonRpcTest {
     sb.append(position + "\",");
     sb.append("\"latest\"],\"id\":1}");
     return sb.toString();
+  }
+
+  private long parsePrice(long timestamp, String energyPriceHistory) {
+    String[] priceList = energyPriceHistory.split(",");
+
+    for (int i = priceList.length - 1; i >= 0; i--) {
+      String[] priceArray = priceList[i].split(":");
+      long time = Long.parseLong(priceArray[0]);
+      long price = Long.parseLong(priceArray[1]);
+      if (timestamp > time) {
+        return price;
+      }
+    }
+
+    return 0;
+  }
+
+  @Test
+  public void testGetEnergyPrice() {
+    String energyPriceHistory =
+        "0:100,1542607200000:20,1544724000000:10,1606240800000:40,1613044800000:140";
+    Assert.assertEquals(100L, parsePrice(1542607100000L, energyPriceHistory));
+    Assert.assertEquals(20L, parsePrice(1542607210000L, energyPriceHistory));
+    Assert.assertEquals(10L, parsePrice(1544724100000L, energyPriceHistory));
+    Assert.assertEquals(40L, parsePrice(1606240810000L, energyPriceHistory));
+    Assert.assertEquals(140L, parsePrice(1613044810000L, energyPriceHistory));
   }
 
 }

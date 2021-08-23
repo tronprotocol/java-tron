@@ -5,6 +5,7 @@ import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
 import static org.tron.core.services.http.Util.setTransactionExtraData;
 import static org.tron.core.services.http.Util.setTransactionPermissionId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
@@ -24,9 +25,11 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -181,21 +184,38 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     br.extraData = null; // no value
     br.size = ByteArray.toJsonHex(block.getSerializedSize());
     br.gasLimit = null;
-    br.gasUsed = null;
     br.timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
 
+    long gasUsedInBlock = 0;
     List<Object> txes = new ArrayList<>();
+    List<Transaction> transactionsList = block.getTransactionsList();
+    List<TransactionInfo> transactionInfoList =
+        wallet.getTransactionInfoByBlockNum(blockCapsule.getNum()).getTransactionInfoList();
     if (fullTx) {
-      for (int i = 0; i < block.getTransactionsList().size(); i++) {
-        txes.add(new TransactionResult(block, i, block.getTransactionsList().get(i), wallet));
+      long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
+
+      for (int i = 0; i < transactionsList.size(); i++) {
+        Transaction transaction = transactionsList.get(i);
+
+        long energyUsageTotal = getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
+        gasUsedInBlock += energyUsageTotal;
+
+        txes.add(new TransactionResult(blockCapsule, i, transaction,
+            energyUsageTotal, energyFee, wallet));
       }
     } else {
-      for (Transaction tx : block.getTransactionsList()) {
-        txes.add(ByteArray.toJsonHex(new TransactionCapsule(tx).getTransactionId().getBytes()));
+      for (int i = 0; i < transactionsList.size(); i++) {
+        gasUsedInBlock += getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
+
+        String txID = ByteArray.toHexString(Sha256Hash
+            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+                transactionsList.get(i).getRawData().toByteArray()));
+        txes.add(ByteArray.toJsonHex(txID.getBytes()));
       }
     }
     br.transactions = txes.toArray();
 
+    br.gasUsed = ByteArray.toJsonHex(gasUsedInBlock);
     List<String> ul = new ArrayList<>();
     br.uncles = ul.toArray(new String[ul.size()]);
 
@@ -500,7 +520,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       return null;
     }
 
-    return new TransactionResult(block, transactionIndex, transaction, wallet);
+    long energyUsageTotal = transactioninfo.getReceipt().getEnergyUsageTotal();
+    return new TransactionResult(new BlockCapsule(block), transactionIndex, transaction,
+        energyUsageTotal, wallet);
   }
 
   public TransactionResult getTransactionByBlockAndIndex(Block block, String index)
@@ -515,8 +537,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     if (txIndex >= block.getTransactionsCount()) {
       return null;
     }
+
     Transaction transaction = block.getTransactions(txIndex);
-    return new TransactionResult(block, txIndex, transaction, wallet);
+    long energyUsageTotal = getEnergyUsageTotal(transaction, wallet);
+
+    return new TransactionResult(new BlockCapsule(block), txIndex, transaction, energyUsageTotal,
+        wallet);
   }
 
   @Override

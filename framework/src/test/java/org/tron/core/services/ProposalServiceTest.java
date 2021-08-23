@@ -1,5 +1,6 @@
 package org.tron.core.services;
 
+import static org.tron.core.utils.ProposalUtil.ProposalType.ENERGY_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.WITNESS_127_PAY_PER_BLOCK;
 
 import java.io.File;
@@ -61,6 +62,24 @@ public class ProposalServiceTest {
       result = ProposalService.process(manager, proposalCapsule);
       Assert.assertTrue(result);
     }
+  }
+
+  @Test
+  public void testUpdateEnergyFee() {
+    String preHistory = manager.getDynamicPropertiesStore().getEnergyPriceHistory();
+
+    long newPrice = 500;
+    Proposal proposal = Proposal.newBuilder().putParameters(ENERGY_FEE.getCode(), newPrice).build();
+    ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
+    boolean result = ProposalService.process(manager, proposalCapsule);
+    Assert.assertTrue(result);
+
+    long currentPrice = manager.getDynamicPropertiesStore().getEnergyFee();
+    Assert.assertEquals(currentPrice, newPrice);
+
+    String currentHistory = manager.getDynamicPropertiesStore().getEnergyPriceHistory();
+    Assert.assertEquals(preHistory + "," + proposalCapsule.getExpirationTime() + ":" + newPrice,
+        currentHistory);
   }
 
 

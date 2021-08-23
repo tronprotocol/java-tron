@@ -75,6 +75,10 @@ public class ProposalService extends ProposalUtil {
         }
         case ENERGY_FEE: {
           manager.getDynamicPropertiesStore().saveEnergyFee(entry.getValue());
+          // update energy price history
+          manager.getDynamicPropertiesStore().saveEnergyPriceHistory(
+              manager.getDynamicPropertiesStore().getEnergyPriceHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         case EXCHANGE_CREATE_FEE: {

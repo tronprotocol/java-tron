@@ -31,9 +31,8 @@ public class TransactionResult {
   public String r;
   public String s;
 
-  public TransactionResult(Protocol.Block b, int index, Protocol.Transaction tx, Wallet wallet) {
-    BlockCapsule blockCapsule = new BlockCapsule(b);
-
+  public TransactionResult(BlockCapsule blockCapsule, int index, Protocol.Transaction tx,
+      long energyUsageTotal, long energyFee, Wallet wallet) {
     byte[] txid = new TransactionCapsule(tx).getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txid);
     nonce = null; // no value
@@ -54,8 +53,8 @@ public class TransactionResult {
       value = null;
     }
 
-    gas = null; // no value
-    gasPrice = null; // no value
+    gas = ByteArray.toJsonHex(energyUsageTotal);
+    gasPrice = ByteArray.toJsonHex(energyFee);
     input = null; // no value
 
     ByteString signature = tx.getSignature(0); // r[32] + s[32] + v[1]
@@ -66,6 +65,15 @@ public class TransactionResult {
     v = ByteArray.toJsonHex(vByte);
     r = ByteArray.toJsonHex(rByte);
     s = ByteArray.toJsonHex(sByte);
+  }
+
+  // gasPrice from blockCapsule
+  public TransactionResult(BlockCapsule blockCapsule, int index, Protocol.Transaction tx,
+      long energyUsageTotal, Wallet wallet) {
+    this(blockCapsule, index, tx, energyUsageTotal, 0, wallet);
+
+    gas = ByteArray.toJsonHex(energyUsageTotal);
+    gasPrice = ByteArray.toJsonHex(wallet.getEnergyFee(blockCapsule.getTimeStamp()));
   }
 
   @Override

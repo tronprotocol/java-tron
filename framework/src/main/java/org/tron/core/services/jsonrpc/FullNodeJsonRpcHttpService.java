@@ -29,6 +29,7 @@ public class FullNodeJsonRpcHttpService implements Service {
 
   @Override
   public void init() {
+
   }
 
   @Override

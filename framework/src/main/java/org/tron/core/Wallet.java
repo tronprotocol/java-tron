@@ -247,6 +247,9 @@ public class Wallet {
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
+
+  private boolean energyPriceHistoryLoaded = false;
+
   @Getter
   private final SignInterface cryptoEngine;
   @Autowired
@@ -3827,6 +3830,33 @@ public class Wallet {
 
   public long getEnergyFee() {
     return chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+  }
+
+  // this function should be called after EnergyPriceHistoryLoader done
+  public long getEnergyFee(long timestamp) {
+    try {
+      String energyPriceHistory =
+          chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      return getEnergyFee(timestamp, energyPriceHistory);
+    } catch (Exception e) {
+      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      return getEnergyFee();
+    }
+  }
+
+  public long getEnergyFee(long timestamp, String energyPriceHistory) {
+    String[] priceList = energyPriceHistory.split(",");
+
+    for (int i = priceList.length - 1; i >= 0; i--) {
+      String[] priceArray = priceList[i].split(":");
+      long time = Long.parseLong(priceArray[0]);
+      long price = Long.parseLong(priceArray[1]);
+      if (timestamp > time) {
+        return price;
+      }
+    }
+
+    return getEnergyFee();
   }
 }
 
