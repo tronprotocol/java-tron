@@ -113,7 +113,7 @@ public class ByteArray {
    * null for empty []
    */
   public static String toJsonHex(byte[] x) {
-    return x == null || x.length == 0 ? null : "0x" + Hex.toHexString(x);
+    return x == null || x.length == 0 ? "0x" : "0x" + Hex.toHexString(x);
   }
 
   // ignore the 41

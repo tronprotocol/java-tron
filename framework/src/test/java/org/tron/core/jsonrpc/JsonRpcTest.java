@@ -14,8 +14,7 @@ import org.tron.core.services.jsonrpc.CallArguments;
 
 public class JsonRpcTest {
 
-  @Test
-  public void generateCallParameter1() {
+  public void generateCallParameterWIthMethodAndParam() {
     String ownerAddress = "TXvRyjomvtNWSKvNouTvAedRGD4w9RXLZD";
     String usdjAddress = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL"; // nile udsj address
 
@@ -37,8 +36,7 @@ public class JsonRpcTest {
     System.out.println(sb.toString());
   }
 
-  @Test
-  public void generateCallParameter2() {
+  public void generateCallParameterWithMethod() {
     String ownerAddress = "TRXPT6Ny7EFvTPv7mFUqaFUST39WUZ4zzz";
     String usdjAddress = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"; // nile udsj address
 

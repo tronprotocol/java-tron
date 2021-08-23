@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Proposal.State;
 public class EnergyPriceHistoryLoader {
 
   private final ChainBaseManager chainBaseManager;
-  public List<ProposalCapsule> proposalCapsuleList = new ArrayList<>();
+  private List<ProposalCapsule> proposalCapsuleList = new ArrayList<>();
 
   public EnergyPriceHistoryLoader(ChainBaseManager chainBaseManager) {
     this.chainBaseManager = chainBaseManager;
@@ -29,10 +29,10 @@ public class EnergyPriceHistoryLoader {
       String energyPriceHistory = parseProposalsToStr();
       chainBaseManager.getDynamicPropertiesStore().saveEnergyPriceHistory(energyPriceHistory);
     }
-    // finish();
+    finish();
 
     logger.info(
-        "Complete the energy price load, total time: {} milliseconds, total count: {}",
+        "Complete energy price load, total time: {} milliseconds, total proposal count: {}",
         System.currentTimeMillis() - start, proposalCapsuleList.size());
   }
 
