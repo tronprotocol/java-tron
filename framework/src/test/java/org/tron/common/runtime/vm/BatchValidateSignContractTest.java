@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.crypto.ECKey;
@@ -25,7 +26,7 @@ public class BatchValidateSignContractTest {
 
   static {
     smellData = new byte[10];
-    longData = new byte[1000000];
+    longData = new byte[1000];
     Arrays.fill(smellData, (byte) 1);
     Arrays.fill(longData, (byte) 2);
   }
@@ -85,6 +86,7 @@ public class BatchValidateSignContractTest {
     System.gc(); // force triggering full gc to avoid timeout for next test
   }
 
+  @Ignore
   @Test
   public void correctionTest() {
     contract.setConstantCall(false);
