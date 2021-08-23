@@ -512,12 +512,15 @@ public class JsonRpcApiUtil {
   public static long getEnergyUsageTotal(List<TransactionInfo> transactionInfoList, int i,
       long blockNum) {
     long energyUsageTotal = 0;
-    try {
-      energyUsageTotal = transactionInfoList.get(i).getReceipt().getEnergyUsageTotal();
-    } catch (Exception e) {
-      logger.warn(
-          "getBlockResult cannot get energy from transactionInfo, block.num={}, error is {}",
-          blockNum, e.getMessage());
+
+    if (!transactionInfoList.isEmpty()) {
+      try {
+        energyUsageTotal = transactionInfoList.get(i).getReceipt().getEnergyUsageTotal();
+      } catch (Exception e) {
+        logger.warn(
+            "getBlockResult cannot get energy from transactionInfo, block.num={}, error is {}",
+            blockNum, e.getMessage());
+      }
     }
 
     return energyUsageTotal;
