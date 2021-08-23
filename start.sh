@@ -44,7 +44,7 @@ checkmemory() {
  allow_memory=8000000
  allow_max_memory=48000000
  max_matespace_size=' -xx:maxmetaspacesize=512m '
- total=`cat /proc/meminfo  |grep memtotal |awk -f ' ' '{print $2}'`
+ total=`cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print $2}'`
  default_memory=true
 
  position=0
@@ -66,8 +66,7 @@ checkmemory() {
  done
 
  if [ $default_memory == true ]; then
-  # total < allow_mem
-  if [ $total -lt $allow_memory ] ; then
+  if [[ $total -lt $allow_memory ]] ; then
      echo "direct memory must be greater than $allow_memory!, current memory: $total!!"
      exit
   fi
@@ -81,10 +80,15 @@ checkmemory() {
   fi
 else
   NEW_RATIO=2
-  max_matespace_size=$allow_memory / 16
+  max_matespace_size=$[allow_memory / 16]
   MEM_OPT="$max_matespace_size $new_ratio"
  fi
 }
+
+if [[ $APP =~ '-' ]]; then
+  APP=''
+fi
+
 
 APP=${APP:-"FullNode"}
 START_OPT=`echo ${@:2}`
@@ -125,8 +129,6 @@ checkPath(){
   fi
 }
 
-
-
 stopService() {
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
@@ -159,6 +161,7 @@ startService() {
  pid=`ps -ef |grep $JAR_NAME |grep -v grep |awk '{print $2}'`
  echo "start java-tron with pid $pid on $HOSTNAME"
 }
+
 
 stopService
 checkPath
