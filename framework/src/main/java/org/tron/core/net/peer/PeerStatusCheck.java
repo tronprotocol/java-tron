@@ -22,8 +22,6 @@ public class PeerStatusCheck {
 
   private int blockUpdateTimeout = 30_000;
 
-  private int disconnectTimeout = 10_000;
-
   public void init() {
     peerStatusCheckExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -43,11 +41,6 @@ public class PeerStatusCheck {
     long now = System.currentTimeMillis();
 
     tronNetDelegate.getActivePeer().forEach(peer -> {
-
-      long disconnectTime = peer.getDisconnectTime();
-      if (disconnectTime != 0 && now - disconnectTime > disconnectTimeout) {
-        tronNetDelegate.notifyDisconnect(peer);
-      }
 
       boolean isDisconnected = false;
 

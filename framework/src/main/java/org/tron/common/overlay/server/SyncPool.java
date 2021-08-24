@@ -59,6 +59,8 @@ public class SyncPool {
 
   private PeerClient peerClient;
 
+  private int disconnectTimeout = 10_000;
+
   public void init() {
 
     channelManager = ctx.getBean(ChannelManager.class);
@@ -67,6 +69,7 @@ public class SyncPool {
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
+        check();
         fillUp();
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
@@ -80,6 +83,16 @@ public class SyncPool {
         logger.error("Exception in sync worker", t);
       }
     }, 30, 10, TimeUnit.SECONDS);
+  }
+
+  private void check() {
+    activePeers.forEach(peer -> {
+      long now = System.currentTimeMillis();
+      long disconnectTime = peer.getDisconnectTime();
+      if (disconnectTime != 0 && now - disconnectTime > disconnectTimeout) {
+        channelManager.notifyDisconnect(peer);
+      }
+    });
   }
 
   private void fillUp() {

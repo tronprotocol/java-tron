@@ -102,10 +102,6 @@ public class TronNetDelegate {
     channelManager.getTrustNodes().put(peer.getInetAddress(), peer.getNode());
   }
 
-  public void notifyDisconnect(Channel channel){
-    channelManager.notifyDisconnect(channel);
-  }
-
   public Collection<PeerConnection> getActivePeer() {
     return syncPool.getActivePeers();
   }
