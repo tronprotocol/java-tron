@@ -257,7 +257,7 @@ public class HttpApiOnSolidityService implements Service {
           EnumSet.allOf(DispatcherType.class));
 
       // api access filter
-      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/walletsolidity/*",
           EnumSet.allOf(DispatcherType.class));
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();

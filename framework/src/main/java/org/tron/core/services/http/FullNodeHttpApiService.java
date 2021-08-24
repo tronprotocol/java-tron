@@ -544,7 +544,7 @@ public class FullNodeHttpApiService implements Service {
           EnumSet.allOf(DispatcherType.class));
 
       // http access filter, it should have high priority than HttpInterceptor
-      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/wallet/*",
           EnumSet.allOf(DispatcherType.class));
 
       // filter

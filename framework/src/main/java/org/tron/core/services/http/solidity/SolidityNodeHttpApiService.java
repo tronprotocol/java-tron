@@ -251,7 +251,7 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
 
       // http access filter
-      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/walletsolidity/*",
           EnumSet.allOf(DispatcherType.class));
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();

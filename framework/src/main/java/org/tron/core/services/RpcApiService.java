@@ -261,11 +261,11 @@ public class RpcApiService implements Service {
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
 
-      // add lite fullnode query interceptor
-      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
       // add api access interceptor, this should have highest priority
       serverBuilder.intercept(apiAccessInterceptor);
+
+      // add lite fullnode query interceptor
+      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
 
       apiServer = serverBuilder.build();
       rateLimiterInterceptor.init(apiServer);
