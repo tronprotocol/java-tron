@@ -219,7 +219,7 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
   })
-  TransactionResult getTransactionByHash(String txid) throws JsonRpcInvalidParamsException;
+  TransactionResult getTransactionByHash(String txId) throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getTransactionByBlockHashAndIndex")
   @JsonRpcErrors({
@@ -341,7 +341,7 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
   })
-  CompilationResult ethCompileSolidity(String contract) throws Exception;
+  CompilationResult ethCompileSolidity(String contract);
 
   @JsonRpcMethod("eth_compileLLL")
   @JsonRpcErrors({

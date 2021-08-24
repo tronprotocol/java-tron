@@ -525,4 +525,19 @@ public class JsonRpcApiUtil {
 
     return energyUsageTotal;
   }
+
+  public static int getTransactionIndex(String txId, List<Transaction> txList) {
+    int transactionIndex = -1;
+    Transaction transaction;
+
+    for (int index = 0; index < txList.size(); index++) {
+      transaction = txList.get(index);
+      if (getTxID(transaction).equals(txId)) {
+        transactionIndex = index;
+        break;
+      }
+    }
+
+    return transactionIndex;
+  }
 }

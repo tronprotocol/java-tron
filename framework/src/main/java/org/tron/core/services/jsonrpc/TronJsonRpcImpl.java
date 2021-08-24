@@ -6,6 +6,7 @@ import static org.tron.core.services.http.Util.setTransactionExtraData;
 import static org.tron.core.services.http.Util.setTransactionPermissionId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
@@ -486,17 +487,28 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionResult getTransactionByHash(String txid) throws JsonRpcInvalidParamsException {
-    ByteString transactionId = ByteString.copyFrom(hashToByteArray(txid));
+  public TransactionResult getTransactionByHash(String txId) throws JsonRpcInvalidParamsException {
+    ByteString transactionId = ByteString.copyFrom(hashToByteArray(txId));
 
     TransactionInfo transactionInfo = wallet.getTransactionInfoById(transactionId);
     if (transactionInfo == null) {
-      Transaction transaction = wallet.getTransactionById(transactionId);
-      if (transaction == null) {
+      TransactionCapsule transactionCapsule = wallet.getTransactionCapsuleById(transactionId);
+      if (transactionCapsule == null) {
         return null;
       }
 
-      return new TransactionResult(transaction, wallet);
+      BlockCapsule blockCapsule = wallet.getBlockCapsuleByNum(transactionCapsule.getBlockNum());
+      int transactionIndex = getTransactionIndex(
+          ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()),
+          blockCapsule.getInstance().getTransactionsList());
+
+      if (transactionIndex == -1) {
+        return null;
+      }
+
+      long energyUsageTotal = 0;
+      return new TransactionResult(blockCapsule, transactionIndex, transactionCapsule.getInstance(),
+          energyUsageTotal, wallet.getEnergyFee(blockCapsule.getTimeStamp()), wallet);
     }
 
     Block block = wallet.getBlockByNum(transactionInfo.getBlockNumber());
@@ -508,7 +520,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private TransactionResult formatTransactionResult(TransactionInfo transactioninfo, Block block) {
-    String txid = ByteArray.toHexString(transactioninfo.getId().toByteArray());
+    String txId = ByteArray.toHexString(transactioninfo.getId().toByteArray());
 
     Transaction transaction = null;
     int transactionIndex = -1;
@@ -516,7 +528,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     List<Transaction> txList = block.getTransactionsList();
     for (int index = 0; index < txList.size(); index++) {
       transaction = txList.get(index);
-      if (getTxID(transaction).equals(txid)) {
+      if (getTxID(transaction).equals(txId)) {
         transactionIndex = index;
         break;
       }
@@ -527,8 +539,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
 
     long energyUsageTotal = transactioninfo.getReceipt().getEnergyUsageTotal();
-    return new TransactionResult(new BlockCapsule(block), transactionIndex, transaction,
-        energyUsageTotal, wallet);
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    return new TransactionResult(blockCapsule, transactionIndex, transaction,
+        energyUsageTotal, wallet.getEnergyFee(blockCapsule.getTimeStamp()), wallet);
   }
 
   public TransactionResult getTransactionByBlockAndIndex(Block block, String index)
@@ -546,9 +559,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     Transaction transaction = block.getTransactions(txIndex);
     long energyUsageTotal = getEnergyUsageTotal(transaction, wallet);
+    BlockCapsule blockCapsule = new BlockCapsule(block);
 
-    return new TransactionResult(new BlockCapsule(block), txIndex, transaction, energyUsageTotal,
-        wallet);
+    return new TransactionResult(blockCapsule, txIndex, transaction, energyUsageTotal,
+        wallet.getEnergyFee(blockCapsule.getTimeStamp()), wallet);
   }
 
   @Override
@@ -575,10 +589,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public TransactionReceipt getTransactionReceipt(String txid)
+  public TransactionReceipt getTransactionReceipt(String txId)
       throws JsonRpcInvalidParamsException {
     TransactionInfo transactionInfo =
-        wallet.getTransactionInfoById(ByteString.copyFrom(hashToByteArray(txid)));
+        wallet.getTransactionInfoById(ByteString.copyFrom(hashToByteArray(txId)));
     if (transactionInfo == null) {
       return null;
     }

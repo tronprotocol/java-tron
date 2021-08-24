@@ -248,8 +248,6 @@ public class Wallet {
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
 
-  private boolean energyPriceHistoryLoaded = false;
-
   @Getter
   private final SignInterface cryptoEngine;
   @Autowired
@@ -1368,6 +1366,21 @@ public class Wallet {
       return transactionCapsule.getInstance();
     }
     return null;
+  }
+
+  public TransactionCapsule getTransactionCapsuleById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = chainBaseManager.getTransactionStore()
+          .get(transactionId.toByteArray());
+    } catch (StoreException e) {
+      return null;
+    }
+
+    return transactionCapsule;
   }
 
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
