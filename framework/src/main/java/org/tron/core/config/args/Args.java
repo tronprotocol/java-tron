@@ -284,6 +284,11 @@ public class Args extends CommonParameter {
       PARAMETER.supportConstant = config.getBoolean(Constant.VM_SUPPORT_CONSTANT);
     }
 
+    if (config.hasPath(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT)) {
+      long configLimit = config.getLong(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT);
+      PARAMETER.maxEnergyLimitForConstant = max(3_000_000L, configLimit);
+    }
+
     if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
       PARAMETER.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
     }

@@ -45,6 +45,10 @@ public class CommonParameter {
   public boolean supportConstant = false;
   @Getter
   @Setter
+  @Parameter(names = {"--max-energy-limit-for-constant"})
+  public long maxEnergyLimitForConstant = 100_000_000L;
+  @Getter
+  @Setter
   @Parameter(names = {"--debug"})
   public boolean debug = false;
   @Getter

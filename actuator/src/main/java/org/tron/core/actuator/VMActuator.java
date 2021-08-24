@@ -451,7 +451,7 @@ public class VMActuator implements Actuator2 {
       AccountCapsule caller = repository.getAccount(callerAddress);
       long energyLimit;
       if (isConstantCall) {
-        energyLimit = VMConstant.ENERGY_LIMIT_IN_CONSTANT_TX;
+        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
       } else {
         AccountCapsule creator = repository
             .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
