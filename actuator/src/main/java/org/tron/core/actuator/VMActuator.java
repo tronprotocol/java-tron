@@ -178,13 +178,6 @@ public class VMActuator implements Actuator2 {
         result = program.getResult();
 
         if (isConstantCall) {
-          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
-          long callTokenValue = TransactionUtil
-              .getCallTokenValue(trx.getRawData().getContract(0));
-          if (callValue > 0 || callTokenValue > 0) {
-            result.setRuntimeError("constant cannot set call value or call token value.");
-            result.rejectInternalTransactions();
-          }
           if (result.getException() != null) {
             result.setRuntimeError(result.getException().getMessage());
             result.rejectInternalTransactions();
@@ -343,12 +336,7 @@ public class VMActuator implements Actuator2 {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     // create vm to constructor smart contract
     try {
-      long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0 || feeLimit > repository.getDynamicPropertiesStore().getMaxFeeLimit()) {
-        logger.info("invalid feeLimit {}", feeLimit);
-        throw new ContractValidateException(
-            "feeLimit must be >= 0 and <= " + repository.getDynamicPropertiesStore().getMaxFeeLimit());
-      }
+      long feeLimit = checkAndGetFeeLimit();
       AccountCapsule creator = this.repository
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
@@ -468,13 +456,7 @@ public class VMActuator implements Actuator2 {
 
     byte[] code = repository.getCode(contractAddress);
     if (isNotEmpty(code)) {
-
-      long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0 || feeLimit > repository.getDynamicPropertiesStore().getMaxFeeLimit()) {
-        logger.info("invalid feeLimit {}", feeLimit);
-        throw new ContractValidateException(
-            "feeLimit must be >= 0 and <= " + repository.getDynamicPropertiesStore().getMaxFeeLimit());
-      }
+      long feeLimit = checkAndGetFeeLimit();
       AccountCapsule caller = repository.getAccount(callerAddress);
       long energyLimit;
       if (isConstantCall) {
@@ -521,6 +503,16 @@ public class VMActuator implements Actuator2 {
           tokenValue);
     }
 
+  }
+
+  private long checkAndGetFeeLimit() throws ContractValidateException {
+    long txFeeLimit = trx.getRawData().getFeeLimit();
+    if (txFeeLimit < 0) {
+      logger.info("invalid feeLimit {}", txFeeLimit);
+      throw new ContractValidateException("feeLimit must be >= 0");
+    }
+    long maxFeeLimit = repository.getDynamicPropertiesStore().getMaxFeeLimit();
+    return min(txFeeLimit, maxFeeLimit);
   }
 
   public long getAccountEnergyLimitWithFixRatio(AccountCapsule account, long feeLimit,

@@ -104,6 +104,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
@@ -146,6 +147,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.BlockIndexStore;
@@ -181,7 +183,6 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -265,9 +266,6 @@ public class Wallet {
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
-
-  @Autowired
-  private TransactionUtil transactionUtil;
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -2576,6 +2574,10 @@ public class Wallet {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     builder.setEnergyUsed(result.getEnergyUsed());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
+    result.getLogInfoList().forEach(logInfo ->
+        builder.addLogs(LogInfo.buildLog(logInfo)));
+    result.getInternalTransactions().forEach(it ->
+        builder.addInternalTransactions(TransactionUtil.buildInternalTransaction(it)));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);

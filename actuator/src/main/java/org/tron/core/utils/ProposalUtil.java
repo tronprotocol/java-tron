@@ -383,9 +383,17 @@ public class ProposalUtil {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1_2)) {
           throw new ContractValidateException("Bad chain parameter id [MAX_FEE_LIMIT]");
         }
-        if (value < 0 || value > 10_000_000_000L) {
+        if (value < 0) {
           throw new ContractValidateException(
-              "Bad MAX_FEE_LIMIT parameter value, valid range is [0,10_000_000_000L]");
+              "Bad MAX_FEE_LIMIT parameter value, value must not be negative");
+        } else if (value > 10_000_000_000L) {
+          if (dynamicPropertiesStore.getAllowTvmLondon() == 0) {
+            throw new ContractValidateException(
+                "Bad MAX_FEE_LIMIT parameter value, valid range is [0,10_000_000_000L]");
+          }
+          if (value > LONG_VALUE) {
+            throw new ContractValidateException(LONG_VALUE_ERROR);
+          }
         }
         break;
       }
