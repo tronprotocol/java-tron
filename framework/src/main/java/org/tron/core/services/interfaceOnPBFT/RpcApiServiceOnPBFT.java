@@ -40,8 +40,8 @@ import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
-import org.tron.core.services.ratelimiter.ApiAccessInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
+import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -77,7 +77,7 @@ public class RpcApiServiceOnPBFT implements Service {
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
 
   @Autowired
-  private ApiAccessInterceptor apiAccessInterceptor;
+  private RpcApiAccessInterceptor apiAccessInterceptor;
 
   @Override
   public void init() {
@@ -109,7 +109,7 @@ public class RpcApiServiceOnPBFT implements Service {
           .flowControlWindow(args.getFlowControlWindow())
           .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
           .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(args.getMaxMessageSize())
+          .maxInboundMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
       // add a ratelimiter interceptor
@@ -118,7 +118,7 @@ public class RpcApiServiceOnPBFT implements Service {
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
 
-      // add api access interceptor
+      // add api access interceptor, this should have highest priority
       serverBuilder.intercept(apiAccessInterceptor);
 
       apiServer = serverBuilder.build();

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.filter.HttpAccessFilter;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
 import org.tron.core.services.http.GetAccountServlet;
@@ -146,6 +146,9 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
 
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
+
   @Override
   public void init() {
   }
@@ -247,12 +250,9 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
 
-      // filter
-      ServletHandler handler = new ServletHandler();
-      FilterHolder
-          fh = handler.addFilterWithMapping((Class<? extends Filter>) HttpAccessFilter.class, "/*",
-          EnumSet.of(DispatcherType.REQUEST));
-      context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+      // http access filter
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

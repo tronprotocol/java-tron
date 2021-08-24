@@ -9,9 +9,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
+@Component
 @Slf4j(topic = "httpAccessFilter")
-public class HttpAccessFilter implements Filter {
+public class HttpApiAccessFilter implements Filter {
 
   private String endpoint;
 
@@ -42,8 +44,8 @@ public class HttpAccessFilter implements Filter {
       }
 
     } catch (Exception e) {
+      logger.error("http api access filter exception: {}", e.getMessage());
     }
-
   }
 
   @Override

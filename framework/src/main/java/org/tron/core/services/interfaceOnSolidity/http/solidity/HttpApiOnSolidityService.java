@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.filter.HttpAccessFilter;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
@@ -150,8 +150,8 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
 
-  // @Autowired
-  // private HttpAccessFilter httpAccessFilter;
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
 
   @Override
   public void init() {
@@ -256,11 +256,9 @@ public class HttpApiOnSolidityService implements Service {
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
           EnumSet.allOf(DispatcherType.class));
 
-      // filter
-      ServletHandler handler = new ServletHandler();
-      FilterHolder fh = handler.addFilterWithMapping((Class<? extends Filter>) HttpAccessFilter.class, "/*",
-          EnumSet.of(DispatcherType.REQUEST));
-      context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+      // api access filter
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

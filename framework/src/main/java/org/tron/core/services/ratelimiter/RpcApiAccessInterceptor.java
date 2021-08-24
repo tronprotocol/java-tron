@@ -12,15 +12,13 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class ApiAccessInterceptor implements ServerInterceptor {
+public class RpcApiAccessInterceptor implements ServerInterceptor {
 
   @Override
   public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
       ServerCallHandler<ReqT, RespT> next) {
 
     String fullMethodName = call.getMethodDescriptor().getFullMethodName();
-
-    // Listener<ReqT> listener = new ServerCall.Listener<ReqT>() {};
 
     try {
       if (fullMethodName.split("/")[1].toLowerCase().equals("getnowblock2")) {
@@ -33,7 +31,5 @@ public class ApiAccessInterceptor implements ServerInterceptor {
       logger.error("Rpc Api Error: {}", e.getMessage());
       return next.startCall(call, headers);
     }
-
-    // return listener;
   }
 }
