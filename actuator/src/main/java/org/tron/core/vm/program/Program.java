@@ -136,6 +136,7 @@ public class Program {
   private boolean stopped;
   private ProgramPrecompile programPrecompile;
 
+
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
   }
@@ -158,6 +159,8 @@ public class Program {
     this.trace = new ProgramTrace(config, programInvoke);
     this.nonce = internalTransaction.getNonce();
   }
+
+
 
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
@@ -716,6 +719,9 @@ public class Program {
 
       if (!contractAlreadyExists) {
         Builder builder = SmartContract.newBuilder();
+        if (getContractVersion() == 1) {
+          builder.setVersion(1);
+        }
         builder.setContractAddress(ByteString.copyFrom(newAddress))
             .setConsumeUserResourcePercent(100)
             .setOriginAddress(ByteString.copyFrom(senderAddress));
@@ -728,8 +734,12 @@ public class Program {
     } else {
       deposit.createAccount(newAddress, "CreatedByContract",
           Protocol.AccountType.Contract);
-      SmartContract newSmartContract = SmartContract.newBuilder()
-          .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+      Builder builder = SmartContract.newBuilder();
+      if (getContractVersion() == 1) {
+        builder.setVersion(1);
+      }
+      SmartContract newSmartContract = builder.setContractAddress(ByteString.copyFrom(newAddress))
+          .setConsumeUserResourcePercent(100)
           .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
       deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
       // In case of hashing collisions, check for any balance before createAccount()
@@ -1658,10 +1668,10 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    // todo version fork
-    if (VMConfig.allowTvmCompatibleEvm()) {
-      availableEnergy.div(new DataWord(intToBytes(64)));
-      availableEnergy.sub(availableEnergy);
+    if (getContractVersion() == 1) {
+      DataWord availableEnergyReduce = availableEnergy.clone();
+      availableEnergyReduce.div(new DataWord(intToBytes(64)));
+      availableEnergy.sub(availableEnergyReduce);
     }
     return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
   }
@@ -1961,6 +1971,12 @@ public class Program {
       internalTx.reject();
     }
     return 0;
+  }
+
+  public int getContractVersion() {
+    byte [] contractAddress =
+        TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    return invoke.getDeposit().getContract(contractAddress).getContractVersion();
   }
 
   /**

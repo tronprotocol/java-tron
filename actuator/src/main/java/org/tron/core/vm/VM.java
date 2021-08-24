@@ -3,26 +3,7 @@ package org.tron.core.vm;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
-import static org.tron.core.vm.OpCode.CALL;
-import static org.tron.core.vm.OpCode.CALLTOKEN;
-import static org.tron.core.vm.OpCode.CALLTOKENID;
-import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
-import static org.tron.core.vm.OpCode.CHAINID;
-import static org.tron.core.vm.OpCode.CREATE2;
-import static org.tron.core.vm.OpCode.EXTCODEHASH;
-import static org.tron.core.vm.OpCode.FREEZE;
-import static org.tron.core.vm.OpCode.FREEZEEXPIRETIME;
-import static org.tron.core.vm.OpCode.ISCONTRACT;
-import static org.tron.core.vm.OpCode.PUSH1;
-import static org.tron.core.vm.OpCode.REVERT;
-import static org.tron.core.vm.OpCode.SAR;
-import static org.tron.core.vm.OpCode.SELFBALANCE;
-import static org.tron.core.vm.OpCode.SHL;
-import static org.tron.core.vm.OpCode.SHR;
-import static org.tron.core.vm.OpCode.TOKENBALANCE;
-import static org.tron.core.vm.OpCode.UNFREEZE;
-import static org.tron.core.vm.OpCode.VOTEWITNESS;
-import static org.tron.core.vm.OpCode.WITHDRAWREWARD;
+import static org.tron.core.vm.OpCode.*;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -119,6 +100,8 @@ public class VM {
               && (op == FREEZE || op == UNFREEZE || op == FREEZEEXPIRETIME))
           || (!VMConfig.allowTvmVote()
               && (op == VOTEWITNESS || op == WITHDRAWREWARD))
+          || (!VMConfig.allowTvmLondon()
+              && (op == BASEFEE))
       ) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
@@ -829,7 +812,10 @@ public class VM {
         break;
         case GASPRICE: {
           DataWord energyPrice = new DataWord(0);
-
+          if (program.getContractVersion() == 1) {
+            energyPrice = new DataWord(program.getContractState()
+                .getDynamicPropertiesStore().getEnergyFee());
+          }
           program.stackPush(energyPrice);
           program.step();
         }
@@ -867,18 +853,19 @@ public class VM {
           program.step();
         }
         break;
-        case DIFFICULTY: {
-          DataWord difficulty = program.getDifficulty();
+        case DIFFICULTY:
+        case GASLIMIT: {
+          DataWord result = new DataWord(0);
 
-          program.stackPush(difficulty);
+          program.stackPush(result);
           program.step();
         }
         break;
-        case GASLIMIT: {
-          // todo: this energylimit is the block's energy limit
-          DataWord energyLimit = new DataWord(0);
+        case BASEFEE: {
+          DataWord energyFee =
+              new DataWord(program.getContractState().getDynamicPropertiesStore().getEnergyFee());
 
-          program.stackPush(energyLimit);
+          program.stackPush(energyFee);
           program.step();
         }
         break;

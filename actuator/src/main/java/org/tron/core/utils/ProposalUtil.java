@@ -471,10 +471,10 @@ public class ProposalUtil {
       }
       case ALLOW_TVM_LONDON: {
         // todo version modify
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
-          throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_TVM_LONDON]");
-        }
+        // if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+        //   throw new ContractValidateException(
+        //       "Bad chain parameter id [ALLOW_TVM_LONDON]");
+        // }
         if (value != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_LONDON] is only allowed to be 1");
@@ -483,10 +483,10 @@ public class ProposalUtil {
       }
       case ALLOW_TVM_COMPATIBLE_EVM: {
         // todo version modify
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
-          throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_TVM_COMPATIBLE_EVM]");
-        }
+        // if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+        //   throw new ContractValidateException(
+        //       "Bad chain parameter id [ALLOW_TVM_COMPATIBLE_EVM]");
+        // }
         if (value != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_COMPATIBLE_EVM] is only allowed to be 1");
