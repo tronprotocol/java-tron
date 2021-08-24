@@ -32,6 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.math.ec.ECPoint;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.DecodeUtil;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 @Slf4j(topic = "crypto")
 public class Hash {
@@ -195,4 +197,18 @@ public class Hash {
     address[0] = DecodeUtil.addressPreFixByte;
     return address;
   }
+
+   /** @param data - message to hash
+    *
+    * @return - ripemd160 hash of the message
+    */
+  public static byte[] ripemd160(byte[] data) {
+    Digest digest = new RIPEMD160Digest();
+
+    byte[] resBuf = new byte[digest.getDigestSize()];
+    digest.update(data, 0, data.length);
+    digest.doFinal(resBuf, 0);
+    return resBuf;
+  }
+
 }

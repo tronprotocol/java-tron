@@ -24,8 +24,10 @@ import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.BIUtil.isZero;
 import static org.tron.common.utils.ByteUtil.*;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
+import static java.util.Arrays.copyOfRange;
 
 import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -45,6 +47,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.tron.common.crypto.Blake2bfMessageDigest;
+import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
@@ -107,6 +111,9 @@ public class PrecompiledContracts {
   private static final ReceivedVoteCount receivedVoteCount = new ReceivedVoteCount();
   private static final TotalVoteCount totalVoteCount = new TotalVoteCount();
 
+  private static final EthRipemd160 ethRipemd160 = new EthRipemd160();
+  private static final Blake2F blake2F = new Blake2F();
+
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
   private static final DataWord sha256Addr = new DataWord(
@@ -147,6 +154,11 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000001000009");
   private static final DataWord totalVoteCountAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000100000a");
+  private static final DataWord ethRipemd160Addr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000020003");
+  private static final DataWord blake2FAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000020009");
+
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -213,6 +225,12 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowTvmVote() && address.equals(totalVoteCountAddr)) {
       return totalVoteCount;
+    }
+    if (VMConfig.allowTvmCompatibleEvm() && address.equals(ethRipemd160Addr)) {
+      return ethRipemd160;
+    }
+    if (VMConfig.allowTvmCompatibleEvm() && address.equals(blake2FAddr)) {
+      return blake2F;
     }
 
     return null;
@@ -1718,6 +1736,68 @@ public class PrecompiledContracts {
 
       return Pair.of(true, longTo32Bytes(0L));
 
+    }
+  }
+
+  public static class EthRipemd160 extends PrecompiledContract {
+
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+
+      if (data == null) {
+        return 600;
+      }
+      return 600L + (data.length + 31) / 32 * 120;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      byte[] result;
+      if (data == null) {
+        result = Hash.ripemd160(EMPTY_BYTE_ARRAY);
+      } else {
+        result = Hash.ripemd160(data);
+      }
+      return Pair.of(true, new DataWord(result).getData());
+    }
+  }
+
+  public static class Blake2F extends PrecompiledContract {
+
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+
+      if (data.length != 213 || (data[212] & 0xFE) != 0) {
+        return 0;
+      }
+      final byte[] roundsBytes = copyOfRange(data, 0, 4);
+      final BigInteger rounds = new BigInteger(1, roundsBytes);
+      return rounds.longValue();
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data.length != 213) {
+        logger.info("Incorrect input length.  Expected {} and got {}", 213, data.length);
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      if ((data[212] & 0xFE) != 0) {
+        logger.info("Incorrect finalization flag, expected 0 or 1 and got {}", data[212]);
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+      final MessageDigest digest = new Blake2bfMessageDigest();
+      byte[] result;
+      try {
+        digest.update(data);
+        result = digest.digest();
+      } catch (Exception e) {
+        return Pair.of(true, new DataWord(EMPTY_BYTE_ARRAY).getData());
+      }
+      return Pair.of(true, result);
     }
   }
 
