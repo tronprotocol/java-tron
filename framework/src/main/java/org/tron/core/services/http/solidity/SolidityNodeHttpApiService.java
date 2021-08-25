@@ -246,6 +246,7 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/triggerconstantcontract");
 
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
+      context.addServlet(new ServletHolder(getNodeInfoServlet), "/walletsolidity/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
@@ -253,6 +254,9 @@ public class SolidityNodeHttpApiService implements Service {
       // http access filter
       context.addFilter(new FilterHolder(httpApiAccessFilter), "/walletsolidity/*",
           EnumSet.allOf(DispatcherType.class));
+      context.getServletHandler().getFilterMappings()[0]
+          .setPathSpecs(new String[] {"/walletsolidity/*",
+              "/wallet/getnodeinfo"});
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

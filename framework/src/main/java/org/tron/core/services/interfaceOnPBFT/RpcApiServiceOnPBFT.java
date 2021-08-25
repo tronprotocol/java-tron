@@ -115,7 +115,7 @@ public class RpcApiServiceOnPBFT implements Service {
       // add a ratelimiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
 
-      // add api access interceptor, this should have highest priority
+      // add api access interceptor
       serverBuilder.intercept(apiAccessInterceptor);
 
       // add lite fullnode query interceptor

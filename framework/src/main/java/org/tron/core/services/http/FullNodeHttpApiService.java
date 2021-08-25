@@ -543,11 +543,17 @@ public class FullNodeHttpApiService implements Service {
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
           EnumSet.allOf(DispatcherType.class));
 
-      // http access filter, it should have high priority than HttpInterceptor
-      context.addFilter(new FilterHolder(httpApiAccessFilter), "/wallet/*",
+      // http access filter, it should have higher priority than HttpInterceptor
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
           EnumSet.allOf(DispatcherType.class));
+      // note: if the pathSpec of servlet is not started with wallet, it should be included here
+      context.getServletHandler().getFilterMappings()[1]
+          .setPathSpecs(new String[] {"/wallet/*",
+              "/net/listnodes",
+              "/monitor/getstatsinfo",
+              "/monitor/getnodeinfo"});
 
-      // filter
+      // metrics filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
