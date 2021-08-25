@@ -10,6 +10,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
+
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
@@ -41,6 +42,7 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
+import org.tron.core.exception.JsonRpcMethodNotFoundException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
@@ -184,10 +186,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     br.totalDifficulty = null; // no value
     br.extraData = null; // no value
     br.size = ByteArray.toJsonHex(block.getSerializedSize());
-    br.gasLimit = null;
     br.timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
 
     long gasUsedInBlock = 0;
+    long gasLimitInBlock = 0;
+
     List<Object> txes = new ArrayList<>();
     List<Transaction> transactionsList = block.getTransactionsList();
     List<TransactionInfo> transactionInfoList =
@@ -197,6 +200,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       for (int i = 0; i < transactionsList.size(); i++) {
         Transaction transaction = transactionsList.get(i);
+        gasLimitInBlock += transaction.getRawData().getFeeLimit();
 
         long energyUsageTotal = getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
         gasUsedInBlock += energyUsageTotal;
@@ -206,19 +210,21 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       }
     } else {
       for (int i = 0; i < transactionsList.size(); i++) {
+        gasLimitInBlock += transactionsList.get(i).getRawData().getFeeLimit();
         gasUsedInBlock += getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
 
-        String txID = ByteArray.toHexString(Sha256Hash
+        byte[] txHash = Sha256Hash
             .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-                transactionsList.get(i).getRawData().toByteArray()));
-        txes.add(ByteArray.toJsonHex(txID.getBytes()));
+                transactionsList.get(i).getRawData().toByteArray());
+        txes.add(ByteArray.toJsonHex(txHash));
       }
     }
     br.transactions = txes.toArray();
 
+    br.gasLimit = ByteArray.toJsonHex(gasLimitInBlock);
     br.gasUsed = ByteArray.toJsonHex(gasUsedInBlock);
     List<String> ul = new ArrayList<>();
-    br.uncles = ul.toArray(new String[ul.size()]);
+    br.uncles = ul.toArray(new String[0]);
 
     return br;
   }
@@ -457,36 +463,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String[] getCompilers() {
-    throw new UnsupportedOperationException(
-        "the method eth_getCompilers does not exist/is not available");
-  }
-
-  @Override
-  public CompilationResult ethCompileSolidity(String contract) {
-    throw new UnsupportedOperationException(
-        "the method eth_compileSolidity does not exist/is not available");
-  }
-
-  @Override
-  public CompilationResult ethCompileLLL(String contract) {
-    throw new UnsupportedOperationException(
-        "the method eth_compileLLL does not exist/is not available");
-  }
-
-  @Override
-  public CompilationResult ethCompileSerpent(String contract) {
-    throw new UnsupportedOperationException(
-        "the method eth_compileSerpent does not exist/is not available");
-  }
-
-  @Override
-  public CompilationResult ethSubmitHashrate(String hashrate, String id) {
-    throw new UnsupportedOperationException(
-        "the method eth_submitHashrate does not exist/is not available");
-  }
-
-  @Override
   public TransactionResult getTransactionByHash(String txId) throws JsonRpcInvalidParamsException {
     ByteString transactionId = ByteString.copyFrom(hashToByteArray(txId));
 
@@ -498,25 +474,30 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       }
 
       BlockCapsule blockCapsule = wallet.getBlockCapsuleByNum(transactionCapsule.getBlockNum());
-      int transactionIndex = getTransactionIndex(
-          ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()),
-          blockCapsule.getInstance().getTransactionsList());
+      if (blockCapsule == null) {
+        return new TransactionResult(transactionCapsule.getInstance(), wallet);
+      } else {
+        int transactionIndex = getTransactionIndex(
+            ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()),
+            blockCapsule.getInstance().getTransactionsList());
 
-      if (transactionIndex == -1) {
+        if (transactionIndex == -1) {
+          return null;
+        }
+
+        long energyUsageTotal = 0;
+        return new TransactionResult(blockCapsule, transactionIndex,
+            transactionCapsule.getInstance(), energyUsageTotal,
+            wallet.getEnergyFee(blockCapsule.getTimeStamp()), wallet);
+      }
+    } else {
+      Block block = wallet.getBlockByNum(transactionInfo.getBlockNumber());
+      if (block == null) {
         return null;
       }
 
-      long energyUsageTotal = 0;
-      return new TransactionResult(blockCapsule, transactionIndex, transactionCapsule.getInstance(),
-          energyUsageTotal, wallet.getEnergyFee(blockCapsule.getTimeStamp()), wallet);
+      return formatTransactionResult(transactionInfo, block);
     }
-
-    Block block = wallet.getBlockByNum(transactionInfo.getBlockNumber());
-    if (block == null) {
-      return null;
-    }
-
-    return formatTransactionResult(transactionInfo, block);
   }
 
   private TransactionResult formatTransactionResult(TransactionInfo transactioninfo, Block block) {
@@ -904,44 +885,80 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public boolean ethSubmitWork(String nonceHex, String headerHex, String digestHex) {
-    throw new UnsupportedOperationException(
+  public boolean ethSubmitWork(String nonceHex, String headerHex, String digestHex)
+      throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
         "the method eth_submitWork does not exist/is not available");
   }
 
   @Override
-  public String ethSendRawTransaction(String rawData) {
-    throw new UnsupportedOperationException(
+  public String ethSendRawTransaction(String rawData) throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
         "the method eth_sendRawTransaction does not exist/is not available");
   }
 
   @Override
-  public String ethSendTransaction(CallArguments args) {
-    throw new UnsupportedOperationException(
+  public String ethSendTransaction(CallArguments args) throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
         "the method eth_sendTransaction does not exist/is not available");
   }
 
   @Override
-  public String ethSign(String address, String msg) {
-    throw new UnsupportedOperationException(
+  public String ethSign(String address, String msg) throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
         "the method eth_sign does not exist/is not available");
   }
 
   @Override
-  public String ethSignTransaction(CallArguments transactionArgs) {
-    throw new UnsupportedOperationException(
+  public String ethSignTransaction(CallArguments transactionArgs)
+      throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
         "the method eth_signTransaction does not exist/is not available");
   }
 
   @Override
-  public String parityNextNonce(String address) {
-    throw new UnsupportedOperationException(
+  public String parityNextNonce(String address) throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
         "the method parity_nextNonce does not exist/is not available");
   }
 
   @Override
-  public String getSendTransactionCountOfAddress(String address, String blockNumOrTag) {
-    throw new UnsupportedOperationException(
+  public String getSendTransactionCountOfAddress(String address, String blockNumOrTag)
+      throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
         "the method eth_getTransactionCount does not exist/is not available");
+  }
+
+  @Override
+  public String[] getCompilers() throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
+        "the method eth_getCompilers does not exist/is not available");
+  }
+
+  @Override
+  public CompilationResult ethCompileSolidity(String contract)
+      throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
+        "the method eth_compileSolidity does not exist/is not available");
+  }
+
+  @Override
+  public CompilationResult ethCompileLLL(String contract) throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
+        "the method eth_compileLLL does not exist/is not available");
+  }
+
+  @Override
+  public CompilationResult ethCompileSerpent(String contract)
+      throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
+        "the method eth_compileSerpent does not exist/is not available");
+  }
+
+  @Override
+  public CompilationResult ethSubmitHashrate(String hashrate, String id)
+      throws JsonRpcMethodNotFoundException {
+    throw new JsonRpcMethodNotFoundException(
+        "the method eth_submitHashrate does not exist/is not available");
   }
 }

@@ -497,11 +497,11 @@ public class JsonRpcApiUtil {
   public static long getEnergyUsageTotal(Transaction transaction, Wallet wallet) {
     long energyUsageTotal = 0;
 
-    String txID = ByteArray.toHexString(Sha256Hash
+    byte[] txHash = Sha256Hash
         .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-            transaction.getRawData().toByteArray()));
+            transaction.getRawData().toByteArray());
     TransactionInfo transactionInfo = wallet
-        .getTransactionInfoById(ByteString.copyFrom(txID.getBytes()));
+        .getTransactionInfoById(ByteString.copyFrom(txHash));
     if (transactionInfo != null) {
       energyUsageTotal = transactionInfo.getReceipt().getEnergyUsageTotal();
     }

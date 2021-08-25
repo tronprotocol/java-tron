@@ -1,27 +1,19 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
-
 import com.alibaba.fastjson.JSONObject;
-import com.google.protobuf.ByteString;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.util.Arrays;
 import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.core.Wallet;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.core.exception.JsonRpcMethodNotFoundException;
 
 @Component
 public interface TronJsonRpc {
@@ -291,73 +283,76 @@ public interface TronJsonRpc {
   // not supported
   @JsonRpcMethod("eth_submitWork")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  boolean ethSubmitWork(String nonce, String header, String digest);
+  boolean ethSubmitWork(String nonce, String header, String digest)
+      throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_sendRawTransaction")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String ethSendRawTransaction(String rawData);
+  String ethSendRawTransaction(String rawData) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_sendTransaction")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String ethSendTransaction(CallArguments transactionArgs);
+  String ethSendTransaction(CallArguments transactionArgs) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_sign")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String ethSign(String addr, String data);
+  String ethSign(String addr, String data) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_signTransaction")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String ethSignTransaction(CallArguments transactionArgs);
+  String ethSignTransaction(CallArguments transactionArgs) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("parity_nextNonce")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String parityNextNonce(String address);
+  String parityNextNonce(String address) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_getTransactionCount")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String getSendTransactionCountOfAddress(String address, String blockNumOrTag);
+  String getSendTransactionCountOfAddress(String address, String blockNumOrTag)
+      throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_getCompilers")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  String[] getCompilers();
+  String[] getCompilers() throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_compileSolidity")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  CompilationResult ethCompileSolidity(String contract);
+  CompilationResult ethCompileSolidity(String contract) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_compileLLL")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  CompilationResult ethCompileLLL(String contract);
+  CompilationResult ethCompileLLL(String contract) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_compileSerpent")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  CompilationResult ethCompileSerpent(String contract);
+  CompilationResult ethCompileSerpent(String contract) throws JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_submitHashrate")
   @JsonRpcErrors({
-      @JsonRpcError(exception = UnsupportedOperationException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
   })
-  CompilationResult ethSubmitHashrate(String hashrate, String id);
+  CompilationResult ethSubmitHashrate(String hashrate, String id)
+      throws JsonRpcMethodNotFoundException;
 }
