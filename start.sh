@@ -43,7 +43,7 @@ buildManifest() {
 checkmemory() {
  allow_memory=8000000
  allow_max_memory=48000000
- max_matespace_size=' -xx:maxmetaspacesize=512m '
+ max_matespace_size=' -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m '
  total=`cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print $2}'`
  default_memory=true
 
@@ -59,7 +59,7 @@ checkmemory() {
       allow_memory=$memory
       default_memory=false
     else
-     echo "direct memory must be greater than1111 $allow_memory!, current memory: $total!!"
+     echo "direct memory must be greater than $allow_memory!, current memory: $total!!"
     fi
    fi
    position=$[position+1]
@@ -71,7 +71,7 @@ checkmemory() {
      exit
   fi
   if [[ $total -gt $allow_memory ]] && [[ $total -lt $allow_max_memory ]] ; then
-     MAX_NEW_SIZE=' -XX:NewSize=3072m -XX:MaxNewSize=3072m '
+     max_new_size=' -XX:NewSize=3072m -XX:MaxNewSize=3072m '
      MEM_OPT="$max_matespace_size $max_new_size"
 
   elif [[ $total -gt $allow_memory ]] ; then
@@ -85,23 +85,23 @@ else
  fi
 }
 
-if [[ $APP =~ '-' ]]; then
-  APP=''
-fi
-
-
-APP=${APP:-"FullNode"}
-START_OPT=`echo ${@:2}`
-JAR_NAME="$APP.jar"
-MAX_STOP_TIME=60
-MEM_OPT=''
+checkAppName() {
+ if [[ $APP =~ '-' ]]; then
+   APP=''
+ fi
+ APP=${APP:-"FullNode"}
+ START_OPT=`echo ${@:2}`
+ JAR_NAME="$APP.jar"
+ MAX_STOP_TIME=60
+ MEM_OPT=''
+}
 
 checkpid() {
  pid=`ps -ef | grep $JAR_NAME |grep -v grep | awk '{print $2}'`
  return $pid
 }
 
-checkPath(){
+checkPathAndRebuild(){
   path='output-directory/database'
   flag=1
   for p in ${ALL_OPT}
@@ -118,18 +118,19 @@ checkPath(){
 
   if [[ -z "${path}" ]]; then
      echo '-d /path or --database-directory /path'
-     return 1
+     exit -1
   fi
 
   if [[ -d ${path} ]]; then
-    return 0
+    rebuildManifest
   else
     echo $path 'not exist'
-    return 1
+    exit -1
   fi
 }
 
 stopService() {
+  checkAppName
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
     checkpid
@@ -149,6 +150,8 @@ stopService() {
 }
 
 startService() {
+ checkmemory
+
  echo `date` >> start.log
  total=`cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print $2}'`
  xmx=`echo "$total/1024/1024*0.6" | bc |awk -F. '{print $1"g"}'`
@@ -162,14 +165,7 @@ startService() {
  echo "start java-tron with pid $pid on $HOSTNAME"
 }
 
-
 stopService
-checkPath
-if [[ 0 ==  $? ]] ; then
- rebuildManifest
-else
- exit -1
-fi
+checkPathAndRebuild
 sleep 5
-checkmemory
 startService
