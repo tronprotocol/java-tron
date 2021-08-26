@@ -171,6 +171,8 @@ public class Constant {
 
   public static final String NODE_RPC_MIN_EFFECTIVE_CONNECTION = "node.rpc.minEffectiveConnection";
 
+  public static final String NODE_RPC_TRX_CACHE_ENABLE = "node.rpc.trxCacheEnable";
+
   public static final String ENERGY_LIMIT_BLOCK_NUM = "enery.limit.block.num";
 
   public static final String VM_TRACE = "vm.vmTrace";
