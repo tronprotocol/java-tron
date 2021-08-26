@@ -728,7 +728,7 @@ public class Program {
 
       if (!contractAlreadyExists) {
         Builder builder = SmartContract.newBuilder();
-        if (getContractVersionByContractAddress() == 1) {
+        if (getContractVersion() == 1) {
           builder.setVersion(1);
         }
         builder.setContractAddress(ByteString.copyFrom(newAddress))
@@ -744,7 +744,7 @@ public class Program {
       deposit.createAccount(newAddress, "CreatedByContract",
           Protocol.AccountType.Contract);
       Builder builder = SmartContract.newBuilder();
-      if (getContractVersionByContractAddress() == 1) {
+      if (getContractVersion() == 1) {
         builder.setVersion(1);
       }
       SmartContract newSmartContract = builder.setContractAddress(ByteString.copyFrom(newAddress))
@@ -1681,7 +1681,7 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    if (getContractVersionByContractAddress() == 1) {
+    if (getContractVersion() == 1) {
       DataWord availableEnergyReduce = availableEnergy.clone();
       availableEnergyReduce.div(new DataWord(intToBytes(64)));
       availableEnergy.sub(availableEnergyReduce);
@@ -1984,12 +1984,6 @@ public class Program {
       internalTx.reject();
     }
     return 0;
-  }
-
-  public int getContractVersionByContractAddress() {
-    byte [] contractAddress =
-        TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    return invoke.getDeposit().getContract(contractAddress).getContractVersion();
   }
 
   /**

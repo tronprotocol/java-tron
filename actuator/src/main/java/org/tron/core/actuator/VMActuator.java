@@ -486,6 +486,7 @@ public class VMActuator implements Actuator2 {
       this.vm = new VM();
       rootInternalTransaction = new InternalTransaction(trx, trxType);
       this.program = new Program(code, programInvoke, rootInternalTransaction, vmConfig);
+      this.program.setContractVersion(repository.getContract(contractAddress).getContractVersion());
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
 
