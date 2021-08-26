@@ -56,15 +56,6 @@ public class ArchiveManifest implements Callable<Boolean> {
 
   private static final int CPUS  = Runtime.getRuntime().availableProcessors();
 
-  private static final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(
-      CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
-      new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
-      new ThreadPoolExecutor.CallerRunsPolicy());
-
-  static {
-    EXECUTOR.allowCoreThreadTimeOut(true);
-  }
-
   public ArchiveManifest(String src, String name, int maxManifestSize, int maxBatchSize) {
     this.name = name;
     this.srcDbPath = Paths.get(src, name);
@@ -96,6 +87,13 @@ public class ArchiveManifest implements Callable<Boolean> {
   }
 
   public static void main(String[] args) {
+    int code = run(args);
+    logger.info("exit code {}.", code);
+    System.out.printf("exit code %d.\n", code);
+    System.exit(code);
+  }
+
+  public static int run(String[] args) {
     Args parameters = new Args();
     JCommander jc = JCommander.newBuilder()
         .addObject(parameters)
@@ -103,13 +101,13 @@ public class ArchiveManifest implements Callable<Boolean> {
     jc.parse(args);
     if (parameters.help) {
       jc.usage();
-      return;
+      return 0;
     }
 
     File dbDirectory = new File(parameters.databaseDirectory);
     if (!dbDirectory.exists()) {
       logger.info("Directory {} does not exist.", parameters.databaseDirectory);
-      return;
+      return 404;
     }
 
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
@@ -118,12 +116,19 @@ public class ArchiveManifest implements Callable<Boolean> {
 
     if (files.isEmpty()) {
       logger.info("Directory {} does not contain any database.", parameters.databaseDirectory);
-      return;
+      return 0;
     }
     final long time = System.currentTimeMillis();
     final List<Future<Boolean>> res = new ArrayList<>();
+    final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+        CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
+        new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
+        new ThreadPoolExecutor.CallerRunsPolicy());
+
+    executor.allowCoreThreadTimeOut(true);
+
     files.forEach(f -> res.add(
-        EXECUTOR.submit(new ArchiveManifest(parameters.databaseDirectory, f.getName(),
+        executor.submit(new ArchiveManifest(parameters.databaseDirectory, f.getName(),
             parameters.maxManifestSize, parameters.maxBatchSize))));
     int fails = res.size();
 
@@ -140,7 +145,7 @@ public class ArchiveManifest implements Callable<Boolean> {
       }
     }
 
-    EXECUTOR.shutdown();
+    executor.shutdown();
     logger.info("DatabaseDirectory:{}, maxManifestSize:{}, maxBatchSize:{},"
             + "database reopen use {} seconds total.",
         parameters.databaseDirectory, parameters.maxManifestSize, parameters.maxBatchSize,
@@ -148,7 +153,7 @@ public class ArchiveManifest implements Callable<Boolean> {
     if (fails > 0) {
       logger.error("Failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
     }
-    System.exit(fails);
+    return fails;
   }
 
   public void open() throws IOException {

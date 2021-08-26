@@ -987,6 +987,10 @@ public class Manager {
     return txs;
   }
 
+  public boolean validWitness(final BlockCapsule block) {
+    return consensus.validBlock(block);
+  }
+
   /**
    * save a block.
    */
@@ -1006,12 +1010,6 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        if (!block.validateSignature(chainBaseManager.getDynamicPropertiesStore(),
-            chainBaseManager.getAccountStore())) {
-          logger.warn("The signature is not validated.");
-          throw new BadBlockException("The signature is not validated");
-        }
-
         if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
           logger.warn(
               "The merkle root doesn't match, Calc result is "

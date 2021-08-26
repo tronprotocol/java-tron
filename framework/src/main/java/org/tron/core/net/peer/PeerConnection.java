@@ -43,7 +43,11 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private HelloMessage helloMessage;
+  private HelloMessage helloMessageReceive;
+
+  @Setter
+  @Getter
+  private HelloMessage helloMessageSend;
 
   private int invCacheSize = 100_000;
 
@@ -114,12 +118,11 @@ public class PeerConnection extends Channel {
   }
 
   public void onConnect() {
-    long headBlockNum = tronNetDelegate.getHeadBlockId().getNum();
-    long peerHeadBlockNum = getHelloMessage().getHeadBlockId().getNum();
+    long headBlockNum = helloMessageSend.getHeadBlockId().getNum();
+    long peerHeadBlockNum = helloMessageReceive.getHeadBlockId().getNum();
 
     if (peerHeadBlockNum > headBlockNum) {
       needSyncFromUs = false;
-      setTronState(TronState.SYNCING);
       syncService.startSync(this);
     } else {
       needSyncFromPeer = false;
