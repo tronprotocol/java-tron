@@ -798,11 +798,10 @@ public class Program {
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
 
-    if (config.allowTvmLondon() && code[0] == (byte) 0xEF) {
-      if (null == createResult.getException()) {
-        createResult.setException(Program.Exception
-            .invalidOpCode((byte) 0xEF));
-      }
+    if (code.length != 0 && config.allowTvmLondon() && code[0] == (byte) 0xEF) {
+      // todo dealwith exception
+      createResult.setException(new BytecodeExecutionException(
+          "can't create a contract start with 0xef"));
     }
 
     long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
