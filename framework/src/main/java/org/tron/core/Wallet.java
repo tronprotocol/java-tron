@@ -26,6 +26,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -3850,26 +3851,19 @@ public class Wallet {
     try {
       String energyPriceHistory =
           chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
-      return getEnergyFee(timestamp, energyPriceHistory);
+      long energyFee = parseEnergyFee(timestamp, energyPriceHistory);
+
+      if (energyFee == -1) {
+        energyFee = getEnergyFee();
+      }
+
+      return energyFee;
     } catch (Exception e) {
       logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
       return getEnergyFee();
     }
   }
 
-  public long getEnergyFee(long timestamp, String energyPriceHistory) {
-    String[] priceList = energyPriceHistory.split(",");
 
-    for (int i = priceList.length - 1; i >= 0; i--) {
-      String[] priceArray = priceList[i].split(":");
-      long time = Long.parseLong(priceArray[0]);
-      long price = Long.parseLong(priceArray[1]);
-      if (timestamp > time) {
-        return price;
-      }
-    }
-
-    return getEnergyFee();
-  }
 }
 

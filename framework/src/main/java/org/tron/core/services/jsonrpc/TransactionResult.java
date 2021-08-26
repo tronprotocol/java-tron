@@ -3,7 +3,6 @@ package org.tron.core.services.jsonrpc;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
-
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import lombok.ToString;

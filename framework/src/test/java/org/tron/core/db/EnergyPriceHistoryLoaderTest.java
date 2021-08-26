@@ -1,5 +1,6 @@
-package org.tron.core.db.api;
+package org.tron.core.db;
 
+import static org.tron.core.store.DynamicPropertiesStore.DEFAULT_ENERGY_PRICE_HISTORY;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ALLOW_CREATION_OF_CONTRACTS;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ASSET_ISSUE_FEE;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ENERGY_FEE;
@@ -14,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
@@ -22,6 +23,8 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.api.EnergyPriceHistoryLoader;
+import org.tron.core.store.ProposalStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
 
@@ -30,7 +33,7 @@ public class EnergyPriceHistoryLoaderTest {
 
   private static ChainBaseManager chainBaseManager;
   private static TronApplicationContext context;
-  private static String dbPath = "output_EnergyPriceHistoryLoaderTest_test";
+  private static String dbPath = "EnergyPriceHistoryLoaderTest";
   private static long t1 = 1542607200000L;
   private static long price1 = 20;
   private static long t3 = 1544724000000L;
@@ -51,7 +54,7 @@ public class EnergyPriceHistoryLoaderTest {
   }
 
   @AfterClass
-  public static void removeDB() {
+  public static void destroy() {
     Args.clearParam();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
@@ -128,7 +131,6 @@ public class EnergyPriceHistoryLoaderTest {
 
   @Test
   public void testLoader() {
-
     if (chainBaseManager == null) {
       init();
     }
@@ -146,8 +148,35 @@ public class EnergyPriceHistoryLoaderTest {
     loader.getEnergyProposals();
     String historyStr = loader.parseProposalsToStr();
 
-    removeDB();
-
     Assert.assertEquals(expectedRes, historyStr);
+  }
+
+  @Test
+  public void testProposalEmpty() {
+    if (chainBaseManager == null) {
+      init();
+    }
+
+    // clean DB firstly
+    ProposalStore proposalStore = chainBaseManager.getProposalStore();
+    proposalStore.forEach(
+        bytesCapsuleEntry -> proposalStore
+            .delete(bytesCapsuleEntry.getKey()));
+    chainBaseManager.getDynamicPropertiesStore().saveEnergyPriceHistoryDone(0);
+
+    String preEnergyPriceHistory =
+        chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+    Assert.assertEquals(DEFAULT_ENERGY_PRICE_HISTORY, preEnergyPriceHistory);
+
+    // loader work
+    EnergyPriceHistoryLoader loader = new EnergyPriceHistoryLoader(chainBaseManager);
+    loader.doWork();
+
+    // check result
+    String afterEnergyPriceHistory =
+        chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+    Assert.assertEquals(DEFAULT_ENERGY_PRICE_HISTORY, afterEnergyPriceHistory);
+    Assert.assertEquals(1L,
+        chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistoryDone());
   }
 }

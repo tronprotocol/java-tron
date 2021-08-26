@@ -10,7 +10,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
-
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
@@ -236,8 +235,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String ethChainId() {
-    return ByteArray.toJsonHex(chainId);
+  public String ethChainId() throws JsonRpcInternalException {
+    // return hash of genesis block
+    try {
+      return ByteArray.toJsonHex(wallet.getBlockCapsuleByNum(0).getBlockId().getBytes());
+    } catch (Exception e) {
+      throw new JsonRpcInternalException(e.getMessage());
+    }
   }
 
   @Override
@@ -525,7 +529,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         energyUsageTotal, wallet.getEnergyFee(blockCapsule.getTimeStamp()), wallet);
   }
 
-  public TransactionResult getTransactionByBlockAndIndex(Block block, String index)
+  private TransactionResult getTransactionByBlockAndIndex(Block block, String index)
       throws JsonRpcInvalidParamsException {
     int txIndex;
     try {

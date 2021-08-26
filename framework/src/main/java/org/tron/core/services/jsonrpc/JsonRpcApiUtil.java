@@ -540,4 +540,19 @@ public class JsonRpcApiUtil {
 
     return transactionIndex;
   }
+
+  public static long parseEnergyFee(long timestamp, String energyPriceHistory) {
+    String[] priceList = energyPriceHistory.split(",");
+
+    for (int i = priceList.length - 1; i >= 0; i--) {
+      String[] priceArray = priceList[i].split(":");
+      long time = Long.parseLong(priceArray[0]);
+      long price = Long.parseLong(priceArray[1]);
+      if (timestamp > time) {
+        return price;
+      }
+    }
+
+    return -1;
+  }
 }

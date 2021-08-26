@@ -158,7 +158,7 @@ public interface TronJsonRpc {
   String getNetVersion();
 
   @JsonRpcMethod("eth_chainId")
-  String ethChainId();
+  String ethChainId() throws JsonRpcInternalException;
 
   @JsonRpcMethod("net_listening")
   boolean isListening();
