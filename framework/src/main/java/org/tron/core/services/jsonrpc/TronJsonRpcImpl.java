@@ -229,9 +229,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String getNetVersion() {
-    // network id
-    return ByteArray.toJsonHex(networkId);
+  public String getNetVersion() throws JsonRpcInternalException {
+    return ethChainId();
   }
 
   @Override

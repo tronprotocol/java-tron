@@ -155,7 +155,7 @@ public interface TronJsonRpc {
       throws JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("net_version")
-  String getNetVersion();
+  String getNetVersion() throws JsonRpcInternalException;
 
   @JsonRpcMethod("eth_chainId")
   String ethChainId() throws JsonRpcInternalException;
