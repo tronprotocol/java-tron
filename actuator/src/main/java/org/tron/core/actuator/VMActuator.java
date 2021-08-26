@@ -377,6 +377,9 @@ public class VMActuator implements Actuator2 {
               vmShouldEndInUs, energyLimit);
       this.vm = new VM();
       this.program = new Program(ops, programInvoke, rootInternalTransaction, vmConfig);
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        this.program.setContractVersion(1);
+      }
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
       if (enableEventListener && isCheckTransaction()) {
@@ -486,7 +489,10 @@ public class VMActuator implements Actuator2 {
       this.vm = new VM();
       rootInternalTransaction = new InternalTransaction(trx, trxType);
       this.program = new Program(code, programInvoke, rootInternalTransaction, vmConfig);
-      this.program.setContractVersion(repository.getContract(contractAddress).getContractVersion());
+      if (VMConfig.allowTvmCompatibleEvm()) {
+      this.program.setContractVersion(
+          repository.getContract(contractAddress).getContractVersion());
+      }
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
 

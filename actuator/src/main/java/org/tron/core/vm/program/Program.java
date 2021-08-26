@@ -796,6 +796,9 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        program.setContractVersion(this.contractVersion);
+      }
       vm.play(program);
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
@@ -1019,7 +1022,10 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
-      program.setContractVersion(invoke.getDeposit().getContract(codeAddress).getContractVersion());
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        program.setContractVersion(
+            invoke.getDeposit().getContract(codeAddress).getContractVersion());
+      }
       vm.play(program);
       callResult = program.getResult();
 
