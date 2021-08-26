@@ -135,6 +135,7 @@ public class Program {
   private byte previouslyExecutedOp;
   private boolean stopped;
   private ProgramPrecompile programPrecompile;
+  private int contractVersion;
 
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
@@ -306,6 +307,14 @@ public class Program {
 
   public void setRootTransactionId(byte[] rootTransactionId) {
     this.rootTransactionId = rootTransactionId.clone();
+  }
+
+  public void setContractVersion(int version) {
+    this.contractVersion = version;
+  }
+
+  public int getContractVersion() {
+    return this.contractVersion;
   }
 
   public long getNonce() {
@@ -719,7 +728,7 @@ public class Program {
 
       if (!contractAlreadyExists) {
         Builder builder = SmartContract.newBuilder();
-        if (getContractVersion() == 1) {
+        if (getContractVersionByContractAddress() == 1) {
           builder.setVersion(1);
         }
         builder.setContractAddress(ByteString.copyFrom(newAddress))
@@ -735,7 +744,7 @@ public class Program {
       deposit.createAccount(newAddress, "CreatedByContract",
           Protocol.AccountType.Contract);
       Builder builder = SmartContract.newBuilder();
-      if (getContractVersion() == 1) {
+      if (getContractVersionByContractAddress() == 1) {
         builder.setVersion(1);
       }
       SmartContract newSmartContract = builder.setContractAddress(ByteString.copyFrom(newAddress))
@@ -1010,6 +1019,7 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
+      program.setContractVersion(invoke.getDeposit().getContract(codeAddress).getContractVersion());
       vm.play(program);
       callResult = program.getResult();
 
@@ -1463,6 +1473,10 @@ public class Program {
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
     byte[] senderAddress;
+    if (VMConfig.allowTvmCompatibleEvm() && getCallDeep() == MAX_DEPTH) {
+      stackPushZero();
+      return;
+    }
     if(VMConfig.allowTvmIstanbul()) {
       senderAddress = TransactionTrace
           .convertToTronAddress(this.getContractAddress().getLast20Bytes());
@@ -1667,7 +1681,7 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    if (getContractVersion() == 1) {
+    if (getContractVersionByContractAddress() == 1) {
       DataWord availableEnergyReduce = availableEnergy.clone();
       availableEnergyReduce.div(new DataWord(intToBytes(64)));
       availableEnergy.sub(availableEnergyReduce);
@@ -1972,7 +1986,7 @@ public class Program {
     return 0;
   }
 
-  public int getContractVersion() {
+  public int getContractVersionByContractAddress() {
     byte [] contractAddress =
         TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     return invoke.getDeposit().getContract(contractAddress).getContractVersion();
