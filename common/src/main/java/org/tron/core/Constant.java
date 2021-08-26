@@ -60,6 +60,7 @@ public class Constant {
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
   public static final String VM_SUPPORT_CONSTANT = "vm.supportConstant";
+  public static final String VM_MAX_ENERGY_LIMIT_FOR_CONSTANT = "vm.maxEnergyLimitForConstant";
   public static final String VM_MIN_TIME_RATIO = "vm.minTimeRatio";
   public static final String VM_MAX_TIME_RATIO = "vm.maxTimeRatio";
   public static final String VM_LONG_RUNNING_TIME = "vm.longRunningTime";
