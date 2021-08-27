@@ -51,8 +51,8 @@ public class BlockHandleImpl implements BlockHandle {
       consensus.receiveBlock(blockCapsule);
       BlockMessage blockMessage = new BlockMessage(blockCapsule);
       tronNetService.fastForward(blockMessage);
-      manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
+      manager.pushBlock(blockCapsule);
     } catch (Exception e) {
       logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;

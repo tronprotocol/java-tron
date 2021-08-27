@@ -123,6 +123,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
         chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
         chainBaseManager.getHeadBlockId());
     fastForward.fillHelloMessage(message, channel);
+    ((PeerConnection) channel).setHelloMessageSend(message);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC,
@@ -174,7 +175,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    ((PeerConnection) channel).setHelloMessage(msg);
+    ((PeerConnection) channel).setHelloMessageReceive(msg);
 
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
 

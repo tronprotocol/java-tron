@@ -8,6 +8,7 @@ import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
@@ -76,6 +77,10 @@ public class TronNetService {
     peerStatusCheck.close();
     transactionsMsgHandler.close();
     logger.info("TronNetService closed successfully.");
+  }
+
+  public int fastBroadcastTransaction(TransactionMessage msg) {
+    return advService.fastBroadcastTransaction(msg);
   }
 
   public void broadcast(Message msg) {
