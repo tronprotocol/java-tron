@@ -158,6 +158,7 @@ startService() {
  directmem=`echo "$total/1024/1024*0.1" | bc |awk -F. '{print $1"g"}'`
  logtime=`date +%Y-%m-%d_%H-%M-%S`
  export LD_PRELOAD="/usr/lib64/libtcmalloc.so"
+ export TCMALLOC_RELEASE_RATE=10
  nohup java -Xms$xmx -Xmx$xmx -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log\
   -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing\
   $MEM_OPT -XX:MaxDirectMemorySize=$directmem -XX:+HeapDumpOnOutOfMemoryError -jar $JAR_NAME $START_OPT -c config.conf  >> start.log 2>&1 &
