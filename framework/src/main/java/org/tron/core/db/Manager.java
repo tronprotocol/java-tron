@@ -1379,7 +1379,8 @@ public class Manager {
 
     session.reset();
 
-    logger.info("Generate block success, pendingCount: {}, rePushCount: {}, postponedCount: {}",
+    logger.info("Generate block {} success, pendingCount: {}, rePushCount: {}, postponedCount: {}",
+        blockCapsule.getNum(),
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
