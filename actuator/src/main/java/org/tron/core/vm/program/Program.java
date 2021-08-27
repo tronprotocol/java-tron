@@ -1689,7 +1689,7 @@ public class Program {
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
     if (getContractVersion() == 1) {
       DataWord availableEnergyReduce = availableEnergy.clone();
-      availableEnergyReduce.div(new DataWord(intToBytes(64)));
+      availableEnergyReduce.div(new DataWord(64));
       availableEnergy.sub(availableEnergyReduce);
     }
     return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;

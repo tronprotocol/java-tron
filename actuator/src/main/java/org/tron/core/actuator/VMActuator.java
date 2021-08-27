@@ -190,8 +190,6 @@ public class VMActuator implements Actuator2 {
           byte[] code = program.getResult().getHReturn();
           if (vmConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
             // todo deal with exception
-            // throw new Program.BytecodeExecutionException("Contract creation error: code cannot "
-            //     + "start with {}", "0xEF");
             if (null == result.getException()) {
               result.setException(Program.Exception
                   .invalidOpCode((byte) 0xEF));
