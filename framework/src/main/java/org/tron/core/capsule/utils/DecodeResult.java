@@ -1,6 +1,7 @@
 package org.tron.core.capsule.utils;
 
 import java.io.Serializable;
+import lombok.var;
 import org.bouncycastle.util.encoders.Hex;
 
 @SuppressWarnings("serial")
@@ -32,7 +33,7 @@ public class DecodeResult implements Serializable {
     } else if (decoded instanceof byte[]) {
       return Hex.toHexString((byte[]) decoded);
     } else if (decoded instanceof Object[]) {
-      StringBuffer result = new StringBuffer();
+      var result = new StringBuilder();
       for (Object item : (Object[]) decoded) {
         result.append(asString(item));
       }
