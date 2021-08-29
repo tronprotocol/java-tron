@@ -50,16 +50,12 @@ public class BackupDbUtil {
   private void switchBackupState() {
     switch (State.valueOf(getBackupState())) {
       case BAKINGONE:
+      case BAKEDTWO:
         setBackupState(State.BAKEDONE.getStatus());
         break;
       case BAKEDONE:
-        setBackupState(State.BAKEDTWO.getStatus());
-        break;
       case BAKINGTWO:
         setBackupState(State.BAKEDTWO.getStatus());
-        break;
-      case BAKEDTWO:
-        setBackupState(State.BAKEDONE.getStatus());
         break;
       default:
         break;
@@ -71,28 +67,18 @@ public class BackupDbUtil {
     try {
       switch (State.valueOf(getBackupState())) {
         case BAKINGONE:
+        case BAKEDTWO:
           deleteBackup(DB_BACKUP_INDEX1);
           backup(DB_BACKUP_INDEX1);
           switchBackupState();
           deleteBackup(DB_BACKUP_INDEX2);
           break;
         case BAKEDONE:
-          deleteBackup(DB_BACKUP_INDEX2);
-          backup(DB_BACKUP_INDEX2);
-          switchBackupState();
-          deleteBackup(DB_BACKUP_INDEX1);
-          break;
         case BAKINGTWO:
           deleteBackup(DB_BACKUP_INDEX2);
           backup(DB_BACKUP_INDEX2);
           switchBackupState();
           deleteBackup(DB_BACKUP_INDEX1);
-          break;
-        case BAKEDTWO:
-          deleteBackup(DB_BACKUP_INDEX1);
-          backup(DB_BACKUP_INDEX1);
-          switchBackupState();
-          deleteBackup(DB_BACKUP_INDEX2);
           break;
         default:
           logger.warn("invalid backup state");

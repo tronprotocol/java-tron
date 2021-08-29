@@ -255,7 +255,7 @@ public final class VMUtils {
       }
       if (assetBalance != null) {
         try {
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+          Math.addExact(assetBalance, amount); //check if overflow
         } catch (Exception e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());

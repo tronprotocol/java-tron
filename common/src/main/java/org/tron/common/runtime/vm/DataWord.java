@@ -114,12 +114,6 @@ public class DataWord implements Comparable<DataWord> {
     return true;
   }
 
-  public static String shortHex(byte[] data) {
-    byte[] bytes = ByteUtil.stripLeadingZeroes(data);
-    String hexValue = Hex.toHexString(bytes).toUpperCase();
-    return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
-  }
-
   public static long sizeInWords(long bytesSize) {
     return bytesSize == 0 ? 0 : (bytesSize - 1) / WORD_SIZE + 1;
   }

@@ -27,7 +27,7 @@ public class FilterQuery {
   private List<String> contractTopicList;
 
   public static long parseFromBlockNumber(String blockNum) {
-    long number = 0;
+    long number;
     if (StringUtils.isEmpty(blockNum) || FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)) {
       number = FilterQuery.EARLIEST_BLOCK_NUM;
     } else {
@@ -42,7 +42,7 @@ public class FilterQuery {
   }
 
   public static long parseToBlockNumber(String blockNum) {
-    long number = 0;
+    long number;
     if (StringUtils.isEmpty(blockNum) || FilterQuery.LATEST.equalsIgnoreCase(blockNum)) {
       number = FilterQuery.LATEST_BLOCK_NUM;
     } else {
