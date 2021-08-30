@@ -26,9 +26,9 @@ public class CallArguments {
   public String to;
   public String gas = ""; //not used
   public String gasPrice = ""; //not used
-  public String value = ""; //not used
+  public String value = "";
   public String data;
-  public String nonce;
+  public String nonce; // not used
 
   /**
    * just support TransferContract and TriggerSmartContract
