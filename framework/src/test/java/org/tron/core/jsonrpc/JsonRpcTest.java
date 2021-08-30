@@ -3,6 +3,7 @@ package org.tron.core.jsonrpc;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 
+
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Test;
@@ -77,6 +78,21 @@ public class JsonRpcTest {
     sb.append(position + "\",");
     sb.append("\"latest\"],\"id\":1}");
     return sb.toString();
+  }
+
+  private String constractData(String functionSelector, String parameter) {
+    String data = getMethodSign(functionSelector) + parameter;
+    return data;
+  }
+
+  @Test
+  public void testConstractData() {
+    String expectedData =
+        "07211ef70000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240";
+
+    String functionSelector = "get_dy_underlying(int128,int128,uint256)";
+    String parameter = "0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240";
+    Assert.assertEquals(expectedData, constractData(functionSelector, parameter));
   }
 
   @Test

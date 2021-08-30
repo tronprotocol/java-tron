@@ -54,7 +54,7 @@ public class CallArguments {
         if (StringUtils.isNotEmpty(value)) {
           contractType = ContractType.TransferContract;
         } else {
-          throw new JsonRpcInvalidRequestException("invalid json request");
+          throw new JsonRpcInvalidRequestException("invalid json request: invalid value");
         }
       }
     }
