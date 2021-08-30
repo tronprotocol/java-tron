@@ -598,7 +598,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      //静态调用合约方法。
       byte[] addressData = addressHashToByteArray(transactionCall.from);
       byte[] contractAddressData = addressHashToByteArray(transactionCall.to);
 
