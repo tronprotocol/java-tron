@@ -345,7 +345,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       trxExt = trxExtBuilder.build();
     }
 
-    String result = null;
+    String result = "0x";
     String code = trxExt.getResult().getCode().toString();
     if ("SUCCESS".equals(code)) {
       List<ByteString> list = trxExt.getConstantResultList();
