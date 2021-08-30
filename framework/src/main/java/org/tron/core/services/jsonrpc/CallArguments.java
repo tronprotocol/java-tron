@@ -2,6 +2,8 @@ package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
+
 
 import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
@@ -57,5 +59,9 @@ public class CallArguments {
       }
     }
     return contractType;
+  }
+
+  public long parseValue() throws JsonRpcInvalidParamsException {
+    return parseQuantityValue(value);
   }
 }

@@ -288,13 +288,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private void callTriggerConstantContract(byte[] ownerAddressByte, byte[] contractAddressByte,
-      byte[] data, TransactionExtention.Builder trxExtBuilder, Return.Builder retBuilder)
+      long value, byte[] data, TransactionExtention.Builder trxExtBuilder,
+      Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     TriggerSmartContract triggerContract = triggerCallContract(
         ownerAddressByte,
         contractAddressByte,
-        0,
+        value,
         data,
         0,
         null
@@ -322,8 +323,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     TransactionExtention trxExt;
 
     try {
-      callTriggerConstantContract(ownerAddressByte, contractAddressByte, data, trxExtBuilder,
-          retBuilder);
+      callTriggerConstantContract(ownerAddressByte, contractAddressByte, 0, data,
+          trxExtBuilder, retBuilder);
 
     } catch (ContractValidateException | VMIllegalException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
@@ -448,6 +449,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     try {
       callTriggerConstantContract(ownerAddress,
           addressHashToByteArray(args.to),
+          args.parseValue(),
           ByteArray.fromHexString(args.data),
           trxExtBuilder,
           retBuilder);
