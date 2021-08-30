@@ -195,7 +195,8 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
-      .newBuilder().maximumSize(TX_ID_CACHE_SIZE).recordStats().build();
+          .newBuilder().maximumSize(TX_ID_CACHE_SIZE)
+          .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
