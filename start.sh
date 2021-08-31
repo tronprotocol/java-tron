@@ -75,13 +75,13 @@ checkmemory() {
      MEM_OPT="$max_matespace_size $max_new_size"
 
   elif [[ $total -gt $allow_memory ]] ; then
-     NEW_RATIO=' -XX:NewSize=6144m -XX:MaxNewSize=6144m '
+     new_ratio=' -XX:NewSize=6144m -XX:MaxNewSize=6144m '
      MEM_OPT="$max_matespace_size $new_ratio"
+  else
+     new_ratio=' -XX:NewRatio=2 '
   fi
-else
-  NEW_RATIO=2
-  max_matespace_size=$[allow_memory / 16]
-  MEM_OPT="$max_matespace_size $new_ratio"
+ else
+  MEM_OPT=' -XX:NewRatio=2 '
  fi
 }
 
