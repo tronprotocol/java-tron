@@ -477,30 +477,6 @@ public class ProposalUtil {
         }
         break;
       }
-      case ALLOW_TVM_LONDON: {
-        // todo version modify
-        // if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
-        //   throw new ContractValidateException(
-        //       "Bad chain parameter id [ALLOW_TVM_LONDON]");
-        // }
-        if (value != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_TVM_LONDON] is only allowed to be 1");
-        }
-        break;
-      }
-      case ALLOW_TVM_COMPATIBLE_EVM: {
-        // todo version modify
-        // if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
-        //   throw new ContractValidateException(
-        //       "Bad chain parameter id [ALLOW_TVM_COMPATIBLE_EVM]");
-        // }
-        if (value != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_TVM_COMPATIBLE_EVM] is only allowed to be 1");
-        }
-        break;
-      }
       case FREE_NET_LIMIT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException("Bad chain parameter id [FREE_NET_LIMIT]");
@@ -530,6 +506,28 @@ public class ProposalUtil {
         if (value != 1) {
           throw new ContractValidateException(
                   "This value[ALLOW_ACCOUNT_ASSET_OPTIMIZATION] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_TVM_LONDON: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_LONDON]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_LONDON] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_TVM_COMPATIBLE_EVM: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_COMPATIBLE_EVM]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_COMPATIBLE_EVM] is only allowed to be 1");
         }
         break;
       }
@@ -583,7 +581,7 @@ public class ProposalUtil {
     ALLOW_MARKET_TRANSACTION(44), // {0, 1}
     MARKET_SELL_FEE(45), // 0 [0,10_000_000_000]
     MARKET_CANCEL_FEE(46), // 0 [0,10_000_000_000]
-    MAX_FEE_LIMIT(47), // [0, 10_000_000_000]
+    MAX_FEE_LIMIT(47), // [0, 100_000_000_000] TRX
     ALLOW_TRANSACTION_FEE_POOL(48), // 0, 1
     ALLOW_BLACKHOLE_OPTIMIZATION(49),// 0,1
     ALLOW_NEW_RESOURCE_MODEL(51),// 0,1
@@ -591,10 +589,10 @@ public class ProposalUtil {
     ALLOW_ACCOUNT_ASSET_OPTIMIZATION(53), // 1
     // ALLOW_NEW_REWARD_ALGORITHM(58), // 0, 1
     ALLOW_TVM_VOTE(59), // 0, 1
-    ALLOW_TVM_COMPATIBLE_EVM(60),
+    ALLOW_TVM_COMPATIBLE_EVM(60), // 0, 1
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
-    ALLOW_TVM_LONDON(63);
+    ALLOW_TVM_LONDON(63); // 0, 1
 
     private long code;
 

@@ -25,7 +25,6 @@ import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-import static org.tron.common.utils.ByteUtil.intToBytes;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -728,8 +727,8 @@ public class Program {
 
       if (!contractAlreadyExists) {
         Builder builder = SmartContract.newBuilder();
-        if (getContractVersion() == 1) {
-          builder.setVersion(1);
+        if (VMConfig.allowTvmCompatibleEvm()) {
+          builder.setVersion(getContractVersion());
         }
         builder.setContractAddress(ByteString.copyFrom(newAddress))
             .setConsumeUserResourcePercent(100)
@@ -744,8 +743,8 @@ public class Program {
       deposit.createAccount(newAddress, "CreatedByContract",
           Protocol.AccountType.Contract);
       Builder builder = SmartContract.newBuilder();
-      if (getContractVersion() == 1) {
-        builder.setVersion(1);
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        builder.setVersion(getContractVersion());
       }
       SmartContract newSmartContract = builder.setContractAddress(ByteString.copyFrom(newAddress))
           .setConsumeUserResourcePercent(100)
@@ -797,7 +796,7 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
-        program.setContractVersion(this.contractVersion);
+        program.setContractVersion(getContractVersion());
       }
       vm.play(program);
       createResult = program.getResult();
@@ -811,9 +810,8 @@ public class Program {
     byte[] code = createResult.getHReturn();
 
     if (code.length != 0 && config.allowTvmLondon() && code[0] == (byte) 0xEF) {
-      // todo dealwith exception
-      createResult.setException(new BytecodeExecutionException(
-          "can't create a contract start with 0xef"));
+        createResult.setException(Program.Exception
+            .invalidCodeException());
     }
 
     long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
@@ -1687,7 +1685,7 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    if (getContractVersion() == 1) {
+    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
       DataWord availableEnergyReduce = availableEnergy.clone();
       availableEnergyReduce.div(new DataWord(64));
       availableEnergy.sub(availableEnergyReduce);
@@ -1696,6 +1694,11 @@ public class Program {
   }
 
   public DataWord getCreateEnergy(DataWord availableEnergy) {
+    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
+      DataWord availableEnergyReduce = availableEnergy.clone();
+      availableEnergyReduce.div(new DataWord(64));
+      availableEnergy.sub(availableEnergyReduce);
+    }
     return availableEnergy;
   }
 
@@ -2072,6 +2075,14 @@ public class Program {
   }
 
   @SuppressWarnings("serial")
+  public static class InvalidCodeException extends BytecodeExecutionException {
+
+    public InvalidCodeException(String message) {
+      super(message);
+    }
+  }
+
+  @SuppressWarnings("serial")
   public static class BadJumpDestinationException extends BytecodeExecutionException {
 
     public BadJumpDestinationException(String message, Object... args) {
@@ -2175,6 +2186,10 @@ public class Program {
     public static IllegalOperationException invalidOpCode(byte... opCode) {
       return new IllegalOperationException("Invalid operation code: opCode[%s];",
           Hex.toHexString(opCode, 0, 1));
+    }
+
+    public static InvalidCodeException invalidCodeException() {
+      return new InvalidCodeException("invalid code: must not begin with 0xef");
     }
 
     public static BadJumpDestinationException badJumpDestination(int pc) {

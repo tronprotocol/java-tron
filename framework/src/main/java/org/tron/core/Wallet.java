@@ -1005,13 +1005,15 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
         .build());
 
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmLondon")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmLondon()).build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmLondon")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmLondon())
+        .build());
 
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmCompatibleEvm")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmCompatibleEvm()).build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmCompatibleEvm")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmCompatibleEvm())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowAccountAssetOptimization")

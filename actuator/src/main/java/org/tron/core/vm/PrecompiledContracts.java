@@ -1783,11 +1783,11 @@ public class PrecompiledContracts {
 
       if (data.length != 213) {
         logger.info("Incorrect input length.  Expected {} and got {}", 213, data.length);
-        return Pair.of(true, DataWord.ZERO().getData());
+        return Pair.of(false, DataWord.ZERO().getData());
       }
       if ((data[212] & 0xFE) != 0) {
         logger.info("Incorrect finalization flag, expected 0 or 1 and got {}", data[212]);
-        return Pair.of(true, DataWord.ZERO().getData());
+        return Pair.of(false, DataWord.ZERO().getData());
       }
       final MessageDigest digest = new Blake2bfMessageDigest();
       byte[] result;
@@ -1795,7 +1795,7 @@ public class PrecompiledContracts {
         digest.update(data);
         result = digest.digest();
       } catch (Exception e) {
-        return Pair.of(true, new DataWord(EMPTY_BYTE_ARRAY).getData());
+        return Pair.of(true, EMPTY_BYTE_ARRAY);
       }
       return Pair.of(true, result);
     }

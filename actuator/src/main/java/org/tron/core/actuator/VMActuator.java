@@ -188,11 +188,10 @@ public class VMActuator implements Actuator2 {
 
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
           byte[] code = program.getResult().getHReturn();
-          if (vmConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
-            // todo deal with exception
+          if (code.length != 0 && vmConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
             if (null == result.getException()) {
               result.setException(Program.Exception
-                  .invalidOpCode((byte) 0xEF));
+                  .invalidCodeException());
             }
           }
           long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
@@ -297,9 +296,11 @@ public class VMActuator implements Actuator2 {
     if (contract == null) {
       throw new ContractValidateException("Cannot get CreateSmartContract from transaction");
     }
-    SmartContract newSmartContract = contract.getNewContract();
+    SmartContract newSmartContract;
     if (VMConfig.allowTvmCompatibleEvm()) {
       newSmartContract = contract.getNewContract().toBuilder().setVersion(1).build();
+    } else {
+      newSmartContract = contract.getNewContract().toBuilder().clearVersion().build();
     }
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
       logger.info("OwnerAddress not equals OriginAddress");
@@ -488,8 +489,7 @@ public class VMActuator implements Actuator2 {
       rootInternalTransaction = new InternalTransaction(trx, trxType);
       this.program = new Program(code, programInvoke, rootInternalTransaction, vmConfig);
       if (VMConfig.allowTvmCompatibleEvm()) {
-      this.program.setContractVersion(
-          repository.getContract(contractAddress).getContractVersion());
+        this.program.setContractVersion(deployedContract.getContractVersion());
       }
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
