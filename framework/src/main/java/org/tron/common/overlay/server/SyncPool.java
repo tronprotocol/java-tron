@@ -86,13 +86,14 @@ public class SyncPool {
   }
 
   private void check() {
-    activePeers.forEach(peer -> {
+    for (PeerConnection peer : new ArrayList<>(activePeers)) {
       long now = System.currentTimeMillis();
       long disconnectTime = peer.getDisconnectTime();
       if (disconnectTime != 0 && now - disconnectTime > disconnectTimeout) {
+        logger.warn("Notify disconnect peer {}.", peer.getInetAddress());
         channelManager.notifyDisconnect(peer);
       }
-    });
+    }
   }
 
   private void fillUp() {
