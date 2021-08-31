@@ -2533,10 +2533,6 @@ public class Wallet {
           "No contract or not a smart contract");
     }
 
-    if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node does not support constant");
-    }
-
     return callConstantContract(trxCap, builder, retBuilder);
   }
 
