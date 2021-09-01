@@ -139,11 +139,11 @@ public class SyncPool {
 
   public List<PeerConnection> getActivePeers() {
     List<PeerConnection> peers = Lists.newArrayList();
-    activePeers.forEach(peer -> {
+    for (PeerConnection peer : new ArrayList<>(activePeers)) {
       if (!peer.isDisconnect()) {
         peers.add(peer);
       }
-    });
+    }
     return peers;
   }
 
