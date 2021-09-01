@@ -59,7 +59,7 @@ public class SyncPool {
 
   private PeerClient peerClient;
 
-  private int disconnectTimeout = 10_000;
+  private int disconnectTimeout = 60_000;
 
   public void init() {
 
