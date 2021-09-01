@@ -2516,29 +2516,36 @@ public class Wallet {
     }
   }
 
-  public Transaction triggerConstantContract(TriggerSmartContract
-      triggerSmartContract,
-      TransactionCapsule trxCap, Builder builder,
-      Return.Builder retBuilder)
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = chainBaseManager.getContractStore();
-    byte[] contractAddress = triggerSmartContract.getContractAddress()
-        .toByteArray();
-    byte[] isContractExist = contractStore
-        .findContractByHash(contractAddress);
-
-    if (ArrayUtils.isEmpty(isContractExist)) {
-      throw new ContractValidateException(
-          "No contract or not a smart contract");
+    if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
+      CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
+      deployBuilder.setOwnerAddress(triggerSmartContract.getOwnerAddress());
+      deployBuilder.setNewContract(SmartContract.newBuilder()
+          .setOriginAddress(triggerSmartContract.getOwnerAddress())
+          .setBytecode(triggerSmartContract.getData())
+          .setCallValue(triggerSmartContract.getCallValue())
+          .setConsumeUserResourcePercent(100)
+          .setOriginEnergyLimit(1)
+          .build()
+      );
+      deployBuilder.setCallTokenValue(triggerSmartContract.getCallTokenValue());
+      deployBuilder.setTokenId(triggerSmartContract.getTokenId());
+      trxCap = createTransactionCapsule(deployBuilder.build(), ContractType.CreateSmartContract);
+    } else { // call contract
+      ContractStore contractStore = chainBaseManager.getContractStore();
+      byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
+      if (contractStore.get(contractAddress) == null) {
+        throw new ContractValidateException("Smart contract is not exist.");
+      }
     }
-
     return callConstantContract(trxCap, builder, retBuilder);
   }
 
-  public Transaction callConstantContract(TransactionCapsule trxCap, Builder
-      builder,
-      Return.Builder retBuilder)
+  public Transaction callConstantContract(TransactionCapsule trxCap,
+      Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -2555,8 +2562,7 @@ public class Wallet {
     }
 
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
-        StoreFactory.getInstance(), true,
-        false);
+        StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
     vmActuator.validate(context);
