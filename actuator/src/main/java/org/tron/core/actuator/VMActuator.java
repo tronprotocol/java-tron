@@ -177,15 +177,6 @@ public class VMActuator implements Actuator2 {
         vm.play(program);
         result = program.getResult();
 
-        if (isConstantCall) {
-          if (result.getException() != null) {
-            result.setRuntimeError(result.getException().getMessage());
-            result.rejectInternalTransactions();
-          }
-          context.setProgramResult(result);
-          return;
-        }
-
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
           byte[] code = program.getResult().getHReturn();
           if (code.length != 0 && vmConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
@@ -208,6 +199,15 @@ public class VMActuator implements Actuator2 {
               repository.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
             }
           }
+        }
+
+        if (isConstantCall) {
+          if (result.getException() != null) {
+            result.setRuntimeError(result.getException().getMessage());
+            result.rejectInternalTransactions();
+          }
+          context.setProgramResult(result);
+          return;
         }
 
         if (result.getException() != null || result.isRevert()) {
@@ -363,6 +363,9 @@ public class VMActuator implements Actuator2 {
         energyLimit = getAccountEnergyLimitWithFixRatio(creator, feeLimit, callValue);
       } else {
         energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
+      }
+      if (isConstantCall) {
+        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
       }
 
       checkTokenValueAndId(tokenValue, tokenId);
