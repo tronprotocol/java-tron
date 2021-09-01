@@ -76,7 +76,6 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -2599,9 +2598,6 @@ public class PublicMethed {
       byteCode = Hex.decode(code);
     }
     builder.setBytecode(ByteString.copyFrom(byteCode));
-    if (VMConfig.allowTvmCompatibleEvm()) {
-      builder.setVersion(1);
-    }
 
     Builder contractBuilder = CreateSmartContract.newBuilder();
     contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
