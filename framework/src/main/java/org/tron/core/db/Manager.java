@@ -414,7 +414,8 @@ public class Manager {
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
-    // initCacheTxs();
+    long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    logger.info("current headNum is: {}", headNum);
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
@@ -554,62 +555,6 @@ public class Manager {
               witnessCapsule.setIsJobs(true);
               chainBaseManager.getWitnessStore().put(keyAddress, witnessCapsule);
             });
-  }
-
-  public void initCacheTxs() {
-    logger.info("begin to init txs cache.");
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    if (dbVersion != 2) {
-      return;
-    }
-    long start = System.currentTimeMillis();
-    long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    logger.info("current headNum is: {}", headNum);
-    long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
-    ListeningExecutorService service = MoreExecutors
-        .listeningDecorator(Executors.newFixedThreadPool(50));
-    List<ListenableFuture<?>> futures = new ArrayList<>();
-    AtomicLong blockCount = new AtomicLong(0);
-    AtomicLong emptyBlockCount = new AtomicLong(0);
-    LongStream.rangeClosed(headNum - recentBlockCount + 1, headNum).forEach(
-        blockNum -> futures.add(service.submit(() -> {
-          try {
-            blockCount.incrementAndGet();
-            if (chainBaseManager.getBlockByNum(blockNum).getTransactions().isEmpty()) {
-              emptyBlockCount.incrementAndGet();
-              // transactions is null, return
-              return;
-            }
-            chainBaseManager.getBlockByNum(blockNum).getTransactions().stream()
-                .map(tc -> tc.getTransactionId().getBytes())
-                .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
-                .forEach(e -> transactionCache
-                    .put(e.getKey(), new BytesCapsule(e.getValue())));
-          } catch (ItemNotFoundException e) {
-            if (!CommonParameter.getInstance().isLiteFullNode) {
-              logger.warn("block not found. num: {}", blockNum);
-            }
-          } catch (BadItemException e) {
-            throw new IllegalStateException("init txs cache error.", e);
-          }
-        })));
-
-    ListenableFuture<?> future = Futures.allAsList(futures);
-    try {
-      future.get();
-      service.shutdown();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException e) {
-      logger.info(e.getMessage());
-    }
-
-    logger.info("end to init txs cache. trx ids:{}, block count:{}, empty block count:{}, cost:{}",
-        transactionCache.size(),
-        blockCount.get(),
-        emptyBlockCount.get(),
-        System.currentTimeMillis() - start
-    );
   }
 
   public AccountStore getAccountStore() {
