@@ -524,8 +524,11 @@ public class RepositoryImpl implements Repository {
       storage = new Storage(address, getStorageRowStore());
     }
     ContractCapsule contract = getContract(address);
-    if (contract != null && !ByteUtil.isNullOrZeroArray(contract.getTrxHash())) {
-      storage.generateAddrHash(contract.getTrxHash());
+    if (contract != null) {
+      storage.setContractVersion(contract.getContractVersion());
+      if (!ByteUtil.isNullOrZeroArray(contract.getTrxHash())) {
+        storage.generateAddrHash(contract.getTrxHash());
+      }
     }
     return storage;
   }
