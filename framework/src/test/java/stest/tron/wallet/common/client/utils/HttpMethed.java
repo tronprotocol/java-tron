@@ -2021,6 +2021,9 @@ public class HttpMethed {
     responseContent = HttpMethed.parseResponseContent(response);
     //HttpMethed.printJsonContent(responseContent);
     //httppost.releaseConnection();
+    if (!responseContent.containsKey("balance")) {
+      return 0L;
+    }
     return Long.parseLong(responseContent.get("balance").toString());
   }
 
