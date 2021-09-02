@@ -28,6 +28,7 @@ public class TransactionReceipt {
     public String address;
     public String data;
     public String[] topics;
+    public boolean removed = false;
 
     public TransactionLog() {
 
