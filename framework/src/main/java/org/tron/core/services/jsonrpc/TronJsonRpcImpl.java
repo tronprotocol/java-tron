@@ -174,7 +174,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     br.parentHash = ByteArray.toJsonHex(blockCapsule.getParentBlockId().getBytes());
     br.nonce = null; // no value
     br.sha3Uncles = null; // no value
-    br.logsBloom = null; // no value
+    br.logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
     br.transactionsRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
     br.stateRoot = ByteArray

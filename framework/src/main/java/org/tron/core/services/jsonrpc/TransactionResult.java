@@ -34,6 +34,8 @@ public class TransactionResult {
   public String r;
   public String s;
 
+  public String type = "0x0";
+
   private void parseSignature(Transaction tx) {
     ByteString signature = tx.getSignature(0); // r[32] + s[32] + v[1]
     byte[] signData = signature.toByteArray();

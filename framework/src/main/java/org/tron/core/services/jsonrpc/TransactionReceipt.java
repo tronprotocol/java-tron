@@ -52,6 +52,8 @@ public class TransactionReceipt {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public String status;  //  either 1 (success) or 0 (failure) (post Byzantium)
 
+  public String type = "0x0";
+
   public TransactionReceipt(Protocol.Block block, TransactionInfo txInfo, Wallet wallet) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     String txid = ByteArray.toHexString(txInfo.getId().toByteArray());
