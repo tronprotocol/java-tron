@@ -72,7 +72,7 @@ public class TransactionReceipt {
         transactionIndex = ByteArray.toJsonHex(index);
         cumulativeGasUsed = ByteArray.toJsonHex(cumulativeGas);
         gasUsed = ByteArray.toJsonHex(energyUsage);
-        status = resourceReceipt.getResultValue() == 1 ? "0x1" : "0x0";
+        status = resourceReceipt.getResultValue() <= 1 ? "0x1" : "0x0";
 
         transaction = block.getTransactions(index);
         break;
