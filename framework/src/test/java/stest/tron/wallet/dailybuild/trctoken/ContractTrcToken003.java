@@ -241,8 +241,8 @@ public class ContractTrcToken003 {
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals(
-        ("contract validate error : invalid arguments " +
-            "with tokenValue = 100, tokenId = 0").toLowerCase(),
+        ("contract validate error : invalid arguments "
+            + "with tokenValue = 100, tokenId = 0").toLowerCase(),
         response.getMessage().toStringUtf8().toLowerCase());
 
     // tokenvalue is less than 0
