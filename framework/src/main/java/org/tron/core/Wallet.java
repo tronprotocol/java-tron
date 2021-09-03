@@ -691,7 +691,7 @@ public class Wallet {
     } else if ("latest".equalsIgnoreCase(id)) {
       return getNowBlock();
     } else if ("pending".equalsIgnoreCase(id)) {
-      return null;
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
     } else {
       long blockNumber;
       try {
@@ -707,7 +707,7 @@ public class Wallet {
   public List<Transaction> getTransactionsByJsonBlockId(String id)
       throws JsonRpcInvalidParamsException {
     if ("pending".equalsIgnoreCase(id)) {
-      return null;
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
     } else {
       Block block = getByJsonBlockId(id);
       return block != null ? block.getTransactionsList() : null;
