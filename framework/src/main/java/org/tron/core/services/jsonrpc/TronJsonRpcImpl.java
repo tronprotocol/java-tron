@@ -418,12 +418,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String getCoinbase() throws JsonRpcInternalException {
-    byte[] witnessAddress = wallet.getNowBlock().getBlockHeader().getRawData().getWitnessAddress()
-        .toByteArray();
-    if (witnessAddress == null || witnessAddress.length != 21) {
-      throw new JsonRpcInternalException("invalid witness address");
+    String address = wallet.getCoinbase();
+
+    if (StringUtils.isEmpty(address)) {
+      throw new JsonRpcInternalException("etherbase must be explicitly specified");
     }
-    return ByteArray.toJsonHexAddress(witnessAddress);
+
+    return address;
   }
 
   // return energy fee
@@ -682,7 +683,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public boolean isMining() {
-    return false;
+    return wallet.isMining();
   }
 
   @Override

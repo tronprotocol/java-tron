@@ -191,7 +191,7 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_coinbase")
   @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
   })
   String getCoinbase() throws JsonRpcInternalException;
 

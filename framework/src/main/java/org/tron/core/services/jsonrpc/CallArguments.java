@@ -4,7 +4,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArr
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 
-
 import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

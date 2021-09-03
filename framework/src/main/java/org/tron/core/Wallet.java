@@ -102,7 +102,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
@@ -510,14 +509,14 @@ public class Wallet {
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} has failed, too many pending.", txID);
         return builder.setResult(false).setCode(response_code.SERVER_BUSY)
-                .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
+            .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
       }
 
       if (trxCacheEnable) {
         if (dbManager.getTransactionIdCache().getIfPresent(txID) != null) {
           logger.warn("Broadcast transaction {} has failed, it already exists.", txID);
           return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
-                  .setMessage(ByteString.copyFromUtf8("Transaction already exists.")).build();
+              .setMessage(ByteString.copyFromUtf8("Transaction already exists.")).build();
         } else {
           dbManager.getTransactionIdCache().put(txID, true);
         }
@@ -530,7 +529,7 @@ public class Wallet {
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0) {
         return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-                .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
+            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
       } else {
         logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
         return builder.setResult(true).setCode(response_code.SUCCESS).build();
@@ -1400,7 +1399,7 @@ public class Wallet {
     TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-              .getTransactionInfo(transactionId.toByteArray());
+          .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1409,7 +1408,7 @@ public class Wallet {
     }
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-              .get(transactionId.toByteArray());
+          .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
@@ -2672,11 +2671,11 @@ public class Wallet {
   }
 
   /**
-   * Add a wrapper for smart contract.
-   * Current additional information including runtime code for a smart contract.
+   * Add a wrapper for smart contract. Current additional information including runtime code for a
+   * smart contract.
+   *
    * @param bytesMessage the contract address message
    * @return contract info
-   *
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
@@ -3873,6 +3872,66 @@ public class Wallet {
     }
   }
 
+  public String getCoinbase() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return null;
+    }
 
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get all witnesses
+    List<WitnessCapsule> witnesses = consensusDelegate.getAllWitnesses();
+    List<String> witnessAddresses = new ArrayList<>();
+    for (WitnessCapsule witnessCapsule : witnesses) {
+      witnessAddresses.add(Hex.toHexString(witnessCapsule.getAddress().toByteArray()));
+    }
+
+    // check if witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (witnessAddresses.contains(localWitnessAddress)) {
+        return "0x" + localWitnessAddress;
+      }
+    }
+
+    return null;
+  }
+
+  public boolean isMining() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return false;
+    }
+
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get active witnesses
+    List<ByteString> activeWitnesses = consensusDelegate.getActiveWitnesses();
+    List<String> activeWitnessAddresses = new ArrayList<>();
+    for (ByteString activeWitness : activeWitnesses) {
+      activeWitnessAddresses.add(Hex.toHexString(activeWitness.toByteArray()));
+    }
+
+    // check if active witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (activeWitnessAddresses.contains(localWitnessAddress)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }
 
