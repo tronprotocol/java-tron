@@ -59,6 +59,7 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
@@ -397,10 +398,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       BytesMessage.Builder build = BytesMessage.newBuilder();
       BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressData)).build();
-      SmartContract smartContract = wallet.getContract(bytesMessage);
+      SmartContractDataWrapper contractDataWrapper = wallet.getContractInfo(bytesMessage);
 
-      if (smartContract != null) {
-        return ByteArray.toJsonHex(smartContract.getBytecode().toByteArray());
+      if (contractDataWrapper != null) {
+        return ByteArray.toJsonHex(contractDataWrapper.getRuntimecode().toByteArray());
       } else {
         return "0x";
       }
