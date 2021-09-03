@@ -135,8 +135,6 @@ public class LiteFullNodeToolTest {
     generateSomeTransactions(10);
     // stop the node
     shutdown();
-    // delete tran-cache
-    FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
     LiteFullNodeTool.main(argsForSnapshot);
     // start fullnode

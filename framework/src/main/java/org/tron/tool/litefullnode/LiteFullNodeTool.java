@@ -167,6 +167,7 @@ public class LiteFullNodeTool {
     try {
       //0. init tmp db
       initTmpDb(databaseDir);
+      initTmpDb(historyDir);
       // 1. check block number and genesis block are compatible,
       //    and return the block numbers of snapshot and history
       blockNumInfo = checkAndGetBlockNumInfo(historyDir, databaseDir);
