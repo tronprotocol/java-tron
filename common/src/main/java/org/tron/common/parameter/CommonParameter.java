@@ -300,7 +300,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minEffectiveConnection;
-
+  @Getter
+  @Setter
+  public boolean trxCacheEnable;
   @Getter
   @Setter
   public long allowMarketTransaction; //committee parameter
