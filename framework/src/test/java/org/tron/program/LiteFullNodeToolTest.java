@@ -121,7 +121,7 @@ public class LiteFullNodeToolTest {
   private void testTools(String dbType, String dbPath) {
     final String[] argsForSnapshot =
         new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
-            dbPath + File.separator + databaseDir, "--dataset-path", dbPath};
+            dbPath + File.separator + databaseDir, "--dataset-path", dbPath, "--check"};
     final String[] argsForHistory =
         new String[]{"-o", "split", "-t", "history", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path", dbPath};
