@@ -423,6 +423,13 @@ public class LiteFullNodeTool {
       case "merge":
         completeHistoryData(argv.datasetPath, argv.fnDataPath);
         break;
+      case "check":
+        if (SNAPSHOT_DIR_NAME.equals(argv.type)) {
+          checkSnapshot(argv.fnDataPath, argv.datasetPath);
+        } else {
+          throw new ParameterException("not support type:" + argv.type);
+        }
+        break;
       default:
         throw new ParameterException("not supportted operate:" + argv.operate);
     }
@@ -457,7 +464,7 @@ public class LiteFullNodeTool {
     @Parameter(
             names = {"--operate", "-o"},
             help = true, required = true,
-            description = "operate: [ split | merge ]",
+            description = "operate: [ split | merge | check],check only support snapshot",
             order = 1)
     private String operate;
     @Parameter(names = {"--type", "-t"},
@@ -489,7 +496,7 @@ public class LiteFullNodeTool {
     @Parameter(
         names = "--check",
         help = true,
-        description = "check the destDir data",
+        description = "if check the destDir data when type is snapshot && operate is split",
         order = 6)
     private boolean check;
   }
