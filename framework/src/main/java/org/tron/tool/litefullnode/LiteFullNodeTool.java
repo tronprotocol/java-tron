@@ -5,19 +5,24 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,9 +34,8 @@ import org.tron.common.utils.PropUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
-import org.tron.tool.litefullnode.db.DBInterface;
+import org.tron.tool.litefullnode.db.TronDB;
 import org.tron.tool.litefullnode.iterator.DBIterator;
 
 @Slf4j(topic = "tool")
@@ -43,49 +47,21 @@ public class LiteFullNodeTool {
   private static final String HISTORY_DIR_NAME = "history";
   private static final String INFO_FILE_NAME = "info.properties";
   private static final String BACKUP_DIR_PREFIX = ".bak_";
-  private static final String CHECKPOINT_DB = "tmp";
+  public static final String CHECKPOINT_DB = "tmp";
   private static final long VM_NEED_RECENT_BLKS = 256;
 
-  private static final String BLOCK_DB_NAME = "block";
-  private static final String BLOCK_INDEX_DB_NAME = "block-index";
-  private static final String TRANS_CACHE_DB_NAME = "trans-cache";
+  public static final String BLOCK_DB_NAME = "block";
+  public static final String BLOCK_INDEX_DB_NAME = "block-index";
+  public static final String PROPERTIES_DB_NAME = "properties";
 
   private static final String DIR_FORMAT_STRING = "%s%s%s";
 
-  private static List<String> archiveDbs = Arrays.asList(
+  private static final List<String> archiveDbs = Arrays.asList(
       BLOCK_DB_NAME,
       BLOCK_INDEX_DB_NAME,
       "trans",
       "transactionRetStore",
       "transactionHistoryStore");
-  private static List<String> minimumDbsForLiteNode = Arrays.asList(
-      "DelegatedResource",
-      "DelegatedResourceAccountIndex",
-      "IncrementalMerkleTree",
-      "account",
-      "account-index",
-      "accountTrie",
-      "accountid-index",
-      "asset-issue",
-      "asset-issue-v2",
-      //"block_KDB",
-      "code",
-      //"common",
-      "contract",
-      "delegation",
-      "exchange",
-      "exchange-v2",
-      //"nullifier",
-      "properties",
-      "proposal",
-      "recent-block",
-      "storage-row",
-      //TRANS_CACHE_DB_NAME,
-      //"tree-block-index",
-      "votes",
-      "witness",
-      "witness_schedule"
-  );
 
   /**
    * Create the snapshot dataset.
@@ -93,26 +69,65 @@ public class LiteFullNodeTool {
    * @param sourceDir the original fullnode database dir,
    *                  same with {storage.db.directory} in conf file.
    * @param snapshotDir the path that stores the snapshot dataset
+   * @param check if check result
    */
-  public void generateSnapshot(String sourceDir, String snapshotDir) {
+  public void generateSnapshot(String sourceDir, String snapshotDir, boolean check) {
     logger.info("start create snapshot.");
-    long start = System.currentTimeMillis();
+    final long start = System.currentTimeMillis();
     snapshotDir = Paths.get(snapshotDir, SNAPSHOT_DIR_NAME).toString();
     try {
       List<String> snapshotDbs = getSnapshotDbs(sourceDir);
       split(sourceDir, snapshotDir, snapshotDbs);
-      mergeCheckpoint2Snapshot(sourceDir, snapshotDir);
       // write genesisBlock and latestBlock
+      // init tmp
+      initTmpDb(sourceDir);
       fillSnapshotBlockDb(sourceDir, snapshotDir);
-      // create tran-cache if not exist, for compatible
-      checkTranCacheStore(sourceDir, snapshotDir);
       generateInfoProperties(Paths.get(snapshotDir, INFO_FILE_NAME).toString(), sourceDir);
     } catch (IOException | RocksDBException e) {
       logger.error("create snapshot failed, " + e.getMessage());
       return;
     }
+    if (check) {
+      checkSnapshot(sourceDir, snapshotDir);
+    }
+
     long end = System.currentTimeMillis();
     logger.info("create snapshot finished, take {}s.", (end - start) / 1000);
+  }
+
+  public void checkSnapshot(String sourceDir, String snapshotDir) {
+    // check checkSnapshot start
+    logger.info("check checkSnapshot start.");
+    File snapshotPath = new File(snapshotDir);
+    List<File> files = Arrays.stream(Objects.requireNonNull(snapshotPath.listFiles()))
+        .filter(File::isDirectory).collect(
+            Collectors.toList());
+    final int CPUS  = Runtime.getRuntime().availableProcessors();
+    final List<Future<Boolean>> res = new ArrayList<>();
+
+    final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
+        CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
+        new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
+        new ThreadPoolExecutor.CallerRunsPolicy());
+
+    esDb.allowCoreThreadTimeOut(true);
+    files.forEach(f -> res.add(esDb.submit(new CheckLite(sourceDir, snapshotDir, f.getName()))));
+
+    esDb.shutdown();
+
+    for (Future<Boolean> re : res) {
+      try {
+        re.get();
+      } catch (InterruptedException e) {
+        logger.error("{}", e);
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        logger.error("{}", e);
+        throw  new RuntimeException(e);
+      }
+    }
+    // check checkSnapshot end
+    logger.info("check checkSnapshot end.");
   }
 
   /**
@@ -150,6 +165,8 @@ public class LiteFullNodeTool {
     long start = System.currentTimeMillis();
     BlockNumInfo blockNumInfo = null;
     try {
+      //0. init tmp db
+      initTmpDb(databaseDir);
       // 1. check block number and genesis block are compatible,
       //    and return the block numbers of snapshot and history
       blockNumInfo = checkAndGetBlockNumInfo(historyDir, databaseDir);
@@ -178,17 +195,7 @@ public class LiteFullNodeTool {
             .filter(File::isDirectory)
             .filter(dir -> !archiveDbs.contains(dir.getName()))
             .forEach(dir -> snapshotDbs.add(dir.getName()));
-    for (String dir : minimumDbsForLiteNode) {
-      if (!snapshotDbs.contains(dir)) {
-        throw new RuntimeException("databaseDir does not contain all the necessary databases");
-      }
-    }
     return snapshotDbs;
-  }
-
-  private void mergeCheckpoint2Snapshot(String sourceDir, String historyDir) {
-    List<String> snapshotDbs = getSnapshotDbs(sourceDir);
-    mergeCheckpoint(sourceDir, historyDir, snapshotDbs);
   }
 
   private void mergeCheckpoint2History(String sourceDir, String destDir) {
@@ -213,16 +220,16 @@ public class LiteFullNodeTool {
   private void mergeCheckpoint(String sourceDir, String destDir, List<String> destDbs) {
     logger.info("-- begin to merge checkpoint to dataset");
     try {
-      DBInterface tmpDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
+      TronDB tmpDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
       try (DBIterator iterator = tmpDb.iterator()) {
         for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
           byte[] key = iterator.getKey();
           byte[] value = iterator.getValue();
-          String dbName = SnapshotManager.simpleDecode(key);
+          String dbName = tmpDb.simpleDecode(key);
           byte[] realKey = Arrays.copyOfRange(key, dbName.getBytes().length + 4, key.length);
           byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
           if (destDbs != null && destDbs.contains(dbName)) {
-            DBInterface destDb = DbTool.getDB(destDir, dbName);
+            TronDB destDb = DbTool.getDB(destDir, dbName);
             if (realValue != null) {
               destDb.put(realKey, realValue);
             } else {
@@ -249,15 +256,9 @@ public class LiteFullNodeTool {
   }
 
   private long getLatestBlockHeaderNum(String databaseDir) throws IOException, RocksDBException {
-    // query latest_block_header_number from checkpoint first
+    // query latest_block_header_number
     final String latestBlockHeaderNumber = "latest_block_header_number";
-    byte[] value = DbTool.getDB(databaseDir, CHECKPOINT_DB).get(
-            Bytes.concat(simpleEncode(CHECKPOINT_DB), latestBlockHeaderNumber.getBytes()));
-    if (value != null && value.length > 1) {
-      return ByteArray.toLong(Arrays.copyOfRange(value, 1, value.length));
-    }
-    // query from propertiesDb if checkpoint not contains latest_block_header_number
-    DBInterface propertiesDb = DbTool.getDB(databaseDir, "properties");
+    TronDB propertiesDb = DbTool.getDB(databaseDir, PROPERTIES_DB_NAME);
     return Optional.ofNullable(propertiesDb.get(ByteArray.fromString(latestBlockHeaderNumber)))
             .map(ByteArray::toLong)
             .orElseThrow(
@@ -271,10 +272,10 @@ public class LiteFullNodeTool {
   private void fillSnapshotBlockDb(String sourceDir, String snapshotDir)
           throws IOException, RocksDBException {
     logger.info("-- begin to fill latest block and genesis block to snapshot");
-    DBInterface sourceBlockIndexDb = DbTool.getDB(sourceDir, BLOCK_INDEX_DB_NAME);
-    DBInterface sourceBlockDb = DbTool.getDB(sourceDir, BLOCK_DB_NAME);
-    DBInterface destBlockDb = DbTool.getDB(snapshotDir, BLOCK_DB_NAME);
-    DBInterface destBlockIndexDb = DbTool.getDB(snapshotDir, BLOCK_INDEX_DB_NAME);
+    TronDB sourceBlockIndexDb = DbTool.getDB(sourceDir, BLOCK_INDEX_DB_NAME);
+    TronDB sourceBlockDb = DbTool.getDB(sourceDir, BLOCK_DB_NAME);
+    TronDB destBlockDb = DbTool.getDB(snapshotDir, BLOCK_DB_NAME);
+    TronDB destBlockIndexDb = DbTool.getDB(snapshotDir, BLOCK_INDEX_DB_NAME);
     // put genesis block and block-index into snapshot
     long genesisBlockNum = 0L;
     byte[] genesisBlockID = sourceBlockIndexDb.get(ByteArray.fromLong(genesisBlockNum));
@@ -287,15 +288,8 @@ public class LiteFullNodeTool {
     // put the recent blocks in snapshot, VM needs recent 256 blocks.
     LongStream.rangeClosed(startIndex, latestBlockNum).forEach(
         blockNum -> {
-          byte[] blockId = null;
-          byte[] block = null;
-          try {
-            blockId = getDataFromSourceDB(sourceDir, BLOCK_INDEX_DB_NAME,
-                    Longs.toByteArray(blockNum));
-            block = getDataFromSourceDB(sourceDir, BLOCK_DB_NAME, blockId);
-          } catch (IOException | RocksDBException e) {
-            throw new RuntimeException(e.getMessage());
-          }
+          byte[] blockId = sourceBlockIndexDb.get(Longs.toByteArray(blockNum));
+          byte[] block = sourceBlockDb.get(blockId);
           // put recent blocks index into snapshot
           destBlockIndexDb.put(ByteArray.fromLong(blockNum), blockId);
           // put latest blocks into snapshot
@@ -303,63 +297,14 @@ public class LiteFullNodeTool {
         });
   }
 
-  private void checkTranCacheStore(String sourceDir, String snapshotDir)
-          throws IOException, RocksDBException {
-    logger.info("-- create trans-cache db if not exists.");
-    if (FileUtil.isExists(String.format(DIR_FORMAT_STRING, snapshotDir,
-            File.separator, TRANS_CACHE_DB_NAME))) {
-      return;
-    }
-    // fullnode is old version, create trans-cache database
-    DBInterface recentBlockDb = DbTool.getDB(snapshotDir, "recent-block");
-    DBInterface transCacheDb = DbTool.getDB(snapshotDir, TRANS_CACHE_DB_NAME);
-    long headNum = getLatestBlockHeaderNum(sourceDir);
-    long recentBlockCount = recentBlockDb.size();
-
-    LongStream.rangeClosed(headNum - recentBlockCount + 1, headNum).forEach(
-        blockNum -> {
-          byte[] blockId = null;
-          byte[] block = null;
-          try {
-            blockId = getDataFromSourceDB(sourceDir, BLOCK_INDEX_DB_NAME,
-                    Longs.toByteArray(blockNum));
-            block = getDataFromSourceDB(sourceDir, BLOCK_DB_NAME, blockId);
-          } catch (IOException | RocksDBException e) {
-            throw new RuntimeException(e.getMessage());
-          }
-          BlockCapsule blockCapsule = null;
-          try {
-            blockCapsule = new BlockCapsule(block);
-          } catch (BadItemException e) {
-            throw new RuntimeException("construct block failed, num: " + blockNum);
-          }
-          if (blockCapsule.getTransactions().isEmpty()) {
-            return;
-          }
-          blockCapsule.getTransactions().stream()
-                  .map(tc -> tc.getTransactionId().getBytes())
-                  .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
-                  .forEach(e -> transCacheDb.put(e.getKey(), e.getValue()));
-        });
-  }
-
   private byte[] getGenesisBlockHash(String parentDir) throws IOException, RocksDBException {
     long genesisBlockNum = 0L;
-    DBInterface blockIndexDb = DbTool.getDB(parentDir, BLOCK_INDEX_DB_NAME);
+    TronDB blockIndexDb = DbTool.getDB(parentDir, BLOCK_INDEX_DB_NAME);
     byte[] result = blockIndexDb.get(ByteArray.fromLong(genesisBlockNum));
     // when merge history, block-index db will be moved to bak dir and replaced by history
     // so should close this db and reopen it.
     DbTool.closeDB(parentDir, BLOCK_INDEX_DB_NAME);
     return result;
-  }
-
-  private static byte[] simpleEncode(String s) {
-    byte[] bytes = s.getBytes();
-    byte[] length = Ints.toByteArray(bytes.length);
-    byte[] r = new byte[4 + bytes.length];
-    System.arraycopy(length, 0, r, 0, 4);
-    System.arraycopy(bytes, 0, r, 4, bytes.length);
-    return r;
   }
 
   private BlockNumInfo checkAndGetBlockNumInfo(String historyDir, String databaseDir)
@@ -413,10 +358,10 @@ public class LiteFullNodeTool {
   private void trimHistory(String databaseDir, BlockNumInfo blockNumInfo)
           throws BadItemException, IOException, RocksDBException {
     logger.info("-- begin to trim the history data.");
-    DBInterface blockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
-    DBInterface blockDb = DbTool.getDB(databaseDir, BLOCK_DB_NAME);
-    DBInterface transDb = DbTool.getDB(databaseDir, "trans");
-    DBInterface tranRetDb = DbTool.getDB(databaseDir, "transactionRetStore");
+    TronDB blockIndexDb = DbTool.getDB(databaseDir, BLOCK_INDEX_DB_NAME);
+    TronDB blockDb = DbTool.getDB(databaseDir, BLOCK_DB_NAME);
+    TronDB transDb = DbTool.getDB(databaseDir, "trans");
+    TronDB tranRetDb = DbTool.getDB(databaseDir, "transactionRetStore");
     for (long n = blockNumInfo.getHistoryBlkNum(); n > blockNumInfo.getSnapshotBlkNum(); n--) {
       byte[] blockIdHash = blockIndexDb.get(ByteArray.fromLong(n));
       BlockCapsule block = new BlockCapsule(blockDb.get(blockIdHash));
@@ -438,8 +383,8 @@ public class LiteFullNodeTool {
             databaseDir, File.separator, BACKUP_DIR_PREFIX, START_TIME);
     logger.info("-- begin to merge {} to database", bakDir);
     for (String dbName : archiveDbs) {
-      DBInterface bakDb = DbTool.getDB(bakDir, dbName);
-      DBInterface destDb = DbTool.getDB(databaseDir, dbName);
+      TronDB bakDb = DbTool.getDB(bakDir, dbName);
+      TronDB destDb = DbTool.getDB(databaseDir, dbName);
       try (DBIterator iterator = bakDb.iterator()) {
         for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
           destDb.put(iterator.getKey(), iterator.getValue());
@@ -448,38 +393,13 @@ public class LiteFullNodeTool {
     }
   }
 
-  private byte[] getDataFromSourceDB(String sourceDir, String dbName, byte[] key)
-          throws IOException, RocksDBException {
-    DBInterface sourceDb = DbTool.getDB(sourceDir, dbName);
-    DBInterface checkpointDb = DbTool.getDB(sourceDir, "tmp");
-    byte[] value = sourceDb.get(key);
-    if (isEmptyBytes(value)) {
-      byte[] valueFromTmp = checkpointDb.get(Bytes.concat(simpleEncode(dbName), key));
-      value = valueFromTmp.length == 1
-              ? null : Arrays.copyOfRange(valueFromTmp, 1, valueFromTmp.length);
-    }
-    if (isEmptyBytes(value)) {
-      throw new RuntimeException(String.format("data not found in store, dbName: %s, key: %s",
-              dbName, Arrays.toString(key)));
-    }
-    return value;
-  }
-
-  /**
-   * return true if byte array is null or length is 0.
-   * @param b bytes
-   * @return true or false
-   */
-  private static boolean isEmptyBytes(byte[] b) {
-    if (b != null) {
-      return b.length == 0;
-    }
-    return true;
-  }
-
   private void deleteSnapshotFlag(String databaseDir) throws IOException {
     logger.info("-- delete the info file to identify this node is a real fullnode.");
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
+  }
+
+  private void initTmpDb(String sourceDir) throws IOException, RocksDBException {
+    DbTool.getDB(sourceDir, "tmp");
   }
 
   private void run(Args argv) {
@@ -492,7 +412,7 @@ public class LiteFullNodeTool {
           throw new ParameterException("type can't be null when operate=split");
         }
         if (SNAPSHOT_DIR_NAME.equals(argv.type)) {
-          generateSnapshot(argv.fnDataPath, argv.datasetPath);
+          generateSnapshot(argv.fnDataPath, argv.datasetPath, argv.check);
         } else if (HISTORY_DIR_NAME.equals(argv.type)) {
           generateHistory(argv.fnDataPath, argv.datasetPath);
         } else {
@@ -526,8 +446,8 @@ public class LiteFullNodeTool {
       } else {
         tool.run(argv);
       }
-    } catch (ParameterException parameterException) {
-      logger.error(parameterException.toString());
+    } catch (Exception e) {
+      logger.error("{}", e);
       jct.usage();
     }
   }
@@ -565,6 +485,12 @@ public class LiteFullNodeTool {
             help = true,
             order = 5)
     private boolean help;
+    @Parameter(
+        names = "--check",
+        help = true,
+        description = "check the destDir data",
+        order = 6)
+    private boolean check;
   }
 
   static class BlockNumInfo {
@@ -584,6 +510,7 @@ public class LiteFullNodeTool {
       return historyBlkNum;
     }
   }
+
 }
 
 

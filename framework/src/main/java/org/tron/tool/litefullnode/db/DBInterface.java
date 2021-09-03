@@ -8,13 +8,13 @@ public interface DBInterface extends Closeable {
 
   byte[] get(byte[] key);
 
+  byte[] getDir(byte[] key);
+
   void put(byte[] key, byte[] value);
 
   void delete(byte[] key);
 
   DBIterator iterator();
-
-  long size();
 
   void close() throws IOException;
 

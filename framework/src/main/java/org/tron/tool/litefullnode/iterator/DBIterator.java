@@ -10,6 +10,8 @@ public interface DBIterator extends Closeable {
 
   boolean hasNext();
 
+  boolean isValid();
+
   byte[] getKey();
 
   byte[] getValue();

@@ -26,6 +26,11 @@ public class LevelDBIterator implements DBIterator {
   }
 
   @Override
+  public boolean isValid() {
+    return iterator.hasNext();
+  }
+
+  @Override
   public byte[] getKey() {
     return iterator.peekNext().getKey();
   }

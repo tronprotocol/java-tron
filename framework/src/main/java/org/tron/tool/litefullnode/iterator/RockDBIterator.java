@@ -27,6 +27,11 @@ public class RockDBIterator implements DBIterator {
   }
 
   @Override
+  public boolean isValid() {
+    return iterator.isValid();
+  }
+
+  @Override
   public byte[] getKey() {
     return iterator.key();
   }
