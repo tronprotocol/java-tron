@@ -67,7 +67,7 @@ This guide walks the user through the TRON Quickstart (v2.0.0) image setup.
 # Deploy
 * [Build](./build.md) Please build java-tron after cloning the project
 * [Run](./run.md) Run java-tron
-* [Run & Build by shell script](./start.md)
+* [Build & Run by shell script](./shell.md)
 # Deployment
 [Deployment Guide](https://tronprotocol.github.io/documentation-en/developers/deployment/)
  walks the user through how to deploy a FullNode and an SR node.
