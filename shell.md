@@ -18,20 +18,20 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
   start the service
 
-  `--stop`
+* `--stop`
 
   stop the service
 
-  `-mem`
-
+* `-mem`
+  
   secify the memory of the started service, size in MB
 
 #### build project
 
 * `--quickstart`
-
+  
   start a project quickly
-
+  
 * `-clone`
   clone the latest code for the master branch from`https://github.com/tronprotocol/java-tron`
 
@@ -46,6 +46,7 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 * `--upgrade`
 
   update the latest version and backup the local jar package
+
 
 #### rebuild manifest
 
@@ -62,7 +63,7 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
   specify the batch manifest size,default：80000
 
 * `--dr` or `--disable-rewrite-manifes`
-  disable rewrite manifes  
+	disable rewrite manifes  
 
 ***
 
@@ -144,6 +145,7 @@ sh start.sh -d /tmp/db/database -m 128 -b 64000
 ```
 
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
+
 
 
 
