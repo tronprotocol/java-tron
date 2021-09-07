@@ -50,30 +50,8 @@ public interface TronJsonRpc {
     public Object[] transactions; //TransactionResult or byte32
     public String[] uncles;
 
-    @Override
-    public String toString() {
-      return "BlockResult{"
-          + "number='" + number + '\''
-          + ", hash='" + hash + '\''
-          + ", parentHash='" + parentHash + '\''
-          + ", nonce='" + nonce + '\''
-          + ", sha3Uncles='" + sha3Uncles + '\''
-          + ", logsBloom='" + logsBloom + '\''
-          + ", transactionsRoot='" + transactionsRoot + '\''
-          + ", stateRoot='" + stateRoot + '\''
-          + ", receiptsRoot='" + receiptsRoot + '\''
-          + ", miner='" + miner + '\''
-          + ", difficulty='" + difficulty + '\''
-          + ", totalDifficulty='" + totalDifficulty + '\''
-          + ", extraData='" + extraData + '\''
-          + ", size='" + size + '\''
-          + ", gas='" + gasLimit + '\''
-          + ", gasUsed='" + gasUsed + '\''
-          + ", timestamp='" + timestamp + '\''
-          + ", transactions=" + Arrays.toString(transactions)
-          + ", uncles=" + Arrays.toString(uncles)
-          + '}';
-    }
+    public String baseFeePerGas = null;
+    public String mixHash = null;
   }
 
   class CompilationResult {
