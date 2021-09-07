@@ -2,16 +2,18 @@
 # build FullNode config
 FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG="main_net_config.conf"
+DEFAULT_FULL_NODE_CONFIG='config.conf'
 FULL_NODE_SHELL="start.sh"
 JAR_NAME="FullNode.jar"
-FULL_START_OPT=$(echo ${@:1})
+FULL_START_OPT=''
+GITHUB_BRANCH='master'
 
 # start service option
 MAX_STOP_TIME=60
 # modify this option to allow the minimum memory to be started, unit MB
 ALLOW_MIN_MEMORY=8192
 # JVM option
-MAX_DIRECT_MEMORY=3g
+MAX_DIRECT_MEMORY=1g
 JVM_MS=4g
 JVM_MX=4g
 
@@ -68,11 +70,6 @@ upgrade() {
   fi
 }
 
-unsetGitProxy() {
-  echo 'info: unset git proxy'
-  git config --global --unset http.proxy
-}
-
 download() {
   local url=$1
   local file_name=$2
@@ -98,17 +95,16 @@ quickStart() {
   full_node_version=$(`echo getLatestReleaseVersion`)
   echo "info: check latest version: $full_node_version"
   echo 'info: download config'
-  download https://raw.githubusercontent.com/tronprotocol/tron-deployment/master/$FULL_NODE_CONFIG $FULL_NODE_CONFIG
+  download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG $FULL_NODE_CONFIG
   mv $FULL_NODE_CONFIG 'config.conf'
 
   echo "info: download $full_node_version"
-#  unsetGitProxy
   download $RELEASE_URL/download/$full_node_version/$JAR_NAME $JAR_NAME
 }
 
 cloneCode() {
   if type git >/dev/null 2>&1; then
-    git_clone=$(git clone -b master git@github.com:tronprotocol/java-tron.git)
+    git_clone=$(git clone -b $GITHUB_BRANCH git@github.com:tronprotocol/java-tron.git)
     if [[ git_clone == 0 ]]; then
       echo 'info: git clone java-tron success'
     fi
@@ -118,16 +114,17 @@ cloneCode() {
 }
 
 cloneBuild() {
-  clone=$(cloneCode)
-  if [[ $clone == 0 ]]; then
-    cd 'java-tron'
-    echo "build java-tron"
-    sh gradlew clean build -x test
-  fi
+  cloneCode
+  cd 'java-tron'
+  echo "info: build java-tron"
+  sh gradlew clean build -x test
 }
 
 checkPid() {
-  pid=$(ps -ef | grep $JAR_NAME | grep -v grep | awk '{print $2}')
+  if [[ $JAR_NAME =~ '/' ]]; then
+    JAR_NAME=$(echo $JAR_NAME |awk -F '/' '{print $NF}')
+  fi
+  pid=$(ps -ef | grep -v start | grep $JAR_NAME | grep -v grep | awk '{print $2}')
   return $pid
 }
 
@@ -153,8 +150,8 @@ stopService() {
 
 checkAllowMemory() {
   os=`uname`
-  totalMemory=`getTotalMemory`
-  totalMemory=`echo $totalMemory`
+#  totalMemory=`getTotalMemory`
+  totalMemory=$(`echo getTotalMemory`)
   total=`expr $totalMemory / 1024`
   if [[ $os == 'Darwin' ]]; then
     return
@@ -197,31 +194,46 @@ getTotalMemory() {
 }
 
 setJVMMemory() {
-  totalMemory=`getTotalMemory`
-  total=`echo $totalMemory`
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
-    MAX_DIRECT_MEMORY=$(echo "$total/1024/1024*0.1" | bc | awk -F. '{print $1"g"}')
+    if [[ $SPECIFY_MEMORY >0 ]]; then
+      max_direct=$(echo "$SPECIFY_MEMORY/1024*0.1" | bc | awk -F. '{print $1"g"}')
+      echo "max_direct$max_direct"
+      if [[ "$max_direct" != "g" ]]; then
+        MAX_DIRECT_MEMORY=$max_direct
+      fi
+
+      JVM_MX=$(echo "$SPECIFY_MEMORY/1024*0.6" | bc | awk -F. '{print $1"g"}')
+      JVM_MS=$JVM_MX
+    else
+      total=$(`echo getTotalMemory`)
+      MAX_DIRECT_MEMORY=$(echo "$total/1024/1024*0.1" | bc | awk -F. '{print $1"g"}')
+      JVM_MX=$(echo "$total/1024/1024*0.6" | bc | awk -F. '{print $1"g"}')
+      JVM_MS=$JVM_MX
+    fi
+
   elif [[ $os == 'Darwin' ]]; then
     MAX_DIRECT_MEMORY='1g'
   fi
-  JVM_MX=$(echo "$total/1024/1024*0.6" | bc | awk -F. '{print $1"g"}')
-  JVM_MS=$JVM_MX
 }
 
 startService() {
   echo $(date) >>start.log
   logtime=$(date +%Y-%m-%d_%H-%M-%S)
-  setTCMalloc
-  setJVMMemory
+
+  if [[ ! $JAR_NAME =~ '-c' ]]; then
+     FULL_START_OPT="$FULL_START_OPT -c $DEFAULT_FULL_NODE_CONFIG"
+  fi
+
   nohup java -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
     -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
     -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
     -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -XX:+HeapDumpOnOutOfMemoryError \
     -XX:NewRatio=2 -jar \
-    $JAR_NAME $FULL_START_OPT -c config.conf >>start.log 2>&1 &
-  pid=$(ps -ef | grep $JAR_NAME | grep -v grep | awk '{print $2}')
+    $JAR_NAME $FULL_START_OPT >>start.log 2>&1 &
+  checkPid
   echo "info: start java-tron with pid $pid on $HOSTNAME"
+  echo "info: stop service execution: sh start.sh --stop"
 }
 
 rebuildManifest() {
@@ -258,28 +270,52 @@ restart() {
   stopService
   checkAllowMemory
   rebuildManifest
+  setTCMalloc
+  setJVMMemory
   startService
 }
 
 while [ -n "$1" ]; do
   case "$1" in
+  -c)
+    DEFAULT_FULL_NODE_CONFIG=$2
+    FULL_START_OPT="$FULL_START_OPT $1 $2"
+    shift 2
+    ;;
   -d)
     REBUILD_DIR=$2/database
+    FULL_START_OPT="$FULL_START_OPT $1 $2"
+    shift 2
+    ;;
+  -j)
+    JAR_NAME=$2
     shift 2
     ;;
   -m)
     REBUILD_MANIFEST_SIZE=$2
     shift 2
     ;;
+  -n)
+    JAR_NAME=$2
+    shift 2
+    ;;
   -b)
     REBUILD_BATCH_SIZE=$2
     shift 2
+    ;;
+  -cb)
+    cloneBuild
+    exit
     ;;
   --download)
     DOWNLOAD=true
     shift 1
     ;;
-  --quickstart)
+  --deploy)
+    QUICK_START=true
+    shift 1
+    ;;
+  --release)
     QUICK_START=true
     shift 1
     ;;
@@ -287,11 +323,7 @@ while [ -n "$1" ]; do
     cloneCode
     exit
     ;;
-  --cb)
-    cloneBuild
-    exit
-    ;;
-  --mem)
+  -mem)
     SPECIFY_MEMORY=$2
     shift 2
     ;;
@@ -299,7 +331,7 @@ while [ -n "$1" ]; do
     REBUILD_MANIFEST=false
     shift 1
     ;;
-  --dr)
+  -dr)
     REBUILD_MANIFEST=false
     shift 1
     ;;

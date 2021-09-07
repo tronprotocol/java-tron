@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Using the `start.sh` script, you can quickly and easily build and update projects.
+Using the `start.sh` script, you can quickly and easily build projects.
 
 If you have already downloaded `java-tron`, you can use `start.sh` to run `java-tron`, or if you have not downloaded java-tron code or jar packages, you can use `start.sh` to download, compile, or get the latest release version in the form of a `jar package`.
 
@@ -22,30 +22,31 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
   stop the service
 
+* `-c`
+
+  configuration file path,default loading of `config.conf`
+
+* `-d`
+
+  database output directory, default path `output-directory`
+
+* `-j`
+
+  jar package path,default package name `FullNode.jar `
+
 * `-mem`
-  
-  secify the memory of the started service, size in MB
+
+  specifies the memory of the started service, size in`MB`,jvm's startup maximum memory will be adjusted according to this parameter
 
 #### build project
 
-* `--quickstart`
-  
-  start a project quickly
-  
-* `-clone`
-  clone the latest code for the master branch from`https://github.com/tronprotocol/java-tron`
+* `-cb`
 
-* `-download`
+  start.sh can be used independently, get the latest code, and compile
 
-  get the latest version of java-tron distribution quickly
+* `--release`
 
-* `--cb`
-
-  clone and build the project
-
-* `--upgrade`
-
-  update the latest version and backup the local jar package
+  get the latest version of the `jar` package from github
 
 
 #### rebuild manifest
@@ -62,8 +63,8 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
   specify the batch manifest size,default：80000
 
-* `--dr` or `--disable-rewrite-manifes`
-	disable rewrite manifes  
+* `-dr` or `--disable-rewrite-manifes`
+  disable rewrite manifes  
 
 ***
 
@@ -101,12 +102,12 @@ Physical memory size in MB, here 12000 means 12000MB Start the service with `sta
 
 #### 2.build project
 
-**quick start**
+**release**
 
 Download the latest version of java-tron
 
 ```
-sh start.sh --quickstart
+sh start.sh --release
 ```
 
 contains the following files：
@@ -118,23 +119,15 @@ FullNode-|
          \--start.sh
 ```
 
-Get the latest code from github
+**clone and build**
 
-```
-sh start.sh -clone
-```
-
- Clone the latest code from the master branch of https://github.com/tronprotocol/java-tron
+Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile download the latest release
 
 ```
 sh start.sh -cb
 ```
 
- Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compileDownload the Latest Release
 
-```
-sh start.sh -download
-```
 
 #### 3.rebuild manifest
 
@@ -145,7 +138,6 @@ sh start.sh -d /tmp/db/database -m 128 -b 64000
 ```
 
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
-
 
 
 
