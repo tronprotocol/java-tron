@@ -70,7 +70,7 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
 ### How to use
 
-#### 1.service Operation
+#### 1.local mode
 
 **start service**
 
@@ -100,14 +100,14 @@ sh start.sh -mem 12000
 
 Physical memory size in MB, here 12000 means 12000MB Start the service with `start.sh`
 
-#### 2.build project
+#### 2.online mode
 
 **release**
 
 Download the latest version of java-tron
 
 ```
-sh start.sh --release
+sh start.sh --release --run
 ```
 
 contains the following files：
@@ -124,7 +124,7 @@ FullNode-|
 Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile download the latest release
 
 ```
-sh start.sh -cb
+sh start.sh -cb --run
 ```
 
 
