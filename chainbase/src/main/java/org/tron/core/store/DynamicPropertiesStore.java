@@ -158,6 +158,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
+  private static final byte[] ALLOW_TVM_LONDON = "ALLOW_TVM_LONDON".getBytes();
+  private static final byte[] ALLOW_TVM_COMPATIBLE_EVM = "ALLOW_TVM_COMPATIBLE_EVM".getBytes();
   private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
   //This value is only allowed to be 1
@@ -760,6 +762,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
             new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
       }
+    }
+
+    try {
+      this.getAllowTvmLondon();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmLondon(CommonParameter.getInstance().getAllowTvmLondon());
+    }
+
+    try {
+      this.getAllowTvmCompatibleEvm();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmCompatibleEvm(CommonParameter.getInstance().getAllowTvmCompatibleEvm());
     }
 
     try {
@@ -2265,6 +2279,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowTvmVote() {
     String msg = "not found ALLOW_TVM_VOTE";
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_VOTE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmLondon(long allowTvmLondon) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_LONDON,
+        new BytesCapsule(ByteArray.fromLong(allowTvmLondon)));
+  }
+
+  public long getAllowTvmLondon() {
+    String msg = "not found ALLOW_TVM_LONDON";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_LONDON))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmCompatibleEvm(long allowTvmCompatibleEvm) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_COMPATIBLE_EVM,
+        new BytesCapsule(ByteArray.fromLong(allowTvmCompatibleEvm)));
+  }
+
+  public long getAllowTvmCompatibleEvm() {
+    String msg = "not found ALLOW_TVM_COMPATIBLE_EVM";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_COMPATIBLE_EVM))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(

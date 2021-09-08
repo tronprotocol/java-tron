@@ -216,7 +216,8 @@ public class ContractTrcToken005 {
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert
-        .assertEquals("contract validate error : No asset !", response.getMessage().toStringUtf8());
+        .assertEquals("contract validate error : No asset !".toLowerCase(),
+            response.getMessage().toStringUtf8().toLowerCase());
 
     // not have this tokenId
     tokenId = assetAccountId.toStringUtf8();

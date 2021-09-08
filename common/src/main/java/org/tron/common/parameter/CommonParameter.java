@@ -45,6 +45,10 @@ public class CommonParameter {
   public boolean supportConstant = false;
   @Getter
   @Setter
+  @Parameter(names = {"--max-energy-limit-for-constant"})
+  public long maxEnergyLimitForConstant = 100_000_000L;
+  @Getter
+  @Setter
   @Parameter(names = {"--debug"})
   public boolean debug = false;
   @Getter
@@ -471,6 +475,14 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowTvmVote;
+
+  @Getter
+  @Setter
+  public long allowTvmLondon;
+
+  @Getter
+  @Setter
+  public long allowTvmCompatibleEvm;
 
   @Getter
   @Setter

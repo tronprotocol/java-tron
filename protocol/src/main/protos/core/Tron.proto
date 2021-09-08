@@ -405,6 +405,7 @@ message Transaction {
       JVM_STACK_OVER_FLOW = 12;
       UNKNOWN = 13;
       TRANSFER_FAILED = 14;
+      INVALID_CODE = 15;
     }
     int64 fee = 1;
     code ret = 2;

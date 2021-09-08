@@ -244,6 +244,10 @@ public enum OpCode {
    *  (0x47) Get current account balance
    */
   SELFBALANCE(0x47, 0, 1, Tier.LowTier),
+  /**
+   *  (0x48) Get block's basefee
+   */
+  BASEFEE(0x48, 0, 1, Tier.BaseTier),
 
 
   /*  Memory, Storage and Flow Operations */

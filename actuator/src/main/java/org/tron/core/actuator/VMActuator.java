@@ -177,24 +177,14 @@ public class VMActuator implements Actuator2 {
         vm.play(program);
         result = program.getResult();
 
-        if (isConstantCall) {
-          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
-          long callTokenValue = TransactionUtil
-              .getCallTokenValue(trx.getRawData().getContract(0));
-          if (callValue > 0 || callTokenValue > 0) {
-            result.setRuntimeError("constant cannot set call value or call token value.");
-            result.rejectInternalTransactions();
-          }
-          if (result.getException() != null) {
-            result.setRuntimeError(result.getException().getMessage());
-            result.rejectInternalTransactions();
-          }
-          context.setProgramResult(result);
-          return;
-        }
-
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
           byte[] code = program.getResult().getHReturn();
+          if (code.length != 0 && vmConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
+            if (null == result.getException()) {
+              result.setException(Program.Exception
+                  .invalidCodeException());
+            }
+          }
           long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
@@ -209,6 +199,15 @@ public class VMActuator implements Actuator2 {
               repository.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
             }
           }
+        }
+
+        if (isConstantCall) {
+          if (result.getException() != null) {
+            result.setRuntimeError(result.getException().getMessage());
+            result.rejectInternalTransactions();
+          }
+          context.setProgramResult(result);
+          return;
         }
 
         if (result.getException() != null || result.isRevert()) {
@@ -297,7 +296,12 @@ public class VMActuator implements Actuator2 {
     if (contract == null) {
       throw new ContractValidateException("Cannot get CreateSmartContract from transaction");
     }
-    SmartContract newSmartContract = contract.getNewContract();
+    SmartContract newSmartContract;
+    if (VMConfig.allowTvmCompatibleEvm()) {
+      newSmartContract = contract.getNewContract().toBuilder().setVersion(1).build();
+    } else {
+      newSmartContract = contract.getNewContract().toBuilder().clearVersion().build();
+    }
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
       logger.info("OwnerAddress not equals OriginAddress");
       throw new ContractValidateException("OwnerAddress is not equals OriginAddress");
@@ -360,6 +364,9 @@ public class VMActuator implements Actuator2 {
       } else {
         energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
       }
+      if (isConstantCall) {
+        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
+      }
 
       checkTokenValueAndId(tokenValue, tokenId);
 
@@ -377,6 +384,9 @@ public class VMActuator implements Actuator2 {
               vmShouldEndInUs, energyLimit);
       this.vm = new VM();
       this.program = new Program(ops, programInvoke, rootInternalTransaction, vmConfig);
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        this.program.setContractVersion(1);
+      }
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
       if (enableEventListener && isCheckTransaction()) {
@@ -459,7 +469,6 @@ public class VMActuator implements Actuator2 {
 
     byte[] code = repository.getCode(contractAddress);
     if (isNotEmpty(code)) {
-
       long feeLimit = trx.getRawData().getFeeLimit();
       if (feeLimit < 0 || feeLimit > repository.getDynamicPropertiesStore().getMaxFeeLimit()) {
         logger.info("invalid feeLimit {}", feeLimit);
@@ -469,7 +478,7 @@ public class VMActuator implements Actuator2 {
       AccountCapsule caller = repository.getAccount(callerAddress);
       long energyLimit;
       if (isConstantCall) {
-        energyLimit = VMConstant.ENERGY_LIMIT_IN_CONSTANT_TX;
+        energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
       } else {
         AccountCapsule creator = repository
             .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
@@ -492,6 +501,9 @@ public class VMActuator implements Actuator2 {
       this.vm = new VM();
       rootInternalTransaction = new InternalTransaction(trx, trxType);
       this.program = new Program(code, programInvoke, rootInternalTransaction, vmConfig);
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        this.program.setContractVersion(deployedContract.getContractVersion());
+      }
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
 

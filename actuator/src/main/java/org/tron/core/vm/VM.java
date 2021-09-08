@@ -23,6 +23,7 @@ import static org.tron.core.vm.OpCode.TOKENBALANCE;
 import static org.tron.core.vm.OpCode.UNFREEZE;
 import static org.tron.core.vm.OpCode.VOTEWITNESS;
 import static org.tron.core.vm.OpCode.WITHDRAWREWARD;
+import static org.tron.core.vm.OpCode.BASEFEE;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -119,6 +120,7 @@ public class VM {
               && (op == FREEZE || op == UNFREEZE || op == FREEZEEXPIRETIME))
           || (!VMConfig.allowTvmVote()
               && (op == VOTEWITNESS || op == WITHDRAWREWARD))
+          || (!VMConfig.allowTvmLondon() && (op == BASEFEE))
       ) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
@@ -829,7 +831,10 @@ public class VM {
         break;
         case GASPRICE: {
           DataWord energyPrice = new DataWord(0);
-
+          if (VMConfig.allowTvmCompatibleEvm() && program.getContractVersion() == 1) {
+            energyPrice = new DataWord(program.getContractState()
+                .getDynamicPropertiesStore().getEnergyFee());
+          }
           program.stackPush(energyPrice);
           program.step();
         }
@@ -867,18 +872,19 @@ public class VM {
           program.step();
         }
         break;
-        case DIFFICULTY: {
-          DataWord difficulty = program.getDifficulty();
+        case DIFFICULTY:
+        case GASLIMIT: {
+          DataWord result = new DataWord(0);
 
-          program.stackPush(difficulty);
+          program.stackPush(result);
           program.step();
         }
         break;
-        case GASLIMIT: {
-          // todo: this energylimit is the block's energy limit
-          DataWord energyLimit = new DataWord(0);
+        case BASEFEE: {
+          DataWord energyFee =
+              new DataWord(program.getContractState().getDynamicPropertiesStore().getEnergyFee());
 
-          program.stackPush(energyLimit);
+          program.stackPush(energyFee);
           program.step();
         }
         break;
