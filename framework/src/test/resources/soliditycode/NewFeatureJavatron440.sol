@@ -26,7 +26,8 @@ contract C {
     }
 
     function testCall(address payable caller, address payable transferTo) public {
-        caller.call(abi.encodeWithSignature("transfer(address)",transferTo));
+        (bool success, bytes memory data) = caller.call(abi.encodeWithSignature("transfer(address)",transferTo));
+        require(success);
     }
 
 }

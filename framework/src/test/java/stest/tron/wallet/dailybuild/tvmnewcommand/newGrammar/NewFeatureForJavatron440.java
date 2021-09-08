@@ -2,6 +2,9 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.newGrammar;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -21,9 +24,6 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -119,7 +119,7 @@ public class NewFeatureForJavatron440 {
     boolean flag = false;
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
       key = getChainParameters.get().getChainParameter(i).getKey();
-      if("getEnergyFee".equals(key)){
+      if ("getEnergyFee".equals(key)) {
         energyfee = getChainParameters.get().getChainParameter(i).getValue();
         logger.info("energyfee: " + energyfee);
         Assert.assertEquals(basefee, energyfee);
@@ -145,9 +145,11 @@ public class NewFeatureForJavatron440 {
     String methedStr = "deploy(uint256)";
     String argsStr = "1";
     String txid = PublicMethed.triggerContract(contractD, methedStr, argsStr,
-        false,0,maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        false, 0, maxFeeLimit, contractExcAddress,
+        contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Optional<Protocol.TransactionInfo> info =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, info.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.SUCCESS,
         info.get().getReceipt().getResult());
@@ -163,7 +165,6 @@ public class NewFeatureForJavatron440 {
         .triggerConstantContractForExtention(create2Address,
             "baseFeeOnly()", "#", false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-//    System.out.println("111111111: " + transactionExtention.toString());
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
@@ -178,7 +179,7 @@ public class NewFeatureForJavatron440 {
     boolean flag = false;
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
       key = getChainParameters.get().getChainParameter(i).getKey();
-      if("getEnergyFee".equals(key)){
+      if ("getEnergyFee".equals(key)) {
         energyfee = getChainParameters.get().getChainParameter(i).getValue();
         logger.info("energyfee: " + energyfee);
         Assert.assertEquals(basefee, energyfee);
@@ -191,7 +192,6 @@ public class NewFeatureForJavatron440 {
         .triggerConstantContractForExtention(create2Address,
             "gasPriceOnly()", "#", false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-//    System.out.println("22222: " + transactionExtention.toString());
 
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
     Assert.assertEquals("SUCESS",
@@ -208,34 +208,35 @@ public class NewFeatureForJavatron440 {
     String transferToKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(transferToKey);
 
+    Long temMaxLimitFee = 200000000L;
     String methedStr = "testCall(address,address)";
-    String argsStr = "\"" + Base58.encode58Check(contractD) + "\"," + "\"" + Base58.encode58Check(transferToAddress) + "\"";
+    String argsStr = "\"" + Base58.encode58Check(contractD) + "\"," + "\""
+        + Base58.encode58Check(transferToAddress) + "\"";
     String txid = PublicMethed.triggerContract(contractC, methedStr, argsStr,
-        false,0,maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        false, 0, temMaxLimitFee, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Optional<Protocol.TransactionInfo> info =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     System.out.println("0000000" + info.toString());
-    Protocol.Account testAccount = PublicMethed.queryAccountByAddress(transferToAddress,blockingStubFull);
+    Protocol.Account testAccount =
+        PublicMethed.queryAccountByAddress(transferToAddress, blockingStubFull);
     System.out.println("testAccount: " + testAccount.toString());
-    Assert.assertEquals(0, info.get().getResultValue());
-    Assert.assertEquals(Protocol.Transaction.Result.contractResult.SUCCESS,
+    Assert.assertEquals(1, info.get().getResultValue());
+    Assert.assertEquals(Protocol.Transaction.Result.contractResult.REVERT,
         info.get().getReceipt().getResult());
     Assert.assertTrue(info.get().getInternalTransactions(0).getRejected());
-    Assert.assertTrue(info.get().getReceipt().getEnergyFee() < maxFeeLimit);
+    Assert.assertTrue(info.get().getReceipt().getEnergyFee() < temMaxLimitFee);
   }
 
   @Test(enabled = true, description = "create2 address call can use 63/64 energy in new contract")
   public void test05Create2AddressCallEnergy() {
-    ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] transferToAddress = ecKey1.getAddress();
-    String transferToKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    PublicMethed.printAddress(transferToKey);
     String methedStr = "deploy(uint256)";
     String argsStr = "1";
     String txid = PublicMethed.triggerContract(contractD, methedStr, argsStr,
-        false,0,maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        false, 0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Optional<Protocol.TransactionInfo> info =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, info.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.SUCCESS,
         info.get().getReceipt().getResult());
@@ -247,22 +248,30 @@ public class NewFeatureForJavatron440 {
     create2Address = ByteArray.fromHexString(create2Str);
     logger.info("create2Address: " + Base58.encode58Check(create2Address));
 
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] transferToAddress = ecKey1.getAddress();
+    String transferToKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.printAddress(transferToKey);
+
+    Long temMaxLimitFee = 200000000L;
     methedStr = "testCall(address,address)";
-    argsStr = "\"" + Base58.encode58Check(contractD) + "\"," + "\"" + Base58.encode58Check(transferToAddress) + "\"";
+    argsStr = "\"" + Base58.encode58Check(contractD) + "\"," + "\""
+        + Base58.encode58Check(transferToAddress) + "\"";
     txid = PublicMethed.triggerContract(create2Address, methedStr, argsStr,
-        false,0,maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        false, 0, temMaxLimitFee, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     System.out.println("0000000" + info.toString());
 
-    Protocol.Account testAccount = PublicMethed.queryAccountByAddress(transferToAddress,blockingStubFull);
+    Protocol.Account testAccount =
+        PublicMethed.queryAccountByAddress(transferToAddress, blockingStubFull);
     System.out.println("testAccount: " + testAccount.toString());
-    Assert.assertEquals("",testAccount.toString());
-    Assert.assertEquals(0, info.get().getResultValue());
-    Assert.assertEquals(Protocol.Transaction.Result.contractResult.SUCCESS,
+    Assert.assertEquals("", testAccount.toString());
+    Assert.assertEquals(1, info.get().getResultValue());
+    Assert.assertEquals(Protocol.Transaction.Result.contractResult.REVERT,
         info.get().getReceipt().getResult());
     Assert.assertTrue(info.get().getInternalTransactions(0).getRejected());
-    Assert.assertTrue(info.get().getReceipt().getEnergyFee() < maxFeeLimit);
+    Assert.assertTrue(info.get().getReceipt().getEnergyFee() < temMaxLimitFee);
   }
 
 
