@@ -83,7 +83,7 @@ download() {
   fi
 }
 
-quickStart() {
+mkdirFullNode() {
   if [ ! -d $FULL_NODE_DIR ]; then
     echo "info: mkdir $FULL_NODE_DIR"
     mkdir $FULL_NODE_DIR
@@ -92,6 +92,11 @@ quickStart() {
   elif [ -d $FULL_NODE_DIR ]; then
     cd $FULL_NODE_DIR
   fi
+
+}
+
+quickStart() {
+  mkdirFullNode
   full_node_version=$(`echo getLatestReleaseVersion`)
   echo "info: check latest version: $full_node_version"
   echo 'info: download config'
@@ -115,9 +120,12 @@ cloneCode() {
 
 cloneBuild() {
   cloneCode
-  cd 'java-tron'
   echo "info: build java-tron"
-  sh gradlew clean build -x test
+  sh 'java-tron/'gradlew clean build -x test
+  mkdirFullNode
+  if [[ $? == 0 ]];then
+    cp 'java-tron/build/libs/FullNode.jar' 'FullNode/'
+  fi
 }
 
 checkPid() {
@@ -198,11 +206,9 @@ setJVMMemory() {
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
     if [[ $SPECIFY_MEMORY >0 ]]; then
       max_direct=$(echo "$SPECIFY_MEMORY/1024*0.1" | bc | awk -F. '{print $1"g"}')
-      echo "max_direct$max_direct"
       if [[ "$max_direct" != "g" ]]; then
         MAX_DIRECT_MEMORY=$max_direct
       fi
-
       JVM_MX=$(echo "$SPECIFY_MEMORY/1024*0.6" | bc | awk -F. '{print $1"g"}')
       JVM_MS=$JVM_MX
     else
@@ -275,6 +281,13 @@ restart() {
   startService
 }
 
+//加校验
+
+//3个例子
+1.本地起
+2.拉代码
+3.拉release
+  加验验
 while [ -n "$1" ]; do
   case "$1" in
   -c)
@@ -305,7 +318,7 @@ while [ -n "$1" ]; do
     ;;
   -cb)
     cloneBuild
-    exit
+    shift 1
     ;;
   --download)
     DOWNLOAD=true
