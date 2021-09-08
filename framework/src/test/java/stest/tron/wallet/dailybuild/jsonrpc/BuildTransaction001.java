@@ -5,10 +5,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannelBuilder;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -33,7 +38,16 @@ public class BuildTransaction001 extends JsonRpcBase {
   byte[] receiverAddress = ecKey1.getAddress();
   final String receiverKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-
+  /**
+   * constructor.
+   */
+  @BeforeClass(enabled = true)
+  public void beforeClass() {
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+  }
 
 
 
@@ -66,6 +80,7 @@ public class BuildTransaction001 extends JsonRpcBase {
 
   @Test(enabled = true, description = "Json rpc api of buildTransaction for transfer trc10")
   public void test02JsonRpcApiTestOfBuildTransactionForTransferTrc10() throws Exception {
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     final Long beforeTokenBalance = PublicMethed.getAssetBalanceByAssetId(ByteString
         .copyFromUtf8(jsonRpcAssetId), receiverKey, blockingStubFull);
     JsonObject param = new JsonObject();
@@ -91,5 +106,16 @@ public class BuildTransaction001 extends JsonRpcBase {
     Assert.assertEquals(afterTokenBalance - beforeTokenBalance,1L);
 
   }
+
+  /**
+   * constructor.
+   */
+  @AfterClass
+  public void shutdown() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+  }
+
 
 }
