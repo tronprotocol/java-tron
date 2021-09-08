@@ -449,8 +449,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     Return.Builder retBuilder = Return.newBuilder();
 
     try {
+      byte[] contractAddress;
+
+      if (contractType == ContractType.TriggerSmartContract) {
+        contractAddress = addressHashToByteArray(args.to);
+      } else {
+        contractAddress = new byte[0];
+      }
+
       callTriggerConstantContract(ownerAddress,
-          addressHashToByteArray(args.to),
+          contractAddress,
           args.parseValue(),
           ByteArray.fromHexString(args.data),
           trxExtBuilder,
@@ -458,7 +466,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       return ByteArray.toJsonHex(trxExtBuilder.getEnergyUsed());
     } catch (ContractValidateException e) {
-      throw new JsonRpcInvalidRequestException(e.getMessage());
+      String errString = "invalid contract";
+      if (e.getMessage() != null) {
+        errString = e.getMessage();
+      }
+
+      throw new JsonRpcInvalidRequestException(errString);
     } catch (Exception e) {
       String errString = "invalid json request";
       if (e.getMessage() != null) {

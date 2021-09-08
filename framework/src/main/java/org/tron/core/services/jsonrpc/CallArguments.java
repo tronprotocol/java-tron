@@ -30,15 +30,22 @@ public class CallArguments {
   public String nonce; // not used
 
   /**
-   * just support TransferContract and TriggerSmartContract
+   * just support TransferContract, CreateSmartContract and TriggerSmartContract
    * */
   public ContractType getContractType(Wallet wallet) throws JsonRpcInvalidRequestException,
       JsonRpcInvalidParamsException {
     ContractType contractType;
 
     // from or to is null
-    if (paramStringIsNull(from) || paramStringIsNull(to)) {
+    if (paramStringIsNull(from)) {
       throw new JsonRpcInvalidRequestException("invalid json request");
+    } else if (paramStringIsNull(to)) {
+      // data is null
+      if (paramStringIsNull(data)) {
+        throw new JsonRpcInvalidRequestException("invalid json request");
+      }
+
+      contractType = ContractType.CreateSmartContract;
     } else {
       byte[] contractAddressData = addressHashToByteArray(to);
       BytesMessage.Builder build = BytesMessage.newBuilder();
