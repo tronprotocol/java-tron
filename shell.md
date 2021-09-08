@@ -174,8 +174,8 @@ contains the following files：
 		├── plugins/
 		├── protocol/
 		├── config.conf
-    ├── FullNode.jar
-    ├── start.sh
+		├── FullNode.jar
+		├── start.sh
 		├── README.md
 		├── ...
 ```
@@ -217,3 +217,7 @@ sh start.sh -d /tmp/db/database -m 128 -b 64000
 ```
 
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
+
+
+
+
