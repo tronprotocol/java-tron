@@ -24,15 +24,15 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
 * `-c`
 
-  configuration file path,default loading of `config.conf`
+  load the specified path configuration file, default load the `config.conf` at the same level as `FullNode.jar`
 
 * `-d`
 
-  database output directory, default path `output-directory`
+  specify the database storage path, The default is in the current directory where `FullNode.jar` is located
 
 * `-j`
 
-  jar package path,default package name `FullNode.jar `
+  specify the directory where the program is located, default package name `FullNode.jar `
 
 * `-mem`
 
@@ -70,7 +70,20 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
 ### How to use
 
+* Local mode
+* Online mode
+
 #### 1.local mode
+
+Format:
+
+```
+sh start.sh [option]
+```
+
+```
+sh start.sh [-j <jarName>] [-d <db database-directory>] [-c <configFile>] [[--run] | [--stop]]
+```
 
 **start service**
 
@@ -79,6 +92,8 @@ sh start.sh
 ```
 
 or
+
+
 
 ```
 sh start.sh --run
@@ -90,41 +105,97 @@ sh start.sh --run
 sh start.sh --stop
 ```
 
-**Limit boot memory size**
 
-Use `-mem` parameter to set the maximum memory usage of `FullNode.jar`
-
-```
-sh start.sh -mem 12000
-```
-
-Physical memory size in MB, here 12000 means 12000MB Start the service with `start.sh`
 
 #### 2.online mode
 
-**release**
+**Get the latest release**
 
-Download the latest version of java-tron
+Format:
 
 ```
-sh start.sh --release --run
+sh start.sh --release [option]
+```
+
+Download the latest version of java-tron, demo:
+
+```
+sh start.sh --release
 ```
 
 contains the following files：
 
 ```
-FullNode-|
-         \--config.conf
-         \--FullNode.jar
-         \--start.sh
+├── ...
+├── FullNode/
+		├── config.conf
+    ├── FullNode.jar
+    ├── start.sh
 ```
 
-**clone and build**
+Get the latest version up and running, demo:
 
-Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile download the latest release
+```
+sh start.sh --release --run
+```
+
+**clone code and build**
+
+Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile download the latest release. 
+
+Format:
+
+```
+sh start.sh -cb [option]
+```
+
+demo:
+
+```
+sh start.sh -cb
+```
+
+contains the following files：
+
+```
+├── ...
+├── java-tron/
+		├── actuator/
+		├── chainbase/
+		├── common/
+		├── config/
+		├── consensus/    
+		├── crypto/
+		├── docker/
+		├── docs/
+		├── example/   
+		├── framework/
+		├── gradle/
+		├── plugins/
+		├── protocol/
+		├── config.conf
+    ├── FullNode.jar
+    ├── start.sh
+		├── README.md
+		├── ...
+```
+
+Download the code and compile and run it
+
+demo:
 
 ```
 sh start.sh -cb --run
+```
+
+After using this command, the FullNode directory will be created and the compiled file FullNode.jar and related configuration files will be copied to this directory
+
+```
+├── ...
+├── FullNode/
+		├── config.conf
+    ├── FullNode.jar
+    ├── start.sh
 ```
 
 
@@ -133,11 +204,16 @@ sh start.sh -cb --run
 
 This tool provides the ability to reformat the manifest according to the current database.
 
+Format:
+
+```
+sh start.sh [-m <manifest size>] | [-b <batch size>]  | [-d <db database-directory>]
+```
+
+Demo
+
 ```
 sh start.sh -d /tmp/db/database -m 128 -b 64000
 ```
 
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
-
-
-
