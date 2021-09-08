@@ -129,8 +129,8 @@ contains the following files：
 ├── ...
 ├── FullNode/
 		├── config.conf
-    ├── FullNode.jar
-    ├── start.sh
+		├── FullNode.jar
+		├── start.sh
 ```
 
 Get the latest version up and running, demo:
