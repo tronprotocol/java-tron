@@ -1222,6 +1222,8 @@ message TransactionExtention {
   repeated bytes constant_result = 3;
   Return result = 4;
   int64 energy_used = 5;
+  repeated TransactionInfo.Log logs = 6;
+  repeated InternalTransaction internal_transactions = 7;
 }
 
 message BlockExtention {

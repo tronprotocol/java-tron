@@ -92,7 +92,7 @@ public class ClearAbi006 {
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_VALIDATE_ERROR"));
     Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-        containsString("contract validate error : Contract not exists"));
+        containsString("Contract validate error : Contract not exists"));
 
   }
 

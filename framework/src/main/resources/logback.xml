@@ -3,7 +3,7 @@
 <configuration>
 
   <!-- Be sure to flush latest logs on exit -->
-  <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+  <shutdownHook class="org.tron.core.config.TronLogShutdownHook"/>
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>

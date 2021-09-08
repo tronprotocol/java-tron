@@ -185,6 +185,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmFreeze = 0;
     PARAMETER.allowTvmVote = 0;
+    PARAMETER.allowTvmLondon = 0;
+    PARAMETER.allowTvmCompatibleEvm = 0;
     PARAMETER.historyBalanceLookup = false;
     PARAMETER.openPrintLog = true;
     PARAMETER.openTransactionSort = false;
@@ -281,6 +283,11 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
       PARAMETER.supportConstant = config.getBoolean(Constant.VM_SUPPORT_CONSTANT);
+    }
+
+    if (config.hasPath(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT)) {
+      long configLimit = config.getLong(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT);
+      PARAMETER.maxEnergyLimitForConstant = max(3_000_000L, configLimit);
     }
 
     if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
@@ -720,6 +727,14 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmVote =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
+
+    PARAMETER.allowTvmLondon =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_LONDON) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_LONDON) : 0;
+
+    PARAMETER.allowTvmCompatibleEvm =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) : 0;
 
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter

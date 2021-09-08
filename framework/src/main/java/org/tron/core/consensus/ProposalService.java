@@ -247,6 +247,14 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
           break;
         }
+        case ALLOW_TVM_LONDON: {
+          manager.getDynamicPropertiesStore().saveAllowTvmLondon(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_COMPATIBLE_EVM: {
+          manager.getDynamicPropertiesStore().saveAllowTvmCompatibleEvm(entry.getValue());
+          break;
+        }
         case FREE_NET_LIMIT: {
           manager.getDynamicPropertiesStore().saveFreeNetLimit(entry.getValue());
           break;
