@@ -3085,6 +3085,24 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
+  public static HttpResponse getTransactionCountByBlocknum(String httpNode, long blocknum) {
+    try {
+      String requestUrl =
+          "http://" + httpNode + "/wallet/gettransactioncountbyblocknum";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", blocknum);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
 
   /**
    * constructor.

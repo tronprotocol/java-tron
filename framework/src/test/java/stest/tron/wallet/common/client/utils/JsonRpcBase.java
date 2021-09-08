@@ -49,7 +49,7 @@ public class JsonRpcBase {
   public final byte[] foundationAccountAddress = PublicMethed.getFinalAddress(foundationAccountKey);
 
   public static final String jsonRpcOwnerKey = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.jsonRpcOnwerKey");
+      .getString("defaultParameter.jsonRpcOwnerKey");
   public static final byte[] jsonRpcOwnerAddress = PublicMethed
       .getFinalAddress(jsonRpcOwnerKey);
   public static final String jsonRpcOwnerAddressString = PublicMethed
@@ -60,6 +60,8 @@ public class JsonRpcBase {
       .getStringList("jsonRpcNode.ip.list").get(0);
   public static String httpFullNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(0);
+  public static String ethHttpsNode = Configuration.getByPath("testng.conf")
+      .getStringList("ethHttpsNode.host.list").get(0);
 
   public ManagedChannel channelFull = null;
   public WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -68,7 +70,7 @@ public class JsonRpcBase {
 
   public WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   public WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
+  public String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
 
   public static long maxFeeLimit = Configuration.getByPath("testng.conf")
@@ -141,12 +143,9 @@ public class JsonRpcBase {
     deployContract();
     triggerContract();
     deployTrc20Contract();
-
-
-
-
-
   }
+
+
 
   /**
    * constructor.
@@ -291,6 +290,22 @@ public class JsonRpcBase {
     trc20AddressHex = ByteArray.toHexString(infoById.get().getContractAddress().toByteArray());
 
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getEthHttps(String ethHttpsNode,JsonObject jsonRpcObject) {
+    try {
+      String requestUrl = "https://" + ethHttpsNode + "/v3/dfb752dd45204b8daae74249f4653584";
+      response = HttpMethed.createConnect(requestUrl,jsonRpcObject);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
 
 
 
