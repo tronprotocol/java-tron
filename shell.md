@@ -71,15 +71,16 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 ### How to use
 
 * Local mode
+
+  Operate local server start and stop
+
 * Online mode
+
+  Get the latest code and latest release from github
 
 #### 1.local mode
 
 Format:
-
-```
-sh start.sh [option]
-```
 
 ```
 sh start.sh [-j <jarName>] [-d <db database-directory>] [-c <configFile>] [[--run] | [--stop]]
@@ -112,23 +113,7 @@ sh start.sh --stop
 Format:
 
 ```
-sh start.sh --release [option]
-```
-
-Download the latest version of java-tron, demo:
-
-```
-sh start.sh --release
-```
-
-contains the following files：
-
-```
-├── ...
-├── FullNode/
-		├── config.conf
-		├── FullNode.jar
-		├── start.sh
+sh start.sh --release [--run]
 ```
 
 Get the latest version up and running, demo:
@@ -137,48 +122,27 @@ Get the latest version up and running, demo:
 sh start.sh --release --run
 ```
 
-**clone code and build**
-
-Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile download the latest release. 
-
-Format:
-
-```
-sh start.sh -cb [option]
-```
-
-demo:
-
-```
-sh start.sh -cb
-```
-
 contains the following files：
 
 ```
 ├── ...
-├── java-tron/
-		├── actuator/
-		├── chainbase/
-		├── common/
-		├── config/
-		├── consensus/    
-		├── crypto/
-		├── docker/
-		├── docs/
-		├── example/   
-		├── framework/
-		├── gradle/
-		├── plugins/
-		├── protocol/
-		├── config.conf
-		├── FullNode.jar
-		├── start.sh
-		├── README.md
-		├── ...
+├── FullNode/
+    ├── config.conf
+    ├── FullNode.jar
+    ├── start.sh
 ```
 
-Download the code and compile and run it
+**clone code and build**
+
+Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile download the latest release. 
+
+After using this command, the FullNode directory will be created and the compiled file FullNode.jar and related configuration files will be copied to this directory
+
+Format:
+
+```
+sh start.sh -cb [--run]
+```
 
 demo:
 
@@ -186,17 +150,40 @@ demo:
 sh start.sh -cb --run
 ```
 
-After using this command, the FullNode directory will be created and the compiled file FullNode.jar and related configuration files will be copied to this directory
+contains the following files：
 
 ```
 ├── ...
-├── FullNode/
-	├── config.conf
+├── java-tron
+    ├── actuator/
+    ├── chainbase/
+    ├── common/
+    ├── config/
+    ├── consensus/    
+    ├── crypto/
+    ├── docker/
+    ├── docs/
+    ├── example/   
+    ├── framework/
+    ├── gradle/
+    ├── plugins/
+    ├── protocol/
+    ├── config.conf
     ├── FullNode.jar
     ├── start.sh
+    ├── README.md
+    ├── ...
 ```
 
 
+
+```
+├── java-tron/
+├── FullNode/
+    |── config.conf
+    ├── FullNode.jar
+    ├── start.sh
+```
 
 #### 3.rebuild manifest
 
