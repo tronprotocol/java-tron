@@ -63,8 +63,8 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
   specify the batch manifest size,default：80000
 
-* `-dr` or `--disable-rewrite-manifes`  
-  disable rewrite manifes  
+* `-dr` or `--disable-rewrite-manifest`  
+  disable rewrite manifest
 
 ***
 
