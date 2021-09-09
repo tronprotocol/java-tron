@@ -63,7 +63,7 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
   specify the batch manifest size,default：80000
 
-* `-dr` or `--disable-rewrite-manifes`
+* `-dr` or `--disable-rewrite-manifes`  
   disable rewrite manifes  
 
 ***
@@ -72,11 +72,11 @@ If you have already downloaded `java-tron`, you can use `start.sh` to run `java-
 
 * Local mode
 
-  Operate local server start and stop
+  Start the service using the native Jar package
 
 * Online mode
 
-  Get the latest code and latest release from github
+  Get the latest code or latest release from github and start the service
 
 #### 1.local mode
 
@@ -87,12 +87,6 @@ sh start.sh [-j <jarName>] [-d <db database-directory>] [-c <configFile>] [[--ru
 ```
 
 **start service**
-
-```
-sh start.sh 
-```
-
-or
 
 ```
 sh start.sh --run
@@ -192,15 +186,19 @@ This tool provides the ability to reformat the manifest according to the current
 Format:
 
 ```
-sh start.sh [-m <manifest size>] | [-b <batch size>]  | [-d <db database-directory>]
+sh start.sh <--run | --release | -cb>  [-m <manifest size>] | [-b <batch size>]  | [-d <db database-directory> | [-dr | --disable-rewrite-manifes]]
 ```
 
-Demo
-
+Demo  
+1.local mode:
 ```
-sh start.sh -d /tmp/db/database -m 128 -b 64000
+sh start.sh --run -d /tmp/db/database -m 128 -b 64000
 ```
 
+2.Online mode
+```
+sh start.sh --release --run -d /tmp/db/database -m 128 -b 64000
+```
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
 
 
