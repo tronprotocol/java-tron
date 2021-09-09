@@ -191,7 +191,7 @@ After using this command, the FullNode directory will be created and the compile
 ```
 ├── ...
 ├── FullNode/
-		├── config.conf
+	├── config.conf
     ├── FullNode.jar
     ├── start.sh
 ```

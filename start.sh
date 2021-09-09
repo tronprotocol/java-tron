@@ -31,6 +31,7 @@ REBUILD_BATCH_SIZE=80000
 DOWNLOAD=false
 RELEASE_URL='https://github.com/tronprotocol/java-tron/releases'
 QUICK_START=false
+CLONE_BUILD=false
 
 getLatestReleaseVersion() {
   default_version='GreatVoyage-v4.3.0'
@@ -85,14 +86,13 @@ download() {
 
 mkdirFullNode() {
   if [ ! -d $FULL_NODE_DIR ]; then
-    echo "info: mkdir $FULL_NODE_DIR"
+    echo "info: create $FULL_NODE_DIR"
     mkdir $FULL_NODE_DIR
     $(cp $0 $FULL_NODE_DIR)
     cd $FULL_NODE_DIR
   elif [ -d $FULL_NODE_DIR ]; then
     cd $FULL_NODE_DIR
   fi
-
 }
 
 quickStart() {
@@ -105,6 +105,7 @@ quickStart() {
 
   echo "info: download $full_node_version"
   download $RELEASE_URL/download/$full_node_version/$JAR_NAME $JAR_NAME
+  checkSign
 }
 
 cloneCode() {
@@ -119,12 +120,20 @@ cloneCode() {
 }
 
 cloneBuild() {
+  local currentPwd=$PWD
+  echo 'info: clone java-tron'
   cloneCode
-  echo "info: build java-tron"
-  sh 'java-tron/'gradlew clean build -x test
-  mkdirFullNode
+
+  echo 'info: build java-tron'
+  cd java-tron
+  sh gradlew clean build -x test
   if [[ $? == 0 ]];then
-    cp 'java-tron/build/libs/FullNode.jar' 'FullNode/'
+    cd $currentPwd
+    mkdirFullNode
+    cp '../java-tron/build/libs/FullNode.jar' $PWD
+    cp '../java-tron/framework/src/main/resources/config.conf' $PWD
+  else
+    exit
   fi
 }
 
@@ -158,7 +167,6 @@ stopService() {
 
 checkAllowMemory() {
   os=`uname`
-#  totalMemory=`getTotalMemory`
   totalMemory=$(`echo getTotalMemory`)
   total=`expr $totalMemory / 1024`
   if [[ $os == 'Darwin' ]]; then
@@ -272,6 +280,31 @@ rebuildManifest() {
   fi
 }
 
+checkSign() {
+  echo 'info: verify signature'
+  local latest_version=$(`echo getLatestReleaseVersion`)
+  download $RELEASE_URL/download/$latest_version/sha256sum.txt sha256sum.txt
+  fullNodeSha256=$(cat sha256sum.txt|grep 'FullNode'| awk -F ' ' '{print $1}')
+
+  os=`uname`
+  if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
+    releaseFullNodeSha256=$(sha256sum FullNode.jar| grep FullNode | awk -F ' ' '{print $1}')
+  elif [[ $os == 'Darwin' ]]; then
+    releaseFullNodeSha256=$(shasum -a 256 FullNode.jar| grep FullNode | awk -F ' ' '{print $1}')
+    cat $releaseFullNodeSha256 | awk -F ' ' '{print $0}'
+  fi
+
+  echo "info:      release sha256sum sign: $releaseFullNodeSha256"
+  echo "info: FullNode.jar sha256sum sign: $fullNodeSha256"
+
+  if [[ "$fullNodeSha256" == "$releaseFullNodeSha256" ]]; then
+    echo 'info: sha256 signatures pass'
+  else
+    echo 'info: sha256 signature exception!!!'
+    echo 'info: please compile from the code or download the latest version from https://github.com/tronprotocol/java-tron'
+  fi
+}
+
 restart() {
   stopService
   checkAllowMemory
@@ -281,13 +314,6 @@ restart() {
   startService
 }
 
-//加校验
-
-//3个例子
-1.本地起
-2.拉代码
-3.拉release
-  加验验
 while [ -n "$1" ]; do
   case "$1" in
   -c)
@@ -317,7 +343,7 @@ while [ -n "$1" ]; do
     shift 2
     ;;
   -cb)
-    cloneBuild
+    CLONE_BUILD=true
     shift 1
     ;;
   --download)
@@ -367,6 +393,10 @@ while [ -n "$1" ]; do
   esac
 done
 
+if [[ $CLONE_BUILD == true ]];then
+  cloneBuild
+fi
+
 if [[ $QUICK_START == true ]]; then
   quickStart
   if [[ $? == 0 ]] ; then
@@ -381,12 +411,6 @@ fi
 
 if [[ $UPGRADE == true ]]; then
   upgrade
-  exit
-fi
-
-if [[ $RUN == true ]]; then
-  restart
-  exit
 fi
 
 if [[ $DOWNLOAD == true ]]; then
@@ -395,4 +419,11 @@ if [[ $DOWNLOAD == true ]]; then
   exit
 fi
 
-restart
+if [[ $RUN == true ]]; then
+  restart
+  exit
+fi
+
+if [[ $# -eq 0 ]]; then
+  restart
+fi
