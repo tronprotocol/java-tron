@@ -90,6 +90,12 @@ contract C {
         return a.length;
     }
 
+    bytes p = "hihello";
+    function bytesConcatWithEmptyStr() public view {
+        bytes memory a = bytes.concat("hi", "", "hello");
+        assert(p.length == a.length);
+    }
+
     event ssoo(uint256);
     function testEmitEvent() public payable {
         emit ssoo(6);
