@@ -329,7 +329,7 @@ public class Create2Test014 {
     Assert.assertEquals(1, infoById.get().getResultValue());
     Assert
         .assertThat(infoById.get().getResMessage().toStringUtf8(),
-            containsString("Not enough energy for 'SWAP1' operation executing"));
+            containsString("REVERT opcode executed"));
   }
 
   // Istanbul change create2 algorithm

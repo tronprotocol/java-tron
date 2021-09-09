@@ -31,7 +31,7 @@ contract Factory {
 
             assembly {
                 addr1 := create2(0, add(code, 0x20), mload(code), salt)
-                if iszero(extcodesize(addr)) {
+                if iszero(extcodesize(addr1)) {
                     revert(0, 0)
                 }
             }

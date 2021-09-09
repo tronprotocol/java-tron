@@ -195,7 +195,7 @@ public class Create2Test003 {
     Assert.assertEquals(1, infoById.get().getResultValue());
     Assert
         .assertThat(infoById.get().getResMessage().toStringUtf8(),
-            containsString("Not enough energy for 'SWAP1' operation executing"));
+            containsString("REVERT opcode executed"));
   }
 
   @Test(enabled = true, description = "Trigger create2 command with empty bytecode")
