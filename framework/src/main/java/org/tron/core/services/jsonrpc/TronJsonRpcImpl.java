@@ -478,7 +478,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         errString = e.getMessage().replaceAll("[\"]", "\'");
       }
 
-      throw new JsonRpcInternalException(errString);
+      throw new JsonRpcInvalidRequestException(errString);
     }
   }
 
