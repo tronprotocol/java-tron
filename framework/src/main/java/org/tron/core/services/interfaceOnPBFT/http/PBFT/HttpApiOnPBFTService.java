@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountOnPBFTServlet;
@@ -123,6 +124,8 @@ public class HttpApiOnPBFTService implements Service {
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
 
   @Autowired
   private GetMarketOrderByAccountOnPBFTServlet getMarketOrderByAccountOnPBFTServlet;
@@ -238,6 +241,10 @@ public class HttpApiOnPBFTService implements Service {
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+
+      // api access filter
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
           EnumSet.allOf(DispatcherType.class));
 
       server.start();
