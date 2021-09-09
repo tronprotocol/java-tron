@@ -35,7 +35,7 @@ public class stake001 {
   private static String url = "url_" + Long.toString(now);
   private static String assetIssueId = null;
   private final String testKey001 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey001);
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -54,21 +54,24 @@ public class stake001 {
   private String USDJAddr = "TLBaRhANQoJFTqre9Nf1mjuwNWjCJeYqUL";
   private String TUSDAddr = "TRz7J6dD2QWxBoumfYt4b3FaiRG23pXfop";
   private String USDTAddr = "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf";
+  private String USDCAddr = "TWMCMCoJPqCGw5RR7eChF2HoY3a9B8eYA3";
   private String sspSUNAddr = "TDqjTkZ63yHB19w2n7vPm2qAkLHwn9fKKk";
   private String sun_trx_lp = "TRGdvFN6N7eXFH1dZHodi5intH25A9KNFH";
-  private String threePool_lp = "TJiwMcAsNuoJ8h493tyM97zTrFbJsoMUZh";
-  private String win_trx_lp = "TXmTRMpZMh8wUHkigkDkxWHmTatUeDxyE4";
-  private String threePoolAddress = "TXnnV92xjyhuvR3nxLX7tkqjDAtHqWCXT9";
   // need change
-  private String FeeConverter = "TMN5iyxEqfywBEhhz2tXpJKwJqHbWtjqcU";
-  private String veSunStaker = "THyASpWzF6ZAorMYUvxpc5zwu8dLtdEDAS";
-  private String LpTokenStakerAuto = "TDD6cP6Y9f7pKydbErdTXUybaTzdMu1Ai4";
-  private String veSUN = "TQdgXCLSr89fEhCq8JfoiaCjTFoiCGVdSo";
-  private String Vote = "TBRE3NP6zb1p745enHQ2P5W8iBjckRNEms";
-  private String FeeConverterUSDC = "TLZCC38GN8FA8xJpBKp1zxYFeSgJs8CJei";
-  private String USDCDepositer = "TXhy9QasSMd1Gnj4TpbuvM393iErYd8c4f";
-  private String USDCSWAP = "TMV5U2b3kwoT4CUhSxen66C56RiDeMHneB";
-  private String usdc3SUNLp = "TV4F4arVprTEjKuKKFHxwUsoioBAmsfAHK";
+  private String threePool_lp = "TRZWskVdiqP3Uwo6cYJJgrxCiWRRSqYk7u";
+  private String usdc_3sun_lp = "TRN8bWvoLQaWiPKAcVnCS86W6H9AqSwKLW";
+  private String threePoolAddress = "TC4oC4PB5T5DVFSA4gZQmo8QsszLHisNhX";
+  private String FeeConverter = "TMdd6E3snej3KJvUuobt2BzztHYsEr8uaZ";
+  private String FeeConverterUSDC = "TSpgYCdWLFHvAMLZ6zkAMu7dAVbNGZ4pEW";
+  private String veSunStaker = "TYx1Dspqi86bKRNJZ7RDbm2aQyZa4UVwxT";
+  private String LpTokenStakerAuto = "TPkGfuBBPaUpAoAsrpDUd3HeqddezrKNnH";
+  private String threePoolLpGauge = "TSqz3A2E1fxT7QnHXpMyStfynhePPHGPWr";
+  private String sunTrxPoolLpGauge = "TM11AnrGf9giZUA8jhDkZJ5QZH46KobNbN";
+  private String usdc3SUNPoolLpGauge = "TUPUoB7ewz1xs7iG43aQvZJoZridEfBmAo";
+  private String veSUN = "TPsyszkiszSYebFn45ykhXJTUrav322wtC";
+  private String Vote = "TNqf7hyp5BHtD3XiYsi2FYu2ttXEcRXoo9";
+  private String USDCDepositer = "TKUaBBoKZLDjbsKDRs5M3PK69U8jd27rWR";
+  private String USDCSWAP = "TSgMxFZ1ypz7WjCm3ALe3mr2wFwS7VS399";
 
   @BeforeSuite
   public void beforeSuite() {
@@ -114,7 +117,7 @@ public class stake001 {
     Assert.assertEquals(0, infoById.get().getResultValue());
 
     // add_liquidity
-    param = "[\"130476461800046232653\",\"131344752975453815606\",\"130476453\"]";
+    param = "[\"3476461800046232653\",\"3344752975453815606\",\"3476453\"],0";
     txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(threePoolAddress), "add_liquidity(uint256[3],uint256)", param, false,
         0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -146,12 +149,142 @@ public class stake001 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
 
-//    // win_trx_lp approve to LpTokenStakerAuto
-//    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(win_trx_lp), "approve(address,uint256)", param, false,
-//        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-//    Assert.assertEquals(0, infoById.get().getResultValue());
+    // usdc_3sun_lp approve to LpTokenStakerAuto
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdc_3sun_lp), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+  }
+
+  @Test(enabled = true, description = "getUsdc3SUNPoolLPAndApproveLPStaker")
+  public void getUsdc3SUNPoolLPAndApproveLPStaker() {
+    String txid;
+    String param;
+    Optional<TransactionInfo> infoById;
+    TransactionExtention transactionExtention;
+    // USDJ approve to USDCDepositer
+    param = "\"" +USDCDepositer + "\",-1";
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(USDJAddr), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    // TUSD approve to USDCDepositer
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(TUSDAddr), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    // USDT approve to USDCDepositer
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(USDTAddr), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    // USDC approve to USDCDepositer
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(USDCAddr), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    // add_liquidity
+    String num1 = PublicMethed.addZeroForNum(new BigInteger("3576453").toString(16),64);
+    String num2 = PublicMethed.addZeroForNum(new BigInteger("3344752975453815606").toString(16),64);
+    String num3 = PublicMethed.addZeroForNum(new BigInteger("3476461800046232653").toString(16),64);
+    String num4 = PublicMethed.addZeroForNum(new BigInteger("3476453").toString(16),64);
+    String num5 = PublicMethed.addZeroForNum(new BigInteger("0").toString(16),64);
+    param = num1 + num2 + num3 + num4 + num5;
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(USDCDepositer), "add_liquidity(uint256[4],uint256)", param, true,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    // get usdc3sun lp count
+    transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(usdc_3sun_lp),
+            "balanceOf(address)", "\"" + WalletClient.encode58Check(fromAddress) + "\"", false,
+            0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    String balancesHex =  ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).replaceAll("^(0+)", "");
+    balancesHex = balancesHex.length()==0?"0":balancesHex;
+    balancesHex = new BigInteger(balancesHex,16).toString(10);
+    System.out.println("usdc3sun lp balances : "+balancesHex);
+
+    // usdc3sun lp approve to threePoolLpGauge
+    param = "\"" + threePoolLpGauge + "\",-1";
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(threePool_lp), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    // sun-trx lp approve to sunTrxPoolLpGauge
+    param = "\"" + sunTrxPoolLpGauge + "\",-1";
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(sun_trx_lp), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    // usdc_3sun_lp approve to usdc3SUNPoolLpGauge
+    param = "\"" + usdc3SUNPoolLpGauge + "\",-1";
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdc_3sun_lp), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+  }
+
+  @Test(enabled = true, description = "usdc3SUNPoolLP_deposit")
+  public void usdc3SUNPoolLP_deposit() {
+    String txid;
+    String param;
+    Optional<TransactionInfo> infoById;
+    TransactionExtention transactionExtention;
+    // usdc_3sun_lp approve to usdc3SUNPoolLpGauge
+    /*param = "\"" + usdc3SUNPoolLpGauge + "\",-1";
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdc_3sun_lp), "approve(address,uint256)", param, false,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());*/
+
+    // deposit
+    String num1 = PublicMethed.addZeroForNum(new BigInteger("1000000000000000000").toString(16),64);
+    param = num1;
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdc3SUNPoolLpGauge), "deposit(uint256)", param, true,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+   /* // withdraw
+    num1 = PublicMethed.addZeroForNum(new BigInteger("1000000000000000000").toString(16),64);
+    param = num1;
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(usdc3SUNPoolLpGauge), "withdraw(uint256)", param, true,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());*/
+
+    // get usdc3sun deposit count
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(usdc3SUNPoolLpGauge),
+            "balanceOf(address)", PublicMethed.addZeroForNum(ByteArray.toHexString(fromAddress).substring(2), 64), true,
+            0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    String balancesHex =  ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).replaceAll("^(0+)", "");
+    balancesHex = balancesHex.length()==0?"0":balancesHex;
+    balancesHex = new BigInteger(balancesHex,16).toString(10);
+    System.out.println("usdc3sun deposit balances : "+balancesHex);
   }
 
   @Test(enabled = true, description = "veSUNStaker_stakeWithLock")
@@ -163,84 +296,110 @@ public class stake001 {
             "lockedBalances(address)", "\"" + WalletClient.encode58Check(fromAddress) + "\"", false,
             0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-    String lockedBalancesBeforeHex =  ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).substring(128,192).replaceAll("^(0+)", "");
-    lockedBalancesBeforeHex = lockedBalancesBeforeHex.length()==0?"0":lockedBalancesBeforeHex;
-    Long lockedBalancesBefore =  Long.parseLong(lockedBalancesBeforeHex,16);
-    System.out.println("lockedBalancesBefore: "+lockedBalancesBefore);
-    String lockEndTimestampHex =  ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).substring(256).replaceAll("^(0+)", "");
-    lockEndTimestampHex = lockEndTimestampHex.length()==0?"0":lockEndTimestampHex;
-    int lockEndTimestamp =  Integer.parseInt(lockEndTimestampHex,16);
-    System.out.println("lockEndTimestamp: "+lockEndTimestamp);
+    String lockedBalancesBeforeHex = ByteArray
+        .toHexString(transactionExtention.getConstantResult(0).toByteArray()).substring(128, 192)
+        .replaceAll("^(0+)", "");
+    lockedBalancesBeforeHex = lockedBalancesBeforeHex.length() == 0 ? "0" : lockedBalancesBeforeHex;
+    Long lockedBalancesBefore = Long.parseLong(lockedBalancesBeforeHex, 16);
+    System.out.println("lockedBalancesBefore: " + lockedBalancesBefore);
+    String lockEndTimestampHex = ByteArray
+        .toHexString(transactionExtention.getConstantResult(0).toByteArray()).substring(256)
+        .replaceAll("^(0+)", "");
+    lockEndTimestampHex = lockEndTimestampHex.length() == 0 ? "0" : lockEndTimestampHex;
+    int lockEndTimestamp = Integer.parseInt(lockEndTimestampHex, 16);
+    System.out.println("lockEndTimestamp: " + lockEndTimestamp);
     // lockedSupply
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(veSunStaker),
             "lockedSupply()", "", false,
             0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-    Long lockedSupplyBefore =  ByteArray.toLong(transactionExtention.getConstantResult(0).toByteArray());
-    System.out.println("lockedSupplyBefore: "+lockedSupplyBefore);
+    Long lockedSupplyBefore = ByteArray
+        .toLong(transactionExtention.getConstantResult(0).toByteArray());
+    System.out.println("lockedSupplyBefore: " + lockedSupplyBefore);
     // totalBalance
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(veSunStaker),
             "totalBalance(address)", "\"" + WalletClient.encode58Check(fromAddress) + "\"", false,
             0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-    Long totalBalanceBefore =  ByteArray.toLong(transactionExtention.getConstantResult(0).toByteArray());
-    System.out.println("totalBalanceBefore: "+totalBalanceBefore);
+    Long totalBalanceBefore = ByteArray
+        .toLong(transactionExtention.getConstantResult(0).toByteArray());
+    System.out.println("totalBalanceBefore: " + totalBalanceBefore);
     // totalSupply
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(veSunStaker),
             "totalSupply()", "", false,
             0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-    Long totalSupplyBefore =  ByteArray.toLong(transactionExtention.getConstantResult(0).toByteArray());
-    System.out.println("totalSupplyBefore: "+totalSupplyBefore);
+    Long totalSupplyBefore = ByteArray
+        .toLong(transactionExtention.getConstantResult(0).toByteArray());
+    System.out.println("totalSupplyBefore: " + totalSupplyBefore);
     // unlockedBalance
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(veSunStaker),
-            "unlockedBalance(address)", "\"" + WalletClient.encode58Check(fromAddress) + "\"", false,
+            "unlockedBalance(address)", "\"" + WalletClient.encode58Check(fromAddress) + "\"",
+            false,
             0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-    Long unlockedBalanceBefore =  ByteArray.toLong(transactionExtention.getConstantResult(0).toByteArray());
-    System.out.println("unlockedBalanceBefore: "+unlockedBalanceBefore);
+    Long unlockedBalanceBefore = ByteArray
+        .toLong(transactionExtention.getConstantResult(0).toByteArray());
+    System.out.println("unlockedBalanceBefore: " + unlockedBalanceBefore);
 
     int currentTimestamp = getSecondTimestampTwo(0);
-    System.out.println("currentTimestamp: "+currentTimestamp);
-    System.out.println("is end: "+(currentTimestamp>lockEndTimestamp));
+    System.out.println("currentTimestamp: " + currentTimestamp);
+    System.out.println("is end: " + (currentTimestamp > lockEndTimestamp));
 
     String txid;
     Optional<TransactionInfo> infoById;
     boolean needStake = true;
     if (needStake) {
-      /*// get allowance
+      // get allowance
       transactionExtention = PublicMethed
           .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(sspSUNAddr),
-              "allowance(address,address)", "\"" + WalletClient.encode58Check(fromAddress) + "\",\"" + veSunStaker + "\"", false,
+              "allowance(address,address)",
+              "\"" + WalletClient.encode58Check(fromAddress) + "\",\"" + veSunStaker + "\"", false,
               0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
       Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-      String allowanceHex =  ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).replaceAll("^(0+)", "");
-      allowanceHex = allowanceHex.length()==0?"0":allowanceHex;
-      Long allowance =  Long.parseLong(allowanceHex,16);
-      if (allowance == 0) {*/
+      String allowanceHex = ByteArray
+          .toHexString(transactionExtention.getConstantResult(0).toByteArray())
+          .replaceAll("^(0+)", "");
+      allowanceHex = allowanceHex.length() == 0 ? "0" : allowanceHex;
+      allowanceHex = allowanceHex.contains("ffffffffffffffffffffffffffffff") ? "-1" : allowanceHex;
+      Long allowance = Long.parseLong(allowanceHex, 16);
+      if (allowance == 0) {
         // approve
-        txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(sspSUNAddr), "approve(address,uint256)", "\"" +veSunStaker + "\",-1", false,
+        txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(sspSUNAddr),
+            "approve(address,uint256)", "\"" + veSunStaker + "\",-1", false,
             0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
         PublicMethed.waitProduceNextBlock(blockingStubFull);
         infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
         Assert.assertEquals(0, infoById.get().getResultValue());
-//      }
+      }
 
       if (lockedBalancesBefore == 0) {
-        if (lockEndTimestamp !=0 && currentTimestamp >= lockEndTimestamp) {
+        if (lockEndTimestamp > 0 && currentTimestamp >= lockEndTimestamp) {
           // withdrawExpiredLocks
-          txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(veSunStaker), "withdrawExpiredLocks()", "", false,
+          txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(veSunStaker),
+              "withdrawExpiredLocks()", "", false,
               0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
           PublicMethed.waitProduceNextBlock(blockingStubFull);
           infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
           Assert.assertEquals(0, infoById.get().getResultValue());
+
+          transactionExtention = PublicMethed
+              .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(veSunStaker),
+                  "lockedSupply()", "", false,
+                  0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
+          Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+          lockedSupplyBefore = ByteArray
+              .toLong(transactionExtention.getConstantResult(0).toByteArray());
+          System.out.println("lockedSupplyBefore: " + lockedSupplyBefore);
         }
         // stakeWithLock
-        txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(veSunStaker), "stake(uint256,bool,uint256)", "123456781234567890,true,"+getSecondTimestampTwo(28239), false,
+        txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(veSunStaker),
+            "stake(uint256,bool,uint256)",
+            "123456781234567890,true," + getSecondTimestampTwo(3600), false,
             0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
         PublicMethed.waitProduceNextBlock(blockingStubFull);
         infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -248,15 +407,16 @@ public class stake001 {
 
       } else if (lockedBalancesBefore > 0) {
         // increaseLock
-        int lockTime = getSecondTimestampTwo(28239);
-        txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(veSunStaker), "increaseLock(uint256,uint256)", "123456781234567890,"+lockTime, false,
+        int lockTime = getSecondTimestampTwo(3600);
+        txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(veSunStaker),
+            "increaseLock(uint256,uint256)", "123456781234567890," + lockTime, false,
             0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
         PublicMethed.waitProduceNextBlock(blockingStubFull);
         infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
         Assert.assertEquals(0, infoById.get().getResultValue());
       }
 
-      if (lockedBalancesBefore == 0 && lockEndTimestamp == 0) {
+      if (lockedBalancesBefore == 0) {
         transactionExtention = PublicMethed
             .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(veSunStaker),
                 "lockedBalances(address)", "\"" + WalletClient.encode58Check(fromAddress) + "\"", false,
@@ -369,16 +529,19 @@ public class stake001 {
       }
     }
     // veSUN.balanceOf
-    String param = PublicMethed.addZeroForNum(ByteArray.toHexString(fromAddress).substring(2), 64);
+    String param = PublicMethed
+        .addZeroForNum(ByteArray.toHexString(fromAddress).substring(2), 64);
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(veSUN),
             "balanceOf(bytes32)", param, true,
             0, 0, "0", 0, fromAddress, testKey001, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
-    String balanceOfHex =  ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).replaceAll("^(0+)", "");
-    balanceOfHex = balanceOfHex.length()==0?"0":balanceOfHex;
-    Long balanceOf =  Long.parseLong(balanceOfHex,16);
-    System.out.println("veSUN.balanceOf: "+balanceOf.longValue());
+    String balanceOfHex = ByteArray
+        .toHexString(transactionExtention.getConstantResult(0).toByteArray())
+        .replaceAll("^(0+)", "");
+    balanceOfHex = balanceOfHex.length() == 0 ? "0" : balanceOfHex;
+    Long balanceOf = Long.parseLong(balanceOfHex, 16);
+    System.out.println("veSUN.balanceOf: " + balanceOf.longValue());
   }
 
   @Test(enabled = true, description = "vote_vote_for_gauge_weights")
@@ -387,7 +550,7 @@ public class stake001 {
     String txid;
     Optional<TransactionInfo> infoById;
     // vote_for_gauge_weights
-    String param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(threePool_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(3600),64);
+    String param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(threePool_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(1600),64);
     System.out.println("param: "+param);
     txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(Vote), "vote_for_gauge_weights(bytes32,uint256)", param, true,
         0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
@@ -396,6 +559,9 @@ public class stake001 {
     Assert.assertEquals(0, infoById.get().getResultValue());
 
     // gauge_relative_weight
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(threePool_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(getNextHalfAHourTimestamp().intValue()),64);
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(Vote),
@@ -414,6 +580,9 @@ public class stake001 {
     Assert.assertEquals(0, infoById.get().getResultValue());
 
     // gauge_relative_weight
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(sun_trx_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(getNextHalfAHourTimestamp().intValue()),64);
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(Vote),
@@ -423,7 +592,7 @@ public class stake001 {
     System.out.println("gauge_relative_weight: "+ByteArray.toLong(transactionExtention.getConstantResult(0).toByteArray()));
 
     // vote_for_gauge_weights
-    param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(win_trx_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(0),64);
+    param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(usdc_3sun_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(6800),64);
     System.out.println("param: "+param);
     txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(Vote), "vote_for_gauge_weights(bytes32,uint256)", param, true,
         0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
@@ -432,7 +601,10 @@ public class stake001 {
     Assert.assertEquals(0, infoById.get().getResultValue());
 
     // gauge_relative_weight
-    param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(win_trx_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(getNextHalfAHourTimestamp().intValue()),64);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(usdc_3sun_lp)).substring(2), 64)+PublicMethed.addZeroForNum(Integer.toHexString(getNextHalfAHourTimestamp().intValue()),64);
     transactionExtention = PublicMethed
         .triggerConstantContractForExtention(WalletClient.decodeFromBase58Check(Vote),
             "gauge_relative_weight(bytes32)", param, true,
@@ -486,6 +658,14 @@ public class stake001 {
     Assert.assertEquals(0, infoById.get().getResultValue());
 
     param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(sun_trx_lp)).substring(2), 64);
+    System.out.println("param: "+param);
+    txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(Vote), "gauge_relative_weight_write(bytes32)", param, true,
+        0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    param = PublicMethed.addZeroForNum(ByteArray.toHexString(WalletClient.decodeFromBase58Check(usdc_3sun_lp)).substring(2), 64);
     System.out.println("param: "+param);
     txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(Vote), "gauge_relative_weight_write(bytes32)", param, true,
         0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
@@ -581,7 +761,8 @@ public class stake001 {
     if (!balanceBeforeHex.equals("0000000000000000000000000000000000000000000000000000000000000000")) {
       // threePool remove_liquidity all balance
       param = balanceBeforeHex+"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-      txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(threePoolAddress), "remove_liquidity(address,uint256)", param, true,
+      logger.info("param:"+param);
+      txid = PublicMethed.triggerContract(WalletClient.decodeFromBase58Check(threePoolAddress), "remove_liquidity(uint256,uint256[3])", param, true,
           0, maxFeeLimit, fromAddress, testKey001, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -626,7 +807,7 @@ public class stake001 {
   }
 
   public static Long getNextHalfAHourTimestamp(){
-    Long l= System.currentTimeMillis() - System.currentTimeMillis()%1800000 + 1800000;
+    Long l= (System.currentTimeMillis() - System.currentTimeMillis()%1800000 + 1800000)/1000;
     System.out.println("nextHalfAHourTimestamp is:" + l);
     System.out.println("date is:" + new Date(l));
     return l;

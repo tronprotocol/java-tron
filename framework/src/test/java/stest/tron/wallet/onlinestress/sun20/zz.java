@@ -1,6 +1,6 @@
 package stest.tron.wallet.onlinestress.sun20;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 
 public class zz {
 
@@ -30,9 +30,9 @@ public class zz {
 //
 //    }
 
-    BigInteger bint=new BigInteger("12000000000000000000");
-    System.out.println(bint.toString(16));//16表示16进制
-
-
+//    BigInteger bint=new BigInteger("12000000000000000000");
+//    System.out.println(bint.toString(16));//16表示16进制
+      BigDecimal b = new BigDecimal("426919746570040982").multiply(new BigDecimal("0.4")).multiply(new BigDecimal("2.5"));
+      System.out.println(b.toString());
   }
 }
