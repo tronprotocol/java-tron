@@ -101,16 +101,18 @@ sh start.sh --stop
 
 
 #### 2.online mode
-
+* Get the latest release
+* Clone code and build
 **Get the latest release**
 
 Format:
 
 ```
-sh start.sh --release [--run]
+sh start.sh <--run | --release | -cb>  [-m <manifest size>] | [-b <batch size>]  | [-d <db database-directory> | [-dr | --disable-rewrite-manifes]]
 ```
 
-Get the latest version up and running, demo:
+Get the latest version up and running  
+demo:
 
 ```
 sh start.sh --release --run
@@ -169,8 +171,6 @@ contains the following files：
     ├── ...
 ```
 
-
-
 ```
 ├── java-tron/
 ├── FullNode/
@@ -179,15 +179,9 @@ contains the following files：
     ├── start.sh
 ```
 
-#### 3.rebuild manifest
+#### 3.rebuild manifest tool
 
-This tool provides the ability to reformat the manifest according to the current database.
-
-Format:
-
-```
-sh start.sh <--run | --release | -cb>  [-m <manifest size>] | [-b <batch size>]  | [-d <db database-directory> | [-dr | --disable-rewrite-manifes]]
-```
+This tool provides the ability to reformat the manifest according to the current database,Enabled by default.
 
 Demo  
 1.local mode:
