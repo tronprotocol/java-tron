@@ -90,6 +90,7 @@ import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
@@ -276,6 +277,10 @@ public class Manager {
     return getDynamicPropertiesStore().getAbiMoveDone() == 0L;
   }
 
+  public boolean needToLoadEnergyPriceHistory() {
+    return getDynamicPropertiesStore().getEnergyPriceHistoryDone() == 0L;
+  }
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return chainBaseManager.getDynamicPropertiesStore();
   }
@@ -410,6 +415,9 @@ public class Manager {
       new MoveAbiHelper(chainBaseManager).doWork();
     }
 
+    if (needToLoadEnergyPriceHistory()) {
+      new EnergyPriceHistoryLoader(chainBaseManager).doWork();
+    }
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();

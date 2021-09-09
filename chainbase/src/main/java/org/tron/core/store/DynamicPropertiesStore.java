@@ -64,6 +64,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] WITNESS_STANDBY_ALLOWANCE = "WITNESS_STANDBY_ALLOWANCE".getBytes();
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
+  private static final long DEFAULT_ENERGY_FEE = 100L;
+  public static final String DEFAULT_ENERGY_PRICE_HISTORY = "0:" + DEFAULT_ENERGY_FEE;
   private static final byte[] MAX_CPU_TIME_OF_ONE_TX = "MAX_CPU_TIME_OF_ONE_TX".getBytes();
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
@@ -162,6 +164,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
   //This value is only allowed to be 1
   private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+  private static final byte[] ENERGY_PRICE_HISTORY = "ENERGY_PRICE_HISTORY".getBytes();
+  private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
 
 
   @Autowired
@@ -385,7 +389,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getEnergyFee();
     } catch (IllegalArgumentException e) {
-      this.saveEnergyFee(100L);// 100 sun per energy
+      this.saveEnergyFee(DEFAULT_ENERGY_FEE); // 100 sun per energy
     }
 
     try {
@@ -777,6 +781,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.setAllowAccountAssetOptimization(CommonParameter
               .getInstance().getAllowAccountAssetOptimization());
+    }
+
+    try {
+      this.getEnergyPriceHistoryDone();
+    } catch (IllegalArgumentException e) {
+      this.saveEnergyPriceHistoryDone(0);
+    }
+
+    try {
+      this.getEnergyPriceHistory();
+    } catch (IllegalArgumentException e) {
+      this.saveEnergyPriceHistory(DEFAULT_ENERGY_PRICE_HISTORY);
     }
   }
 
@@ -2326,6 +2342,30 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void setAllowAccountAssetOptimization(long value) {
     this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public void saveEnergyPriceHistoryDone(long num) {
+    this.put(ENERGY_PRICE_HISTORY_DONE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getEnergyPriceHistoryDone() {
+    return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY_DONE"));
+  }
+
+  public String getEnergyPriceHistory() {
+    return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY"));
+  }
+
+  public void saveEnergyPriceHistory(String value) {
+    this.put(ENERGY_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
   }
 
   private static class DynamicResourceProperties {
