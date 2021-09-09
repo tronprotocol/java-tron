@@ -22,6 +22,7 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 
@@ -278,6 +279,8 @@ public class FullNodeHttpApiService implements Service {
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
   @Autowired
   private GetTransactionFromPendingServlet getTransactionFromPendingServlet;
   @Autowired
@@ -540,7 +543,17 @@ public class FullNodeHttpApiService implements Service {
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
           EnumSet.allOf(DispatcherType.class));
 
-      // filter
+      // http access filter, it should have higher priority than HttpInterceptor
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+      // note: if the pathSpec of servlet is not started with wallet, it should be included here
+      context.getServletHandler().getFilterMappings()[1]
+          .setPathSpecs(new String[] {"/wallet/*",
+              "/net/listnodes",
+              "/monitor/getstatsinfo",
+              "/monitor/getnodeinfo"});
+
+      // metrics filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",

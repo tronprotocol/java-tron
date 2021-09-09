@@ -191,6 +191,7 @@ public class Args extends CommonParameter {
     PARAMETER.openPrintLog = true;
     PARAMETER.openTransactionSort = false;
     PARAMETER.allowAccountAssetOptimization = 0;
+    PARAMETER.disabledApiList = Collections.emptyList();
   }
 
   /**
@@ -779,6 +780,12 @@ public class Args extends CommonParameter {
     PARAMETER.allowAccountAssetOptimization = config
             .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
             .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
+
+    PARAMETER.disabledApiList =
+        config.hasPath(Constant.NODE_DISABLED_API_LIST)
+            ? config.getStringList(Constant.NODE_DISABLED_API_LIST)
+            .stream().map(String::toLowerCase).collect(Collectors.toList())
+            : Collections.emptyList();
 
     logConfig();
   }
