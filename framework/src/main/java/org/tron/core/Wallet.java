@@ -26,6 +26,7 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -101,7 +102,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.LogInfo;
@@ -161,6 +161,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -247,6 +248,7 @@ public class Wallet {
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
+
   @Getter
   private final SignInterface cryptoEngine;
   @Autowired
@@ -505,14 +507,14 @@ public class Wallet {
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} has failed, too many pending.", txID);
         return builder.setResult(false).setCode(response_code.SERVER_BUSY)
-                .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
+            .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
       }
 
       if (trxCacheEnable) {
         if (dbManager.getTransactionIdCache().getIfPresent(txID) != null) {
           logger.warn("Broadcast transaction {} has failed, it already exists.", txID);
           return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
-                  .setMessage(ByteString.copyFromUtf8("Transaction already exists.")).build();
+              .setMessage(ByteString.copyFromUtf8("Transaction already exists.")).build();
         } else {
           dbManager.getTransactionIdCache().put(txID, true);
         }
@@ -525,7 +527,7 @@ public class Wallet {
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0) {
         return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
-                .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
+            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
       } else {
         logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
         return builder.setResult(true).setCode(response_code.SUCCESS).build();
@@ -659,6 +661,15 @@ public class Wallet {
     }
   }
 
+  public BlockCapsule getBlockCapsuleByNum(long blockNum) {
+    try {
+      return chainBaseManager.getBlockByNum(blockNum);
+    } catch (StoreException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
   public long getTransactionCountByBlockNum(long blockNum) {
     long count = 0;
 
@@ -670,6 +681,35 @@ public class Wallet {
     }
 
     return count;
+  }
+
+  public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
+    if ("earliest".equalsIgnoreCase(id)) {
+      return getBlockByNum(0);
+    } else if ("latest".equalsIgnoreCase(id)) {
+      return getNowBlock();
+    } else if ("pending".equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else {
+      long blockNumber;
+      try {
+        blockNumber = ByteArray.hexToBigInteger(id).longValue();
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException("invalid block number");
+      }
+
+      return getBlockByNum(blockNumber);
+    }
+  }
+
+  public List<Transaction> getTransactionsByJsonBlockId(String id)
+      throws JsonRpcInvalidParamsException {
+    if ("pending".equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else {
+      Block block = getByJsonBlockId(id);
+      return block != null ? block.getTransactionsList() : null;
+    }
   }
 
   public WitnessList getWitnessList() {
@@ -1345,6 +1385,21 @@ public class Wallet {
     return null;
   }
 
+  public TransactionCapsule getTransactionCapsuleById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = chainBaseManager.getTransactionStore()
+          .get(transactionId.toByteArray());
+    } catch (StoreException e) {
+      return null;
+    }
+
+    return transactionCapsule;
+  }
+
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -1352,7 +1407,7 @@ public class Wallet {
     TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-              .getTransactionInfo(transactionId.toByteArray());
+          .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1361,7 +1416,7 @@ public class Wallet {
     }
     try {
       transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-              .get(transactionId.toByteArray());
+          .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
@@ -2630,11 +2685,11 @@ public class Wallet {
   }
 
   /**
-   * Add a wrapper for smart contract.
-   * Current additional information including runtime code for a smart contract.
+   * Add a wrapper for smart contract. Current additional information including runtime code for a
+   * smart contract.
+   *
    * @param bytesMessage the contract address message
    * @return contract info
-   *
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
@@ -3807,6 +3862,90 @@ public class Wallet {
     if (accountIdentifier.getAddress().isEmpty()) {
       throw new IllegalArgumentException("account_identifier address is null");
     }
+  }
+
+  public long getEnergyFee() {
+    return chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+  }
+
+  // this function should be called after EnergyPriceHistoryLoader done
+  public long getEnergyFee(long timestamp) {
+    try {
+      String energyPriceHistory =
+          chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      long energyFee = parseEnergyFee(timestamp, energyPriceHistory);
+
+      if (energyFee == -1) {
+        energyFee = getEnergyFee();
+      }
+
+      return energyFee;
+    } catch (Exception e) {
+      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      return getEnergyFee();
+    }
+  }
+
+  public String getCoinbase() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return null;
+    }
+
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get all witnesses
+    List<WitnessCapsule> witnesses = consensusDelegate.getAllWitnesses();
+    List<String> witnessAddresses = new ArrayList<>();
+    for (WitnessCapsule witnessCapsule : witnesses) {
+      witnessAddresses.add(Hex.toHexString(witnessCapsule.getAddress().toByteArray()));
+    }
+
+    // check if witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (witnessAddresses.contains(localWitnessAddress)) {
+        return "0x" + localWitnessAddress;
+      }
+    }
+
+    return null;
+  }
+
+  public boolean isMining() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return false;
+    }
+
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get active witnesses
+    List<ByteString> activeWitnesses = consensusDelegate.getActiveWitnesses();
+    List<String> activeWitnessAddresses = new ArrayList<>();
+    for (ByteString activeWitness : activeWitnesses) {
+      activeWitnessAddresses.add(Hex.toHexString(activeWitness.toByteArray()));
+    }
+
+    // check if active witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (activeWitnessAddresses.contains(localWitnessAddress)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
 

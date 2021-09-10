@@ -2021,6 +2021,9 @@ public class HttpMethed {
     responseContent = HttpMethed.parseResponseContent(response);
     //HttpMethed.printJsonContent(responseContent);
     //httppost.releaseConnection();
+    if (!responseContent.containsKey("balance")) {
+      return 0L;
+    }
     return Long.parseLong(responseContent.get("balance").toString());
   }
 
@@ -3073,6 +3076,24 @@ public class HttpMethed {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/generateaddress";
       JsonObject userBaseObj2 = new JsonObject();
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getTransactionCountByBlocknum(String httpNode, long blocknum) {
+    try {
+      String requestUrl =
+          "http://" + httpNode + "/wallet/gettransactioncountbyblocknum";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", blocknum);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();

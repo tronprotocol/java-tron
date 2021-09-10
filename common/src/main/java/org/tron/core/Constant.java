@@ -96,6 +96,13 @@ public class Constant {
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
 
+  public static final String NODE_JSONRPC_HTTP_FULLNODE_ENABLE = "node.jsonrpc.httpFullNodeEnable";
+  public static final String NODE_JSONRPC_HTTP_FULLNODE_PORT = "node.jsonrpc.httpFullNodePort";
+  public static final String NODE_JSONRPC_HTTP_SOLIDITY_ENABLE = "node.jsonrpc.httpSolidityEnable";
+  public static final String NODE_JSONRPC_HTTP_SOLIDITY_PORT = "node.jsonrpc.httpSolidityPort";
+  public static final String NODE_JSONRPC_HTTP_PBFT_ENABLE = "node.jsonrpc.httpPBFTEnable";
+  public static final String NODE_JSONRPC_HTTP_PBFT_PORT = "node.jsonrpc.httpPBFTPort";
+
   public static final String NODE_DISABLED_API_LIST = "node.disabledApi";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
