@@ -101,6 +101,7 @@ public class JsonRpcBase {
   public static String blockNumHex;
   public static String blockId;
   public static String txid;
+  public static String trc20Txid;
 
 
   /**
@@ -288,6 +289,18 @@ public class JsonRpcBase {
         .getTransactionInfoById(deployTrc20Txid, blockingStubFull);
 
     trc20AddressHex = ByteArray.toHexString(infoById.get().getContractAddress().toByteArray());
+
+    byte[] trc20Address = infoById.get().getContractAddress().toByteArray();
+
+    String selector = "transfer(address,uint256)";
+    String addressParam = "000000000000000000000000" + ByteArray
+        .toHexString(foundationAccountAddress).substring(2);//[0,3)
+    String transferValueParam = "0000000000000000000000000000000000000000000000000000000000000001";
+    String paramString = addressParam + transferValueParam;
+
+    trc20Txid = PublicMethed.triggerContract(trc20Address, selector, paramString,
+        true, 0, maxFeeLimit, "0",0,
+        jsonRpcOwnerAddress, jsonRpcOwnerKey, blockingStubFull);
 
   }
 
