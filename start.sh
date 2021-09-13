@@ -3,7 +3,7 @@
 FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG="main_net_config.conf"
 DEFAULT_FULL_NODE_CONFIG='config.conf'
-FULL_NODE_SHELL="start.sh"
+#FULL_NODE_SHELL="start.sh"
 JAR_NAME="FullNode.jar"
 FULL_START_OPT=''
 GITHUB_BRANCH='master'
@@ -422,9 +422,6 @@ while [ -n "$1" ]; do
           JAR_NAME="$1.jar"
         fi
         restart
-        exit
-      else
-        echo "warn: option $1 does not exist"
         exit
       fi
     fi
