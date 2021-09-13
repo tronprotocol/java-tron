@@ -9,8 +9,7 @@ FULL_START_OPT=''
 GITHUB_BRANCH='master'
 
 # shell option
-ALL_OPT=$@
-ALL_OPT_LENGTH=${#ALL_OPT[@]}
+ALL_OPT_LENGTH=$#
 
 # start service option
 MAX_STOP_TIME=60
