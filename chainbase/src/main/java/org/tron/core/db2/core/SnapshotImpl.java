@@ -21,6 +21,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Getter
   protected Snapshot root;
 
+
+
   SnapshotImpl(Snapshot snapshot) {
     root = snapshot.getRoot();
     synchronized (this) {
