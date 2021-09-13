@@ -8,6 +8,10 @@ JAR_NAME="FullNode.jar"
 FULL_START_OPT=''
 GITHUB_BRANCH='master'
 
+# shell option
+ALL_OPT=$@
+ALL_OPT_LENGTH=${#ALL_OPT[@]}
+
 # start service option
 MAX_STOP_TIME=60
 # modify this option to allow the minimum memory to be started, unit MB
@@ -47,7 +51,7 @@ checkVersion() {
  if [[ -n $github_release_version ]]; then
   echo "info: github latest version: $github_release_version"
   echo $github_release_version
-  else
+ else
     echo 'info: not getting the latest version'
     exit
  fi
@@ -96,9 +100,9 @@ mkdirFullNode() {
 }
 
 quickStart() {
-  if [[ -n $github_release_version ]]; then
+  full_node_version=$(`echo getLatestReleaseVersion`)
+  if [[ -n $full_node_version ]]; then
     mkdirFullNode
-    full_node_version=$(`echo getLatestReleaseVersion`)
     echo "info: check latest version: $full_node_version"
     echo 'info: download config'
     download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG $FULL_NODE_CONFIG
@@ -238,10 +242,13 @@ setJVMMemory() {
 
 startService() {
   echo $(date) >>start.log
-  logtime=$(date +%Y-%m-%d_%H-%M-%S)
-
   if [[ ! $JAR_NAME =~ '-c' ]]; then
      FULL_START_OPT="$FULL_START_OPT -c $DEFAULT_FULL_NODE_CONFIG"
+  fi
+
+  if [[ ! -f $JAR_NAME ]]; then
+    echo "warn: jar file $JAR_NAME not exist"
+    exit
   fi
 
   nohup java -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
@@ -252,7 +259,7 @@ startService() {
     $JAR_NAME $FULL_START_OPT >>start.log 2>&1 &
   checkPid
   echo "info: start java-tron with pid $pid on $HOSTNAME"
-  echo "info: stop service execution: sh start.sh --stop"
+  echo "info: if you need to stop the service, execute: sh start.sh --stop"
 }
 
 rebuildManifest() {
@@ -384,6 +391,10 @@ while [ -n "$1" ]; do
     shift 1
     ;;
   --run)
+    if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
+      restart
+      exit
+    fi
     RUN=true
     shift 1
     ;;
@@ -391,7 +402,33 @@ while [ -n "$1" ]; do
     stopService
     exit
     ;;
+  FullNode)
+    RUN=true
+    shift 1
+    ;;
+  FullNode.jar)
+    RUN=true
+    shift 1
+    ;;
+  *.jar)
+    RUN=true
+    shift 1
+    ;;
   *)
+    if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
+      if [[ ! "$1" =~ "-" ]] && [[ ! "$1" =~ "--" ]]; then
+        if [[ $1 =~ '.jar' ]]; then
+          JAR_NAME=$1
+        else
+          JAR_NAME="$1.jar"
+        fi
+        restart
+        exit
+      else
+        echo "warn: option $1 does not exist"
+        exit
+      fi
+    fi
     echo "warn: option $1 does not exist"
     exit
     ;;
@@ -428,11 +465,12 @@ if [[ $DOWNLOAD == true ]]; then
   fi
 fi
 
-if [[ $RUN == true ]]; then
+if [[ $ALL_OPT_LENGTH -eq 0 ]]; then
   restart
   exit
 fi
 
-if [[ $# -eq 0 ]]; then
+if [[ $RUN == true ]]; then
   restart
+  exit
 fi
