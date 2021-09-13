@@ -3220,6 +3220,24 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getContractInfo(String httpNode, String contractAddress) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getcontractinfo";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", contractAddress);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
   public static void disConnect() {
     httppost.releaseConnection();
   }
