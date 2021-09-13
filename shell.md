@@ -3,9 +3,9 @@
 
 ## Introduction
 
-Using the `start.sh` script, you can quickly and easily build projects.
+Using the `start.sh` script, you can quickly and easily run and build projects.
 
-If you have already downloaded `java-tron`, you can use `start.sh` to run `java-tron`, or if you have not downloaded java-tron code or jar packages, you can use `start.sh` to download, compile, or get the latest release version in the form of a `jar package`.
+If you have already downloaded `java-tron`, you can use `start.sh` to run `java-tron`, or if you have not downloaded java-tron code or jar packages, you can use `start.sh` to download, compile, run or get the latest release version in the form of a `jar package ` and run.
 
 ***
 
@@ -184,7 +184,7 @@ Demo
 sh start.sh --run -d /tmp/db/database -m 128 -b 64000
 ```
 
-2.Online mode
+2.Online mode  
 
 ```
 sh start.sh --release --run -d /tmp/db/database -m 128 -b 64000
