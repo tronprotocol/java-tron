@@ -104,6 +104,7 @@ sh start.sh --stop
 #### 2.online mode
 * Get the latest release
 * Clone code and build
+
 **Get the latest release**
 
 Format:
