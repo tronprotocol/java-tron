@@ -114,7 +114,8 @@ public class JsonRpcBase {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
+    Assert.assertTrue(PublicMethed.sendcoin(jsonRpcOwnerAddress, 2048000000L,
+        foundationAccountAddress, foundationAccountKey, blockingStubFull));
     if (PublicMethed.queryAccount(jsonRpcOwnerAddress, blockingStubFull).getAssetV2Count() == 0L) {
       Assert.assertTrue(PublicMethed.sendcoin(jsonRpcOwnerAddress, 2048000000L,
           foundationAccountAddress, foundationAccountKey, blockingStubFull));
