@@ -34,12 +34,11 @@ QUICK_START=false
 CLONE_BUILD=false
 
 getLatestReleaseVersion() {
-  default_version='GreatVoyage-v4.3.0'
   full_node_version=`git ls-remote --tags git@github.com:tronprotocol/java-tron.git |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
   if [[ -n $full_node_version ]]; then
    echo $full_node_version
   else
-   echo $default_version
+   echo ''
   fi
 }
 
@@ -48,8 +47,8 @@ checkVersion() {
  if [[ -n $github_release_version ]]; then
   echo "info: github latest version: $github_release_version"
   echo $github_release_version
- else
-   echo ''
+  else
+    echo 'info: not getting the latest version'
  fi
 }
 
@@ -96,16 +95,20 @@ mkdirFullNode() {
 }
 
 quickStart() {
-  mkdirFullNode
-  full_node_version=$(`echo getLatestReleaseVersion`)
-  echo "info: check latest version: $full_node_version"
-  echo 'info: download config'
-  download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG $FULL_NODE_CONFIG
-  mv $FULL_NODE_CONFIG 'config.conf'
+  if [[ -n $github_release_version ]]; then
+    mkdirFullNode
+    full_node_version=$(`echo getLatestReleaseVersion`)
+    echo "info: check latest version: $full_node_version"
+    echo 'info: download config'
+    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG $FULL_NODE_CONFIG
+    mv $FULL_NODE_CONFIG 'config.conf'
 
-  echo "info: download $full_node_version"
-  download $RELEASE_URL/download/$full_node_version/$JAR_NAME $JAR_NAME
-  checkSign
+    echo "info: download $full_node_version"
+    download $RELEASE_URL/download/$full_node_version/$JAR_NAME $JAR_NAME
+    checkSign
+  else
+    echo 'info: not getting the latest version'
+  fi
 }
 
 cloneCode() {
@@ -415,8 +418,12 @@ fi
 
 if [[ $DOWNLOAD == true ]]; then
   latest=$(`echo getLatestReleaseVersion`)
-  download $RELEASE_URL/download/$latest/$JAR_NAME $latest
-  exit
+  if [[ -n $latest ]]; then
+    download $RELEASE_URL/download/$latest/$JAR_NAME $latest
+    exit
+  else
+    echo 'info: not getting the latest version'
+  fi
 fi
 
 if [[ $RUN == true ]]; then

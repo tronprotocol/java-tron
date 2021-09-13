@@ -1,3 +1,4 @@
+
 ## Quick Start Scripting Tool
 
 ## Introduction
@@ -108,7 +109,7 @@ sh start.sh --stop
 Format:
 
 ```
-sh start.sh <--run | --release | -cb>  [-m <manifest size>] | [-b <batch size>]  | [-d <db database-directory> | [-dr | --disable-rewrite-manifes]]
+sh start.sh <[--release | -cb]> <--run> [-m <manifest size>] | [-b <batch size>]  | [-d <db database-directory> | [-dr | --disable-rewrite-manifes]]
 ```
 
 Get the latest version up and running  
@@ -133,12 +134,6 @@ contains the following files：
 Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile download the latest release. 
 
 After using this command, the FullNode directory will be created and the compiled file FullNode.jar and related configuration files will be copied to this directory
-
-Format:
-
-```
-sh start.sh -cb [--run]
-```
 
 demo:
 
@@ -190,11 +185,8 @@ sh start.sh --run -d /tmp/db/database -m 128 -b 64000
 ```
 
 2.Online mode
+
 ```
 sh start.sh --release --run -d /tmp/db/database -m 128 -b 64000
 ```
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
-
-
-
-
