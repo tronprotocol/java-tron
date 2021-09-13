@@ -49,6 +49,7 @@ checkVersion() {
   echo $github_release_version
   else
     echo 'info: not getting the latest version'
+    exit
  fi
 }
 
@@ -108,6 +109,7 @@ quickStart() {
     checkSign
   else
     echo 'info: not getting the latest version'
+    exit
   fi
 }
 
