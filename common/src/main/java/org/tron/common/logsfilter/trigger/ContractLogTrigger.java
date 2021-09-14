@@ -40,5 +40,6 @@ public class ContractLogTrigger extends ContractTrigger {
     setCreatorAddress(eventTrigger.getCreatorAddress());
     setBlockNumber(eventTrigger.getBlockNumber());
     setTimeStamp(eventTrigger.getTimeStamp());
+    setBlockHash(eventTrigger.getBlockHash());
   }
 }

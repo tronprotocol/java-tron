@@ -127,6 +127,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     event.setCreatorAddress(contractTrigger.getCreatorAddress());
     event.setBlockNumber(contractTrigger.getBlockNumber());
     event.setTimeStamp(contractTrigger.getTimeStamp());
+    event.setBlockHash(contractTrigger.getBlockHash());
 
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
