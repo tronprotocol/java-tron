@@ -23,7 +23,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.Protocol.Proposal;
 
-@Ignore
+
 public class ProposalServiceTest {
 
   private TronApplicationContext context;

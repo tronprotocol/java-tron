@@ -29,7 +29,7 @@ import org.tron.core.store.ProposalStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
 
-@Ignore
+
 @Slf4j
 public class EnergyPriceHistoryLoaderTest {
 
