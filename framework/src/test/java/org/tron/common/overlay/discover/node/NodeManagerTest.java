@@ -24,7 +24,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
-@Ignore
+
 public class NodeManagerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");

@@ -14,7 +14,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.core.services.jsonrpc.CallArguments;
 
-@Ignore
+
 public class JsonRpcTest {
 
   public void generateCallParameterWIthMethodAndParam() {
