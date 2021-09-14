@@ -1,7 +1,9 @@
 package org.tron.common.logsfilter.capsule;
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.CreateSmartContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TriggerSmartContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -24,6 +26,8 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
@@ -32,7 +36,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   @Setter
   private TransactionLogTrigger transactionLogTrigger;
 
-  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule) {
+  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
+      int index, long cumulativeEnergyUsed) {
     transactionLogTrigger = new TransactionLogTrigger();
     if (Objects.nonNull(blockCapsule)) {
       transactionLogTrigger.setBlockHash(blockCapsule.getBlockId().toString());
@@ -42,6 +47,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     transactionLogTrigger.setBlockNumber(trxCapsule.getBlockNum());
     transactionLogTrigger.setData(Hex.toHexString(trxCapsule
         .getInstance().getRawData().getData().toByteArray()));
+
+    transactionLogTrigger.setTransactionIndex(index);
 
     TransactionTrace trxTrace = trxCapsule.getTrxTrace();
 
@@ -109,6 +116,27 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               }
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }
+          } else if (contract.getType() == TriggerSmartContract) {
+            TriggerSmartContract triggerSmartContract = contractParameter
+                .unpack(TriggerSmartContract.class);
+
+            if (Objects.nonNull(triggerSmartContract.getOwnerAddress())) {
+              transactionLogTrigger.setFromAddress(
+                  StringUtil.encode58Check(triggerSmartContract.getOwnerAddress().toByteArray()));
+            }
+
+            if (Objects.nonNull(triggerSmartContract.getContractAddress())) {
+              transactionLogTrigger.setToAddress(StringUtil
+                  .encode58Check(triggerSmartContract.getContractAddress().toByteArray()));
+            }
+          } else if (contract.getType() == CreateSmartContract) {
+            CreateSmartContract createSmartContract = contractParameter
+                .unpack(CreateSmartContract.class);
+
+            if (Objects.nonNull(createSmartContract.getOwnerAddress())) {
+              transactionLogTrigger.setFromAddress(
+                  StringUtil.encode58Check(createSmartContract.getOwnerAddress().toByteArray()));
+            }
           }
         } catch (Exception e) {
           logger.error("failed to load transferAssetContract, error'{}'", e);
@@ -116,15 +144,19 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       }
     }
 
+    long energyUsageTotal = 0;
     // receipt
     if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getReceipt())) {
+      energyUsageTotal = trxTrace.getReceipt().getEnergyUsageTotal();
+
       transactionLogTrigger.setEnergyFee(trxTrace.getReceipt().getEnergyFee());
       transactionLogTrigger.setOriginEnergyUsage(trxTrace.getReceipt().getOriginEnergyUsage());
-      transactionLogTrigger.setEnergyUsageTotal(trxTrace.getReceipt().getEnergyUsageTotal());
+      transactionLogTrigger.setEnergyUsageTotal(energyUsageTotal);
       transactionLogTrigger.setNetUsage(trxTrace.getReceipt().getNetUsage());
       transactionLogTrigger.setNetFee(trxTrace.getReceipt().getNetFee());
       transactionLogTrigger.setEnergyUsage(trxTrace.getReceipt().getEnergyUsage());
     }
+    transactionLogTrigger.setCumulativeEnergyUsed(cumulativeEnergyUsed + energyUsageTotal);
 
     // program result
     if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getRuntime()) && Objects

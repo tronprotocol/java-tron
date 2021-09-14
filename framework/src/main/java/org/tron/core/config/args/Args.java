@@ -964,6 +964,11 @@ public class Args extends CommonParameter {
     String topic = triggerObject.get("topic").unwrapped().toString();
     triggerConfig.setTopic(topic);
 
+    if (triggerObject.containsKey("redundancy")) {
+      String redundancy = triggerObject.get("redundancy").unwrapped().toString();
+      triggerConfig.setRedundancy("true".equalsIgnoreCase(redundancy));
+    }
+
     return triggerConfig;
   }
 

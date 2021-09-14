@@ -17,9 +17,14 @@ public class TriggerConfig {
   @Setter
   private String topic;
 
+  @Getter
+  @Setter
+  private boolean redundancy;
+
   public TriggerConfig() {
     triggerName = "";
     enabled = false;
     topic = "";
+    redundancy = false;
   }
 }

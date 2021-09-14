@@ -36,6 +36,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     contractTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
+  public void setBlockHash(String blockHash) {
+    contractTrigger.setBlockHash(blockHash);
+  }
+
   @Override
   public void processTrigger() {
     ContractTrigger event;
@@ -136,6 +140,15 @@ public class ContractTriggerCapsule extends TriggerCapsule {
                   .offer((ContractEventTrigger) event);
         }
 
+        // enable process contractEvent as contractLog
+        if (EventPluginLoader.getInstance().isContractLogTriggerEnable()
+            && EventPluginLoader.getInstance().isContractLogTriggerRedundancy()) {
+          ContractLogTrigger logTrigger = new ContractLogTrigger((ContractEventTrigger) event);
+          logTrigger.setTopicList(logInfo.getHexTopics());
+          logTrigger.setData(logInfo.getHexData());
+
+          EventPluginLoader.getInstance().postContractLogTrigger(logTrigger);
+        }
       } else {
         if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
           EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);

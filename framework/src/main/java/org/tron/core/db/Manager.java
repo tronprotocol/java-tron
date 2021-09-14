@@ -1201,7 +1201,12 @@ public class Manager {
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
 
     // if event subscribe is enabled, post contract triggers to queue
-    postContractTrigger(trace, false);
+    String blockHash = "";
+    if (Objects.nonNull(blockCap)) {
+      blockHash = blockCap.getBlockId().toString();
+    }
+    postContractTrigger(trace, false, blockHash);
+
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
@@ -1733,21 +1738,28 @@ public class Manager {
       }
     }
 
-    for (TransactionCapsule e : newBlock.getTransactions()) {
-      postTransactionTrigger(e, newBlock);
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      long cumulativeEnergyUsed = 0;
+      List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
+      for (int i = 0; i < transactionCapsuleList.size(); i++) {
+        cumulativeEnergyUsed += postTransactionTrigger(transactionCapsuleList.get(i), newBlock, i,
+            cumulativeEnergyUsed);
+      }
     }
   }
 
-  private void postTransactionTrigger(final TransactionCapsule trxCap,
-      final BlockCapsule blockCap) {
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
-      trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum());
-      if (!triggerCapsuleQueue.offer(trx)) {
-        logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
-      }
+  // return energyUsageTotal of the current transaction
+  private long postTransactionTrigger(final TransactionCapsule trxCap,
+      final BlockCapsule blockCap, int index, long cumulativeEnergyUsed) {
+    TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap,
+        index, cumulativeEnergyUsed);
+    trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+        .getLatestSolidifiedBlockNum());
+    if (!triggerCapsuleQueue.offer(trx)) {
+      logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
     }
+
+    return trx.getTransactionLogTrigger().getEnergyUsageTotal();
   }
 
   private void reOrgContractTrigger() {
@@ -1759,7 +1771,7 @@ public class Manager {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
         for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
-          postContractTrigger(trx.getTrxTrace(), true);
+          postContractTrigger(trx.getTrxTrace(), true, oldHeadBlock.getBlockId().toString());
         }
       } catch (BadItemException | ItemNotFoundException e) {
         logger.error("block header hash does not exist or is bad: {}",
@@ -1768,7 +1780,7 @@ public class Manager {
     }
   }
 
-  private void postContractTrigger(final TransactionTrace trace, boolean remove) {
+  private void postContractTrigger(final TransactionTrace trace, boolean remove, String blockHash) {
     boolean isContractTriggerEnable = EventPluginLoader.getInstance()
         .isContractEventTriggerEnable() || EventPluginLoader
         .getInstance().isContractLogTriggerEnable();
@@ -1783,6 +1795,8 @@ public class Manager {
         contractTriggerCapsule.getContractTrigger().setRemoved(remove);
         contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
             .getLatestSolidifiedBlockNum());
+        contractTriggerCapsule.setBlockHash(blockHash);
+
         if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
           logger
               .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());

@@ -50,6 +50,8 @@ public class EventPluginLoader {
 
   private boolean contractLogTriggerEnable = false;
 
+  private boolean contractLogTriggerRedundancy = false;
+
   private boolean solidityEventTriggerEnable = false;
 
   private boolean solidityLogTriggerEnable = false;
@@ -277,8 +279,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         contractLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          contractLogTriggerRedundancy = true;
+        }
       } else {
         contractLogTriggerEnable = false;
+        contractLogTriggerRedundancy = false;
       }
 
       if (!useNativeQueue) {
@@ -354,6 +360,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isContractLogTriggerEnable() {
     return contractLogTriggerEnable;
+  }
+
+  public synchronized boolean isContractLogTriggerRedundancy() {
+    return contractLogTriggerRedundancy;
   }
 
   private void setPluginTopic(int eventType, String topic) {
