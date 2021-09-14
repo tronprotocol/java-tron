@@ -10,15 +10,11 @@ If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, 
 
 # Usage
 
-## Use steps
-- 1. Make sure `start.sh`, `FullNode.jar`, and the configuration file are in the same directory
-- 2. Execute `start.sh` 
+
 
 ## Examples
 
-* Start the service
-
-  Start java-tron. (`start.sh`, `config.conf` and `FullNode.jar` in the same directory.)
+* Start the `FullNode.jar` (`start.sh`, `config.conf` and `FullNode.jar` in the same directory.)
 
   ```
   sh start.sh --run
@@ -29,26 +25,26 @@ If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, 
   ```
   sh start.sh --run -j /data/FullNode.jar -c /data/config.conf -d /data/output-directory
   ```
-
-* Stop the service
+  
+* Stop the `FullNode.jar`
 
   ```
   sh start.sh --stop
   ```
 
-* Get the latest release
-
-  Get the latest released version of `FullNode.jar` and `config.conf`, then start the `FullNode.jar`.
+* Get the latest version of `FullNode.jar` and start it
 
   ```
   sh start.sh --release --run
   ```
-
-* Clone source code, compile the `Fullnode.jar` and start the service
+  
+* Clone the source code, compile `java-tron`, and generate `FullNode.jar` and start it
 
   ```
   sh start.sh -cb --run
   ```
+
+
 
 ## Options
 
