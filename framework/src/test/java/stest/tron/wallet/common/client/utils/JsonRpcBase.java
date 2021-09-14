@@ -12,6 +12,7 @@ import io.netty.util.internal.StringUtil;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -160,10 +161,13 @@ public class JsonRpcBase {
     param.addProperty("from", ByteArray.toHexString(jsonRpcOwnerAddress));
     param.addProperty("name", "transferTokenContract");
     param.addProperty("gas", "0x245498");
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken001_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken001_transferTokenContract");
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken001.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     param.addProperty("abi", abi);
     param.addProperty("data", code);
     param.addProperty("consumeUserResourcePercent", 100);
