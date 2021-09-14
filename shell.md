@@ -14,15 +14,15 @@ If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, 
 
 * Start the service
 
-	```
+  ```
 	sh start.sh --run
-	```
+  ```
 
 * Stop the service
 
-	```
+  ```
 	sh start.sh --stop
-	```
+  ```
 
 * Get the latest release
 
