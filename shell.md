@@ -4,18 +4,30 @@
 
 Using the `start.sh` script, you can quickly and easily run and build java-tron.
 
-If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, or if you have not downloaded java-tron code or jar packages, you can use `start.sh` to download the source code, compile, run or get the latest release version in the form of a `jar package ` and run.
+If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, or if you have not downloaded java-tron source code or jar packages, you can use `start.sh` to download the source code, compile, run or get the latest release version in the form of a `jar package ` and run.
 
 ***
 
 # Usage
 
-## examples
+## Use steps
+- 1. Make sure `start.sh`, `FullNode.jar`, and the configuration file are in the same directory
+- 2. Execute `start.sh` 
+
+## Examples
 
 * Start the service
 
+  Start java-tron. (`start.sh`, `config.conf` and `FullNode.jar` in the same directory.)
+
   ```
   sh start.sh --run
+  ```
+  
+  Start the servive with options.
+  
+  ```
+  sh start.sh --run -j /data/FullNode.jar -c /data/config.conf -d /data/output-directory
   ```
 
 * Stop the service
@@ -26,11 +38,13 @@ If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, 
 
 * Get the latest release
 
+  Get the latest released version of `FullNode.jar` and `config.conf`, then start the `FullNode.jar`.
+
   ```
   sh start.sh --release --run
   ```
 
-* Clone source code and run
+* Clone source code, compile the `Fullnode.jar` and start the service
 
   ```
   sh start.sh -cb --run
@@ -138,14 +152,14 @@ Format:
 sh start.sh <[--release | -cb]> <--run> [-m <manifest size>] | [-b <batch size>] | [-d <db database-directory> | [-dr | --disable-rewrite-manifes]]
 ```
 
-Get the latest version.
+Get the latest released version.
 
 
 ```
 sh start.sh --release --run
 ```
 
-You will following file structure after executed the above command and the `FullNode.jar` will be started up. 
+Following file structure will be generated after executed the above command and the `FullNode.jar` will be started. 
 
 ```
 ├── ...
@@ -155,11 +169,11 @@ You will following file structure after executed the above command and the `Full
     ├── start.sh
 ```
 
-**clone the source code and build**
+**Clone the source code and build**
 
 Get the latest code from master branch of https://github.com/tronprotocol/java-tron and compile. 
 
-After using this command, the "FullNode" directory will be created and the compiled file `FullNode.jar` and related configuration files will be copied to this directory
+After using this command, the "FullNode" directory will be created, the compiled file `FullNode.jar` and the configuration file will be copied to this directory
 
 demo:
 
@@ -200,7 +214,7 @@ Following file structure will be created：
     ├── start.sh
 ```
 
-### 3.rebuild manifest tool
+### 3. rebuild manifest tool
 
 This tool provides the ability to reformat the manifest based on current database, Enabled by default.
 
