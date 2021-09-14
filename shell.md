@@ -33,7 +33,7 @@ If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, 
 * Clone source code and run
 
   ```
-  sh start -cb --run
+  sh start.sh -cb --run
   ```
 
 ## Options
