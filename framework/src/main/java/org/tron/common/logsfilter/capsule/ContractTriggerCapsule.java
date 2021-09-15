@@ -142,13 +142,23 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
 
         // enable process contractEvent as contractLog
-        if (EventPluginLoader.getInstance().isContractLogTriggerEnable()
-            && EventPluginLoader.getInstance().isContractLogTriggerRedundancy()) {
+        if ((EventPluginLoader.getInstance().isContractLogTriggerEnable()
+            && EventPluginLoader.getInstance().isContractLogTriggerRedundancy())
+            || (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()
+            && EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy())) {
           ContractLogTrigger logTrigger = new ContractLogTrigger((ContractEventTrigger) event);
           logTrigger.setTopicList(logInfo.getHexTopics());
           logTrigger.setData(logInfo.getHexData());
 
-          EventPluginLoader.getInstance().postContractLogTrigger(logTrigger);
+          if (EventPluginLoader.getInstance().isContractLogTriggerRedundancy()) {
+            EventPluginLoader.getInstance().postContractLogTrigger(logTrigger);
+          }
+
+          if (EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy()) {
+            Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+                .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                .offer(logTrigger);
+          }
         }
       } else {
         if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {

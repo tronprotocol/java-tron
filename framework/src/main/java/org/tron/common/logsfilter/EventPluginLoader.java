@@ -56,6 +56,8 @@ public class EventPluginLoader {
 
   private boolean solidityLogTriggerEnable = false;
 
+  private boolean solidityLogTriggerRedundancy = false;
+
   private boolean solidityTriggerEnable = false;
 
   private FilterQuery filterQuery;
@@ -315,8 +317,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         solidityLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          solidityLogTriggerRedundancy = true;
+        }
       } else {
         solidityLogTriggerEnable = false;
+        solidityLogTriggerRedundancy = false;
       }
       if (!useNativeQueue) {
         setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
@@ -348,6 +354,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isSolidityLogTriggerEnable() {
     return solidityLogTriggerEnable;
+  }
+
+  public synchronized boolean isSolidityLogTriggerRedundancy() {
+    return solidityLogTriggerRedundancy;
   }
 
   public synchronized boolean isTransactionLogTriggerEnable() {
