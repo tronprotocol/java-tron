@@ -17,6 +17,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -1414,6 +1415,22 @@ public class HttpMethed {
     return response;
   }
 
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getStatsInfo(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/monitor/getstatsinfo";
+      response = createConnectForGet(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
   /**
    * constructor.
    */
@@ -2723,6 +2740,30 @@ public class HttpMethed {
         entity.setContentType("application/json");
         httppost.setEntity(entity);
       }
+
+      logger.info(httppost.toString());
+      response = httpClient.execute(httppost);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createConnectForGet(String url) {
+    try {
+      httpClient.getParams()
+              .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
+      httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
+      HttpGet httppost;
+      httppost = new HttpGet(url);
+      httppost.setHeader("Content-type", "application/json; charset=utf-8");
+      httppost.setHeader("Connection", "Close");
 
       logger.info(httppost.toString());
       response = httpClient.execute(httppost);
