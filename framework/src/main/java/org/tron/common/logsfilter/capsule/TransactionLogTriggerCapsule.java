@@ -199,7 +199,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         TransactionInfo.Log log = transactionInfo.getLogList().get(index);
         LogPojo logPojo = new LogPojo();
 
-        logPojo.setAddress(StringUtil.encode58Check((log.getAddress().toByteArray())));
+        logPojo.setAddress((log.getAddress() != null) ?
+            Hex.toHexString(log.getAddress().toByteArray()) : "");
         logPojo.setBlockHash(blockHash);
         logPojo.setBlockNumber(trxCapsule.getBlockNum());
         logPojo.setData(Hex.toHexString(log.getData().toByteArray()));
