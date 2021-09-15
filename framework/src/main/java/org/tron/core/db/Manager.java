@@ -1708,15 +1708,6 @@ public class Manager {
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
-      SolidityTriggerCapsule solidityTriggerCapsule
-          = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
-      boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
-      if (!result) {
-        logger.info("too many trigger, lost solidified trigger, "
-            + "block number: {}", latestSolidifiedBlockNumber);
-      }
-    }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
@@ -1725,6 +1716,15 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
       for (Long i : Args.getSolidityContractEventTriggerMap().keySet()) {
         postSolidityEventContractTrigger(i, latestSolidifiedBlockNumber);
+      }
+    }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
+      SolidityTriggerCapsule solidityTriggerCapsule
+          = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
+      boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
+      if (!result) {
+        logger.info("too many trigger, lost solidified trigger, "
+            + "block number: {}", latestSolidifiedBlockNumber);
       }
     }
   }
