@@ -60,7 +60,6 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     transactionLogTrigger.setData(Hex.toHexString(trxCapsule
         .getInstance().getRawData().getData().toByteArray()));
 
-
     TransactionTrace trxTrace = trxCapsule.getTrxTrace();
 
     //result
