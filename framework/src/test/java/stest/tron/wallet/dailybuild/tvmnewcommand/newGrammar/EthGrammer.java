@@ -27,7 +27,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 
 @Slf4j
-public class NewFeatureForJavatron440 {
+public class EthGrammer {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -70,7 +70,7 @@ public class NewFeatureForJavatron440 {
             testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/NewFeatureJavatron440.sol";
+    String filePath = "src/test/resources/soliditycode/EthGrammer.sol";
     String contractName = "C";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -217,10 +217,9 @@ public class NewFeatureForJavatron440 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> info =
         PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println("0000000" + info.toString());
     Protocol.Account testAccount =
         PublicMethed.queryAccountByAddress(transferToAddress, blockingStubFull);
-    System.out.println("testAccount: " + testAccount.toString());
+    logger.info("testAccount: " + testAccount.toString());
     Assert.assertEquals(1, info.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.REVERT,
         info.get().getReceipt().getResult());
@@ -261,11 +260,9 @@ public class NewFeatureForJavatron440 {
         false, 0, temMaxLimitFee, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println("0000000" + info.get().toString());
 
     Protocol.Account testAccount =
         PublicMethed.queryAccountByAddress(transferToAddress, blockingStubFull);
-    System.out.println("testAccount: " + testAccount.toString());
     Assert.assertEquals("", testAccount.toString());
     Assert.assertEquals(1, info.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.REVERT,
@@ -308,11 +305,9 @@ public class NewFeatureForJavatron440 {
         false, 0, temMaxLimitFee, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println("0000000" + info.toString());
 
     Protocol.Account testAccount =
         PublicMethed.queryAccountByAddress(transferToAddress, blockingStubFull);
-    System.out.println("testAccount: " + testAccount.toString());
     Assert.assertEquals("", testAccount.toString());
     Assert.assertEquals(1, info.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.REVERT,
@@ -354,11 +349,9 @@ public class NewFeatureForJavatron440 {
         false, 0, temMaxLimitFee, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println("0000000" + info.toString());
 
     Protocol.Account testAccount =
         PublicMethed.queryAccountByAddress(transferToAddress, blockingStubFull);
-    System.out.println("testAccount: " + testAccount.toString());
     Assert.assertEquals("", testAccount.toString());
     Assert.assertEquals(1, info.get().getResultValue());
     Assert.assertEquals(Protocol.Transaction.Result.contractResult.REVERT,
@@ -368,19 +361,144 @@ public class NewFeatureForJavatron440 {
   }
 
   //
-  @Test(enabled = false, description = "test get Ripemd160")
+  @Test(enabled = true, description = "test get Ripemd160 input is 123")
   public void test08getRipemd160() {
-    String args = "0000000000000000000000000000000000000000000000000000000000000064";
+    String args = "\"123\"";
     GrpcAPI.TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractC,
-            "getRipemd160(bytes)", args, true,
+            "getRipemd160(string)", args, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     String result = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
-    System.out.println("result: " + result);
     Assert.assertEquals(true, transactionExtention.getResult().getResult());
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("e3431a8e0adbf96fd140103dc6f63a3f8fa343ab000000000000000000000000", result);
   }
+
+  @Test(enabled = true, description = "test get Ripemd160 input is empty")
+  public void test09getRipemd160() {
+    String args = "\"\"";
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractC,
+            "getRipemd160(string)", args, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    String result = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
+    Assert.assertEquals(true, transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("9c1185a5c5e9fc54612808977ee8f548b2258d31000000000000000000000000", result);
+  }
+
+  @Test(enabled = true, description = "test get Ripemd160 input length is greater than 256")
+  public void test10getRipemd160() {
+    String args = "\"111111111111ddddddddddddd0x0000000000000000000000008b56a0602cc81fb0"
+        + "b99bce992b3198c0bab181ac111111111111ddddddddddddd0x0000000000000000000000008b56"
+        + "a0602cc81fb0b99bce992b3198c0bab181ac%^$#0000008b56a0602cc81fb0b99bce99"
+        + "2b3198c0bab181ac%^$#0000008b56a0602cc81fb0b99bce992b3198c0bab181ac%^$#\"";
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractC,
+            "getRipemd160(string)", args, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    String result = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
+    Assert.assertEquals(true, transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("173c283ebcbad0e1c623a5c0f6813cb663338369000000000000000000000000", result);
+  }
+
+  @Test(enabled = true, description = "test get Ripemd160 input is string "
+      + "and do not convert to bytes")
+  public void test11getRipemd160Str() {
+    String args = "\"data\"";
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractC,
+            "getRipemd160Str(string)", args, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    String result = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
+    Assert.assertEquals(true, transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("cd43325b85172ca28e96785d0cb4832fd62cdf43000000000000000000000000", result);
+  }
+
+  @Test(enabled = true, description = "test get Ripemd160 input is string and "
+      + "do not convert to bytes")
+  public void test12getRipemd160Str() {
+    String args = "\"000000000000000000000000000000000000000000000"
+        + "0000000000000000000000000000000000000000000000000000000\"";
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractC,
+            "getRipemd160Str(string)", args, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    String result = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
+    Assert.assertEquals(true, transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("efe2df697b79b5eb73a577251ce3911078811fa4000000000000000000000000", result);
+  }
+
+  @Test(enabled = true, description = "test blake2f")
+  public void test13getBlak2f() {
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractC,
+            "callF()", "#", false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    String result = ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray());
+    Assert.assertEquals(true, transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("ba80a53f981c4d0d6a2797b69f12f6e94c212f14685ac"
+        + "4b74b12bb6fdbffa2d17d87c5392aab792dc252d5de4533cc9518d38aa8dbf1925ab92386edd4009923",
+        result);
+
+  }
+
+  @Test(enabled = true, description = "when call create2, stack depth will be checked"
+      + "if stack depth is greater than 64, then create command will revert"
+      + "but run environment can not compute so much, so the actual result is time out")
+  public void test14FixCreate2StackDepth() {
+    String methedStr = "fixCreate2StackDepth(uint256)";
+    String argsStr = "123";
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractD,
+            methedStr, argsStr, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    logger.info("transactionExtention: " + transactionExtention.toString());
+    String message = ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray());
+    Assert.assertTrue(message.contains("CPU timeout"));
+    /*int interCount = transactionExtention.getInternalTransactionsCount();
+    int createCount = 0;
+    for(int i=0;i<interCount;i++){
+      if("63726561746532".equals(transactionExtention.getInternalTransactions(i).getNote())){
+        createCount ++;
+      }
+    }
+    Assert.assertTrue(createCount >= 15 && createCount <= 64);*/
+  }
+
+  @Test(enabled = true, description = "when call create, stack depth will be checked."
+      + "if stack depth is greater than 64, then create command will revert"
+      + "but run environment can not compute so much, so the actual result is time out")
+  public void test15FixCreateStackDepth() {
+
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractD,
+            "fixCreateStackDepth()", "#", false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    String message = ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray());
+    logger.info("transactionExtention: " + transactionExtention.toString());
+    Assert.assertTrue(message.contains("CPU timeout"));
+    /*int interCount = transactionExtention.getInternalTransactionsCount();
+    int createCount = 0;
+    for(int i=0;i<interCount;i++){
+      if("637265617465".equals(transactionExtention.getInternalTransactions(i).getNote())){
+        createCount ++;
+      }
+    }
+    Assert.assertTrue(createCount >= 15 && createCount <= 64);*/
+
+  }
+
 
   /**
    * constructor.
