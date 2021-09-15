@@ -48,6 +48,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
@@ -1739,20 +1740,64 @@ public class Manager {
     }
 
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      long cumulativeEnergyUsed = 0;
       List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
-      for (int i = 0; i < transactionCapsuleList.size(); i++) {
-        cumulativeEnergyUsed += postTransactionTrigger(transactionCapsuleList.get(i), newBlock, i,
-            cumulativeEnergyUsed);
+
+      // get transactionInfoList
+      if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
+        TransactionInfoList transactionInfoList = null;
+        TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
+
+        try {
+          TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
+              .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
+
+          if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+            result.getInstance().getTransactioninfoList().forEach(
+                transactionInfoListBuilder::addTransactionInfo
+            );
+
+            transactionInfoList = transactionInfoListBuilder.build();
+          }
+        } catch (BadItemException e) {
+          logger.error("postBlockTrigger getTransactionInfoList blockNum={}, error is {}",
+              newBlock.getNum(), e.getMessage());
+        }
+
+        if (transactionInfoList != null
+            && transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
+          long cumulativeEnergyUsed = 0;
+          long cumulativeLogCount = 0;
+          for (int i = 0; i < transactionCapsuleList.size(); i++) {
+            TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
+            TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
+
+            cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
+                cumulativeEnergyUsed, cumulativeLogCount, transactionInfo);
+
+            cumulativeLogCount += transactionInfo.getLogCount();
+          }
+        } else {
+          logger.error("postBlockTrigger blockNum={} the sizes of transactionInfoList "
+              + "and transactionCapsuleList are not equal", newBlock.getNum());
+          for (TransactionCapsule e : newBlock.getTransactions()) {
+            postTransactionTrigger(e, newBlock);
+          }
+        }
+      } else {
+        for (TransactionCapsule e : newBlock.getTransactions()) {
+          postTransactionTrigger(e, newBlock);
+        }
       }
     }
   }
 
   // return energyUsageTotal of the current transaction
+  // cumulativeEnergyUsed is the total of energy used before the current transaction
   private long postTransactionTrigger(final TransactionCapsule trxCap,
-      final BlockCapsule blockCap, int index, long cumulativeEnergyUsed) {
+      final BlockCapsule blockCap, int index, long preCumulativeEnergyUsed,
+      long cumulativeLogCount, final TransactionInfo transactionInfo) {
     TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap,
-        index, cumulativeEnergyUsed);
+        index, preCumulativeEnergyUsed, cumulativeLogCount, transactionInfo);
     trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
         .getLatestSolidifiedBlockNum());
     if (!triggerCapsuleQueue.offer(trx)) {
@@ -1760,6 +1805,17 @@ public class Manager {
     }
 
     return trx.getTransactionLogTrigger().getEnergyUsageTotal();
+  }
+
+
+  private void postTransactionTrigger(final TransactionCapsule trxCap,
+      final BlockCapsule blockCap) {
+    TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
+    trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+        .getLatestSolidifiedBlockNum());
+    if (!triggerCapsuleQueue.offer(trx)) {
+      logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
+    }
   }
 
   private void reOrgContractTrigger() {

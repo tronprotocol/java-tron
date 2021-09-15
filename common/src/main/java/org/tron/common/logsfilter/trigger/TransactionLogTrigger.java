@@ -81,6 +81,12 @@ public class TransactionLogTrigger extends Trigger {
   @Getter
   @Setter
   private String data;
+  @Getter
+  @Setter
+  private long preCumulativeLogCount;
+  @Getter
+  @Setter
+  private List<LogPojo> logList;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);

@@ -969,6 +969,11 @@ public class Args extends CommonParameter {
       triggerConfig.setRedundancy("true".equalsIgnoreCase(redundancy));
     }
 
+    if (triggerObject.containsKey("ethCompatible")) {
+      String ethCompatible = triggerObject.get("ethCompatible").unwrapped().toString();
+      triggerConfig.setEthCompatible("true".equalsIgnoreCase(ethCompatible));
+    }
+
     return triggerConfig;
   }
 

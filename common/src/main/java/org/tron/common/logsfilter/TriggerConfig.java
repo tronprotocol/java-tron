@@ -21,10 +21,15 @@ public class TriggerConfig {
   @Setter
   private boolean redundancy;
 
+  @Getter
+  @Setter
+  private boolean ethCompatible;
+
   public TriggerConfig() {
     triggerName = "";
     enabled = false;
     topic = "";
     redundancy = false;
+    ethCompatible = false;
   }
 }

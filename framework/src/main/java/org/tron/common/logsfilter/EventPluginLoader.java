@@ -46,6 +46,8 @@ public class EventPluginLoader {
 
   private boolean transactionLogTriggerEnable = false;
 
+  private boolean transactionLogTriggerEthCompatible = false;
+
   private boolean contractEventTriggerEnable = false;
 
   private boolean contractLogTriggerEnable = false;
@@ -257,8 +259,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         transactionLogTriggerEnable = true;
+        if (triggerConfig.isEthCompatible()) {
+          transactionLogTriggerEthCompatible = true;
+        }
       } else {
         transactionLogTriggerEnable = false;
+        transactionLogTriggerEthCompatible = false;
       }
 
       if (!useNativeQueue) {
@@ -362,6 +368,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isTransactionLogTriggerEnable() {
     return transactionLogTriggerEnable;
+  }
+
+  public synchronized boolean isTransactionLogTriggerEthCompatible() {
+    return transactionLogTriggerEthCompatible;
   }
 
   public synchronized boolean isContractEventTriggerEnable() {

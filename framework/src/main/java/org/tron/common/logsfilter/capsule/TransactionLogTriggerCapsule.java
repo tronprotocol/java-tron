@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
+import org.tron.common.logsfilter.trigger.LogPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
@@ -24,6 +25,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
@@ -36,19 +38,28 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   @Setter
   private TransactionLogTrigger transactionLogTrigger;
 
+  public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule) {
+    this(trxCapsule, blockCapsule, 0, 0, 0, null);
+  }
+
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
-      int index, long cumulativeEnergyUsed) {
+      int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
+      TransactionInfo transactionInfo) {
     transactionLogTrigger = new TransactionLogTrigger();
+
+    String blockHash = "";
     if (Objects.nonNull(blockCapsule)) {
-      transactionLogTrigger.setBlockHash(blockCapsule.getBlockId().toString());
+      blockHash = blockCapsule.getBlockId().toString();
+      transactionLogTrigger.setBlockHash(blockHash);
     }
-    transactionLogTrigger.setTransactionId(trxCapsule.getTransactionId().toString());
+
+    String transactionHash = trxCapsule.getTransactionId().toString();
+    transactionLogTrigger.setTransactionId(transactionHash);
     transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
     transactionLogTrigger.setBlockNumber(trxCapsule.getBlockNum());
     transactionLogTrigger.setData(Hex.toHexString(trxCapsule
         .getInstance().getRawData().getData().toByteArray()));
 
-    transactionLogTrigger.setTransactionIndex(index);
 
     TransactionTrace trxTrace = trxCapsule.getTrxTrace();
 
@@ -139,7 +150,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
             }
           }
         } catch (Exception e) {
-          logger.error("failed to load transferAssetContract, error'{}'", e);
+          logger.error("failed to load transferAssetContract, error '{}'", e.getMessage());
         }
       }
     }
@@ -156,7 +167,6 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setNetFee(trxTrace.getReceipt().getNetFee());
       transactionLogTrigger.setEnergyUsage(trxTrace.getReceipt().getEnergyUsage());
     }
-    transactionLogTrigger.setCumulativeEnergyUsed(cumulativeEnergyUsed + energyUsageTotal);
 
     // program result
     if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getRuntime()) && Objects
@@ -177,6 +187,38 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       // internal transaction
       transactionLogTrigger.setInternalTransactionList(
           getInternalTransactionList(programResult.getInternalTransactions()));
+    }
+
+    // process transactionInfo list, only enabled when ethCompatible is true
+    if (Objects.nonNull(transactionInfo)) {
+      transactionLogTrigger.setTransactionIndex(txIndex);
+      transactionLogTrigger.setCumulativeEnergyUsed(preCumulativeEnergyUsed + energyUsageTotal);
+      transactionLogTrigger.setPreCumulativeLogCount(preCumulativeLogCount);
+
+      List<LogPojo> logPojoList = new ArrayList<>();
+      for (int index = 0; index < transactionInfo.getLogCount(); index++) {
+        TransactionInfo.Log log = transactionInfo.getLogList().get(index);
+        LogPojo logPojo = new LogPojo();
+
+        logPojo.setAddress(StringUtil.encode58Check((log.getAddress().toByteArray())));
+        logPojo.setBlockHash(blockHash);
+        logPojo.setBlockNumber(trxCapsule.getBlockNum());
+        logPojo.setData(Hex.toHexString(log.getData().toByteArray()));
+        logPojo.setLogIndex(preCumulativeLogCount + index);
+
+        List<String> topics = new ArrayList<>();
+        for (int i = 0; i < log.getTopicsCount(); i++) {
+          topics.add(Hex.toHexString(log.getTopics(i).toByteArray()));
+        }
+        logPojo.setTopicList(topics);
+
+        logPojo.setTransactionHash(transactionHash);
+        logPojo.setTransactionIndex(txIndex);
+
+        logPojoList.add(logPojo);
+      }
+
+      transactionLogTrigger.setLogList(logPojoList);
     }
   }
 
