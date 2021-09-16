@@ -174,7 +174,7 @@ contract D {
         }
     }
 
-    function deployef(bytes memory code) public{
+    function deployef(bytes memory code) public payable{
         address addr;
         assembly {
             addr := create(0, add(code, 0x20), mload(code))

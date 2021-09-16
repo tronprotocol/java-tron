@@ -32,6 +32,9 @@ public class EthGrammer {
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  private final String witnessKey001 = Configuration.getByPath("testng.conf")
+      .getString("witness.key1");
+  private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
   byte[] contractC = null;
   byte[] contractD = null;
   byte[] create2Address;
@@ -497,6 +500,25 @@ public class EthGrammer {
     }
     Assert.assertTrue(createCount >= 15 && createCount <= 64);*/
 
+  }
+
+  @Test(enabled = false, description = "test max Energy Limit For trigger Constant contract")
+  public void test16MaxEnergyLimitForConstant() {
+    String methedStr = "transfer(address)";
+    String argsStr = "\"" + Base58.encode58Check(testNetAccountAddress) + "\"";
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractD,
+            methedStr, argsStr, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    System.out.println("transactionExtention: " + transactionExtention.toString());
+  }
+
+  @Test(enabled = true, description = "commit NO.47 value can be 1e17 if commit No.63 opened")
+  public void test17Commit47Value() {
+    HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
+    proposalMap.put(47L, 100000000000000000L);
+    org.testng.Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
+        proposalMap, blockingStubFull));
   }
 
 
