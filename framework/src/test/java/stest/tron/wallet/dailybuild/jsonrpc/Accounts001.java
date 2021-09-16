@@ -46,6 +46,7 @@ public class Accounts001 extends JsonRpcBase {
   long size = 0;
   long gas = 0;
   long blockTimeStamp = 0;
+  long gasPriceFromHttp = 0;
 
   /** constructor. */
   @BeforeClass(enabled = true)
@@ -165,20 +166,19 @@ public class Accounts001 extends JsonRpcBase {
     responseContent = HttpMethed.parseResponseContent(response);
     responseContent.get("result");
     String gasPrice = responseContent.get("result").toString().substring(2);
-    int gasPrice1 = Integer.parseInt(gasPrice, 16);
-    logger.info(String.valueOf(gasPrice1));
+    long gasPriceFromJsonrpc = Long.parseLong(gasPrice, 16);
+    logger.info(String.valueOf(gasPriceFromJsonrpc));
     response = HttpMethed.getChainParameter(httpFullNode);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONArray temp;
     temp = responseContent.getJSONArray("chainParameter");
-    int gasPrice2 = 0;
     for (int i = 0; i < temp.size(); i++) {
       if (temp.getJSONObject(i).get("key").equals("getEnergyFee")) {
-        gasPrice2 = temp.getJSONObject(i).getInteger("value");
+        gasPriceFromHttp = temp.getJSONObject(i).getLong("value");
       }
     }
-    logger.info(String.valueOf(gasPrice2));
-    Assert.assertEquals(gasPrice1, gasPrice2);
+    logger.info("gasPriceFromHttp:" + gasPriceFromHttp);
+    Assert.assertEquals(gasPriceFromJsonrpc, gasPriceFromHttp);
   }
 
   @Test(enabled = true, description = "Json rpc api of eth_getBalance")
@@ -340,10 +340,11 @@ public class Accounts001 extends JsonRpcBase {
     logger.info("indexHex：" + indexHex);
     params.add(indexHex);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionByBlockNumberAndIndex", params);
+    logger.info("13requestBody:" + requestBody);
     response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     result = responseContent.getJSONObject("result");
-    logger.info("15 result" + result);
+    logger.info("13 result" + result);
     Map<String, Object> jsonrpcResult = new HashMap();
     for (Map.Entry<String, Object> entry : result.entrySet()) {
       jsonrpcResult.put(entry.getKey(), entry.getValue());
@@ -542,6 +543,11 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(
         resultFromTransactionReceipt.getString("to"),
         resultFromTransactionByBlockNumberAndIndex.getString("to"));
+    logger.info("effectiveGasPrice:" + resultFromTransactionReceipt.getString("effectiveGasPrice"));
+    logger.info("gasPriceFromHttp:" + Long.toHexString(gasPriceFromHttp));
+    Assert.assertEquals(
+        resultFromTransactionReceipt.getString("effectiveGasPrice"),
+        "0x" + Long.toHexString(gasPriceFromHttp));
     Assert.assertEquals(
         resultFromTransactionReceipt.getString("contractAddress").substring(2),
         trc20AddressHex.substring(2));
