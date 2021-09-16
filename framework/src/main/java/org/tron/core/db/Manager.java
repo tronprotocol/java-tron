@@ -1746,6 +1746,7 @@ public class Manager {
       if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
         TransactionInfoList transactionInfoList = null;
         TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
+        long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
 
         try {
           TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
@@ -1772,7 +1773,7 @@ public class Manager {
             TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
 
             cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
-                cumulativeEnergyUsed, cumulativeLogCount, transactionInfo);
+                cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
 
             cumulativeLogCount += transactionInfo.getLogCount();
           }
@@ -1795,9 +1796,9 @@ public class Manager {
   // cumulativeEnergyUsed is the total of energy used before the current transaction
   private long postTransactionTrigger(final TransactionCapsule trxCap,
       final BlockCapsule blockCap, int index, long preCumulativeEnergyUsed,
-      long cumulativeLogCount, final TransactionInfo transactionInfo) {
+      long cumulativeLogCount, final TransactionInfo transactionInfo, long energyUnitPrice) {
     TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap,
-        index, preCumulativeEnergyUsed, cumulativeLogCount, transactionInfo);
+        index, preCumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
     trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
         .getLatestSolidifiedBlockNum());
     if (!triggerCapsuleQueue.offer(trx)) {

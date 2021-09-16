@@ -39,12 +39,12 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   private TransactionLogTrigger transactionLogTrigger;
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule) {
-    this(trxCapsule, blockCapsule, 0, 0, 0, null);
+    this(trxCapsule, blockCapsule, 0, 0, 0, null, 0);
   }
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCapsule, BlockCapsule blockCapsule,
       int txIndex, long preCumulativeEnergyUsed, long preCumulativeLogCount,
-      TransactionInfo transactionInfo) {
+      TransactionInfo transactionInfo, long energyUnitPrice) {
     transactionLogTrigger = new TransactionLogTrigger();
 
     String blockHash = "";
@@ -193,14 +193,15 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setTransactionIndex(txIndex);
       transactionLogTrigger.setCumulativeEnergyUsed(preCumulativeEnergyUsed + energyUsageTotal);
       transactionLogTrigger.setPreCumulativeLogCount(preCumulativeLogCount);
+      transactionLogTrigger.setEnergyUnitPrice(energyUnitPrice);
 
       List<LogPojo> logPojoList = new ArrayList<>();
       for (int index = 0; index < transactionInfo.getLogCount(); index++) {
         TransactionInfo.Log log = transactionInfo.getLogList().get(index);
         LogPojo logPojo = new LogPojo();
 
-        logPojo.setAddress((log.getAddress() != null) ?
-            Hex.toHexString(log.getAddress().toByteArray()) : "");
+        logPojo.setAddress((log.getAddress() != null)
+            ? Hex.toHexString(log.getAddress().toByteArray()) : "");
         logPojo.setBlockHash(blockHash);
         logPojo.setBlockNumber(trxCapsule.getBlockNum());
         logPojo.setData(Hex.toHexString(log.getData().toByteArray()));
