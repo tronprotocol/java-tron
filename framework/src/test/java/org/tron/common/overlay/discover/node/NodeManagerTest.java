@@ -94,6 +94,8 @@ public class NodeManagerTest {
     //insert 3001 nodes(isConnectible = true) with threshold = 3000
     final int totalNodes = insertValues(3002);
     Assert.assertEquals(calculateTrimNodes(totalNodes, 0), getHandlerMapSize());
+
+    clearNodeManager();
   }
 
   @Test
@@ -104,6 +106,12 @@ public class NodeManagerTest {
     method.setAccessible(true);
     method.invoke(nodeManager);
     Assert.assertEquals(calculateTrimNodes(totalNodes, 2), getHandlerMapSize());
+
+    clearNodeManager();
+  }
+
+  private void clearNodeManager() {
+    nodeManager.clearNodeHandlerMap();
   }
 
   /**
