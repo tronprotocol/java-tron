@@ -29,7 +29,7 @@ public interface TronJsonRpc {
     private final String highestBlock;
   }
 
-  @JsonPropertyOrder(alphabetic=true)
+  @JsonPropertyOrder(alphabetic = true)
   class BlockResult {
 
     public String number;

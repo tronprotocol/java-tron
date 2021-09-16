@@ -17,11 +17,12 @@ import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
 
-@JsonPropertyOrder(alphabetic=true)
+@JsonPropertyOrder(alphabetic = true)
 public class TransactionReceipt {
 
-  @JsonPropertyOrder(alphabetic=true)
+  @JsonPropertyOrder(alphabetic = true)
   public static class TransactionLog {
+
     public String logIndex;
     public String blockHash;
     public String blockNumber;
