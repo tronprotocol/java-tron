@@ -154,9 +154,9 @@ public class JsonRpcApiUtil {
             list.add(receiverAddress);
           }
           break;
-        case CreateSmartContract:
-          list.add(ByteString.copyFrom(generateContractAddress(transaction)));
-          break;
+        // case CreateSmartContract:
+        //   list.add(ByteString.copyFrom(generateContractAddress(transaction)));
+        //   break;
         case TriggerSmartContract:
           list.add(contractParameter.unpack(TriggerSmartContract.class).getContractAddress());
           break;
