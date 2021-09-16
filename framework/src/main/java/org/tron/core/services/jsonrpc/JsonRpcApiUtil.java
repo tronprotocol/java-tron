@@ -154,21 +154,9 @@ public class JsonRpcApiUtil {
             list.add(receiverAddress);
           }
           break;
-        // case CreateSmartContract:
-        //   list.add(ByteString.copyFrom(generateContractAddress(transaction)));
-        //   break;
         case TriggerSmartContract:
           list.add(contractParameter.unpack(TriggerSmartContract.class).getContractAddress());
           break;
-        // case BuyStorageContract:
-        //   owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-        //   break;
-        // case BuyStorageBytesContract:
-        //   owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-        //   break;
-        // case SellStorageContract:
-        //   owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-        //   break;
         case UpdateSettingContract:
           list.add(contractParameter.unpack(UpdateSettingContract.class).getContractAddress());
           break;
