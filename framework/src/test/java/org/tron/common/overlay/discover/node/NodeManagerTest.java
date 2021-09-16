@@ -7,8 +7,11 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,21 +30,22 @@ import org.tron.core.db.Manager;
 public class NodeManagerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private Manager manager;
-  private NodeManager nodeManager;
-  private TronApplicationContext context;
-  private CommonParameter argsTest;
-  private Application appTest;
+  private static Manager manager;
+  private static NodeManager nodeManager;
+  private static TronApplicationContext context;
+  private static CommonParameter argsTest;
+  private static Application appTest;
   private Class nodeManagerClazz;
+  private static String dbPath = "NodeManagerTest";
 
 
   /**
    * start the application.
    */
-  @Before
-  public void init() {
+  @BeforeClass
+  public static void init() {
     argsTest = Args.getInstance();
-    Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
+    Args.setParam(new String[]{"--output-directory", dbPath},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
@@ -53,11 +57,11 @@ public class NodeManagerTest {
   /**
    * destroy the context.
    */
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File("output-directory"))) {
+    if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
