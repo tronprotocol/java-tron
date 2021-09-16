@@ -55,7 +55,7 @@ public class NodeManagerTest {
     try {
       initManager();
     } catch (Exception e) {
-
+      logger.error("init failed {}", e.getMessage());
     }
   }
 
