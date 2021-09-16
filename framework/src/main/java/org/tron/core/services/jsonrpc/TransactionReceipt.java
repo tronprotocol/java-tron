@@ -20,8 +20,8 @@ import org.tron.protos.Protocol.TransactionInfo;
 @JsonPropertyOrder(alphabetic=true)
 public class TransactionReceipt {
 
+  @JsonPropertyOrder(alphabetic=true)
   public static class TransactionLog {
-
     public String logIndex;
     public String blockHash;
     public String blockNumber;
@@ -33,7 +33,6 @@ public class TransactionReceipt {
     public boolean removed = false;
 
     public TransactionLog() {
-
     }
   }
 
