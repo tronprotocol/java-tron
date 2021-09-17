@@ -44,7 +44,11 @@ public class EventPluginLoader {
 
   private boolean blockLogTriggerEnable = false;
 
+  private boolean blockLogTriggerSolidified = false;
+
   private boolean transactionLogTriggerEnable = false;
+
+  private boolean transactionLogTriggerSolidified = false;
 
   private boolean transactionLogTriggerEthCompatible = false;
 
@@ -247,8 +251,12 @@ public class EventPluginLoader {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         blockLogTriggerEnable = true;
+        if (triggerConfig.isSolidified()) {
+          blockLogTriggerSolidified = true;
+        }
       } else {
         blockLogTriggerEnable = false;
+        blockLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -262,9 +270,13 @@ public class EventPluginLoader {
         if (triggerConfig.isEthCompatible()) {
           transactionLogTriggerEthCompatible = true;
         }
+        if (triggerConfig.isSolidified()) {
+          transactionLogTriggerSolidified = true;
+        }
       } else {
         transactionLogTriggerEnable = false;
         transactionLogTriggerEthCompatible = false;
+        transactionLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -350,6 +362,10 @@ public class EventPluginLoader {
     return blockLogTriggerEnable;
   }
 
+  public synchronized boolean isBlockLogTriggerSolidified() {
+    return blockLogTriggerSolidified;
+  }
+
   public synchronized boolean isSolidityTriggerEnable() {
     return solidityTriggerEnable;
   }
@@ -372,6 +388,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isTransactionLogTriggerEthCompatible() {
     return transactionLogTriggerEthCompatible;
+  }
+
+  public synchronized boolean isTransactionLogTriggerSolidified() {
+    return transactionLogTriggerSolidified;
   }
 
   public synchronized boolean isContractEventTriggerEnable() {

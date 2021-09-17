@@ -25,11 +25,16 @@ public class TriggerConfig {
   @Setter
   private boolean ethCompatible;
 
+  @Getter
+  @Setter
+  private boolean solidified;
+
   public TriggerConfig() {
     triggerName = "";
     enabled = false;
     topic = "";
     redundancy = false;
     ethCompatible = false;
+    solidified = false;
   }
 }

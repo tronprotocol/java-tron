@@ -1729,8 +1729,21 @@ public class Manager {
     }
   }
 
-  private void postBlockTrigger(final BlockCapsule newBlock) {
+  private void postBlockTrigger(final BlockCapsule blockCapsule) {
+    BlockCapsule newBlock = blockCapsule;
+
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+      if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
+        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+        try {
+          newBlock = chainBaseManager
+              .getBlockByNum(solidityBlkNum);
+        } catch (Exception e) {
+          logger.error("postBlockTrigger getBlockByNum blkNum={} except, error is {}",
+              solidityBlkNum, e.getMessage());
+        }
+      }
+
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum());
@@ -1740,6 +1753,17 @@ public class Manager {
     }
 
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
+        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+        try {
+          newBlock = chainBaseManager
+              .getBlockByNum(solidityBlkNum);
+        } catch (Exception e) {
+          logger.error("postBlockTrigger getBlockByNum blkNum={} except, error is {}",
+              solidityBlkNum, e.getMessage());
+        }
+      }
+
       List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
 
       // get transactionInfoList

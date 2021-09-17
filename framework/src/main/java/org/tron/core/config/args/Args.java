@@ -974,6 +974,11 @@ public class Args extends CommonParameter {
       triggerConfig.setEthCompatible("true".equalsIgnoreCase(ethCompatible));
     }
 
+    if (triggerObject.containsKey("solidified")) {
+      String solidified = triggerObject.get("solidified").unwrapped().toString();
+      triggerConfig.setSolidified("true".equalsIgnoreCase(solidified));
+    }
+
     return triggerConfig;
   }
 
