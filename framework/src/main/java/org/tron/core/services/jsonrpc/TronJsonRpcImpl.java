@@ -47,6 +47,7 @@ import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.core.store.StorageRowStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Storage;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
@@ -371,8 +372,20 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
       byte[] addressByte = addressHashToByteArray(address);
 
+      // get contract from contractStore
+      BytesMessage.Builder build = BytesMessage.newBuilder();
+      BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressByte)).build();
+      SmartContract smartContract = wallet.getContract(bytesMessage);
+      if (smartContract == null) {
+        return ByteArray.toJsonHex(new byte[32]);
+      }
+
       StorageRowStore store = manager.getStorageRowStore();
       Storage storage = new Storage(addressByte, store);
+
+      // init Tvm config
+      storage.setContractVersion(smartContract.getVersion());
+      VMConfig.initAllowTvmCompatibleEvm(1);
 
       DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
       return ByteArray.toJsonHex(value == null ? new byte[32] : value.getData());

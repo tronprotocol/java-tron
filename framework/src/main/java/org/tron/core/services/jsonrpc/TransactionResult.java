@@ -3,6 +3,7 @@ package org.tron.core.services.jsonrpc;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import lombok.ToString;
@@ -14,6 +15,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
+@JsonPropertyOrder(alphabetic = true)
 @ToString
 public class TransactionResult {
 

@@ -350,22 +350,23 @@ public class VMActuator implements Actuator2 {
       long energyLimit;
       // according to version
 
-      if (StorageUtils.getEnergyLimitHardFork()) {
-        if (callValue < 0) {
-          throw new ContractValidateException("callValue must be >= 0");
-        }
-        if (tokenValue < 0) {
-          throw new ContractValidateException("tokenValue must be >= 0");
-        }
-        if (newSmartContract.getOriginEnergyLimit() <= 0) {
-          throw new ContractValidateException("The originEnergyLimit must be > 0");
-        }
-        energyLimit = getAccountEnergyLimitWithFixRatio(creator, feeLimit, callValue);
-      } else {
-        energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
-      }
       if (isConstantCall) {
         energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
+      } else {
+        if (StorageUtils.getEnergyLimitHardFork()) {
+          if (callValue < 0) {
+            throw new ContractValidateException("callValue must be >= 0");
+          }
+          if (tokenValue < 0) {
+            throw new ContractValidateException("tokenValue must be >= 0");
+          }
+          if (newSmartContract.getOriginEnergyLimit() <= 0) {
+            throw new ContractValidateException("The originEnergyLimit must be > 0");
+          }
+          energyLimit = getAccountEnergyLimitWithFixRatio(creator, feeLimit, callValue);
+        } else {
+          energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
+        }
       }
 
       checkTokenValueAndId(tokenValue, tokenId);
