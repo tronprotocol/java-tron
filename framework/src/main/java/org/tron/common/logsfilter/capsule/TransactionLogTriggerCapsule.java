@@ -25,6 +25,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -67,15 +69,19 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setResult(trxCapsule.getContractRet().toString());
     }
 
-    if (Objects.nonNull(trxCapsule.getInstance().getRawData())) {
-      // fee limit
-      transactionLogTrigger.setFeeLimit(trxCapsule.getInstance().getRawData().getFeeLimit());
+    Transaction.raw rawData = trxCapsule.getInstance().getRawData();
+    ContractType contractType = null;
 
-      Protocol.Transaction.Contract contract = trxCapsule.getInstance().getRawData().getContract(0);
+    if (Objects.nonNull(rawData)) {
+      // fee limit
+      transactionLogTrigger.setFeeLimit(rawData.getFeeLimit());
+
+      Protocol.Transaction.Contract contract = rawData.getContract(0);
       Any contractParameter = null;
+
       // contract type
       if (Objects.nonNull(contract)) {
-        Protocol.Transaction.Contract.ContractType contractType = contract.getType();
+        contractType = contract.getType();
         if (Objects.nonNull(contractType)) {
           transactionLogTrigger.setContractType(contractType.toString());
         }
@@ -87,66 +93,74 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
       if (Objects.nonNull(contractParameter) && Objects.nonNull(contract)) {
         try {
-          if (contract.getType() == TransferContract) {
-            TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
+          switch (contractType) {
+            case TransferContract:
+              TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
 
-            if (Objects.nonNull(contractTransfer)) {
-              transactionLogTrigger.setAssetName("trx");
+              if (Objects.nonNull(contractTransfer)) {
+                transactionLogTrigger.setAssetName("trx");
 
-              if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
-                transactionLogTrigger.setFromAddress(StringUtil
-                    .encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
+                  transactionLogTrigger.setFromAddress(StringUtil
+                      .encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                }
+
+                if (Objects.nonNull(contractTransfer.getToAddress())) {
+                  transactionLogTrigger.setToAddress(
+                      StringUtil.encode58Check(contractTransfer.getToAddress().toByteArray()));
+                }
+
+                transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
               }
+              break;
+            case TransferAssetContract:
+              TransferAssetContract contractAssetTransfer = contractParameter
+                  .unpack(TransferAssetContract.class);
 
-              if (Objects.nonNull(contractTransfer.getToAddress())) {
-                transactionLogTrigger.setToAddress(
-                    StringUtil.encode58Check(contractTransfer.getToAddress().toByteArray()));
+              if (Objects.nonNull(contractAssetTransfer)) {
+                if (Objects.nonNull(contractAssetTransfer.getAssetName())) {
+                  transactionLogTrigger
+                      .setAssetName(contractAssetTransfer.getAssetName().toStringUtf8());
+                }
+
+                if (Objects.nonNull(contractAssetTransfer.getOwnerAddress())) {
+                  transactionLogTrigger.setFromAddress(
+                      StringUtil
+                          .encode58Check(contractAssetTransfer.getOwnerAddress().toByteArray()));
+                }
+
+                if (Objects.nonNull(contractAssetTransfer.getToAddress())) {
+                  transactionLogTrigger.setToAddress(StringUtil
+                      .encode58Check(contractAssetTransfer.getToAddress().toByteArray()));
+                }
+                transactionLogTrigger.setAssetAmount(contractAssetTransfer.getAmount());
               }
+              break;
+            case TriggerSmartContract:
+              TriggerSmartContract triggerSmartContract = contractParameter
+                  .unpack(TriggerSmartContract.class);
 
-              transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
-            }
-
-          } else if (contract.getType() == TransferAssetContract) {
-            TransferAssetContract contractTransfer = contractParameter
-                .unpack(TransferAssetContract.class);
-
-            if (Objects.nonNull(contractTransfer)) {
-              if (Objects.nonNull(contractTransfer.getAssetName())) {
-                transactionLogTrigger.setAssetName(contractTransfer.getAssetName().toStringUtf8());
-              }
-
-              if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
+              if (Objects.nonNull(triggerSmartContract.getOwnerAddress())) {
                 transactionLogTrigger.setFromAddress(
-                    StringUtil.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                    StringUtil.encode58Check(triggerSmartContract.getOwnerAddress().toByteArray()));
               }
 
-              if (Objects.nonNull(contractTransfer.getToAddress())) {
+              if (Objects.nonNull(triggerSmartContract.getContractAddress())) {
                 transactionLogTrigger.setToAddress(StringUtil
-                    .encode58Check(contractTransfer.getToAddress().toByteArray()));
+                    .encode58Check(triggerSmartContract.getContractAddress().toByteArray()));
               }
-              transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
-            }
-          } else if (contract.getType() == TriggerSmartContract) {
-            TriggerSmartContract triggerSmartContract = contractParameter
-                .unpack(TriggerSmartContract.class);
+              break;
+            case CreateSmartContract:
+              CreateSmartContract createSmartContract = contractParameter
+                  .unpack(CreateSmartContract.class);
 
-            if (Objects.nonNull(triggerSmartContract.getOwnerAddress())) {
-              transactionLogTrigger.setFromAddress(
-                  StringUtil.encode58Check(triggerSmartContract.getOwnerAddress().toByteArray()));
-            }
-
-            if (Objects.nonNull(triggerSmartContract.getContractAddress())) {
-              transactionLogTrigger.setToAddress(StringUtil
-                  .encode58Check(triggerSmartContract.getContractAddress().toByteArray()));
-            }
-          } else if (contract.getType() == CreateSmartContract) {
-            CreateSmartContract createSmartContract = contractParameter
-                .unpack(CreateSmartContract.class);
-
-            if (Objects.nonNull(createSmartContract.getOwnerAddress())) {
-              transactionLogTrigger.setFromAddress(
-                  StringUtil.encode58Check(createSmartContract.getOwnerAddress().toByteArray()));
-            }
+              if (Objects.nonNull(createSmartContract.getOwnerAddress())) {
+                transactionLogTrigger.setFromAddress(
+                    StringUtil.encode58Check(createSmartContract.getOwnerAddress().toByteArray()));
+              }
+              break;
+            default:
+              break;
           }
         } catch (Exception e) {
           logger.error("failed to load transferAssetContract, error '{}'", e.getMessage());
@@ -179,8 +193,13 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       }
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
-        transactionLogTrigger
-            .setContractAddress(StringUtil.encode58Check((contractAddress.toByteArray())));
+        if (Objects.nonNull(transactionInfo)
+            && contractType != null && contractType != CreateSmartContract) {
+          transactionLogTrigger.setContractAddress(null);
+        } else {
+          transactionLogTrigger
+              .setContractAddress(StringUtil.encode58Check((contractAddress.toByteArray())));
+        }
       }
 
       // internal transaction
