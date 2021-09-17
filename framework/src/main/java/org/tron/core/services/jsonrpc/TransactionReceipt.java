@@ -15,6 +15,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -92,18 +93,21 @@ public class TransactionReceipt {
     transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
     effectiveGasPrice = ByteArray.toJsonHex(wallet.getEnergyFee(blockCapsule.getTimeStamp()));
 
+    from = null;
+    to = null;
+    contractAddress = null;
+
     if (transaction != null && !transaction.getRawData().getContractList().isEmpty()) {
       Contract contract = transaction.getRawData().getContract(0);
       byte[] fromByte = TransactionCapsule.getOwner(contract);
       byte[] toByte = getToAddress(transaction);
       from = ByteArray.toJsonHexAddress(fromByte);
       to = ByteArray.toJsonHexAddress(toByte);
-    } else {
-      from = null;
-      to = null;
-    }
 
-    contractAddress = ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray());
+      if (contract.getType() == ContractType.CreateSmartContract) {
+        contractAddress = ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray());
+      }
+    }
 
     // logs
     List<TransactionLog> logList = new ArrayList<>();
