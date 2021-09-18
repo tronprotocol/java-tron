@@ -548,9 +548,10 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(
         resultFromTransactionReceipt.getString("effectiveGasPrice"),
         "0x" + Long.toHexString(gasPriceFromHttp));
-    Assert.assertEquals(
-        resultFromTransactionReceipt.getString("contractAddress").substring(2),
-        trc20AddressHex.substring(2));
+    /* Assert.assertEquals(
+    resultFromTransactionReceipt.getString("contractAddress").substring(2),
+    trc20AddressHex.substring(2));*/
+    Assert.assertNull(resultFromTransactionReceipt.getString("contractAddress"));
     Assert.assertEquals(
         resultFromTransactionReceipt.getString("logsBloom"),
         "0x000000000000000000000000000000000000000000000000000000000000"
