@@ -6,17 +6,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
@@ -35,23 +31,32 @@ public class NodeManagerTest {
   private static TronApplicationContext context;
   private static CommonParameter argsTest;
   private static Application appTest;
-  private Class nodeManagerClazz;
+  private static Class nodeManagerClazz;
   private static String dbPath = "NodeManagerTest";
 
+  static {
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+  }
 
   /**
    * start the application.
    */
   @BeforeClass
   public static void init() {
-    argsTest = Args.getInstance();
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appTest = ApplicationFactory.create(context);
-    appTest.initServices(argsTest);
-    appTest.startServices();
-    appTest.startup();
+    // argsTest = Args.getInstance();
+    // Args.setParam(new String[]{"--output-directory", dbPath},
+    //     Constant.TEST_CONF);
+    // context = new TronApplicationContext(DefaultConfig.class);
+    // appTest = ApplicationFactory.create(context);
+    // appTest.initServices(argsTest);
+    // appTest.startServices();
+    // appTest.startup();
+    try {
+      initManager();
+    } catch (Exception e) {
+      logger.error("init failed {}", e.getMessage());
+    }
   }
 
   /**
@@ -71,8 +76,8 @@ public class NodeManagerTest {
   /**
    * init the managers.
    */
-  @Before
-  public void initManager() throws Exception {
+  // @Before
+  public static void initManager() throws Exception {
     nodeManagerClazz = NodeManager.class;
     Constructor<NodeManager> handlerConstructor
         = nodeManagerClazz.getConstructor(ChainBaseManager.class);

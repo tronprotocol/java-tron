@@ -3,14 +3,13 @@ package org.tron.common.overlay.discover.node;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
@@ -24,41 +23,40 @@ import org.tron.core.db.Manager;
 public class NodeHandlerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private Manager dbManager;
-  private TronApplicationContext context;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
   private Application appTest;
   private CommonParameter argsTest;
-  private Node currNode;
-  private Node oldNode;
-  private Node replaceNode;
-  private NodeHandler currHandler;
-  private NodeHandler oldHandler;
-  private NodeHandler replaceHandler;
-  private NodeManager nodeManager;
+  private static Node currNode;
+  private static Node oldNode;
+  private static Node replaceNode;
+  private static NodeHandler currHandler;
+  private static NodeHandler oldHandler;
+  private static NodeHandler replaceHandler;
+  private static NodeManager nodeManager;
+  private static String dbPath = "NodeHandlerTest";
+
+  static {
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    context = new TronApplicationContext(DefaultConfig.class);
+  }
 
   /**
    * init the application.
    */
-  @Before
-  public void init() {
-    argsTest = Args.getInstance();
-    Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
-        Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appTest = ApplicationFactory.create(context);
-    appTest.initServices(argsTest);
-    appTest.startServices();
-    appTest.startup();
+  @BeforeClass
+  public static void init() {
+    initNodes();
   }
 
   /**
    * destroy the context.
    */
-  @After
-  public void destroy() {
+  @AfterClass
+  public static void destroy() {
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File("output-directory"))) {
+    if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
@@ -68,8 +66,7 @@ public class NodeHandlerTest {
   /**
    * init nodes.
    */
-  @Before
-  public void initNodes() {
+  public static void initNodes() {
     dbManager = context.getBean(Manager.class);
     nodeManager = new NodeManager(context.getBean(ChainBaseManager.class));
     String currNodeId = "74c11ffad1d59d7b1a56691a0b84a53f0791c92361357364f1d2537"
