@@ -588,8 +588,8 @@ public class Accounts001 extends JsonRpcBase {
         logs.getJSONObject(0).getString("transactionHash"),
         resultFromTransactionReceipt.getString("transactionHash"));
     Assert.assertEquals(
-        logs.getJSONObject(0).getString("address"),
-        resultFromTransactionReceipt.getString("contractAddress"));
+        logs.getJSONObject(0).getString("address"),resultFromTransactionReceipt.getString("to")
+        );
     response = HttpMethed.getTransactionInfoByBlocknum(httpFullNode, blockNumForTrc20);
     List<JSONObject> responseContent1 = HttpMethed.parseResponseContentArray(response);
     logger.info("responseContent1:" + responseContent1);
