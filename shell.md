@@ -6,7 +6,7 @@ Using the `start.sh` script, you can quickly and easily run and build java-tron.
 
 If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, or if you have not downloaded java-tron source code or jar packages, you can use `start.sh` to download the source code, compile, run or get the latest release version in the form of a `jar package ` and run.
 
-The script is available in the java-tron project at [github](https://github.com/tronprotocol/java-tron), or if you need a separate script: [start.sh](https://github.com/tronprotocol/java-tron/blob/develop/start. sh)
+The script is available in the java-tron project at [github](https://github.com/tronprotocol/java-tron), or if you need a separate script: [start.sh](https://github.com/tronprotocol/java-tron/blob/develop/start.sh)
 
 ***
 
