@@ -4,6 +4,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.convertToTronAddress
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getToAddress;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.List;
 import org.tron.api.GrpcAPI.TransactionInfoList;
@@ -14,10 +15,13 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 
+@JsonPropertyOrder(alphabetic = true)
 public class TransactionReceipt {
 
+  @JsonPropertyOrder(alphabetic = true)
   public static class TransactionLog {
 
     public String logIndex;
@@ -31,7 +35,6 @@ public class TransactionReceipt {
     public boolean removed = false;
 
     public TransactionLog() {
-
     }
   }
 
@@ -43,6 +46,7 @@ public class TransactionReceipt {
   public String to;
 
   public String cumulativeGasUsed;
+  public String effectiveGasPrice;
   public String gasUsed;
   public String contractAddress;
   public TransactionLog[] logs;
@@ -87,6 +91,11 @@ public class TransactionReceipt {
     blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     transactionHash = ByteArray.toJsonHex(txInfo.getId().toByteArray());
+    effectiveGasPrice = ByteArray.toJsonHex(wallet.getEnergyFee(blockCapsule.getTimeStamp()));
+
+    from = null;
+    to = null;
+    contractAddress = null;
 
     if (transaction != null && !transaction.getRawData().getContractList().isEmpty()) {
       Contract contract = transaction.getRawData().getContract(0);
@@ -94,12 +103,11 @@ public class TransactionReceipt {
       byte[] toByte = getToAddress(transaction);
       from = ByteArray.toJsonHexAddress(fromByte);
       to = ByteArray.toJsonHexAddress(toByte);
-    } else {
-      from = null;
-      to = null;
-    }
 
-    contractAddress = ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray());
+      if (contract.getType() == ContractType.CreateSmartContract) {
+        contractAddress = ByteArray.toJsonHexAddress(txInfo.getContractAddress().toByteArray());
+      }
+    }
 
     // logs
     List<TransactionLog> logList = new ArrayList<>();

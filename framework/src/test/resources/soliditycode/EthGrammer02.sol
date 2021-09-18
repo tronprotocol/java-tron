@@ -1,6 +1,7 @@
 contract D {
     constructor() public payable{}
 
+    event createAddress(address addr);
     function createDeployEf(bytes memory code) public returns(address addr){
         address addr;
         assembly {
@@ -20,6 +21,7 @@ contract D {
                 revert(0, 0)
             }
         }
+        emit createAddress(addr);
         return addr;
     }
 

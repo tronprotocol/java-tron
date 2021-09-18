@@ -80,6 +80,7 @@ public class EthGrammer02 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContractOuterClass.SmartContract smartContract = PublicMethed.getContract(contractD,
         blockingStubFull);
+    Assert.assertEquals(1, smartContract.getVersion());
     Assert.assertNotNull(smartContract.getAbi());
   }
 
@@ -520,6 +521,22 @@ public class EthGrammer02 {
     long result = ByteArray.toLong(transactionExtention.getConstantResult(0).toByteArray());
     logger.info("result: " + result);
     Assert.assertEquals(value, result);
+  }
+
+  @Test(enabled = true, description = "TransactionExtention has logs and internal_transactions")
+  public void test38ConstantLogEven() {
+    salt++;
+    String methedStr = "create2DeployEf(bytes,uint256)";
+    String argsStr = "\"0x60fe60005360016000f3\"," + salt;
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractD,
+            methedStr, argsStr, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals(true, transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals(1, transactionExtention.getLogsCount());
+    Assert.assertEquals(1, transactionExtention.getInternalTransactionsCount());
   }
 
   /**
