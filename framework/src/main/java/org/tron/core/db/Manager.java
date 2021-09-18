@@ -1802,8 +1802,9 @@ public class Manager {
             cumulativeLogCount += transactionInfo.getLogCount();
           }
         } else {
-          logger.error("postBlockTrigger blockNum={} the sizes of transactionInfoList "
-              + "and transactionCapsuleList are not equal", newBlock.getNum());
+          logger.error("postBlockTrigger blockNum={} has no transactions or "
+              + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
+              newBlock.getNum());
           for (TransactionCapsule e : newBlock.getTransactions()) {
             postTransactionTrigger(e, newBlock);
           }
