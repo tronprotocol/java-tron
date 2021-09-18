@@ -1768,9 +1768,8 @@ public class Manager {
 
       // get transactionInfoList
       if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
-        TransactionInfoList transactionInfoList = null;
+        TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
         TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
-        long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
 
         try {
           TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
@@ -1788,10 +1787,11 @@ public class Manager {
               newBlock.getNum(), e.getMessage());
         }
 
-        if (transactionInfoList != null
-            && transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
+        if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
           long cumulativeEnergyUsed = 0;
           long cumulativeLogCount = 0;
+          long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+
           for (int i = 0; i < transactionCapsuleList.size(); i++) {
             TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
             TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
