@@ -1,9 +1,6 @@
 package org.tron.common.logsfilter.capsule;
 
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.CreateSmartContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TriggerSmartContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
