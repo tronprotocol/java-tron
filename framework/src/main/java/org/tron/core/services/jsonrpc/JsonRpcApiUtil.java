@@ -154,21 +154,9 @@ public class JsonRpcApiUtil {
             list.add(receiverAddress);
           }
           break;
-        case CreateSmartContract:
-          list.add(ByteString.copyFrom(generateContractAddress(transaction)));
-          break;
         case TriggerSmartContract:
           list.add(contractParameter.unpack(TriggerSmartContract.class).getContractAddress());
           break;
-        // case BuyStorageContract:
-        //   owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-        //   break;
-        // case BuyStorageBytesContract:
-        //   owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-        //   break;
-        // case SellStorageContract:
-        //   owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-        //   break;
         case UpdateSettingContract:
           list.add(contractParameter.unpack(UpdateSettingContract.class).getContractAddress());
           break;
@@ -195,20 +183,6 @@ public class JsonRpcApiUtil {
       t.printStackTrace();
     }
     return list;
-  }
-
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-
-    byte[] txRawDataHash = Sha256Hash.hash(true, trx.getRawData().toByteArray());
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return Hash.sha3omit12(combined);
   }
 
   public static String getTxID(Transaction transaction) {

@@ -1,6 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
@@ -28,6 +29,7 @@ public interface TronJsonRpc {
     private final String highestBlock;
   }
 
+  @JsonPropertyOrder(alphabetic = true)
   class BlockResult {
 
     public String number;

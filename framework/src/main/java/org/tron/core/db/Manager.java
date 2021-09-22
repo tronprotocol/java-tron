@@ -7,12 +7,7 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,10 +31,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
@@ -932,10 +925,6 @@ public class Manager {
     });
 
     return txs;
-  }
-
-  public boolean validWitness(final BlockCapsule block) {
-    return consensus.validBlock(block);
   }
 
   /**
