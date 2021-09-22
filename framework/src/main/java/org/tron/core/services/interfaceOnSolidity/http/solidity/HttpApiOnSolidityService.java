@@ -30,6 +30,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSoliditySer
 import org.tron.core.services.interfaceOnSolidity.http.GetBurnTrxOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetEnergyPricesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByIdOnSolidityServlet;
@@ -146,6 +147,8 @@ public class HttpApiOnSolidityService implements Service {
   private GetMarketOrderListByPairOnSolidityServlet getMarketOrderListByPairOnSolidityServlet;
   @Autowired
   private GetMarketPairListOnSolidityServlet getMarketPairListOnSolidityServlet;
+  @Autowired
+  private GetEnergyPricesOnSolidityServlet getEnergyPricesOnSolidityServlet;
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
@@ -252,6 +255,8 @@ public class HttpApiOnSolidityService implements Service {
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       context
           .addServlet(new ServletHolder(getBurnTrxOnSolidityServlet), "/walletsolidity/getburntrx");
+      context.addServlet(new ServletHolder(getEnergyPricesOnSolidityServlet),
+          "/walletsolidity/getenergyprices");
 
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false

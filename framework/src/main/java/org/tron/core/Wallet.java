@@ -3886,6 +3886,16 @@ public class Wallet {
     }
   }
 
+  public String getEnergyPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+    } catch (Exception e) {
+      logger.error("getEnergyPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
   public String getCoinbase() {
     if (!CommonParameter.getInstance().isWitness()) {
       return null;

@@ -287,6 +287,8 @@ public class FullNodeHttpApiService implements Service {
   private GetTransactionListFromPendingServlet getTransactionListFromPendingServlet;
   @Autowired
   private GetPendingSizeServlet getPendingSizeServlet;
+  @Autowired
+  private GetEnergyPricesServlet getEnergyPricesServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -532,6 +534,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getTransactionListFromPendingServlet),
           "/wallet/gettransactionlistfrompending");
       context.addServlet(new ServletHolder(getPendingSizeServlet), "/wallet/getpendingsize");
+      context.addServlet(new ServletHolder(getEnergyPricesServlet), "/wallet/getenergyprices");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

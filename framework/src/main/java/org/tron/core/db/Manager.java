@@ -41,6 +41,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
@@ -1038,10 +1039,10 @@ public class Manager {
 
           applyBlock(newBlock, txs);
           tmpSession.commit();
-          // if event subscribe is enabled, post solidity trigger to queue
-          postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
+          // if event subscribe is enabled, post solidity trigger to queue
+          postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -1190,7 +1191,12 @@ public class Manager {
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
 
     // if event subscribe is enabled, post contract triggers to queue
-    postContractTrigger(trace, false);
+    String blockHash = "";
+    if (Objects.nonNull(blockCap)) {
+      blockHash = blockCap.getBlockId().toString();
+    }
+    postContractTrigger(trace, false, blockHash);
+
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
@@ -1691,15 +1697,6 @@ public class Manager {
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
-      SolidityTriggerCapsule solidityTriggerCapsule
-          = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
-      boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
-      if (!result) {
-        logger.info("too many trigger, lost solidified trigger, "
-            + "block number: {}", latestSolidifiedBlockNumber);
-      }
-    }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
@@ -1710,10 +1707,42 @@ public class Manager {
         postSolidityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
+      SolidityTriggerCapsule solidityTriggerCapsule
+          = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
+
+      BlockCapsule blockCapsule;
+      try {
+        blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
+        solidityTriggerCapsule.setTimeStamp(blockCapsule.getTimeStamp());
+      } catch (Exception e) {
+        logger.error("postSolidityTrigger getBlockByNum={} except, {}",
+            latestSolidifiedBlockNumber, e.getMessage());
+      }
+
+      boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
+      if (!result) {
+        logger.info("too many trigger, lost solidified trigger, "
+            + "block number: {}", latestSolidifiedBlockNumber);
+      }
+    }
   }
 
-  private void postBlockTrigger(final BlockCapsule newBlock) {
+  private void postBlockTrigger(final BlockCapsule blockCapsule) {
+    BlockCapsule newBlock = blockCapsule;
+
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+      if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
+        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+        try {
+          newBlock = chainBaseManager
+              .getBlockByNum(solidityBlkNum);
+        } catch (Exception e) {
+          logger.error("postBlockTrigger getBlockByNum blkNum={} except, error is {}",
+              solidityBlkNum, e.getMessage());
+        }
+      }
+
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum());
@@ -1722,20 +1751,95 @@ public class Manager {
       }
     }
 
-    for (TransactionCapsule e : newBlock.getTransactions()) {
-      postTransactionTrigger(e, newBlock);
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
+        long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+        try {
+          newBlock = chainBaseManager
+              .getBlockByNum(solidityBlkNum);
+        } catch (Exception e) {
+          logger.error("postBlockTrigger getBlockByNum blkNum={} except, error is {}",
+              solidityBlkNum, e.getMessage());
+        }
+      }
+
+      List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
+
+      // get transactionInfoList
+      if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
+        TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
+        TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
+
+        try {
+          TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
+              .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
+
+          if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+            result.getInstance().getTransactioninfoList().forEach(
+                transactionInfoListBuilder::addTransactionInfo
+            );
+
+            transactionInfoList = transactionInfoListBuilder.build();
+          }
+        } catch (BadItemException e) {
+          logger.error("postBlockTrigger getTransactionInfoList blockNum={}, error is {}",
+              newBlock.getNum(), e.getMessage());
+        }
+
+        if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
+          long cumulativeEnergyUsed = 0;
+          long cumulativeLogCount = 0;
+          long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+
+          for (int i = 0; i < transactionCapsuleList.size(); i++) {
+            TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
+            TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
+
+            cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
+                cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
+
+            cumulativeLogCount += transactionInfo.getLogCount();
+          }
+        } else {
+          logger.error("postBlockTrigger blockNum={} has no transactions or "
+              + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
+              newBlock.getNum());
+          for (TransactionCapsule e : newBlock.getTransactions()) {
+            postTransactionTrigger(e, newBlock);
+          }
+        }
+      } else {
+        for (TransactionCapsule e : newBlock.getTransactions()) {
+          postTransactionTrigger(e, newBlock);
+        }
+      }
     }
   }
 
+  // return energyUsageTotal of the current transaction
+  // cumulativeEnergyUsed is the total of energy used before the current transaction
+  private long postTransactionTrigger(final TransactionCapsule trxCap,
+      final BlockCapsule blockCap, int index, long preCumulativeEnergyUsed,
+      long cumulativeLogCount, final TransactionInfo transactionInfo, long energyUnitPrice) {
+    TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap,
+        index, preCumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
+    trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+        .getLatestSolidifiedBlockNum());
+    if (!triggerCapsuleQueue.offer(trx)) {
+      logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
+    }
+
+    return trx.getTransactionLogTrigger().getEnergyUsageTotal();
+  }
+
+
   private void postTransactionTrigger(final TransactionCapsule trxCap,
       final BlockCapsule blockCap) {
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
-      trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum());
-      if (!triggerCapsuleQueue.offer(trx)) {
-        logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
-      }
+    TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
+    trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+        .getLatestSolidifiedBlockNum());
+    if (!triggerCapsuleQueue.offer(trx)) {
+      logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
     }
   }
 
@@ -1748,7 +1852,7 @@ public class Manager {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
         for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
-          postContractTrigger(trx.getTrxTrace(), true);
+          postContractTrigger(trx.getTrxTrace(), true, oldHeadBlock.getBlockId().toString());
         }
       } catch (BadItemException | ItemNotFoundException e) {
         logger.error("block header hash does not exist or is bad: {}",
@@ -1757,7 +1861,7 @@ public class Manager {
     }
   }
 
-  private void postContractTrigger(final TransactionTrace trace, boolean remove) {
+  private void postContractTrigger(final TransactionTrace trace, boolean remove, String blockHash) {
     boolean isContractTriggerEnable = EventPluginLoader.getInstance()
         .isContractEventTriggerEnable() || EventPluginLoader
         .getInstance().isContractLogTriggerEnable();
@@ -1772,6 +1876,8 @@ public class Manager {
         contractTriggerCapsule.getContractTrigger().setRemoved(remove);
         contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
             .getLatestSolidifiedBlockNum());
+        contractTriggerCapsule.setBlockHash(blockHash);
+
         if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
           logger
               .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
