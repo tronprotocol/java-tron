@@ -281,13 +281,7 @@ public class TronNetDelegate {
               "time:" + time + ",block time:" + block.getTimeStamp());
     }
     validSignature(block);
-    long headNum = getHeadBlockId().getNum();
-    boolean flag = dbManager.validWitness(block);
-    if (!flag && block.getNum() - headNum <= 1) {
-      throw new P2pException(TypeEnum.BAD_BLOCK,
-              "block num:" + block.getNum() + ",head num:" + headNum);
-    }
-    return flag;
+    return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress());
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {
