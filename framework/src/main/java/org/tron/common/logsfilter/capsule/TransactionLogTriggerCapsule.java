@@ -92,45 +92,45 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
         try {
           switch (contractType) {
             case TransferContract:
-              TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
+              TransferContract transferContract = contractParameter.unpack(TransferContract.class);
 
-              if (Objects.nonNull(contractTransfer)) {
+              if (Objects.nonNull(transferContract)) {
                 transactionLogTrigger.setAssetName("trx");
 
-                if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
+                if (Objects.nonNull(transferContract.getOwnerAddress())) {
                   transactionLogTrigger.setFromAddress(StringUtil
-                      .encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                      .encode58Check(transferContract.getOwnerAddress().toByteArray()));
                 }
 
-                if (Objects.nonNull(contractTransfer.getToAddress())) {
+                if (Objects.nonNull(transferContract.getToAddress())) {
                   transactionLogTrigger.setToAddress(
-                      StringUtil.encode58Check(contractTransfer.getToAddress().toByteArray()));
+                      StringUtil.encode58Check(transferContract.getToAddress().toByteArray()));
                 }
 
-                transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
+                transactionLogTrigger.setAssetAmount(transferContract.getAmount());
               }
               break;
             case TransferAssetContract:
-              TransferAssetContract contractAssetTransfer = contractParameter
+              TransferAssetContract transferAssetContract = contractParameter
                   .unpack(TransferAssetContract.class);
 
-              if (Objects.nonNull(contractAssetTransfer)) {
-                if (Objects.nonNull(contractAssetTransfer.getAssetName())) {
+              if (Objects.nonNull(transferAssetContract)) {
+                if (Objects.nonNull(transferAssetContract.getAssetName())) {
                   transactionLogTrigger
-                      .setAssetName(contractAssetTransfer.getAssetName().toStringUtf8());
+                      .setAssetName(transferAssetContract.getAssetName().toStringUtf8());
                 }
 
-                if (Objects.nonNull(contractAssetTransfer.getOwnerAddress())) {
+                if (Objects.nonNull(transferAssetContract.getOwnerAddress())) {
                   transactionLogTrigger.setFromAddress(
                       StringUtil
-                          .encode58Check(contractAssetTransfer.getOwnerAddress().toByteArray()));
+                          .encode58Check(transferAssetContract.getOwnerAddress().toByteArray()));
                 }
 
-                if (Objects.nonNull(contractAssetTransfer.getToAddress())) {
+                if (Objects.nonNull(transferAssetContract.getToAddress())) {
                   transactionLogTrigger.setToAddress(StringUtil
-                      .encode58Check(contractAssetTransfer.getToAddress().toByteArray()));
+                      .encode58Check(transferAssetContract.getToAddress().toByteArray()));
                 }
-                transactionLogTrigger.setAssetAmount(contractAssetTransfer.getAmount());
+                transactionLogTrigger.setAssetAmount(transferAssetContract.getAmount());
               }
               break;
             case TriggerSmartContract:
@@ -234,7 +234,6 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
         logPojoList.add(logPojo);
       }
-
       transactionLogTrigger.setLogList(logPojoList);
     }
   }

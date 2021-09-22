@@ -3893,7 +3893,7 @@ public class Wallet {
       logger.error("getEnergyPrices failed, error is {}", e.getMessage());
     }
 
-    return "";
+    return null;
   }
 
   public String getCoinbase() {

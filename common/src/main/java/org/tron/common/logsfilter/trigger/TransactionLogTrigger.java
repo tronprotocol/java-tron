@@ -11,9 +11,6 @@ public class TransactionLogTrigger extends Trigger {
   private String transactionId;
   @Getter
   @Setter
-  private int transactionIndex;
-  @Getter
-  @Setter
   private String blockHash;
   @Getter
   @Setter
@@ -30,9 +27,6 @@ public class TransactionLogTrigger extends Trigger {
   @Getter
   @Setter
   private long energyUsageTotal;
-  @Getter
-  @Setter
-  private long cumulativeEnergyUsed;
   @Getter
   @Setter
   private long netUsage;
@@ -81,6 +75,12 @@ public class TransactionLogTrigger extends Trigger {
   @Getter
   @Setter
   private String data;
+  @Getter
+  @Setter
+  private int transactionIndex;
+  @Getter
+  @Setter
+  private long cumulativeEnergyUsed;
   @Getter
   @Setter
   private long preCumulativeLogCount;
