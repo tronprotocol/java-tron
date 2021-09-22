@@ -1710,6 +1710,16 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
       SolidityTriggerCapsule solidityTriggerCapsule
           = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
+
+      BlockCapsule blockCapsule;
+      try {
+        blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
+        solidityTriggerCapsule.setTimeStamp(blockCapsule.getTimeStamp());
+      } catch (Exception e) {
+        logger.error("postSolidityTrigger getBlockByNum={} except, {}",
+            latestSolidifiedBlockNumber, e.getMessage());
+      }
+
       boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
       if (!result) {
         logger.info("too many trigger, lost solidified trigger, "
