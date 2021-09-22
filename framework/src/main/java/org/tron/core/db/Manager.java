@@ -926,10 +926,6 @@ public class Manager {
     return txs;
   }
 
-  public boolean validWitness(final BlockCapsule block) {
-    return consensus.validBlock(block);
-  }
-
   /**
    * save a block.
    */
