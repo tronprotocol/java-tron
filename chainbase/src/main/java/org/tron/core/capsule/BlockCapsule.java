@@ -227,6 +227,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       tag = log.getClassName() + "." + log.getMethodName();
     }
     System.out.println(tag);
+    logger.info(tag);
     return tag;
   }
 
