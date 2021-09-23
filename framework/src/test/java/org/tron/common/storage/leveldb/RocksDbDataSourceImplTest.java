@@ -50,7 +50,7 @@ public class RocksDbDataSourceImplTest {
    */
   @AfterClass
   public static void destroy() {
-    String directory =Args.getInstance().getStorage().getDbDirectory();
+    String directory = Args.getInstance().getStorage().getDbDirectory();
     Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
