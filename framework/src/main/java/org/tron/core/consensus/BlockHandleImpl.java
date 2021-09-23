@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.Param.Miner;
@@ -13,6 +15,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -44,6 +47,14 @@ public class BlockHandleImpl implements BlockHandle {
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
+    Protocol.BlockHeader.raw raw = blockCapsule.getInstance().getBlockHeader().getRawData();
+    logger.info("g-block: {}, ID:{}, f:{},rawHexString:{}, rawString:{}",
+            blockCapsule,
+            new Sha256Hash(raw.getNumber(), Sha256Hash.of(CommonParameter
+                    .getInstance().isECKeyCryptoEngine(), raw.toByteArray())),
+            CommonParameter.getInstance().isECKeyCryptoEngine(),
+            org.apache.commons.codec.binary.Hex.encodeHexString(raw.toByteArray()),
+            raw.toString());
     if (blockCapsule == null) {
       return null;
     }
