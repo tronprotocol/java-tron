@@ -139,6 +139,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -1049,7 +1050,15 @@ public class Manager {
           throw throwable;
         }
       }
-      logger.info(SAVE_BLOCK + newBlock);
+      Protocol.BlockHeader.raw raw = block.getInstance().getBlockHeader().getRawData();
+      logger.info("SAVE_BLOCK: {}, ID:{}, f:{},rawHexString:{}, rawString:{}",
+                      newBlock,
+              new Sha256Hash(raw.getNumber(), Sha256Hash.of(CommonParameter
+                      .getInstance().isECKeyCryptoEngine(), raw.toByteArray())),
+              CommonParameter.getInstance().isECKeyCryptoEngine(),
+              org.apache.commons.codec.binary.Hex.encodeHexString(raw.toByteArray()),
+              raw.toString());
+
     }
     //clear ownerAddressSet
     if (CollectionUtils.isNotEmpty(ownerAddressSet)) {

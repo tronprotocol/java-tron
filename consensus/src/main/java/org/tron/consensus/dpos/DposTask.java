@@ -5,6 +5,7 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import com.google.protobuf.ByteString;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -107,12 +108,17 @@ public class DposTask {
       }
 
       BlockHeader.raw raw = blockCapsule.getInstance().getBlockHeader().getRawData();
-      logger.info("Produce block successfully, num: {}, time: {}, witness: {}, ID:{}, parentID:{}",
+      logger.info("Produce block successfully, num: {}, time: {}, witness: {}, ID:{}," +
+                      "f:{},rawHexString:{}, rawString:{}, parentID:{}",
           raw.getNumber(),
           new DateTime(raw.getTimestamp()),
           ByteArray.toHexString(raw.getWitnessAddress().toByteArray()),
           new Sha256Hash(raw.getNumber(), Sha256Hash.of(CommonParameter
               .getInstance().isECKeyCryptoEngine(), raw.toByteArray())),
+              CommonParameter
+                      .getInstance().isECKeyCryptoEngine(),
+              Hex.encodeHexString(raw.toByteArray()),
+              raw.toString(),
           ByteArray.toHexString(raw.getParentHash().toByteArray()));
     }
 
