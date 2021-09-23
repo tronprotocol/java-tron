@@ -964,6 +964,21 @@ public class Args extends CommonParameter {
     String topic = triggerObject.get("topic").unwrapped().toString();
     triggerConfig.setTopic(topic);
 
+    if (triggerObject.containsKey("redundancy")) {
+      String redundancy = triggerObject.get("redundancy").unwrapped().toString();
+      triggerConfig.setRedundancy("true".equalsIgnoreCase(redundancy));
+    }
+
+    if (triggerObject.containsKey("ethCompatible")) {
+      String ethCompatible = triggerObject.get("ethCompatible").unwrapped().toString();
+      triggerConfig.setEthCompatible("true".equalsIgnoreCase(ethCompatible));
+    }
+
+    if (triggerObject.containsKey("solidified")) {
+      String solidified = triggerObject.get("solidified").unwrapped().toString();
+      triggerConfig.setSolidified("true".equalsIgnoreCase(solidified));
+    }
+
     return triggerConfig;
   }
 

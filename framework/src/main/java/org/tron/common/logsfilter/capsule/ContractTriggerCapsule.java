@@ -36,6 +36,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     contractTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
+  public void setBlockHash(String blockHash) {
+    contractTrigger.setBlockHash(blockHash);
+  }
+
   @Override
   public void processTrigger() {
     ContractTrigger event;
@@ -123,6 +127,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     event.setCreatorAddress(contractTrigger.getCreatorAddress());
     event.setBlockNumber(contractTrigger.getBlockNumber());
     event.setTimeStamp(contractTrigger.getTimeStamp());
+    event.setBlockHash(contractTrigger.getBlockHash());
 
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
@@ -136,6 +141,25 @@ public class ContractTriggerCapsule extends TriggerCapsule {
                   .offer((ContractEventTrigger) event);
         }
 
+        // enable process contractEvent as contractLog
+        if ((EventPluginLoader.getInstance().isContractLogTriggerEnable()
+            && EventPluginLoader.getInstance().isContractLogTriggerRedundancy())
+            || (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()
+            && EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy())) {
+          ContractLogTrigger logTrigger = new ContractLogTrigger((ContractEventTrigger) event);
+          logTrigger.setTopicList(logInfo.getHexTopics());
+          logTrigger.setData(logInfo.getHexData());
+
+          if (EventPluginLoader.getInstance().isContractLogTriggerRedundancy()) {
+            EventPluginLoader.getInstance().postContractLogTrigger(logTrigger);
+          }
+
+          if (EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy()) {
+            Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+                .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                .offer(logTrigger);
+          }
+        }
       } else {
         if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
           EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
