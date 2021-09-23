@@ -193,11 +193,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public BlockId getBlockId() {
+    logger.info("##### 1 num:{}, f:{}, hash:{}", blockId.getNum(), blockId, blockId.equals(Sha256Hash.ZERO_HASH));
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId =
           new BlockId(Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
               this.block.getBlockHeader().getRawData().toByteArray()), getNum());
     }
+    logger.info("##### 2 num:{}, f:{}, hash:{}", blockId.getNum(), blockId, blockId.equals(Sha256Hash.ZERO_HASH));
     return blockId;
   }
 

@@ -58,6 +58,17 @@ public class BlockHandleImpl implements BlockHandle {
     if (blockCapsule == null) {
       return null;
     }
+
+    BlockCapsule blockCapsule2 = new BlockCapsule(blockCapsule.getInstance());
+    raw = blockCapsule2.getInstance().getBlockHeader().getRawData();
+    logger.info("g-block 2 : {}, ID:{}, f:{},rawHexString:{}, rawString:{}",
+            blockCapsule2,
+            new Sha256Hash(raw.getNumber(), Sha256Hash.of(CommonParameter
+                    .getInstance().isECKeyCryptoEngine(), raw.toByteArray())),
+            CommonParameter.getInstance().isECKeyCryptoEngine(),
+            org.apache.commons.codec.binary.Hex.encodeHexString(raw.toByteArray()),
+            raw.toString());
+
     try {
       consensus.receiveBlock(blockCapsule);
       BlockMessage blockMessage = new BlockMessage(blockCapsule);
