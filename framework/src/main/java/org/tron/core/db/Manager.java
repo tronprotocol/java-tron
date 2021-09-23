@@ -409,9 +409,9 @@ public class Manager {
       new MoveAbiHelper(chainBaseManager).doWork();
     }
 
-    if (needToLoadEnergyPriceHistory()) {
-      new EnergyPriceHistoryLoader(chainBaseManager).doWork();
-    }
+    // if (needToLoadEnergyPriceHistory()) {
+    //   new EnergyPriceHistoryLoader(chainBaseManager).doWork();
+    // }
 
     //for test only
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
