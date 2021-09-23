@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
 
+@Ignore
 public class NodeManagerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
