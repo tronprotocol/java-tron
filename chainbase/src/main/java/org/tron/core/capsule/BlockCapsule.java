@@ -202,7 +202,32 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     logger.info("##### 2 num:{}, f:{}, hash:{}", blockId.getNum(), blockId.equals(Sha256Hash.ZERO_HASH), blockId);
     logger.info("##### 3 num:{}, f:{}, hash:{}", blockId.getNum(), blockId.equals(Sha256Hash.ZERO_HASH), new BlockId(Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
             this.block.getBlockHeader().getRawData().toByteArray()), getNum()));
+
+    defaultTag();
+
     return blockId;
+  }
+
+  private static String defaultTag() {
+    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+    for (StackTraceElement e : stackTrace) {
+      System.out.println(e.getClassName() + "\t"
+              + e.getMethodName() + "\t" + e.getLineNumber());
+    }
+    StackTraceElement log = stackTrace[1];
+    String tag = null;
+    for (int i = 1; i < stackTrace.length; i++) {
+      StackTraceElement e = stackTrace[i];
+      if (!e.getClassName().equals(log.getClassName())) {
+        tag = e.getClassName() + "." + e.getMethodName();
+        break;
+      }
+    }
+    if (tag == null) {
+      tag = log.getClassName() + "." + log.getMethodName();
+    }
+    System.out.println(tag);
+    return tag;
   }
 
   public Sha256Hash calcMerkleRoot() {
