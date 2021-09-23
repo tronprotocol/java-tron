@@ -9,6 +9,7 @@ import java.util.Set;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
@@ -64,6 +65,7 @@ public class ProposalServiceTest {
     }
   }
 
+  @Ignore
   @Test
   public void testUpdateEnergyFee() {
     String preHistory = manager.getDynamicPropertiesStore().getEnergyPriceHistory();
