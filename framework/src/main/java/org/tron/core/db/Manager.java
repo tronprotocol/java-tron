@@ -1325,7 +1325,7 @@ public class Manager {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
 
-    return blockCapsule;
+    return new BlockCapsule(blockCapsule.getInstance());
 
   }
 
