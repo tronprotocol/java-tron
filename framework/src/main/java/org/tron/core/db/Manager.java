@@ -1191,11 +1191,11 @@ public class Manager {
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
 
     // if event subscribe is enabled, post contract triggers to queue
-    String blockHash = "";
-    if (Objects.nonNull(blockCap)) {
-      blockHash = blockCap.getBlockId().toString();
+    // only trigger when process block
+    if (Objects.nonNull(blockCap) && blockCap.isMerkleRootEmpty()) {
+      String blockHash = blockCap.getBlockId().toString();
+      postContractTrigger(trace, false, blockHash);
     }
-    postContractTrigger(trace, false, blockHash);
 
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultiSignTransaction(trxCap.getInstance())) {
@@ -1509,6 +1509,9 @@ public class Manager {
           .getTransactionId()))) {
         triggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         EventPluginLoader.getInstance().postSolidityLogTrigger(triggerCapsule);
+      } else {
+        logger.error("postSolidityLogContractTrigger txId={} not contains transaction",
+            triggerCapsule.getTransactionId());
       }
     }
     Args.getSolidityContractLogTriggerMap().remove(blockNum);
@@ -1731,6 +1734,7 @@ public class Manager {
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
     BlockCapsule newBlock = blockCapsule;
 
+    // process block trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
         long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
@@ -1751,6 +1755,7 @@ public class Manager {
       }
     }
 
+    // process transaction trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
         long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
@@ -1761,6 +1766,9 @@ public class Manager {
           logger.error("postBlockTrigger getBlockByNum blkNum={} except, error is {}",
               solidityBlkNum, e.getMessage());
         }
+      } else {
+        // need to reset block
+        newBlock = blockCapsule;
       }
 
       List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
@@ -1794,6 +1802,7 @@ public class Manager {
           for (int i = 0; i < transactionCapsuleList.size(); i++) {
             TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
             TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
+            transactionCapsule.setBlockNum(newBlock.getNum());
 
             cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
                 cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
