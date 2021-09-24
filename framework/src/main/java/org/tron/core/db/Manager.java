@@ -1802,6 +1802,7 @@ public class Manager {
           for (int i = 0; i < transactionCapsuleList.size(); i++) {
             TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
             TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
+            // reset block num to ignore value is -1
             transactionCapsule.setBlockNum(newBlock.getNum());
 
             cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
