@@ -1038,6 +1038,7 @@ public class Manager {
         try (ISession tmpSession = revokingStore.buildSession()) {
 
           applyBlock(newBlock, txs);
+          //todo something
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
