@@ -1192,7 +1192,7 @@ public class Manager {
 
     // if event subscribe is enabled, post contract triggers to queue
     // only trigger when process block
-    if (Objects.nonNull(blockCap) && blockCap.isMerkleRootEmpty()) {
+    if (Objects.nonNull(blockCap) && !blockCap.isMerkleRootEmpty()) {
       String blockHash = blockCap.getBlockId().toString();
       postContractTrigger(trace, false, blockHash);
     }
