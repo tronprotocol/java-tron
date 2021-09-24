@@ -136,9 +136,14 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
 
         if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-          Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
+          boolean result = Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                   .offer((ContractEventTrigger) event);
+
+          if (!result) {
+            logger.info("too many triggers, solidity event trigger lost: {}",
+                event.getUniqueId());
+          }
         }
 
         // enable process contractEvent as contractLog
@@ -155,9 +160,14 @@ public class ContractTriggerCapsule extends TriggerCapsule {
           }
 
           if (EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy()) {
-            Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+            boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
                 .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                 .offer(logTrigger);
+
+            if (!result) {
+              logger.info("too many triggers, solidity log trigger lost: {}",
+                  logTrigger.getUniqueId());
+            }
           }
         }
       } else {
@@ -166,9 +176,14 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
 
         if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-          Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+          boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                   .offer((ContractLogTrigger) event);
+
+          if (!result) {
+            logger.info("too many triggers, solidity log trigger lost: {}",
+                event.getUniqueId());
+          }
         }
       }
     }
