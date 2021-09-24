@@ -1325,8 +1325,9 @@ public class Manager {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
 
-    return blockCapsule;
-
+    BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
+    capsule.generatedByMyself = true;
+    return capsule;
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
