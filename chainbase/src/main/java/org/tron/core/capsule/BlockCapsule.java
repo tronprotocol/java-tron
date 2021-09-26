@@ -260,6 +260,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block.getBlockHeader().getRawData().getWitnessAddress();
   }
 
+  public boolean isMerkleRootEmpty() {
+    return this.block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray().length == 0;
+  }
+
   @Override
   public byte[] getData() {
     return this.block.toByteArray();
