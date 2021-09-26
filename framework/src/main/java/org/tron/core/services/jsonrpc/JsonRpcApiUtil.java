@@ -13,6 +13,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
@@ -379,6 +380,51 @@ public class JsonRpcApiUtil {
       throw new JsonRpcInvalidParamsException(e.getMessage());
     }
     return bHash;
+  }
+
+  /**
+   * check if address is hex string of size 40
+   */
+  public static byte[] addressToByteArray(String address) throws JsonRpcInvalidParamsException {
+    byte[] addressByte;
+    try {
+      if (address.startsWith("0x")) {
+        address = address.substring(2);
+      }
+      if (address.length() != 40) {
+        String msg = address.length() % 2 == 0 ? String.valueOf(address.length() / 2)
+            : String.valueOf(address.length() / 2.0);
+        throw new JsonRpcInvalidParamsException(
+            "data type size mismatch, expected 20 got " + msg);
+      }
+      addressByte = ByteArray.fromHexString(address);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(e.getMessage());
+    }
+    byte[] last20Bytes = new DataWord(addressByte).getLast20Bytes();
+    return last20Bytes;
+  }
+
+  /**
+   * check if topic is hex string of size 64
+   */
+  public static byte[] topicToByteArray(String topic) throws JsonRpcInvalidParamsException {
+    byte[] topicByte;
+    try {
+      if (topic.startsWith("0x")) {
+        topic = topic.substring(2);
+      }
+      if (topic.length() != 64) {
+        String msg = topic.length() % 2 == 0 ? String.valueOf(topic.length() / 2)
+            : String.valueOf(topic.length() / 2.0);
+        throw new JsonRpcInvalidParamsException(
+            "data type size mismatch, expected 32 got " + msg);
+      }
+      topicByte = ByteArray.fromHexString(topic);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(e.getMessage());
+    }
+    return topicByte;
   }
 
   public static boolean paramStringIsNull(String string) {

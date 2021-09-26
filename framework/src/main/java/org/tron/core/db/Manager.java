@@ -99,6 +99,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -190,8 +191,8 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
-          .newBuilder().maximumSize(TX_ID_CACHE_SIZE)
-          .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+      .newBuilder().maximumSize(TX_ID_CACHE_SIZE)
+      .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
@@ -258,6 +259,8 @@ public class Manager {
           }
         }
       };
+  private Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
+      .compare(o2.getOrder(), o1.getOrder());
 
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
@@ -350,9 +353,6 @@ public class Manager {
   public void stopRePushTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
   }
-
-  private Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
-      .compare(o2.getOrder(), o1.getOrder());
 
   @PostConstruct
   public void init() {
@@ -745,7 +745,8 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException {
+      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
+      EventBloomException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -757,20 +758,20 @@ public class Manager {
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
-          ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
-          TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-          TaposException, ValidateScheduleException, ReceiptCheckErrException,
-          VMIllegalException, TooBigTransactionResultException,
-          ZksnarkException, BadBlockException {
+      ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      TaposException, ValidateScheduleException, ReceiptCheckErrException,
+      VMIllegalException, TooBigTransactionResultException,
+      ZksnarkException, BadBlockException, EventBloomException {
     applyBlock(block, block.getTransactions());
   }
 
   private void applyBlock(BlockCapsule block, List<TransactionCapsule> txs)
-          throws ContractValidateException, ContractExeException, ValidateSignatureException,
-          AccountResourceInsufficientException, TransactionExpirationException,
-          TooBigTransactionException,DupTransactionException, TaposException,
-          ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
-          TooBigTransactionResultException, ZksnarkException, BadBlockException {
+      throws ContractValidateException, ContractExeException, ValidateSignatureException,
+      AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, TaposException,
+      ValidateScheduleException, ReceiptCheckErrException, VMIllegalException,
+      TooBigTransactionResultException, ZksnarkException, BadBlockException, EventBloomException {
     processBlock(block, txs);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -792,7 +793,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, ZksnarkException, BadBlockException {
+      VMIllegalException, ZksnarkException, BadBlockException, EventBloomException {
 
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT);
 
@@ -936,13 +937,13 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException, ZksnarkException {
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
     long start = System.currentTimeMillis();
     List<TransactionCapsule> txs = getVerifyTxs(block);
     logger.info("Block num: {}, re-push-size: {}, pending-size: {}, "
-                    + "block-tx-size: {}, verify-tx-size: {}",
-            block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
-            block.getTransactions().size(), txs.size());
+            + "block-tx-size: {}, verify-tx-size: {}",
+        block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
+        block.getTransactions().size(), txs.size());
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1385,7 +1386,7 @@ public class Manager {
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BadBlockException {
+      ZksnarkException, BadBlockException, EventBloomException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1454,6 +1455,9 @@ public class Manager {
     updateDynamicProperties(block);
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
+
+    chainBaseManager.getSectionBloomStore().initBlockSection(block.getNum(), transactionRetCapsule);
+    chainBaseManager.getSectionBloomStore().write(block.getNum());
   }
 
   private void payReward(BlockCapsule block) {
@@ -1803,7 +1807,7 @@ public class Manager {
           }
         } else {
           logger.error("postBlockTrigger blockNum={} has no transactions or "
-              + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
+                  + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
               newBlock.getNum());
           for (TransactionCapsule e : newBlock.getTransactions()) {
             postTransactionTrigger(e, newBlock);
@@ -1892,32 +1896,6 @@ public class Manager {
     StoreFactory.getInstance().setChainBaseManager(chainBaseManager);
   }
 
-  private static class ValidateSignTask implements Callable<Boolean> {
-
-    private TransactionCapsule trx;
-    private CountDownLatch countDownLatch;
-    private ChainBaseManager manager;
-
-    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
-        ChainBaseManager manager) {
-      this.trx = trx;
-      this.countDownLatch = countDownLatch;
-      this.manager = manager;
-    }
-
-    @Override
-    public Boolean call() throws ValidateSignatureException {
-      try {
-        trx.validateSignature(manager.getAccountStore(), manager.getDynamicPropertiesStore());
-      } catch (ValidateSignatureException e) {
-        throw e;
-      } finally {
-        countDownLatch.countDown();
-      }
-      return true;
-    }
-  }
-
   public TransactionCapsule getTxFromPending(String txId) {
     AtomicReference<TransactionCapsule> transactionCapsule = new AtomicReference<>();
     Sha256Hash txHash = Sha256Hash.wrap(ByteArray.fromHexString(txId));
@@ -1954,5 +1932,31 @@ public class Manager {
     long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
+  }
+
+  private static class ValidateSignTask implements Callable<Boolean> {
+
+    private TransactionCapsule trx;
+    private CountDownLatch countDownLatch;
+    private ChainBaseManager manager;
+
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
+        ChainBaseManager manager) {
+      this.trx = trx;
+      this.countDownLatch = countDownLatch;
+      this.manager = manager;
+    }
+
+    @Override
+    public Boolean call() throws ValidateSignatureException {
+      try {
+        trx.validateSignature(manager.getAccountStore(), manager.getDynamicPropertiesStore());
+      } catch (ValidateSignatureException e) {
+        throw e;
+      } finally {
+        countDownLatch.countDown();
+      }
+      return true;
+    }
   }
 }

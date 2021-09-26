@@ -13,9 +13,13 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -66,10 +70,10 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
 
-  String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
   private final int chainId = 100;
   private final int networkId = 100;
-
+  String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
+  ExecutorService executor;
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
   private Manager manager;
@@ -78,6 +82,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
     this.manager = manager;
+    this.executor = Executors.newFixedThreadPool(5);
   }
 
   @Override
@@ -992,5 +997,37 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       throws JsonRpcMethodNotFoundException {
     throw new JsonRpcMethodNotFoundException(
         "the method eth_submitHashrate does not exist/is not available");
+  }
+
+  @Override
+  public String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException, IOException {
+    return null;
+  }
+
+  @Override
+  public String newBlockFilter() throws JsonRpcInvalidParamsException, IOException {
+    return null;
+  }
+
+  @Override
+  public boolean uninstallFilter(String filterId) throws IOException {
+    return false;
+  }
+
+  @Override
+  public Object[] getFilterChanges(String filterId)
+      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException {
+    return new Object[0];
+  }
+
+  @Override
+  public LogFilterElement[] getLogs(FilterRequest fr)
+      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException {
+    return new LogFilterElement[0];
+  }
+
+  @Override
+  public long getDbCount() throws JsonRpcInvalidParamsException, IOException {
+    return manager.getChainBaseManager().getSectionBloomStore().getCount();
   }
 }

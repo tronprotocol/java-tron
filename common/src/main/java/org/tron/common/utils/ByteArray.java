@@ -138,6 +138,10 @@ public class ByteArray {
     return toJsonHex((long) x);
   }
 
+  public static String toJsonHex(String x) {
+    return "0x" + x;
+  }
+
   public static BigInteger hexToBigInteger(String input) {
     if (input.startsWith("0x")) {
       return new BigInteger(input.substring(2), 16);
