@@ -1737,6 +1737,61 @@ public class Manager {
     }
   }
 
+  private void processTransactionTrigger(BlockCapsule newBlock) {
+    List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
+
+    // need to set eth compatible data from transactionInfoList
+    if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
+      TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
+      TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
+
+      try {
+        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
+            .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
+
+        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+          result.getInstance().getTransactioninfoList().forEach(
+              transactionInfoListBuilder::addTransactionInfo
+          );
+
+          transactionInfoList = transactionInfoListBuilder.build();
+        }
+      } catch (BadItemException e) {
+        logger.error("postBlockTrigger getTransactionInfoList blockNum={}, error is {}",
+            newBlock.getNum(), e.getMessage());
+      }
+
+      if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
+        long cumulativeEnergyUsed = 0;
+        long cumulativeLogCount = 0;
+        long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+
+        for (int i = 0; i < transactionCapsuleList.size(); i++) {
+          TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
+          TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
+          // reset block num to ignore value is -1
+          transactionCapsule.setBlockNum(newBlock.getNum());
+
+          cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
+              cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
+
+          cumulativeLogCount += transactionInfo.getLogCount();
+        }
+      } else {
+        logger.error("postBlockTrigger blockNum={} has no transactions or "
+                + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
+            newBlock.getNum());
+        for (TransactionCapsule e : newBlock.getTransactions()) {
+          postTransactionTrigger(e, newBlock);
+        }
+      }
+    } else {
+      for (TransactionCapsule e : newBlock.getTransactions()) {
+        postTransactionTrigger(e, newBlock);
+      }
+    }
+  }
+
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
     BlockCapsule newBlock = blockCapsule;
 
@@ -1763,11 +1818,11 @@ public class Manager {
 
     // process transaction trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      // set newBlock
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
         long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
         try {
-          newBlock = chainBaseManager
-              .getBlockByNum(solidityBlkNum);
+          newBlock = chainBaseManager.getBlockByNum(solidityBlkNum);
         } catch (Exception e) {
           logger.error("postBlockTrigger getBlockByNum blkNum={} except, error is {}",
               solidityBlkNum, e.getMessage());
@@ -1777,58 +1832,7 @@ public class Manager {
         newBlock = blockCapsule;
       }
 
-      List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
-
-      // get transactionInfoList
-      if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
-        TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
-        TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
-
-        try {
-          TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
-              .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
-
-          if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-            result.getInstance().getTransactioninfoList().forEach(
-                transactionInfoListBuilder::addTransactionInfo
-            );
-
-            transactionInfoList = transactionInfoListBuilder.build();
-          }
-        } catch (BadItemException e) {
-          logger.error("postBlockTrigger getTransactionInfoList blockNum={}, error is {}",
-              newBlock.getNum(), e.getMessage());
-        }
-
-        if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
-          long cumulativeEnergyUsed = 0;
-          long cumulativeLogCount = 0;
-          long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
-
-          for (int i = 0; i < transactionCapsuleList.size(); i++) {
-            TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
-            TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
-            // reset block num to ignore value is -1
-            transactionCapsule.setBlockNum(newBlock.getNum());
-
-            cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
-                cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
-
-            cumulativeLogCount += transactionInfo.getLogCount();
-          }
-        } else {
-          logger.error("postBlockTrigger blockNum={} has no transactions or "
-                  + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
-              newBlock.getNum());
-          for (TransactionCapsule e : newBlock.getTransactions()) {
-            postTransactionTrigger(e, newBlock);
-          }
-        }
-      } else {
-        for (TransactionCapsule e : newBlock.getTransactions()) {
-          postTransactionTrigger(e, newBlock);
-        }
-      }
+      processTransactionTrigger(newBlock);
     }
   }
 
@@ -1895,8 +1899,8 @@ public class Manager {
         contractTriggerCapsule.setBlockHash(blockHash);
 
         if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
-          logger
-              .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
+          logger.info("too many triggers, contract log trigger lost: {}",
+              trigger.getTransactionId());
         }
       }
     }
