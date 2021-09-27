@@ -18,7 +18,7 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
 
   @Override
   public void processFilterTrigger() {
-    // todo
+    // todo process block filter: handle(blockHash)
     logger.info("BlockFilterCapsule processFilterTrigger get blockHash: {}", blockHash);
   }
 }

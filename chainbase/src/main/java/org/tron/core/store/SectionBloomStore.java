@@ -78,10 +78,11 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
     put(key, new BytesCapsule(compressData));
   }
 
-  public void initBlockSection(long blockNum, TransactionRetCapsule transactionRetCapsule) {
+  public Bloom initBlockSection(long blockNum, TransactionRetCapsule transactionRetCapsule) {
     Iterator<TransactionInfo> it =
         transactionRetCapsule.getInstance().getTransactioninfoList().iterator();
     Bloom blockBloom = null;
+
     while (it.hasNext()) {
       TransactionInfo transactionInfo = it.next();
       //if contract address is empty, skip
@@ -103,7 +104,7 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
 
     if (Objects.isNull(blockBloom)) {
       bitList = null;
-      return;
+      return null;
     }
 
     bitList = new ArrayList<>();
@@ -115,6 +116,8 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
       }
       bitList.add(i);
     }
+
+    return blockBloom;
   }
 
   public void write(long blockNum) throws EventBloomException {

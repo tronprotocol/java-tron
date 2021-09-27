@@ -43,12 +43,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.logsfilter.Bloom;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
+import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
@@ -277,7 +279,7 @@ public class Manager {
             logger.error("filterProcessLoop get InterruptedException, error is {}", e.getMessage());
             Thread.currentThread().interrupt();
           } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in filter process loop: ", throwable);
+            logger.error("unknown throwable happened in filterProcessLoop: ", throwable);
           }
         }
       };
@@ -855,6 +857,7 @@ public class Manager {
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
         reOrgContractTrigger();
+        reOrgLogsFilter();
         eraseBlock();
       }
     }
@@ -1491,8 +1494,12 @@ public class Manager {
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
-    chainBaseManager.getSectionBloomStore().initBlockSection(block.getNum(), transactionRetCapsule);
-    chainBaseManager.getSectionBloomStore().write(block.getNum());
+    if (true) {
+      Bloom blockBloom = chainBaseManager.getSectionBloomStore()
+          .initBlockSection(block.getNum(), transactionRetCapsule);
+      chainBaseManager.getSectionBloomStore().write(block.getNum());
+      block.setBloom(blockBloom);
+    }
   }
 
   private void payReward(BlockCapsule block) {
@@ -1826,15 +1833,63 @@ public class Manager {
     }
   }
 
+  private void reOrgLogsFilter() {
+    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+      logger.info("switchfork occurred, post reOrgContractTrigger");
+
+      try {
+        BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        postLogsFilter(oldHeadBlock, true);
+      } catch (BadItemException | ItemNotFoundException e) {
+        logger.error("block header hash does not exist or is bad: {}",
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      }
+    }
+  }
+
+  private void postBlockFilter(final BlockCapsule blockCapsule) {
+    BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule);
+    if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
+      logger.info("too many filters, block filter lost: {}", blockCapsule.getBlockId());
+    }
+  }
+
+  private void postLogsFilter(final BlockCapsule blockCapsule, boolean removed) {
+    if (!blockCapsule.getTransactions().isEmpty()
+        && (removed || blockCapsule.getBloom() != null)) {
+      long blockNumber = blockCapsule.getNum();
+      List<TransactionInfo> transactionInfoList = new ArrayList<>();
+
+      try {
+        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
+            .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNumber));
+
+        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+          transactionInfoList.addAll(result.getInstance().getTransactioninfoList());
+        }
+      } catch (BadItemException e) {
+        logger.error("processLogsFilter getTransactionInfoList blockNum={}, error is {}",
+            blockNumber, e.getMessage());
+        return;
+      }
+
+      LogsFilterCapsule logsFilterCapsule = new LogsFilterCapsule(blockNumber,
+          blockCapsule.getBloom(), transactionInfoList, removed);
+
+      if (!filterCapsuleQueue.offer(logsFilterCapsule)) {
+        logger.info("too many filters, logs filter lost: {}", blockNumber);
+      }
+    }
+  }
+
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
     BlockCapsule newBlock = blockCapsule;
 
-    // process block filter for jsonrpc
+    // process filter for jsonrpc
     if (CommonParameter.getInstance().isJsonRpcEnabled()) {
-      BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule);
-      if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
-        logger.info("too many filters, block filter lost: {}", blockCapsule.getBlockId());
-      }
+      postBlockFilter(blockCapsule);
+      postLogsFilter(blockCapsule, false);
     }
 
     // process block trigger
