@@ -45,8 +45,10 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
+import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
@@ -216,6 +218,9 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+  // log filter
+  private boolean isRunFilterProcessThread = true;
+  private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
 
   /**
    * Cycle thread to rePush Transactions
@@ -259,6 +264,24 @@ public class Manager {
           }
         }
       };
+
+  private Runnable filterProcessLoop =
+      () -> {
+        while (isRunFilterProcessThread) {
+          try {
+            FilterTriggerCapsule filterCapsule = filterCapsuleQueue.poll(1, TimeUnit.SECONDS);
+            if (filterCapsule != null) {
+              filterCapsule.processFilterTrigger();
+            }
+          } catch (InterruptedException e) {
+            logger.error("filterProcessLoop get InterruptedException, error is {}", e.getMessage());
+            Thread.currentThread().interrupt();
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in filter process loop: ", throwable);
+          }
+        }
+      };
+
   private Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
       .compare(o2.getOrder(), o1.getOrder());
 
@@ -354,6 +377,10 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
+  public void stopFilterProcessThread() {
+    isRunFilterProcessThread = false;
+  }
+
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
@@ -376,6 +403,7 @@ public class Manager {
       this.rePushTransactions = new LinkedBlockingQueue<>();
     }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
+    this.filterCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
     chainBaseManager.init();
@@ -428,6 +456,12 @@ public class Manager {
       startEventSubscribing();
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
+    }
+
+    // start json rpc filter process
+    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+      Thread filterProcessThread = new Thread(filterProcessLoop);
+      filterProcessThread.start();
     }
 
     //initStoreFactory
@@ -1794,6 +1828,14 @@ public class Manager {
 
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
     BlockCapsule newBlock = blockCapsule;
+
+    // process block filter for jsonrpc
+    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+      BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule);
+      if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
+        logger.info("too many filters, block filter lost: {}", blockCapsule.getBlockId());
+      }
+    }
 
     // process block trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
