@@ -25,7 +25,9 @@ public class PendingManager implements AutoCloseable {
     List<TransactionCapsule> list = new ArrayList<>();
     TransactionCapsule capsule = dbManager.getRePushTransactions().poll();
     while (capsule != null) {
-      list.add(capsule);
+      if (System.currentTimeMillis() - capsule.getTime() < timeout) {
+        list.add(capsule);
+      }
       capsule = dbManager.getRePushTransactions().poll();
     }
 
