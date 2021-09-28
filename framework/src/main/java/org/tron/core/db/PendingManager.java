@@ -23,17 +23,14 @@ public class PendingManager implements AutoCloseable {
   public void close() {
 
     List<TransactionCapsule> list = new ArrayList<>();
-    TransactionCapsule capsule = dbManager.getRePushTransactions().poll();
-    while (capsule != null) {
+    dbManager.getRePushTransactions().forEach(capsule -> {
       if (System.currentTimeMillis() - capsule.getTime() < timeout) {
         list.add(capsule);
       }
-      capsule = dbManager.getRePushTransactions().poll();
-    }
+    });
 
-    if (list.size() > 0) {
-      dbManager.getRePushTransactions().addAll(list);
-    }
+    dbManager.getRePushTransactions().clear();
+    dbManager.getRePushTransactions().addAll(list);
 
     for (TransactionCapsule tx : dbManager.getPendingTransactions()) {
       txIteration(tx);
