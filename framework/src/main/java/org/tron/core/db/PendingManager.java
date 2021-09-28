@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j(topic = "DB")
 public class PendingManager implements AutoCloseable {
 
@@ -19,9 +22,21 @@ public class PendingManager implements AutoCloseable {
   @Override
   public void close() {
 
+    List<TransactionCapsule> list = new ArrayList<>();
+    TransactionCapsule capsule = dbManager.getRePushTransactions().poll();
+    while (capsule != null) {
+      list.add(capsule);
+      capsule = dbManager.getRePushTransactions().poll();
+    }
+
+    for (TransactionCapsule tx : list) {
+      dbManager.getRePushTransactions().add(tx);
+    }
+
     for (TransactionCapsule tx : dbManager.getPendingTransactions()) {
       txIteration(tx);
     }
+
     dbManager.getPendingTransactions().clear();
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
       tx.setTime(System.currentTimeMillis());
