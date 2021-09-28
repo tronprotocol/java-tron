@@ -317,33 +317,6 @@ public interface TronJsonRpc {
     private final String highestBlock;
   }
 
-  @JsonPropertyOrder(alphabetic = true)
-  class BlockResult {
-
-    public String number;
-    public String hash;
-    public String parentHash;
-    public String nonce;
-    public String sha3Uncles;
-    public String logsBloom;
-    public String transactionsRoot;
-    public String stateRoot;
-    public String receiptsRoot;
-    public String miner;
-    public String difficulty;
-    public String totalDifficulty;
-    public String extraData;
-    public String size;
-    public String gasLimit;
-    public String gasUsed;
-    public String timestamp;
-    public Object[] transactions; //TransactionResult or byte32
-    public String[] uncles;
-
-    public String baseFeePerGas = null;
-    public String mixHash = null;
-  }
-
   class CompilationResult {
 
     public String code;
@@ -422,6 +395,7 @@ public interface TronJsonRpc {
 
   }
 
+  @JsonPropertyOrder(alphabetic = true)
   class LogFilterElement {
 
     public String logIndex;

@@ -174,65 +174,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       return null;
     }
 
-    BlockCapsule blockCapsule = new BlockCapsule(block);
-    BlockResult br = new BlockResult();
-    br.number = ByteArray.toJsonHex(blockCapsule.getNum());
-    br.hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
-    br.parentHash = ByteArray.toJsonHex(blockCapsule.getParentBlockId().getBytes());
-    br.nonce = null; // no value
-    br.sha3Uncles = null; // no value
-    br.logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
-    br.transactionsRoot = ByteArray
-        .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
-    br.stateRoot = ByteArray
-        .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
-    br.receiptsRoot = null; // no value
-    br.miner = ByteArray.toJsonHex(blockCapsule.getWitnessAddress().toByteArray());
-    br.difficulty = null; // no value
-    br.totalDifficulty = null; // no value
-    br.extraData = null; // no value
-    br.size = ByteArray.toJsonHex(block.getSerializedSize());
-    br.timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
-
-    long gasUsedInBlock = 0;
-    long gasLimitInBlock = 0;
-
-    List<Object> txes = new ArrayList<>();
-    List<Transaction> transactionsList = block.getTransactionsList();
-    List<TransactionInfo> transactionInfoList =
-        wallet.getTransactionInfoByBlockNum(blockCapsule.getNum()).getTransactionInfoList();
-    if (fullTx) {
-      long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
-
-      for (int i = 0; i < transactionsList.size(); i++) {
-        Transaction transaction = transactionsList.get(i);
-        gasLimitInBlock += transaction.getRawData().getFeeLimit();
-
-        long energyUsageTotal = getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
-        gasUsedInBlock += energyUsageTotal;
-
-        txes.add(new TransactionResult(blockCapsule, i, transaction,
-            energyUsageTotal, energyFee, wallet));
-      }
-    } else {
-      for (int i = 0; i < transactionsList.size(); i++) {
-        gasLimitInBlock += transactionsList.get(i).getRawData().getFeeLimit();
-        gasUsedInBlock += getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
-
-        byte[] txHash = Sha256Hash
-            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-                transactionsList.get(i).getRawData().toByteArray());
-        txes.add(ByteArray.toJsonHex(txHash));
-      }
-    }
-    br.transactions = txes.toArray();
-
-    br.gasLimit = ByteArray.toJsonHex(gasLimitInBlock);
-    br.gasUsed = ByteArray.toJsonHex(gasUsedInBlock);
-    List<String> ul = new ArrayList<>();
-    br.uncles = ul.toArray(new String[0]);
-
-    return br;
+    return new BlockResult(block, fullTx, wallet);
   }
 
   @Override
