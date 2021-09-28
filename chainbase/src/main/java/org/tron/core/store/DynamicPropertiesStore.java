@@ -794,6 +794,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveEnergyPriceHistory(DEFAULT_ENERGY_PRICE_HISTORY);
     }
+
+    try {
+      this.getSetBlackholeAccountPermission();
+    } catch (IllegalArgumentException e) {
+      this.saveSetBlackholePermission(0);
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -2357,6 +2363,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY_DONE"));
   }
 
+  public boolean isBlackholeAccountPermissionSet() {
+    return getSetBlackholeAccountPermission() == 1L;
+  }
+
   public String getEnergyPriceHistory() {
     return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY))
         .map(BytesCapsule::getData)
@@ -2366,6 +2376,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveEnergyPriceHistory(String value) {
     this.put(ENERGY_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+
+  public long getSetBlackholeAccountPermission() {
+    return Optional.of(getUnchecked(DynamicResourceProperties.SET_BLACKHOLE_ACCOUNT_PERMISSION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_CLOSE_BLACKHOLE_ACCOUNT"));
+  }
+
+  public void saveSetBlackholePermission(long value) {
+    this.put(DynamicResourceProperties.SET_BLACKHOLE_ACCOUNT_PERMISSION,
+        new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {
@@ -2396,6 +2419,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO =
         "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
             .getBytes();
+    private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
+        "SET_BLACKHOLE_ACCOUNT_PERMISSION"
+        .getBytes();
   }
 
 }

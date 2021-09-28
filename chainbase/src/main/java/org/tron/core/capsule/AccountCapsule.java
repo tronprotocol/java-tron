@@ -19,10 +19,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.util.List;
 import java.util.Map;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -1117,9 +1115,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       builder.setWitnessPermission(witness);
     }
     builder.clearActivePermission();
-    for (int i = 0; i < actives.size(); i++) {
-      Permission permission = actives.get(i).toBuilder().setId(i + 2).build();
-      builder.addActivePermission(permission);
+    if (actives != null) {
+      for (int i = 0; i < actives.size(); i++) {
+        Permission permission = actives.get(i).toBuilder().setId(i + 2).build();
+        builder.addActivePermission(permission);
+      }
     }
     this.account = builder.build();
   }
