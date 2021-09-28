@@ -2353,9 +2353,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
-  public void saveEnergyPriceHistoryDone(long num) {
+  public void saveEnergyPriceHistoryDone(long value) {
     this.put(ENERGY_PRICE_HISTORY_DONE,
-        new BytesCapsule(ByteArray.fromLong(num)));
+        new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public long getEnergyPriceHistoryDone() {
