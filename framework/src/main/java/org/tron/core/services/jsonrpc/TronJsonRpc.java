@@ -263,29 +263,29 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_newFilter")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
+      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
   })
   String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException, IOException;
 
   @JsonRpcMethod("eth_newBlockFilter")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
+      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
   })
   String newBlockFilter() throws JsonRpcInvalidParamsException, IOException;
 
   @JsonRpcMethod("eth_uninstallFilter")
   @JsonRpcErrors({
-      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
+      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
   })
   boolean uninstallFilter(String filterId) throws IOException;
 
   @JsonRpcMethod("eth_getFilterChanges")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
-      @JsonRpcError(exception = ExecutionException.class, code = -32603, data = "{}"),
-      @JsonRpcError(exception = InterruptedException.class, code = -32603, data = "{}"),
+      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
   })
   Object[] getFilterChanges(String filterId)
       throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException;
@@ -293,9 +293,9 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_getLogs")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
-      @JsonRpcError(exception = ExecutionException.class, code = -32603, data = "{}"),
-      @JsonRpcError(exception = InterruptedException.class, code = -32603, data = "{}"),
+      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
   })
   LogFilterElement[] getLogs(FilterRequest fr)
       throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException;
@@ -303,7 +303,7 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_dbCount")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
+      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
   })
   long getDbCount() throws JsonRpcInvalidParamsException, IOException;
 
@@ -432,7 +432,7 @@ public interface TronJsonRpc {
     public String address;
     public String data;
     public String[] topics;
-    public boolean removed; //所在的交易是否被回退。由于回退的交易在索引中查不到，所以 removed == false
+    public boolean removed;
 
     public LogFilterElement(String blockHash, Long blockNum, String txId, Integer txIndex,
         String contractAddress, List<DataWord> topicList, String logData, int logIdx,
