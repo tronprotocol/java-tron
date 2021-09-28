@@ -24,10 +24,10 @@ public class LogFilterWrapper {
   public LogFilterWrapper(FilterRequest fr, long currentMaxBlockNum, Wallet wallet)
       throws JsonRpcInvalidParamsException {
 
-    //1.convert FilterRequest to LogFilter
+    // 1.convert FilterRequest to LogFilter
     this.logFilter = new LogFilter(fr);
 
-    //2. get fromBlock、toBlock from FilterRequest
+    // 2. get fromBlock、toBlock from FilterRequest
     long fromBlock;
     long toBlock;
     if (fr.blockHash != null) {
@@ -45,9 +45,9 @@ public class LogFilterWrapper {
       toBlock = fromBlock;
     } else {
 
-      //if fromBlock is empty but toBlock is not empty,
-      //then if toBlock < maxBlockNum, set fromBlock = toBlock
-      //then if toBlock >= maxBlockNum, set fromBlock = maxBlockNum
+      // if fromBlock is empty but toBlock is not empty,
+      // then if toBlock < maxBlockNum, set fromBlock = toBlock
+      // then if toBlock >= maxBlockNum, set fromBlock = maxBlockNum
       if (StringUtils.isEmpty(fr.fromBlock) && StringUtils.isNotEmpty(fr.toBlock)) {
         toBlock = JsonRpcApiUtil.getByJsonBlockId(fr.toBlock);
         if (toBlock < currentMaxBlockNum) {
@@ -87,5 +87,4 @@ public class LogFilterWrapper {
     this.fromBlock = fromBlock;
     this.toBlock = toBlock;
   }
-
 }

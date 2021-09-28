@@ -13,7 +13,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
-import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionRet;
@@ -33,7 +32,6 @@ public class LogMatch {
    */
   private List<Long> blockNumList;
   private Manager manager;
-
 
   public LogMatch(LogFilterWrapper logFilterWrapper, List<Long> blockNumList,
       Manager manager) {
@@ -55,7 +53,7 @@ public class LogMatch {
       String blockHash = manager.getChainBaseManager().getBlockIdByNum(blockNum).toString();
       List<LogFilterElement> matchedLog =
           matchBlock(blockNum, blockHash, transactionInfoList, false);
-      if (matchedLog.size() > 0) {
+      if (!matchedLog.isEmpty()) {
         logFilterElementList.addAll(matchedLog);
       }
     }
