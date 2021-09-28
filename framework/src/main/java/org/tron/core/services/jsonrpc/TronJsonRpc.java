@@ -15,6 +15,8 @@ import lombok.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
@@ -278,7 +280,7 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
   })
-  boolean uninstallFilter(String filterId) throws IOException;
+  boolean uninstallFilter(String filterId) throws IOException, JsonRpcInvalidParamsException;
 
   @JsonRpcMethod("eth_getFilterChanges")
   @JsonRpcErrors({
@@ -291,14 +293,23 @@ public interface TronJsonRpc {
       throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException;
 
   @JsonRpcMethod("eth_getLogs")
+//  @JsonRpcErrors({
+//      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+//      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
+//      @JsonRpcError(exception = ExecutionException.class, code = -32603, data = "{}"),
+//      @JsonRpcError(exception = InterruptedException.class, code = -32603, data = "{}"),
+//  })
+  LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException, ExecutionException,
+      InterruptedException, BadItemException, ItemNotFoundException;
+
+  @JsonRpcMethod("eth_getFilterLogs")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
       @JsonRpcError(exception = ExecutionException.class, code = -32603, data = "{}"),
       @JsonRpcError(exception = InterruptedException.class, code = -32603, data = "{}"),
   })
-  LogFilterElement[] getLogs(FilterRequest fr)
-      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException;
+  LogFilterElement[] getFilterLogs(String filterId) throws Exception;
 
   @JsonRpcMethod("eth_dbCount")
   @JsonRpcErrors({
@@ -414,8 +425,8 @@ public interface TronJsonRpc {
   @AllArgsConstructor
   class FilterRequest {
 
-    public String fromBlock = "latest";
-    public String toBlock = "latest";
+    public String fromBlock;
+    public String toBlock;
     public Object address;
     public Object[] topics;
     public String blockHash;  // EIP-234: makes fromBlock = toBlock = blockHash

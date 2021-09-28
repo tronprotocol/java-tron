@@ -5,24 +5,29 @@ import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
 import static org.tron.core.services.http.Util.setTransactionExtraData;
 import static org.tron.core.services.http.Util.setTransactionPermissionId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateFilterId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -39,9 +44,11 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
@@ -70,10 +77,18 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
 
+  public static final int expireSeconds = 5 * 60;
+  //for log filter
+  @Getter
+  private static Map<String, LogFilterAndResult> eventFilter2Result = new ConcurrentHashMap<>();
+  //for block
+  @Getter
+  private static Map<String, BlockFilterAndResult> blockFilter2Result = new ConcurrentHashMap<>();
+
   private final int chainId = 100;
   private final int networkId = 100;
-  String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
-  ExecutorService executor;
+  private String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
+  private ExecutorService executor;
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
   private Manager manager;
@@ -1000,30 +1015,99 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException, IOException {
+  public String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
+    long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    LogFilterAndResult logFilterAndResult = new LogFilterAndResult(fr, currentMaxFullNum, wallet);
+    String filterID = generateFilterId();
+    eventFilter2Result.put(filterID, logFilterAndResult);
+    return filterID;
+  }
+
+  @Override
+  public String newBlockFilter() {
+    BlockFilterAndResult filterAndResult = new BlockFilterAndResult();
+    String filterID = generateFilterId();
+    blockFilter2Result.put(filterID, filterAndResult);
+    return filterID;
+  }
+
+  @Override
+  public boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException {
+    if (eventFilter2Result.containsKey(filterId)) {
+      eventFilter2Result.remove(filterId);
+      return true;
+    } else if (blockFilter2Result.containsKey(filterId)) {
+      blockFilter2Result.remove(filterId);
+      return true;
+    } else {
+      throw new JsonRpcInvalidParamsException("filter not found");
+    }
+  }
+
+  @Override
+  public Object[] getFilterChanges(String filterId) throws JsonRpcInvalidParamsException {
+    Object[] result;
+    if (blockFilter2Result.containsKey(filterId)) {
+      List<String> blockHashList = blockFilter2Result.get(filterId).getResult();
+      blockFilter2Result.get(filterId).clear();
+      result = blockHashList.toArray(new String[blockHashList.size()]);
+
+    } else if (eventFilter2Result.containsKey(filterId)) {
+      List<LogFilterElement> elements = eventFilter2Result.get(filterId).getResult();
+      eventFilter2Result.get(filterId).clear();
+      result = elements.toArray(new LogFilterElement[elements.size()]);
+
+    } else {
+      throw new JsonRpcInvalidParamsException("filter not found");
+    }
+    return result;
+  }
+
+  @Override
+  public LogFilterElement[] getLogs(FilterRequest fr) {
+    long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    //convert FilterRequest to LogFilterWrapper
+
+    LogFilterWrapper logFilterWrapper = null;
+    try {
+      logFilterWrapper = new LogFilterWrapper(fr, currentMaxFullNum, wallet);
+      return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxFullNum);
+    } catch (Exception e) {
+      logger.error("getLogs failed: {}", Throwables.getStackTraceAsString(e));
+    }
+
     return null;
   }
 
   @Override
-  public String newBlockFilter() throws JsonRpcInvalidParamsException, IOException {
-    return null;
+  public LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException {
+    if (!eventFilter2Result.containsKey(filterId)) {
+      throw new JsonRpcInvalidParamsException("filter not found");
+    }
+    LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
+    long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxFullNum);
   }
 
-  @Override
-  public boolean uninstallFilter(String filterId) throws IOException {
-    return false;
-  }
+  private LogFilterElement[] getLogsByLogFilterWrapper(LogFilterWrapper logFilterWrapper,
+      long currentMaxFullNum) throws JsonRpcInvalidParamsException, ExecutionException,
+      InterruptedException, BadItemException, ItemNotFoundException {
+    //query possible block
+    LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, manager.getChainBaseManager()
+        .getSectionBloomStore(), currentMaxFullNum, executor);
+    List<Long> possibleBlockList = logBlockQuery.getPossibleBlock();
 
-  @Override
-  public Object[] getFilterChanges(String filterId)
-      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException {
-    return new Object[0];
-  }
+    //match event from block one by one exactly
+    LogMatch logMatch =
+        new LogMatch(logFilterWrapper, possibleBlockList, manager);
+    LogFilterElement[] matchedLogs = logMatch.matchBlockOneByOne();
 
-  @Override
-  public LogFilterElement[] getLogs(FilterRequest fr)
-      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException {
-    return new LogFilterElement[0];
+    if (matchedLogs.length >= LogBlockQuery.maxResult) {
+      throw new JsonRpcInvalidParamsException(
+          "query returned more than " + LogBlockQuery.maxResult + " results");
+    }
+    return matchedLogs;
   }
 
   @Override

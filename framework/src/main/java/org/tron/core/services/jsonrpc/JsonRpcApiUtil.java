@@ -4,6 +4,7 @@ import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +21,6 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -40,7 +40,6 @@ import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
@@ -50,6 +49,7 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
+
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
     byte[] temp = new byte[] {Wallet.getAddressPreFixByte()};
@@ -509,5 +509,24 @@ public class JsonRpcApiUtil {
     }
 
     return -1;
+  }
+
+  public static long getByJsonBlockId(String blockNumOrTag) throws JsonRpcInvalidParamsException {
+    if ("earliest".equalsIgnoreCase(blockNumOrTag)
+        || "pending".equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
+    }
+    if (StringUtils.isEmpty(blockNumOrTag) || "latest".equalsIgnoreCase(blockNumOrTag)) {
+      return -1;
+    } else {
+      return ByteArray.jsonHexToLong(blockNumOrTag);
+    }
+  }
+
+  public static String generateFilterId() {
+    SecureRandom random = new SecureRandom();
+    byte[] uid = new byte[16]; // 128 bits are converted to 16 bytes;
+    random.nextBytes(uid);
+    return ByteArray.toHexString(uid);
   }
 }

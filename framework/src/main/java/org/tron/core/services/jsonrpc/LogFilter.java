@@ -22,15 +22,16 @@ package org.tron.core.services.jsonrpc;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;
 
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 public class LogFilter {
 
@@ -38,9 +39,9 @@ public class LogFilter {
   @Setter
   private byte[][] contractAddresses = new byte[0][]; //[addr1, addr2]
   //first topic must be func1 or func2，ignore second，third must be A or B，forth must be C
+  @Getter
   @Setter
   private List<byte[][]> topics = new ArrayList<>();  //  [[func1, func1], null, [A, B], [C]]
-
 
   public LogFilter() {
   }
@@ -138,12 +139,12 @@ public class LogFilter {
   /**
    * match any event
    */
-  public boolean matchesExactly(LogInfo logInfo) {
+  public boolean matchesExactly(Log logInfo) {
 
-    if (!matchesContractAddress(logInfo.getContractAddress())) {
+    if (!matchesContractAddress(logInfo.getAddress().toByteArray())) {
       return false;
     }
-    List<DataWord> logTopics = logInfo.getTopics();
+    List<ByteString> logTopics = logInfo.getTopicsList();
     for (int i = 0; i < this.topics.size(); i++) {
       if (i >= logTopics.size()) {
         return false;
@@ -151,9 +152,9 @@ public class LogFilter {
       byte[][] orTopics = topics.get(i);
       if (orTopics != null && orTopics.length > 0) {
         boolean orMatches = false;
-        DataWord logTopic = logTopics.get(i);
+        byte[] logTopic = logTopics.get(i).toByteArray();
         for (byte[] orTopic : orTopics) {
-          if (new DataWord(orTopic).equals(logTopic)) {
+          if (new DataWord(orTopic).equals(new DataWord(logTopic))) {
             orMatches = true;
             break;
           }
@@ -165,14 +166,4 @@ public class LogFilter {
     }
     return true;
   }
-
-  @AllArgsConstructor
-  static class LogInfo {
-
-    @Getter
-    byte[] contractAddress; //byte[20]
-    @Getter
-    List<DataWord> topics;
-  }
-
 }
