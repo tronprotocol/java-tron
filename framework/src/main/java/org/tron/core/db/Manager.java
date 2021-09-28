@@ -1835,7 +1835,7 @@ public class Manager {
 
   private void reOrgLogsFilter() {
     if (CommonParameter.getInstance().isJsonRpcEnabled()) {
-      logger.info("switch fork occurred, post reOrgContractTrigger");
+      logger.info("switch fork occurred, post reOrgLogsFilter");
 
       try {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
