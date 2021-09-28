@@ -277,6 +277,23 @@ public class Manager {
     return getDynamicPropertiesStore().getEnergyPriceHistoryDone() == 0L;
   }
 
+  public boolean needToSetBlackholePermission() {
+    return getDynamicPropertiesStore().getSetBlackholeAccountPermission() == 0L;
+  }
+
+  private void resetBlackholeAccountPermission() {
+    AccountCapsule blackholeAccount = getAccountStore().getBlackhole();
+
+    byte[] zeroAddress = new byte[21];
+    zeroAddress[0] = Wallet.getAddressPreFixByte();
+    Permission owner = AccountCapsule
+        .createDefaultOwnerPermission(ByteString.copyFrom(zeroAddress));
+    blackholeAccount.updatePermissions(owner, null, null);
+    getAccountStore().put(blackholeAccount.getAddress().toByteArray(), blackholeAccount);
+
+    getDynamicPropertiesStore().saveSetBlackholePermission(1);
+  }
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return chainBaseManager.getDynamicPropertiesStore();
   }
@@ -415,15 +432,8 @@ public class Manager {
       new EnergyPriceHistoryLoader(chainBaseManager).doWork();
     }
 
-    if (!chainBaseManager.getDynamicPropertiesStore().isBlackholeAccountPermissionSet()) {
-      AccountCapsule blackholeAccount = getAccountStore().getBlackhole();
-      byte[] zeroAddress = new byte[21];
-      zeroAddress[0] = Wallet.getAddressPreFixByte();
-      Permission owner = AccountCapsule
-          .createDefaultOwnerPermission(ByteString.copyFrom(zeroAddress));
-      blackholeAccount.updatePermissions(owner, null, null);
-      getAccountStore().put(blackholeAccount.getAddress().toByteArray(), blackholeAccount);
-      chainBaseManager.getDynamicPropertiesStore().saveSetBlackholePermission(1);
+    if (needToSetBlackholePermission()) {
+      resetBlackholeAccountPermission();
     }
 
     //for test only

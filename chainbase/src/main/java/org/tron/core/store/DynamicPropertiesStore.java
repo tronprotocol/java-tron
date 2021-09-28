@@ -163,9 +163,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
   //This value is only allowed to be 1
-  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
+      "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
   private static final byte[] ENERGY_PRICE_HISTORY = "ENERGY_PRICE_HISTORY".getBytes();
   private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
+  private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
+      "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
 
 
   @Autowired
@@ -2363,10 +2366,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY_DONE"));
   }
 
-  public boolean isBlackholeAccountPermissionSet() {
-    return getSetBlackholeAccountPermission() == 1L;
-  }
-
   public String getEnergyPriceHistory() {
     return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY))
         .map(BytesCapsule::getData)
@@ -2378,17 +2377,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(ENERGY_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
   }
 
-
   public long getSetBlackholeAccountPermission() {
-    return Optional.of(getUnchecked(DynamicResourceProperties.SET_BLACKHOLE_ACCOUNT_PERMISSION))
+    return Optional.of(getUnchecked(SET_BLACKHOLE_ACCOUNT_PERMISSION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_CLOSE_BLACKHOLE_ACCOUNT"));
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SET_BLACKHOLE_ACCOUNT_PERMISSION"));
   }
 
   public void saveSetBlackholePermission(long value) {
-    this.put(DynamicResourceProperties.SET_BLACKHOLE_ACCOUNT_PERMISSION,
-        new BytesCapsule(ByteArray.fromLong(value)));
+    this.put(SET_BLACKHOLE_ACCOUNT_PERMISSION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {
@@ -2419,9 +2417,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO =
         "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
             .getBytes();
-    private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
-        "SET_BLACKHOLE_ACCOUNT_PERMISSION"
-        .getBytes();
+
   }
 
 }
