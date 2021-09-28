@@ -1245,8 +1245,11 @@ public class Program {
   }
 
   public DataWord getChainId() {
-    return new DataWord(Hex.toHexString(getContractState()
-        .getBlockByNum(0).getBlockId().getBytes()));
+    byte[] chainId = getContractState().getBlockByNum(0).getBlockId().getBytes();
+    if (VMConfig.allowTvmCompatibleEvm()) {
+      chainId = Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length);
+    }
+    return new DataWord(chainId);
   }
   public DataWord getDropPrice() {
     return new DataWord(1);

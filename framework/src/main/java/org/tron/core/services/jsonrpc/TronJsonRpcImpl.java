@@ -239,7 +239,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String ethChainId() throws JsonRpcInternalException {
     // return hash of genesis block
     try {
-      return ByteArray.toJsonHex(wallet.getBlockCapsuleByNum(0).getBlockId().getBytes());
+      byte[] chainId = wallet.getBlockCapsuleByNum(0).getBlockId().getBytes();
+      return ByteArray.toJsonHex(Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length));
     } catch (Exception e) {
       throw new JsonRpcInternalException(e.getMessage());
     }
