@@ -1,4 +1,4 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.jsonrpc.filters;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.protos.Protocol.Block;
 

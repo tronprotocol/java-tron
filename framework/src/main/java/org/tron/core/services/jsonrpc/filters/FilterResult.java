@@ -1,7 +1,8 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.jsonrpc.filters;
 
 import java.util.List;
 import lombok.Getter;
+import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 
 public abstract class FilterResult<T> {
 

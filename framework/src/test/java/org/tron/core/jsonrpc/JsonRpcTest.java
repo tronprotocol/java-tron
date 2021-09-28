@@ -11,7 +11,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.core.services.jsonrpc.CallArguments;
+import org.tron.core.services.jsonrpc.types.CallArguments;
 
 public class JsonRpcTest {
 

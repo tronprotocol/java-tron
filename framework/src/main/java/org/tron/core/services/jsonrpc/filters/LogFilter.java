@@ -1,4 +1,4 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.jsonrpc.filters;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;

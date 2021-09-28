@@ -21,6 +21,11 @@ import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.JsonRpcMethodNotFoundException;
+import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.BuildArguments;
+import org.tron.core.services.jsonrpc.types.CallArguments;
+import org.tron.core.services.jsonrpc.types.TransactionReceipt;
+import org.tron.core.services.jsonrpc.types.TransactionResult;
 
 @Component
 public interface TronJsonRpc {
@@ -293,14 +298,14 @@ public interface TronJsonRpc {
       throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException;
 
   @JsonRpcMethod("eth_getLogs")
-//  @JsonRpcErrors({
-//      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-//      @JsonRpcError(exception = IOException.class, code = -32603, data = "{}"),
-//      @JsonRpcError(exception = ExecutionException.class, code = -32603, data = "{}"),
-//      @JsonRpcError(exception = InterruptedException.class, code = -32603, data = "{}"),
-//  })
-  LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException, ExecutionException,
-      InterruptedException, BadItemException, ItemNotFoundException;
+  // @JsonRpcErrors({
+  //     @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+  //     @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
+  //     @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
+  //     @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
+  // })
+  LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException;
 
   @JsonRpcMethod("eth_getFilterLogs")
   @JsonRpcErrors({

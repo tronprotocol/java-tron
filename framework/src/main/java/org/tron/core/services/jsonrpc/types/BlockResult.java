@@ -1,4 +1,4 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.jsonrpc.types;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 

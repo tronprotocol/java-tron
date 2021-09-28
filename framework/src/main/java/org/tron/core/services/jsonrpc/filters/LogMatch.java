@@ -1,4 +1,4 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.jsonrpc.filters;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -13,6 +13,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
+import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionRet;
