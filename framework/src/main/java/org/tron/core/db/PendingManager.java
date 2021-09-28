@@ -31,8 +31,8 @@ public class PendingManager implements AutoCloseable {
       capsule = dbManager.getRePushTransactions().poll();
     }
 
-    for (TransactionCapsule tx : list) {
-      dbManager.getRePushTransactions().add(tx);
+    if (list.size() > 0) {
+      dbManager.getRePushTransactions().addAll(list);
     }
 
     for (TransactionCapsule tx : dbManager.getPendingTransactions()) {
