@@ -21,13 +21,12 @@ public class LogQuery {
   }
 
   private List<Long> possibleBlock() {
-
     return null;
   }
 
-  //address -> subMatch0,
-  //topic1 -> subMatch1, topic2 -> subMatch2, topic3 -> subMatch3, topic4 -> subMatch4
-  //works serial
+  // address -> subMatch0,
+  // topic1 -> subMatch1, topic2 -> subMatch2, topic3 -> subMatch3, topic4 -> subMatch4
+  // works serial
   private BitSet subMatch(int[][] bitIndexes) {
     int minSection = (int) (logFilterWrapper.fromBlock / Bloom.bloom_bit_size);
     int maxSection = (int) (logFilterWrapper.toBlock / Bloom.bloom_bit_size);
@@ -38,7 +37,7 @@ public class LogQuery {
     return null;
   }
 
-  //every section has a section, works parallel
+  // every section has a section, works parallel
   // and condition in second dimension, or condition in first dimension
   private BitSet partialMatch(int[][] bitIndexes, int section) {
     for (int i = 0; i < bitIndexes.length; i++) {
@@ -50,7 +49,6 @@ public class LogQuery {
   }
 
   class Task implements Callable<BitSet> {
-
     private int section;
     private int bitIndex;
     private SectionBloomStore sectionBloomStore;
@@ -63,7 +61,7 @@ public class LogQuery {
 
     @Override
     public BitSet call() throws Exception {
-      //bitset size is blockPerSection
+      // bitset size is blockPerSection
       return sectionBloomStore.get(section, bitIndex);
     }
   }
