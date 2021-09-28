@@ -40,27 +40,8 @@ public class LogMatch {
     this.manager = manager;
   }
 
-  public LogFilterElement[] matchBlockOneByOne() throws BadItemException, ItemNotFoundException {
-    List<LogFilterElement> logFilterElementList = new ArrayList<>();
-    for (long blockNum : blockNumList) {
-      logger.info("matchBlockOneByOne:{}", blockNum);
-      TransactionRetCapsule transactionRetCapsule =
-          manager.getTransactionRetStore()
-              .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
-      TransactionRet transactionRet = transactionRetCapsule.getInstance();
-      List<TransactionInfo> transactionInfoList = transactionRet.getTransactioninfoList();
-
-      String blockHash = manager.getChainBaseManager().getBlockIdByNum(blockNum).toString();
-      List<LogFilterElement> matchedLog =
-          matchBlock(blockNum, blockHash, transactionInfoList, false);
-      if (!matchedLog.isEmpty()) {
-        logFilterElementList.addAll(matchedLog);
-      }
-    }
-    return logFilterElementList.toArray(new LogFilterElement[logFilterElementList.size()]);
-  }
-
-  private List<LogFilterElement> matchBlock(long blockNum, String blockHash,
+  public static List<LogFilterElement> matchBlock(LogFilter logFilter, long blockNum,
+      String blockHash,
       List<TransactionInfo> transactionInfoList, boolean removed) {
 
     int txCount = transactionInfoList.size();
@@ -75,7 +56,7 @@ public class LogMatch {
       for (int j = 0; j < logCount; j++) {
 
         Log log = transactionInfo.getLog(j);
-        if (logFilterWrapper.getLogFilter().matchesExactly(log)) {
+        if (logFilter.matchesExactly(log)) {
           List<DataWord> topicList = new ArrayList<>();
           for (ByteString topic : log.getTopicsList()) {
             topicList.add(new DataWord(topic.toByteArray()));
@@ -97,6 +78,26 @@ public class LogMatch {
       }
     }
     return matchedLog;
+  }
+
+  public LogFilterElement[] matchBlockOneByOne() throws BadItemException, ItemNotFoundException {
+    List<LogFilterElement> logFilterElementList = new ArrayList<>();
+    for (long blockNum : blockNumList) {
+      logger.info("matchBlockOneByOne:{}", blockNum);
+      TransactionRetCapsule transactionRetCapsule =
+          manager.getTransactionRetStore()
+              .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+      TransactionRet transactionRet = transactionRetCapsule.getInstance();
+      List<TransactionInfo> transactionInfoList = transactionRet.getTransactioninfoList();
+
+      String blockHash = manager.getChainBaseManager().getBlockIdByNum(blockNum).toString();
+      List<LogFilterElement> matchedLog = matchBlock(logFilterWrapper.getLogFilter(), blockNum,
+          blockHash, transactionInfoList, false);
+      if (!matchedLog.isEmpty()) {
+        logFilterElementList.addAll(matchedLog);
+      }
+    }
+    return logFilterElementList.toArray(new LogFilterElement[logFilterElementList.size()]);
   }
 
 }

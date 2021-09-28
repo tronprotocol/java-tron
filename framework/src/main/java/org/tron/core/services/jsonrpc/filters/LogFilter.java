@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.Bloom;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
@@ -23,6 +25,8 @@ public class LogFilter {
   @Getter
   @Setter
   private List<byte[][]> topics = new ArrayList<>();  //  [[func1, func1], null, [A, B], [C]]
+  @Setter
+  private Bloom[][] filterBlooms;  // [[func1, func1], null, [A, B], [C]] + [addr1, addr2] => Bloom[][]
 
   public LogFilter() {
   }
@@ -105,6 +109,52 @@ public class LogFilter {
   public LogFilter withTopic(byte[]... orTopic) {
     topics.add(orTopic);
     return this;
+  }
+
+  /**
+   * generate filterBlooms from  contractAddresses、topics
+   */
+  private void initBlooms() {
+    if (filterBlooms != null) {
+      return;
+    }
+
+    List<byte[][]> addrAndTopics = new ArrayList<>(topics);
+    addrAndTopics.add(contractAddresses);
+
+    //topics数组的bloom在前，地址数组的bloom在后，n+1
+    filterBlooms = new Bloom[addrAndTopics.size()][];
+    for (int i = 0; i < addrAndTopics.size(); i++) {
+      byte[][] orTopics = addrAndTopics.get(i);
+      if (orTopics == null || orTopics.length == 0) {
+        filterBlooms[i] = new Bloom[] {new Bloom()}; // always matches
+      } else {
+        filterBlooms[i] = new Bloom[orTopics.length];
+        for (int j = 0; j < orTopics.length; j++) {
+          filterBlooms[i][j] = Bloom.create(Hash.sha3(orTopics[j]));
+        }
+      }
+    }
+  }
+
+  /**
+   * match this logFilter with a block bloom sketchy first. if matched, the match exactly
+   */
+  public boolean matchBloom(Bloom blockBloom) {
+    initBlooms();
+    for (Bloom[] andBloom : filterBlooms) {
+      boolean orMatches = false;
+      for (Bloom orBloom : andBloom) { //每一层是"或"条件
+        if (blockBloom.matches(orBloom)) {
+          orMatches = true;
+          break;
+        }
+      }
+      if (!orMatches) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public boolean matchesContractAddress(byte[] toAddr) {
