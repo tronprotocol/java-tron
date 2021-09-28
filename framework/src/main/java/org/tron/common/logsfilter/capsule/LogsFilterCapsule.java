@@ -17,6 +17,9 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
   private long blockNumber;
   @Getter
   @Setter
+  private String blockHash;
+  @Getter
+  @Setter
   private Bloom bloom;
   @Getter
   @Setter
@@ -25,9 +28,10 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
   @Setter
   private boolean removed;
 
-  public LogsFilterCapsule(long blockNumber, Bloom bloom, List<TransactionInfo> txInfoList,
-      boolean removed) {
+  public LogsFilterCapsule(long blockNumber, String blockHash, Bloom bloom,
+      List<TransactionInfo> txInfoList, boolean removed) {
     this.blockNumber = blockNumber;
+    this.blockHash = blockHash;
     this.bloom = bloom;
     this.txInfoList = txInfoList;
     this.removed = removed;

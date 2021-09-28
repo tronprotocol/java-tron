@@ -1875,7 +1875,8 @@ public class Manager {
       }
 
       LogsFilterCapsule logsFilterCapsule = new LogsFilterCapsule(blockNumber,
-          blockCapsule.getBloom(), transactionInfoList, removed);
+          blockCapsule.getBlockId().toString(), blockCapsule.getBloom(), transactionInfoList,
+          removed);
 
       if (!filterCapsuleQueue.offer(logsFilterCapsule)) {
         logger.info("too many filters, logs filter lost: {}", blockNumber);
