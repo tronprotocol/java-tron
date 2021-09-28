@@ -1886,7 +1886,7 @@ public class Manager {
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
     BlockCapsule newBlock = blockCapsule;
 
-    // process filter for jsonrpc
+    // post block and logs for jsonrpc
     if (CommonParameter.getInstance().isJsonRpcEnabled()) {
       postBlockFilter(blockCapsule);
       postLogsFilter(blockCapsule, false);
