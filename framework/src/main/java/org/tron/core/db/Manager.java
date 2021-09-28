@@ -43,10 +43,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.logsfilter.Bloom;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
+import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
+import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
@@ -216,6 +220,9 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+  // log filter
+  private boolean isRunFilterProcessThread = true;
+  private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
 
   /**
    * Cycle thread to rePush Transactions
@@ -259,6 +266,24 @@ public class Manager {
           }
         }
       };
+
+  private Runnable filterProcessLoop =
+      () -> {
+        while (isRunFilterProcessThread) {
+          try {
+            FilterTriggerCapsule filterCapsule = filterCapsuleQueue.poll(1, TimeUnit.SECONDS);
+            if (filterCapsule != null) {
+              filterCapsule.processFilterTrigger();
+            }
+          } catch (InterruptedException e) {
+            logger.error("filterProcessLoop get InterruptedException, error is {}", e.getMessage());
+            Thread.currentThread().interrupt();
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in filterProcessLoop: ", throwable);
+          }
+        }
+      };
+
   private Comparator downComparator = (Comparator<TransactionCapsule>) (o1, o2) -> Long
       .compare(o2.getOrder(), o1.getOrder());
 
@@ -354,6 +379,10 @@ public class Manager {
     isRunTriggerCapsuleProcessThread = false;
   }
 
+  public void stopFilterProcessThread() {
+    isRunFilterProcessThread = false;
+  }
+
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
@@ -376,6 +405,7 @@ public class Manager {
       this.rePushTransactions = new LinkedBlockingQueue<>();
     }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
+    this.filterCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
     chainBaseManager.init();
@@ -428,6 +458,12 @@ public class Manager {
       startEventSubscribing();
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
+    }
+
+    // start json rpc filter process
+    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+      Thread filterProcessThread = new Thread(filterProcessLoop);
+      filterProcessThread.start();
     }
 
     //initStoreFactory
@@ -821,6 +857,7 @@ public class Manager {
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
         reOrgContractTrigger();
+        reOrgLogsFilter();
         eraseBlock();
       }
     }
@@ -1457,8 +1494,12 @@ public class Manager {
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
-    chainBaseManager.getSectionBloomStore().initBlockSection(block.getNum(), transactionRetCapsule);
-    chainBaseManager.getSectionBloomStore().write(block.getNum());
+    if (true) {
+      Bloom blockBloom = chainBaseManager.getSectionBloomStore()
+          .initBlockSection(block.getNum(), transactionRetCapsule);
+      chainBaseManager.getSectionBloomStore().write(block.getNum());
+      block.setBloom(blockBloom);
+    }
   }
 
   private void payReward(BlockCapsule block) {
@@ -1737,8 +1778,119 @@ public class Manager {
     }
   }
 
+  private void processTransactionTrigger(BlockCapsule newBlock) {
+    List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
+
+    // need to set eth compatible data from transactionInfoList
+    if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
+      TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
+      TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
+
+      try {
+        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
+            .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
+
+        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+          result.getInstance().getTransactioninfoList().forEach(
+              transactionInfoListBuilder::addTransactionInfo
+          );
+
+          transactionInfoList = transactionInfoListBuilder.build();
+        }
+      } catch (BadItemException e) {
+        logger.error("postBlockTrigger getTransactionInfoList blockNum={}, error is {}",
+            newBlock.getNum(), e.getMessage());
+      }
+
+      if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
+        long cumulativeEnergyUsed = 0;
+        long cumulativeLogCount = 0;
+        long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+
+        for (int i = 0; i < transactionCapsuleList.size(); i++) {
+          TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
+          TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
+          // reset block num to ignore value is -1
+          transactionCapsule.setBlockNum(newBlock.getNum());
+
+          cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
+              cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
+
+          cumulativeLogCount += transactionInfo.getLogCount();
+        }
+      } else {
+        logger.error("postBlockTrigger blockNum={} has no transactions or "
+                + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
+            newBlock.getNum());
+        for (TransactionCapsule e : newBlock.getTransactions()) {
+          postTransactionTrigger(e, newBlock);
+        }
+      }
+    } else {
+      for (TransactionCapsule e : newBlock.getTransactions()) {
+        postTransactionTrigger(e, newBlock);
+      }
+    }
+  }
+
+  private void reOrgLogsFilter() {
+    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+      logger.info("switchfork occurred, post reOrgContractTrigger");
+
+      try {
+        BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        postLogsFilter(oldHeadBlock, true);
+      } catch (BadItemException | ItemNotFoundException e) {
+        logger.error("block header hash does not exist or is bad: {}",
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      }
+    }
+  }
+
+  private void postBlockFilter(final BlockCapsule blockCapsule) {
+    BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule);
+    if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
+      logger.info("too many filters, block filter lost: {}", blockCapsule.getBlockId());
+    }
+  }
+
+  private void postLogsFilter(final BlockCapsule blockCapsule, boolean removed) {
+    if (!blockCapsule.getTransactions().isEmpty()
+        && (removed || blockCapsule.getBloom() != null)) {
+      long blockNumber = blockCapsule.getNum();
+      List<TransactionInfo> transactionInfoList = new ArrayList<>();
+
+      try {
+        TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
+            .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNumber));
+
+        if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+          transactionInfoList.addAll(result.getInstance().getTransactioninfoList());
+        }
+      } catch (BadItemException e) {
+        logger.error("processLogsFilter getTransactionInfoList blockNum={}, error is {}",
+            blockNumber, e.getMessage());
+        return;
+      }
+
+      LogsFilterCapsule logsFilterCapsule = new LogsFilterCapsule(blockNumber,
+          blockCapsule.getBloom(), transactionInfoList, removed);
+
+      if (!filterCapsuleQueue.offer(logsFilterCapsule)) {
+        logger.info("too many filters, logs filter lost: {}", blockNumber);
+      }
+    }
+  }
+
   private void postBlockTrigger(final BlockCapsule blockCapsule) {
     BlockCapsule newBlock = blockCapsule;
+
+    // process filter for jsonrpc
+    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+      postBlockFilter(blockCapsule);
+      postLogsFilter(blockCapsule, false);
+    }
 
     // process block trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
@@ -1763,11 +1915,11 @@ public class Manager {
 
     // process transaction trigger
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
+      // set newBlock
       if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
         long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
         try {
-          newBlock = chainBaseManager
-              .getBlockByNum(solidityBlkNum);
+          newBlock = chainBaseManager.getBlockByNum(solidityBlkNum);
         } catch (Exception e) {
           logger.error("postBlockTrigger getBlockByNum blkNum={} except, error is {}",
               solidityBlkNum, e.getMessage());
@@ -1777,58 +1929,7 @@ public class Manager {
         newBlock = blockCapsule;
       }
 
-      List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
-
-      // get transactionInfoList
-      if (EventPluginLoader.getInstance().isTransactionLogTriggerEthCompatible()) {
-        TransactionInfoList transactionInfoList = TransactionInfoList.newBuilder().build();
-        TransactionInfoList.Builder transactionInfoListBuilder = TransactionInfoList.newBuilder();
-
-        try {
-          TransactionRetCapsule result = chainBaseManager.getTransactionRetStore()
-              .getTransactionInfoByBlockNum(ByteArray.fromLong(newBlock.getNum()));
-
-          if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-            result.getInstance().getTransactioninfoList().forEach(
-                transactionInfoListBuilder::addTransactionInfo
-            );
-
-            transactionInfoList = transactionInfoListBuilder.build();
-          }
-        } catch (BadItemException e) {
-          logger.error("postBlockTrigger getTransactionInfoList blockNum={}, error is {}",
-              newBlock.getNum(), e.getMessage());
-        }
-
-        if (transactionCapsuleList.size() == transactionInfoList.getTransactionInfoCount()) {
-          long cumulativeEnergyUsed = 0;
-          long cumulativeLogCount = 0;
-          long energyUnitPrice = chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
-
-          for (int i = 0; i < transactionCapsuleList.size(); i++) {
-            TransactionInfo transactionInfo = transactionInfoList.getTransactionInfo(i);
-            TransactionCapsule transactionCapsule = transactionCapsuleList.get(i);
-            // reset block num to ignore value is -1
-            transactionCapsule.setBlockNum(newBlock.getNum());
-
-            cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
-                cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
-
-            cumulativeLogCount += transactionInfo.getLogCount();
-          }
-        } else {
-          logger.error("postBlockTrigger blockNum={} has no transactions or "
-                  + "the sizes of transactionInfoList and transactionCapsuleList are not equal",
-              newBlock.getNum());
-          for (TransactionCapsule e : newBlock.getTransactions()) {
-            postTransactionTrigger(e, newBlock);
-          }
-        }
-      } else {
-        for (TransactionCapsule e : newBlock.getTransactions()) {
-          postTransactionTrigger(e, newBlock);
-        }
-      }
+      processTransactionTrigger(newBlock);
     }
   }
 
@@ -1895,8 +1996,8 @@ public class Manager {
         contractTriggerCapsule.setBlockHash(blockHash);
 
         if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
-          logger
-              .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
+          logger.info("too many triggers, contract log trigger lost: {}",
+              trigger.getTransactionId());
         }
       }
     }
