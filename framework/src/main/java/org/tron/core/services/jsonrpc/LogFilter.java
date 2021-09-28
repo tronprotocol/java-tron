@@ -17,11 +17,10 @@ public class LogFilter {
 
   @Getter
   @Setter
-  private byte[][] contractAddresses = new byte[0][]; //[addr1, addr2]
-  //first topic must be func1 or func2，ignore second，third must be A or B，forth must be C
+  private byte[][] contractAddresses = new byte[0][]; // [addr1, addr2]
+  // first topic must be func1 or func2，ignore second，third must be A or B，forth must be C
   @Setter
-  private List<byte[][]> topics = new ArrayList<>();  //  [[func1, func1], null, [A, B], [C]]
-
+  private List<byte[][]> topics = new ArrayList<>(); // [[func1, func1], null, [A, B], [C]]
 
   public LogFilter() {
   }
@@ -30,7 +29,6 @@ public class LogFilter {
    * construct one LogFilter from part parameters of FilterRequest
    */
   public LogFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
-
     if (fr.address instanceof String) {
       try {
         withContractAddress(addressToByteArray((String) fr.address));
@@ -120,7 +118,6 @@ public class LogFilter {
    * match any event
    */
   public boolean matchesExactly(LogInfo logInfo) {
-
     if (!matchesContractAddress(logInfo.getContractAddress())) {
       return false;
     }
