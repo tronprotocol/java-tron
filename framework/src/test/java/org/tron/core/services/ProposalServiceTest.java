@@ -6,9 +6,10 @@ import static org.tron.core.utils.ProposalUtil.ProposalType.WITNESS_127_PAY_PER_
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.After;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
@@ -21,14 +22,15 @@ import org.tron.core.db.Manager;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.Protocol.Proposal;
 
+@Slf4j
 public class ProposalServiceTest {
 
-  private TronApplicationContext context;
-  private Manager manager;
-  private String dbPath = "output_proposal_test";
+  private static TronApplicationContext context;
+  private static Manager manager;
+  private static String dbPath = "output_proposal_test";
 
-  @Before
-  public void init() {
+  @BeforeClass
+  public static void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
@@ -82,11 +84,14 @@ public class ProposalServiceTest {
         currentHistory);
   }
 
-
-  @After
-  public void removeDb() {
+  @AfterClass
+  public static void removeDb() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 }

@@ -1,12 +1,14 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.application.Application;
@@ -17,6 +19,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -54,6 +57,20 @@ public class ValidateMultiSignContractTest {
   }
 
   ValidateMultiSign contract = new ValidateMultiSign();
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
 
   @Test
   public void testAddressNonExist() {
