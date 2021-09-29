@@ -1,8 +1,6 @@
 package org.tron.core.db;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
@@ -24,8 +22,8 @@ public class PendingManager implements AutoCloseable {
 
     long now = System.currentTimeMillis();
     Iterator<TransactionCapsule> iterator = dbManager.getRePushTransactions().iterator();
-    while (iterator.hasNext()){
-      if (now - iterator.next().getTime() > timeout){
+    while (iterator.hasNext()) {
+      if (now - iterator.next().getTime() > timeout) {
         iterator.remove();
       }
     }
