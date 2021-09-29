@@ -9,24 +9,21 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.application.Application;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 
 
 public class NodeHandlerTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private static Manager dbManager;
+  // private static Manager dbManager;
   private static TronApplicationContext context;
-  private Application appTest;
-  private CommonParameter argsTest;
+  // private Application appTest;
+  // private CommonParameter argsTest;
   private static Node currNode;
   private static Node oldNode;
   private static Node replaceNode;
@@ -67,7 +64,7 @@ public class NodeHandlerTest {
    * init nodes.
    */
   public static void initNodes() {
-    dbManager = context.getBean(Manager.class);
+    // dbManager = context.getBean(Manager.class);
     nodeManager = new NodeManager(context.getBean(ChainBaseManager.class));
     String currNodeId = "74c11ffad1d59d7b1a56691a0b84a53f0791c92361357364f1d2537"
         + "898407ef0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
@@ -97,7 +94,7 @@ public class NodeHandlerTest {
     nh.changeState(NodeHandler.State.NONACTIVE);
     replaceHandler.changeState(NodeHandler.State.ALIVE);
 
-    Assert.assertTrue(!nodeManager.getTable().contains(oldNode));
+    Assert.assertFalse(nodeManager.getTable().contains(oldNode));
     Assert.assertTrue(nodeManager.getTable().contains(replaceNode));
   }
 }
