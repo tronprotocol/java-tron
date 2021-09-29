@@ -418,6 +418,20 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getEnergyPric(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getenergyprices";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+  /**
+   * constructor.
+   */
   public static HttpResponse getChainParameters(String httpNode) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
