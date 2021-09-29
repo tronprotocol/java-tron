@@ -282,10 +282,6 @@ public class Manager {
   }
 
   private void resetBlackholeAccountPermission() {
-    if (getAccountStore().getBlackholeAddress() == null) {
-      return;
-    }
-
     AccountCapsule blackholeAccount = getAccountStore().getBlackhole();
 
     byte[] zeroAddress = new byte[21];

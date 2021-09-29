@@ -1108,12 +1108,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public void updatePermissions(Permission owner, Permission witness, List<Permission> actives) {
     Builder builder = this.account.toBuilder();
+
     owner = owner.toBuilder().setId(0).build();
     builder.setOwnerPermission(owner);
-    if (builder.getIsWitness()) {
+    if (witness != null && builder.getIsWitness()) {
       witness = witness.toBuilder().setId(1).build();
       builder.setWitnessPermission(witness);
     }
+
     builder.clearActivePermission();
     if (actives != null) {
       for (int i = 0; i < actives.size(); i++) {
@@ -1121,6 +1123,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         builder.addActivePermission(permission);
       }
     }
+
     this.account = builder.build();
   }
 
