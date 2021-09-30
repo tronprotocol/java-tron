@@ -1075,13 +1075,17 @@ public class Manager {
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
 
+          long oldSolidNum =
+              chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+
           applyBlock(newBlock, txs);
           //todo something
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
           // if event subscribe is enabled, post solidity trigger to queue
-          postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          postSolidityTrigger(oldSolidNum,
+              getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -1746,7 +1750,7 @@ public class Manager {
     }
   }
 
-  private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
+  private void postSolidityTrigger(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
@@ -1778,6 +1782,12 @@ public class Manager {
     }
 
     if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
+      if (oldSolidNum >= latestSolidifiedBlockNumber) {
+        logger.warn("post solidity filter failed, new: {} <= old: {}",
+            latestSolidifiedBlockNumber, oldSolidNum);
+        return;
+      }
+
       BlockCapsule blockCapsule;
       try {
         blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
