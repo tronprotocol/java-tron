@@ -875,7 +875,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
   }
 
-  public void disableInPBFT(String method) throws JsonRpcMethodNotFoundException {
+  private void disableInPBFT(String method) throws JsonRpcMethodNotFoundException {
     if (getSource() == RequestSource.PBFT) {
       String msg = String.format("the method %s does not exist/is not available in PBFT", method);
       throw new JsonRpcMethodNotFoundException(msg);
@@ -885,7 +885,15 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public TransactionJson buildTransaction(BuildArguments args)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
-      JsonRpcInternalException {
+      JsonRpcInternalException, JsonRpcMethodNotFoundException {
+
+    if (getSource() != RequestSource.FULLNODE) {
+      String msg = String
+          .format("the method buildTransaction does not exist/is not available in %s",
+              getSource().toString());
+      throw new JsonRpcMethodNotFoundException(msg);
+    }
+
     byte[] fromAddressData;
     try {
       fromAddressData = addressCompatibleToByteArray(args.from);
