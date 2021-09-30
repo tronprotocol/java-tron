@@ -391,8 +391,7 @@ public class JsonRpcApiUtil {
    * convert 40 hex string of address to byte array, padding 0 ahead if length is odd.
    */
   public static byte[] addressToByteArray(String hexAddress) throws JsonRpcInvalidParamsException {
-    String address = ByteArray.fromHex(hexAddress);
-    byte[] addressByte = ByteArray.fromHexString(address);
+    byte[] addressByte = ByteArray.fromHexString(hexAddress);
     if (addressByte.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
       throw new JsonRpcInvalidParamsException("invalid address: " + hexAddress);
     }
@@ -404,9 +403,8 @@ public class JsonRpcApiUtil {
    * check if topic is hex string of size 64, padding 0 ahead if length is odd.
    */
   public static byte[] topicToByteArray(String hexTopic) throws JsonRpcInvalidParamsException {
-    String topic = ByteArray.fromHex(hexTopic);
-    byte[] topicByte = ByteArray.fromHexString(topic);
-    if (topic.length() != 32) {
+    byte[] topicByte = ByteArray.fromHexString(hexTopic);
+    if (topicByte.length != 32) {
       throw new JsonRpcInvalidParamsException("invalid topic: " + hexTopic);
     }
     return topicByte;

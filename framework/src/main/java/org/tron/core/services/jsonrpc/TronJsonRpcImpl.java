@@ -85,19 +85,30 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
 
-  public enum RequestSource {
-    FULLNODE,
-    SOLIDITY,
-    PBFT
-  }
-
   public static final int expireSeconds = 5 * 60;
-  //for log filter
+  /**
+   * for log filter in Full Json-RPC
+   */
   @Getter
-  private static Map<String, LogFilterAndResult> eventFilter2Result = new ConcurrentHashMap<>();
-  //for block
+  private static Map<String, LogFilterAndResult> eventFilter2ResultFull = new ConcurrentHashMap<>();
+  /**
+   * for block in Full Json-RPC
+   */
   @Getter
-  private static Map<String, BlockFilterAndResult> blockFilter2Result = new ConcurrentHashMap<>();
+  private static Map<String, BlockFilterAndResult> blockFilter2ResultFull =
+      new ConcurrentHashMap<>();
+  /**
+   * for log filter in solidity Json-RPC
+   */
+  @Getter
+  private static Map<String, LogFilterAndResult> eventFilter2ResultSolidity =
+      new ConcurrentHashMap<>();
+  /**
+   * for block in solidity Json-RPC
+   */
+  @Getter
+  private static Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
+      new ConcurrentHashMap<>();
 
   private final int chainId = 100;
   private final int networkId = 100;
@@ -997,6 +1008,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_newFilter");
 
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
+
     long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     LogFilterAndResult logFilterAndResult = new LogFilterAndResult(fr, currentMaxFullNum, wallet);
     String filterID = generateFilterId();
@@ -1008,6 +1026,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String newBlockFilter() throws JsonRpcMethodNotFoundException {
     disableInPBFT("eth_newBlockFilter");
 
+    Map<String, BlockFilterAndResult> blockFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      blockFilter2Result = blockFilter2ResultFull;
+    } else {
+      blockFilter2Result = blockFilter2ResultSolidity;
+    }
+
     BlockFilterAndResult filterAndResult = new BlockFilterAndResult();
     String filterID = generateFilterId();
     blockFilter2Result.put(filterID, filterAndResult);
@@ -1018,6 +1043,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public boolean uninstallFilter(String filterId) throws IOException, JsonRpcInvalidParamsException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_uninstallFilter");
+
+    Map<String, BlockFilterAndResult> blockFilter2Result;
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      blockFilter2Result = blockFilter2ResultFull;
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      blockFilter2Result = blockFilter2ResultSolidity;
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
 
     filterId = ByteArray.fromHex(filterId);
     if (eventFilter2Result.containsKey(filterId)) {
@@ -1035,6 +1070,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public Object[] getFilterChanges(String filterId) throws JsonRpcInvalidParamsException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_getFilterChanges");
+
+    Map<String, BlockFilterAndResult> blockFilter2Result;
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      blockFilter2Result = blockFilter2ResultFull;
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      blockFilter2Result = blockFilter2ResultSolidity;
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
 
     filterId = ByteArray.fromHex(filterId);
     Object[] result;
@@ -1055,14 +1100,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public LogFilterElement[] getLogs(FilterRequest fr) {
-    long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+  public LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_getLogs");
+
+    long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     //convert FilterRequest to LogFilterWrapper
 
     LogFilterWrapper logFilterWrapper = null;
     try {
-      logFilterWrapper = new LogFilterWrapper(fr, currentMaxFullNum, wallet);
-      return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxFullNum);
+      logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
+      return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
     } catch (Exception e) {
       logger.error("getLogs failed: {}", Throwables.getStackTraceAsString(e));
     }
@@ -1072,23 +1119,32 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,
-      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException {
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_getFilterLogs");
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
+
     filterId = ByteArray.fromHex(filterId);
     if (!eventFilter2Result.containsKey(filterId)) {
       throw new JsonRpcInvalidParamsException("filter not found");
     }
     LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
-    long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
-    logger.info("currentMaxFullNum: {}", currentMaxFullNum);
-    return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxFullNum);
+    long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    logger.info("currentMaxBlockNum: {}", currentMaxBlockNum);
+    return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }
 
   private LogFilterElement[] getLogsByLogFilterWrapper(LogFilterWrapper logFilterWrapper,
-      long currentMaxFullNum) throws JsonRpcInvalidParamsException, ExecutionException,
+      long currentMaxBlockNum) throws JsonRpcInvalidParamsException, ExecutionException,
       InterruptedException, BadItemException, ItemNotFoundException {
     //query possible block
     LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, manager.getChainBaseManager()
-        .getSectionBloomStore(), currentMaxFullNum, sectionExecutor);
+        .getSectionBloomStore(), currentMaxBlockNum, sectionExecutor);
     List<Long> possibleBlockList = logBlockQuery.getPossibleBlock();
 
     //match event from block one by one exactly
@@ -1101,5 +1157,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public long getDbCount() throws JsonRpcInvalidParamsException, IOException {
     return manager.getChainBaseManager().getSectionBloomStore().getCount();
+  }
+
+  public enum RequestSource {
+    FULLNODE,
+    SOLIDITY,
+    PBFT
   }
 }

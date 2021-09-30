@@ -56,6 +56,9 @@ public class JsonRpcServlet extends RateLimiterServlet {
     rpcServer.setHttpStatusCodeProvider(httpStatusCodeProvider);
 
     rpcServer.setShouldLogInvocationErrors(false);
+
+    System.setProperty("com.googlecode.jsonrpc4j.async.socket.timeout", "100"); //ms
+    System.setProperty("com.googlecode.jsonrpc4j.async.connect.timeout", "100"); //ms
   }
 
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {

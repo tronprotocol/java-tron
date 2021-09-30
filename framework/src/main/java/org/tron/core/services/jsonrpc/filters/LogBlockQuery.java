@@ -31,22 +31,22 @@ public class LogBlockQuery {
   private long maxBlock;
 
   public LogBlockQuery(LogFilterWrapper logFilterWrapper, SectionBloomStore sectionBloomStore,
-      long currentMaxFullNum, ExecutorService executor) {
+      long currentMaxBlockNum, ExecutorService executor) {
     this.logFilterWrapper = logFilterWrapper;
     this.sectionBloomStore = sectionBloomStore;
     this.sectionExecutor = executor;
 
     if (logFilterWrapper.getFromBlock() == Long.MAX_VALUE) {
-      minSection = (int) (currentMaxFullNum / Bloom.bloom_bit_size);
-      minBlock = currentMaxFullNum;
+      minSection = (int) (currentMaxBlockNum / Bloom.bloom_bit_size);
+      minBlock = currentMaxBlockNum;
     } else {
       minSection = (int) (logFilterWrapper.getFromBlock() / Bloom.bloom_bit_size);
       minBlock = logFilterWrapper.getFromBlock();
     }
 
     if (logFilterWrapper.getToBlock() == Long.MAX_VALUE) {
-      maxSection = (int) (currentMaxFullNum / Bloom.bloom_bit_size);
-      maxBlock = currentMaxFullNum;
+      maxSection = (int) (currentMaxBlockNum / Bloom.bloom_bit_size);
+      maxBlock = currentMaxBlockNum;
     } else {
       maxSection = (int) (logFilterWrapper.getToBlock() / Bloom.bloom_bit_size);
       maxBlock = logFilterWrapper.getToBlock();

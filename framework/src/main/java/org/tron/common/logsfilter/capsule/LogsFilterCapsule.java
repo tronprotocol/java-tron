@@ -53,8 +53,13 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
   public void processFilterTrigger() {
     logger.info("LogsFilterCapsule processFilterTrigger: {}, {}", blockNumber, solidified);
 
-    Iterator<Entry<String, LogFilterAndResult>>
-        it = TronJsonRpcImpl.getEventFilter2Result().entrySet().iterator();
+    Iterator<Entry<String, LogFilterAndResult>> it;
+    if (solidified) {
+      it = TronJsonRpcImpl.getEventFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = TronJsonRpcImpl.getEventFilter2ResultFull().entrySet().iterator();
+    }
+
     while (it.hasNext()) {
       Entry<String, LogFilterAndResult> entry = it.next();
       if (entry.getValue().isExpire()) {
