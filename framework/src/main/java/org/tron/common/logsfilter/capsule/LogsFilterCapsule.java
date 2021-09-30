@@ -28,26 +28,30 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
   private String blockHash;
   @Getter
   @Setter
-  private Bloom bloom;
+  private Bloom bloom; // if solidified is true or remove is true, bloom will be null
   @Getter
   @Setter
   private List<TransactionInfo> txInfoList;
   @Getter
   @Setter
-  private boolean removed; //if removed == true, then bloom = null
+  private boolean solidified;
+  @Getter
+  @Setter
+  private boolean removed;
 
   public LogsFilterCapsule(long blockNumber, String blockHash, Bloom bloom,
-      List<TransactionInfo> txInfoList, boolean removed) {
+      List<TransactionInfo> txInfoList, boolean solidified, boolean removed) {
     this.blockNumber = blockNumber;
     this.blockHash = blockHash;
     this.bloom = bloom;
     this.txInfoList = txInfoList;
+    this.solidified = solidified;
     this.removed = removed;
   }
 
   @Override
   public void processFilterTrigger() {
-    logger.info("LogsFilterCapsule processFilterTrigger: {}", blockNumber);
+    logger.info("LogsFilterCapsule processFilterTrigger: {}, {}", blockNumber, solidified);
 
     Iterator<Entry<String, LogFilterAndResult>>
         it = TronJsonRpcImpl.getEventFilter2Result().entrySet().iterator();

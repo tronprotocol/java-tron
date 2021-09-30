@@ -461,7 +461,7 @@ public class Manager {
     }
 
     // start json rpc filter process
-    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+    if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       Thread filterProcessThread = new Thread(filterProcessLoop);
       filterProcessThread.start();
     }
@@ -1776,6 +1776,20 @@ public class Manager {
             + "block number: {}", latestSolidifiedBlockNumber);
       }
     }
+
+    if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
+      BlockCapsule blockCapsule;
+      try {
+        blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
+      } catch (Exception e) {
+        logger.error("postSolidityTrigger getBlockByNum={} except, {}",
+            latestSolidifiedBlockNumber, e.getMessage());
+        return;
+      }
+
+      postBlockFilter(blockCapsule, true);
+      postLogsFilter(blockCapsule, true, false);
+    }
   }
 
   private void processTransactionTrigger(BlockCapsule newBlock) {
@@ -1834,13 +1848,13 @@ public class Manager {
   }
 
   private void reOrgLogsFilter() {
-    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
+    if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
       logger.info("switch fork occurred, post reOrgLogsFilter");
 
       try {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
-        postLogsFilter(oldHeadBlock, true);
+        postLogsFilter(oldHeadBlock, false, true);
       } catch (BadItemException | ItemNotFoundException e) {
         logger.error("block header hash does not exist or is bad: {}",
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
@@ -1848,16 +1862,16 @@ public class Manager {
     }
   }
 
-  private void postBlockFilter(final BlockCapsule blockCapsule) {
-    BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule);
+  private void postBlockFilter(final BlockCapsule blockCapsule, boolean solidified) {
+    BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule, solidified);
     if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
       logger.info("too many filters, block filter lost: {}", blockCapsule.getBlockId());
     }
   }
 
-  private void postLogsFilter(final BlockCapsule blockCapsule, boolean removed) {
-    if (!blockCapsule.getTransactions().isEmpty()
-        && (removed || blockCapsule.getBloom() != null)) {
+  private void postLogsFilter(final BlockCapsule blockCapsule, boolean solidified,
+      boolean removed) {
+    if (!blockCapsule.getTransactions().isEmpty()) {
       long blockNumber = blockCapsule.getNum();
       List<TransactionInfo> transactionInfoList = new ArrayList<>();
 
@@ -1876,7 +1890,7 @@ public class Manager {
 
       LogsFilterCapsule logsFilterCapsule = new LogsFilterCapsule(blockNumber,
           blockCapsule.getBlockId().toString(), blockCapsule.getBloom(), transactionInfoList,
-          removed);
+          solidified, removed);
 
       if (!filterCapsuleQueue.offer(logsFilterCapsule)) {
         logger.info("too many filters, logs filter lost: {}", blockNumber);
@@ -1888,9 +1902,9 @@ public class Manager {
     BlockCapsule newBlock = blockCapsule;
 
     // post block and logs for jsonrpc
-    if (CommonParameter.getInstance().isJsonRpcEnabled()) {
-      postBlockFilter(blockCapsule);
-      postLogsFilter(blockCapsule, false);
+    if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
+      postBlockFilter(blockCapsule, false);
+      postLogsFilter(blockCapsule, false, false);
     }
 
     // process block trigger
