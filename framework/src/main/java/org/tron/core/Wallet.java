@@ -154,6 +154,7 @@ import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -3956,6 +3957,10 @@ public class Wallet {
     }
 
     return false;
+  }
+
+  public Chainbase.Cursor getCursor() {
+    return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
   }
 }
 
