@@ -79,15 +79,16 @@ public class NodeManagerTest {
   // @Before
   public static void initManager() throws Exception {
     nodeManagerClazz = NodeManager.class;
-    Constructor<NodeManager> handlerConstructor
-        = nodeManagerClazz.getConstructor(ChainBaseManager.class);
+    // Constructor<NodeManager> handlerConstructor
+    //     = nodeManagerClazz.getConstructor(ChainBaseManager.class);
     manager = context.getBean(Manager.class);
-    nodeManager = handlerConstructor.newInstance(context.getBean(ChainBaseManager.class));
+    // nodeManager = handlerConstructor.newInstance(context.getBean(ChainBaseManager.class));
+    nodeManager = new NodeManager(context.getBean(ChainBaseManager.class));
   }
 
   @Test
   public void isNodeAliveTest() {
-    Node node = new Node(new byte[64], "128.0.0.1", 18888, 18888);
+    Node node = new Node(new byte[64], "128.0.0.1", 18889, 18889);
     nodeManager.getTable().addNode(node);
     NodeHandler nodeHandler = new NodeHandler(node, nodeManager);
     nodeHandler.changeState(NodeHandler.State.ACTIVE);
@@ -167,7 +168,7 @@ public class NodeManagerTest {
       Class nodeClazz = Node.class;
       Constructor<Node> nodeConstructor
           = nodeClazz.getConstructor(byte[].class, String.class, int.class, int.class);
-      Node node = nodeConstructor.newInstance(bytes, stringBuilder.toString(), 18888, 18888);
+      Node node = nodeConstructor.newInstance(bytes, stringBuilder.toString(), 18889, 18889);
       Field isConnectableField = nodeClazz.getDeclaredField("p2pVersion");
       isConnectableField.setAccessible(true);
       isConnectableField.set(node, Args.getInstance().getNodeP2pVersion());
@@ -183,10 +184,10 @@ public class NodeManagerTest {
     Class nodeClazz = Node.class;
     Constructor<Node> nodeConstructor
         = nodeClazz.getConstructor(byte[].class, String.class, int.class, int.class);
-    Node wrongNode1 = nodeConstructor.newInstance(new byte[64], "128.0.0.1", 1111, 18888);
+    Node wrongNode1 = nodeConstructor.newInstance(new byte[64], "128.0.0.1", 1111, 18889);
     byte[] id = new byte[64];
     id[63] = 1;
-    Node wrongNode2 = nodeConstructor.newInstance(id, "128.0.0.2", 1111, 18888);
+    Node wrongNode2 = nodeConstructor.newInstance(id, "128.0.0.2", 1111, 18889);
     Field isConnectableField = nodeClazz.getDeclaredField("p2pVersion");
     isConnectableField.setAccessible(true);
     isConnectableField.set(wrongNode1, 999);
@@ -210,9 +211,9 @@ public class NodeManagerTest {
 
   @Test
   public void dumpActiveNodesTest() {
-    Node node1 = new Node(new byte[64], "128.0.0.1", 18888, 18888);
-    Node node2 = new Node(new byte[64], "128.0.0.2", 18888, 18888);
-    Node node3 = new Node(new byte[64], "128.0.0.3", 18888, 18888);
+    Node node1 = new Node(new byte[64], "128.0.0.1", 18889, 18889);
+    Node node2 = new Node(new byte[64], "128.0.0.2", 18889, 18889);
+    Node node3 = new Node(new byte[64], "128.0.0.3", 18889, 18889);
     NodeHandler nodeHandler1 = nodeManager.getNodeHandler(node1);
     NodeHandler nodeHandler2 = nodeManager.getNodeHandler(node2);
     NodeHandler nodeHandler3 = nodeManager.getNodeHandler(node3);
