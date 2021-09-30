@@ -4,7 +4,7 @@ import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
 import static org.tron.core.services.http.Util.setTransactionExtraData;
 import static org.tron.core.services.http.Util.setTransactionPermissionId;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateFilterId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
@@ -237,7 +237,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressData = addressHashToByteArray(address);
+      byte[] addressData = addressCompatibleToByteArray(address);
 
       Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
       Account reply = wallet.getAccount(account);
@@ -339,7 +339,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressByte = addressHashToByteArray(address);
+      byte[] addressByte = addressCompatibleToByteArray(address);
 
       // get contract from contractStore
       BytesMessage.Builder build = BytesMessage.newBuilder();
@@ -376,7 +376,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressData = addressHashToByteArray(contractAddress);
+      byte[] addressData = addressCompatibleToByteArray(contractAddress);
 
       BytesMessage.Builder build = BytesMessage.newBuilder();
       BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressData)).build();
@@ -419,7 +419,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public String estimateGas(CallArguments args) throws JsonRpcInvalidRequestException,
       JsonRpcInvalidParamsException, JsonRpcInternalException {
-    byte[] ownerAddress = addressHashToByteArray(args.from);
+    byte[] ownerAddress = addressCompatibleToByteArray(args.from);
 
     ContractType contractType = args.getContractType(wallet);
     if (contractType == ContractType.TransferContract) {
@@ -434,7 +434,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       byte[] contractAddress;
 
       if (contractType == ContractType.TriggerSmartContract) {
-        contractAddress = addressHashToByteArray(args.to);
+        contractAddress = addressCompatibleToByteArray(args.to);
       } else {
         contractAddress = new byte[0];
       }
@@ -595,8 +595,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressData = addressHashToByteArray(transactionCall.from);
-      byte[] contractAddressData = addressHashToByteArray(transactionCall.to);
+      byte[] addressData = addressCompatibleToByteArray(transactionCall.from);
+      byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.to);
 
       return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
     } else {
@@ -748,7 +748,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private TransactionJson buildTriggerSmartContractTransaction(byte[] ownerAddress,
       BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
-    byte[] contractAddress = addressHashToByteArray(args.to);
+    byte[] contractAddress = addressCompatibleToByteArray(args.to);
 
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
@@ -832,7 +832,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     TransferContract.Builder build = TransferContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
-        .setToAddress(ByteString.copyFrom(addressHashToByteArray(args.to)))
+        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.to)))
         .setAmount(amount);
 
     return createTransactionJson(build, ContractType.TransferContract, args);
@@ -849,7 +849,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     TransferAssetContract.Builder build = TransferAssetContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
-        .setToAddress(ByteString.copyFrom(addressHashToByteArray(args.to)))
+        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.to)))
         .setAssetName(ByteString.copyFrom(tokenIdArr))
         .setAmount(args.tokenValue);
 
@@ -862,7 +862,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       JsonRpcInternalException {
     byte[] fromAddressData;
     try {
-      fromAddressData = addressHashToByteArray(args.from);
+      fromAddressData = addressCompatibleToByteArray(args.from);
     } catch (JsonRpcInvalidParamsException e) {
       throw new JsonRpcInvalidRequestException("invalid json request");
     }
@@ -969,7 +969,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     LogFilterAndResult logFilterAndResult = new LogFilterAndResult(fr, currentMaxFullNum, wallet);
     String filterID = generateFilterId();
     eventFilter2Result.put(filterID, logFilterAndResult);
-    return filterID;
+    return ByteArray.toJsonHex(filterID);
   }
 
   @Override
@@ -977,11 +977,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     BlockFilterAndResult filterAndResult = new BlockFilterAndResult();
     String filterID = generateFilterId();
     blockFilter2Result.put(filterID, filterAndResult);
-    return filterID;
+    return ByteArray.toJsonHex(filterID);
   }
 
   @Override
   public boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException {
+    filterId = ByteArray.fromHex(filterId);
     if (eventFilter2Result.containsKey(filterId)) {
       eventFilter2Result.remove(filterId);
       return true;
@@ -995,16 +996,17 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public Object[] getFilterChanges(String filterId) throws JsonRpcInvalidParamsException {
+    filterId = ByteArray.fromHex(filterId);
     Object[] result;
     if (blockFilter2Result.containsKey(filterId)) {
       List<String> blockHashList = blockFilter2Result.get(filterId).getResult();
-      blockFilter2Result.get(filterId).clear();
       result = blockHashList.toArray(new String[blockHashList.size()]);
+      blockFilter2Result.get(filterId).clear();
 
     } else if (eventFilter2Result.containsKey(filterId)) {
       List<LogFilterElement> elements = eventFilter2Result.get(filterId).getResult();
-      eventFilter2Result.get(filterId).clear();
       result = elements.toArray(new LogFilterElement[elements.size()]);
+      eventFilter2Result.get(filterId).clear();
 
     } else {
       throw new JsonRpcInvalidParamsException("filter not found");
@@ -1031,11 +1033,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException {
+    filterId = ByteArray.fromHex(filterId);
     if (!eventFilter2Result.containsKey(filterId)) {
       throw new JsonRpcInvalidParamsException("filter not found");
     }
     LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
     long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    logger.info("currentMaxFullNum: {}", currentMaxFullNum);
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxFullNum);
   }
 
@@ -1051,11 +1055,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     LogMatch logMatch =
         new LogMatch(logFilterWrapper, possibleBlockList, manager);
     LogFilterElement[] matchedLogs = logMatch.matchBlockOneByOne();
-
-    if (matchedLogs.length >= LogBlockQuery.maxResult) {
-      throw new JsonRpcInvalidParamsException(
-          "query returned more than " + LogBlockQuery.maxResult + " results");
-    }
     return matchedLogs;
   }
 

@@ -75,7 +75,7 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
     long keyLong = combineKey(section, bitIndex);
     byte[] key = Long.toHexString(keyLong).getBytes();
     byte[] compressData = ByteUtil.compress(bitSet.toByteArray());
-    put(key, new BytesCapsule(compressData));
+    super.put(key, new BytesCapsule(compressData));
   }
 
   public Bloom initBlockSection(long blockNum, TransactionRetCapsule transactionRetCapsule) {
@@ -121,6 +121,7 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void write(long blockNum) throws EventBloomException {
+    logger.info("write section-bloom {}", blockNum);
     if (CollectionUtils.isEmpty(bitList)) {
       return;
     }

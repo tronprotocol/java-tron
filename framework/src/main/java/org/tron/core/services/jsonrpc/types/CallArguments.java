@@ -1,6 +1,6 @@
 package org.tron.core.services.jsonrpc.types;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 
@@ -47,7 +47,7 @@ public class CallArguments {
 
       contractType = ContractType.CreateSmartContract;
     } else {
-      byte[] contractAddressData = addressHashToByteArray(to);
+      byte[] contractAddressData = addressCompatibleToByteArray(to);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       BytesMessage bytesMessage =
           build.setValue(ByteString.copyFrom(contractAddressData)).build();

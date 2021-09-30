@@ -9,7 +9,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
 
-@Slf4j
+@Slf4j(topic = "API")
 public class BlockFilterCapsule extends FilterTriggerCapsule {
 
   @Getter
@@ -32,6 +32,7 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
         it.remove();
         continue;
       }
+      logger.info("add blockHash to filterID:{}", entry.getKey());
       entry.getValue().getResult().add(blockHash);
     }
   }

@@ -18,15 +18,19 @@ import org.tron.protos.Protocol.TransactionInfo.Log;
 
 public class LogFilter {
 
+  //[addr1, addr2]
   @Getter
   @Setter
-  private byte[][] contractAddresses = new byte[0][]; //[addr1, addr2]
-  //first topic must be func1 or func2，ignore second，third must be A or B，forth must be C
+  private byte[][] contractAddresses = new byte[0][];
+  // example: [[func1, func1], null, [A, B], [C]]
+  // first topic must be func1 or func2，second can be any，third must be A or B，forth must be C
   @Getter
   @Setter
-  private List<byte[][]> topics = new ArrayList<>();  //  [[func1, func1], null, [A, B], [C]]
+  private List<byte[][]> topics = new ArrayList<>();
+  // [[func1, func1], null, [A, B], [C]] + [addr1, addr2] => Bloom[][]
   @Setter
-  private Bloom[][] filterBlooms;  // [[func1, func1], null, [A, B], [C]] + [addr1, addr2] => Bloom[][]
+  private Bloom[][] filterBlooms;
+
 
   public LogFilter() {
   }
@@ -50,7 +54,7 @@ public class LogFilter {
           i++;
         } catch (JsonRpcInvalidParamsException e) {
           throw new JsonRpcInvalidParamsException(
-              String.format("invalid address at index %d: %s", i, e.getMessage()));
+              String.format("invalid address at index %d: [%s]", i, e.getMessage()));
         }
       }
       withContractAddress(addr.toArray(new byte[addr.size()][]));
@@ -98,7 +102,7 @@ public class LogFilter {
   /**
    * add contractAddress
    */
-  public LogFilter withContractAddress(byte[]... orAddress) {
+  private LogFilter withContractAddress(byte[]... orAddress) {
     contractAddresses = orAddress;
     return this;
   }
@@ -106,7 +110,7 @@ public class LogFilter {
   /**
    * add one or more topic
    */
-  public LogFilter withTopic(byte[]... orTopic) {
+  private LogFilter withTopic(byte[]... orTopic) {
     topics.add(orTopic);
     return this;
   }
@@ -119,10 +123,10 @@ public class LogFilter {
       return;
     }
 
+    //topics ahead，address last
     List<byte[][]> addrAndTopics = new ArrayList<>(topics);
     addrAndTopics.add(contractAddresses);
 
-    //topics数组的bloom在前，地址数组的bloom在后，n+1
     filterBlooms = new Bloom[addrAndTopics.size()][];
     for (int i = 0; i < addrAndTopics.size(); i++) {
       byte[][] orTopics = addrAndTopics.get(i);
@@ -144,7 +148,7 @@ public class LogFilter {
     initBlooms();
     for (Bloom[] andBloom : filterBlooms) {
       boolean orMatches = false;
-      for (Bloom orBloom : andBloom) { //每一层是"或"条件
+      for (Bloom orBloom : andBloom) {
         if (blockBloom.matches(orBloom)) {
           orMatches = true;
           break;
@@ -157,7 +161,7 @@ public class LogFilter {
     return true;
   }
 
-  public boolean matchesContractAddress(byte[] toAddr) {
+  private boolean matchesContractAddress(byte[] toAddr) {
     for (byte[] address : contractAddresses) {
       if (Arrays.equals(address, toAddr)) {
         return true;

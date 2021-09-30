@@ -12,6 +12,7 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
@@ -33,16 +34,14 @@ public class LogMatch {
   private List<Long> blockNumList;
   private Manager manager;
 
-  public LogMatch(LogFilterWrapper logFilterWrapper, List<Long> blockNumList,
-      Manager manager) {
+  public LogMatch(LogFilterWrapper logFilterWrapper, List<Long> blockNumList, Manager manager) {
     this.logFilterWrapper = logFilterWrapper;
     this.blockNumList = blockNumList;
     this.manager = manager;
   }
 
   public static List<LogFilterElement> matchBlock(LogFilter logFilter, long blockNum,
-      String blockHash,
-      List<TransactionInfo> transactionInfoList, boolean removed) {
+      String blockHash, List<TransactionInfo> transactionInfoList, boolean removed) {
 
     int txCount = transactionInfoList.size();
 
@@ -80,7 +79,8 @@ public class LogMatch {
     return matchedLog;
   }
 
-  public LogFilterElement[] matchBlockOneByOne() throws BadItemException, ItemNotFoundException {
+  public LogFilterElement[] matchBlockOneByOne()
+      throws BadItemException, ItemNotFoundException, JsonRpcInvalidParamsException {
     List<LogFilterElement> logFilterElementList = new ArrayList<>();
     for (long blockNum : blockNumList) {
       logger.info("matchBlockOneByOne:{}", blockNum);
@@ -95,6 +95,10 @@ public class LogMatch {
           blockHash, transactionInfoList, false);
       if (!matchedLog.isEmpty()) {
         logFilterElementList.addAll(matchedLog);
+      }
+      if (logFilterElementList.size() > LogBlockQuery.maxResult) {
+        throw new JsonRpcInvalidParamsException(
+            "query returned more than " + LogBlockQuery.maxResult + " results");
       }
     }
     return logFilterElementList.toArray(new LogFilterElement[logFilterElementList.size()]);

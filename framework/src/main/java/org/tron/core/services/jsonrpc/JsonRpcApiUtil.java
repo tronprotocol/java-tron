@@ -364,65 +364,50 @@ public class JsonRpcApiUtil {
     return amount;
   }
 
-  public static byte[] addressHashToByteArray(String hash) throws JsonRpcInvalidParamsException {
-    byte[] bHash;
+  /**
+   * convert 40 or 42 hex string of address to byte array, compatible with "41"(T) ahead,
+   * padding 0 ahead if length is odd.
+   */
+  public static byte[] addressCompatibleToByteArray(String hexAddress)
+      throws JsonRpcInvalidParamsException {
+    byte[] addressByte;
     try {
-      bHash = ByteArray.fromHexString(hash);
-      if (bHash.length != DecodeUtil.ADDRESS_SIZE / 2
-          && bHash.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
+      addressByte = ByteArray.fromHexString(hexAddress);
+      if (addressByte.length != DecodeUtil.ADDRESS_SIZE / 2
+          && addressByte.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
         throw new JsonRpcInvalidParamsException("invalid address hash value");
       }
 
-      if (bHash.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
-        bHash = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, bHash);
+      if (addressByte.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
+        addressByte = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, addressByte);
       }
     } catch (Exception e) {
       throw new JsonRpcInvalidParamsException(e.getMessage());
     }
-    return bHash;
+    return addressByte;
   }
 
   /**
-   * check if address is hex string of size 40
+   * convert 40 hex string of address to byte array, padding 0 ahead if length is odd.
    */
-  public static byte[] addressToByteArray(String address) throws JsonRpcInvalidParamsException {
-    byte[] addressByte;
-    try {
-      if (address.startsWith("0x")) {
-        address = address.substring(2);
-      }
-      if (address.length() != 40) {
-        String msg = address.length() % 2 == 0 ? String.valueOf(address.length() / 2)
-            : String.valueOf(address.length() / 2.0);
-        throw new JsonRpcInvalidParamsException(
-            "data type size mismatch, expected 20 got " + msg);
-      }
-      addressByte = ByteArray.fromHexString(address);
-    } catch (Exception e) {
-      throw new JsonRpcInvalidParamsException(e.getMessage());
+  public static byte[] addressToByteArray(String hexAddress) throws JsonRpcInvalidParamsException {
+    String address = ByteArray.fromHex(hexAddress);
+    byte[] addressByte = ByteArray.fromHexString(address);
+    if (addressByte.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
+      throw new JsonRpcInvalidParamsException("invalid address: " + hexAddress);
     }
     byte[] last20Bytes = new DataWord(addressByte).getLast20Bytes();
     return last20Bytes;
   }
 
   /**
-   * check if topic is hex string of size 64
+   * check if topic is hex string of size 64, padding 0 ahead if length is odd.
    */
-  public static byte[] topicToByteArray(String topic) throws JsonRpcInvalidParamsException {
-    byte[] topicByte;
-    try {
-      if (topic.startsWith("0x")) {
-        topic = topic.substring(2);
-      }
-      if (topic.length() != 64) {
-        String msg = topic.length() % 2 == 0 ? String.valueOf(topic.length() / 2)
-            : String.valueOf(topic.length() / 2.0);
-        throw new JsonRpcInvalidParamsException(
-            "data type size mismatch, expected 32 got " + msg);
-      }
-      topicByte = ByteArray.fromHexString(topic);
-    } catch (Exception e) {
-      throw new JsonRpcInvalidParamsException(e.getMessage());
+  public static byte[] topicToByteArray(String hexTopic) throws JsonRpcInvalidParamsException {
+    String topic = ByteArray.fromHex(hexTopic);
+    byte[] topicByte = ByteArray.fromHexString(topic);
+    if (topic.length() != 32) {
+      throw new JsonRpcInvalidParamsException("invalid topic: " + hexTopic);
     }
     return topicByte;
   }

@@ -43,6 +43,7 @@ public class LogBlockQuery {
       minSection = (int) (logFilterWrapper.getFromBlock() / Bloom.bloom_bit_size);
       minBlock = logFilterWrapper.getFromBlock();
     }
+
     if (logFilterWrapper.getToBlock() == Long.MAX_VALUE) {
       maxSection = (int) (currentMaxFullNum / Bloom.bloom_bit_size);
       maxBlock = currentMaxFullNum;
@@ -61,6 +62,7 @@ public class LogBlockQuery {
     BitSet blockNumBitSet = new BitSet(capacity);
     blockNumBitSet.set(0, capacity);
 
+    //works serial
     for (int conditionIndex = 0; conditionIndex < allConditionsIndex.length; conditionIndex++) {
       BitSet bitSet = subMatch(allConditionsIndex[conditionIndex]);
       blockNumBitSet.and(bitSet);
@@ -84,9 +86,6 @@ public class LogBlockQuery {
     logger.info("get possible block length: {}", blockNumList.size());
     return blockNumList;
   }
-
-  //address -> subMatch0,topic1 -> subMatch1, topic2 -> subMatch2, topic3 -> subMatch3,
-  //topic4 -> subMatch4, works serial
 
   /**
    * address -> subMatch0,
@@ -117,9 +116,9 @@ public class LogBlockQuery {
 
 
   /**
-   * every section has a section, works parallel
-   * and condition in second dimension, or condition in first dimension
-   * return a BitSet with capacity of blockPerSection
+   * every section has a compound query of sectionBloomStore, works parallel
+   * "and" condition in second dimension of query, "or" condition in first dimension
+   * return a BitSet whose capacity is blockPerSection
    */
   private BitSet partialMatch(final int[][] bitIndexes, int section)
       throws ExecutionException, InterruptedException {
@@ -139,7 +138,7 @@ public class LogBlockQuery {
     BitSet bitSet = new BitSet(SectionBloomStore.blockPerSection);
 
     for (List<Future<BitSet>> futureList : bitSetList) {
-      // all 0 => all 1
+      // initial a BitSet with all 1
       BitSet subBitSet = new BitSet(SectionBloomStore.blockPerSection);
       subBitSet.set(0, SectionBloomStore.blockPerSection);
       // and condition in second dimension
@@ -150,16 +149,20 @@ public class LogBlockQuery {
           break;
         }
         logger.info("future one size:{}", one.cardinality());
+        // "and" condition in second dimension
         subBitSet.and(one);
       }
       logger.info("future subBitSet size:{}", subBitSet.cardinality());
-      // or condition in first dimension
+      // "or" condition in first dimension
       bitSet.or(subBitSet);
     }
     logger.info("future bitSet size:{}", bitSet.cardinality());
     return bitSet;
   }
 
+  /**
+   * convert LogFilter to the condition as 3 dimension array
+   */
   private int[][][] getConditions() {
 
     LogFilter logFilter = logFilterWrapper.getLogFilter();

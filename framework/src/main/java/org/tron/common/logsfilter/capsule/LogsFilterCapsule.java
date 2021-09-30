@@ -16,7 +16,7 @@ import org.tron.core.services.jsonrpc.filters.LogFilterAndResult;
 import org.tron.core.services.jsonrpc.filters.LogMatch;
 import org.tron.protos.Protocol.TransactionInfo;
 
-@Slf4j
+@Slf4j(topic = "API")
 @ToString
 public class LogsFilterCapsule extends FilterTriggerCapsule {
 
@@ -47,7 +47,7 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
 
   @Override
   public void processFilterTrigger() {
-    logger.info("LogsFilterCapsule processFilterTrigger: {}", this.toString());
+    logger.info("LogsFilterCapsule processFilterTrigger: {}", blockNumber);
 
     Iterator<Entry<String, LogFilterAndResult>>
         it = TronJsonRpcImpl.getEventFilter2Result().entrySet().iterator();
@@ -66,7 +66,7 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
 
       LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
       List<LogFilterElement> elements =
-          LogMatch.matchBlock(logFilter, blockNumber, null, txInfoList, removed);
+          LogMatch.matchBlock(logFilter, blockNumber, blockHash, txInfoList, removed);
       if (CollectionUtils.isNotEmpty(elements)) {
         logFilterAndResult.getResult().addAll(elements);
       }
