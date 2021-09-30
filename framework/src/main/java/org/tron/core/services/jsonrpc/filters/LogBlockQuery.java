@@ -23,7 +23,7 @@ public class LogBlockQuery {
   public static final int maxResult = 10000;
   private LogFilterWrapper logFilterWrapper;
   private SectionBloomStore sectionBloomStore;
-  private ExecutorService executor;
+  private ExecutorService sectionExecutor;
 
   private int minSection;
   private int maxSection;
@@ -31,22 +31,22 @@ public class LogBlockQuery {
   private long maxBlock;
 
   public LogBlockQuery(LogFilterWrapper logFilterWrapper, SectionBloomStore sectionBloomStore,
-      long currentMaxFullNum, ExecutorService executor) {
+      long currentMaxBlockNum, ExecutorService executor) {
     this.logFilterWrapper = logFilterWrapper;
     this.sectionBloomStore = sectionBloomStore;
-    this.executor = executor;
+    this.sectionExecutor = executor;
 
     if (logFilterWrapper.getFromBlock() == Long.MAX_VALUE) {
-      minSection = (int) (currentMaxFullNum / Bloom.bloom_bit_size);
-      minBlock = currentMaxFullNum;
+      minSection = (int) (currentMaxBlockNum / Bloom.bloom_bit_size);
+      minBlock = currentMaxBlockNum;
     } else {
       minSection = (int) (logFilterWrapper.getFromBlock() / Bloom.bloom_bit_size);
       minBlock = logFilterWrapper.getFromBlock();
     }
 
     if (logFilterWrapper.getToBlock() == Long.MAX_VALUE) {
-      maxSection = (int) (currentMaxFullNum / Bloom.bloom_bit_size);
-      maxBlock = currentMaxFullNum;
+      maxSection = (int) (currentMaxBlockNum / Bloom.bloom_bit_size);
+      maxBlock = currentMaxBlockNum;
     } else {
       maxSection = (int) (logFilterWrapper.getToBlock() / Bloom.bloom_bit_size);
       maxBlock = logFilterWrapper.getToBlock();
@@ -129,7 +129,7 @@ public class LogBlockQuery {
       for (int j = 0; j < bitIndexes[i].length; j++) { //must be 3
         final int bitIndex = bitIndexes[i][j];
         Future<BitSet> bitSetFuture =
-            executor.submit(() -> sectionBloomStore.get(section, bitIndex));
+            sectionExecutor.submit(() -> sectionBloomStore.get(section, bitIndex));
         futureList.add(bitSetFuture);
       }
       bitSetList.add(futureList);

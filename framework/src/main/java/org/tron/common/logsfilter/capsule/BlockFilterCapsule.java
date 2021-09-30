@@ -30,8 +30,13 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
   public void processFilterTrigger() {
     logger.info("BlockFilterCapsule processFilterTrigger get blockHash: {}", this);
 
-    Iterator<Entry<String, BlockFilterAndResult>>
-        it = TronJsonRpcImpl.getBlockFilter2Result().entrySet().iterator();
+    Iterator<Entry<String, BlockFilterAndResult>> it;
+    if (solidified) {
+      it = TronJsonRpcImpl.getBlockFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = TronJsonRpcImpl.getBlockFilter2ResultFull().entrySet().iterator();
+    }
+
     while (it.hasNext()) {
       Entry<String, BlockFilterAndResult> entry = it.next();
       if (entry.getValue().isExpire()) {

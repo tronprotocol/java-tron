@@ -315,7 +315,8 @@ public interface TronJsonRpc {
   //     @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
   // })
   LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
-      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException;
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_getFilterLogs")
   @JsonRpcErrors({
