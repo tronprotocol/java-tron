@@ -95,7 +95,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private final int chainId = 100;
   private final int networkId = 100;
   private String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
-  private ExecutorService executor;
+  /**
+   * thread pool of query section bloom store
+   */
+  private ExecutorService sectionExecutor;
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
   private Manager manager;
@@ -104,7 +107,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
     this.manager = manager;
-    this.executor = Executors.newFixedThreadPool(5);
+    this.sectionExecutor = Executors.newFixedThreadPool(5);
   }
 
   @Override
@@ -1048,7 +1051,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       InterruptedException, BadItemException, ItemNotFoundException {
     //query possible block
     LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, manager.getChainBaseManager()
-        .getSectionBloomStore(), currentMaxFullNum, executor);
+        .getSectionBloomStore(), currentMaxFullNum, sectionExecutor);
     List<Long> possibleBlockList = logBlockQuery.getPossibleBlock();
 
     //match event from block one by one exactly

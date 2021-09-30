@@ -23,7 +23,7 @@ public class LogBlockQuery {
   public static final int maxResult = 10000;
   private LogFilterWrapper logFilterWrapper;
   private SectionBloomStore sectionBloomStore;
-  private ExecutorService executor;
+  private ExecutorService sectionExecutor;
 
   private int minSection;
   private int maxSection;
@@ -34,7 +34,7 @@ public class LogBlockQuery {
       long currentMaxFullNum, ExecutorService executor) {
     this.logFilterWrapper = logFilterWrapper;
     this.sectionBloomStore = sectionBloomStore;
-    this.executor = executor;
+    this.sectionExecutor = executor;
 
     if (logFilterWrapper.getFromBlock() == Long.MAX_VALUE) {
       minSection = (int) (currentMaxFullNum / Bloom.bloom_bit_size);
@@ -129,7 +129,7 @@ public class LogBlockQuery {
       for (int j = 0; j < bitIndexes[i].length; j++) { //must be 3
         final int bitIndex = bitIndexes[i][j];
         Future<BitSet> bitSetFuture =
-            executor.submit(() -> sectionBloomStore.get(section, bitIndex));
+            sectionExecutor.submit(() -> sectionBloomStore.get(section, bitIndex));
         futureList.add(bitSetFuture);
       }
       bitSetList.add(futureList);
