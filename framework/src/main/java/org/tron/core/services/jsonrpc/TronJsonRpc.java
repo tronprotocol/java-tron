@@ -269,33 +269,42 @@ public interface TronJsonRpc {
 
   @JsonRpcMethod("eth_newFilter")
   @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
   })
-  String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException, IOException;
+  String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException, IOException;
 
   @JsonRpcMethod("eth_newBlockFilter")
   @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
   })
-  String newBlockFilter() throws JsonRpcInvalidParamsException, IOException;
+  String newBlockFilter() throws JsonRpcInvalidParamsException, JsonRpcMethodNotFoundException,
+      IOException;
 
   @JsonRpcMethod("eth_uninstallFilter")
   @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
   })
-  boolean uninstallFilter(String filterId) throws IOException, JsonRpcInvalidParamsException;
+  boolean uninstallFilter(String filterId) throws IOException, JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_getFilterChanges")
   @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
   })
   Object[] getFilterChanges(String filterId)
-      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException;
+      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException,
+      JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_getLogs")
   // @JsonRpcErrors({

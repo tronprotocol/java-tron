@@ -27,6 +27,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   void setCursor(Chainbase.Cursor cursor, long offset);
 
+  Chainbase.Cursor getCursor();
+
   // for blockstore
   Set<byte[]> getlatestValues(long limit);
 

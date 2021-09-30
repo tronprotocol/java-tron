@@ -41,6 +41,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -83,6 +84,12 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
+
+  public enum RequestSource {
+    FULLNODE,
+    SOLIDITY,
+    PBFT
+  }
 
   public static final int expireSeconds = 5 * 60;
   //for log filter
@@ -859,6 +866,25 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return createTransactionJson(build, ContractType.TransferAssetContract, args);
   }
 
+  public RequestSource getSource() {
+    Chainbase.Cursor cursor = wallet.getCursor();
+    switch (cursor) {
+      case SOLIDITY:
+        return RequestSource.SOLIDITY;
+      case PBFT:
+        return RequestSource.PBFT;
+      default:
+        return RequestSource.FULLNODE;
+    }
+  }
+
+  public void disableInPBFT(String method) throws JsonRpcMethodNotFoundException {
+    if (getSource() == RequestSource.PBFT) {
+      String msg = String.format("the method %s does not exist/is not available in PBFT", method);
+      throw new JsonRpcMethodNotFoundException(msg);
+    }
+  }
+
   @Override
   public TransactionJson buildTransaction(BuildArguments args)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
@@ -967,7 +993,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
+  public String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_newFilter");
+
     long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     LogFilterAndResult logFilterAndResult = new LogFilterAndResult(fr, currentMaxFullNum, wallet);
     String filterID = generateFilterId();
@@ -976,7 +1005,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public String newBlockFilter() {
+  public String newBlockFilter() throws JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_newBlockFilter");
+
     BlockFilterAndResult filterAndResult = new BlockFilterAndResult();
     String filterID = generateFilterId();
     blockFilter2Result.put(filterID, filterAndResult);
@@ -984,7 +1015,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException {
+  public boolean uninstallFilter(String filterId) throws IOException, JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_uninstallFilter");
+
     filterId = ByteArray.fromHex(filterId);
     if (eventFilter2Result.containsKey(filterId)) {
       eventFilter2Result.remove(filterId);
@@ -998,7 +1032,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public Object[] getFilterChanges(String filterId) throws JsonRpcInvalidParamsException {
+  public Object[] getFilterChanges(String filterId) throws JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_getFilterChanges");
+
     filterId = ByteArray.fromHex(filterId);
     Object[] result;
     if (blockFilter2Result.containsKey(filterId)) {
