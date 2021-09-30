@@ -299,7 +299,7 @@ public class Manager {
     return getDynamicPropertiesStore().getAbiMoveDone() == 0L;
   }
 
-  public boolean needToLoadEnergyPriceHistory() {
+  private boolean needToLoadEnergyPriceHistory() {
     return getDynamicPropertiesStore().getEnergyPriceHistoryDone() == 0L;
   }
 
