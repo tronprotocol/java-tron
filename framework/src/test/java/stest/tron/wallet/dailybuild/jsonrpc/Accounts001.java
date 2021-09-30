@@ -123,7 +123,7 @@ public class Accounts001 extends JsonRpcBase {
     String blockIdFromJsonRpcNode = responseContent.get("result").toString().substring(2);
     response = HttpMethed.getBlockByNum(httpFullNode, 0);
     responseContent = HttpMethed.parseResponseContent(response);
-    String blockIdFromHttp = responseContent.getString("blockID");
+    String blockIdFromHttp = responseContent.getString("blockID").substring(56);
     logger.info("blockIdFromJsonRpcNode:" + blockIdFromJsonRpcNode);
     logger.info("blockIdFromHttp:" + blockIdFromHttp);
     Assert.assertEquals(blockIdFromJsonRpcNode, blockIdFromHttp);
