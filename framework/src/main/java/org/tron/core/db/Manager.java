@@ -1750,17 +1750,39 @@ public class Manager {
     }
   }
 
+  private void postSolidityFilter(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
+    if (oldSolidNum >= latestSolidifiedBlockNumber) {
+      logger.warn("post solidity filter failed, new: {} <= old: {}",
+          latestSolidifiedBlockNumber, oldSolidNum);
+      return;
+    }
+
+    BlockCapsule blockCapsule;
+    try {
+      blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
+    } catch (Exception e) {
+      logger.error("postSolidityFilter getBlockByNum={} except, {}",
+          latestSolidifiedBlockNumber, e.getMessage());
+      return;
+    }
+
+    postBlockFilter(blockCapsule, true);
+    postLogsFilter(blockCapsule, true, false);
+  }
+
   private void postSolidityTrigger(final long oldSolidNum, final long latestSolidifiedBlockNumber) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
+
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
       for (Long i : Args.getSolidityContractEventTriggerMap().keySet()) {
         postSolidityEventContractTrigger(i, latestSolidifiedBlockNumber);
       }
     }
+
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
       SolidityTriggerCapsule solidityTriggerCapsule
           = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
@@ -1782,23 +1804,7 @@ public class Manager {
     }
 
     if (CommonParameter.getInstance().isJsonRpcHttpSolidityNodeEnable()) {
-      if (oldSolidNum >= latestSolidifiedBlockNumber) {
-        logger.warn("post solidity filter failed, new: {} <= old: {}",
-            latestSolidifiedBlockNumber, oldSolidNum);
-        return;
-      }
-
-      BlockCapsule blockCapsule;
-      try {
-        blockCapsule = chainBaseManager.getBlockByNum(latestSolidifiedBlockNumber);
-      } catch (Exception e) {
-        logger.error("postSolidityTrigger getBlockByNum={} except, {}",
-            latestSolidifiedBlockNumber, e.getMessage());
-        return;
-      }
-
-      postBlockFilter(blockCapsule, true);
-      postLogsFilter(blockCapsule, true, false);
+      postSolidityFilter(oldSolidNum, latestSolidifiedBlockNumber);
     }
   }
 
