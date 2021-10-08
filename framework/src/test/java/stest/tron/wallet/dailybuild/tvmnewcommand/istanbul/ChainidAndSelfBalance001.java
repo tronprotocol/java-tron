@@ -75,7 +75,8 @@ public class ChainidAndSelfBalance001 {
     String chainIdHex = ByteArray.toHexString(returns.getConstantResult(0).toByteArray());
 
     BlockExtention blockZero = PublicMethed.getBlock2(0, blockingStubFull);
-    String blockZeroId = ByteArray.toHexString(blockZero.getBlockid().toByteArray());
+    String tem = ByteArray.toHexString(blockZero.getBlockid().toByteArray()).substring(56);
+    String blockZeroId = "00000000000000000000000000000000000000000000000000000000"+tem;
 
     Assert.assertEquals(chainIdHex,blockZeroId);
   }
