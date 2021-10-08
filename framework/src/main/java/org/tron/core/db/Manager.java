@@ -1079,7 +1079,6 @@ public class Manager {
               chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
 
           applyBlock(newBlock, txs);
-          //todo something
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
@@ -1498,7 +1497,7 @@ public class Manager {
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
-    if (true) {
+    if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       Bloom blockBloom = chainBaseManager.getSectionBloomStore()
           .initBlockSection(block.getNum(), transactionRetCapsule);
       chainBaseManager.getSectionBloomStore().write(block.getNum());
