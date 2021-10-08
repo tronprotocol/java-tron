@@ -344,20 +344,14 @@ public interface TronJsonRpc {
     private final String highestBlock;
   }
 
+  @ToString
   class CompilationResult {
 
     public String code;
     public CompilationInfo info;
-
-    @Override
-    public String toString() {
-      return "CompilationResult{"
-          + "code='" + code + '\''
-          + ", info=" + info
-          + '}';
-    }
   }
 
+  @ToString
   class CompilationInfo {
 
     public String source;
@@ -368,18 +362,6 @@ public interface TronJsonRpc {
     public String userDoc;
     public String developerDoc;
 
-    @Override
-    public String toString() {
-      return "CompilationInfo{"
-          + "source='" + source + '\''
-          + ", language='" + language + '\''
-          + ", languageVersion='" + languageVersion + '\''
-          + ", compilerVersion='" + compilerVersion + '\''
-          // + ", abiDefinition=" + abiDefinition + '\''
-          + ", userDoc='" + userDoc + '\''
-          + ", developerDoc='" + developerDoc + '\''
-          + '}';
-    }
   }
 
   class TransactionJson {

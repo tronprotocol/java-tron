@@ -1130,6 +1130,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_getFilterLogs");
+
     Map<String, LogFilterAndResult> eventFilter2Result;
     if (getSource() == RequestSource.FULLNODE) {
       eventFilter2Result = eventFilter2ResultFull;
@@ -1158,8 +1159,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     //match event from block one by one exactly
     LogMatch logMatch =
         new LogMatch(logFilterWrapper, possibleBlockList, manager);
-    LogFilterElement[] matchedLogs = logMatch.matchBlockOneByOne();
-    return matchedLogs;
+    return logMatch.matchBlockOneByOne();
   }
 
   @Override
