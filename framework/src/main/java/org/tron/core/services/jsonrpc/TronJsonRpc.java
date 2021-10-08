@@ -268,6 +268,7 @@ public interface TronJsonRpc {
   CompilationResult ethSubmitHashrate(String hashrate, String id)
       throws JsonRpcMethodNotFoundException;
 
+  // filter
   @JsonRpcMethod("eth_newFilter")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
