@@ -140,8 +140,4 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
       put(section, bitIndex, bitSet);
     }
   }
-
-  public long getCount() {
-    return Streams.stream(revokingDB.iterator()).count();
-  }
 }

@@ -1162,11 +1162,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return logMatch.matchBlockOneByOne();
   }
 
-  @Override
-  public long getDbCount() throws JsonRpcInvalidParamsException, IOException {
-    return manager.getChainBaseManager().getSectionBloomStore().getCount();
-  }
-
   public enum RequestSource {
     FULLNODE,
     SOLIDITY,

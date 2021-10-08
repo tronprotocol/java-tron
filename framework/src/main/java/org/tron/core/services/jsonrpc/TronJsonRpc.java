@@ -328,13 +328,6 @@ public interface TronJsonRpc {
   })
   LogFilterElement[] getFilterLogs(String filterId) throws Exception;
 
-  @JsonRpcMethod("eth_dbCount")
-  @JsonRpcErrors({
-      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
-  })
-  long getDbCount() throws JsonRpcInvalidParamsException, IOException;
-
   @Value
   @AllArgsConstructor
   @ToString

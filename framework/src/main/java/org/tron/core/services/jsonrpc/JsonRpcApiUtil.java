@@ -508,7 +508,7 @@ public class JsonRpcApiUtil {
 
   public static String generateFilterId() {
     SecureRandom random = new SecureRandom();
-    byte[] uid = new byte[16]; // 128 bits are converted to 16 bytes;
+    byte[] uid = new byte[16]; // 128 bits are converted to 16 bytes
     random.nextBytes(uid);
     return ByteArray.toHexString(uid);
   }
