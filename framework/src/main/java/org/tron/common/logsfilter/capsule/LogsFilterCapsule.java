@@ -51,8 +51,6 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
 
   @Override
   public void processFilterTrigger() {
-    logger.info("LogsFilterCapsule processFilterTrigger: {}, {}", blockNumber, solidified);
-
     Iterator<Entry<String, LogFilterAndResult>> it;
     if (solidified) {
       it = TronJsonRpcImpl.getEventFilter2ResultSolidity().entrySet().iterator();

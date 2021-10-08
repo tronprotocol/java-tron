@@ -29,8 +29,6 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
 
   @Override
   public void processFilterTrigger() {
-    logger.info("BlockFilterCapsule processFilterTrigger get blockHash: {}", this);
-
     Iterator<Entry<String, BlockFilterAndResult>> it;
     if (solidified) {
       it = TronJsonRpcImpl.getBlockFilter2ResultSolidity().entrySet().iterator();
@@ -44,7 +42,6 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
         it.remove();
         continue;
       }
-      logger.info("add blockHash to filterID:{}", entry.getKey());
       entry.getValue().getResult().add(ByteArray.toJsonHex(blockHash));
     }
   }
