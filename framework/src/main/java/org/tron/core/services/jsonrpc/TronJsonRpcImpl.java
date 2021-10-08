@@ -85,7 +85,13 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
 
-  public static final int expireSeconds = 5 * 60;
+  public enum RequestSource {
+    FULLNODE,
+    SOLIDITY,
+    PBFT
+  }
+
+  public static final int EXPIRE_SECONDS = 5 * 60;
   /**
    * for log filter in Full Json-RPC
    */
@@ -110,8 +116,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private static Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
       new ConcurrentHashMap<>();
 
-  private final int chainId = 100;
-  private final int networkId = 100;
   private String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
   /**
    * thread pool of query section bloom store
@@ -1116,8 +1120,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     //convert FilterRequest to LogFilterWrapper
-
     LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
+
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }
 
@@ -1138,9 +1142,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     if (!eventFilter2Result.containsKey(filterId)) {
       throw new JsonRpcInvalidParamsException("filter not found");
     }
+
     LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
-    logger.info("currentMaxBlockNum: {}", currentMaxBlockNum);
+
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }
 
@@ -1158,9 +1163,5 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return logMatch.matchBlockOneByOne();
   }
 
-  public enum RequestSource {
-    FULLNODE,
-    SOLIDITY,
-    PBFT
-  }
+
 }

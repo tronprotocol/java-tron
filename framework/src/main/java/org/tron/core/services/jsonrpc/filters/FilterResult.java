@@ -12,7 +12,7 @@ public abstract class FilterResult<T> {
   protected List<T> result;
 
   public void updateExpireTime() {
-    expireTimeStamp = System.currentTimeMillis() + TronJsonRpcImpl.expireSeconds * 1000;
+    expireTimeStamp = System.currentTimeMillis() + TronJsonRpcImpl.EXPIRE_SECONDS * 1000;
   }
 
   public boolean isExpire() {
