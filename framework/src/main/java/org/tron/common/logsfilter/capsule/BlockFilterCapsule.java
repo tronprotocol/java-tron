@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
@@ -44,7 +45,7 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
         continue;
       }
       logger.info("add blockHash to filterID:{}", entry.getKey());
-      entry.getValue().getResult().add(blockHash);
+      entry.getValue().getResult().add(ByteArray.toJsonHex(blockHash));
     }
   }
 }
