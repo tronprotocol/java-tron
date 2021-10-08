@@ -588,8 +588,7 @@ public class Accounts001 extends JsonRpcBase {
         logs.getJSONObject(0).getString("transactionHash"),
         resultFromTransactionReceipt.getString("transactionHash"));
     Assert.assertEquals(
-        logs.getJSONObject(0).getString("address"),resultFromTransactionReceipt.getString("to")
-        );
+        logs.getJSONObject(0).getString("address"), resultFromTransactionReceipt.getString("to"));
     response = HttpMethed.getTransactionInfoByBlocknum(httpFullNode, blockNumForTrc20);
     List<JSONObject> responseContent1 = HttpMethed.parseResponseContentArray(response);
     logger.info("responseContent1:" + responseContent1);
@@ -759,13 +758,13 @@ public class Accounts001 extends JsonRpcBase {
     JsonObject requestBody = getJsonRpcBody("net_version", params);
     response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
-    String firstBlockHash1 = responseContent.getString("result").substring(2);
+    String firstBlockHashFromJsonRpc = responseContent.getString("result").substring(2);
     response = HttpMethed.getBlockByNum(httpFullNode, 0);
     responseContent = HttpMethed.parseResponseContent(response);
-    String firstBlockHash2 = responseContent.getString("blockID");
-    logger.info(firstBlockHash1);
-    logger.info(firstBlockHash2);
-    Assert.assertEquals(firstBlockHash1, firstBlockHash2);
+    String firstBlockHashFromHttp = responseContent.getString("blockID").substring(56);
+    logger.info("firstBlockHashFromJsonRpc" + firstBlockHashFromJsonRpc);
+    logger.info("firstBlockHashFromHttp" + firstBlockHashFromHttp);
+    Assert.assertEquals(firstBlockHashFromJsonRpc, firstBlockHashFromHttp);
   }
 
   @Test(enabled = true, description = "Json rpc api of web3_clientVersion")
