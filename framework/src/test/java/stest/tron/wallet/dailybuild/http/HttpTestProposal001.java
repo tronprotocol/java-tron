@@ -123,6 +123,7 @@ public class HttpTestProposal001 {
         100000, responseContent.getJSONArray("chainParameter").getJSONObject(2).get("value"));
   }
   /** constructor. */
+
   @Test(enabled = true, description = "Get energy price by http")
   public void test8GetEnergyPrice() {
     response = HttpMethed.getEnergyPric(httpnode);

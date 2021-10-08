@@ -432,6 +432,7 @@ public class HttpMethed {
   /**
    * constructor.
    */
+
   public static HttpResponse getChainParameters(String httpNode) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
@@ -5307,11 +5308,11 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionFromPending(String httpNode,String txid) {
+  public static HttpResponse getTransactionFromPending(String httpNode, String txid) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/gettransactionfrompending";
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("value",txid);
+      userBaseObj2.addProperty("value", txid);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
