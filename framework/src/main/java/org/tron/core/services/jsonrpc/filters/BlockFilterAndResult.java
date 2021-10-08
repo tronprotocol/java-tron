@@ -1,7 +1,6 @@
 package org.tron.core.services.jsonrpc.filters;
 
 import java.util.ArrayList;
-import org.tron.core.services.jsonrpc.filters.FilterResult;
 
 public class BlockFilterAndResult extends FilterResult<String> {
 
