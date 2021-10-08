@@ -94,7 +94,7 @@ public class LogFilter {
       }
     }
 
-    if (contractAddresses.length == 0 && topics.size() == 0) {
+    if (contractAddresses.length == 0 && topics.isEmpty()) {
       throw new JsonRpcInvalidParamsException("must specify address or topics.");
     }
   }

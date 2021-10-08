@@ -1049,7 +1049,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public boolean uninstallFilter(String filterId) throws IOException, JsonRpcInvalidParamsException,
+  public boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_uninstallFilter");
 

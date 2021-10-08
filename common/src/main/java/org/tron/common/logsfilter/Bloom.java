@@ -1,46 +1,17 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.tron.common.logsfilter;
 
 import java.util.Arrays;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 
-
-/**
- * See http://www.herongyang.com/Java/Bit-String-Set-Bit-to-Byte-Array.html.
- *
- * @author Roman Mandeleil
- * @modify jiangyuanshu
- * @since 20.11.2014
- */
-
 public class Bloom {
 
-  //private static final long MEM_SIZE = 256 + 16;
-
-  public final static int bloom_bit_size = 2048;
-  public final static int bloom_byte_size = bloom_bit_size / 8;
-  private final static int _8STEPS = 8;
+  public final static int BLOOM_BIT_SIZE = 2048;
+  public final static int BLOOM_BYTE_SIZE = BLOOM_BIT_SIZE / 8;
+  private final static int STEPS_8 = 8;
   private final static int ENSURE_BYTE = 255;
-  private final static int _3LOW_BITS = getLowBits(bloom_bit_size);
-  private byte[] data = new byte[bloom_byte_size];
+  private final static int LOW_3_BITS = getLowBits(BLOOM_BIT_SIZE);
+  private byte[] data = new byte[BLOOM_BYTE_SIZE];
 
   public Bloom() {
   }
@@ -62,13 +33,13 @@ public class Bloom {
   public static Bloom create(byte[] toBloom) {
 
     int mov1 =
-        (((toBloom[0] & ENSURE_BYTE) & (_3LOW_BITS)) << _8STEPS) + ((toBloom[1]) & ENSURE_BYTE);
+        (((toBloom[0] & ENSURE_BYTE) & (LOW_3_BITS)) << STEPS_8) + ((toBloom[1]) & ENSURE_BYTE);
     int mov2 =
-        (((toBloom[2] & ENSURE_BYTE) & (_3LOW_BITS)) << _8STEPS) + ((toBloom[3]) & ENSURE_BYTE);
+        (((toBloom[2] & ENSURE_BYTE) & (LOW_3_BITS)) << STEPS_8) + ((toBloom[3]) & ENSURE_BYTE);
     int mov3 =
-        (((toBloom[4] & ENSURE_BYTE) & (_3LOW_BITS)) << _8STEPS) + ((toBloom[5]) & ENSURE_BYTE);
+        (((toBloom[4] & ENSURE_BYTE) & (LOW_3_BITS)) << STEPS_8) + ((toBloom[5]) & ENSURE_BYTE);
 
-    byte[] data = new byte[bloom_byte_size];
+    byte[] data = new byte[BLOOM_BYTE_SIZE];
     Bloom bloom = new Bloom(data);
 
     ByteUtil.setBit(data, mov1, 1);
@@ -77,7 +48,6 @@ public class Bloom {
 
     return bloom;
   }
-
 
   public void or(Bloom bloom) {
     for (int i = 0; i < data.length; ++i) {

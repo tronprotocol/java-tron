@@ -2,9 +2,7 @@ package org.tron.core.services.jsonrpc.filters;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
@@ -44,17 +42,16 @@ public class LogMatch {
       String blockHash, List<TransactionInfo> transactionInfoList, boolean removed) {
 
     int txCount = transactionInfoList.size();
-
-    Map<Long, String> blockNum2Hash = new HashMap<>();
     List<LogFilterElement> matchedLog = new ArrayList<>();
-    List<Log> logList = new ArrayList<>();
     int logIndexInBlock = 0;
+
     for (int i = 0; i < txCount; i++) {
       TransactionInfo transactionInfo = transactionInfoList.get(i);
       int logCount = transactionInfo.getLogCount();
-      for (int j = 0; j < logCount; j++) {
 
+      for (int j = 0; j < logCount; j++) {
         Log log = transactionInfo.getLog(j);
+
         if (logFilter.matchesExactly(log)) {
           List<DataWord> topicList = new ArrayList<>();
           for (ByteString topic : log.getTopicsList()) {
@@ -73,17 +70,19 @@ public class LogMatch {
           );
           matchedLog.add(logFilterElement);
         }
+
         logIndexInBlock += 1;
       }
     }
+
     return matchedLog;
   }
 
   public LogFilterElement[] matchBlockOneByOne()
       throws BadItemException, ItemNotFoundException, JsonRpcInvalidParamsException {
     List<LogFilterElement> logFilterElementList = new ArrayList<>();
+
     for (long blockNum : blockNumList) {
-      logger.info("matchBlockOneByOne:{}", blockNum);
       TransactionRetCapsule transactionRetCapsule =
           manager.getTransactionRetStore()
               .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
@@ -96,11 +95,13 @@ public class LogMatch {
       if (!matchedLog.isEmpty()) {
         logFilterElementList.addAll(matchedLog);
       }
-      if (logFilterElementList.size() > LogBlockQuery.maxResult) {
+
+      if (logFilterElementList.size() > LogBlockQuery.MAX_RESULT) {
         throw new JsonRpcInvalidParamsException(
-            "query returned more than " + LogBlockQuery.maxResult + " results");
+            "query returned more than " + LogBlockQuery.MAX_RESULT + " results");
       }
     }
+
     return logFilterElementList.toArray(new LogFilterElement[logFilterElementList.size()]);
   }
 

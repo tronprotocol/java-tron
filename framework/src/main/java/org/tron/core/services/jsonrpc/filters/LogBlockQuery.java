@@ -20,7 +20,7 @@ import org.tron.core.store.SectionBloomStore;
 @Slf4j(topic = "API")
 public class LogBlockQuery {
 
-  public static final int maxResult = 10000;
+  public static final int MAX_RESULT = 10000;
   private LogFilterWrapper logFilterWrapper;
   private SectionBloomStore sectionBloomStore;
   private ExecutorService sectionExecutor;
@@ -37,18 +37,18 @@ public class LogBlockQuery {
     this.sectionExecutor = executor;
 
     if (logFilterWrapper.getFromBlock() == Long.MAX_VALUE) {
-      minSection = (int) (currentMaxBlockNum / Bloom.bloom_bit_size);
+      minSection = (int) (currentMaxBlockNum / Bloom.BLOOM_BIT_SIZE);
       minBlock = currentMaxBlockNum;
     } else {
-      minSection = (int) (logFilterWrapper.getFromBlock() / Bloom.bloom_bit_size);
+      minSection = (int) (logFilterWrapper.getFromBlock() / Bloom.BLOOM_BIT_SIZE);
       minBlock = logFilterWrapper.getFromBlock();
     }
 
     if (logFilterWrapper.getToBlock() == Long.MAX_VALUE) {
-      maxSection = (int) (currentMaxBlockNum / Bloom.bloom_bit_size);
+      maxSection = (int) (currentMaxBlockNum / Bloom.BLOOM_BIT_SIZE);
       maxBlock = currentMaxBlockNum;
     } else {
-      maxSection = (int) (logFilterWrapper.getToBlock() / Bloom.bloom_bit_size);
+      maxSection = (int) (logFilterWrapper.getToBlock() / Bloom.BLOOM_BIT_SIZE);
       maxBlock = logFilterWrapper.getToBlock();
     }
   }
@@ -80,10 +80,11 @@ public class LogBlockQuery {
       }
     }
 
-    if (blockNumList.size() >= maxResult) {
-      throw new JsonRpcInvalidParamsException("query returned more than " + maxResult + " results");
+    if (blockNumList.size() >= MAX_RESULT) {
+      throw new JsonRpcInvalidParamsException(
+          "query returned more than " + MAX_RESULT + " results");
     }
-    logger.info("get possible block length: {}", blockNumList.size());
+
     return blockNumList;
   }
 
@@ -99,7 +100,6 @@ public class LogBlockQuery {
 
     for (int section = minSection; section <= maxSection; section++) {
       BitSet partialBitSet = partialMatch(bitIndexes, section);
-      logger.info("partialBitSet size:{}", partialBitSet.cardinality());
 
       for (int i = partialBitSet.nextSetBit(0); i >= 0; i = partialBitSet.nextSetBit(i + 1)) {
         // operate on index i here
@@ -148,15 +148,12 @@ public class LogBlockQuery {
           subBitSet.clear();
           break;
         }
-        logger.info("future one size:{}", one.cardinality());
         // "and" condition in second dimension
         subBitSet.and(one);
       }
-      logger.info("future subBitSet size:{}", subBitSet.cardinality());
       // "or" condition in first dimension
       bitSet.or(subBitSet);
     }
-    logger.info("future bitSet size:{}", bitSet.cardinality());
     return bitSet;
   }
 
@@ -200,10 +197,8 @@ public class LogBlockQuery {
 
         bitIndexes[j] = bitIndex;
       }
-      logger.info("bitIndexes size:{}", bitIndexes.length);
       allConditionsIndex[k] = bitIndexes;
     }
-    logger.info("allConditionsIndex size:{}", allConditionsIndex.length);
 
     return allConditionsIndex;
   }
