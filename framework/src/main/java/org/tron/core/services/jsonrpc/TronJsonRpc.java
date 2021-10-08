@@ -308,12 +308,12 @@ public interface TronJsonRpc {
       JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_getLogs")
-  // @JsonRpcErrors({
-  //     @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-  //     @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
-  //     @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
-  //     @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
-  // })
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = IOException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
+  })
   LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
       JsonRpcMethodNotFoundException;
