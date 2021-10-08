@@ -70,6 +70,7 @@ import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -145,6 +146,7 @@ import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -303,6 +305,23 @@ public class Manager {
     return getDynamicPropertiesStore().getEnergyPriceHistoryDone() == 0L;
   }
 
+  public boolean needToSetBlackholePermission() {
+    return getDynamicPropertiesStore().getSetBlackholeAccountPermission() == 0L;
+  }
+
+  private void resetBlackholeAccountPermission() {
+    AccountCapsule blackholeAccount = getAccountStore().getBlackhole();
+
+    byte[] zeroAddress = new byte[21];
+    zeroAddress[0] = Wallet.getAddressPreFixByte();
+    Permission owner = AccountCapsule
+        .createDefaultOwnerPermission(ByteString.copyFrom(zeroAddress));
+    blackholeAccount.updatePermissions(owner, null, null);
+    getAccountStore().put(blackholeAccount.getAddress().toByteArray(), blackholeAccount);
+
+    getDynamicPropertiesStore().saveSetBlackholePermission(1);
+  }
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return chainBaseManager.getDynamicPropertiesStore();
   }
@@ -441,6 +460,10 @@ public class Manager {
 
     if (needToLoadEnergyPriceHistory()) {
       new EnergyPriceHistoryLoader(chainBaseManager).doWork();
+    }
+
+    if (needToSetBlackholePermission()) {
+      resetBlackholeAccountPermission();
     }
 
     //for test only

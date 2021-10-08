@@ -33,7 +33,7 @@ public class EnergyPriceHistoryLoaderTest {
 
   private static ChainBaseManager chainBaseManager;
   private static TronApplicationContext context;
-  private static String dbPath = "EnergyPriceHistoryLoaderTest";
+  private static String dbPath = "output-EnergyPriceHistoryLoaderTest-test";
   private static long t1 = 1542607200000L;
   private static long price1 = 20;
   private static long t3 = 1544724000000L;

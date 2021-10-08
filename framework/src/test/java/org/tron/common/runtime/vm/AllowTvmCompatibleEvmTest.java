@@ -6,6 +6,8 @@ import static org.tron.common.utils.ByteUtil.longTo32Bytes;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
@@ -35,9 +37,8 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
     }
   }*/
 
-  @Test
-  public void testEthRipemd160() throws ContractExeException, ReceiptCheckErrException,
-      VMIllegalException, ContractValidateException {
+  @BeforeClass
+  public static void beforeClass() {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -45,8 +46,11 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
     VMConfig.initAllowTvmIstanbul(1);
     VMConfig.initAllowTvmLondon(1);
     VMConfig.initAllowTvmCompatibleEvm(1);
-    manager.getDynamicPropertiesStore().saveChangeDelegation(1);
+  }
 
+  @Test
+  public void testEthRipemd160() throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     String contractName = "testEthRipemd160";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = "[{\"inputs\":[],\"name\":\"getRipemd160\","
@@ -133,15 +137,6 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
   @Test
   public void testBlake2f() throws ContractExeException, ReceiptCheckErrException,
       VMIllegalException, ContractValidateException {
-    ConfigLoader.disable = true;
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(1);
-    VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmIstanbul(1);
-    VMConfig.initAllowTvmLondon(1);
-    VMConfig.initAllowTvmCompatibleEvm(1);
-    manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-
     String contractName = "testBlake2f";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = "[{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"rounds\","
@@ -230,15 +225,6 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
   @Test
   public void testGasPrice() throws ContractExeException, ReceiptCheckErrException,
       VMIllegalException, ContractValidateException {
-    ConfigLoader.disable = true;
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(1);
-    VMConfig.initAllowTvmSolidity059(1);
-    VMConfig.initAllowTvmIstanbul(1);
-    VMConfig.initAllowTvmLondon(1);
-    VMConfig.initAllowTvmCompatibleEvm(1);
-    manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-
     String contractName = "testGasPrice";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String abi = "[{\"inputs\":[],\"name\":\"getprice\","
@@ -273,6 +259,53 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(returnValue,
         longTo32Bytes(manager.getDynamicPropertiesStore().getEnergyFee()));
+  }
+
+  @Test
+  public void testChainId() throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
+    String contractName = "TestChainId";
+    byte[] address = Hex.decode(OWNER_ADDRESS);
+    String contractCode = "608060405234801561001057600080fd5b5060b58061001f6000"
+        + "396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c"
+        + "80633408e47014602d575b600080fd5b60336047565b604051603e9190605c565b6040"
+        + "5180910390f35b600046905090565b6056816075565b82525050565b60006020820190"
+        + "50606f6000830184604f565b92915050565b600081905091905056fea2646970667358"
+        + "2212203ccbe28f012f703b4369308e34d6dfc1a89a5f51e3ea42d531fcf3a2dba31150"
+        + "64736f6c63430008070033";
+    long feeLimit = 100_000_000L;
+
+    // deploy contract
+    Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
+        contractName, address, "[]", contractCode, 0, feeLimit, 0, null);
+    byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    Assert.assertNull(runtime.getRuntimeError());
+
+    // Trigger contract method: getChainId()
+    String methodSignature = "getChainId()";
+    String hexInput =
+        AbiUtil.parseMethod(methodSignature, Collections.singletonList(""));
+
+    TVMTestResult result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
+            factoryAddress, Hex.decode(hexInput), 0, feeLimit, manager, null);
+    byte[] returnValue = result.getRuntime().getResult().getHReturn();
+    Assert.assertNull(result.getRuntime().getRuntimeError());
+    Assert.assertEquals(Hex.toHexString(returnValue),
+        "0000000000000000000000000000000000000000000000000000000028c12d1e");
+
+    VMConfig.initAllowTvmCompatibleEvm(0);
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    ConfigLoader.disable = false;
+    VMConfig.initAllowTvmTransferTrc10(0);
+    VMConfig.initAllowTvmConstantinople(0);
+    VMConfig.initAllowTvmSolidity059(0);
+    VMConfig.initAllowTvmIstanbul(0);
+    VMConfig.initAllowTvmCompatibleEvm(0);
   }
 
 }
