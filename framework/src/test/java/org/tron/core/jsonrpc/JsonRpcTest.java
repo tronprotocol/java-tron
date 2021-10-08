@@ -83,8 +83,7 @@ public class JsonRpcTest {
   }
 
   private String constructData(String functionSelector, String parameter) {
-    String data = getMethodSign(functionSelector) + parameter;
-    return data;
+    return getMethodSign(functionSelector) + parameter;
   }
 
   @Test
