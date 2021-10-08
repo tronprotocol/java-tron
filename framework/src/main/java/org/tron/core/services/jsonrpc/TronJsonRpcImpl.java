@@ -1109,21 +1109,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcMethodNotFoundException {
+  public LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException {
     disableInPBFT("eth_getLogs");
 
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     //convert FilterRequest to LogFilterWrapper
 
-    LogFilterWrapper logFilterWrapper = null;
-    try {
-      logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
-      return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
-    } catch (Exception e) {
-      logger.error("getLogs failed: {}", Throwables.getStackTraceAsString(e));
-    }
-
-    return null;
+    LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
+    return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }
 
   @Override
