@@ -3,7 +3,6 @@ package org.tron.common.bloom;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Iterator;
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -11,7 +10,6 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
-@Slf4j(topic = "DB")
 public class Bloom {
 
   public static final int BLOOM_BIT_SIZE = 2048;
