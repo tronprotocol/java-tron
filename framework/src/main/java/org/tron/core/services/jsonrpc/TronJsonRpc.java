@@ -21,6 +21,7 @@ import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
@@ -304,6 +305,7 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcTooManyResultException.class, code = -32005, data = "{}"),
       @JsonRpcError(exception = BadItemException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
@@ -311,18 +313,21 @@ public interface TronJsonRpc {
   })
   LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
-      JsonRpcMethodNotFoundException;
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException;
 
   @JsonRpcMethod("eth_getFilterLogs")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcTooManyResultException.class, code = -32005, data = "{}"),
       @JsonRpcError(exception = BadItemException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
   })
-  LogFilterElement[] getFilterLogs(String filterId) throws Exception;
+  LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException;
 
   @Value
   @AllArgsConstructor

@@ -12,10 +12,8 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.alibaba.fastjson.JSON;
-import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +49,7 @@ import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
@@ -115,7 +114,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Getter
   private static Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
       new ConcurrentHashMap<>();
-
   private String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
   /**
    * thread pool of query section bloom store
@@ -124,7 +122,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
   private Manager manager;
-
   public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
@@ -1115,7 +1112,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
-      JsonRpcMethodNotFoundException {
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
     disableInPBFT("eth_getLogs");
 
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
@@ -1128,7 +1125,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
-      JsonRpcMethodNotFoundException {
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
     disableInPBFT("eth_getFilterLogs");
 
     Map<String, LogFilterAndResult> eventFilter2Result;
@@ -1150,7 +1147,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   private LogFilterElement[] getLogsByLogFilterWrapper(LogFilterWrapper logFilterWrapper,
-      long currentMaxBlockNum) throws JsonRpcInvalidParamsException, ExecutionException,
+      long currentMaxBlockNum) throws JsonRpcTooManyResultException, ExecutionException,
       InterruptedException, BadItemException, ItemNotFoundException {
     //query possible block
     LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, manager.getChainBaseManager()

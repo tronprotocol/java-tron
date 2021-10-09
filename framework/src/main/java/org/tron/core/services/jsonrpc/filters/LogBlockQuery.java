@@ -11,6 +11,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.Bloom;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.store.SectionBloomStore;
 
 /**
@@ -56,7 +57,7 @@ public class LogBlockQuery {
   }
 
   public List<Long> getPossibleBlock() throws ExecutionException, InterruptedException,
-      JsonRpcInvalidParamsException {
+      JsonRpcTooManyResultException {
     List<Long> blockNumList = new ArrayList<>();
     if(minBlock > currentMaxBlockNum){
       return blockNumList;
@@ -86,7 +87,7 @@ public class LogBlockQuery {
     }
 
     if (blockNumList.size() >= MAX_RESULT) {
-      throw new JsonRpcInvalidParamsException(
+      throw new JsonRpcTooManyResultException(
           "query returned more than " + MAX_RESULT + " results");
     }
 

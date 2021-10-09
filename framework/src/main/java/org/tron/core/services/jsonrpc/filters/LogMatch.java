@@ -11,6 +11,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
@@ -79,13 +80,18 @@ public class LogMatch {
   }
 
   public LogFilterElement[] matchBlockOneByOne()
-      throws BadItemException, ItemNotFoundException, JsonRpcInvalidParamsException {
+      throws BadItemException, ItemNotFoundException, JsonRpcTooManyResultException {
     List<LogFilterElement> logFilterElementList = new ArrayList<>();
 
     for (long blockNum : blockNumList) {
       TransactionRetCapsule transactionRetCapsule =
           manager.getTransactionRetStore()
               .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+      if (transactionRetCapsule == null) {
+        //if query condition (address and topics) is empty, we will traversal every block,
+        //include empty block
+        continue;
+      }
       TransactionRet transactionRet = transactionRetCapsule.getInstance();
       List<TransactionInfo> transactionInfoList = transactionRet.getTransactioninfoList();
 
@@ -97,7 +103,7 @@ public class LogMatch {
       }
 
       if (logFilterElementList.size() > LogBlockQuery.MAX_RESULT) {
-        throw new JsonRpcInvalidParamsException(
+        throw new JsonRpcTooManyResultException(
             "query returned more than " + LogBlockQuery.MAX_RESULT + " results");
       }
     }
