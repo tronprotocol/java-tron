@@ -29,12 +29,14 @@ public class LogBlockQuery {
   private int maxSection;
   private long minBlock;
   private long maxBlock;
+  private long currentMaxBlockNum;
 
   public LogBlockQuery(LogFilterWrapper logFilterWrapper, SectionBloomStore sectionBloomStore,
       long currentMaxBlockNum, ExecutorService executor) {
     this.logFilterWrapper = logFilterWrapper;
     this.sectionBloomStore = sectionBloomStore;
     this.sectionExecutor = executor;
+    this.currentMaxBlockNum = currentMaxBlockNum;
 
     if (logFilterWrapper.getFromBlock() == Long.MAX_VALUE) {
       minSection = (int) (currentMaxBlockNum / Bloom.BLOOM_BIT_SIZE);
@@ -55,6 +57,10 @@ public class LogBlockQuery {
 
   public List<Long> getPossibleBlock() throws ExecutionException, InterruptedException,
       JsonRpcInvalidParamsException {
+    List<Long> blockNumList = new ArrayList<>();
+    if(minBlock > currentMaxBlockNum){
+      return blockNumList;
+    }
 
     int[][][] allConditionsIndex = getConditions();
 
@@ -68,7 +74,6 @@ public class LogBlockQuery {
       blockNumBitSet.and(bitSet);
     }
 
-    List<Long> blockNumList = new ArrayList<>();
     for (int i = blockNumBitSet.nextSetBit(0); i >= 0; i = blockNumBitSet.nextSetBit(i + 1)) {
       // operate on index i here
       if (i == Integer.MAX_VALUE) {
