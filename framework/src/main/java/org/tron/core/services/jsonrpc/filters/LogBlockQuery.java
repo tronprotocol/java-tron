@@ -8,8 +8,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
-import org.tron.common.logsfilter.Bloom;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.store.SectionBloomStore;
@@ -59,13 +59,13 @@ public class LogBlockQuery {
   public List<Long> getPossibleBlock() throws ExecutionException, InterruptedException,
       JsonRpcTooManyResultException {
     List<Long> blockNumList = new ArrayList<>();
-    if(minBlock > currentMaxBlockNum){
+    if (minBlock > currentMaxBlockNum) {
       return blockNumList;
     }
 
     int[][][] allConditionsIndex = getConditions();
 
-    int capacity = (maxSection - minSection + 1) * SectionBloomStore.blockPerSection;
+    int capacity = (maxSection - minSection + 1) * SectionBloomStore.BLOCK_PER_SECTION;
     BitSet blockNumBitSet = new BitSet(capacity);
     blockNumBitSet.set(0, capacity);
 
@@ -80,7 +80,7 @@ public class LogBlockQuery {
       if (i == Integer.MAX_VALUE) {
         break; // or (i+1) would overflow
       }
-      long blockNum = minSection * SectionBloomStore.blockPerSection + i;
+      long blockNum = minSection * SectionBloomStore.BLOCK_PER_SECTION + i;
       if (minBlock <= blockNum && blockNum <= maxBlock) {
         blockNumList.add(blockNum);
       }
@@ -101,7 +101,7 @@ public class LogBlockQuery {
    */
   private BitSet subMatch(int[][] bitIndexes) throws ExecutionException, InterruptedException {
 
-    int capacity = (maxSection - minSection + 1) * SectionBloomStore.blockPerSection;
+    int capacity = (maxSection - minSection + 1) * SectionBloomStore.BLOCK_PER_SECTION;
     BitSet subBitSet = new BitSet(capacity);
 
     for (int section = minSection; section <= maxSection; section++) {
@@ -112,14 +112,13 @@ public class LogBlockQuery {
         if (i == Integer.MAX_VALUE) {
           break; // or (i+1) would overflow
         }
-        int offset = (section - minSection) * SectionBloomStore.blockPerSection + i;
+        int offset = (section - minSection) * SectionBloomStore.BLOCK_PER_SECTION + i;
         subBitSet.set(offset);
       }
     }
 
     return subBitSet;
   }
-
 
   /**
    * every section has a compound query of sectionBloomStore, works parallel
@@ -141,12 +140,12 @@ public class LogBlockQuery {
       bitSetList.add(futureList);
     }
 
-    BitSet bitSet = new BitSet(SectionBloomStore.blockPerSection);
+    BitSet bitSet = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
 
     for (List<Future<BitSet>> futureList : bitSetList) {
       // initial a BitSet with all 1
-      BitSet subBitSet = new BitSet(SectionBloomStore.blockPerSection);
-      subBitSet.set(0, SectionBloomStore.blockPerSection);
+      BitSet subBitSet = new BitSet(SectionBloomStore.BLOCK_PER_SECTION);
+      subBitSet.set(0, SectionBloomStore.BLOCK_PER_SECTION);
       // and condition in second dimension
       for (Future<BitSet> future : futureList) {
         BitSet one = future.get();

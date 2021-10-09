@@ -1,8 +1,15 @@
-package org.tron.common.logsfilter;
+package org.tron.common.bloom;
 
+import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import java.util.Iterator;
+import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.capsule.TransactionRetCapsule;
+import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 public class Bloom {
 
@@ -24,8 +31,8 @@ public class Bloom {
     this.data = data;
   }
 
-  //get several low bit. 512 -> 0b1, 1024 -> 0b11, 2048 -> 0b111, 4086-> 0b1111
-  private static int getLowBits(int bloomBitSize) {
+  //get several low bit. 512 -> 0b1, 1024 -> 0b11, 2048 -> 0b111, 4096-> 0b1111
+  public static int getLowBits(int bloomBitSize) {
     return ENSURE_BYTE >> (16 + 1 - Integer.toBinaryString(bloomBitSize).length());
   }
 
@@ -55,7 +62,9 @@ public class Bloom {
     }
   }
 
-  //this || topicBloom == this
+  /**
+   * (this || topicBloom) == this
+   */
   public boolean matches(Bloom topicBloom) {
     Bloom copy = copy();
     copy.or(topicBloom);
@@ -68,6 +77,36 @@ public class Bloom {
 
   public Bloom copy() {
     return new Bloom(Arrays.copyOf(getData(), getData().length));
+  }
+
+  public static Bloom createBloom(TransactionRetCapsule transactionRetCapsule) {
+    Iterator<TransactionInfo> it =
+        transactionRetCapsule.getInstance().getTransactioninfoList().iterator();
+    Bloom blockBloom = null;
+
+    while (it.hasNext()) {
+      TransactionInfo transactionInfo = it.next();
+      // if contract address is empty, skip
+      if (ArrayUtils.isEmpty(transactionInfo.getContractAddress().toByteArray())) {
+        continue;
+      }
+
+      if (blockBloom == null) {
+        blockBloom = new Bloom();
+      }
+
+      Bloom bloom = Bloom.create(Hash.sha3(transactionInfo.getContractAddress().toByteArray()));
+      blockBloom.or(bloom);
+
+      for (Log log : transactionInfo.getLogList()) {
+        for (ByteString topic : log.getTopicsList()) {
+          bloom = Bloom.create(Hash.sha3(topic.toByteArray()));
+          blockBloom.or(bloom);
+        }
+      }
+    }
+
+    return blockBloom;
   }
 
   @Override
