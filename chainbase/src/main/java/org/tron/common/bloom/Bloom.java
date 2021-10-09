@@ -14,11 +14,11 @@ import org.tron.protos.Protocol.TransactionInfo.Log;
 @Slf4j(topic = "DB")
 public class Bloom {
 
-  public final static int BLOOM_BIT_SIZE = 2048;
-  public final static int BLOOM_BYTE_SIZE = BLOOM_BIT_SIZE / 8;
-  private final static int STEPS_8 = 8;
-  private final static int ENSURE_BYTE = 255;
-  private final static int LOW_3_BITS = getLowBits(BLOOM_BIT_SIZE);
+  public static final int BLOOM_BIT_SIZE = 2048;
+  public static final int BLOOM_BYTE_SIZE = BLOOM_BIT_SIZE / 8;
+  private static final int STEPS_8 = 8;
+  private static final int ENSURE_BYTE = 255;
+  private static final int LOW_3_BITS = getLowBits(BLOOM_BIT_SIZE);
   private byte[] data = new byte[BLOOM_BYTE_SIZE];
 
   public Bloom() {
