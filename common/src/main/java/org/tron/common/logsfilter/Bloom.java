@@ -24,7 +24,7 @@ public class Bloom {
     this.data = data;
   }
 
-  //get several low bit。512 -> 0b1，1024 -> 0b11，2048 -> 0b111，4086-> 0b1111
+  //get several low bit. 512 -> 0b1, 1024 -> 0b11, 2048 -> 0b111, 4086-> 0b1111
   private static int getLowBits(int bloomBitSize) {
     return ENSURE_BYTE >> (16 + 1 - Integer.toBinaryString(bloomBitSize).length());
   }
