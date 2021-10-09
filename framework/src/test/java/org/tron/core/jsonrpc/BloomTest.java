@@ -3,13 +3,19 @@ package org.tron.core.jsonrpc;
 import static org.tron.common.bloom.Bloom.BLOOM_BYTE_SIZE;
 import static org.tron.common.bloom.Bloom.getLowBits;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
+import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 public class BloomTest {
 
@@ -91,19 +97,77 @@ public class BloomTest {
         String.format("benchmarkMatches total %d times cost %d ms", times, end - start));
   }
 
+  public byte[] bytesToAddress(byte[] address) {
+    byte[] data = new byte[20];
+    System.arraycopy(address, 0, data, 20-address.length, address.length);
+    return data;
+  }
+
+  public TransactionInfo createTransactionInfo(byte[] address1, byte[] address2) {
+    List<Log> logList = new ArrayList<>();
+    List<DataWord> topics = new ArrayList<>();
+
+    TransactionInfo.Builder builder = TransactionInfo.newBuilder();
+
+    LogInfo logInfo =
+        new LogInfo(bytesToAddress(address1), topics, new byte[0]);
+    logList.add(LogInfo.buildLog(logInfo));
+    logInfo =
+        new LogInfo(bytesToAddress(address2), topics, new byte[0]);
+    logList.add(LogInfo.buildLog(logInfo));
+    builder.addAllLog(logList);
+
+    return builder.build();
+
+  }
+
   @Test
   public void benchmarkCreateByTransaction() {
-    // TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
-    // transactionInfoCapsule.setContractAddress(new byte[] {0x01, 0x11, 0x11});
-    // // transactionInfoCapsule.addAllLog();
-    //
-    // // transactionInfoCapsule.setId(transactionId);
-    // transactionInfoCapsule.setFee(1000L);
-    // transactionInfoCapsule.setBlockNumber(100L);
-    // transactionInfoCapsule.setBlockTimeStamp(200L);
-    //
-    // TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule();
-    // transactionRetCapsule.addTransactionInfo(transactionInfoCapsule.getInstance());
+    int times = 10000;
 
+    // small
+    TransactionRetCapsule smallCapsule = new TransactionRetCapsule();
+    smallCapsule.addTransactionInfo(createTransactionInfo(new byte[] {0x11},
+        new byte[] {0x01, 0x11}));
+    smallCapsule.addTransactionInfo(createTransactionInfo(new byte[] {0x22},
+        new byte[] {0x02, 0x22}));
+
+    long start = System.currentTimeMillis();
+
+    Bloom sBloom = new Bloom();
+    for (int i = 0; i < times; i ++) {
+      sBloom = Bloom.createBloom(smallCapsule);
+    }
+
+    long end = System.currentTimeMillis();
+    System.out.println(
+        String.format("benchmarkCreateByTransaction total %d times cost %d ms", times, end - start));
+
+    String exp = "c384c56ece49458a427c67b90fefe979ebf7104795be65dc398b280f24104949";
+    String got = Hex.toHexString(Hash.sha3(sBloom.getData()));
+    Assert.assertEquals(got, exp);
+
+    // large
+    TransactionRetCapsule largeCapsule = new TransactionRetCapsule();
+    for (int i = 0; i < 200; i++) {
+      largeCapsule.addTransactionInfo(createTransactionInfo(new byte[] {0x11},
+          new byte[] {0x01, 0x11}));
+      largeCapsule.addTransactionInfo(createTransactionInfo(new byte[] {0x22},
+          new byte[] {0x02, 0x22}));
+    }
+
+    start = System.currentTimeMillis();
+
+    Bloom lBloom = new Bloom();
+    for (int i = 0; i < times; i ++) {
+      lBloom = Bloom.createBloom(largeCapsule);
+    }
+
+    end = System.currentTimeMillis();
+    System.out.println(
+        String.format("benchmarkCreateByTransaction total %d times cost %d ms", times, end - start));
+
+    got = Hex.toHexString(Hash.sha3(lBloom.getData()));
+    Assert.assertEquals(got, exp);
   }
 }
