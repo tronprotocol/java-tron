@@ -1,6 +1,6 @@
 package org.tron.core.services.jsonrpc.filters;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArrayWithPrefix;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;
 
 import com.google.protobuf.ByteString;
@@ -9,13 +9,16 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
+@Slf4j(topic = "API")
 public class LogFilter {
 
   //[addr1, addr2]
@@ -41,7 +44,7 @@ public class LogFilter {
   public LogFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
     if (fr.address instanceof String) {
       try {
-        withContractAddress(addressToByteArray((String) fr.address));
+        withContractAddress(addressToByteArrayWithPrefix((String) fr.address));
       } catch (JsonRpcInvalidParamsException e) {
         throw new JsonRpcInvalidParamsException("invalid address: " + e.getMessage());
       }
@@ -50,7 +53,7 @@ public class LogFilter {
       int i = 0;
       for (Object s : (ArrayList) fr.address) {
         try {
-          addr.add(addressToByteArray((String) s));
+          addr.add(addressToByteArrayWithPrefix((String) s));
           i++;
         } catch (JsonRpcInvalidParamsException e) {
           throw new JsonRpcInvalidParamsException(
@@ -162,8 +165,9 @@ public class LogFilter {
   }
 
   private boolean matchesContractAddress(byte[] toAddr) {
+    byte[] toAddrWithPrefix = JsonRpcApiUtil.convertToTronAddress(toAddr);
     for (byte[] address : contractAddresses) {
-      if (Arrays.equals(address, toAddr)) {
+      if (Arrays.equals(address, toAddrWithPrefix)) {
         return true;
       }
     }

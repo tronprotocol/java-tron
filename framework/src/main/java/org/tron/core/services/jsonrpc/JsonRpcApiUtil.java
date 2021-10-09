@@ -400,6 +400,14 @@ public class JsonRpcApiUtil {
   }
 
   /**
+   * convert 40 hex string of address to byte array, padding 0 ahead if length is odd, add 41 ahead
+   */
+  public static byte[] addressToByteArrayWithPrefix(String hexAddress)
+      throws JsonRpcInvalidParamsException {
+    return convertToTronAddress(addressToByteArray(hexAddress));
+  }
+
+  /**
    * check if topic is hex string of size 64, padding 0 ahead if length is odd.
    */
   public static byte[] topicToByteArray(String hexTopic) throws JsonRpcInvalidParamsException {
