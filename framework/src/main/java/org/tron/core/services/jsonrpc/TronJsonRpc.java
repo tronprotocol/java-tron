@@ -288,18 +288,20 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
   })
   boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException,
-      JsonRpcMethodNotFoundException;
+      JsonRpcMethodNotFoundException, ItemNotFoundException;
 
   @JsonRpcMethod("eth_getFilterChanges")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
   })
   Object[] getFilterChanges(String filterId)
       throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException,
-      JsonRpcMethodNotFoundException;
+      JsonRpcMethodNotFoundException, ItemNotFoundException;
 
   @JsonRpcMethod("eth_getLogs")
   @JsonRpcErrors({

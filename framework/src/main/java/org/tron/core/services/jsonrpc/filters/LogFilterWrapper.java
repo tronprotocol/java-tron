@@ -31,12 +31,12 @@ public class LogFilterWrapper {
     long fromBlock;
     long toBlock;
     if (fr.blockHash != null) {
-      fr.blockHash = ByteArray.fromHex(fr.blockHash);
+      String blockHash = ByteArray.fromHex(fr.blockHash);
       if (fr.fromBlock != null || fr.toBlock != null) {
         throw new JsonRpcInvalidParamsException(
             "cannot specify both BlockHash and FromBlock/ToBlock, choose one or the other");
       }
-      Block block = wallet.getBlockById(ByteString.copyFrom(fr.blockHash.getBytes()));
+      Block block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
 
       if (block == null) {
         throw new JsonRpcInvalidParamsException("invalid blockHash");

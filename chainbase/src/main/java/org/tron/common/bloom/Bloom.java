@@ -3,7 +3,7 @@ package org.tron.common.bloom;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Iterator;
-import org.apache.commons.lang3.ArrayUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -11,6 +11,7 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
+@Slf4j(topic = "DB")
 public class Bloom {
 
   public final static int BLOOM_BIT_SIZE = 2048;
@@ -56,6 +57,39 @@ public class Bloom {
     return bloom;
   }
 
+  public static Bloom createBloom(TransactionRetCapsule transactionRetCapsule) {
+    if (transactionRetCapsule == null) {
+      return null;
+    }
+    Iterator<TransactionInfo> it =
+        transactionRetCapsule.getInstance().getTransactioninfoList().iterator();
+    Bloom blockBloom = null;
+
+    while (it.hasNext()) {
+      TransactionInfo transactionInfo = it.next();
+      if (transactionInfo == null || transactionInfo.getLogCount() == 0) {
+        continue;
+      }
+
+      if (blockBloom == null) {
+        blockBloom = new Bloom();
+      }
+
+      for (Log log : transactionInfo.getLogList()) {
+        //log.address doesn't have "41" ahead
+        Bloom bloom = Bloom.create(Hash.sha3(log.getAddress().toByteArray()));
+        blockBloom.or(bloom);
+
+        for (ByteString topic : log.getTopicsList()) {
+          bloom = Bloom.create(Hash.sha3(topic.toByteArray()));
+          blockBloom.or(bloom);
+        }
+      }
+    }
+
+    return blockBloom;
+  }
+
   public void or(Bloom bloom) {
     for (int i = 0; i < data.length; ++i) {
       data[i] |= bloom.data[i];
@@ -77,36 +111,6 @@ public class Bloom {
 
   public Bloom copy() {
     return new Bloom(Arrays.copyOf(getData(), getData().length));
-  }
-
-  public static Bloom createBloom(TransactionRetCapsule transactionRetCapsule) {
-    Iterator<TransactionInfo> it =
-        transactionRetCapsule.getInstance().getTransactioninfoList().iterator();
-    Bloom blockBloom = null;
-
-    while (it.hasNext()) {
-      TransactionInfo transactionInfo = it.next();
-      // if contract address is empty, skip
-      if (ArrayUtils.isEmpty(transactionInfo.getContractAddress().toByteArray())) {
-        continue;
-      }
-
-      if (blockBloom == null) {
-        blockBloom = new Bloom();
-      }
-
-      Bloom bloom = Bloom.create(Hash.sha3(transactionInfo.getContractAddress().toByteArray()));
-      blockBloom.or(bloom);
-
-      for (Log log : transactionInfo.getLogList()) {
-        for (ByteString topic : log.getTopicsList()) {
-          bloom = Bloom.create(Hash.sha3(topic.toByteArray()));
-          blockBloom.or(bloom);
-        }
-      }
-    }
-
-    return blockBloom;
   }
 
   @Override

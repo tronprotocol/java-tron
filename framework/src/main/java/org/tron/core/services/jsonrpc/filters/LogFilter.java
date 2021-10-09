@@ -1,6 +1,6 @@
 package org.tron.core.services.jsonrpc.filters;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArrayWithPrefix;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;
 
 import com.google.protobuf.ByteString;
@@ -14,14 +14,14 @@ import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
-import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
 @Slf4j(topic = "API")
 public class LogFilter {
 
-  //[addr1, addr2]
+  // example: [addr1, addr2]
+  // come from log.address
   @Getter
   @Setter
   private byte[][] contractAddresses = new byte[0][];
@@ -44,7 +44,7 @@ public class LogFilter {
   public LogFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
     if (fr.address instanceof String) {
       try {
-        withContractAddress(addressToByteArrayWithPrefix((String) fr.address));
+        withContractAddress(addressToByteArray((String) fr.address));
       } catch (JsonRpcInvalidParamsException e) {
         throw new JsonRpcInvalidParamsException("invalid address: " + e.getMessage());
       }
@@ -53,7 +53,7 @@ public class LogFilter {
       int i = 0;
       for (Object s : (ArrayList) fr.address) {
         try {
-          addr.add(addressToByteArrayWithPrefix((String) s));
+          addr.add(addressToByteArray((String) s));
           i++;
         } catch (JsonRpcInvalidParamsException e) {
           throw new JsonRpcInvalidParamsException(
@@ -97,9 +97,6 @@ public class LogFilter {
       }
     }
 
-//    if (contractAddresses.length == 0 && topics.isEmpty()) {
-//      throw new JsonRpcInvalidParamsException("must specify address or topics.");
-//    }
   }
 
   /**
@@ -165,9 +162,9 @@ public class LogFilter {
   }
 
   private boolean matchesContractAddress(byte[] toAddr) {
-    byte[] toAddrWithPrefix = JsonRpcApiUtil.convertToTronAddress(toAddr);
+    //not have 41 ahead both
     for (byte[] address : contractAddresses) {
-      if (Arrays.equals(address, toAddrWithPrefix)) {
+      if (Arrays.equals(address, toAddr)) {
         return true;
       }
     }

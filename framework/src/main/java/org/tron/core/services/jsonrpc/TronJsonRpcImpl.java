@@ -1050,7 +1050,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException,
+  public boolean uninstallFilter(String filterId) throws ItemNotFoundException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_uninstallFilter");
 
@@ -1072,12 +1072,12 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       blockFilter2Result.remove(filterId);
       return true;
     } else {
-      throw new JsonRpcInvalidParamsException("filter not found");
+      throw new ItemNotFoundException("filter not found");
     }
   }
 
   @Override
-  public Object[] getFilterChanges(String filterId) throws JsonRpcInvalidParamsException,
+  public Object[] getFilterChanges(String filterId) throws ItemNotFoundException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_getFilterChanges");
 
@@ -1104,7 +1104,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       eventFilter2Result.get(filterId).clear();
 
     } else {
-      throw new JsonRpcInvalidParamsException("filter not found");
+      throw new ItemNotFoundException("filter not found");
     }
     return result;
   }
@@ -1123,8 +1123,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   }
 
   @Override
-  public LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,
-      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+  public LogFilterElement[] getFilterLogs(String filterId) throws ExecutionException,
+      InterruptedException, BadItemException, ItemNotFoundException,
       JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
     disableInPBFT("eth_getFilterLogs");
 
@@ -1137,7 +1137,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     filterId = ByteArray.fromHex(filterId);
     if (!eventFilter2Result.containsKey(filterId)) {
-      throw new JsonRpcInvalidParamsException("filter not found");
+      throw new ItemNotFoundException("filter not found");
     }
 
     LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
@@ -1159,6 +1159,5 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         new LogMatch(logFilterWrapper, possibleBlockList, manager);
     return logMatch.matchBlockOneByOne();
   }
-
 
 }
