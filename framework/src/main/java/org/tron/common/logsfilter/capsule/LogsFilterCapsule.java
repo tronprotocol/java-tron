@@ -66,6 +66,12 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
       }
 
       LogFilterAndResult logFilterAndResult = entry.getValue();
+      long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
+      long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
+      if (!(fromBlock <= blockNumber && blockNumber <= toBlock)) {
+        continue;
+      }
+
       if (bloom != null
           && !logFilterAndResult.getLogFilterWrapper().getLogFilter().matchBloom(bloom)) {
         continue;
