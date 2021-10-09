@@ -43,7 +43,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
-import org.tron.common.logsfilter.Bloom;
+// import org.tron.common.logsfilter.Bloom;
+// import org.tron.common.bloom.Bloom;
+import org.tron.common.bloom.Bloom;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
@@ -1522,7 +1524,7 @@ public class Manager {
 
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       Bloom blockBloom = chainBaseManager.getSectionBloomStore()
-          .initBlockSection(block.getNum(), transactionRetCapsule);
+          .initBlockSection(transactionRetCapsule);
       chainBaseManager.getSectionBloomStore().write(block.getNum());
       block.setBloom(blockBloom);
     }

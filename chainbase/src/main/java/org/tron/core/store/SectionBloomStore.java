@@ -1,10 +1,7 @@
 package org.tron.core.store;
 
-import com.google.common.collect.Streams;
-import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -13,21 +10,18 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.Hash;
-import org.tron.common.logsfilter.Bloom;
+import org.tron.common.bloom.Bloom;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.EventBloomException;
-import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionInfo.Log;
 
 @Slf4j(topic = "DB")
 @Component
 public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
 
-  public static int blockPerSection = 2048;
+  public static final int BLOCK_PER_SECTION = 2048;
   private List<Integer> bitList;
 
   @Autowired
@@ -78,29 +72,8 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
     super.put(key, new BytesCapsule(compressData));
   }
 
-  public Bloom initBlockSection(long blockNum, TransactionRetCapsule transactionRetCapsule) {
-    Iterator<TransactionInfo> it =
-        transactionRetCapsule.getInstance().getTransactioninfoList().iterator();
-    Bloom blockBloom = null;
-
-    while (it.hasNext()) {
-      TransactionInfo transactionInfo = it.next();
-      //if contract address is empty, skip
-      if (ArrayUtils.isEmpty(transactionInfo.getContractAddress().toByteArray())) {
-        continue;
-      }
-      if (blockBloom == null) {
-        blockBloom = new Bloom();
-      }
-      Bloom bloom = Bloom.create(Hash.sha3(transactionInfo.getContractAddress().toByteArray()));
-      blockBloom.or(bloom);
-      for (Log log : transactionInfo.getLogList()) {
-        for (ByteString topic : log.getTopicsList()) {
-          bloom = Bloom.create(Hash.sha3(topic.toByteArray()));
-          blockBloom.or(bloom);
-        }
-      }
-    }
+  public Bloom initBlockSection(TransactionRetCapsule transactionRetCapsule) {
+    Bloom blockBloom = Bloom.createBloom(transactionRetCapsule);
 
     if (Objects.isNull(blockBloom)) {
       bitList = null;
@@ -121,18 +94,17 @@ public class SectionBloomStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void write(long blockNum) throws EventBloomException {
-    logger.info("write section-bloom {}", blockNum);
     if (CollectionUtils.isEmpty(bitList)) {
       return;
     }
 
-    int section = (int) (blockNum / blockPerSection);
-    int blockNumOffset = (int) (blockNum % blockPerSection);
+    int section = (int) (blockNum / BLOCK_PER_SECTION);
+    int blockNumOffset = (int) (blockNum % BLOCK_PER_SECTION);
     for (int bitIndex : bitList) {
       // get first from leveldb
       BitSet bitSet = get(section, bitIndex);
       if (Objects.isNull(bitSet)) {
-        bitSet = new BitSet(blockPerSection);
+        bitSet = new BitSet(BLOCK_PER_SECTION);
       }
       // update
       bitSet.set(blockNumOffset);

@@ -46,3 +46,4 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
     }
   }
 }
+
