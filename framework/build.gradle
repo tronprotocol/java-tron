@@ -136,6 +136,7 @@ run {
 }
 
 test {
+    maxHeapSize = "4096m"
     testLogging {
         exceptionFormat = 'full'
     }
