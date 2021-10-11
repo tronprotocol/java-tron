@@ -12,7 +12,6 @@ import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
@@ -97,13 +96,13 @@ public class BloomTest {
         String.format("benchmarkMatches total %d times cost %d ms", times, end - start));
   }
 
-  public byte[] bytesToAddress(byte[] address) {
+  private byte[] bytesToAddress(byte[] address) {
     byte[] data = new byte[20];
     System.arraycopy(address, 0, data, 20-address.length, address.length);
     return data;
   }
 
-  public TransactionInfo createTransactionInfo(byte[] address1, byte[] address2) {
+  private TransactionInfo createTransactionInfo(byte[] address1, byte[] address2) {
     List<Log> logList = new ArrayList<>();
     List<DataWord> topics = new ArrayList<>();
 
