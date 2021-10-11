@@ -27,9 +27,16 @@ public class BloomTest {
   }
 
   @Test
-  public void testBloomMatches() {
-    String[] positive = new String[]{"testtest", "test", "hallo", "other"};
-    String[] negative = new String[]{"tes", "lo"};
+  public void testBloom() {
+    List<String> positive = new ArrayList<>();
+    positive.add("testtest");
+    positive.add("test");
+    positive.add("hallo");
+    positive.add("other");
+
+    List<String> negative = new ArrayList<>();
+    negative.add("tes");
+    negative.add("lo");
 
     Bloom bloom = new Bloom();
     for (String str : positive) {
@@ -41,7 +48,9 @@ public class BloomTest {
     }
 
     for (String str: negative) {
-      Assert.assertFalse(bloom.matches(Bloom.create(Hash.sha3(str.getBytes()))));
+      if (!bloom.matches(Bloom.create(Hash.sha3(str.getBytes())))) {
+        Assert.assertFalse(positive.contains(str));
+      }
     }
   }
 
@@ -63,7 +72,7 @@ public class BloomTest {
   }
 
   @Test
-  public void benchmarkBloom() {
+  public void benchmarkNewBloom() {
     int times = 100000;
     byte[] data = new byte[BLOOM_BYTE_SIZE];
     byte[] test = "testestestest".getBytes();
@@ -77,7 +86,7 @@ public class BloomTest {
 
     long end = System.currentTimeMillis();
     System.out
-        .println(String.format("benchmarkBloom total %d times cost %d ms", times, end - start));
+        .println(String.format("benchmarkNewBloom total %d times cost %d ms", times, end - start));
   }
 
   @Test
