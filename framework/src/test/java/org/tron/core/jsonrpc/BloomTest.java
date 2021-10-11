@@ -141,7 +141,7 @@ public class BloomTest {
 
     long end = System.currentTimeMillis();
     System.out.println(
-        String.format("benchmarkCreateByTransaction total %d times cost %d ms", times, end - start));
+        String.format("benchmarkCreateByTransaction %d times cost %d ms", times, end - start));
 
     String exp = "c384c56ece49458a427c67b90fefe979ebf7104795be65dc398b280f24104949";
     String got = Hex.toHexString(Hash.sha3(sBloom.getData()));
@@ -165,7 +165,7 @@ public class BloomTest {
 
     end = System.currentTimeMillis();
     System.out.println(
-        String.format("benchmarkCreateByTransaction total %d times cost %d ms", times, end - start));
+        String.format("benchmarkCreateByTransaction %d times cost %d ms", times, end - start));
 
     got = Hex.toHexString(Hash.sha3(lBloom.getData()));
     Assert.assertEquals(got, exp);
