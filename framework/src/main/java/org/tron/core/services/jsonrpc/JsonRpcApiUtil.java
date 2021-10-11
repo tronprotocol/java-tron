@@ -495,12 +495,13 @@ public class JsonRpcApiUtil {
   }
 
   public static long getByJsonBlockId(String blockNumOrTag) throws JsonRpcInvalidParamsException {
-    if ("earliest".equalsIgnoreCase(blockNumOrTag)
-        || "pending".equalsIgnoreCase(blockNumOrTag)) {
-      throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
+    if ("pending".equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
     }
     if (StringUtils.isEmpty(blockNumOrTag) || "latest".equalsIgnoreCase(blockNumOrTag)) {
       return -1;
+    } else if ("earliest".equalsIgnoreCase(blockNumOrTag)) {
+      return 0;
     } else {
       return ByteArray.jsonHexToLong(blockNumOrTag);
     }
