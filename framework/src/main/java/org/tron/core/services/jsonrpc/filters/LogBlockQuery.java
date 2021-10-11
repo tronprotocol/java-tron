@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.store.SectionBloomStore;
 
@@ -53,6 +52,9 @@ public class LogBlockQuery {
     } else {
       maxSection = (int) (logFilterWrapper.getToBlock() / Bloom.BLOOM_BIT_SIZE);
       maxBlock = logFilterWrapper.getToBlock();
+      if (maxBlock > currentMaxBlockNum) {
+        maxBlock = currentMaxBlockNum;
+      }
     }
   }
 
