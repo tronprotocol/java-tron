@@ -24,6 +24,11 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
     this.solidified = solidified;
   }
 
+  public BlockFilterCapsule(String blockHash, boolean solidified) {
+    this.blockHash = blockHash;
+    this.solidified = solidified;
+  }
+
   @Override
   public void processFilterTrigger() {
     handleBLockFilter(this);

@@ -129,6 +129,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
   private Manager manager;
+
   public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
@@ -1099,21 +1100,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
 
     filterId = ByteArray.fromHex(filterId);
-    Object[] result;
-    if (blockFilter2Result.containsKey(filterId)) {
-      List<String> blockHashList = blockFilter2Result.get(filterId).getResult();
-      result = blockHashList.toArray(new String[blockHashList.size()]);
-      blockFilter2Result.get(filterId).clear();
 
-    } else if (eventFilter2Result.containsKey(filterId)) {
-      List<LogFilterElement> elements = eventFilter2Result.get(filterId).getResult();
-      result = elements.toArray(new LogFilterElement[elements.size()]);
-      eventFilter2Result.get(filterId).clear();
-
-    } else {
-      throw new ItemNotFoundException("filter not found");
-    }
-    return result;
+    return getFilterResult(filterId, blockFilter2Result, eventFilter2Result);
   }
 
   @Override
@@ -1225,6 +1213,29 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     LogMatch logMatch =
         new LogMatch(logFilterWrapper, possibleBlockList, manager);
     return logMatch.matchBlockOneByOne();
+  }
+
+  public static Object[] getFilterResult(String filterId, Map<String,
+      BlockFilterAndResult> blockFilter2Result,
+      Map<String, LogFilterAndResult> eventFilter2Result)
+      throws ItemNotFoundException {
+    Object[] result;
+
+    if (blockFilter2Result.containsKey(filterId)) {
+      List<String> blockHashList = blockFilter2Result.get(filterId).getResult();
+      result = blockHashList.toArray(new String[blockHashList.size()]);
+      blockFilter2Result.get(filterId).clear();
+
+    } else if (eventFilter2Result.containsKey(filterId)) {
+      List<LogFilterElement> elements = eventFilter2Result.get(filterId).getResult();
+      result = elements.toArray(new LogFilterElement[elements.size()]);
+      eventFilter2Result.get(filterId).clear();
+
+    } else {
+      throw new ItemNotFoundException("filter not found");
+    }
+
+    return result;
   }
 
 }
