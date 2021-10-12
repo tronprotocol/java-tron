@@ -47,7 +47,7 @@ public class BloomTest {
       Assert.assertTrue(bloom.matches(Bloom.create(Hash.sha3(str.getBytes()))));
     }
 
-    for (String str: negative) {
+    for (String str : negative) {
       if (!bloom.matches(Bloom.create(Hash.sha3(str.getBytes())))) {
         Assert.assertFalse(positive.contains(str));
       }
@@ -107,7 +107,7 @@ public class BloomTest {
 
   private byte[] bytesToAddress(byte[] address) {
     byte[] data = new byte[20];
-    System.arraycopy(address, 0, data, 20-address.length, address.length);
+    System.arraycopy(address, 0, data, 20 - address.length, address.length);
     return data;
   }
 
@@ -143,7 +143,7 @@ public class BloomTest {
     long start = System.currentTimeMillis();
 
     Bloom sBloom = new Bloom();
-    for (int i = 0; i < times; i ++) {
+    for (int i = 0; i < times; i++) {
       sBloom = Bloom.createBloom(smallCapsule);
     }
 
@@ -167,7 +167,7 @@ public class BloomTest {
     start = System.currentTimeMillis();
 
     Bloom lBloom = new Bloom();
-    for (int i = 0; i < times; i ++) {
+    for (int i = 0; i < times; i++) {
       lBloom = Bloom.createBloom(largeCapsule);
     }
 

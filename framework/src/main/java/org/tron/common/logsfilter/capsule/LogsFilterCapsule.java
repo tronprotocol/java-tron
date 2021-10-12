@@ -1,19 +1,13 @@
 package org.tron.common.logsfilter.capsule;
 
-import java.util.Iterator;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.handleLogsFilter;
+
 import java.util.List;
-import java.util.Map.Entry;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.bloom.Bloom;
-import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
-import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
-import org.tron.core.services.jsonrpc.filters.LogFilter;
-import org.tron.core.services.jsonrpc.filters.LogFilterAndResult;
-import org.tron.core.services.jsonrpc.filters.LogMatch;
 import org.tron.protos.Protocol.TransactionInfo;
 
 @Slf4j(topic = "API")
@@ -51,38 +45,6 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
 
   @Override
   public void processFilterTrigger() {
-    Iterator<Entry<String, LogFilterAndResult>> it;
-    if (solidified) {
-      it = TronJsonRpcImpl.getEventFilter2ResultSolidity().entrySet().iterator();
-    } else {
-      it = TronJsonRpcImpl.getEventFilter2ResultFull().entrySet().iterator();
-    }
-
-    while (it.hasNext()) {
-      Entry<String, LogFilterAndResult> entry = it.next();
-      if (entry.getValue().isExpire()) {
-        it.remove();
-        continue;
-      }
-
-      LogFilterAndResult logFilterAndResult = entry.getValue();
-      long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
-      long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
-      if (!(fromBlock <= blockNumber && blockNumber <= toBlock)) {
-        continue;
-      }
-
-      if (bloom != null
-          && !logFilterAndResult.getLogFilterWrapper().getLogFilter().matchBloom(bloom)) {
-        continue;
-      }
-
-      LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
-      List<LogFilterElement> elements =
-          LogMatch.matchBlock(logFilter, blockNumber, blockHash, txInfoList, removed);
-      if (CollectionUtils.isNotEmpty(elements)) {
-        logFilterAndResult.getResult().addAll(elements);
-      }
-    }
+    handleLogsFilter(this);
   }
 }

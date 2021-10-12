@@ -15,8 +15,10 @@ import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -26,12 +28,15 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
+import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -56,6 +61,7 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
+import org.tron.core.services.jsonrpc.filters.LogFilter;
 import org.tron.core.services.jsonrpc.filters.LogFilterAndResult;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.filters.LogMatch;
@@ -1144,6 +1150,66 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
 
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
+  }
+
+  public static void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
+    Iterator<Entry<String, BlockFilterAndResult>> it;
+
+    if (blockFilterCapsule.isSolidified()) {
+      it = TronJsonRpcImpl.getBlockFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = TronJsonRpcImpl.getBlockFilter2ResultFull().entrySet().iterator();
+    }
+
+    while (it.hasNext()) {
+      Entry<String, BlockFilterAndResult> entry = it.next();
+      if (entry.getValue().isExpire()) {
+        it.remove();
+        continue;
+      }
+      entry.getValue().getResult().add(ByteArray.toJsonHex(blockFilterCapsule.getBlockHash()));
+    }
+  }
+
+  public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
+    Iterator<Entry<String, LogFilterAndResult>> it;
+
+    if (logsFilterCapsule.isSolidified()) {
+      it = TronJsonRpcImpl.getEventFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = TronJsonRpcImpl.getEventFilter2ResultFull().entrySet().iterator();
+    }
+
+    while (it.hasNext()) {
+      Entry<String, LogFilterAndResult> entry = it.next();
+      if (entry.getValue().isExpire()) {
+        it.remove();
+        continue;
+      }
+
+      LogFilterAndResult logFilterAndResult = entry.getValue();
+      long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
+      long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
+      if (!(fromBlock <= logsFilterCapsule.getBlockNumber()
+          && logsFilterCapsule.getBlockNumber() <= toBlock)) {
+        continue;
+      }
+
+      if (logsFilterCapsule.getBloom() != null
+          && !logFilterAndResult.getLogFilterWrapper().getLogFilter()
+          .matchBloom(logsFilterCapsule.getBloom())) {
+        continue;
+      }
+
+      LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
+      List<LogFilterElement> elements =
+          LogMatch.matchBlock(logFilter, logsFilterCapsule.getBlockNumber(),
+              logsFilterCapsule.getBlockHash(), logsFilterCapsule.getTxInfoList(),
+              logsFilterCapsule.isRemoved());
+      if (CollectionUtils.isNotEmpty(elements)) {
+        logFilterAndResult.getResult().addAll(elements);
+      }
+    }
   }
 
   private LogFilterElement[] getLogsByLogFilterWrapper(LogFilterWrapper logFilterWrapper,
