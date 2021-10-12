@@ -35,6 +35,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
@@ -65,6 +66,12 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "API")
 public class TronJsonRpcImpl implements TronJsonRpc {
+
+  public enum RequestSource {
+    FULLNODE,
+    SOLIDITY,
+    PBFT
+  }
 
   String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
   private final int chainId = 100;
@@ -888,10 +895,30 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return createTransactionJson(build, ContractType.TransferAssetContract, args);
   }
 
+  public RequestSource getSource() {
+    Chainbase.Cursor cursor = wallet.getCursor();
+    switch (cursor) {
+      case SOLIDITY:
+        return RequestSource.SOLIDITY;
+      case PBFT:
+        return RequestSource.PBFT;
+      default:
+        return RequestSource.FULLNODE;
+    }
+  }
+
   @Override
   public TransactionJson buildTransaction(BuildArguments args)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
-      JsonRpcInternalException {
+      JsonRpcInternalException, JsonRpcMethodNotFoundException {
+
+    if (getSource() != RequestSource.FULLNODE) {
+      String msg = String
+          .format("the method buildTransaction does not exist/is not available in %s",
+              getSource().toString());
+      throw new JsonRpcMethodNotFoundException(msg);
+    }
+
     byte[] fromAddressData;
     try {
       fromAddressData = addressHashToByteArray(args.from);
