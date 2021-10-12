@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.utils.ByteArray;
@@ -21,7 +22,7 @@ public class ConcurrentHashMapTest {
 
   @Test
   public void testHandleBlockHash() {
-    int times = 100;
+    int times = 200;
     int eachCount = 200;
 
     Map<String, BlockFilterAndResult> conMap = TronJsonRpcImpl.getBlockFilter2ResultFull();
@@ -40,7 +41,7 @@ public class ConcurrentHashMapTest {
     }
 
     try {
-      Thread.sleep(randomInt(100, 200));
+      Thread.sleep(200);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -49,8 +50,7 @@ public class ConcurrentHashMapTest {
       public void run() {
 
         for (int i = 1; i <= times; i++) {
-          System.out.println(
-              "put time " + i + ", from " + (1 + (i - 1) * eachCount) + " to " + i * eachCount);
+          logger.info("put time {}, from {} to {}", i, (1 + (i - 1) * eachCount),  i * eachCount);
 
           for (int j = 1 + (i - 1) * eachCount; j <= i * eachCount; j++) {
             BlockFilterCapsule blockFilterCapsule =
@@ -77,11 +77,9 @@ public class ConcurrentHashMapTest {
             e.printStackTrace();
           }
 
-          System.out.println("get time " + t);
+          logger.info("Thread1 get time {}", t);
 
           for (int k = 0; k < 5; k++) {
-            // System.out.println("get key " + k);
-
             try {
               Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
                   TronJsonRpcImpl.getEventFilter2ResultFull());
@@ -108,11 +106,9 @@ public class ConcurrentHashMapTest {
             e.printStackTrace();
           }
 
-          System.out.println("Thread2 get time " + t);
+          logger.info("Thread2 get time {}", t);
 
           for (int k = 0; k < 5; k++) {
-            System.out.println("get key " + k);
-
             try {
               Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
                   TronJsonRpcImpl.getEventFilter2ResultFull());
@@ -147,24 +143,18 @@ public class ConcurrentHashMapTest {
             e.printStackTrace();
           }
 
-          System.out.println("Thread3 get time " + t);
+          logger.info("Thread3 get time {}", t);
 
           for (int k = 0; k < 5; k++) {
-            // System.out.println("get key " + k);
-
             try {
               Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
                   TronJsonRpcImpl.getEventFilter2ResultFull());
-
-              // if (blockHashList.length == 0) {
-              //   continue;
-              // }
 
               for (Object str : blockHashList) {
                 try {
                   resultMap3.get(String.valueOf(k)).add(str.toString());
                 } catch (Exception e) {
-                  logger.error("--------");
+                  logger.error("resultMap3 get {} exception {}", k, e.getMessage());
                   e.printStackTrace();
                 }
               }
@@ -191,20 +181,21 @@ public class ConcurrentHashMapTest {
       e.printStackTrace();
     }
 
-    System.out.println("-----------------------------------------------------------------------");
+    logger.info("-----------------------------------------------------------------------");
 
     for (int i = 0; i < 5; i++) {
       List<String> pResult = resultMap1.get(String.valueOf(i));
       pResult.addAll(resultMap2.get(String.valueOf(i)));
       pResult.addAll(resultMap3.get(String.valueOf(i)));
-      // System.out.println("check  get key " + i + " value is " + pResult);
 
       for (int j = 1; j <= times * eachCount; j++) {
-        if (!pResult.contains(ByteArray.toJsonHex(String.valueOf(j)))) {
-          System.out.println(String.format("key %s not contains %s", i, j));
-        }
-        // Assert.assertTrue(pResult.contains(String.valueOf(j)));
+        // if (!pResult.contains(ByteArray.toJsonHex(String.valueOf(j)))) {
+        //   logger.info("key {} not contains {}", i, j);
+        // }
+        Assert.assertTrue(pResult.contains(ByteArray.toJsonHex(String.valueOf(j))));
       }
+
+      Assert.assertEquals(times * eachCount, pResult.size());
     }
   }
 
