@@ -56,6 +56,15 @@ public class Chainbase implements IRevokingDB {
     this.offset.set(offset);
   }
 
+  @Override
+  public Cursor getCursor() {
+    if (cursor.get() == null) {
+      return Cursor.HEAD;
+    } else {
+      return cursor.get();
+    }
+  }
+
   private Snapshot head() {
     if (cursor.get() == null) {
       return head;
