@@ -120,6 +120,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Getter
   private static Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
       new ConcurrentHashMap<>();
+
   private String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
   /**
    * thread pool of query section bloom store
