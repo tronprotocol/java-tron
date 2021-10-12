@@ -1,6 +1,8 @@
 package org.tron.core.services.jsonrpc.filters;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;
 import org.tron.core.Wallet;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
@@ -15,7 +17,7 @@ public class LogFilterAndResult extends FilterResult<LogFilterElement> {
   public LogFilterAndResult(FilterRequest fr, long currentMaxBlockNum, Wallet wallet)
       throws JsonRpcInvalidParamsException {
     this.logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
-    result = new ArrayList<>();
+    result = new LinkedBlockingQueue<>();
     this.updateExpireTime();
   }
 
@@ -25,8 +27,9 @@ public class LogFilterAndResult extends FilterResult<LogFilterElement> {
   }
 
   @Override
-  public void clear() {
-    result.clear();
-    this.updateExpireTime();
+  public List<LogFilterElement> popAll() {
+    List<LogFilterElement> elements = new ArrayList<>();
+    result.drainTo(elements);
+    return elements;
   }
 }

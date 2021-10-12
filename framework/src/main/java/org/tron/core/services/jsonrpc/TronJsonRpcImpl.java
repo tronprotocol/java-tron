@@ -12,6 +12,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.util.Arrays;
@@ -1215,30 +1216,21 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return logMatch.matchBlockOneByOne();
   }
 
-  public static Object[] getFilterResult(String filterId, Map<String,
-      BlockFilterAndResult> blockFilter2Result,
-      Map<String, LogFilterAndResult> eventFilter2Result)
+  public static Object[] getFilterResult(String filterId, Map<String, BlockFilterAndResult>
+      blockFilter2Result, Map<String, LogFilterAndResult> eventFilter2Result)
       throws ItemNotFoundException {
     Object[] result;
 
     if (blockFilter2Result.containsKey(filterId)) {
-      List<String> blockHashList = blockFilter2Result.get(filterId).getResult();
-
-      synchronized (blockHashList) {
-        result = blockHashList.toArray(new String[blockHashList.size()]);
-        blockHashList.clear();
-      }
-
+      List<String> blockHashList = blockFilter2Result.get(filterId).popAll();
+      result = blockHashList.toArray(new String[blockHashList.size()]);
       blockFilter2Result.get(filterId).updateExpireTime();
+
     } else if (eventFilter2Result.containsKey(filterId)) {
-      List<LogFilterElement> logElementList = eventFilter2Result.get(filterId).getResult();
-
-      synchronized (logElementList) {
-        result = logElementList.toArray(new LogFilterElement[logElementList.size()]);
-        logElementList.clear();
-      }
-
+      List<LogFilterElement> logElementList = eventFilter2Result.get(filterId).popAll();
+      result = logElementList.toArray(new LogFilterElement[logElementList.size()]);
       eventFilter2Result.get(filterId).updateExpireTime();
+
     } else {
       throw new ItemNotFoundException("filter not found");
     }
