@@ -1166,12 +1166,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         result = blockHashList.toArray(new String[blockHashList.size()]);
         blockHashList.clear();
       }
+      blockFilter2Result.get(filterId).updateExpireTime();
     } else if (eventFilter2Result.containsKey(filterId)) {
       List<LogFilterElement> logElementList = eventFilter2Result.get(filterId).getResult();
       synchronized (logElementList) {
         result = logElementList.toArray(new LogFilterElement[logElementList.size()]);
         logElementList.clear();
       }
+      eventFilter2Result.get(filterId).updateExpireTime();
     } else {
       throw new ItemNotFoundException("filter not found");
     }
