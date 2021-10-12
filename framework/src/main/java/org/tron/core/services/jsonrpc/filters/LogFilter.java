@@ -25,12 +25,13 @@ public class LogFilter {
   @Getter
   @Setter
   private byte[][] contractAddresses = new byte[0][];
-  // example: [[func1, func1], null, [A, B], [C]]
+  // example: [[func1, func2], null, [A, B], [C]]
   // first topic must be func1 or func2，second can be any，third must be A or B，forth must be C
+  // [A, null] is not allowed.
   @Getter
   @Setter
   private List<byte[][]> topics = new ArrayList<>();
-  // [[func1, func1], null, [A, B], [C]] + [addr1, addr2] => Bloom[][]
+  // [[func1, func2], null, [A, B], [C]] + [addr1, addr2] => Bloom[][]
   @Setter
   private Bloom[][] filterBlooms;
 
@@ -43,11 +44,8 @@ public class LogFilter {
    */
   public LogFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
     if (fr.address instanceof String) {
-      try {
-        withContractAddress(addressToByteArray((String) fr.address));
-      } catch (JsonRpcInvalidParamsException e) {
-        throw new JsonRpcInvalidParamsException("invalid address: " + e.getMessage());
-      }
+      withContractAddress(addressToByteArray((String) fr.address));
+
     } else if (fr.address instanceof ArrayList) {
       List<byte[]> addr = new ArrayList<>();
       int i = 0;
@@ -57,7 +55,7 @@ public class LogFilter {
           i++;
         } catch (JsonRpcInvalidParamsException e) {
           throw new JsonRpcInvalidParamsException(
-              String.format("invalid address at index %d: [%s]", i, e.getMessage()));
+              String.format("invalid address at index %d: %s", i, s));
         }
       }
       withContractAddress(addr.toArray(new byte[addr.size()][]));
@@ -78,7 +76,7 @@ public class LogFilter {
           try {
             withTopic(new DataWord(topicToByteArray((String) topic)).getData());
           } catch (JsonRpcInvalidParamsException e) {
-            throw new JsonRpcInvalidParamsException("invalid topic(s): " + e.getMessage());
+            throw new JsonRpcInvalidParamsException("invalid topic(s): " + topic);
           }
         } else if (topic instanceof ArrayList) {
 
@@ -87,7 +85,7 @@ public class LogFilter {
             try {
               t.add(new DataWord(topicToByteArray((String) s)).getData());
             } catch (JsonRpcInvalidParamsException e) {
-              throw new JsonRpcInvalidParamsException("invalid topic(s): " + e.getMessage());
+              throw new JsonRpcInvalidParamsException("invalid topic(s): " + s);
             }
           }
           withTopic(t.toArray(new byte[t.size()][]));

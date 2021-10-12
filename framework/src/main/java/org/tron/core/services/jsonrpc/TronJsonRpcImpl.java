@@ -137,6 +137,66 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     this.sectionExecutor = Executors.newFixedThreadPool(5);
   }
 
+  public static void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
+    Iterator<Entry<String, BlockFilterAndResult>> it;
+
+    if (blockFilterCapsule.isSolidified()) {
+      it = getBlockFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = getBlockFilter2ResultFull().entrySet().iterator();
+    }
+
+    while (it.hasNext()) {
+      Entry<String, BlockFilterAndResult> entry = it.next();
+      if (entry.getValue().isExpire()) {
+        it.remove();
+        continue;
+      }
+      entry.getValue().getResult().add(ByteArray.toJsonHex(blockFilterCapsule.getBlockHash()));
+    }
+  }
+
+  public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
+    Iterator<Entry<String, LogFilterAndResult>> it;
+
+    if (logsFilterCapsule.isSolidified()) {
+      it = getEventFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = getEventFilter2ResultFull().entrySet().iterator();
+    }
+
+    while (it.hasNext()) {
+      Entry<String, LogFilterAndResult> entry = it.next();
+      if (entry.getValue().isExpire()) {
+        it.remove();
+        continue;
+      }
+
+      LogFilterAndResult logFilterAndResult = entry.getValue();
+      long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
+      long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
+      if (!(fromBlock <= logsFilterCapsule.getBlockNumber()
+          && logsFilterCapsule.getBlockNumber() <= toBlock)) {
+        continue;
+      }
+
+      if (logsFilterCapsule.getBloom() != null
+          && !logFilterAndResult.getLogFilterWrapper().getLogFilter()
+          .matchBloom(logsFilterCapsule.getBloom())) {
+        continue;
+      }
+
+      LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
+      List<LogFilterElement> elements =
+          LogMatch.matchBlock(logFilter, logsFilterCapsule.getBlockNumber(),
+              logsFilterCapsule.getBlockHash(), logsFilterCapsule.getTxInfoList(),
+              logsFilterCapsule.isRemoved());
+      if (CollectionUtils.isNotEmpty(elements)) {
+        logFilterAndResult.getResult().addAll(elements);
+      }
+    }
+  }
+
   @Override
   public String web3ClientVersion() {
     Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
@@ -1141,66 +1201,6 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }
 
-  public static void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
-    Iterator<Entry<String, BlockFilterAndResult>> it;
-
-    if (blockFilterCapsule.isSolidified()) {
-      it = TronJsonRpcImpl.getBlockFilter2ResultSolidity().entrySet().iterator();
-    } else {
-      it = TronJsonRpcImpl.getBlockFilter2ResultFull().entrySet().iterator();
-    }
-
-    while (it.hasNext()) {
-      Entry<String, BlockFilterAndResult> entry = it.next();
-      if (entry.getValue().isExpire()) {
-        it.remove();
-        continue;
-      }
-      entry.getValue().getResult().add(ByteArray.toJsonHex(blockFilterCapsule.getBlockHash()));
-    }
-  }
-
-  public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
-    Iterator<Entry<String, LogFilterAndResult>> it;
-
-    if (logsFilterCapsule.isSolidified()) {
-      it = TronJsonRpcImpl.getEventFilter2ResultSolidity().entrySet().iterator();
-    } else {
-      it = TronJsonRpcImpl.getEventFilter2ResultFull().entrySet().iterator();
-    }
-
-    while (it.hasNext()) {
-      Entry<String, LogFilterAndResult> entry = it.next();
-      if (entry.getValue().isExpire()) {
-        it.remove();
-        continue;
-      }
-
-      LogFilterAndResult logFilterAndResult = entry.getValue();
-      long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
-      long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
-      if (!(fromBlock <= logsFilterCapsule.getBlockNumber()
-          && logsFilterCapsule.getBlockNumber() <= toBlock)) {
-        continue;
-      }
-
-      if (logsFilterCapsule.getBloom() != null
-          && !logFilterAndResult.getLogFilterWrapper().getLogFilter()
-          .matchBloom(logsFilterCapsule.getBloom())) {
-        continue;
-      }
-
-      LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
-      List<LogFilterElement> elements =
-          LogMatch.matchBlock(logFilter, logsFilterCapsule.getBlockNumber(),
-              logsFilterCapsule.getBlockHash(), logsFilterCapsule.getTxInfoList(),
-              logsFilterCapsule.isRemoved());
-      if (CollectionUtils.isNotEmpty(elements)) {
-        logFilterAndResult.getResult().addAll(elements);
-      }
-    }
-  }
-
   private LogFilterElement[] getLogsByLogFilterWrapper(LogFilterWrapper logFilterWrapper,
       long currentMaxBlockNum) throws JsonRpcTooManyResultException, ExecutionException,
       InterruptedException, BadItemException, ItemNotFoundException {
@@ -1223,14 +1223,22 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     if (blockFilter2Result.containsKey(filterId)) {
       List<String> blockHashList = blockFilter2Result.get(filterId).getResult();
-      result = blockHashList.toArray(new String[blockHashList.size()]);
-      blockFilter2Result.get(filterId).clear();
 
+      synchronized (blockHashList) {
+        result = blockHashList.toArray(new String[blockHashList.size()]);
+        blockHashList.clear();
+      }
+
+      blockFilter2Result.get(filterId).updateExpireTime();
     } else if (eventFilter2Result.containsKey(filterId)) {
-      List<LogFilterElement> elements = eventFilter2Result.get(filterId).getResult();
-      result = elements.toArray(new LogFilterElement[elements.size()]);
-      eventFilter2Result.get(filterId).clear();
+      List<LogFilterElement> logElementList = eventFilter2Result.get(filterId).getResult();
 
+      synchronized (logElementList) {
+        result = logElementList.toArray(new LogFilterElement[logElementList.size()]);
+        logElementList.clear();
+      }
+
+      eventFilter2Result.get(filterId).updateExpireTime();
     } else {
       throw new ItemNotFoundException("filter not found");
     }
