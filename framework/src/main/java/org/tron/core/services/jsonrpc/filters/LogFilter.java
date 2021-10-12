@@ -27,6 +27,7 @@ public class LogFilter {
   private byte[][] contractAddresses = new byte[0][];
   // example: [[func1, func2], null, [A, B], [C]]
   // first topic must be func1 or func2，second can be any，third must be A or B，forth must be C
+  // [A, null] is not allowed.
   @Getter
   @Setter
   private List<byte[][]> topics = new ArrayList<>();
