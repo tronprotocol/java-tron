@@ -134,6 +134,8 @@ public class Program {
   private byte previouslyExecutedOp;
   private boolean stopped;
   private ProgramPrecompile programPrecompile;
+  private int contractVersion;
+
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
@@ -157,6 +159,8 @@ public class Program {
     this.trace = new ProgramTrace(config, programInvoke);
     this.nonce = internalTransaction.getNonce();
   }
+
+
 
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
@@ -302,6 +306,14 @@ public class Program {
 
   public void setRootTransactionId(byte[] rootTransactionId) {
     this.rootTransactionId = rootTransactionId.clone();
+  }
+
+  public void setContractVersion(int version) {
+    this.contractVersion = version;
+  }
+
+  public int getContractVersion() {
+    return this.contractVersion;
   }
 
   public long getNonce() {
@@ -715,6 +727,9 @@ public class Program {
 
       if (!contractAlreadyExists) {
         Builder builder = SmartContract.newBuilder();
+        if (VMConfig.allowTvmCompatibleEvm()) {
+          builder.setVersion(getContractVersion());
+        }
         builder.setContractAddress(ByteString.copyFrom(newAddress))
             .setConsumeUserResourcePercent(100)
             .setOriginAddress(ByteString.copyFrom(senderAddress));
@@ -727,8 +742,12 @@ public class Program {
     } else {
       deposit.createAccount(newAddress, "CreatedByContract",
           Protocol.AccountType.Contract);
-      SmartContract newSmartContract = SmartContract.newBuilder()
-          .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+      Builder builder = SmartContract.newBuilder();
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        builder.setVersion(getContractVersion());
+      }
+      SmartContract newSmartContract = builder.setContractAddress(ByteString.copyFrom(newAddress))
+          .setConsumeUserResourcePercent(100)
           .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
       deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
       // In case of hashing collisions, check for any balance before createAccount()
@@ -776,6 +795,9 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        program.setContractVersion(getContractVersion());
+      }
       vm.play(program);
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
@@ -786,6 +808,11 @@ public class Program {
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
     byte[] code = createResult.getHReturn();
+
+    if (code.length != 0 && config.allowTvmLondon() && code[0] == (byte) 0xEF) {
+        createResult.setException(Program.Exception
+            .invalidCodeException());
+    }
 
     long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
@@ -993,6 +1020,10 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
+      if (VMConfig.allowTvmCompatibleEvm()) {
+        program.setContractVersion(
+            invoke.getDeposit().getContract(codeAddress).getContractVersion());
+      }
       vm.play(program);
       callResult = program.getResult();
 
@@ -1214,8 +1245,11 @@ public class Program {
   }
 
   public DataWord getChainId() {
-    return new DataWord(Hex.toHexString(getContractState()
-        .getBlockByNum(0).getBlockId().getBytes()));
+    byte[] chainId = getContractState().getBlockByNum(0).getBlockId().getBytes();
+    if (VMConfig.allowTvmCompatibleEvm()) {
+      chainId = Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length);
+    }
+    return new DataWord(chainId);
   }
   public DataWord getDropPrice() {
     return new DataWord(1);
@@ -1446,6 +1480,10 @@ public class Program {
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
     byte[] senderAddress;
+    if (VMConfig.allowTvmCompatibleEvm() && getCallDeep() == MAX_DEPTH) {
+      stackPushZero();
+      return;
+    }
     if(VMConfig.allowTvmIstanbul()) {
       senderAddress = TransactionTrace
           .convertToTronAddress(this.getContractAddress().getLast20Bytes());
@@ -1650,10 +1688,20 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
+    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
+      DataWord availableEnergyReduce = availableEnergy.clone();
+      availableEnergyReduce.div(new DataWord(64));
+      availableEnergy.sub(availableEnergyReduce);
+    }
     return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
   }
 
   public DataWord getCreateEnergy(DataWord availableEnergy) {
+    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
+      DataWord availableEnergyReduce = availableEnergy.clone();
+      availableEnergyReduce.div(new DataWord(64));
+      availableEnergy.sub(availableEnergyReduce);
+    }
     return availableEnergy;
   }
 
@@ -1765,7 +1813,9 @@ public class Program {
     } catch (ArithmeticException e) {
       logger.error("TVM Freeze: frozenBalance out of long range.");
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return false;
   }
 
@@ -1787,12 +1837,16 @@ public class Program {
       processor.validate(param, repository);
       long unfreezeBalance = processor.execute(param, repository);
       repository.commit();
-      internalTx.setValue(unfreezeBalance);
+      if (internalTx != null) {
+        internalTx.setValue(unfreezeBalance);
+      }
       return true;
     } catch (ContractValidateException e) {
       logger.error("TVM Unfreeze: validate failure. Reason: {}", e.getMessage());
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return false;
   }
 
@@ -1891,7 +1945,9 @@ public class Program {
         param.addVote(TransactionTrace.convertToTronAddress(witness.getLast20Bytes()),
             amount.sValue().longValueExact());
       }
-      internalTx.setExtra(param.toJsonStr());
+      if (internalTx != null) {
+        internalTx.setExtra(param.toJsonStr());
+      }
 
       VoteWitnessProcessor processor = new VoteWitnessProcessor();
       processor.validate(param, repository);
@@ -1905,7 +1961,9 @@ public class Program {
     } catch (ArithmeticException e) {
       logger.error("TVM VoteWitness: int or long out of range. caused by: {}", e.getMessage());
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return false;
   }
 
@@ -1925,14 +1983,18 @@ public class Program {
       processor.validate(param, repository);
       long allowance = processor.execute(param, repository);
       repository.commit();
-      internalTx.setValue(allowance);
+      if (internalTx != null) {
+        internalTx.setValue(allowance);
+      }
       return allowance;
     } catch (ContractValidateException e) {
       logger.error("TVM WithdrawReward: validate failure. Reason: {}", e.getMessage());
     } catch (ContractExeException e) {
       logger.error("TVM WithdrawReward: execute failure. Reason: {}", e.getMessage());
     }
-    internalTx.reject();
+    if (internalTx != null) {
+      internalTx.reject();
+    }
     return 0;
   }
 
@@ -2012,6 +2074,14 @@ public class Program {
 
     public IllegalOperationException(String message, Object... args) {
       super(format(message, args));
+    }
+  }
+
+  @SuppressWarnings("serial")
+  public static class InvalidCodeException extends BytecodeExecutionException {
+
+    public InvalidCodeException(String message) {
+      super(message);
     }
   }
 
@@ -2119,6 +2189,10 @@ public class Program {
     public static IllegalOperationException invalidOpCode(byte... opCode) {
       return new IllegalOperationException("Invalid operation code: opCode[%s];",
           Hex.toHexString(opCode, 0, 1));
+    }
+
+    public static InvalidCodeException invalidCodeException() {
+      return new InvalidCodeException("invalid code: must not begin with 0xef");
     }
 
     public static BadJumpDestinationException badJumpDestination(int pc) {

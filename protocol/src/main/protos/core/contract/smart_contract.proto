@@ -55,6 +55,7 @@ message SmartContract {
   int64 origin_energy_limit = 8;
   bytes code_hash = 9;
   bytes trx_hash = 10;
+  int32 version = 11;
 }
 
 message CreateSmartContract {

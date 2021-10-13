@@ -29,7 +29,6 @@ import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
-@Ignore
 public class AccountCapsuleTest {
 
   private static final String dbPath = "output_accountCapsule_test";

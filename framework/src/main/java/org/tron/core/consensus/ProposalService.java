@@ -75,6 +75,10 @@ public class ProposalService extends ProposalUtil {
         }
         case ENERGY_FEE: {
           manager.getDynamicPropertiesStore().saveEnergyFee(entry.getValue());
+          // update energy price history
+          manager.getDynamicPropertiesStore().saveEnergyPriceHistory(
+              manager.getDynamicPropertiesStore().getEnergyPriceHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         case EXCHANGE_CREATE_FEE: {
@@ -245,6 +249,14 @@ public class ProposalService extends ProposalUtil {
         case ALLOW_TVM_VOTE: {
           manager.getDynamicPropertiesStore().saveAllowTvmVote(entry.getValue());
           manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
+          break;
+        }
+        case ALLOW_TVM_LONDON: {
+          manager.getDynamicPropertiesStore().saveAllowTvmLondon(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_COMPATIBLE_EVM: {
+          manager.getDynamicPropertiesStore().saveAllowTvmCompatibleEvm(entry.getValue());
           break;
         }
         case FREE_NET_LIMIT: {

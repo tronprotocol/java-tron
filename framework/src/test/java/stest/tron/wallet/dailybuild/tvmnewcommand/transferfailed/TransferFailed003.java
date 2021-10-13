@@ -390,7 +390,7 @@ public class TransferFailed003 {
     Assert.assertEquals(contractAccountCountBefore - 2, contractAccountCountAfter.longValue());
 
     Assert.assertEquals(energyUsageTotal,
-        energyUsageTotal2 + EnergyCost.getInstance().getNEW_ACCT_CALL());
+        energyUsageTotal2 + EnergyCost.getInstance().getNewAcctCall());
 
     nonexistentAddressAccount = PublicMethed
         .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
@@ -792,7 +792,7 @@ public class TransferFailed003 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    Assert.assertTrue(energyUsageTotal > EnergyCost.getInstance().getNEW_ACCT_CALL());
+    Assert.assertTrue(energyUsageTotal > EnergyCost.getInstance().getNewAcctCall());
 
     Long nonexistentAddressAccount = PublicMethed
         .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
