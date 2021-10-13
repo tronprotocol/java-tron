@@ -36,8 +36,10 @@ public class LogFilterWrapper {
         throw new JsonRpcInvalidParamsException(
             "cannot specify both BlockHash and FromBlock/ToBlock, choose one or the other");
       }
-      Block block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
-
+      Block block = null;
+      if (wallet != null) {
+        block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+      }
       if (block == null) {
         throw new JsonRpcInvalidParamsException("invalid blockHash");
       }
@@ -50,6 +52,9 @@ public class LogFilterWrapper {
       // then if toBlock >= maxBlockNum, set fromBlock = maxBlockNum
       if (StringUtils.isEmpty(fr.fromBlock) && StringUtils.isNotEmpty(fr.toBlock)) {
         toBlock = JsonRpcApiUtil.getByJsonBlockId(fr.toBlock);
+        if (toBlock == -1) {
+          toBlock = Long.MAX_VALUE;
+        }
         if (toBlock < currentMaxBlockNum) {
           fromBlock = toBlock;
         } else {
