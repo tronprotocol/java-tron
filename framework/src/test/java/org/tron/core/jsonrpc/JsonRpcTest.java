@@ -1,5 +1,6 @@
 package org.tron.core.jsonrpc;
 
+import static org.tron.common.utils.DecodeUtil.addressPreFixString;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
@@ -17,7 +18,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.core.Wallet;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
@@ -123,10 +123,10 @@ public class JsonRpcTest {
   @Test
   public void testAddressCompatibleToByteArray() {
     String rawAddress = "548794500882809695a8a687866e76d4271a1abc";
-    byte[] expectedBytes = ByteArray.fromHexString("41" + rawAddress);
+    byte[] expectedBytes = ByteArray.fromHexString(addressPreFixString + rawAddress);
 
     String addressNoPre = "0x" + rawAddress;
-    String addressWithPre = "0x" + Wallet.getAddressPreFixString() + rawAddress;
+    String addressWithPre = "0x" + addressPreFixString + rawAddress;
 
     try {
       Assert.assertArrayEquals(expectedBytes, addressCompatibleToByteArray(rawAddress));
