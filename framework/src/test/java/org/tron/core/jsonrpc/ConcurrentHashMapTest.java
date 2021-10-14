@@ -95,6 +95,7 @@ public class ConcurrentHashMapTest {
               }
 
             } catch (ItemNotFoundException e) {
+              e.printStackTrace();
               // Assert.fail(e.getMessage());
             }
           }
