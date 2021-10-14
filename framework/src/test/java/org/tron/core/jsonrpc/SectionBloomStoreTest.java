@@ -59,7 +59,7 @@ public class SectionBloomStoreTest {
     bitSet.set(1000);
     try {
       sectionBloomStore.put(100, 101, bitSet);
-      sectionBloomStore.get(100, 101).equals(bitSet);
+      Assert.assertEquals(bitSet, sectionBloomStore.get(100, 101));
     } catch (EventBloomException e) {
       Assert.fail();
     }
