@@ -22,8 +22,9 @@ public class ConcurrentHashMapTest {
 
   /**
    * test producer and consumer model in getFilterChanges after newBlockFilter.
-   * first, sum of all consumers' number of messages is same as producer generates.
-   * second, message of every consumer is continuous, not interject with another when consumes parallel.
+   * Firstly, sum of all consumers' number of messages is same as producer generates.
+   * Secondly, message of every consumer is continuous, not interject with another
+   * when consumes parallel.
    */
   @Test
   public void testHandleBlockHash() {
