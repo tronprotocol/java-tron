@@ -20,6 +20,11 @@ public class ConcurrentHashMapTest {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
 
+  /**
+   * test producer and consumer model in getFilterChanges after newBlockFilter.
+   * first, sum of all consumers' number of messages is same as producer generates.
+   * second, message of every consumer is continuous, not interject with another when consumes parallel.
+   */
   @Test
   public void testHandleBlockHash() {
     int times = 200;
@@ -50,7 +55,7 @@ public class ConcurrentHashMapTest {
       public void run() {
 
         for (int i = 1; i <= times; i++) {
-          logger.info("put time {}, from {} to {}", i, (1 + (i - 1) * eachCount),  i * eachCount);
+          logger.info("put time {}, from {} to {}", i, (1 + (i - 1) * eachCount), i * eachCount);
 
           for (int j = 1 + (i - 1) * eachCount; j <= i * eachCount; j++) {
             BlockFilterCapsule blockFilterCapsule =
@@ -121,7 +126,6 @@ public class ConcurrentHashMapTest {
                 try {
                   resultMap2.get(String.valueOf(k)).add(str.toString());
                 } catch (Exception e) {
-
                 }
               }
 

@@ -167,7 +167,7 @@ public class LogBlockQuery {
   /**
    * convert LogFilter to the condition as 3 dimension array
    */
-  private int[][][] getConditions() {
+  public int[][][] getConditions() {
 
     LogFilter logFilter = logFilterWrapper.getLogFilter();
     List<byte[][]> conditions = new ArrayList<>();
