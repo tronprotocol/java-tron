@@ -1009,7 +1009,7 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(getBlockByHashResult.getString("hash"), "0x" + bid);
     Assert.assertEquals(getBlockByHashResult.getString("parentHash"), "0x" + parentHash);
     Assert.assertEquals(getBlockByHashResult.getString("transactionsRoot"), "0x" + txTrieRoot);
-    Assert.assertEquals(getBlockByHashResult.getString("miner"), "0x" + witnessAddress);
+    Assert.assertEquals(getBlockByHashResult.getString("miner"), "0x" + witnessAddress.substring(2));
     Assert.assertEquals(getBlockByHashResult.getString("gasUsed"), "0x" + Long.toHexString(gas));
     Assert.assertEquals(
         String.valueOf(Long.parseLong(getBlockByHashResult.getString("gasLimit").substring(2), 16)),
@@ -1078,7 +1078,7 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(getBlockByNumberResult.getString("hash"), "0x" + bid);
     Assert.assertEquals(getBlockByNumberResult.getString("parentHash"), "0x" + parentHash);
     Assert.assertEquals(getBlockByNumberResult.getString("transactionsRoot"), "0x" + txTrieRoot);
-    Assert.assertEquals(getBlockByNumberResult.getString("miner"), "0x" + witnessAddress);
+    Assert.assertEquals(getBlockByNumberResult.getString("miner"), "0x" + witnessAddress.substring(2));
     Assert.assertEquals(getBlockByNumberResult.getString("gasUsed"), "0x" + Long.toHexString(gas));
     Assert.assertEquals(
         String.valueOf(
