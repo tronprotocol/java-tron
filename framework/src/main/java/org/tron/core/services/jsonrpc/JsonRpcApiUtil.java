@@ -1,5 +1,7 @@
 package org.tron.core.services.jsonrpc;
 
+import static org.tron.common.utils.DecodeUtil.addressPreFixString;
+
 import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
@@ -380,6 +382,9 @@ public class JsonRpcApiUtil {
 
       if (addressByte.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
         addressByte = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, addressByte);
+      } else if (addressByte[0] != ByteArray.fromHexString(DecodeUtil.addressPreFixString)[0]) {
+        // addressByte.length == DecodeUtil.ADDRESS_SIZE / 2
+        throw new JsonRpcInvalidParamsException("invalid address hash value");
       }
     } catch (Exception e) {
       throw new JsonRpcInvalidParamsException(e.getMessage());

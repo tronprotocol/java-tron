@@ -142,6 +142,12 @@ public class JsonRpcTest {
       Assert.assertEquals("invalid address hash value", e.getMessage());
     }
 
+    try {
+      addressCompatibleToByteArray(rawAddress + "00");
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertEquals("invalid address hash value", e.getMessage());
+    }
+
   }
 
   @Test
