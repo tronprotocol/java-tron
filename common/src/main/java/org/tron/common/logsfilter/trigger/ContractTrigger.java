@@ -57,6 +57,10 @@ public class ContractTrigger extends Trigger {
   @Setter
   private Long blockNumber;
 
+  @Getter
+  @Setter
+  private String blockHash;
+
   /**
    * true if the transaction has been revoked
    */

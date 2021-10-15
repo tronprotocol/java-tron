@@ -148,14 +148,14 @@ public class MarketSellAsset001 {
         .marketSellAssetGetResposne(testAddress, testKey, assetAccountId001,
             sellTokenQuantity, assetAccountId002, buyTokenQuantity, blockingStubFull);
     Assert.assertEquals(ByteArray.toStr(resposne.getMessage().toByteArray()),
-        "contract validate error : SellToken balance is not enough !");
+        "Contract validate error : SellToken balance is not enough !");
     Assert.assertEquals(resposne.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
 
     resposne = PublicMethed
         .marketSellAssetGetResposne(testAddress, testKey, assetAccountId001,
             0, assetAccountId002, buyTokenQuantity, blockingStubFull);
     Assert.assertEquals(ByteArray.toStr(resposne.getMessage().toByteArray()),
-        "contract validate error : token quantity must greater than zero");
+        "Contract validate error : token quantity must greater than zero");
     Assert.assertEquals(resposne.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
 
     Account account = PublicMethed
@@ -174,35 +174,35 @@ public class MarketSellAsset001 {
         .marketSellAssetGetResposne(testAddress001, testKey001, "xxxx".getBytes(),
             sellTokenQuantity, assetAccountId002, buyTokenQuantity, blockingStubFull);
     Assert.assertEquals(ByteArray.toStr(resposne.getMessage().toByteArray()),
-        "contract validate error : sellTokenId is not a valid number");
+        "Contract validate error : sellTokenId is not a valid number");
     Assert.assertEquals(resposne.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
 
     resposne = PublicMethed
         .marketSellAssetGetResposne(testAddress001, testKey001, assetAccountId001,
             sellTokenQuantity, "xxx".getBytes(), buyTokenQuantity, blockingStubFull);
     Assert.assertEquals(ByteArray.toStr(resposne.getMessage().toByteArray()),
-        "contract validate error : buyTokenId is not a valid number");
+        "Contract validate error : buyTokenId is not a valid number");
     Assert.assertEquals(resposne.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
 
     resposne = PublicMethed
         .marketSellAssetGetResposne(testAddress001, testKey001, "10001039999".getBytes(),
             sellTokenQuantity, assetAccountId002, buyTokenQuantity, blockingStubFull);
     Assert.assertEquals(ByteArray.toStr(resposne.getMessage().toByteArray()),
-        "contract validate error : No sellTokenId !");
+        "Contract validate error : No sellTokenId !");
     Assert.assertEquals(resposne.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
 
     resposne = PublicMethed
         .marketSellAssetGetResposne(testAddress001, testKey001, assetAccountId001,
             sellTokenQuantity, "10001039999".getBytes(), buyTokenQuantity, blockingStubFull);
     Assert.assertEquals(ByteArray.toStr(resposne.getMessage().toByteArray()),
-        "contract validate error : No buyTokenId !");
+        "Contract validate error : No buyTokenId !");
     Assert.assertEquals(resposne.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
 
     resposne = PublicMethed
         .marketSellAssetGetResposne(testAddress001, testKey001, assetAccountId001,
             sellTokenQuantity, assetAccountId001, buyTokenQuantity, blockingStubFull);
     Assert.assertEquals(ByteArray.toStr(resposne.getMessage().toByteArray()),
-        "contract validate error : cannot exchange same tokens");
+        "Contract validate error : cannot exchange same tokens");
     Assert.assertEquals(resposne.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
 
     long afterBalance = PublicMethed.queryAccount(testAddress002, blockingStubFull).getBalance();

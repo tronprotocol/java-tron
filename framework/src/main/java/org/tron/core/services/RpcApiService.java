@@ -113,6 +113,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
+import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -201,6 +202,8 @@ public class RpcApiService implements Service {
   private RateLimiterInterceptor rateLimiterInterceptor;
   @Autowired
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
+  @Autowired
+  private RpcApiAccessInterceptor apiAccessInterceptor;
 
   @Autowired
   private MetricsApiService metricsApiService;
@@ -252,11 +255,14 @@ public class RpcApiService implements Service {
           .flowControlWindow(parameter.getFlowControlWindow())
           .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
           .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(parameter.getMaxMessageSize())
+          .maxInboundMessageSize(parameter.getMaxMessageSize())
           .maxHeaderListSize(parameter.getMaxHeaderListSize());
 
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);

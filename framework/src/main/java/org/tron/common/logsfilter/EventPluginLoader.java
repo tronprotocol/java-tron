@@ -44,15 +44,25 @@ public class EventPluginLoader {
 
   private boolean blockLogTriggerEnable = false;
 
+  private boolean blockLogTriggerSolidified = false;
+
   private boolean transactionLogTriggerEnable = false;
+
+  private boolean transactionLogTriggerSolidified = false;
+
+  private boolean transactionLogTriggerEthCompatible = false;
 
   private boolean contractEventTriggerEnable = false;
 
   private boolean contractLogTriggerEnable = false;
 
+  private boolean contractLogTriggerRedundancy = false;
+
   private boolean solidityEventTriggerEnable = false;
 
   private boolean solidityLogTriggerEnable = false;
+
+  private boolean solidityLogTriggerRedundancy = false;
 
   private boolean solidityTriggerEnable = false;
 
@@ -241,8 +251,12 @@ public class EventPluginLoader {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         blockLogTriggerEnable = true;
+        if (triggerConfig.isSolidified()) {
+          blockLogTriggerSolidified = true;
+        }
       } else {
         blockLogTriggerEnable = false;
+        blockLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -253,8 +267,16 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         transactionLogTriggerEnable = true;
+        if (triggerConfig.isEthCompatible()) {
+          transactionLogTriggerEthCompatible = true;
+        }
+        if (triggerConfig.isSolidified()) {
+          transactionLogTriggerSolidified = true;
+        }
       } else {
         transactionLogTriggerEnable = false;
+        transactionLogTriggerEthCompatible = false;
+        transactionLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -277,8 +299,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         contractLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          contractLogTriggerRedundancy = true;
+        }
       } else {
         contractLogTriggerEnable = false;
+        contractLogTriggerRedundancy = false;
       }
 
       if (!useNativeQueue) {
@@ -309,8 +335,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         solidityLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          solidityLogTriggerRedundancy = true;
+        }
       } else {
         solidityLogTriggerEnable = false;
+        solidityLogTriggerRedundancy = false;
       }
       if (!useNativeQueue) {
         setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
@@ -332,6 +362,10 @@ public class EventPluginLoader {
     return blockLogTriggerEnable;
   }
 
+  public synchronized boolean isBlockLogTriggerSolidified() {
+    return blockLogTriggerSolidified;
+  }
+
   public synchronized boolean isSolidityTriggerEnable() {
     return solidityTriggerEnable;
   }
@@ -344,8 +378,20 @@ public class EventPluginLoader {
     return solidityLogTriggerEnable;
   }
 
+  public synchronized boolean isSolidityLogTriggerRedundancy() {
+    return solidityLogTriggerRedundancy;
+  }
+
   public synchronized boolean isTransactionLogTriggerEnable() {
     return transactionLogTriggerEnable;
+  }
+
+  public synchronized boolean isTransactionLogTriggerEthCompatible() {
+    return transactionLogTriggerEthCompatible;
+  }
+
+  public synchronized boolean isTransactionLogTriggerSolidified() {
+    return transactionLogTriggerSolidified;
   }
 
   public synchronized boolean isContractEventTriggerEnable() {
@@ -354,6 +400,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isContractLogTriggerEnable() {
     return contractLogTriggerEnable;
+  }
+
+  public synchronized boolean isContractLogTriggerRedundancy() {
+    return contractLogTriggerRedundancy;
   }
 
   private void setPluginTopic(int eventType, String topic) {

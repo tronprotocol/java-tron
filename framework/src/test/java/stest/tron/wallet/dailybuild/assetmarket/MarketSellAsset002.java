@@ -203,7 +203,7 @@ public class MarketSellAsset002 {
     // get order Message and RemainSellTokenQuantity
     MarketOrder order001 = PublicMethed
         .getMarketOrderById(orderId, blockingStubFull).get();
-    Assert.assertEquals(order001.getSellTokenQuantityRemain(),sellTokenQuantity);
+    Assert.assertEquals(order001.getSellTokenQuantityRemain(), sellTokenQuantity);
 
     Map<String, Long> afterAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
         .getAssetV2Map();
@@ -238,7 +238,7 @@ public class MarketSellAsset002 {
     // get order Message and RemainSellTokenQuantity
     order001 = PublicMethed
         .getMarketOrderById(orderId, blockingStubFull).get();
-    Assert.assertEquals(order001.getSellTokenQuantityRemain(),0);
+    Assert.assertEquals(order001.getSellTokenQuantityRemain(), 0);
 
     afterAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
         .getAssetV2Map();
@@ -340,7 +340,7 @@ public class MarketSellAsset002 {
     tokenId = orderList.get().getOrders(0).getSellTokenId().toByteArray();
     sellTokenQuantity001 = orderList.get().getOrders(0).getSellTokenQuantityRemain();
 
-    String txid = PublicMethed.marketCancelOrder(testAddress001,testKey001,orderId001,
+    String txid = PublicMethed.marketCancelOrder(testAddress001, testKey001, orderId001,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertNotNull(txid);
@@ -365,8 +365,8 @@ public class MarketSellAsset002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertNotNull(response);
     Assert.assertEquals(response.getCode(), response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ByteArray.toStr(response.getMessage().toByteArray()),
-        "contract validate error : Order is not active!");
+    Assert.assertEquals(ByteArray.toStr(response.getMessage().toByteArray()).toLowerCase(),
+        "contract validate error : Order is not active!".toLowerCase());
 
 
   }
