@@ -85,6 +85,8 @@ public class TronNetDelegate {
 
   private int blockIdCacheSize = 100;
 
+  private long timeout = 1000;
+
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
     public boolean offer(BlockId blockId) {
@@ -261,14 +263,25 @@ public class TronNetDelegate {
     }
   }
 
-  public boolean validBlock(BlockCapsule block) throws P2pException {
+  public void validSignature(BlockCapsule block) throws P2pException {
     try {
-      return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())
-          && block
-          .validateSignature(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+      if (!block.validateSignature(dbManager.getDynamicPropertiesStore(),
+              dbManager.getAccountStore())) {
+        throw new P2pException(TypeEnum.BAD_BLOCK, "valid signature failed.");
+      }
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public boolean validBlock(BlockCapsule block) throws P2pException {
+    long time = System.currentTimeMillis();
+    if (block.getTimeStamp() - time > timeout) {
+      throw new P2pException(TypeEnum.BAD_BLOCK,
+              "time:" + time + ",block time:" + block.getTimeStamp());
+    }
+    validSignature(block);
+    return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress());
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {

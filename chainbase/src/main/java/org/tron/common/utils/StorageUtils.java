@@ -56,6 +56,15 @@ public class StorageUtils {
     if (hasProperty(dbName)) {
       return getProperty(dbName).getDbOptions();
     }
-    return createDefaultDbOptions();
+    Options options = createDefaultDbOptions();
+    switch (dbName) {
+      case "block":
+      case "transactionHistoryStore":
+      case "transactionRetStore":
+      case "trans": options.writeBufferSize(256 * 1024 * 1024);
+        break;
+      default:
+    }
+    return options;
   }
 }

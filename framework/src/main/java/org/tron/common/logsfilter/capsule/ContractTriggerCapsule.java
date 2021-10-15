@@ -36,6 +36,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     contractTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
+  public void setBlockHash(String blockHash) {
+    contractTrigger.setBlockHash(blockHash);
+  }
+
   @Override
   public void processTrigger() {
     ContractTrigger event;
@@ -123,6 +127,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     event.setCreatorAddress(contractTrigger.getCreatorAddress());
     event.setBlockNumber(contractTrigger.getBlockNumber());
     event.setTimeStamp(contractTrigger.getTimeStamp());
+    event.setBlockHash(contractTrigger.getBlockHash());
 
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
@@ -131,20 +136,54 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
 
         if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-          Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
+          boolean result = Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                   .offer((ContractEventTrigger) event);
+
+          if (!result) {
+            logger.info("too many triggers, solidity event trigger lost: {}",
+                event.getUniqueId());
+          }
         }
 
+        // enable process contractEvent as contractLog
+        if ((EventPluginLoader.getInstance().isContractLogTriggerEnable()
+            && EventPluginLoader.getInstance().isContractLogTriggerRedundancy())
+            || (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()
+            && EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy())) {
+          ContractLogTrigger logTrigger = new ContractLogTrigger((ContractEventTrigger) event);
+          logTrigger.setTopicList(logInfo.getHexTopics());
+          logTrigger.setData(logInfo.getHexData());
+
+          if (EventPluginLoader.getInstance().isContractLogTriggerRedundancy()) {
+            EventPluginLoader.getInstance().postContractLogTrigger(logTrigger);
+          }
+
+          if (EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy()) {
+            boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+                .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                .offer(logTrigger);
+
+            if (!result) {
+              logger.info("too many triggers, solidity log trigger lost: {}",
+                  logTrigger.getUniqueId());
+            }
+          }
+        }
       } else {
         if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
           EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
         }
 
         if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-          Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+          boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                   .offer((ContractLogTrigger) event);
+
+          if (!result) {
+            logger.info("too many triggers, solidity log trigger lost: {}",
+                event.getUniqueId());
+          }
         }
       }
     }

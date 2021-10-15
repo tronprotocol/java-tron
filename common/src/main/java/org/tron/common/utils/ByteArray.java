@@ -108,6 +108,59 @@ public class ByteArray {
   }
 
   /**
+   * Stringify byte[] x
+   * null for null
+   * null for empty []
+   */
+  public static String toJsonHex(byte[] x) {
+    return x == null || x.length == 0 ? "0x" : "0x" + Hex.toHexString(x);
+  }
+
+  // ignore the 41
+  public static String toJsonHexAddress(byte[] x) {
+    if (x == null || x.length == 0) {
+      return null;
+    } else {
+      String res = Hex.toHexString(x);
+      if (res.startsWith(DecodeUtil.addressPreFixString)) {
+        return "0x" + res.substring(DecodeUtil.addressPreFixString.length());
+      } else {
+        return "0x" + res;
+      }
+    }
+  }
+
+  public static String toJsonHex(Long x) {
+    return x == null ? null : "0x" + Long.toHexString(x);
+  }
+
+  public static String toJsonHex(int x) {
+    return toJsonHex((long) x);
+  }
+
+  public static BigInteger hexToBigInteger(String input) {
+    if (input.startsWith("0x")) {
+      return new BigInteger(input.substring(2), 16);
+    } else {
+      return new BigInteger(input, 10);
+    }
+  }
+
+  public static long jsonHexToLong(String x) throws Exception {
+    if (!x.startsWith("0x"))
+      throw new Exception("Incorrect hex syntax");
+    x = x.substring(2);
+    return Long.parseLong(x, 16);
+  }
+
+  public static int jsonHexToInt(String x) throws Exception {
+    if (!x.startsWith("0x"))
+      throw new Exception("Incorrect hex syntax");
+    x = x.substring(2);
+    return Integer.parseInt(x, 16);
+  }
+
+  /**
    * Generate a subarray of a given byte array.
    *
    * @param input the input byte array

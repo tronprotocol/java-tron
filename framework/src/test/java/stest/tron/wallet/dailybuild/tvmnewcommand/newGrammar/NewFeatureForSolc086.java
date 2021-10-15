@@ -277,6 +277,17 @@ public class NewFeatureForSolc086 {
     Assert.assertEquals(res1, res2);
   }
 
+  @Test(enabled = true, description = "test bytes concat with empty string")
+  public void test13bytesConcatWithEmptyStr() {
+    GrpcAPI.TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(mapKeyContract,
+            "bytesConcatWithEmptyStr()", "#", false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals(true, transactionExtention.getResult().getResult());
+    Assert.assertEquals("SUCESS",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+  }
+
   /**
    * constructor.
    */

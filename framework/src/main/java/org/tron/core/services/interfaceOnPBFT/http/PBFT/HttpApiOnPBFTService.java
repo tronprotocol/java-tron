@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountOnPBFTServlet;
@@ -27,6 +28,7 @@ import org.tron.core.services.interfaceOnPBFT.http.GetBrokerageOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBurnTrxOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceAccountIndexOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetEnergyPricesOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetExchangeByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderByAccountOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderByIdOnPBFTServlet;
@@ -123,6 +125,8 @@ public class HttpApiOnPBFTService implements Service {
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
 
   @Autowired
   private GetMarketOrderByAccountOnPBFTServlet getMarketOrderByAccountOnPBFTServlet;
@@ -144,6 +148,8 @@ public class HttpApiOnPBFTService implements Service {
       isShieldedTRC20ContractNoteSpentOnPBFTServlet;
   @Autowired
   private GetBurnTrxOnPBFTServlet getBurnTrxOnPBFTServlet;
+  @Autowired
+  private GetEnergyPricesOnPBFTServlet getEnergyPricesOnPBFTServlet;
 
   @Override
   public void init() {
@@ -229,6 +235,8 @@ public class HttpApiOnPBFTService implements Service {
           "/isshieldedtrc20contractnotespent");
       context.addServlet(new ServletHolder(getBurnTrxOnPBFTServlet),
           "/getburntrx");
+      context.addServlet(new ServletHolder(getEnergyPricesOnPBFTServlet),
+          "/getenergyprices");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
@@ -238,6 +246,10 @@ public class HttpApiOnPBFTService implements Service {
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+
+      // api access filter
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
           EnumSet.allOf(DispatcherType.class));
 
       server.start();

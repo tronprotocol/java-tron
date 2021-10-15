@@ -258,7 +258,7 @@ public class Create2Test024 {
     Assert.assertEquals(infoById.get().getResultValue(), 1);
     Assert.assertEquals(infoById.get().getResult().toString(), "FAILED");
     Assert.assertThat(ByteArray.toStr(infoById.get().getResMessage().toByteArray()),
-        containsString("Not enough energy for 'SWAP1' operation executing: "));
+        containsString("REVERT opcode executed"));
 
 
   }

@@ -80,9 +80,9 @@ public class StorageTest {
     Assert.assertTrue(options.verifyChecksums());
     Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(4 * 1024, options.blockSize());
-    Assert.assertEquals(10 * 1024 * 1024, options.writeBufferSize());
-    Assert.assertEquals(10 * 1024 * 1024L, options.cacheSize());
-    Assert.assertEquals(100, options.maxOpenFiles());
+    Assert.assertEquals(64 * 1024 * 1024, options.writeBufferSize());
+    Assert.assertEquals(32 * 1024 * 1024L, options.cacheSize());
+    Assert.assertEquals(5000, options.maxOpenFiles());
   }
 
 }
