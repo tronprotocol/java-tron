@@ -189,7 +189,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     br.stateRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
     br.receiptsRoot = null; // no value
-    br.miner = ByteArray.toJsonHex(blockCapsule.getWitnessAddress().toByteArray());
+    br.miner = ByteArray.toJsonHexAddress(blockCapsule.getWitnessAddress().toByteArray());
     br.difficulty = null; // no value
     br.totalDifficulty = null; // no value
     br.extraData = null; // no value

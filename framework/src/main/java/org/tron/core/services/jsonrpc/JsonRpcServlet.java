@@ -33,9 +33,10 @@ public class JsonRpcServlet extends RateLimiterServlet {
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
 
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
     TronJsonRpcImpl jsonRpcImpl = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
-        this.getClass().getClassLoader(),
+        cl,
         new Object[] {jsonRpcImpl},
         new Class[] {TronJsonRpc.class},
         true);
