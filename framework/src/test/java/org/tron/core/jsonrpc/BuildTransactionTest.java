@@ -7,7 +7,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -26,7 +25,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @Slf4j
 public class BuildTransactionTest {
 
-  private static String dbPath = "output_buildtransaction_test";
+  private static String dbPath = "output_build_transaction_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "first";
 
@@ -34,7 +33,7 @@ public class BuildTransactionTest {
   private static final String CONTRACT_ADDRESS;
   private static final long SOURCE_PERCENT = 10L;
 
-  private static AnnotationConfigApplicationContext context;
+  private static TronApplicationContext context;
   private static Manager dbManager;
   private static Wallet wallet;
 
@@ -51,7 +50,6 @@ public class BuildTransactionTest {
   public static void init() {
     dbManager = context.getBean(Manager.class);
     wallet = context.getBean(Wallet.class);
-
 
     AccountCapsule accountCapsule =
         new AccountCapsule(
