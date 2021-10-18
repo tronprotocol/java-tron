@@ -14,7 +14,6 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.core.Wallet;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
-import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
