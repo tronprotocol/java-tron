@@ -125,10 +125,7 @@ public class ConcurrentHashMapTest {
               // }
 
               for (Object str : blockHashList) {
-                try {
-                  resultMap2.get(String.valueOf(k)).add(str.toString());
-                } catch (Exception e) {
-                }
+                resultMap2.get(String.valueOf(k)).add(str.toString());
               }
 
             } catch (ItemNotFoundException e) {

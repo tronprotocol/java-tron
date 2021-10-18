@@ -25,6 +25,7 @@ import org.tron.core.services.jsonrpc.filters.LogFilter;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 
+
 public class JsonRpcTest {
 
   public void generateCallParameterWIthMethodAndParam() {

@@ -17,6 +17,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -417,6 +418,21 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getEnergyPric(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getenergyprices";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+  /**
+   * constructor.
+   */
+
   public static HttpResponse getChainParameters(String httpNode) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
@@ -1406,6 +1422,22 @@ public class HttpMethed {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/listnodes";
       response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getStatsInfo(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/monitor/getstatsinfo";
+      response = createConnectForGet(requestUrl);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -2734,6 +2766,30 @@ public class HttpMethed {
     return response;
   }
 
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createConnectForGet(String url) {
+    try {
+      httpClient.getParams()
+              .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
+      httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
+      HttpGet httppost;
+      httppost = new HttpGet(url);
+      httppost.setHeader("Content-type", "application/json; charset=utf-8");
+      httppost.setHeader("Connection", "Close");
+
+      logger.info(httppost.toString());
+      response = httpClient.execute(httppost);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
   /**
    * constructor.
    */
@@ -3208,6 +3264,24 @@ public class HttpMethed {
       logger.info(userBaseObj2.toString());
       transactionString = EntityUtils.toString(response.getEntity());
       logger.info(transactionString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getContractInfo(String httpNode, String contractAddress) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getcontractinfo";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", contractAddress);
+      response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -5234,11 +5308,11 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionFromPending(String httpNode,String txid) {
+  public static HttpResponse getTransactionFromPending(String httpNode, String txid) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/gettransactionfrompending";
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("value",txid);
+      userBaseObj2.addProperty("value", txid);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();

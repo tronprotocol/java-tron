@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
@@ -27,6 +28,7 @@ import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.store.ProposalStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
+
 
 @Slf4j
 public class EnergyPriceHistoryLoaderTest {

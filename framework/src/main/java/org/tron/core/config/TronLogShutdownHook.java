@@ -34,6 +34,7 @@ public class TronLogShutdownHook extends ShutdownHookBase {
         Thread.sleep(CHECK_SHUTDOWN_DELAY.getMilliseconds());
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       addInfo("TronLogShutdownHook run error :" + e.getMessage());
     }
     super.stop();
