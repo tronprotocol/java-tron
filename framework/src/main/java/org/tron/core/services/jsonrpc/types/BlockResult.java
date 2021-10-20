@@ -45,7 +45,8 @@ public class BlockResult {
 
     number = ByteArray.toJsonHex(blockCapsule.getNum());
     hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
-    parentHash = ByteArray.toJsonHex(blockCapsule.getParentBlockId().getBytes());
+    parentHash =
+        ByteArray.toJsonHex(block.getBlockHeader().getRawData().getParentHash().toByteArray());
     nonce = null; // no value
     sha3Uncles = null; // no value
     logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
@@ -54,7 +55,7 @@ public class BlockResult {
     stateRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
     receiptsRoot = null; // no value
-    miner = ByteArray.toJsonHex(blockCapsule.getWitnessAddress().toByteArray());
+    miner = ByteArray.toJsonHexAddress(blockCapsule.getWitnessAddress().toByteArray());
     difficulty = null; // no value
     totalDifficulty = null; // no value
     extraData = null; // no value
