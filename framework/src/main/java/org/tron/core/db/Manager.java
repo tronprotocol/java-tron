@@ -40,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
@@ -1712,14 +1713,10 @@ public class Manager {
       if (!eventPluginLoaded) {
         logger.error("failed to load eventPlugin");
       }
-
-      FilterQuery eventFilter = Args.getInstance().getEventFilter();
-      if (!Objects.isNull(eventFilter)) {
-        EventPluginLoader.getInstance().setFilterQuery(eventFilter);
-      }
+      EventPluginLoader.getInstance().getFilterQuery();
 
     } catch (Exception e) {
-      logger.error("{}", e);
+      logger.error("startEventSubscribing error:{}", e.toString(), e);
     }
   }
 

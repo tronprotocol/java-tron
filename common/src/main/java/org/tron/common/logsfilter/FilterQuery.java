@@ -26,6 +26,10 @@ public class FilterQuery {
   @Setter
   private List<String> contractTopicList;
 
+  @Getter
+  @Setter
+  private String name;
+
   public static long parseFromBlockNumber(String blockNum) {
     long number = 0;
     if (StringUtils.isEmpty(blockNum) || FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)) {
@@ -58,7 +62,10 @@ public class FilterQuery {
 
   @Override
   public String toString() {
-    return new StringBuilder().append("fromBlock: ")
+    return new StringBuilder()
+        .append("name: ")
+        .append(name)
+        .append("fromBlock: ")
         .append(fromBlock)
         .append(", toBlock: ")
         .append(toBlock)

@@ -26,4 +26,6 @@ public interface IPluginEventListener extends ExtensionPoint {
   void handleSolidityLogTrigger(Object trigger);
 
   void handleSolidityEventTrigger(Object trigger);
+
+  String getEventFilterList();
 }

@@ -1,9 +1,13 @@
 package org.tron.common.logsfilter;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.beust.jcommander.internal.Sets;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -24,6 +28,7 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.logsfilter.trigger.SolidityTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
+import org.tron.core.config.args.Args;
 
 @Slf4j
 public class EventPluginLoader {
@@ -66,9 +71,11 @@ public class EventPluginLoader {
 
   private boolean solidityTriggerEnable = false;
 
-  private FilterQuery filterQuery;
+  private List<FilterQuery> filterQuery = null;
 
   private boolean useNativeQueue = false;
+
+  private long filterQueryLastUpdate = 0;
 
   public static EventPluginLoader getInstance() {
     if (Objects.isNull(instance)) {
@@ -81,51 +88,53 @@ public class EventPluginLoader {
     return instance;
   }
 
-  public static boolean matchFilter(ContractTrigger trigger) {
+  public static List<String> matchFilter(ContractTrigger trigger) {
     long blockNumber = trigger.getBlockNumber();
 
-    FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
-    if (Objects.isNull(filterQuery)) {
-      return true;
-    }
+    List<FilterQuery> filterQueryList = EventPluginLoader.getInstance().getFilterQuery();
+    List<String> matchedFilters = new ArrayList<>(filterQueryList.size());
+    for (FilterQuery filterQuery : filterQueryList) {
+      long fromBlockNumber = filterQuery.getFromBlock();
+      long toBlockNumber = filterQuery.getToBlock();
 
-    long fromBlockNumber = filterQuery.getFromBlock();
-    long toBlockNumber = filterQuery.getToBlock();
-
-    boolean matched = false;
-    if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
-        || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-      logger.error("invalid filter: fromBlockNumber: {}, toBlockNumber: {}",
-          fromBlockNumber, toBlockNumber);
-      return false;
-    }
-
-    if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
-      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-        matched = true;
-      } else {
-        if (blockNumber >= fromBlockNumber) {
-          matched = true;
-        }
+      boolean matched = false;
+      if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
+          || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+        logger.error("invalid filter {}: fromBlockNumber: {}, toBlockNumber: {}",
+            filterQuery.getName(), fromBlockNumber, toBlockNumber);
+        continue;
       }
-    } else {
-      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-        if (blockNumber <= toBlockNumber) {
+
+      if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
+        if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
           matched = true;
+        } else {
+          if (blockNumber >= fromBlockNumber) {
+            matched = true;
+          }
         }
       } else {
-        if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
-          matched = true;
+        if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+          if (blockNumber <= toBlockNumber) {
+            matched = true;
+          }
+        } else {
+          if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
+            matched = true;
+          }
         }
       }
-    }
 
-    if (!matched) {
-      return false;
-    }
+      if (!matched) {
+        continue;
+      }
 
-    return filterContractAddress(trigger, filterQuery.getContractAddressList())
-        && filterContractTopicList(trigger, filterQuery.getContractTopicList());
+      if( filterContractAddress(trigger, filterQuery.getContractAddressList())
+          && filterContractTopicList(trigger, filterQuery.getContractTopicList())){
+        matchedFilters.add(filterQuery.getName());
+      }
+    }
+    return matchedFilters;
   }
 
   private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
@@ -532,11 +541,72 @@ public class EventPluginLoader {
     return jsonData;
   }
 
-  public synchronized FilterQuery getFilterQuery() {
-    return filterQuery;
+  public synchronized List<FilterQuery> getFilterQuery() {
+    if(System.currentTimeMillis() - this.filterQueryLastUpdate > 60000*10 || this.filterQuery==null){
+      String eventFilters = null;
+      for(IPluginEventListener eventListener : eventListeners){
+        eventFilters = eventListener.getEventFilterList();
+        if(eventFilters != null && !eventFilters.isEmpty()){
+          break;
+        }
+      }
+      if(eventFilters != null && !eventFilters.isEmpty()) {
+        List<FilterQuery> newFilterQuery = parseEventFilters(eventFilters);
+        setFilterQuery(newFilterQuery);
+        this.filterQueryLastUpdate = System.currentTimeMillis();
+      }
+    }
+    if (this.filterQuery == null || this.filterQuery.isEmpty()) {
+      FilterQuery eventFilter = Args.getInstance().getEventFilter();
+      if (Objects.isNull(eventFilter)) {
+        eventFilter = new FilterQuery();
+      }
+      eventFilter.setName("default");
+      setFilterQuery(eventFilter);
+      this.filterQueryLastUpdate = System.currentTimeMillis();
+    }
+    return this.filterQuery;
   }
 
   public synchronized void setFilterQuery(FilterQuery filterQuery) {
+    setFilterQuery(Lists.newArrayList(filterQuery));
+  }
+
+  public synchronized void setFilterQuery(List<FilterQuery> filterQuery) {
     this.filterQuery = filterQuery;
+  }
+
+  private List<FilterQuery> parseEventFilters(String eventFilters) {
+    JSONArray filterObjs = JSONArray.parseArray(eventFilters);
+    List<FilterQuery> queries = new ArrayList<>(filterObjs.size());
+    for(Object o : filterObjs){
+      JSONObject filterObj = (JSONObject) o;
+      FilterQuery filter = new FilterQuery();
+      long fromBlockLong;
+      long toBlockLong;
+
+      String name = filterObj.getString("name");
+      filter.setName(name);
+
+      String fromBlock = filterObj.getString("fromblock");
+      fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
+      filter.setFromBlock(fromBlockLong);
+
+      String toBlock = filterObj.getString("toblock");
+      toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
+      filter.setToBlock(toBlockLong);
+
+      List<String> addressList = filterObj.getObject("contractAddress", List.class);
+      addressList = addressList.stream().filter(org.apache.commons.lang3.StringUtils::isNotEmpty).collect(
+          Collectors.toList());
+      filter.setContractAddressList(addressList);
+
+      List<String> topicList = filterObj.getObject("contractTopic", List.class);
+      topicList = topicList.stream().filter(org.apache.commons.lang3.StringUtils::isNotEmpty).collect(
+          Collectors.toList());
+      filter.setContractTopicList(topicList);
+      queries.add(filter);
+    }
+    return queries;
   }
 }
