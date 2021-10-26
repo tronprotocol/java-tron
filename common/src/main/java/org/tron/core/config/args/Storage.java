@@ -36,7 +36,6 @@ import org.tron.common.utils.Property;
  * @version 1.0
  * @since 2018/5/25
  */
-
 public class Storage {
 
   /**
@@ -50,6 +49,7 @@ public class Storage {
   private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
   private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
+  private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "storage.default";
   private static final String DEFAULT_TRANSACTIONHISTORY_SWITCH = "on";
 
   private static final String NAME_CONFIG_KEY = "name";
@@ -113,6 +113,8 @@ public class Storage {
   @Setter
   private String transactionHistorySwitch;
 
+  private Options defaultDbOptions;
+
   /**
    * Key: dbName, Value: Property object of that database
    */
@@ -162,7 +164,7 @@ public class Storage {
         : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
-  private static Property createProperty(final ConfigObject conf) {
+  private  Property createProperty(final ConfigObject conf) {
 
     Property property = new Property();
 
@@ -191,8 +193,15 @@ public class Storage {
     }
 
     // Check, get and set fields of Options
-    Options dbOptions = DbOptionalsUtils.createDefaultDbOptions();
+    Options dbOptions = newDefaultDbOptions(property.getName());
 
+    setIfNeeded(conf, dbOptions);
+
+    property.setDbOptions(dbOptions);
+    return property;
+  }
+
+  private static void setIfNeeded(ConfigObject conf, Options dbOptions) {
     if (conf.containsKey(CREATE_IF_MISSING_CONFIG_KEY)) {
       dbOptions.createIfMissing(
           Boolean.parseBoolean(
@@ -281,9 +290,6 @@ public class Storage {
             "[storage.properties] maxOpenFiles must be Integer type.");
       }
     }
-
-    property.setDbOptions(dbOptions);
-    return property;
   }
 
   /**
@@ -294,7 +300,7 @@ public class Storage {
   public void setPropertyMapFromConfig(final Config config) {
     if (config.hasPath(PROPERTIES_CONFIG_KEY)) {
       propertyMap = config.getObjectList(PROPERTIES_CONFIG_KEY).stream()
-          .map(Storage::createProperty)
+          .map(this::createProperty)
           .collect(Collectors.toMap(Property::getName, p -> p));
     }
   }
@@ -313,6 +319,17 @@ public class Storage {
         FileUtil.recursiveDelete(path);
       }
     }
+  }
+
+  public void setDefaultDbOptions(final Config config) {
+    this.defaultDbOptions = DbOptionalsUtils.createDefaultDbOptions();
+    if (config.hasPath(PROPERTIES_CONFIG_DEFAULT_KEY)) {
+      setIfNeeded(config.getObject(PROPERTIES_CONFIG_DEFAULT_KEY), this.defaultDbOptions);
+    }
+  }
+
+  public Options newDefaultDbOptions(String name ) {
+      return DbOptionalsUtils.newDefaultDbOptions(name ,this.defaultDbOptions);
   }
 }
 

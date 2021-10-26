@@ -13,14 +13,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.error.TronDBException;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.core.db.RevokingDatabase;
@@ -55,6 +58,8 @@ public class SnapshotManager implements RevokingDatabase {
 
   private volatile int flushCount = 0;
 
+  private volatile boolean  hitDown;
+
   private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
 
   @Autowired
@@ -66,6 +71,24 @@ public class SnapshotManager implements RevokingDatabase {
   private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
   public SnapshotManager(String checkpointPath) {
+  }
+
+  @PostConstruct
+  public void init() {
+    ExecutorService discoverer = Executors.newSingleThreadExecutor();
+    discoverer.execute(() -> {
+      while (true) {
+        try {
+          Thread.sleep(3);
+          if (hitDown) {
+            System.exit(1);
+          }
+        } catch (InterruptedException e) {
+          logger.error("{}", e);
+        }
+      }
+    });
+    discoverer.shutdown();
   }
 
   public static String simpleDecode(byte[] bytes) {
@@ -89,7 +112,7 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    if (size > maxSize.get()) {
+    if (size > maxSize.get() && !hitDown) {
       flushCount = flushCount + (size - maxSize.get());
       updateSolidity(size - maxSize.get());
       size = maxSize.get();
@@ -249,8 +272,10 @@ public class SnapshotManager implements RevokingDatabase {
       future.get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      throw new TronDBException(e);
     } catch (ExecutionException e) {
       logger.error(e.getMessage(), e);
+      throw new TronDBException(e);
     }
   }
 
@@ -289,7 +314,12 @@ public class SnapshotManager implements RevokingDatabase {
       deleteCheckpoint();
       createCheckpoint();
       long checkPointEnd = System.currentTimeMillis();
-      refresh();
+      try {
+        refresh();
+      } catch (TronDBException e) {
+        logger.error(" Find fatal error , program will be exited soon", e);
+        hitDown = true;
+      }
       flushCount = 0;
       logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
           System.currentTimeMillis() - start,
