@@ -8,8 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -73,6 +75,8 @@ public class EventPluginLoader {
 
   private List<FilterQuery> filterQuery = null;
 
+  private Map<String, Map<String, List<FilterQuery>>> filterQueryMap = null;
+
   private boolean useNativeQueue = false;
 
   private long filterQueryLastUpdate = 0;
@@ -91,50 +95,68 @@ public class EventPluginLoader {
   public static List<String> matchFilter(ContractTrigger trigger) {
     long blockNumber = trigger.getBlockNumber();
 
-    List<FilterQuery> filterQueryList = EventPluginLoader.getInstance().getFilterQuery();
-    List<String> matchedFilters = new ArrayList<>(filterQueryList.size());
-    for (FilterQuery filterQuery : filterQueryList) {
-      long fromBlockNumber = filterQuery.getFromBlock();
-      long toBlockNumber = filterQuery.getToBlock();
-
-      boolean matched = false;
-      if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
-          || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-        logger.error("invalid filter {}: fromBlockNumber: {}, toBlockNumber: {}",
-            filterQuery.getName(), fromBlockNumber, toBlockNumber);
-        continue;
+    Set<String> matchedFilterName = new HashSet<>();
+    Map<String, Map<String, List<FilterQuery>>> filterQueryMap = EventPluginLoader.getInstance().getFilterQuery();
+    if (Objects.isNull(filterQueryMap) || filterQueryMap.isEmpty()) {
+      return new ArrayList<>(0);
+    }
+    List<List<FilterQuery>> maybeMatchFilters = new ArrayList<>(4);
+    if(!trigger.getLogInfo().getTopics().isEmpty()) {
+      Map<String, List<FilterQuery>> filterQueryMapForTopic = filterQueryMap.get(trigger.getLogInfo().getTopics().get(0).toHexString());
+      if(filterQueryMapForTopic.containsKey(trigger.getContractAddress())){
+        maybeMatchFilters.add(filterQueryMapForTopic.get(trigger.getContractAddress()));
       }
-
-      if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
-        if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-          matched = true;
-        } else {
-          if (blockNumber >= fromBlockNumber) {
-            matched = true;
-          }
-        }
-      } else {
-        if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-          if (blockNumber <= toBlockNumber) {
-            matched = true;
-          }
-        } else {
-          if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
-            matched = true;
-          }
-        }
-      }
-
-      if (!matched) {
-        continue;
-      }
-
-      if( filterContractAddress(trigger, filterQuery.getContractAddressList())
-          && filterContractTopicList(trigger, filterQuery.getContractTopicList())){
-        matchedFilters.add(filterQuery.getName());
+      if(filterQueryMapForTopic.containsKey("") && !trigger.getContractAddress().equals("")){
+        maybeMatchFilters.add(filterQueryMapForTopic.get(""));
       }
     }
-    return matchedFilters;
+    if(filterQueryMap.containsKey("")){
+      Map<String, List<FilterQuery>> filterQueryMapForTopic = filterQueryMap.get("");
+      if(filterQueryMapForTopic.containsKey(trigger.getContractAddress())){
+        maybeMatchFilters.add(filterQueryMapForTopic.get(trigger.getContractAddress()));
+      }
+      if(filterQueryMapForTopic.containsKey("") && !trigger.getContractAddress().equals("")){
+        maybeMatchFilters.add(filterQueryMapForTopic.get(""));
+      }
+    }
+    for(List<FilterQuery> maybeMatchFilterList : maybeMatchFilters){
+      for(FilterQuery maybeMatchFilter : maybeMatchFilterList){
+
+        long fromBlockNumber = maybeMatchFilter.getFromBlock();
+        long toBlockNumber = maybeMatchFilter.getToBlock();
+
+        boolean matched = false;
+        if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
+            || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+          logger.error("invalid filter {}: fromBlockNumber: {}, toBlockNumber: {}",
+              maybeMatchFilter.getName(), fromBlockNumber, toBlockNumber);
+          continue;
+        }
+        if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
+          if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+            matched = true;
+          } else {
+            if (blockNumber >= fromBlockNumber) {
+              matched = true;
+            }
+          }
+        } else {
+          if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+            if (blockNumber <= toBlockNumber) {
+              matched = true;
+            }
+          } else {
+            if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
+              matched = true;
+            }
+          }
+        }
+        if (matched) {
+          matchedFilterName.add(maybeMatchFilter.getName());
+        }
+      }
+    }
+    return new ArrayList<>(matchedFilterName);
   }
 
   private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
@@ -541,7 +563,7 @@ public class EventPluginLoader {
     return jsonData;
   }
 
-  public synchronized List<FilterQuery> getFilterQuery() {
+  public Map<String, Map<String, List<FilterQuery>>> getFilterQuery() {
     if(System.currentTimeMillis() - this.filterQueryLastUpdate > 60000*10 || this.filterQuery==null){
       String eventFilters = null;
       for(IPluginEventListener eventListener : eventListeners){
@@ -565,15 +587,16 @@ public class EventPluginLoader {
       setFilterQuery(eventFilter);
       this.filterQueryLastUpdate = System.currentTimeMillis();
     }
-    return this.filterQuery;
+    return this.filterQueryMap;
   }
 
-  public synchronized void setFilterQuery(FilterQuery filterQuery) {
+  public void setFilterQuery(FilterQuery filterQuery) {
     setFilterQuery(Lists.newArrayList(filterQuery));
   }
 
-  public synchronized void setFilterQuery(List<FilterQuery> filterQuery) {
+  public void setFilterQuery(List<FilterQuery> filterQuery) {
     this.filterQuery = filterQuery;
+    this.filterQueryMap = filterQueryListToMap(filterQuery);
   }
 
   private List<FilterQuery> parseEventFilters(String eventFilters) {
@@ -608,5 +631,31 @@ public class EventPluginLoader {
       queries.add(filter);
     }
     return queries;
+  }
+
+  private Map<String, Map<String, List<FilterQuery>>> filterQueryListToMap(List<FilterQuery> filterQueryList){
+    // if filter accept all topic, an empty topic will be used.
+    // if filter accept all contract address, an empty contract address will be used.
+
+    // Map< topic, Map< contract, List<FilterQuery> > >
+    Map<String, Map<String, List<FilterQuery>>> filterQueryMap = new HashMap<>(filterQueryList.size());
+    for(FilterQuery filter : filterQueryList){
+      List<String> topicList = filter.getContractTopicList();
+      if(topicList.isEmpty()){
+        topicList.add("");
+      }
+      for(String topic : topicList){
+        Map<String, List<FilterQuery>> filterQueryMapForTopic = filterQueryMap.computeIfAbsent(topic, k->new HashMap<>());
+        List<String> contractList = filter.getContractAddressList();
+        if(contractList.isEmpty()){
+          contractList.add("");
+        }
+        for(String contract : contractList){
+          List<FilterQuery> filterQueries = filterQueryMapForTopic.computeIfAbsent(contract, k->new ArrayList<>());
+          filterQueries.add(filter);
+        }
+      }
+    }
+    return filterQueryMap;
   }
 }
