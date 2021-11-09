@@ -41,6 +41,7 @@ public class Accounts001 extends JsonRpcBase {
   String witnessAddress = null;
   String feeLimit = null;
   String accountStateRoot = null;
+  String energyUsed = "0x135c6";
 
   List<String> transactionIdList = null;
   long size = 0;
@@ -156,12 +157,11 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals("0x147", dataResult);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_estimateGas")
+  @Test(enabled = true, description = "Json rpc api of eth_estimateGasHasPayable")
   public void test07JsonRpcApiTestForEthEstimateGasHasPayable() throws Exception {
     response = HttpMethed.getTransactionInfoById(httpFullNode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
-    String realEnergyUsed =
-        responseContent.getJSONObject("receipt").getString("energy_usage_total");
+    Long realEnergyUsed = responseContent.getJSONObject("receipt").getLong("energy_usage_total");
     logger.info("realEnergyUsed:" + realEnergyUsed);
     JsonObject param = new JsonObject();
     param.addProperty("from", "0x" + ByteArray.toHexString(jsonRpcOwnerAddress).substring(2));
@@ -177,11 +177,10 @@ public class Accounts001 extends JsonRpcBase {
     logger.info("test07requestBody:" + requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
-    Assert.assertEquals(
-        realEnergyUsed, String.valueOf(Long.parseLong(dataResult.substring(2), 16)));
+    Assert.assertEquals((long) realEnergyUsed, Long.parseLong(dataResult.substring(2), 16));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_estimateGas")
+  @Test(enabled = true, description = "Json rpc api of eth_estimateGasWithoutTo")
   public void test08JsonRpcApiTestForEthEstimateGasWithoutTo() throws Exception {
     JsonObject param = new JsonObject();
     param.addProperty("from", "0x6C0214C9995C6F3A61AB23F0EB84B0CDE7FD9C7C");
@@ -209,10 +208,10 @@ public class Accounts001 extends JsonRpcBase {
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
     logger.info("dataResult:" + dataResult);
-    Assert.assertEquals("0x135c6", dataResult);
+    Assert.assertEquals(energyUsed, dataResult);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_estimateGas")
+  @Test(enabled = true, description = "Json rpc api of eth_estimateGasSendTrx")
   public void test09JsonRpcApiTestForEthEstimateGasSendTrx() throws Exception {
     JsonObject param = new JsonObject();
     param.addProperty("from", ByteArray.toHexString(jsonRpcOwnerAddress));
