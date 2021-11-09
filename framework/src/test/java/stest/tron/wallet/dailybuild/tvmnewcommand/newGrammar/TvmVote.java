@@ -60,7 +60,7 @@ public class TvmVote {
    * constructor.
    */
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -88,49 +88,7 @@ public class TvmVote {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = false, description = "freeze balance and vote witness")
-  public void yty() {
-    String filePath = "src/test/resources/soliditycode/tvmVote.sol";
-    String contractName = "TestVote";
-
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    final String transferTokenTxid = PublicMethed
-        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
-            0, 0, 10000, "0", 0,
-            null, contractExcKey, contractExcAddress,
-            blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(transferTokenTxid, blockingStubFull);
-
-    if (transferTokenTxid == null || infoById.get().getResultValue() != 0) {
-      Assert.fail("deploy transaction failed with message: " + infoById.get().getResMessage()
-          .toStringUtf8());
-    }
-
-    mapKeyContract = infoById.get().getContractAddress().toByteArray();
-
-    String methodStr = "freeze(address,uint256,uint256)";
-    String receiverAdd = Base58.encode58Check(mapKeyContract);
-    String args = "\"" + receiverAdd + "\"," + freezeCount + ",1";
-    logger.info("receiverAdd: " + receiverAdd);
-    logger.info("args: " + args);
-    String triggerTxid = PublicMethed
-        .triggerContract(mapKeyContract, methodStr, args, false, 0,
-            1000000000L, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
-    logger.info("infoById:  " + infoById.toString());
-
-
-  }
-
-  @Test(enabled = false, description = "query reward balance")
+  @Test(enabled = true, description = "query reward balance")
   public void test01QueryRewardBalance() {
     GrpcAPI.TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(mapKeyContract,
@@ -148,7 +106,7 @@ public class TvmVote {
   }
 
 
-  @Test(enabled = false, description = "freeze balance and vote witness")
+  @Test(enabled = true, description = "freeze balance and vote witness")
   public void test02VoteWitness() {
     String methodStr = "freeze(address,uint256,uint256)";
     String receiverAdd = Base58.encode58Check(mapKeyContract);
@@ -191,7 +149,7 @@ public class TvmVote {
     Assert.assertEquals(1, voteCount);
   }
 
-  @Test(enabled = false, description = "query contract address is Sr Candidate or not")
+  @Test(enabled = true, description = "query contract address is Sr Candidate or not")
   public void test03IsSrCandidate() {
     String args = "\"" + Base58.encode58Check(mapKeyContract) + "\"";
     GrpcAPI.TransactionExtention transactionExtention = PublicMethed
@@ -203,7 +161,7 @@ public class TvmVote {
     Assert.assertEquals(0, 0);
   }
 
-  @Test(enabled = false, description = "query sr address is Sr Candidate or not")
+  @Test(enabled = true, description = "query sr address is Sr Candidate or not")
   public void test04IsSrCandidate() {
     String args = "\"" + Base58.encode58Check(witnessAddress) + "\"";
     GrpcAPI.TransactionExtention transactionExtention = PublicMethed
@@ -215,7 +173,7 @@ public class TvmVote {
     Assert.assertEquals(1, 1);
   }
 
-  @Test(enabled = false, description = "query zero address is Sr Candidate or not")
+  @Test(enabled = true, description = "query zero address is Sr Candidate or not")
   public void test05IsSrCandidate() {
     String args = "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"";
     GrpcAPI.TransactionExtention transactionExtention = PublicMethed
@@ -227,7 +185,7 @@ public class TvmVote {
     Assert.assertEquals(0, 0);
   }
 
-  @Test(enabled = false, description = "query sr's total vote count")
+  @Test(enabled = true, description = "query sr's total vote count")
   public void test06querySrTotalVoteCount() {
     String args = "\"" + Base58.encode58Check(witnessAddress) + "\"";
     GrpcAPI.TransactionExtention transactionExtention = PublicMethed
@@ -239,7 +197,7 @@ public class TvmVote {
     Assert.assertEquals(0, trueRes);
   }
 
-  @Test(enabled = false, description = "query contract's total vote count")
+  @Test(enabled = true, description = "query contract's total vote count")
   public void test07queryContractTotalVoteCount() {
     String args = "\"" + Base58.encode58Check(mapKeyContract) + "\"";
     GrpcAPI.TransactionExtention transactionExtention = PublicMethed
@@ -251,7 +209,7 @@ public class TvmVote {
     Assert.assertEquals(freezeCount / 1000000, trueRes);
   }
 
-  @Test(enabled = false, description = "query vote count")
+  @Test(enabled = true, description = "query vote count")
   public void test08queryVoteCount() {
     String from = Base58.encode58Check(mapKeyContract);
     String to = Base58.encode58Check(witnessAddress);
@@ -265,7 +223,7 @@ public class TvmVote {
     Assert.assertEquals(voteCount, trueRes);
   }
 
-  @Test(enabled = false, description = "query contract used vote count")
+  @Test(enabled = true, description = "query contract used vote count")
   public void test09queryUsedVoteCount() {
     String from = Base58.encode58Check(mapKeyContract);
     String args = "\"" + from + "\"";
@@ -278,7 +236,7 @@ public class TvmVote {
     Assert.assertEquals(voteCount, trueRes);
   }
 
-  @Test(enabled = false, description = "query witnesses received vote count")
+  @Test(enabled = true, description = "query witnesses received vote count")
   public void test10queryReceivedVoteCount() {
     String witness = Base58.encode58Check(witnessAddress);
     String args = "\"" + witness + "\"";
@@ -302,7 +260,7 @@ public class TvmVote {
     Assert.assertEquals(trueRes, receiveCount);
   }
 
-  @Test(enabled = false, description = "withdraw reward")
+  @Test(enabled = true, description = "withdraw reward")
   public void test11WithdrawReward() {
     String methodStr = "withdrawReward()";
     String triggerTxid = PublicMethed.triggerContract(mapKeyContract, methodStr, "#", false,
@@ -321,7 +279,7 @@ public class TvmVote {
     Assert.assertEquals("", internal.getCallValueInfo(0).toString());
   }
 
-  @Test(enabled = false, description = "unfreeze energy")
+  @Test(enabled = true, description = "unfreeze energy")
   public void test12Unfreeze() {
     String methodStr = "unfreeze(address,uint256)";
     String args = "\"" + Base58.encode58Check(mapKeyContract) + "\",1";
@@ -340,7 +298,7 @@ public class TvmVote {
     Assert.assertEquals(freezeCount, internal.getCallValueInfo(0).getCallValue());
   }
 
-  @Test(enabled = false, description = "kill me")
+  @Test(enabled = true, description = "kill me")
   public void test13Suicide() {
     String methodStr = "killme(address)";
     String args = "\"" + Base58.encode58Check(witnessAddress) + "\"";

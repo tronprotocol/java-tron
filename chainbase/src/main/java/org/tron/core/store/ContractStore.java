@@ -18,9 +18,6 @@ import java.util.Objects;
 public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
 
   @Autowired
-  private AbiStore abiStore;
-
-  @Autowired
   private ContractStore(@Value("contract") String dbName) {
     super(dbName);
   }

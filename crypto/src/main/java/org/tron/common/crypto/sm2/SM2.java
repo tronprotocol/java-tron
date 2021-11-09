@@ -72,7 +72,7 @@ public class SM2 implements Serializable, SignInterface {
 
   static {
     secureRandom = new SecureRandom();
-    curve = new ECCurve.Fp(SM2_P, SM2_A, SM2_B);
+    curve = new ECCurve.Fp(SM2_P, SM2_A, SM2_B, null, null);
     ecc_point_g = curve.createPoint(SM2_GX, SM2_GY);
     ecc_param = new ECDomainParameters(curve, ecc_point_g, SM2_N);
     ecc_spec = new ECParameterSpec(curve, ecc_point_g, SM2_N);

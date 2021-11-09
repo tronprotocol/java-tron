@@ -75,6 +75,21 @@ public class TransactionLogTrigger extends Trigger {
   @Getter
   @Setter
   private String data;
+  @Getter
+  @Setter
+  private int transactionIndex;
+  @Getter
+  @Setter
+  private long cumulativeEnergyUsed;
+  @Getter
+  @Setter
+  private long preCumulativeLogCount;
+  @Getter
+  @Setter
+  private List<LogPojo> logList;
+  @Getter
+  @Setter
+  private long energyUnitPrice;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
