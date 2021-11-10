@@ -85,6 +85,7 @@ public class SnapshotManager implements RevokingDatabase {
           }
         } catch (InterruptedException e) {
           logger.error("{}", e);
+          Thread.currentThread().interrupt();
         }
       }
     });
@@ -274,7 +275,6 @@ public class SnapshotManager implements RevokingDatabase {
       Thread.currentThread().interrupt();
       throw new TronDBException(e);
     } catch (ExecutionException e) {
-      logger.error(e.getMessage(), e);
       throw new TronDBException(e);
     }
   }
@@ -310,64 +310,73 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     if (shouldBeRefreshed()) {
-      long start = System.currentTimeMillis();
-      deleteCheckpoint();
-      createCheckpoint();
-      long checkPointEnd = System.currentTimeMillis();
       try {
+        long start = System.currentTimeMillis();
+        deleteCheckpoint();
+        createCheckpoint();
+        long checkPointEnd = System.currentTimeMillis();
         refresh();
+        flushCount = 0;
+        logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
+            System.currentTimeMillis() - start,
+            checkPointEnd - start,
+            System.currentTimeMillis() - checkPointEnd
+        );
       } catch (TronDBException e) {
         logger.error(" Find fatal error , program will be exited soon", e);
         hitDown = true;
       }
-      flushCount = 0;
-      logger.info("flush cost:{}, create checkpoint cost:{}, refresh cost:{}",
-          System.currentTimeMillis() - start,
-          checkPointEnd - start,
-          System.currentTimeMillis() - checkPointEnd
-      );
     }
   }
 
   private void createCheckpoint() {
-    Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
-    for (Chainbase db : dbs) {
-      Snapshot head = db.getHead();
-      if (Snapshot.isRoot(head)) {
-        return;
-      }
+    try {
+      Map<WrappedByteArray, WrappedByteArray> batch = new HashMap<>();
+      for (Chainbase db : dbs) {
+        Snapshot head = db.getHead();
+        if (Snapshot.isRoot(head)) {
+          return;
+        }
 
-      String dbName = db.getDbName();
-      Snapshot next = head.getRoot();
-      for (int i = 0; i < flushCount; ++i) {
-        next = next.getNext();
-        SnapshotImpl snapshot = (SnapshotImpl) next;
-        DB<Key, Value> keyValueDB = snapshot.getDb();
-        for (Map.Entry<Key, Value> e : keyValueDB) {
-          Key k = e.getKey();
-          Value v = e.getValue();
-          batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
-              WrappedByteArray.of(v.encode()));
+        String dbName = db.getDbName();
+        Snapshot next = head.getRoot();
+        for (int i = 0; i < flushCount; ++i) {
+          next = next.getNext();
+          SnapshotImpl snapshot = (SnapshotImpl) next;
+          DB<Key, Value> keyValueDB = snapshot.getDb();
+          for (Map.Entry<Key, Value> e : keyValueDB) {
+            Key k = e.getKey();
+            Value v = e.getValue();
+            batch.put(WrappedByteArray.of(Bytes.concat(simpleEncode(dbName), k.getBytes())),
+                WrappedByteArray.of(v.encode()));
+          }
         }
       }
-    }
 
-    checkTmpStore.getDbSource().updateByBatch(batch.entrySet().stream()
-            .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-            .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
-        WriteOptionsWrapper.getInstance().sync(CommonParameter
-            .getInstance().getStorage().isDbSync()));
+      checkTmpStore.getDbSource().updateByBatch(batch.entrySet().stream()
+              .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+              .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
+          WriteOptionsWrapper.getInstance().sync(CommonParameter
+              .getInstance().getStorage().isDbSync()));
+
+    } catch ( Exception e) {
+      throw new TronDBException(e);
+    }
   }
 
   private void deleteCheckpoint() {
-    Map<byte[], byte[]> hmap = new HashMap<byte[], byte[]>();
-    if (!checkTmpStore.getDbSource().allKeys().isEmpty()) {
-      for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
-        hmap.put(e.getKey(), null);
+    try {
+      Map<byte[], byte[]> hmap = new HashMap<>();
+      if (!checkTmpStore.getDbSource().allKeys().isEmpty()) {
+        for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
+          hmap.put(e.getKey(), null);
+        }
       }
-    }
 
-    checkTmpStore.getDbSource().updateByBatch(hmap);
+      checkTmpStore.getDbSource().updateByBatch(hmap);
+    } catch (Exception e) {
+      throw new TronDBException(e);
+    }
   }
 
   // ensure run this method first after process start.

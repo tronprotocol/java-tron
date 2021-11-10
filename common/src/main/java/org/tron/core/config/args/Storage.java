@@ -49,7 +49,10 @@ public class Storage {
   private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
   private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
   private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
-  private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "storage.default";
+  private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
+  private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
+  private static final String PROPERTIES_CONFIG_DEFAULT_M_KEY = "defaultM";
+  private static final String PROPERTIES_CONFIG_DEFAULT_L_KEY = "defaultL";
   private static final String DEFAULT_TRANSACTIONHISTORY_SWITCH = "on";
 
   private static final String NAME_CONFIG_KEY = "name";
@@ -74,6 +77,7 @@ public class Storage {
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWITCH = "on";
+  private Config storage;
 
   /**
    * Database storage directory: /path/to/{dbDirectory}
@@ -323,13 +327,28 @@ public class Storage {
 
   public void setDefaultDbOptions(final Config config) {
     this.defaultDbOptions = DbOptionalsUtils.createDefaultDbOptions();
-    if (config.hasPath(PROPERTIES_CONFIG_DEFAULT_KEY)) {
-      setIfNeeded(config.getObject(PROPERTIES_CONFIG_DEFAULT_KEY), this.defaultDbOptions);
-    }
+    storage = config.getConfig(PROPERTIES_CONFIG_DB_KEY);
   }
 
   public Options newDefaultDbOptions(String name ) {
-      return DbOptionalsUtils.newDefaultDbOptions(name ,this.defaultDbOptions);
+    // first fetch origin default
+    Options options =  DbOptionalsUtils.newDefaultDbOptions(name, this.defaultDbOptions);
+
+    // then fetch from config for default
+    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_KEY)) {
+      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_KEY), options);
+    }
+
+    // check if has middle config
+    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_M_KEY) && DbOptionalsUtils.DB_M.contains(name)) {
+      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_M_KEY), options);
+
+    }
+    // check if has large config
+    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_L_KEY) && DbOptionalsUtils.DB_L.contains(name)) {
+      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_L_KEY), options);
+    }
+
+    return options;
   }
 }
-
