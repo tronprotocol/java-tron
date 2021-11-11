@@ -2168,6 +2168,10 @@ public class Program {
       return new OutOfMemoryException("Out of Memory when '%s' operation executing", op.name());
     }
 
+    public static OutOfMemoryException memoryOverflow(String opName) {
+      return new OutOfMemoryException("Out of Memory when '%s' operation executing", opName);
+    }
+
     public static OutOfStorageException notEnoughStorage() {
       return new OutOfStorageException("Not enough ContractState resource");
     }
