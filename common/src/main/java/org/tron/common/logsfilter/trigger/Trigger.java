@@ -12,6 +12,7 @@ public class Trigger {
   public static final int SOLIDITY_TRIGGER = 4;
   public static final int SOLIDITY_EVENT_TRIGGER = 5;
   public static final int SOLIDITY_LOG_TRIGGER = 6;
+  public static final int BLOCK_CONTRACTLOG_TRIGGER = 7;
 
   public static final String BLOCK_TRIGGER_NAME = "blockTrigger";
   public static final String TRANSACTION_TRIGGER_NAME = "transactionTrigger";
@@ -20,6 +21,7 @@ public class Trigger {
   public static final String SOLIDITY_TRIGGER_NAME = "solidityTrigger";
   public static final String SOLIDITYLOG_TRIGGER_NAME = "solidityLogTrigger";
   public static final String SOLIDITYEVENT_TRIGGER_NAME = "solidityEventTrigger";
+  public static final String BLOCK_CONTRACTLOG_TRIGGER_NAME = "blockContractLogTrigger";
   @Getter
   @Setter
   protected long timeStamp;

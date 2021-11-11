@@ -23,6 +23,7 @@ import org.pf4j.ManifestPluginDescriptorFinder;
 import org.pf4j.PluginManager;
 import org.springframework.util.StringUtils;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
+import org.tron.common.logsfilter.trigger.BlockContractLogTrigger;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
@@ -72,6 +73,8 @@ public class EventPluginLoader {
   private boolean solidityLogTriggerRedundancy = false;
 
   private boolean solidityTriggerEnable = false;
+
+  private boolean blockContractLogTriggerEnable = false;
 
   private List<FilterQuery> filterQuery = null;
 
@@ -376,6 +379,16 @@ public class EventPluginLoader {
       if (!useNativeQueue) {
         setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
       }
+    } else if (EventPluginConfig.BLOCK_CONTRACTLOG_TRIGGER_NAME
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        blockContractLogTriggerEnable = true;
+      } else {
+        blockContractLogTriggerEnable = false;
+      }
+      if (!useNativeQueue) {
+        setPluginTopic(Trigger.BLOCK_CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
+      }
     }
   }
 
@@ -435,6 +448,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isContractLogTriggerRedundancy() {
     return contractLogTriggerRedundancy;
+  }
+
+  public synchronized boolean isBlockContractLogTriggerEnable() {
+    return blockContractLogTriggerEnable;
   }
 
   private void setPluginTopic(int eventType, String topic) {
@@ -548,6 +565,16 @@ public class EventPluginLoader {
     } else {
       eventListeners.forEach(listener ->
           listener.handleContractEventTrigger(toJsonString(trigger)));
+    }
+  }
+
+  public void postBlockContractLogTrigger(BlockContractLogTrigger trigger) {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
+      eventListeners.forEach(listener ->
+          listener.handleBlockContractLogTrigger(toJsonString(trigger)));
     }
   }
 
