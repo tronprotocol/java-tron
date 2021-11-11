@@ -3,6 +3,9 @@ package org.tron.common.logsfilter.capsule;
 import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.CreateSmartContract;
 
+import com.google.common.base.Charsets;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -46,6 +49,14 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
     blockContractLogTrigger.setTimeStamp(block.getTimeStamp());
     blockContractLogTrigger.setBlockNumber(block.getNum());
     blockContractLogTrigger.setLatestSolidifiedBlockNumber(solidifiedNumber);
+    // bloom filter
+    blockContractLogTrigger.setBloomFilterContractAndTopic(BloomFilter.create(Funnels.stringFunnel(
+        Charsets.UTF_8), 80, 0.01));
+    blockContractLogTrigger.setBloomFilterContract(BloomFilter.create(Funnels.stringFunnel(
+        Charsets.UTF_8), 80, 0.01));
+    blockContractLogTrigger.setBloomFilterTopic(BloomFilter.create(Funnels.stringFunnel(
+        Charsets.UTF_8), 80, 0.01));
+
     // get transaction info
     List<BlockContractLogTrigger.TransactionInBlock> transactionInBlockList = new ArrayList<>(block.getTransactions().size());
     blockContractLogTrigger.setTransactionList(transactionInBlockList);
@@ -63,12 +74,15 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       }
       transactionInBlock.setTransactionId(trxCapsule.getTransactionId().toString());
       transactionInBlock.setTransactionIndex(i);
-      // todo : fromAddr and toAddr
       // log trigger
       List<ContractLogTrigger> logTriggers = new ArrayList<>(contractTriggerCapsuleList.size());
       transactionInBlock.setLogList(logTriggers);
       for (ContractTrigger trigger : contractTriggerCapsuleList) {
-        // todo: boomFilter
+        // boomFilter
+        blockContractLogTrigger.getBloomFilterContract().put(trigger.getContractAddress());
+        blockContractLogTrigger.getBloomFilterTopic().put(trigger.getLogInfo().getTopics().get(0).toHexString());
+        blockContractLogTrigger.getBloomFilterContractAndTopic().put(
+            trigger.getContractAddress()+trigger.getLogInfo().getTopics().get(0).toHexString());
 
         List<String> filterNames = matchFilter(trigger);
         if (filterNames.isEmpty()) {

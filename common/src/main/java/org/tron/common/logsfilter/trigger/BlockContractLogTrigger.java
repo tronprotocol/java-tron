@@ -20,15 +20,15 @@ public class BlockContractLogTrigger extends Trigger {
   @Setter
   private long latestSolidifiedBlockNumber;
 
-  // BloomFilter for contractAddress+topic0
+  // BloomFilter for Base58(contractAddress)+Hex(topic0)
   @Getter
   @Setter
   private BloomFilter<String> bloomFilterContractAndTopic;
-  // BloomFilter for contractAddress
+  // BloomFilter for Base58(contractAddress)
   @Getter
   @Setter
   private BloomFilter<String> bloomFilterContract;
-  // BloomFilter for topic0
+  // BloomFilter for Hex(topic0)
   @Getter
   @Setter
   private BloomFilter<String> bloomFilterTopic;
