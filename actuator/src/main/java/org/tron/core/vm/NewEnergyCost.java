@@ -16,7 +16,6 @@ public class NewEnergyCost {
   private static final long LOW_TIER = 5;
   private static final long MID_TIER = 8;
   private static final long HIGH_TIER = 10;
-  private static final long EXT_TIER = 20;
   private static final long SPECIAL_TIER = 1;
 
   private static final long EXP_ENERGY = 10;
@@ -45,6 +44,7 @@ public class NewEnergyCost {
   private static final int CREATE = 32000;
   private static final int CALL_ENERGY = 40;
   private static final int VT_CALL = 9000;
+  private static final int STIPEND_CALL = 2300;
 
   // call series opcode
   private static final int CALLTOKEN = 0xd0;
@@ -81,6 +81,10 @@ public class NewEnergyCost {
 
   public static long getSpecialTierCost(Program program) {
     return SPECIAL_TIER;
+  }
+
+  public static long getStipendCallCost() {
+    return STIPEND_CALL;
   }
 
   public static long getExpCost(Program program) {
@@ -252,13 +256,13 @@ public class NewEnergyCost {
     BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2),
         stack.get(stack.size() - opOff - 3)); // out offset+size
     energyCost += calcMemEnergy(oldMemSize, in.max(out),
-        0, Integer.toHexString(op & 0xff));
-    checkMemorySize(Integer.toHexString(op & 0xff), in.max(out));
+        0, Op.getOpName(op & 0xff));
+    checkMemorySize(Op.getOpName(op & 0xff), in.max(out));
 
     if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
       throw new Program.OutOfEnergyException(
           "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
-          Integer.toHexString(op & 0xff),
+          Op.getOpName(op & 0xff),
           energyCost, program.getEnergyLimitLeft().longValueSafe());
     }
     DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();

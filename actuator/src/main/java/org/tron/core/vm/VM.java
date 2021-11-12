@@ -1286,8 +1286,8 @@ public class VM {
         program.verifyStackSize(op.getRequire());
         //Check not exceeding stack limits
         program.verifyStackOverflow(op.getRequire(), op.getRet());
-        // todo modify construct
-        //program.spendEnergy(op.getEnergyCost(program), op.getOpName());
+
+        program.spendEnergy(op.getEnergyCost(program), Op.getOpName(op.getOpcode()));
         op.execute(program);
         program.setPreviouslyExecutedOp((byte) op.getOpcode());
       }

@@ -16,12 +16,6 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 public class OperationActions {
 
   private static final BigInteger _32_ = BigInteger.valueOf(32);
-  private static final int CALLTOKEN = 0xd0;
-  private static final int CALL = 0xf1;
-  private static final int CALLCODE = 0xf2;
-  private static final int DELEGATECALL = 0xf4;
-  private static final int STIPEND_CALL = 2300;
-
 
   public static void stopAction(Program program) {
     program.setHReturn(EMPTY_BYTE_ARRAY);
@@ -844,22 +838,22 @@ public class OperationActions {
 
     byte op = program.getCurrentOp();
     DataWord value = DataWord.ZERO;
-    if (op == (byte) CALL || op == (byte) CALLTOKEN || op == (byte) CALLCODE) {
+    if (op == (byte) Op.CALL || op == (byte) Op.CALLTOKEN || op == (byte) Op.CALLCODE) {
       value = program.stackPop();
     }
 
-    if (program.isStaticCall() && (op == (byte) CALL || op == (byte) CALLTOKEN)
+    if (program.isStaticCall() && (op == (byte) Op.CALL || op == (byte) Op.CALLTOKEN)
         && !value.isZero()) {
       throw new Program.StaticCallModificationException();
     }
     DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
     if (!value.isZero()) {
-      adjustedCallEnergy.add(new DataWord(STIPEND_CALL));
+      adjustedCallEnergy.add(new DataWord(NewEnergyCost.getStipendCallCost()));
     }
 
     DataWord tokenId = new DataWord(0);
     boolean isTokenTransferMsg = false;
-    if (op == (byte) CALLTOKEN) {
+    if (op == (byte) Op.CALLTOKEN) {
       tokenId = program.stackPop();
       // allowMultiSign proposal
       if (VMConfig.allowMultiSign()) {
@@ -881,7 +875,7 @@ public class OperationActions {
 
     PrecompiledContracts.PrecompiledContract contract =
         PrecompiledContracts.getContractForAddress(codeAddress);
-    if (!(op == (byte) CALLCODE || op == (byte) DELEGATECALL)) {
+    if (!(op == (byte) Op.CALLCODE || op == (byte) Op.DELEGATECALL)) {
       program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
     }
 

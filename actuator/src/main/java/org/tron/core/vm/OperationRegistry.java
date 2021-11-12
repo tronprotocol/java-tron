@@ -144,19 +144,19 @@ public class OperationRegistry {
     operations[Op.JUMPDEST] = new Operation(0x5b, 0, 0,
         NewEnergyCost::getSpecialTierCost, OperationActions::jumpDestAction);
     for (int i = 0; i <= 31; i++) {
-      operations[Op.PUSH + i] = new Operation(0x60 + i, 0, 1,
+      operations[Op.PUSH1 + i] = new Operation(0x60 + i, 0, 1,
           NewEnergyCost::getVeryLowTierCost, OperationActions::pushAction);
     }
     for (int i = 0; i <= 15; i++) {
-      operations[Op.DUP + i] = new Operation(0x80 + i, 1 + i, 2 + i,
+      operations[Op.DUP1 + i] = new Operation(0x80 + i, 1 + i, 2 + i,
           NewEnergyCost::getVeryLowTierCost, OperationActions::dupAction);
     }
     for (int i = 0; i <= 15; i++) {
-      operations[Op.SWAP + i] = new Operation(0x90 + i, 2 + i, 2 + i,
+      operations[Op.SWAP1 + i] = new Operation(0x90 + i, 2 + i, 2 + i,
           NewEnergyCost::getVeryLowTierCost, OperationActions::swapAction);
     }
     for (int i = 0; i <= 4; i++) {
-      operations[Op.LOG + i] = new Operation(0xa0 + i, 2 + i, 0,
+      operations[Op.LOG0 + i] = new Operation(0xa0 + i, 2 + i, 0,
           NewEnergyCost::getLogCost, OperationActions::logAction);
     }
     operations[Op.CALLTOKEN] = new Operation(0xd0, 8, 0,
