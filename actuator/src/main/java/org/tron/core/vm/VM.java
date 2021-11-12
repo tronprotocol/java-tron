@@ -1281,7 +1281,9 @@ public class VM {
 
       while (!program.isStopped()) {
         Operation op = OperationRegistry.get(program.getCurrentOp());
-
+        if (op == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
         program.setLastOp((byte) op.getOpcode());
         program.verifyStackSize(op.getRequire());
         //Check not exceeding stack limits
