@@ -1,5 +1,7 @@
 package org.tron.core.vm;
 
+import org.tron.core.vm.config.VMConfig;
+
 public class OperationRegistry {
 
   private static final int NUM_OPERATIONS = 256;
@@ -7,11 +9,7 @@ public class OperationRegistry {
   private static final Operation[] operations = new Operation[NUM_OPERATIONS];
 
   public static Operation get(final byte opcode) {
-    return get(opcode & 0xff);
-  }
-
-  public static Operation get(final int opcode) {
-    return operations[opcode];
+    return operations[opcode & 0xff];
   }
 
   static {
@@ -61,12 +59,20 @@ public class OperationRegistry {
         NewEnergyCost::getVeryLowTierCost, OperationActions::notAction);
     operations[Op.BYTE] = new Operation(0x1a, 1, 1,
         NewEnergyCost::getVeryLowTierCost, OperationActions::byteAction);
-    operations[Op.SHL] = new Operation(0x1b, 2, 1,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::shlAction);
-    operations[Op.SHR] = new Operation(0x1c, 2, 1,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::shrAction);
-    operations[Op.SAR] = new Operation(0x1d, 2, 1,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::sarAction);
+
+    if (VMConfig.allowTvmConstantinople()) {
+      operations[Op.SHL] = new Operation(0x1b, 2, 1,
+          NewEnergyCost::getVeryLowTierCost, OperationActions::shlAction);
+      operations[Op.SHR] = new Operation(0x1c, 2, 1,
+          NewEnergyCost::getVeryLowTierCost, OperationActions::shrAction);
+      operations[Op.SAR] = new Operation(0x1d, 2, 1,
+          NewEnergyCost::getVeryLowTierCost, OperationActions::sarAction);
+      operations[Op.CREATE2] = new Operation(0xf5, 4, 1,
+          NewEnergyCost::getCreate2Cost, OperationActions::create2Action);
+      operations[Op.EXTCODEHASH] = new Operation(0x3f, 1, 1,
+          NewEnergyCost::getExtTierCost, OperationActions::extCodeHashAction);
+    }
+
     operations[Op.SHA3] = new Operation(0x20, 2, 1,
         NewEnergyCost::getSha3Cost, OperationActions::sha3Action);
     operations[Op.ADDRESS] = new Operation(0x30, 0, 1,
@@ -99,8 +105,6 @@ public class OperationRegistry {
         NewEnergyCost::getExtTierCost, OperationActions::extCodeSizeAction);
     operations[Op.EXTCODECOPY] = new Operation(0x3c, 4, 0,
         NewEnergyCost::getExtTierCost, OperationActions::extCodeCopyAction);
-    operations[Op.EXTCODEHASH] = new Operation(0x3f, 1, 1,
-        NewEnergyCost::getExtTierCost, OperationActions::extCodeHashAction);
     operations[Op.BLOCKHASH] = new Operation(0x40, 1, 1,
         NewEnergyCost::getExtTierCost, OperationActions::blockHashAction);
     operations[Op.COINBASE] = new Operation(0x41, 0, 1,
@@ -113,10 +117,14 @@ public class OperationRegistry {
         NewEnergyCost::getBaseTierCost, OperationActions::difficultyAction);
     operations[Op.GASLIMIT] = new Operation(0x45, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::gasLimitAction);
-    operations[Op.CHAINID] = new Operation(0x46, 0, 1,
+
+    if (VMConfig.allowTvmIstanbul()) {
+      operations[Op.CHAINID] = new Operation(0x46, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::chainIdAction);
-    operations[Op.SELFBALANCE] = new Operation(0x47, 0, 1,
+      operations[Op.SELFBALANCE] = new Operation(0x47, 0, 1,
         NewEnergyCost::getLowTierCost, OperationActions::selfBalanceAction);
+    }
+
     operations[Op.BASEFEE] = new Operation(0x48, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::baseFeeAction);
     operations[Op.POP] = new Operation(0x50, 1, 0,
@@ -143,6 +151,7 @@ public class OperationRegistry {
         NewEnergyCost::getBaseTierCost, OperationActions::gasAction);
     operations[Op.JUMPDEST] = new Operation(0x5b, 0, 0,
         NewEnergyCost::getSpecialTierCost, OperationActions::jumpDestAction);
+
     for (int i = 0; i <= 31; i++) {
       operations[Op.PUSH1 + i] = new Operation(0x60 + i, 0, 1,
           NewEnergyCost::getVeryLowTierCost, OperationActions::pushAction);
@@ -159,26 +168,39 @@ public class OperationRegistry {
       operations[Op.LOG0 + i] = new Operation(0xa0 + i, 2 + i, 0,
           NewEnergyCost::getLogCost, OperationActions::logAction);
     }
-    operations[Op.CALLTOKEN] = new Operation(0xd0, 8, 0,
-        NewEnergyCost::getCallCost, OperationActions::callAction);
-    operations[Op.TOKENBALANCE] = new Operation(0xd1, 2, 1,
-        NewEnergyCost::getBalanceCost, OperationActions::tokenBalanceAction);
-    operations[Op.CALLTOKENVALUE] = new Operation(0xd2, 0, 1,
-        NewEnergyCost::getBaseTierCost, OperationActions::callTokenValueAction);
-    operations[Op.CALLTOKENID] = new Operation(0xd3, 0, 1,
-        NewEnergyCost::getBaseTierCost, OperationActions::callTokenIdAction);
-    operations[Op.ISCONTRACT] = new Operation(0xd4, 1, 1,
+
+    if (VMConfig.allowTvmTransferTrc10()) {
+      operations[Op.CALLTOKEN] = new Operation(0xd0, 8, 0,
+          NewEnergyCost::getCallCost, OperationActions::callAction);
+      operations[Op.TOKENBALANCE] = new Operation(0xd1, 2, 1,
+          NewEnergyCost::getBalanceCost, OperationActions::tokenBalanceAction);
+      operations[Op.CALLTOKENVALUE] = new Operation(0xd2, 0, 1,
+          NewEnergyCost::getBaseTierCost, OperationActions::callTokenValueAction);
+      operations[Op.CALLTOKENID] = new Operation(0xd3, 0, 1,
+          NewEnergyCost::getBaseTierCost, OperationActions::callTokenIdAction);
+    }
+
+    if (VMConfig.allowTvmSolidity059()) {
+      operations[Op.ISCONTRACT] = new Operation(0xd4, 1, 1,
         NewEnergyCost::getBalanceCost, OperationActions::isContractAction);
-    operations[Op.FREEZE] = new Operation(0xd5, 3, 1,
+    }
+
+    if (VMConfig.allowTvmFreeze()) {
+      operations[Op.FREEZE] = new Operation(0xd5, 3, 1,
         NewEnergyCost::getFreezeCost, OperationActions::freezeAction);
-    operations[Op.UNFREEZE] = new Operation(0xd6, 2, 1,
+      operations[Op.UNFREEZE] = new Operation(0xd6, 2, 1,
         NewEnergyCost::getUnfreezeCost, OperationActions::unfreezeAction);
-    operations[Op.FREEZEEXPIRETIME] = new Operation(0xd7, 2, 1,
+      operations[Op.FREEZEEXPIRETIME] = new Operation(0xd7, 2, 1,
         NewEnergyCost::getFreezeExpireTimeCost, OperationActions::freezeExpireTimeAction);
-    operations[Op.VOTEWITNESS] = new Operation(0xd8, 4, 1,
+    }
+
+    if (VMConfig.allowTvmVote()) {
+      operations[Op.VOTEWITNESS] = new Operation(0xd8, 4, 1,
         NewEnergyCost::getVoteWitnessCost, OperationActions::voteWitnessAction);
-    operations[Op.WITHDRAWREWARD] = new Operation(0xd9, 0, 1,
+      operations[Op.WITHDRAWREWARD] = new Operation(0xd9, 0, 1,
         NewEnergyCost::getWithdrawRewardCost, OperationActions::withdrawRewardAction);
+    }
+
     operations[Op.CREATE] = new Operation(0xf0, 3, 1,
         NewEnergyCost::getCreateCost, OperationActions::createAction);
     operations[Op.CALL] = new Operation(0xf1, 7, 1,
@@ -189,8 +211,6 @@ public class OperationRegistry {
         NewEnergyCost::getZeroTierCost, OperationActions::returnAction);
     operations[Op.DELEGATECALL] = new Operation(0xf4, 6, 1,
         NewEnergyCost::getCallCost, OperationActions::callAction);
-    operations[Op.CREATE2] = new Operation(0xf5, 4, 1,
-        NewEnergyCost::getCreate2Cost, OperationActions::create2Action);
     operations[Op.STATICCALL] = new Operation(0xfa, 6, 1,
         NewEnergyCost::getCallCost, OperationActions::callAction);
     operations[Op.REVERT] = new Operation(0xfd, 2, 0,
