@@ -1280,7 +1280,16 @@ public class VM {
       }
 
       while (!program.isStopped()) {
-        this.step(program);
+        Operation op = OperationRegistry.get(program.getCurrentOp());
+
+        program.setLastOp((byte) op.getOpcode());
+        program.verifyStackSize(op.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(op.getRequire(), op.getRet());
+        // todo modify construct
+        //program.spendEnergy(op.getEnergyCost(program), op.getOpName());
+        op.execute(program);
+        program.setPreviouslyExecutedOp((byte) op.getOpcode());
       }
 
     } catch (JVMStackOverFlowException | OutOfTimeException e) {
