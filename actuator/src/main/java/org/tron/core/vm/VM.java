@@ -1141,22 +1141,22 @@ public class VM {
 
           program.memoryExpand(outDataOffs, outDataSize);
 
-          MessageCall msg = new MessageCall(
-              op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
-              outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
-
-          PrecompiledContracts.PrecompiledContract contract =
-              PrecompiledContracts.getContractForAddress(codeAddress);
-
-          if (!op.callIsStateless()) {
-            program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
-          }
-
-          if (contract != null) {
-            program.callToPrecompiledAddress(msg, contract);
-          } else {
-            program.callToAddress(msg);
-          }
+          // MessageCall msg = new MessageCall(
+          //     op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
+          //     outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
+          //
+          // PrecompiledContracts.PrecompiledContract contract =
+          //     PrecompiledContracts.getContractForAddress(codeAddress);
+          //
+          // if (!op.callIsStateless()) {
+          //   program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
+          // }
+          //
+          // if (contract != null) {
+          //   program.callToPrecompiledAddress(msg, contract);
+          // } else {
+          //   program.callToAddress(msg);
+          // }
 
           program.step();
         }

@@ -1,10 +1,14 @@
 package org.tron.core.vm;
 
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Stack;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
@@ -12,6 +16,12 @@ import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 public class OperationActions {
 
   private static final BigInteger _32_ = BigInteger.valueOf(32);
+  private static final int CALLTOKEN = 0xd0;
+  private static final int CALL = 0xf1;
+  private static final int CALLCODE = 0xf2;
+  private static final int DELEGATECALL = 0xf4;
+  private static final int STIPEND_CALL = 2300;
+
 
   public static void stopAction(Program program) {
     program.setHReturn(EMPTY_BYTE_ARRAY);
@@ -580,6 +590,337 @@ public class OperationActions {
 
     program.stackPush(val);
     program.step();
+  }
+
+  public static void sStoreAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    DataWord addr = program.stackPop();
+    DataWord value = program.stackPop();
+
+    program.storageSave(addr, value);
+    program.step();
+  }
+
+  public static void jumpAction(Program program) {
+    DataWord pos = program.stackPop();
+    int nextPC = program.verifyJumpDest(pos);
+
+    program.setPC(nextPC);
+  }
+
+  public static void jumpIAction(Program program) {
+    DataWord pos = program.stackPop();
+    DataWord cond = program.stackPop();
+
+    if (!cond.isZero()) {
+      int nextPC = program.verifyJumpDest(pos);
+      program.setPC(nextPC);
+    } else {
+      program.step();
+    }
+  }
+
+  public static void pcAction(Program program) {
+    int pc = program.getPC();
+    DataWord pcWord = new DataWord(pc);
+
+    program.stackPush(pcWord);
+    program.step();
+  }
+
+  public static void mSizeAction(Program program) {
+    int memSize = program.getMemSize();
+    DataWord wordMemSize = new DataWord(memSize);
+
+    program.stackPush(wordMemSize);
+    program.step();
+  }
+
+  public static void gasAction(Program program) {
+    DataWord energy = program.getEnergyLimitLeft();
+
+    program.stackPush(energy);
+    program.step();
+  }
+
+  public static void jumpDestAction(Program program) {
+    program.step();
+  }
+
+  public static void pushAction(Program program) {
+    program.step();
+    int n = program.getCurrentOp() - 0x60 + 1;
+    byte[] data = program.sweep(n);
+
+    program.stackPush(data);
+  }
+
+  public static void dupAction(Program program) {
+    Stack stack = program.getStack();
+    int n = program.getCurrentOp() - 0x80 + 1;
+    DataWord word_1 = stack.get(stack.size() - n);
+
+    program.stackPush(word_1.clone());
+    program.step();
+  }
+
+  public static void swapAction(Program program) {
+    Stack stack = program.getStack();
+    int n = program.getCurrentOp() - 0x90 + 2;
+    stack.swap(stack.size() - 1, stack.size() - n);
+
+    program.step();
+  }
+
+  public static void logAction(Program program) {
+    Stack stack = program.getStack();
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord address = program.getContractAddress();
+
+    DataWord memStart = stack.pop();
+    DataWord memOffset = stack.pop();
+
+    int nTopics = program.getCurrentOp() - 0xa0;
+
+    List<DataWord> topics = new ArrayList<>();
+    for (int i = 0; i < nTopics; ++i) {
+      DataWord topic = stack.pop();
+      topics.add(topic);
+    }
+
+    byte[] data = program.memoryChunk(memStart.intValueSafe(), memOffset.intValueSafe());
+
+    LogInfo logInfo =
+        new LogInfo(address.getLast20Bytes(), topics, data);
+
+    program.getResult().addLogInfo(logInfo);
+    program.step();
+  }
+
+  public static void tokenBalanceAction(Program program) {
+    DataWord tokenId = program.stackPop();
+    DataWord address = program.stackPop();
+    DataWord tokenBalance = program.getTokenBalance(address, tokenId);
+
+    program.stackPush(tokenBalance);
+    program.step();
+  }
+
+  public static void callTokenValueAction(Program program) {
+    DataWord tokenValue = program.getTokenValue();
+
+    program.stackPush(tokenValue);
+    program.step();
+  }
+
+  public static void callTokenIdAction(Program program) {
+    DataWord _tokenId = program.getTokenId();
+
+    program.stackPush(_tokenId);
+    program.step();
+  }
+
+  public static void isContractAction(Program program) {
+    DataWord address = program.stackPop();
+    DataWord isContract = program.isContract(address);
+
+    program.stackPush(isContract);
+    program.step();
+  }
+
+  public static void freezeAction(Program program) {
+    // after allow vote, check static
+    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+    // 0 as bandwidth, 1 as energy
+    DataWord resourceType = program.stackPop();
+    DataWord frozenBalance = program.stackPop();
+    DataWord receiverAddress = program.stackPop();
+
+    boolean result = program.freeze(receiverAddress, frozenBalance, resourceType );
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void unfreezeAction(Program program) {
+    if (VMConfig.allowTvmVote() && program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    DataWord resourceType = program.stackPop();
+    DataWord receiverAddress = program.stackPop();
+
+    boolean result = program.unfreeze(receiverAddress, resourceType);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void freezeExpireTimeAction(Program program) {
+    DataWord resourceType = program.stackPop();
+    DataWord targetAddress = program.stackPop();
+
+    long expireTime = program.freezeExpireTime(targetAddress, resourceType);
+    program.stackPush(new DataWord(expireTime / 1000));
+    program.step();
+  }
+
+  public static void voteWitnessAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    int amountArrayLength = program.stackPop().intValueSafe();
+    int amountArrayOffset = program.stackPop().intValueSafe();
+    int witnessArrayLength = program.stackPop().intValueSafe();
+    int witnessArrayOffset = program.stackPop().intValueSafe();
+
+    boolean result = program.voteWitness(witnessArrayOffset, witnessArrayLength,
+        amountArrayOffset, amountArrayLength);
+    program.stackPush(result ? DataWord.ONE() : DataWord.ZERO());
+    program.step();
+  }
+
+  public static void withdrawRewardAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    long allowance = program.withdrawReward();
+    program.stackPush(new DataWord(allowance));
+    program.step();
+  }
+
+  public static void createAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    DataWord value = program.stackPop();
+    DataWord inOffset = program.stackPop();
+    DataWord inSize = program.stackPop();
+
+    program.createContract(value, inOffset, inSize);
+    program.step();
+  }
+
+  public static void returnAction(Program program) {
+    DataWord offset = program.stackPop();
+    DataWord size = program.stackPop();
+
+    byte[] hReturn = program.memoryChunk(offset.intValueSafe(), size.intValueSafe());
+    program.setHReturn(hReturn);
+
+    program.step();
+    program.stop();
+  }
+
+  public static void create2Action(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    DataWord value = program.stackPop();
+    DataWord inOffset = program.stackPop();
+    DataWord inSize = program.stackPop();
+    DataWord salt = program.stackPop();
+
+    program.createContract2(value, inOffset, inSize, salt);
+    program.step();
+  }
+
+  public static void callAction(Program program) {
+    // use adjustedCallEnergy instead of requested
+    Stack stack = program.getStack();
+    DataWord callEnergyWord = stack.get(stack.size() - 1);
+    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    program.stackPop();
+    DataWord codeAddress = program.stackPop();
+
+    byte op = program.getCurrentOp();
+    DataWord value = DataWord.ZERO;
+    if (op == (byte) CALL || op == (byte) CALLTOKEN || op == (byte) CALLCODE) {
+      value = program.stackPop();
+    }
+
+    if (program.isStaticCall() && (op == (byte) CALL || op == (byte) CALLTOKEN)
+        && !value.isZero()) {
+      throw new Program.StaticCallModificationException();
+    }
+    DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+    if (!value.isZero()) {
+      adjustedCallEnergy.add(new DataWord(STIPEND_CALL));
+    }
+
+    DataWord tokenId = new DataWord(0);
+    boolean isTokenTransferMsg = false;
+    if (op == (byte) CALLTOKEN) {
+      tokenId = program.stackPop();
+      // allowMultiSign proposal
+      if (VMConfig.allowMultiSign()) {
+        isTokenTransferMsg = true;
+      }
+    }
+
+    DataWord inDataOffs = program.stackPop();
+    DataWord inDataSize = program.stackPop();
+
+    DataWord outDataOffs = program.stackPop();
+    DataWord outDataSize = program.stackPop();
+
+    program.memoryExpand(outDataOffs, outDataSize);
+
+    MessageCall msg = new MessageCall(
+        op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
+        outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
+
+    PrecompiledContracts.PrecompiledContract contract =
+        PrecompiledContracts.getContractForAddress(codeAddress);
+    if (!(op == (byte) CALLCODE || op == (byte) DELEGATECALL)) {
+      program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
+    }
+
+    if (contract != null) {
+      program.callToPrecompiledAddress(msg, contract);
+    } else {
+      program.callToAddress(msg);
+    }
+
+    program.step();
+  }
+
+  public static void revertAction(Program program) {
+    DataWord offset = program.stackPop();
+    DataWord size = program.stackPop();
+
+    byte[] hReturn = program.memoryChunk(offset.intValueSafe(), size.intValueSafe());
+    program.setHReturn(hReturn);
+
+    program.step();
+    program.stop();
+
+    program.getResult().setRevert();
+  }
+
+  public static void suicideAction(Program program) {
+    if (program.isStaticCall()) {
+      throw new Program.StaticCallModificationException();
+    }
+
+    if (!program.canSuicide()) {
+      program.getResult().setRevert();
+    } else {
+      DataWord address = program.stackPop();
+      program.suicide(address);
+      program.getResult().addTouchAccount(address.getLast20Bytes());
+    }
+
+    program.stop();
   }
 
 }

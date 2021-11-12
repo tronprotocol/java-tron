@@ -112,6 +112,9 @@ public class Program {
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
   private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
   private static final String CALL_PRE_COMPILED = "call pre-compiled";
+  private static final int CALLCODE = 0xf2;
+  private static final int DELEGATECALL = 0xf4;
+  private static final int STATICCALL = 0xfa;
   private final VMConfig config;
   private long nonce;
   private byte[] rootTransactionId;
@@ -900,10 +903,12 @@ public class Program {
         .convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] senderAddress = TransactionTrace
         .convertToTronAddress(getContractAddress().getLast20Bytes());
-    byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
-
+    byte[] contextAddress = codeAddress;
+    if (msg.getOpCode() == (byte) CALLCODE || msg.getOpCode() == (byte) DELEGATECALL) {
+      contextAddress = senderAddress;
+    }
     if (logger.isDebugEnabled()) {
-      logger.debug(msg.getType().name()
+      logger.debug(Integer.toHexString(msg.getOpCode() & 0xff)
               + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
           Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(),
           msg.getOutDataSize().longValue());
@@ -1005,14 +1010,18 @@ public class Program {
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
-      DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
+      DataWord callValue = msg.getEndowment();
+      if (msg.getOpCode() == (byte) DELEGATECALL) {
+        callValue = getCallValue();
+      }
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
-          msg.getType().callIsDelegate() ? getCallerAddress() : getContractAddress(),
+          msg.getOpCode() == (byte) DELEGATECALL ? getCallerAddress() : getContractAddress(),
           !isTokenTransfer ? callValue : new DataWord(0),
           !isTokenTransfer ? new DataWord(0) : callValue,
           !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
-          contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
+          contextBalance, data, deposit,
+          msg.getOpCode() == (byte) STATICCALL || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       if (isConstantCall()) {
         programInvoke.setConstantCall();
@@ -1036,10 +1045,7 @@ public class Program {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
             Hex.toHexString(contextAddress),
             callResult.getException());
-
-        if(internalTx != null){
-          internalTx.reject();
-        }
+        internalTx.reject();
 
         callResult.rejectInternalTransactions();
 
@@ -1529,7 +1535,10 @@ public class Program {
         .convertToTronAddress(this.getContractAddress().getLast20Bytes());
     byte[] codeAddress = TransactionTrace
         .convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
+    byte[] contextAddress = codeAddress;
+    if (msg.getOpCode() == (byte) CALLCODE || msg.getOpCode() == (byte) DELEGATECALL) {
+      contextAddress = senderAddress;
+    }
 
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = 0;
@@ -1583,8 +1592,12 @@ public class Program {
       this.stackPushZero();
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
-      contract.setCallerAddress(TransactionTrace.convertToTronAddress(msg.getType().callIsDelegate()
-          ? getCallerAddress().getLast20Bytes() : getContractAddress().getLast20Bytes()));
+      contract.setCallerAddress(TransactionTrace.convertToTronAddress(
+          getContractAddress().getLast20Bytes()));
+      if (msg.getOpCode() == (byte) DELEGATECALL) {
+        contract.setCallerAddress(TransactionTrace.convertToTronAddress(
+            getCallerAddress().getLast20Bytes()));
+      }
       // this is the depositImpl, not contractState as above
       contract.setRepository(deposit);
       contract.setResult(this.result);
@@ -1688,6 +1701,15 @@ public class Program {
   }
 
   public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
+    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
+      DataWord availableEnergyReduce = availableEnergy.clone();
+      availableEnergyReduce.div(new DataWord(64));
+      availableEnergy.sub(availableEnergyReduce);
+    }
+    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
+  }
+
+  public DataWord getCallEnergy(DataWord requestedEnergy, DataWord availableEnergy) {
     if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
       DataWord availableEnergyReduce = availableEnergy.clone();
       availableEnergyReduce.div(new DataWord(64));
