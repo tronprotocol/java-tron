@@ -46,11 +46,6 @@ public class NewEnergyCost {
   private static final int VT_CALL = 9000;
   private static final int STIPEND_CALL = 2300;
 
-  // call series opcode
-  private static final int CALLTOKEN = 0xd0;
-  private static final int CALL = 0xf1;
-  private static final int CALLCODE = 0xf2;
-
   public static long getZeroTierCost(Program program) {
     return ZERO_TIER;
   }
@@ -225,36 +220,84 @@ public class NewEnergyCost {
 
   public static long getCallCost(Program program) {
     Stack stack = program.getStack();
-    long oldMemSize = program.getMemSize();
     // here, contract call an other contract, or a library, and so on
     long energyCost = CALL_ENERGY;
-    DataWord callEnergyWord = stack.get(stack.size() - 1);
     DataWord callAddressWord = stack.get(stack.size() - 2);
-    byte op = program.getCurrentOp();
-    DataWord value = DataWord.ZERO;
-    int opOff = 3;
-    if (op == (byte) CALL || op == (byte) CALLTOKEN || op == (byte) CALLCODE) {
-      value = stack.get(stack.size() - 3);
-      opOff = 4;
-    }
+    DataWord value = stack.get(stack.size() - 3);
+    int opOff = 4;
     //check to see if account does not exist and is not a precompiled contract
-    if ((op == (byte) CALL || op == (byte) CALLTOKEN)
-        && isDeadAccount(program, callAddressWord)
+    if (isDeadAccount(program, callAddressWord)
         && !value.isZero()) {
       energyCost += NEW_ACCT_CALL;
     }
-
-    // TODO #POC9 Make sure this is converted to BigInteger (256num support)
     if (!value.isZero()) {
       energyCost += VT_CALL;
     }
-    if (op == (byte) CALLTOKEN) {
-      opOff++;
+    return getCalculateCallCost(stack, program, energyCost, opOff);
+  }
+
+  public static long getStaticCallCost(Program program) {
+    Stack stack = program.getStack();
+    long energyCost = CALL_ENERGY;
+    DataWord value = DataWord.ZERO;
+    int opOff = 3;
+    if (!value.isZero()) {
+      energyCost += VT_CALL;
     }
+    return getCalculateCallCost(stack, program, energyCost, opOff);
+  }
+
+  public static long getDelegateCallCost(Program program) {
+    Stack stack = program.getStack();
+    long energyCost = CALL_ENERGY;
+    DataWord value = DataWord.ZERO;
+    int opOff = 3;
+    if (!value.isZero()) {
+      energyCost += VT_CALL;
+    }
+    return getCalculateCallCost(stack, program, energyCost, opOff);
+  }
+
+  public static long getCallCodeCost(Program program) {
+    Stack stack = program.getStack();
+    long energyCost = CALL_ENERGY;
+    DataWord value = stack.get(stack.size() - 3);
+    int opOff = 4;
+    if (!value.isZero()) {
+      energyCost += VT_CALL;
+    }
+    return getCalculateCallCost(stack, program, energyCost, opOff);
+  }
+
+  public static long getCallTokenCost(Program program) {
+    Stack stack = program.getStack();
+    long energyCost = CALL_ENERGY;
+    DataWord callAddressWord = stack.get(stack.size() - 2);
+    DataWord value = stack.get(stack.size() - 3);
+    int opOff = 4;
+
+    //check to see if account does not exist and is not a precompiled contract
+    if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
+      energyCost += NEW_ACCT_CALL;
+    }
+    if (!value.isZero()) {
+      energyCost += VT_CALL;
+    }
+    opOff++;
+    return getCalculateCallCost(stack, program, energyCost, opOff);
+  }
+
+  public static long getCalculateCallCost(Stack stack, Program program,
+                                          long energyCost, int opOff) {
+    byte op = program.getCurrentOp();
+    long oldMemSize = program.getMemSize();
+    DataWord callEnergyWord = stack.get(stack.size() - 1);
+    // in offset+size
     BigInteger in = memNeeded(stack.get(stack.size() - opOff),
-        stack.get(stack.size() - opOff - 1)); // in offset+size
+        stack.get(stack.size() - opOff - 1));
+    // out offset+size
     BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2),
-        stack.get(stack.size() - opOff - 3)); // out offset+size
+        stack.get(stack.size() - opOff - 3));
     energyCost += calcMemEnergy(oldMemSize, in.max(out),
         0, Op.getOpName(op & 0xff));
     checkMemorySize(Op.getOpName(op & 0xff), in.max(out));
@@ -267,6 +310,7 @@ public class NewEnergyCost {
     }
     DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
     getEnergyLimitLeft.sub(new DataWord(energyCost));
+    program.setAdjustedCallEnergy(getEnergyLimitLeft);
 
     DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
     energyCost += adjustedCallEnergy.longValueSafe();

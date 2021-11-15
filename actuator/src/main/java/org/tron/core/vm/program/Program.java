@@ -138,6 +138,7 @@ public class Program {
   private boolean stopped;
   private ProgramPrecompile programPrecompile;
   private int contractVersion;
+  private DataWord adjustedCallEnergy;
 
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
@@ -317,6 +318,14 @@ public class Program {
 
   public int getContractVersion() {
     return this.contractVersion;
+  }
+
+  public void setAdjustedCallEnergy(DataWord adjustedCallEnergy) {
+    this.adjustedCallEnergy = adjustedCallEnergy;
+  }
+
+  public DataWord getAdjustedCallEnergy() {
+    return this.adjustedCallEnergy;
   }
 
   public long getNonce() {

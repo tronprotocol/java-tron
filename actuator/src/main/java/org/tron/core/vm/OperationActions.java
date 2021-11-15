@@ -909,7 +909,7 @@ public class OperationActions {
   public static void staticCallAction(Program program) {
     Stack stack = program.getStack();
     DataWord callEnergyWord = stack.get(stack.size() - 1);
-    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    DataWord getEnergyLimitLeft = program.getAdjustedCallEnergy();
     program.stackPop();
     DataWord codeAddress = program.stackPop();
     DataWord value = DataWord.ZERO;
