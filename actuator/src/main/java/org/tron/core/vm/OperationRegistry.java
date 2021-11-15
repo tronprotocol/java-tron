@@ -173,7 +173,7 @@ public class OperationRegistry {
 
     if (VMConfig.allowTvmTransferTrc10()) {
       operations[Op.CALLTOKEN] = new Operation(0xd0, 8, 0,
-          NewEnergyCost::getCallCost, OperationActions::callAction);
+          NewEnergyCost::getCallCost, OperationActions::callTokenAction);
       operations[Op.TOKENBALANCE] = new Operation(0xd1, 2, 1,
           NewEnergyCost::getBalanceCost, OperationActions::tokenBalanceAction);
       operations[Op.CALLTOKENVALUE] = new Operation(0xd2, 0, 1,
@@ -208,13 +208,13 @@ public class OperationRegistry {
     operations[Op.CALL] = new Operation(0xf1, 7, 1,
         NewEnergyCost::getCallCost, OperationActions::callAction);
     operations[Op.CALLCODE] = new Operation(0xf2, 7, 1,
-        NewEnergyCost::getCallCost, OperationActions::callAction);
+        NewEnergyCost::getCallCost, OperationActions::callCodeAction);
     operations[Op.RETURN] = new Operation(0xf3, 2, 0,
         NewEnergyCost::getZeroTierCost, OperationActions::returnAction);
     operations[Op.DELEGATECALL] = new Operation(0xf4, 6, 1,
-        NewEnergyCost::getCallCost, OperationActions::callAction);
+        NewEnergyCost::getCallCost, OperationActions::delegateCallAction);
     operations[Op.STATICCALL] = new Operation(0xfa, 6, 1,
-        NewEnergyCost::getCallCost, OperationActions::callAction);
+        NewEnergyCost::getCallCost, OperationActions::staticCallAction);
     operations[Op.REVERT] = new Operation(0xfd, 2, 0,
         NewEnergyCost::getZeroTierCost, OperationActions::revertAction);
     operations[Op.SUICIDE] = new Operation(0xff, 1, 0,

@@ -12,6 +12,8 @@ import java.util.List;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.core.vm.OpCode.CALL;
+import static org.tron.core.vm.OpCode.CALLTOKEN;
 
 public class OperationActions {
 
@@ -835,15 +837,9 @@ public class OperationActions {
     DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
     program.stackPop();
     DataWord codeAddress = program.stackPop();
+    DataWord value = program.stackPop();
 
-    byte op = program.getCurrentOp();
-    DataWord value = DataWord.ZERO;
-    if (op == (byte) Op.CALL || op == (byte) Op.CALLTOKEN || op == (byte) Op.CALLCODE) {
-      value = program.stackPop();
-    }
-
-    if (program.isStaticCall() && (op == (byte) Op.CALL || op == (byte) Op.CALLTOKEN)
-        && !value.isZero()) {
+    if (program.isStaticCall() && !value.isZero()) {
       throw new Program.StaticCallModificationException();
     }
     DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
@@ -853,13 +849,82 @@ public class OperationActions {
 
     DataWord tokenId = new DataWord(0);
     boolean isTokenTransferMsg = false;
-    if (op == (byte) Op.CALLTOKEN) {
-      tokenId = program.stackPop();
-      // allowMultiSign proposal
-      if (VMConfig.allowMultiSign()) {
-        isTokenTransferMsg = true;
-      }
+    exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId, isTokenTransferMsg);
+  }
+
+  public static void callTokenAction(Program program) {
+    Stack stack = program.getStack();
+    DataWord callEnergyWord = stack.get(stack.size() - 1);
+    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    program.stackPop();
+    DataWord codeAddress = program.stackPop();
+    DataWord value = program.stackPop();
+
+    if (program.isStaticCall() && !value.isZero()) {
+      throw new Program.StaticCallModificationException();
     }
+    DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+    if (!value.isZero()) {
+      adjustedCallEnergy.add(new DataWord(NewEnergyCost.getStipendCallCost()));
+    }
+    program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
+    DataWord tokenId = program.stackPop();
+    boolean isTokenTransferMsg = false;
+    // allowMultiSign proposal
+    if (VMConfig.allowMultiSign()) {
+      isTokenTransferMsg = true;
+    }
+    exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId, isTokenTransferMsg);
+  }
+
+  public static void callCodeAction(Program program) {
+    Stack stack = program.getStack();
+    DataWord callEnergyWord = stack.get(stack.size() - 1);
+    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    program.stackPop();
+    DataWord codeAddress = program.stackPop();
+    DataWord value = program.stackPop();
+
+    DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+    if (!value.isZero()) {
+      adjustedCallEnergy.add(new DataWord(NewEnergyCost.getStipendCallCost()));
+    }
+    DataWord tokenId = new DataWord(0);
+    boolean isTokenTransferMsg = false;
+    exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId, isTokenTransferMsg);
+  }
+
+  public static void delegateCallAction(Program program) {
+    Stack stack = program.getStack();
+    DataWord callEnergyWord = stack.get(stack.size() - 1);
+    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    program.stackPop();
+    DataWord codeAddress = program.stackPop();
+    DataWord value = DataWord.ZERO;
+
+    DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+    DataWord tokenId = new DataWord(0);
+    boolean isTokenTransferMsg = false;
+    exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId, isTokenTransferMsg);
+  }
+
+  public static void staticCallAction(Program program) {
+    Stack stack = program.getStack();
+    DataWord callEnergyWord = stack.get(stack.size() - 1);
+    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    program.stackPop();
+    DataWord codeAddress = program.stackPop();
+    DataWord value = DataWord.ZERO;
+
+    DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+    DataWord tokenId = new DataWord(0);
+    boolean isTokenTransferMsg = false;
+    program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
+    exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId, isTokenTransferMsg);
+  }
+
+  public static void exeCall(Program program, DataWord adjustedCallEnergy,
+            DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
 
     DataWord inDataOffs = program.stackPop();
     DataWord inDataSize = program.stackPop();
@@ -868,23 +933,18 @@ public class OperationActions {
     DataWord outDataSize = program.stackPop();
 
     program.memoryExpand(outDataOffs, outDataSize);
-
+    byte op = program.getCurrentOp();
     MessageCall msg = new MessageCall(
         op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
         outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
 
     PrecompiledContracts.PrecompiledContract contract =
         PrecompiledContracts.getContractForAddress(codeAddress);
-    if (!(op == (byte) Op.CALLCODE || op == (byte) Op.DELEGATECALL)) {
-      program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
-    }
-
     if (contract != null) {
       program.callToPrecompiledAddress(msg, contract);
     } else {
       program.callToAddress(msg);
     }
-
     program.step();
   }
 
