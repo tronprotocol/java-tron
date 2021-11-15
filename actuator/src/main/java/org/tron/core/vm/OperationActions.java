@@ -12,8 +12,6 @@ import java.util.List;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.core.vm.OpCode.CALL;
-import static org.tron.core.vm.OpCode.CALLTOKEN;
 
 public class OperationActions {
 
