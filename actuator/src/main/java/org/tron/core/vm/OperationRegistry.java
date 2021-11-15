@@ -125,8 +125,10 @@ public class OperationRegistry {
         NewEnergyCost::getLowTierCost, OperationActions::selfBalanceAction);
     }
 
-    operations[Op.BASEFEE] = new Operation(0x48, 0, 1,
+    if (VMConfig.allowTvmLondon()) {
+      operations[Op.BASEFEE] = new Operation(0x48, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::baseFeeAction);
+    }
     operations[Op.POP] = new Operation(0x50, 1, 0,
         NewEnergyCost::getBaseTierCost, OperationActions::popAction);
     operations[Op.MLOAD] = new Operation(0x51, 1, 1,
