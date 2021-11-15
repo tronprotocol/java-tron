@@ -1290,6 +1290,7 @@ public class VM {
         program.verifyStackOverflow(op.getRequire(), op.getRet());
 
         program.spendEnergy(op.getEnergyCost(program), Op.getOpName(op.getOpcode()));
+        program.checkCPUTimeLimit(Op.getOpName(op.getOpcode()));
         op.execute(program);
         program.setPreviouslyExecutedOp((byte) op.getOpcode());
       }
