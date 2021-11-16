@@ -106,6 +106,7 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
     LogInfo logInfo = contractTrigger.getLogInfo();
     event.setTopicList(logInfo.getHexTopics());
     event.setData(logInfo.getHexData());
+    event.setLogInfo(logInfo);
     RawData rawData = new RawData(logInfo.getAddress(), logInfo.getTopics(), logInfo.getData());
     event.setRawData(rawData);
     event.setLatestSolidifiedBlockNumber(contractTrigger.getLatestSolidifiedBlockNumber());
@@ -114,12 +115,13 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
     event.setTransactionId(contractTrigger.getTransactionId());
     event.setContractAddress(contractTrigger.getContractAddress());
     event.setOriginAddress(contractTrigger.getOriginAddress());
-    event.setCallerAddress("");
+    event.setCallerAddress(contractTrigger.getCallerAddress());
     event.setCreatorAddress(contractTrigger.getCreatorAddress());
     event.setBlockNumber(contractTrigger.getBlockNumber());
     event.setTimeStamp(contractTrigger.getTimeStamp());
     event.setBlockHash(contractTrigger.getBlockHash());
     event.setFilterNameList(contractTrigger.getFilterNameList());
+    event.setAbi(contractTrigger.getAbi());
     return event;
   }
 
