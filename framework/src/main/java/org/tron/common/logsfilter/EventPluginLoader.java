@@ -96,70 +96,79 @@ public class EventPluginLoader {
   }
 
   public static List<String> matchFilter(ContractTrigger trigger) {
-    long blockNumber = trigger.getBlockNumber();
+    try {
+      long blockNumber = trigger.getBlockNumber();
 
-    Set<String> matchedFilterName = new HashSet<>();
-    Map<String, Map<String, List<FilterQuery>>> filterQueryMap = EventPluginLoader.getInstance().getFilterQuery();
-    if (Objects.isNull(filterQueryMap) || filterQueryMap.isEmpty()) {
-      return new ArrayList<>(0);
-    }
-    List<List<FilterQuery>> maybeMatchFilters = new ArrayList<>(4);
-    if(!trigger.getLogInfo().getTopics().isEmpty()) {
-      Map<String, List<FilterQuery>> filterQueryMapForTopic = filterQueryMap.get(trigger.getLogInfo().getTopics().get(0).toHexString());
-      if(filterQueryMapForTopic.containsKey(trigger.getContractAddress())){
-        maybeMatchFilters.add(filterQueryMapForTopic.get(trigger.getContractAddress()));
+      Set<String> matchedFilterName = new HashSet<>();
+      Map<String, Map<String, List<FilterQuery>>> filterQueryMap = EventPluginLoader.getInstance()
+          .getFilterQuery();
+      if (Objects.isNull(filterQueryMap) || filterQueryMap.isEmpty()) {
+        return new ArrayList<>(0);
       }
-      if(filterQueryMapForTopic.containsKey("") && !trigger.getContractAddress().equals("")){
-        maybeMatchFilters.add(filterQueryMapForTopic.get(""));
-      }
-    }
-    if(filterQueryMap.containsKey("")){
-      Map<String, List<FilterQuery>> filterQueryMapForTopic = filterQueryMap.get("");
-      if(filterQueryMapForTopic.containsKey(trigger.getContractAddress())){
-        maybeMatchFilters.add(filterQueryMapForTopic.get(trigger.getContractAddress()));
-      }
-      if(filterQueryMapForTopic.containsKey("") && !trigger.getContractAddress().equals("")){
-        maybeMatchFilters.add(filterQueryMapForTopic.get(""));
-      }
-    }
-    for(List<FilterQuery> maybeMatchFilterList : maybeMatchFilters){
-      for(FilterQuery maybeMatchFilter : maybeMatchFilterList){
-
-        long fromBlockNumber = maybeMatchFilter.getFromBlock();
-        long toBlockNumber = maybeMatchFilter.getToBlock();
-
-        boolean matched = false;
-        if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
-            || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-          logger.error("invalid filter {}: fromBlockNumber: {}, toBlockNumber: {}",
-              maybeMatchFilter.getName(), fromBlockNumber, toBlockNumber);
-          continue;
-        }
-        if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
-          if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-            matched = true;
-          } else {
-            if (blockNumber >= fromBlockNumber) {
-              matched = true;
-            }
+      List<List<FilterQuery>> maybeMatchFilters = new ArrayList<>(4);
+      if (!trigger.getLogInfo().getTopics().isEmpty()) {
+        String topic0 = trigger.getLogInfo().getTopics().get(0).toHexString();
+        if(filterQueryMap.containsKey(topic0)) {
+          Map<String, List<FilterQuery>> filterQueryMapForTopic = filterQueryMap.get(topic0);
+          if (filterQueryMapForTopic.containsKey(trigger.getContractAddress())) {
+            maybeMatchFilters.add(filterQueryMapForTopic.get(trigger.getContractAddress()));
           }
-        } else {
-          if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-            if (blockNumber <= toBlockNumber) {
-              matched = true;
-            }
-          } else {
-            if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
-              matched = true;
-            }
+          if (filterQueryMapForTopic.containsKey("") && !trigger.getContractAddress().equals("")) {
+            maybeMatchFilters.add(filterQueryMapForTopic.get(""));
           }
         }
-        if (matched) {
-          matchedFilterName.add(maybeMatchFilter.getName());
+      }
+      if (filterQueryMap.containsKey("")) {
+        Map<String, List<FilterQuery>> filterQueryMapForTopic = filterQueryMap.get("");
+        if (filterQueryMapForTopic.containsKey(trigger.getContractAddress())) {
+          maybeMatchFilters.add(filterQueryMapForTopic.get(trigger.getContractAddress()));
+        }
+        if (filterQueryMapForTopic.containsKey("") && !trigger.getContractAddress().equals("")) {
+          maybeMatchFilters.add(filterQueryMapForTopic.get(""));
         }
       }
+      for (List<FilterQuery> maybeMatchFilterList : maybeMatchFilters) {
+        for (FilterQuery maybeMatchFilter : maybeMatchFilterList) {
+
+          long fromBlockNumber = maybeMatchFilter.getFromBlock();
+          long toBlockNumber = maybeMatchFilter.getToBlock();
+
+          boolean matched = false;
+          if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
+              || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+            logger.error("invalid filter {}: fromBlockNumber: {}, toBlockNumber: {}",
+                maybeMatchFilter.getName(), fromBlockNumber, toBlockNumber);
+            continue;
+          }
+          if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
+            if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+              matched = true;
+            } else {
+              if (blockNumber >= fromBlockNumber) {
+                matched = true;
+              }
+            }
+          } else {
+            if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+              if (blockNumber <= toBlockNumber) {
+                matched = true;
+              }
+            } else {
+              if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
+                matched = true;
+              }
+            }
+          }
+          if (matched) {
+            matchedFilterName.add(maybeMatchFilter.getName());
+          }
+        }
+      }
+      return new ArrayList<>(matchedFilterName);
+    } catch (Exception e){
+      logger.error("matchFilter failed trigger:{}", trigger, e);
+      return Lists.newArrayList("default");
     }
-    return new ArrayList<>(matchedFilterName);
   }
 
   private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
@@ -573,6 +582,7 @@ public class EventPluginLoader {
       NativeMessageQueue.getInstance()
           .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
     } else {
+      logger.info("postBlockContractLogTrigger {}", trigger.getBlockNumber());
       eventListeners.forEach(listener ->
           listener.handleBlockContractLogTrigger(toJsonString(trigger)));
     }
