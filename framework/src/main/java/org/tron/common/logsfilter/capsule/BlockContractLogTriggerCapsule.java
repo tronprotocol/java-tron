@@ -102,6 +102,7 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
 
   private ContractLogTrigger parseContractTriggerToLogTrigger(ContractTrigger contractTrigger) {
     ContractLogTrigger event = new ContractLogTrigger();
+    event.setTriggerName(null);
     LogInfo logInfo = contractTrigger.getLogInfo();
     event.setTopicList(logInfo.getHexTopics());
     event.setData(logInfo.getHexData());
