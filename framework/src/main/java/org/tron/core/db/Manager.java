@@ -1990,7 +1990,7 @@ public class Manager {
   }
 
   private void postBlockContractLogTrigger(final BlockCapsule blockCapsule) {
-    if (!eventPluginLoaded || !EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
+    if (!eventPluginLoaded || !EventPluginLoader.getInstance().isBlockContractLogTriggerEnable()) {
       return;
     }
     BlockContractLogTriggerCapsule blockContractLogTriggerCapsule =
