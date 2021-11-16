@@ -832,7 +832,7 @@ public class OperationActions {
     // use adjustedCallEnergy instead of requested
     Stack stack = program.getStack();
     DataWord callEnergyWord = stack.get(stack.size() - 1);
-    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    DataWord getEnergyLimitLeft = program.getAdjustedCallEnergy();
     program.stackPop();
     DataWord codeAddress = program.stackPop();
     DataWord value = program.stackPop();
@@ -853,7 +853,7 @@ public class OperationActions {
   public static void callTokenAction(Program program) {
     Stack stack = program.getStack();
     DataWord callEnergyWord = stack.get(stack.size() - 1);
-    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    DataWord getEnergyLimitLeft = program.getAdjustedCallEnergy();
     program.stackPop();
     DataWord codeAddress = program.stackPop();
     DataWord value = program.stackPop();
@@ -878,7 +878,7 @@ public class OperationActions {
   public static void callCodeAction(Program program) {
     Stack stack = program.getStack();
     DataWord callEnergyWord = stack.get(stack.size() - 1);
-    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    DataWord getEnergyLimitLeft = program.getAdjustedCallEnergy();
     program.stackPop();
     DataWord codeAddress = program.stackPop();
     DataWord value = program.stackPop();
@@ -895,7 +895,7 @@ public class OperationActions {
   public static void delegateCallAction(Program program) {
     Stack stack = program.getStack();
     DataWord callEnergyWord = stack.get(stack.size() - 1);
-    DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
+    DataWord getEnergyLimitLeft = program.getAdjustedCallEnergy();
     program.stackPop();
     DataWord codeAddress = program.stackPop();
     DataWord value = DataWord.ZERO;
