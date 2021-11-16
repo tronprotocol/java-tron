@@ -16,6 +16,7 @@ public class NewEnergyCost {
   private static final long LOW_TIER = 5;
   private static final long MID_TIER = 8;
   private static final long HIGH_TIER = 10;
+  private static final long EXT_TIER = 20;
   private static final long SPECIAL_TIER = 1;
 
   private static final long EXP_ENERGY = 10;
@@ -45,6 +46,8 @@ public class NewEnergyCost {
   private static final int CALL_ENERGY = 40;
   private static final int VT_CALL = 9000;
   private static final int STIPEND_CALL = 2300;
+  private static final int EXT_CODE_COPY = 20;
+  private static final int EXT_CODE_HASH = 400;
 
   public static long getZeroTierCost(Program program) {
     return ZERO_TIER;
@@ -67,7 +70,7 @@ public class NewEnergyCost {
   }
 
   public static long getExtTierCost(Program program) {
-    return EXP_ENERGY;
+    return EXT_TIER;
   }
 
   public static long getHighTierrCost(Program program) {
@@ -99,6 +102,74 @@ public class NewEnergyCost {
     energyCost += chunkUsed * SHA3_WORD;
     return energyCost;
   }
+
+  public static long getCodeCopyCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), stack.get(stack.size() - 3)),
+        stack.get(stack.size() - 3).longValueSafe(), "CODECOPY");
+    return energyCost;
+  }
+
+  public static long getReturnDataCopyCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), stack.get(stack.size() - 3)),
+        stack.get(stack.size() - 3).longValueSafe(), "RETURNDATACOPY");
+    return energyCost;
+  }
+
+  public static long getCallDataCopyCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), stack.get(stack.size() - 3)),
+        stack.get(stack.size() - 3).longValueSafe(), "CALLDATACOPY");
+    return energyCost;
+  }
+
+  public static long getExtCodeCopyCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = EXT_CODE_COPY + calcMemEnergy(oldMemSize,
+        memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
+        stack.get(stack.size() - 4).longValueSafe(), "EXTCODECOPY");
+    return energyCost;
+  }
+
+  public static long getExtCodeHashCost(Program program) {
+    return EXT_CODE_HASH;
+  }
+
+  public static long getMloadCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), new DataWord(32)),
+        0, "MLOAD");
+    return energyCost;
+  }
+
+  public static long getMStoreCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), new DataWord(32)),
+        0, "MSTORE");
+    return energyCost;
+  }
+
+  public static long getMStore8Cost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), new DataWord(1)),
+        0, "MSTORE8");
+    return energyCost;
+  }
+
 
   public static long getSloadCost(Program program) {
     return SLOAD;
@@ -310,9 +381,9 @@ public class NewEnergyCost {
     }
     DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
     getEnergyLimitLeft.sub(new DataWord(energyCost));
-    program.setAdjustedCallEnergy(getEnergyLimitLeft);
 
     DataWord adjustedCallEnergy = program.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+    program.setAdjustedCallEnergy(adjustedCallEnergy);
     energyCost += adjustedCallEnergy.longValueSafe();
     return energyCost;
   }

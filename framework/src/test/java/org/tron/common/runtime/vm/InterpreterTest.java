@@ -27,6 +27,9 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.vm.Op;
+import org.tron.core.vm.Operation;
+import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
@@ -64,7 +67,20 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getOpName(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.OutOfEnergyException e) {
       result = true;
@@ -87,7 +103,20 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getOpName(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.StackTooSmallException e) {
       // except to get stack too small exception for Jump
@@ -113,7 +142,20 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getOpName(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.BadJumpDestinationException e) {
       // except to get BadJumpDestinationException for Jump
@@ -140,7 +182,20 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getOpName(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.BadJumpDestinationException e) {
       // except to get BadJumpDestinationException for Jump

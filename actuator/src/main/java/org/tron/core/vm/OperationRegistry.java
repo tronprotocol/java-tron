@@ -70,7 +70,7 @@ public class OperationRegistry {
       operations[Op.CREATE2] = new Operation(0xf5, 4, 1,
           NewEnergyCost::getCreate2Cost, OperationActions::create2Action);
       operations[Op.EXTCODEHASH] = new Operation(0x3f, 1, 1,
-          NewEnergyCost::getExtTierCost, OperationActions::extCodeHashAction);
+          NewEnergyCost::getExtCodeHashCost, OperationActions::extCodeHashAction);
     }
 
     operations[Op.SHA3] = new Operation(0x20, 2, 1,
@@ -90,21 +90,21 @@ public class OperationRegistry {
     operations[Op.CALLDATASIZE] = new Operation(0x36, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::callDataSizeAction);
     operations[Op.CALLDATACOPY] = new Operation(0x37, 3, 0,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::callDataCopyAction);
+        NewEnergyCost::getCallDataCopyCost, OperationActions::callDataCopyAction);
     operations[Op.CODESIZE] = new Operation(0x38, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::codeSizeAction);
     operations[Op.CODECOPY] = new Operation(0x39, 3, 0,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::codeCopyAction);
+        NewEnergyCost::getCodeCopyCost, OperationActions::codeCopyAction);
     operations[Op.RETURNDATASIZE] = new Operation(0x3d, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::returnDataSizeAction);
     operations[Op.RETURNDATACOPY] = new Operation(0x3e, 3, 0,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::returnDataCopyAction);
+        NewEnergyCost::getReturnDataCopyCost, OperationActions::returnDataCopyAction);
     operations[Op.GASPRICE] = new Operation(0x3a, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::gasPriceAction);
     operations[Op.EXTCODESIZE] = new Operation(0x3b, 1, 1,
         NewEnergyCost::getExtTierCost, OperationActions::extCodeSizeAction);
     operations[Op.EXTCODECOPY] = new Operation(0x3c, 4, 0,
-        NewEnergyCost::getExtTierCost, OperationActions::extCodeCopyAction);
+        NewEnergyCost::getExtCodeCopyCost, OperationActions::extCodeCopyAction);
     operations[Op.BLOCKHASH] = new Operation(0x40, 1, 1,
         NewEnergyCost::getExtTierCost, OperationActions::blockHashAction);
     operations[Op.COINBASE] = new Operation(0x41, 0, 1,
@@ -132,11 +132,11 @@ public class OperationRegistry {
     operations[Op.POP] = new Operation(0x50, 1, 0,
         NewEnergyCost::getBaseTierCost, OperationActions::popAction);
     operations[Op.MLOAD] = new Operation(0x51, 1, 1,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::mLoadAction);
+        NewEnergyCost::getMloadCost, OperationActions::mLoadAction);
     operations[Op.MSTORE] = new Operation(0x52, 2, 0,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::mStoreAction);
+        NewEnergyCost::getMStoreCost, OperationActions::mStoreAction);
     operations[Op.MSTORE8] = new Operation(0x53, 2, 0,
-        NewEnergyCost::getVeryLowTierCost, OperationActions::mStore8Action);
+        NewEnergyCost::getMStore8Cost, OperationActions::mStore8Action);
     operations[Op.SLOAD] = new Operation(0x54, 1, 1,
         NewEnergyCost::getSloadCost, OperationActions::sLoadAction);
     operations[Op.SSTORE] = new Operation(0x55, 2, 0,
