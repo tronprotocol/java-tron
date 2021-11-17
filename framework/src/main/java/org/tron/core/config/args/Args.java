@@ -198,6 +198,7 @@ public class Args extends CommonParameter {
     PARAMETER.openTransactionSort = false;
     PARAMETER.allowAccountAssetOptimization = 0;
     PARAMETER.disabledApiList = Collections.emptyList();
+    PARAMETER.improveEvmCompatibility = 0;
   }
 
   /**
@@ -819,6 +820,10 @@ public class Args extends CommonParameter {
             ? config.getStringList(Constant.NODE_DISABLED_API_LIST)
             .stream().map(String::toLowerCase).collect(Collectors.toList())
             : Collections.emptyList();
+
+    PARAMETER.improveEvmCompatibility =
+        config.hasPath(Constant.COMMITTEE_IMPROVE_EVM_COMPATIBILITY) ? config
+            .getInt(Constant.COMMITTEE_IMPROVE_EVM_COMPATIBILITY) : 0;
 
     logConfig();
   }

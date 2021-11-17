@@ -150,8 +150,8 @@ public class TransferActuator extends AbstractActuator {
               "Account type is Contract, but it is not exist in contract store.");
         } else if (contractCapsule.getContractVersion() == 1) {
           throw new ContractValidateException(
-              "Cannot transfer TRX to a smartContract which version is one. " +
-                  "Instead please use TriggerSmartContract ");
+              "Cannot transfer TRX to a smartContract which version is one. "
+                  + "Instead please use TriggerSmartContract ");
         }
       }
 

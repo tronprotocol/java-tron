@@ -30,6 +30,7 @@ public class EnergyCost {
   private final int EXT_CODE_SIZE = 20;
   private final int EXT_CODE_COPY = 20;
   private final int EXT_CODE_HASH = 400;
+  // TODO Why zero?
   private final int NEW_ACCT_SUICIDE = 0;
   private final int FREEZE = 20000;
   private final int UNFREEZE = 20000;

@@ -30,7 +30,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -70,7 +69,6 @@ public class VMActuator implements Actuator2 {
   private InternalTransaction rootInternalTransaction;
   private ProgramInvokeFactory programInvokeFactory;
   private ReceiptCapsule receipt;
-
 
   private VM vm;
   private Program program;
@@ -117,6 +115,22 @@ public class VMActuator implements Actuator2 {
     ConfigLoader.load(context.getStoreFactory());
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
+
+    // after this proposal, check energy limit field
+    if (VMConfig.improveEvmCompatibility()) {
+
+      // two kinds of limit can not be set at the same time
+      if (trx.getRawData().getFeeLimit() > 0 && trx.getRawData().getEnergyLimit() > 0) {
+        throw new ContractValidateException(
+            "FeeLimit and EnergyLimit can not be set at the same time");
+      }
+
+      // check energy limit range ( >= 0 )
+      if (trx.getRawData().getEnergyLimit() < 0) {
+        throw new ContractValidateException("EnergyLimit can not be negative");
+      }
+    }
+
     if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {
       receipt = context.getTrxCap().getTrxTrace().getReceipt();
     }
@@ -544,6 +558,9 @@ public class VMActuator implements Actuator2 {
     long availableEnergy = Math.addExact(leftFrozenEnergy, energyFromBalance);
 
     long energyFromFeeLimit = feeLimit / sunPerEnergy;
+    if (VMConfig.improveEvmCompatibility()) {
+      return min(availableEnergy, max(energyFromFeeLimit, trx.getRawData().getEnergyLimit()));
+    }
     return min(availableEnergy, energyFromFeeLimit);
 
   }

@@ -169,6 +169,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
   private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
       "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
+  private static final byte[] IMPROVE_EVM_COMPATIBILITY = "IMPROVE_EVM_COMPATIBILITY".getBytes();
 
 
   @Autowired
@@ -802,6 +803,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getSetBlackholeAccountPermission();
     } catch (IllegalArgumentException e) {
       this.saveSetBlackholePermission(0);
+    }
+
+    try {
+      this.getImproveEvmCompatibility();
+    } catch (IllegalArgumentException e) {
+      this.saveImproveEvmCompatibility(CommonParameter.getInstance().getImproveEvmCompatibility());
     }
   }
 
@@ -2387,6 +2394,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveSetBlackholePermission(long value) {
     this.put(SET_BLACKHOLE_ACCOUNT_PERMISSION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public void saveImproveEvmCompatibility(long value) {
+    this.put(DynamicPropertiesStore.IMPROVE_EVM_COMPATIBILITY,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getImproveEvmCompatibility() {
+    String msg = "not found IMPROVE_EVM_COMPATIBILITY";
+    return Optional.ofNullable(getUnchecked(IMPROVE_EVM_COMPATIBILITY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
   }
 
   private static class DynamicResourceProperties {
