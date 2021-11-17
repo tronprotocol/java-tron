@@ -55,6 +55,8 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_COMPATIBLE_EVM = false;
 
+  private static boolean IMPROVE_EVM_COMPATIBILITY = false;
+
   private VMConfig() {
   }
 
@@ -114,6 +116,10 @@ public class VMConfig {
     ALLOW_TVM_COMPATIBLE_EVM = allow == 1;
   }
 
+  public static void initImproveEvmCompatibility(long value) {
+    IMPROVE_EVM_COMPATIBILITY = value == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -156,6 +162,10 @@ public class VMConfig {
 
   public static boolean allowTvmCompatibleEvm() {
     return ALLOW_TVM_COMPATIBLE_EVM;
+  }
+
+  public static boolean improveEvmCompatibility() {
+    return IMPROVE_EVM_COMPATIBILITY;
   }
 
   private static class SystemPropertiesInstance {

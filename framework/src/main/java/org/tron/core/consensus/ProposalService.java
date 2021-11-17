@@ -267,9 +267,12 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
           break;
         }
-
         case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
+          break;
+        }
+        case IMPROVE_EVM_COMPATIBILITY: {
+          manager.getDynamicPropertiesStore().saveImproveEvmCompatibility(entry.getValue());
           break;
         }
         default:
