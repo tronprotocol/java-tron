@@ -8,6 +8,8 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -50,12 +52,12 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
     blockContractLogTrigger.setBlockNumber(block.getNum());
     blockContractLogTrigger.setLatestSolidifiedBlockNumber(solidifiedNumber);
     // bloom filter
-    blockContractLogTrigger.setBloomFilterContractAndTopic(BloomFilter.create(Funnels.stringFunnel(
-        Charsets.UTF_8), 80, 0.01));
-    blockContractLogTrigger.setBloomFilterContract(BloomFilter.create(Funnels.stringFunnel(
-        Charsets.UTF_8), 80, 0.01));
-    blockContractLogTrigger.setBloomFilterTopic(BloomFilter.create(Funnels.stringFunnel(
-        Charsets.UTF_8), 80, 0.01));
+    BloomFilter<String> bloomFilterContractAndTopic = BloomFilter.create(Funnels.stringFunnel(
+        Charsets.UTF_8), 80, 0.01);
+    BloomFilter<String> bloomFilterContract = BloomFilter.create(Funnels.stringFunnel(
+        Charsets.UTF_8), 80, 0.01);
+    BloomFilter<String> bloomFilterTopic = BloomFilter.create(Funnels.stringFunnel(
+        Charsets.UTF_8), 80, 0.01);
 
     // get transaction info
     List<BlockContractLogTrigger.TransactionInBlock> transactionInBlockList = new ArrayList<>(block.getTransactions().size());
@@ -79,9 +81,9 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       transactionInBlock.setLogList(logTriggers);
       for (ContractTrigger trigger : contractTriggerCapsuleList) {
         // boomFilter
-        blockContractLogTrigger.getBloomFilterContract().put(trigger.getContractAddress());
-        blockContractLogTrigger.getBloomFilterTopic().put(trigger.getLogInfo().getTopics().get(0).toHexString());
-        blockContractLogTrigger.getBloomFilterContractAndTopic().put(
+        bloomFilterContract.put(trigger.getContractAddress());
+        bloomFilterTopic.put(trigger.getLogInfo().getTopics().get(0).toHexString());
+        bloomFilterContractAndTopic.put(
             trigger.getContractAddress()+trigger.getLogInfo().getTopics().get(0).toHexString());
 
         List<String> filterNames = matchFilter(trigger);
@@ -97,6 +99,18 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       if(!logTriggers.isEmpty()){
         transactionInBlockList.add(transactionInBlock);
       }
+    }
+    try {
+      ByteArrayOutputStream outStreamContract = new ByteArrayOutputStream();
+      ByteArrayOutputStream outStreamTopic = new ByteArrayOutputStream();
+      ByteArrayOutputStream outStreamContractAndTopic = new ByteArrayOutputStream();
+      bloomFilterContract.writeTo(outStreamContract);
+      bloomFilterTopic.writeTo(outStreamTopic);
+      bloomFilterContractAndTopic.writeTo(outStreamContractAndTopic);
+      blockContractLogTrigger.setBloomFilterContract(outStreamContract.toString());
+      blockContractLogTrigger.setBloomFilterContract(bloomFilterTopic.toString());
+      blockContractLogTrigger.setBloomFilterContract(bloomFilterContractAndTopic.toString());
+    } catch (IOException ioE){
     }
   }
 

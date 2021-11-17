@@ -1,6 +1,5 @@
 package org.tron.common.logsfilter.trigger;
 
-import com.google.common.hash.BloomFilter;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -23,15 +22,15 @@ public class BlockContractLogTrigger extends Trigger {
   // BloomFilter for Base58(contractAddress)+Hex(topic0)
   @Getter
   @Setter
-  private BloomFilter<String> bloomFilterContractAndTopic;
+  private String bloomFilterContractAndTopic;
   // BloomFilter for Base58(contractAddress)
   @Getter
   @Setter
-  private BloomFilter<String> bloomFilterContract;
+  private String bloomFilterContract;
   // BloomFilter for Hex(topic0)
   @Getter
   @Setter
-  private BloomFilter<String> bloomFilterTopic;
+  private String bloomFilterTopic;
 
   @Getter
   @Setter
