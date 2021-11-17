@@ -22,15 +22,15 @@ public class BlockContractLogTrigger extends Trigger {
   // BloomFilter for Base58(contractAddress)+Hex(topic0)
   @Getter
   @Setter
-  private String bloomFilterContractAndTopic;
+  private byte[] bloomFilterContractAndTopic;
   // BloomFilter for Base58(contractAddress)
   @Getter
   @Setter
-  private String bloomFilterContract;
+  private byte[] bloomFilterContract;
   // BloomFilter for Hex(topic0)
   @Getter
   @Setter
-  private String bloomFilterTopic;
+  private byte[] bloomFilterTopic;
 
   @Getter
   @Setter

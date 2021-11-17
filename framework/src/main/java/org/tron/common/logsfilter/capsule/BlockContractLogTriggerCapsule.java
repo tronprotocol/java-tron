@@ -107,9 +107,9 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       bloomFilterContract.writeTo(outStreamContract);
       bloomFilterTopic.writeTo(outStreamTopic);
       bloomFilterContractAndTopic.writeTo(outStreamContractAndTopic);
-      blockContractLogTrigger.setBloomFilterContract(outStreamContract.toString());
-      blockContractLogTrigger.setBloomFilterContract(bloomFilterTopic.toString());
-      blockContractLogTrigger.setBloomFilterContract(bloomFilterContractAndTopic.toString());
+      blockContractLogTrigger.setBloomFilterContract(outStreamContract.toByteArray());
+      blockContractLogTrigger.setBloomFilterContract(outStreamTopic.toByteArray());
+      blockContractLogTrigger.setBloomFilterContract(outStreamContractAndTopic.toByteArray());
     } catch (IOException ioE){
     }
   }
