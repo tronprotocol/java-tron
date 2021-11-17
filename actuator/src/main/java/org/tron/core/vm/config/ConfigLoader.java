@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.OperationRegistry;
 
 @Slf4j(topic = "VMConfigLoader")
 public class ConfigLoader {
@@ -30,6 +31,27 @@ public class ConfigLoader {
         VMConfig.initAllowTvmVote(ds.getAllowTvmVote());
         VMConfig.initAllowTvmLondon(ds.getAllowTvmLondon());
         VMConfig.initAllowTvmCompatibleEvm(ds.getAllowTvmCompatibleEvm());
+      }
+      if (VMConfig.allowTvmTransferTrc10()) {
+        OperationRegistry.newAllowTvmTransferTrc10Operation();
+      }
+      if (VMConfig.allowTvmConstantinople()) {
+        OperationRegistry.newAllowTvmConstantinopleOperation();
+      }
+      if (VMConfig.allowTvmSolidity059()) {
+        OperationRegistry.newAllowTvmSolidity059Operation();
+      }
+      if (VMConfig.allowTvmIstanbul()) {
+        OperationRegistry.newAllowTvmIstanbulOperation();
+      }
+      if (VMConfig.allowTvmFreeze()) {
+        OperationRegistry.newAllowTvmFreezeOperation();
+      }
+      if (VMConfig.allowTvmVote()) {
+        OperationRegistry.newAllowTvmVoteOperation();
+      }
+      if (VMConfig.allowTvmLondon()) {
+        OperationRegistry.newAllowTvmLondonOperation();
       }
     }
   }

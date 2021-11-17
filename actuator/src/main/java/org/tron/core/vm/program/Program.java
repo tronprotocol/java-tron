@@ -916,12 +916,6 @@ public class Program {
     if (msg.getOpCode() == (byte) CALLCODE || msg.getOpCode() == (byte) DELEGATECALL) {
       contextAddress = senderAddress;
     }
-    if (logger.isDebugEnabled()) {
-      logger.debug(Integer.toHexString(msg.getOpCode() & 0xff)
-              + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
-          Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(),
-          msg.getOutDataSize().longValue());
-    }
 
     Repository deposit = getContractState().newRepositoryChild();
 
