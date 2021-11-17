@@ -21,33 +21,36 @@ public class NewEnergyCost {
 
   private static final long EXP_ENERGY = 10;
   private static final long EXP_BYTE_ENERGY = 10;
-  private static final int SHA3 = 30;
+  private static final long SHA3 = 30;
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
-  private static final int MEMORY = 3;
-  private static final int COPY_ENERGY = 3;
-  private static final int SHA3_WORD = 6;
-  private static final int SLOAD = 50;
-  private static final int CLEAR_SSTORE = 5000;
-  private static final int SET_SSTORE = 20000;
-  private static final int RESET_SSTORE = 5000;
-  private static final int REFUND_SSTORE = 15000;
-  private static final int LOG_DATA_ENERGY = 8;
-  private static final int LOG_ENERGY = 375;
-  private static final int LOG_TOPIC_ENERGY = 375;
-  private static final int BALANCE = 20;
-  private static final int FREEZE = 20000;
-  private static final int NEW_ACCT_CALL = 25000;
-  private static final int UNFREEZE = 20000;
-  private static final int FREEZE_EXPIRE_TIME = 50;
-  private static final int VOTE_WITNESS = 30000;
-  private static final int WITHDRAW_REWARD = 20000;
-  private static final int CREATE = 32000;
-  private static final int CALL_ENERGY = 40;
-  private static final int VT_CALL = 9000;
-  private static final int STIPEND_CALL = 2300;
-  private static final int EXT_CODE_COPY = 20;
-  private static final int EXT_CODE_HASH = 400;
+  private static final long MEMORY = 3;
+  private static final long COPY_ENERGY = 3;
+  private static final long SHA3_WORD = 6;
+  private static final long SLOAD = 50;
+  private static final long CLEAR_SSTORE = 5000;
+  private static final long SET_SSTORE = 20000;
+  private static final long RESET_SSTORE = 5000;
+  private static final long REFUND_SSTORE = 15000;
+  private static final long LOG_DATA_ENERGY = 8;
+  private static final long LOG_ENERGY = 375;
+  private static final long LOG_TOPIC_ENERGY = 375;
+  private static final long BALANCE = 20;
+  private static final long FREEZE = 20000;
+  private static final long NEW_ACCT_CALL = 25000;
+  private static final long UNFREEZE = 20000;
+  private static final long FREEZE_EXPIRE_TIME = 50;
+  private static final long VOTE_WITNESS = 30000;
+  private static final long WITHDRAW_REWARD = 20000;
+  private static final long CREATE = 32000;
+  private static final long CALL_ENERGY = 40;
+  private static final long VT_CALL = 9000;
+  private static final long STIPEND_CALL = 2300;
+  private static final long EXT_CODE_COPY = 20;
+  private static final long EXT_CODE_SIZE = 20;
+  private static final long EXT_CODE_HASH = 400;
+  private static final long SUICIDE = 0;
+  private static final long STOP = 0;
 
   public static long getZeroTierCost(Program program) {
     return ZERO_TIER;
@@ -90,6 +93,10 @@ public class NewEnergyCost {
     DataWord exp = stack.get(stack.size() - 2);
     int bytesOccupied = exp.bytesOccupied();
     return EXP_ENERGY  + EXP_BYTE_ENERGY * bytesOccupied;
+  }
+
+  public static long getExtCodeSizeCost(Program program) {
+     return EXT_CODE_SIZE;
   }
 
   public static long getSha3Cost(Program program) {
@@ -170,9 +177,24 @@ public class NewEnergyCost {
     return energyCost;
   }
 
-
   public static long getSloadCost(Program program) {
     return SLOAD;
+  }
+
+  public static long getReturnCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = STOP + calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, "RETURN");
+    return energyCost;
+  }
+
+  public static long getRevertCost(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    long energyCost = STOP + calcMemEnergy(oldMemSize,
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, "REVERT");
+    return energyCost;
   }
 
   public static long getSstoreCost(Program program) {
@@ -217,6 +239,10 @@ public class NewEnergyCost {
 
     checkMemorySize("LOG" + nTopics, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
     return energyCost;
+  }
+
+  public static long getSuicideCost(Program program) {
+    return SUICIDE;
   }
 
   public static long getBalanceCost(Program program) {
@@ -272,9 +298,10 @@ public class NewEnergyCost {
   public static long getCreateCost(Program program) {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
-    return CREATE + calcMemEnergy(oldMemSize,
+    long energyCost = CREATE + calcMemEnergy(oldMemSize,
         memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)),
         0, "create");
+    return energyCost;
   }
 
   public static long getCreate2Cost(Program program) {
@@ -310,22 +337,14 @@ public class NewEnergyCost {
   public static long getStaticCallCost(Program program) {
     Stack stack = program.getStack();
     long energyCost = CALL_ENERGY;
-    DataWord value = DataWord.ZERO;
     int opOff = 3;
-    if (!value.isZero()) {
-      energyCost += VT_CALL;
-    }
     return getCalculateCallCost(stack, program, energyCost, opOff);
   }
 
   public static long getDelegateCallCost(Program program) {
     Stack stack = program.getStack();
     long energyCost = CALL_ENERGY;
-    DataWord value = DataWord.ZERO;
     int opOff = 3;
-    if (!value.isZero()) {
-      energyCost += VT_CALL;
-    }
     return getCalculateCallCost(stack, program, energyCost, opOff);
   }
 

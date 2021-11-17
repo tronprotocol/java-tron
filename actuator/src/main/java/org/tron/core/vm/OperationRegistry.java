@@ -86,7 +86,7 @@ public class OperationRegistry {
     operations[Op.GASPRICE] = new Operation(0x3a, 0, 1,
         NewEnergyCost::getBaseTierCost, OperationActions::gasPriceAction);
     operations[Op.EXTCODESIZE] = new Operation(0x3b, 1, 1,
-        NewEnergyCost::getExtTierCost, OperationActions::extCodeSizeAction);
+        NewEnergyCost::getExtCodeSizeCost, OperationActions::extCodeSizeAction);
     operations[Op.EXTCODECOPY] = new Operation(0x3c, 4, 0,
         NewEnergyCost::getExtCodeCopyCost, OperationActions::extCodeCopyAction);
     operations[Op.BLOCKHASH] = new Operation(0x40, 1, 1,
@@ -150,15 +150,15 @@ public class OperationRegistry {
     operations[Op.CALLCODE] = new Operation(0xf2, 7, 1,
         NewEnergyCost::getCallCodeCost, OperationActions::callCodeAction);
     operations[Op.RETURN] = new Operation(0xf3, 2, 0,
-        NewEnergyCost::getZeroTierCost, OperationActions::returnAction);
+        NewEnergyCost::getReturnCost, OperationActions::returnAction);
     operations[Op.DELEGATECALL] = new Operation(0xf4, 6, 1,
         NewEnergyCost::getDelegateCallCost, OperationActions::delegateCallAction);
     operations[Op.STATICCALL] = new Operation(0xfa, 6, 1,
         NewEnergyCost::getStaticCallCost, OperationActions::staticCallAction);
     operations[Op.REVERT] = new Operation(0xfd, 2, 0,
-        NewEnergyCost::getZeroTierCost, OperationActions::revertAction);
+        NewEnergyCost::getRevertCost, OperationActions::revertAction);
     operations[Op.SUICIDE] = new Operation(0xff, 1, 0,
-        NewEnergyCost::getZeroTierCost, OperationActions::suicideAction);
+        NewEnergyCost::getSuicideCost, OperationActions::suicideAction);
   }
 
   public static void newAllowTvmTransferTrc10Operation() {

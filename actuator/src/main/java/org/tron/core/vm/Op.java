@@ -254,6 +254,7 @@ public class Op {
   public static final int SUICIDE = 0xff;
 
   private static final String[] OpName = new String[256];
+
   static {
     Field[] fields = Op.class.getDeclaredFields();
     for (Field field : fields) {
