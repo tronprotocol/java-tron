@@ -52,6 +52,7 @@ public class ContractTrc1155 {
   String txid = null;
   byte[] trc1155AddressByte = null;
   /** constructor. */
+
   @BeforeSuite
   public void beforeSuite() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
