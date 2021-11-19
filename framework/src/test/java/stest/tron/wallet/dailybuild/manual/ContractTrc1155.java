@@ -69,131 +69,6 @@ public class ContractTrc1155 {
     deployNoHolder();
   }
 
-  /** constructor. */
-  public void deployTrc1155() throws Exception {
-    Assert.assertTrue(
-        PublicMethed.sendcoin(
-            ownerAddressByte, 500000000000L, fromAddress, testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName = "IssueCoins";
-    String filePath = "./src/test/resources/soliditycode/contractTrc1155.sol";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    int deploySuccessFlag = 1;
-    Integer retryTimes = 5;
-
-    while (retryTimes-- > 0 && deploySuccessFlag != 0) {
-      String txid =
-          PublicMethed.deployContractAndGetTransactionInfoById(
-              contractName,
-              abi,
-              code,
-              "",
-              maxFeeLimit,
-              0L,
-              100,
-              null,
-              ownerKey,
-              ownerAddressByte,
-              blockingStubFull);
-
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-      logger.info("Deploy IssueCoins txid:" + txid);
-      Optional<Protocol.TransactionInfo> infoById =
-          PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-      com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
-      SmartContractOuterClass.SmartContract smartContract =
-          PublicMethed.getContract(contractAddress.toByteArray(), blockingStubFull);
-      logger.info("smartContract:" + smartContract);
-      trc1155AddressByte = contractAddress.toByteArray();
-      ownerAddressString = WalletClient.encode58Check(ownerAddressByte);
-      logger.info("trc1155AddressByte:" + trc1155AddressByte);
-      logger.info("ownerAddressString:" + ownerAddressString);
-      deploySuccessFlag = infoById.get().getResult().getNumber();
-    }
-
-    Assert.assertEquals(deploySuccessFlag, 0);
-  }
-
-  /** constructor. */
-  public void deployHolder() throws Exception {
-    String contractName = "MyContractCanReceiver";
-    String filePath = "./src/test/resources/soliditycode/contractTrc1155.sol";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    String txid =
-        PublicMethed.deployContractAndGetTransactionInfoById(
-            contractName,
-            abi,
-            code,
-            "",
-            maxFeeLimit,
-            0L,
-            100,
-            null,
-            ownerKey,
-            ownerAddressByte,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    logger.info("Deploy IssueCoins txid:" + txid);
-    Optional<Protocol.TransactionInfo> infoById =
-        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
-    SmartContractOuterClass.SmartContract smartContract =
-        PublicMethed.getContract(contractAddress.toByteArray(), blockingStubFull);
-
-    holderAddressString = WalletClient.encode58Check(contractAddress.toByteArray());
-
-    logger.info("HolderAddress:" + holderAddressString);
-    Assert.assertTrue(smartContract.getAbi() != null);
-    Assert.assertEquals(infoById.get().getResult().getNumber(), 0);
-  }
-
-  /** constructor. */
-  public void deployNoHolder() throws Exception {
-    String contractName = "MyContractCanNotReceiver";
-    String filePath = "./src/test/resources/soliditycode/contractTrc1155.sol";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    String txid =
-        PublicMethed.deployContractAndGetTransactionInfoById(
-            contractName,
-            abi,
-            code,
-            "",
-            maxFeeLimit,
-            0L,
-            100,
-            null,
-            ownerKey,
-            ownerAddressByte,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    logger.info("Deploy IssueCoins txid:" + txid);
-    Optional<Protocol.TransactionInfo> infoById =
-        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
-    SmartContractOuterClass.SmartContract smartContract =
-        PublicMethed.getContract(contractAddress.toByteArray(), blockingStubFull);
-
-    noHolderAddress = WalletClient.encode58Check(contractAddress.toByteArray());
-    logger.info("NoHolderAddress:" + noHolderAddress);
-    Assert.assertTrue(smartContract.getAbi() != null);
-    Assert.assertEquals(infoById.get().getResult().getNumber(), 0);
-  }
-
   @Test(enabled = true, description = "Trigger Trc1155  balanceOf method ")
   public void test01triggerTrc1155BalanceOfMethod() {
     int coinType = 3;
@@ -316,7 +191,6 @@ public class ContractTrc1155 {
     Optional<Protocol.Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     String s = ByteArray.toHexString(byId.get().getRawData().getContract(0).toByteArray());
     Assert.assertTrue(s.contains(bytes));
-
 
     List<Object> parameters3 = Arrays.asList(ownerAddressString, coinType);
     data = PublicMethed.parametersString(parameters3);
@@ -772,6 +646,131 @@ public class ContractTrc1155 {
     Assert.assertEquals(0, Long.parseLong(hexBalance.substring(320, 384), 16));
     Assert.assertEquals(0, Long.parseLong(hexBalance.substring(384, 448), 16));
     Assert.assertEquals(0, Long.parseLong(hexBalance.substring(448, 512), 16));
+  }
+
+  /** constructor. */
+  public void deployTrc1155() throws Exception {
+    Assert.assertTrue(
+        PublicMethed.sendcoin(
+            ownerAddressByte, 500000000000L, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String contractName = "TronCoins";
+    String filePath = "./src/test/resources/soliditycode/contractTrc1155.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    int deploySuccessFlag = 1;
+    Integer retryTimes = 5;
+
+    while (retryTimes-- > 0 && deploySuccessFlag != 0) {
+      String txid =
+          PublicMethed.deployContractAndGetTransactionInfoById(
+              contractName,
+              abi,
+              code,
+              "",
+              maxFeeLimit,
+              0L,
+              100,
+              null,
+              ownerKey,
+              ownerAddressByte,
+              blockingStubFull);
+
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+      logger.info("Deploy IssueCoins txid:" + txid);
+      Optional<Protocol.TransactionInfo> infoById =
+          PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
+      SmartContractOuterClass.SmartContract smartContract =
+          PublicMethed.getContract(contractAddress.toByteArray(), blockingStubFull);
+      logger.info("smartContract:" + smartContract);
+      trc1155AddressByte = contractAddress.toByteArray();
+      ownerAddressString = WalletClient.encode58Check(ownerAddressByte);
+      logger.info("trc1155AddressByte:" + trc1155AddressByte);
+      logger.info("ownerAddressString:" + ownerAddressString);
+      deploySuccessFlag = infoById.get().getResult().getNumber();
+    }
+
+    Assert.assertEquals(deploySuccessFlag, 0);
+  }
+
+  /** constructor. */
+  public void deployHolder() throws Exception {
+    String contractName = "MyContractCanReceiver";
+    String filePath = "./src/test/resources/soliditycode/contractTrc1155.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    String txid =
+        PublicMethed.deployContractAndGetTransactionInfoById(
+            contractName,
+            abi,
+            code,
+            "",
+            maxFeeLimit,
+            0L,
+            100,
+            null,
+            ownerKey,
+            ownerAddressByte,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    logger.info("Deploy IssueCoins txid:" + txid);
+    Optional<Protocol.TransactionInfo> infoById =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
+    SmartContractOuterClass.SmartContract smartContract =
+        PublicMethed.getContract(contractAddress.toByteArray(), blockingStubFull);
+
+    holderAddressString = WalletClient.encode58Check(contractAddress.toByteArray());
+
+    logger.info("HolderAddress:" + holderAddressString);
+    Assert.assertTrue(smartContract.getAbi() != null);
+    Assert.assertEquals(infoById.get().getResult().getNumber(), 0);
+  }
+
+  /** constructor. */
+  public void deployNoHolder() throws Exception {
+    String contractName = "MyContractCanNotReceiver";
+    String filePath = "./src/test/resources/soliditycode/contractTrc1155.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    String txid =
+        PublicMethed.deployContractAndGetTransactionInfoById(
+            contractName,
+            abi,
+            code,
+            "",
+            maxFeeLimit,
+            0L,
+            100,
+            null,
+            ownerKey,
+            ownerAddressByte,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    logger.info("Deploy IssueCoins txid:" + txid);
+    Optional<Protocol.TransactionInfo> infoById =
+        PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
+    SmartContractOuterClass.SmartContract smartContract =
+        PublicMethed.getContract(contractAddress.toByteArray(), blockingStubFull);
+
+    noHolderAddress = WalletClient.encode58Check(contractAddress.toByteArray());
+    logger.info("NoHolderAddress:" + noHolderAddress);
+    Assert.assertTrue(smartContract.getAbi() != null);
+    Assert.assertEquals(infoById.get().getResult().getNumber(), 0);
   }
 
   /** constructor. */

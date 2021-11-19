@@ -551,7 +551,7 @@ contract ERC1155 is Context, ERC165, IERC1155, IERC1155MetadataURI {
 }
 
 
-contract IssueCoins is ERC1155 {
+contract TronCoins is ERC1155 {
     uint256 public constant TRX = 0;
     uint256 public constant BTT = 1;
     uint256 public constant WIN = 2;

@@ -229,7 +229,7 @@ public class ScanBlockTools {
             transaction.getRawData().toByteArray()));
         //String writeData = ByteArray.toHexString(Sha256Hash.hash(true,
         // transaction.getRawData().toByteArray()));
-        createRosettaApiCsvData.writeDataToCsvFile("txid-stressss.csv",txid);
+        writeDataToCsvFile("txid-stressss.csv",txid);
         //System.out.println("Fee:" + PublicMethed.getTransactionInfoById(txid,
         // blockingStubFull).get().getFee());
       }
@@ -242,7 +242,7 @@ public class ScanBlockTools {
           String writeData = ByteArray.toHexString(Sha256Hash.hash(true,
               transaction.getRawData().toByteArray()));
           logger.info(writeData);
-          createRosettaApiCsvData.writeDataToCsvFile("28164160L-28167324L.csv",writeData);
+          writeDataToCsvFile("28164160L-28167324L.csv",writeData);
         }
       }
       endNum--;
@@ -471,7 +471,7 @@ public class ScanBlockTools {
 
   private static AtomicLong blockNum = new AtomicLong(30000523L - 20000L);
   private static AtomicLong times = new AtomicLong(5);
-  
+
   @Test(enabled = true, threadPoolSize = 10, invocationCount = 10)
   public void test06ScanMainNetMostActiveAccounts() throws Exception {
     getNowAddressList();
@@ -518,7 +518,7 @@ public class ScanBlockTools {
               isExist(triggerSmartContract.getOwnerAddress());
               break;
             case 13:
-              WithdrawBalanceContract withdrawBalanceContract 
+              WithdrawBalanceContract withdrawBalanceContract
                   = any.unpack(WithdrawBalanceContract.class);
 
               isExist(withdrawBalanceContract.getOwnerAddress());
@@ -533,7 +533,7 @@ public class ScanBlockTools {
               isExist(accountCreateContract.getAccountAddress());
               break;
             case 12:
-              UnfreezeBalanceContract unfreezeBalanceContract 
+              UnfreezeBalanceContract unfreezeBalanceContract
                   = any.unpack(UnfreezeBalanceContract.class);
               isExist(unfreezeBalanceContract.getOwnerAddress());
               break;
@@ -542,7 +542,7 @@ public class ScanBlockTools {
               isExist(createSmartContract.getOwnerAddress());
               break;
             case 46:
-              AccountPermissionUpdateContract accountPermissionUpdateContract 
+              AccountPermissionUpdateContract accountPermissionUpdateContract
                   = any.unpack(AccountPermissionUpdateContract.class);
               isExist(accountPermissionUpdateContract.getOwnerAddress());
               break;
