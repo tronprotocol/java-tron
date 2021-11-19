@@ -52,7 +52,6 @@ public class ContractTrc1155 {
   String txid = null;
   byte[] trc1155AddressByte = null;
   /** constructor. */
-
   @BeforeSuite
   public void beforeSuite() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
@@ -69,7 +68,7 @@ public class ContractTrc1155 {
     deployNoHolder();
   }
 
-  @Test(enabled = true, description = "Trigger Trc1155  balanceOf method ")
+  @Test(enabled = true, description = "Trigger Trc1155 balanceOf method")
   public void test01triggerTrc1155BalanceOfMethod() {
     int coinType = 3;
     List<Object> parameters = Arrays.asList(ownerAddressString, coinType);
@@ -89,14 +88,13 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String hexBalance = Hex.toHexString(transactionExtention.getConstantResult(0).toByteArray());
     long result = Long.parseLong(hexBalance, 16);
     Assert.assertEquals((long) Math.pow(10, 4), result);
   }
 
-  @Test(enabled = true, description = "Trigger Trc1155  balanceOfBatch method ")
-  public void test02triggerTrc1155BalanceOfMethod() {
+  @Test(enabled = true, description = "Trigger Trc1155 balanceOfBatch method")
+  public void test02triggerTrc1155BalanceOfBatchMethod() {
     List<Object> address =
         Stream.of(
                 ownerAddressString,
@@ -123,7 +121,6 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String hexBalance = Hex.toHexString(transactionExtention1.getConstantResult(0).toByteArray());
     logger.info("hexBalance:" + hexBalance);
     final long trxAmount = (long) Math.pow(10, 3);
@@ -164,7 +161,6 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String hexBalance = Hex.toHexString(transactionExtention.getConstantResult(0).toByteArray());
     long result = Long.parseLong(hexBalance, 16);
     Assert.assertEquals((long) Math.pow(10, 4), result);
@@ -208,7 +204,6 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     hexBalance = Hex.toHexString(transactionExtention3.getConstantResult(0).toByteArray());
     result = Long.parseLong(hexBalance, 16);
     Assert.assertEquals((long) Math.pow(10, 4) - coinAmount, result);
@@ -217,7 +212,7 @@ public class ContractTrc1155 {
     data = PublicMethed.parametersString(parameters);
 
     logger.info("data2:" + data);
-    GrpcAPI.TransactionExtention transactionExtention1 =
+    transactionExtention =
         PublicMethed.triggerConstantContractForExtention(
             trc1155AddressByte,
             "balanceOf(address,uint256)",
@@ -230,13 +225,12 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    hexBalance = Hex.toHexString(transactionExtention1.getConstantResult(0).toByteArray());
+    hexBalance = Hex.toHexString(transactionExtention.getConstantResult(0).toByteArray());
     result = Long.parseLong(hexBalance, 16);
     Assert.assertEquals(coinAmount, result);
   }
 
-  @Test(enabled = true, description = "trigger Trc1155 function of SafeBatchTransferFrom function")
+  @Test(enabled = true, description = "trigger Trc1155 SafeBatchTransferFrom function")
   public void test04triggerTrc1155SafeBatchTransferFromFunction() {
 
     ECKey ecKey4 = new ECKey(Utils.getRandom());
@@ -294,7 +288,6 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String hexBalance = Hex.toHexString(transactionExtention.getConstantResult(0).toByteArray());
     logger.info("hexBalance:" + hexBalance);
     Assert.assertEquals(
@@ -308,7 +301,13 @@ public class ContractTrc1155 {
     Assert.assertEquals(0, Long.parseLong(hexBalance.substring(448, 512), 16));
 
     address =
-        Stream.of(sendAddress, sendAddress, sendAddress, sendAddress, sendAddress, sendAddress)
+        Stream.of(
+                sendAddress,
+                sendAddress,
+                ownerAddressString,
+                ownerAddressString,
+                ownerAddressString,
+                sendAddress)
             .collect(Collectors.toList());
     coinType = Stream.of(0, 1, 2, 3, 4, 5).collect(Collectors.toList());
     parameters = Arrays.asList(address, coinType);
@@ -328,14 +327,13 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     hexBalance = Hex.toHexString(transactionExtention.getConstantResult(0).toByteArray());
-
     Assert.assertEquals(50, Long.parseLong(hexBalance.substring(128, 192), 16));
     Assert.assertEquals(10, Long.parseLong(hexBalance.substring(192, 256), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(256, 320), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(320, 384), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(384, 448), 16));
+    Assert.assertEquals((long) Math.pow(10, 5), Long.parseLong(hexBalance.substring(256, 320), 16));
+    Assert.assertEquals(
+        (long) Math.pow(10, 4) - 2, Long.parseLong(hexBalance.substring(320, 384), 16));
+    Assert.assertEquals(1, Long.parseLong(hexBalance.substring(384, 448), 16));
     Assert.assertEquals(1, Long.parseLong(hexBalance.substring(448, 512), 16));
   }
 
@@ -490,7 +488,6 @@ public class ContractTrc1155 {
             ownerAddressByte,
             ownerKey,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String hexBalance = Hex.toHexString(transactionExtention.getConstantResult(0).toByteArray());
     Assert.assertEquals(trxAmount + 10, Long.parseLong(hexBalance.substring(128, 192), 16));
     Assert.assertEquals(bttAmount, Long.parseLong(hexBalance.substring(192, 256), 16));
@@ -500,8 +497,8 @@ public class ContractTrc1155 {
     Assert.assertEquals(0, Long.parseLong(hexBalance.substring(448, 512), 16));
   }
 
-  @Test(enabled = true, description = "None trc1155Holder can't receive trc1155")
-  public void test07NoneTrc1155HolderCanNotReceiveTrc1155() {
+  @Test(enabled = true, description = "Non-trc1155Holder can not receive trc1155")
+  public void test07NonTrc1155HolderCanNotReceiveTrc1155() {
     List<Object> parameters = Arrays.asList(noHolderAddress, true);
     String data = PublicMethed.parametersString(parameters);
     logger.info("data:" + data);
@@ -560,92 +557,6 @@ public class ContractTrc1155 {
     String hexBalance = Hex.toHexString(transactionExtention1.getConstantResult(0).toByteArray());
     long result = Long.parseLong(hexBalance, 16);
     Assert.assertEquals(0, result);
-  }
-
-  @Test(enabled = true, description = "None trc1155Holder can't receive trc1155")
-  public void test08NoneTrc1155HolderCanNotReceiveTrc1155_01() {
-    List<Object> parameters = Arrays.asList(noHolderAddress, true);
-    String data = PublicMethed.parametersString(parameters);
-    logger.info("data:" + data);
-    txid =
-        PublicMethed.triggerContract(
-            trc1155AddressByte,
-            "setApprovalForAll(address,bool)",
-            data,
-            false,
-            0,
-            maxFeeLimit,
-            ownerAddressByte,
-            ownerKey,
-            blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    logger.info("setApprovalForAll_txid:" + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("infobyid : --- " + infoById);
-    int trxAmount = 50;
-    int bttAmount = 30;
-    int winAmount = 25;
-    int sunAmount = 10;
-    int apenftAmount = 1;
-    List<Object> coinType = Stream.of(0, 1, 2, 3, 4).collect(Collectors.toList());
-    List<Object> coinAmount =
-        Stream.of(trxAmount, bttAmount, winAmount, sunAmount, apenftAmount)
-            .collect(Collectors.toList());
-    String bytes = "0000000000000000000000000000000000e6b58be8af95e5ad97e7aca6e4b8b2";
-    parameters = Arrays.asList(ownerAddressString, noHolderAddress, coinType, coinAmount, bytes);
-    data = PublicMethed.parametersString(parameters);
-    logger.info("data1:" + data);
-    txid =
-        PublicMethed.triggerContract(
-            trc1155AddressByte,
-            "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
-            data,
-            false,
-            0,
-            maxFeeLimit,
-            ownerAddressByte,
-            ownerKey,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    logger.info("safeBatchTransferFrom_txid:" + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("infobyid1 : --- " + infoById);
-
-    List<Object> address =
-        Stream.of(
-                noHolderAddress,
-                noHolderAddress,
-                noHolderAddress,
-                noHolderAddress,
-                noHolderAddress,
-                noHolderAddress)
-            .collect(Collectors.toList());
-    List<Integer> coinType1 = Stream.of(0, 1, 2, 3, 4, 5).collect(Collectors.toList());
-    parameters = Arrays.asList(address, coinType1);
-    data = PublicMethed.parametersString(parameters);
-    logger.info("data2:" + data);
-    GrpcAPI.TransactionExtention transactionExtention1 =
-        PublicMethed.triggerConstantContractForExtention(
-            trc1155AddressByte,
-            "balanceOfBatch(address[],uint256[])",
-            data,
-            false,
-            0,
-            0,
-            "0",
-            0,
-            ownerAddressByte,
-            ownerKey,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String hexBalance = Hex.toHexString(transactionExtention1.getConstantResult(0).toByteArray());
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(128, 192), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(192, 256), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(256, 320), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(320, 384), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(384, 448), 16));
-    Assert.assertEquals(0, Long.parseLong(hexBalance.substring(448, 512), 16));
   }
 
   /** constructor. */
