@@ -594,7 +594,7 @@ public class EventPluginLoader {
     try {
       jsonData = objectMapper.writeValueAsString(data);
     } catch (JsonProcessingException e) {
-      logger.error("'{}'", e);
+      logger.error("toJsonString error {}", data, e);
     }
 
     return jsonData;
