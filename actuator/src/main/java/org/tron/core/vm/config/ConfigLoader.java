@@ -16,7 +16,9 @@ public class ConfigLoader {
   public static boolean disable = false;
 
   public static void load(StoreFactory storeFactory) {
-    if (!disable) {
+    if (disable) {
+      OperationRegistry.clearOperations();
+    } else {
       DynamicPropertiesStore ds = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
       VMConfig.setVmTrace(CommonParameter.getInstance().isVmTrace());
       if (ds != null) {
@@ -33,27 +35,35 @@ public class ConfigLoader {
         VMConfig.initAllowTvmCompatibleEvm(ds.getAllowTvmCompatibleEvm());
         VMConfig.initImproveEvmCompatibility(ds.getImproveEvmCompatibility());
       }
-      if (VMConfig.allowTvmTransferTrc10()) {
-        OperationRegistry.newAllowTvmTransferTrc10Operation();
-      }
-      if (VMConfig.allowTvmConstantinople()) {
-        OperationRegistry.newAllowTvmConstantinopleOperation();
-      }
-      if (VMConfig.allowTvmSolidity059()) {
-        OperationRegistry.newAllowTvmSolidity059Operation();
-      }
-      if (VMConfig.allowTvmIstanbul()) {
-        OperationRegistry.newAllowTvmIstanbulOperation();
-      }
-      if (VMConfig.allowTvmFreeze()) {
-        OperationRegistry.newAllowTvmFreezeOperation();
-      }
-      if (VMConfig.allowTvmVote()) {
-        OperationRegistry.newAllowTvmVoteOperation();
-      }
-      if (VMConfig.allowTvmLondon()) {
-        OperationRegistry.newAllowTvmLondonOperation();
-      }
+    }
+    OperationRegistry.newBaseOperation();
+
+    if (VMConfig.allowTvmTransferTrc10()) {
+      OperationRegistry.newAllowTvmTransferTrc10Operation();
+    }
+
+    if (VMConfig.allowTvmConstantinople()) {
+      OperationRegistry.newAllowTvmConstantinopleOperation();
+    }
+
+    if (VMConfig.allowTvmSolidity059()) {
+      OperationRegistry.newAllowTvmSolidity059Operation();
+    }
+
+    if (VMConfig.allowTvmIstanbul()) {
+      OperationRegistry.newAllowTvmIstanbulOperation();
+    }
+
+    if (VMConfig.allowTvmFreeze()) {
+      OperationRegistry.newAllowTvmFreezeOperation();
+    }
+
+    if (VMConfig.allowTvmVote()) {
+      OperationRegistry.newAllowTvmVoteOperation();
+    }
+
+    if (VMConfig.allowTvmLondon()) {
+      OperationRegistry.newAllowTvmLondonOperation();
     }
   }
 }

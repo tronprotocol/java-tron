@@ -645,7 +645,7 @@ public class OperationActions {
   }
 
   public static void pushAction(Program program) {
-    int n = program.getCurrentOp() - 0x60 + 1;
+    int n = program.getCurrentOpIntValue() - Op.PUSH1 + 1;
     program.step();
     byte[] data = program.sweep(n);
 
@@ -654,7 +654,7 @@ public class OperationActions {
 
   public static void dupAction(Program program) {
     Stack stack = program.getStack();
-    int n = (program.getCurrentOp() & 0xff) - 0x80 + 1;
+    int n = program.getCurrentOpIntValue() - Op.DUP1 + 1;
     DataWord word_1 = stack.get(stack.size() - n);
 
     program.stackPush(word_1.clone());
@@ -663,7 +663,7 @@ public class OperationActions {
 
   public static void swapAction(Program program) {
     Stack stack = program.getStack();
-    int n = (program.getCurrentOp() & 0xff) - 0x90 + 2;
+    int n = program.getCurrentOpIntValue() - Op.SWAP1 + 2;
     stack.swap(stack.size() - 1, stack.size() - n);
 
     program.step();
@@ -679,7 +679,7 @@ public class OperationActions {
     DataWord memStart = stack.pop();
     DataWord memOffset = stack.pop();
 
-    int nTopics = (program.getCurrentOp() & 0xff) - 0xa0;
+    int nTopics = program.getCurrentOpIntValue() - Op.LOG0;
 
     List<DataWord> topics = new ArrayList<>();
     for (int i = 0; i < nTopics; ++i) {
@@ -931,7 +931,7 @@ public class OperationActions {
     DataWord outDataSize = program.stackPop();
 
     program.memoryExpand(outDataOffs, outDataSize);
-    byte op = program.getCurrentOp();
+    int op = program.getCurrentOpIntValue();
     MessageCall msg = new MessageCall(
         op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
         outDataOffs, outDataSize, tokenId, isTokenTransferMsg);

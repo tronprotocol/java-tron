@@ -1280,19 +1280,34 @@ public class VM {
       }
 
       while (!program.isStopped()) {
-        Operation op = OperationRegistry.get(program.getCurrentOp());
-        if (op == null) {
-          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        if (VMConfig.vmTrace()) {
+          program.saveOpTrace();
         }
-        program.setLastOp((byte) op.getOpcode());
-        program.verifyStackSize(op.getRequire());
-        //Check not exceeding stack limits
-        program.verifyStackOverflow(op.getRequire(), op.getRet());
+        try {
+          Operation op = OperationRegistry.get(program.getCurrentOpIntValue());
+          if (op == null) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
+          program.setLastOp((byte) op.getOpcode());
+          program.verifyStackSize(op.getRequire());
+          //Check not exceeding stack limits
+          program.verifyStackOverflow(op.getRequire(), op.getRet());
 
-        program.spendEnergy(op.getEnergyCost(program), Op.getOpName(op.getOpcode()));
-        program.checkCPUTimeLimit(Op.getOpName(op.getOpcode()));
-        op.execute(program);
-        program.setPreviouslyExecutedOp((byte) op.getOpcode());
+          program.spendEnergy(op.getEnergyCost(program), Op.getNameOf(op.getOpcode()));
+          program.checkCPUTimeLimit(Op.getNameOf(op.getOpcode()));
+          op.execute(program);
+          program.setPreviouslyExecutedOp((byte) op.getOpcode());
+        } catch (RuntimeException e) {
+          logger.info("VM halted: [{}]", e.getMessage());
+          if (!(e instanceof TransferException)) {
+            program.spendAllEnergy();
+          }
+          program.resetFutureRefund();
+          program.stop();
+          throw e;
+        } finally {
+          program.fullTrace();
+        }
       }
 
     } catch (JVMStackOverFlowException | OutOfTimeException e) {

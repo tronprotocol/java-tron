@@ -76,7 +76,7 @@ public class NewEnergyCost {
     return EXT_TIER;
   }
 
-  public static long getHighTierrCost(Program program) {
+  public static long getHighTierCost(Program program) {
     return HIGH_TIER;
   }
 
@@ -103,7 +103,7 @@ public class NewEnergyCost {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     long energyCost = SHA3 + calcMemEnergy(oldMemSize,
-        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, "SHA3");
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, Op.SHA3);
     DataWord size = stack.get(stack.size() - 2);
     long chunkUsed = (size.longValueSafe() + 31) / 32;
     energyCost += chunkUsed * SHA3_WORD;
@@ -115,7 +115,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), stack.get(stack.size() - 3)),
-        stack.get(stack.size() - 3).longValueSafe(), "CODECOPY");
+        stack.get(stack.size() - 3).longValueSafe(), Op.CODECOPY);
     return energyCost;
   }
 
@@ -124,7 +124,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), stack.get(stack.size() - 3)),
-        stack.get(stack.size() - 3).longValueSafe(), "RETURNDATACOPY");
+        stack.get(stack.size() - 3).longValueSafe(), Op.RETURNDATACOPY);
     return energyCost;
   }
 
@@ -133,7 +133,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), stack.get(stack.size() - 3)),
-        stack.get(stack.size() - 3).longValueSafe(), "CALLDATACOPY");
+        stack.get(stack.size() - 3).longValueSafe(), Op.CALLDATACOPY);
     return energyCost;
   }
 
@@ -142,7 +142,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = EXT_CODE_COPY + calcMemEnergy(oldMemSize,
         memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
-        stack.get(stack.size() - 4).longValueSafe(), "EXTCODECOPY");
+        stack.get(stack.size() - 4).longValueSafe(), Op.EXTCODECOPY);
     return energyCost;
   }
 
@@ -155,7 +155,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), new DataWord(32)),
-        0, "MLOAD");
+        0, Op.MLOAD);
     return energyCost;
   }
 
@@ -164,7 +164,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), new DataWord(32)),
-        0, "MSTORE");
+        0, Op.MSTORE);
     return energyCost;
   }
 
@@ -173,7 +173,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), new DataWord(1)),
-        0, "MSTORE8");
+        0, Op.MSTORE8);
     return energyCost;
   }
 
@@ -185,7 +185,7 @@ public class NewEnergyCost {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     long energyCost = STOP + calcMemEnergy(oldMemSize,
-        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, "RETURN");
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, Op.RETURN);
     return energyCost;
   }
 
@@ -193,7 +193,7 @@ public class NewEnergyCost {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     long energyCost = STOP + calcMemEnergy(oldMemSize,
-        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, "REVERT");
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, Op.REVERT);
     return energyCost;
   }
 
@@ -221,7 +221,7 @@ public class NewEnergyCost {
   public static long getLogCost(Program program) {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
-    int nTopics = program.getCurrentOp() - 0xa0;
+    int nTopics = program.getCurrentOpIntValue() - Op.LOG0;
     BigInteger dataSize = stack.get(stack.size() - 2).value();
     BigInteger dataCost = dataSize
         .multiply(BigInteger.valueOf(LOG_DATA_ENERGY));
@@ -231,13 +231,14 @@ public class NewEnergyCost {
           "LOG" + nTopics,
           dataCost.longValueExact(), program.getEnergyLimitLeft().longValueSafe());
     }
-    long energyCost = LOG_ENERGY
-        + LOG_TOPIC_ENERGY * nTopics
+    long energyCost = LOG_ENERGY + LOG_TOPIC_ENERGY * nTopics
         + LOG_DATA_ENERGY * stack.get(stack.size() - 2).longValue()
         + calcMemEnergy(oldMemSize,
-        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, "LOG" + nTopics);
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)),
+        0, program.getCurrentOpIntValue());
 
-    checkMemorySize("LOG" + nTopics, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
+    checkMemorySize(program.getCurrentOpIntValue(),
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)));
     return energyCost;
   }
 
@@ -287,7 +288,7 @@ public class NewEnergyCost {
     energyCost += calcMemEnergy(oldMemSize,
         (amountArrayMemoryNeeded.compareTo(witnessArrayMemoryNeeded) > 0
             ? amountArrayMemoryNeeded : witnessArrayMemoryNeeded),
-        0, "VOTEWITNESS");
+        0, Op.VOTEWITNESS);
     return energyCost;
   }
 
@@ -300,7 +301,7 @@ public class NewEnergyCost {
     long oldMemSize = program.getMemSize();
     long energyCost = CREATE + calcMemEnergy(oldMemSize,
         memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)),
-        0, "create");
+        0, Op.CREATE);
     return energyCost;
   }
 
@@ -311,7 +312,7 @@ public class NewEnergyCost {
     long energyCost = CREATE;
     energyCost += calcMemEnergy(oldMemSize,
         memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)),
-        0, "create2");
+        0, Op.CREATE2);
     energyCost += DataWord.sizeInWords(codeSize.intValueSafe()) * SHA3_WORD;
     return energyCost;
   }
@@ -379,7 +380,7 @@ public class NewEnergyCost {
 
   public static long getCalculateCallCost(Stack stack, Program program,
                                           long energyCost, int opOff) {
-    byte op = program.getCurrentOp();
+    int op = program.getCurrentOpIntValue();
     long oldMemSize = program.getMemSize();
     DataWord callEnergyWord = stack.get(stack.size() - 1);
     // in offset+size
@@ -389,13 +390,12 @@ public class NewEnergyCost {
     BigInteger out = memNeeded(stack.get(stack.size() - opOff - 2),
         stack.get(stack.size() - opOff - 3));
     energyCost += calcMemEnergy(oldMemSize, in.max(out),
-        0, Op.getOpName(op & 0xff));
-    checkMemorySize(Op.getOpName(op & 0xff), in.max(out));
+        0, op);
 
     if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
       throw new Program.OutOfEnergyException(
           "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
-          Op.getOpName(op & 0xff),
+          Op.getNameOf(op & 0xff),
           energyCost, program.getEnergyLimitLeft().longValueSafe());
     }
     DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
@@ -409,10 +409,10 @@ public class NewEnergyCost {
 
 
   private static long calcMemEnergy(long oldMemSize, BigInteger newMemSize,
-                             long copySize, String opName) {
+                             long copySize, int op) {
     long energyCost = 0;
 
-    checkMemorySize(opName, newMemSize);
+    checkMemorySize(op, newMemSize);
 
     // memory SUN consume calc
     long memoryUsage = (newMemSize.longValueExact() + 31) / 32 * 32;
@@ -431,9 +431,9 @@ public class NewEnergyCost {
     return energyCost;
   }
 
-  private static void checkMemorySize(String opName, BigInteger newMemSize) {
+  private static void checkMemorySize(int op, BigInteger newMemSize) {
     if (newMemSize.compareTo(MEM_LIMIT) > 0) {
-      throw Program.Exception.memoryOverflow(opName);
+      throw Program.Exception.memoryOverflow(op);
     }
   }
 

@@ -43,6 +43,7 @@ public class InterpreterTest {
 
   @BeforeClass
   public static void init() {
+    OperationRegistry.newBaseOperation();
     CommonParameter.getInstance().setDebug(true);
   }
 
@@ -67,7 +68,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -77,8 +78,8 @@ public class InterpreterTest {
         program.verifyStackOverflow(operation.getRequire(), operation.getRet());
 
         program.spendEnergy(operation.getEnergyCost(program),
-            Op.getOpName(operation.getOpcode()));
-        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
         operation.execute(program);
         program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
@@ -103,7 +104,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -113,8 +114,8 @@ public class InterpreterTest {
         program.verifyStackOverflow(operation.getRequire(), operation.getRet());
 
         program.spendEnergy(operation.getEnergyCost(program),
-            Op.getOpName(operation.getOpcode()));
-        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
         operation.execute(program);
         program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
@@ -142,7 +143,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -152,8 +153,8 @@ public class InterpreterTest {
         program.verifyStackOverflow(operation.getRequire(), operation.getRet());
 
         program.spendEnergy(operation.getEnergyCost(program),
-            Op.getOpName(operation.getOpcode()));
-        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
         operation.execute(program);
         program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
@@ -182,7 +183,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOp());
+        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -192,8 +193,8 @@ public class InterpreterTest {
         program.verifyStackOverflow(operation.getRequire(), operation.getRet());
 
         program.spendEnergy(operation.getEnergyCost(program),
-            Op.getOpName(operation.getOpcode()));
-        program.checkCPUTimeLimit(Op.getOpName(operation.getOpcode()));
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
         operation.execute(program);
         program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }

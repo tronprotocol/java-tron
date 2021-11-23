@@ -33,6 +33,8 @@ import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.LogInfoTriggerParser;
@@ -124,10 +126,15 @@ public class VMActuator implements Actuator2 {
         throw new ContractValidateException(
             "FeeLimit and EnergyLimit can not be set at the same time");
       }
-
+      DynamicPropertiesStore dynamicPropertiesStore =
+          StoreFactory.getInstance().getChainBaseManager().getDynamicPropertiesStore();
       // check energy limit range ( >= 0 )
       if (trx.getRawData().getEnergyLimit() < 0) {
         throw new ContractValidateException("EnergyLimit can not be negative");
+      } else if (trx.getRawData().getEnergyLimit() > 0
+          && (dynamicPropertiesStore.getMaxFeeLimit() / trx.getRawData().getEnergyLimit()
+          < dynamicPropertiesStore.getEnergyFee())) {
+        throw new ContractValidateException("EnergyLimit can not exceed max_fee_limit");
       }
     }
 

@@ -270,7 +270,7 @@ public class Op {
     }
   }
 
-  public static String getOpName(int opCode) {
+  public static String getNameOf(int opCode) {
     return OpName[opCode];
   }
 }

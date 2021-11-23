@@ -65,6 +65,7 @@ import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.Op;
 import org.tron.core.vm.OpCode;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VM;
@@ -112,9 +113,6 @@ public class Program {
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
   private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
   private static final String CALL_PRE_COMPILED = "call pre-compiled";
-  private static final int CALLCODE = 0xf2;
-  private static final int DELEGATECALL = 0xf4;
-  private static final int STATICCALL = 0xfa;
   private final VMConfig config;
   private long nonce;
   private byte[] rootTransactionId;
@@ -386,6 +384,10 @@ public class Program {
 
   public byte getCurrentOp() {
     return isEmpty(ops) ? 0 : ops[pc];
+  }
+
+  public int getCurrentOpIntValue() {
+    return getCurrentOp() & 0xff;
   }
 
   /**
@@ -913,7 +915,7 @@ public class Program {
     byte[] senderAddress = TransactionTrace
         .convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] contextAddress = codeAddress;
-    if (msg.getOpCode() == (byte) CALLCODE || msg.getOpCode() == (byte) DELEGATECALL) {
+    if (msg.getOpCode() == Op.CALLCODE || msg.getOpCode() == Op.DELEGATECALL) {
       contextAddress = senderAddress;
     }
 
@@ -1014,17 +1016,17 @@ public class Program {
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
       DataWord callValue = msg.getEndowment();
-      if (msg.getOpCode() == (byte) DELEGATECALL) {
+      if (msg.getOpCode() == Op.DELEGATECALL) {
         callValue = getCallValue();
       }
       ProgramInvoke programInvoke = programInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
-          msg.getOpCode() == (byte) DELEGATECALL ? getCallerAddress() : getContractAddress(),
+          msg.getOpCode() == Op.DELEGATECALL ? getCallerAddress() : getContractAddress(),
           !isTokenTransfer ? callValue : new DataWord(0),
           !isTokenTransfer ? new DataWord(0) : callValue,
           !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
           contextBalance, data, deposit,
-          msg.getOpCode() == (byte) STATICCALL || isStaticCall(),
+          msg.getOpCode() == Op.STATICCALL || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       if (isConstantCall()) {
         programInvoke.setConstantCall();
@@ -1539,7 +1541,7 @@ public class Program {
     byte[] codeAddress = TransactionTrace
         .convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = codeAddress;
-    if (msg.getOpCode() == (byte) CALLCODE || msg.getOpCode() == (byte) DELEGATECALL) {
+    if (msg.getOpCode() == Op.CALLCODE || msg.getOpCode() == Op.DELEGATECALL) {
       contextAddress = senderAddress;
     }
 
@@ -1597,7 +1599,7 @@ public class Program {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
       contract.setCallerAddress(TransactionTrace.convertToTronAddress(
           getContractAddress().getLast20Bytes()));
-      if (msg.getOpCode() == (byte) DELEGATECALL) {
+      if (msg.getOpCode() == Op.DELEGATECALL) {
         contract.setCallerAddress(TransactionTrace.convertToTronAddress(
             getCallerAddress().getLast20Bytes()));
       }
@@ -2193,8 +2195,9 @@ public class Program {
       return new OutOfMemoryException("Out of Memory when '%s' operation executing", op.name());
     }
 
-    public static OutOfMemoryException memoryOverflow(String opName) {
-      return new OutOfMemoryException("Out of Memory when '%s' operation executing", opName);
+    public static OutOfMemoryException memoryOverflow(int op) {
+      return new OutOfMemoryException("Out of Memory when '%s' operation executing",
+          Op.getNameOf(op));
     }
 
     public static OutOfStorageException notEnoughStorage() {
