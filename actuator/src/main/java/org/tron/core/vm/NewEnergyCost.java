@@ -395,7 +395,7 @@ public class NewEnergyCost {
     if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
       throw new Program.OutOfEnergyException(
           "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
-          Op.getNameOf(op & 0xff),
+          Op.getNameOf(op),
           energyCost, program.getEnergyLimitLeft().longValueSafe());
     }
     DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
