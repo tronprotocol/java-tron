@@ -15,11 +15,26 @@ public class DbOptionalsUtils {
   public static final int DEFAULT_WRITE_BUFFER_SIZE_L = 256 * 1024 * 1024;
   public static final long DEFAULT_CACHE_SIZE = 32 * 1024 * 1024L;
   public static final int DEFAULT_MAX_OPEN_FILES = 100;
-  public static final int DEFAULT_MAX_OPEN_FILES_M = 500;
-  public static final int DEFAULT_MAX_OPEN_FILES_L = 1000;
+  /**
+   * defaultM = {
+   *   maxOpenFiles = 500
+   *   }
+   *   add defaultL settings into storage to overwrite 100
+   */
+  public static final int DEFAULT_MAX_OPEN_FILES_M = 100;
+  /**
+   * defaultL = {
+   *   maxOpenFiles = 1000
+   *   }
+   *   add defaultL settings into storage to overwrite 100
+   */
+  public static final int DEFAULT_MAX_OPEN_FILES_L = 100;
+  // Read a lot
   public static final List<String> DB_M = Arrays.asList( "code", "contract");
+  // Read frequently
   public static final List<String> DB_L = Arrays.asList("account", "delegation",
       "storage-row");
+  // Write frequently
   public static final List<String> DB_WRITE_L = Arrays.asList("block", "account",
       "transactionRetStore", "storage-row", "trans");
 
