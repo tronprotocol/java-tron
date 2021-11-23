@@ -525,4 +525,8 @@ public class CommonParameter {
 
     return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
+
+  public boolean isJsonRpcFilterEnabled() {
+    return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
+  }
 }
