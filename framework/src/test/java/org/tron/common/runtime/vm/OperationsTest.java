@@ -1,12 +1,13 @@
 package org.tron.common.runtime.vm;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.util.StringUtils;
-import org.testng.Assert;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.core.config.args.Args;
@@ -14,6 +15,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
+import org.tron.core.vm.VM;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
@@ -53,6 +55,53 @@ public class OperationsTest {
     VMConfig.initAllowTvmIstanbul(0);
     VMConfig.initAllowTvmLondon(0);
     VMConfig.initAllowTvmCompatibleEvm(0);
+  }
+
+  @Test
+  public void testStackUnderFlow() {
+    for (int i = 0; i < 256; i++) {
+      Operation op = OperationRegistry.get(i);
+      if (op != null) {
+        Program context = buildEmptyContext(new byte[]{(byte)op.getOpcode()});
+        new VM().play(context);
+
+        if (op.getRequire() != 0) {
+          Assert.assertTrue(context.getResult().getException()
+              instanceof Program.StackTooSmallException);
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testStackOverFlow() {
+    for (int i = 0; i < 256; i++) {
+      Operation op = OperationRegistry.get(i);
+      if (op != null) {
+        Program context = buildEmptyContext(new byte[]{(byte)op.getOpcode()});
+        for (int j = 0; j < 1024; j++) {
+          context.stackPushZero();
+        }
+        new VM().play(context);
+
+        if (op.getRet() - op.getRequire() > 0) {
+          Assert.assertTrue(context.getResult().getException()
+              instanceof Program.StackTooLargeException);
+        }
+      }
+    }
+  }
+
+  @SneakyThrows
+  private Program buildEmptyContext(byte[] ops) {
+    Program context = new Program(
+        ops,
+        new ProgramInvokeMockImpl(),
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+    context.setRootTransactionId(new byte[32]);
+    return context;
   }
 
   // test Arithmetic Operations
