@@ -25,7 +25,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -184,22 +183,6 @@ public class TransferAssetActuator extends AbstractActuator {
       if (dynamicStore.getForbidTransferToContract() == 1
           && toAccount.getType() == AccountType.Contract) {
         throw new ContractValidateException("Cannot transfer asset to smartContract.");
-      }
-
-      // after ImproveEvmCompatibility proposal, send trc10 to smartContract which version is one
-      // by actuator is not allowed.
-      if (dynamicStore.getImproveEvmCompatibility() == 1
-          && toAccount.getType() == AccountType.Contract) {
-
-        ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(toAddress);
-        if (contractCapsule == null) { //  this can not happen
-          throw new ContractValidateException(
-              "Account type is Contract, but it is not exist in contract store.");
-        } else if (contractCapsule.getContractVersion() == 1) {
-          throw new ContractValidateException(
-              "Cannot transfer TRC10 to a smartContract which version is one. "
-                  + "Instead please use TriggerSmartContract ");
-        }
       }
 
       if (dynamicStore.getAllowSameTokenName() == 0) {

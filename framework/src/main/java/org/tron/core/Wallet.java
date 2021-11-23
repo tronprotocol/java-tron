@@ -1080,11 +1080,6 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
         .build());
 
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getImproveEvmCompatibility")
-        .setValue(dbManager.getDynamicPropertiesStore().getImproveEvmCompatibility())
-        .build());
-
     return builder.build();
   }
 
