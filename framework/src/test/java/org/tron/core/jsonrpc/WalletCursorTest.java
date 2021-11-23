@@ -120,7 +120,7 @@ public class WalletCursorTest {
     buildArguments.tokenId = 1000016L;
     buildArguments.tokenValue = 20L;
 
-    dbManager.setCursor(Cursor.SOLIDITY);
+    dbManager.setCursor(Cursor.PBFT);
 
     TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
     try {
