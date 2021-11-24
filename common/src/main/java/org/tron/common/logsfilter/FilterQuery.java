@@ -31,6 +31,10 @@ public class FilterQuery {
   @Setter
   private String name = "";
 
+  @Getter
+  @Setter
+  private String disable;
+
   public static long parseFromBlockNumber(String blockNum) {
     long number = 0;
     if (StringUtils.isEmpty(blockNum) || FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)) {
@@ -66,13 +70,15 @@ public class FilterQuery {
     return new StringBuilder()
         .append("name: ")
         .append(name)
-        .append("fromBlock: ")
+        .append(", fromBlock: ")
         .append(fromBlock)
         .append(", toBlock: ")
         .append(toBlock)
         .append(", contractAddress: ")
         .append(contractAddressList)
         .append(", contractTopics: ")
-        .append(contractTopicList).toString();
+        .append(contractTopicList)
+        .append(", disable: ")
+        .append(disable).toString();
   }
 }

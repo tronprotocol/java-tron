@@ -605,6 +605,7 @@ public class EventPluginLoader {
       String eventFilters = null;
       for(IPluginEventListener eventListener : eventListeners){
         eventFilters = eventListener.getEventFilterList();
+        logger.info("eventFilters:{}", eventFilters);
         if(eventFilters != null && !eventFilters.isEmpty()){
           break;
         }
@@ -667,6 +668,7 @@ public class EventPluginLoader {
       filter.setContractTopicList(topicList);
       queries.add(filter);
     }
+    logger.info("parseEventFilters:{}", queries);
     return queries;
   }
 
@@ -693,6 +695,7 @@ public class EventPluginLoader {
         }
       }
     }
+    logger.info("filterQueryListToMap:{}", filterQueryMap);
     return filterQueryMap;
   }
 }
