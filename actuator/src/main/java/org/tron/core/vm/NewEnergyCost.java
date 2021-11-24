@@ -51,6 +51,7 @@ public class NewEnergyCost {
   private static final long EXT_CODE_HASH = 400;
   private static final long SUICIDE = 0;
   private static final long STOP = 0;
+  private static final long CREATE_DATA = 200;
 
   public static long getZeroTierCost(Program program) {
     return ZERO_TIER;
@@ -405,6 +406,14 @@ public class NewEnergyCost {
     program.setAdjustedCallEnergy(adjustedCallEnergy);
     energyCost += adjustedCallEnergy.longValueSafe();
     return energyCost;
+  }
+
+  public static long getNewAcctCall() {
+    return NEW_ACCT_CALL;
+  }
+
+  public static long getCREATE_DATA() {
+    return CREATE_DATA;
   }
 
 

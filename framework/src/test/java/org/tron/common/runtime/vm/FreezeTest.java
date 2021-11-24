@@ -40,7 +40,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.NewEnergyCost;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
@@ -334,7 +334,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountA = freezeForOther(contract, userA, frozenBalance, 0)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getInstance().getNewAcctCall(),
+    Assert.assertEquals(energyWithCreatingAccountA - NewEnergyCost.getNewAcctCall(),
         energyWithoutCreatingAccountA);
 
     freezeForOther(contract, userA, frozenBalance, 1);
@@ -344,7 +344,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountB = freezeForOther(contract, userB, frozenBalance, 1)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getInstance().getNewAcctCall(),
+    Assert.assertEquals(energyWithCreatingAccountB - NewEnergyCost.getNewAcctCall(),
         energyWithoutCreatingAccountB);
 
     freezeForOther(contract, userB, frozenBalance, 0);

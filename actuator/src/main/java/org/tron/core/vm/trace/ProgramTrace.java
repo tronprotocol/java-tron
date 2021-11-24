@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.vm.OpCode;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 
@@ -93,7 +92,7 @@ public class ProgramTrace {
   public Op addOp(byte code, int pc, int deep, DataWord energy, OpActions actions) {
     Op op = new Op();
     op.setActions(actions);
-    op.setCode(OpCode.code(code));
+    op.setCode(code & 0xff);
     op.setDeep(deep);
     op.setEnergy(energy.value());
     op.setPc(pc);

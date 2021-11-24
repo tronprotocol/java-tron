@@ -36,7 +36,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.NewEnergyCost;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -198,7 +198,7 @@ public class TransferToAccountTest {
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        EnergyCost.getInstance().getNewAcctCall());
+        NewEnergyCost.getNewAcctCall());
     //5. Test transfer Trx with exsit account
 
     selectorStr = "transferTo(address,uint256)";
@@ -233,7 +233,7 @@ public class TransferToAccountTest {
 
     //7.test energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        EnergyCost.getInstance().getNewAcctCall());
+        NewEnergyCost.getNewAcctCall());
 
     //8.test transfer to itself
     selectorStr = "transferTo(address,uint256)";

@@ -29,15 +29,11 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
-import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Objects;
-import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -63,10 +59,9 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.NewEnergyCost;
 import org.tron.core.vm.Op;
-import org.tron.core.vm.OpCode;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
@@ -171,135 +166,6 @@ public class Program {
       ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
     }
     return ret.toString();
-  }
-
-  public static String stringifyMultiline(byte[] code) {
-    int index = 0;
-    StringBuilder sb = new StringBuilder();
-    BitSet mask = buildReachableBytecodesMask(code);
-    ByteArrayOutputStream binData = new ByteArrayOutputStream();
-    int binDataStartPC = -1;
-
-    while (index < code.length) {
-      final byte opCode = code[index];
-      OpCode op = OpCode.code(opCode);
-
-      if (!mask.get(index)) {
-        if (binDataStartPC == -1) {
-          binDataStartPC = index;
-        }
-        binData.write(code[index]);
-        index++;
-        if (index < code.length) {
-          continue;
-        }
-      }
-
-      if (binDataStartPC != -1) {
-        sb.append(formatBinData(binData.toByteArray(), binDataStartPC));
-        binDataStartPC = -1;
-        binData = new ByteArrayOutputStream();
-        if (index == code.length) {
-          continue;
-        }
-      }
-
-      sb.append(Utils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
-
-      if (op == null) {
-        sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");
-        index++;
-        continue;
-      }
-
-      if (op.name().startsWith("PUSH")) {
-        sb.append(' ').append(op.name()).append(' ');
-
-        int nPush = op.val() - OpCode.PUSH1.val() + 1;
-        byte[] data = Arrays.copyOfRange(code, index + 1, index + nPush + 1);
-        BigInteger bi = new BigInteger(1, data);
-        sb.append("0x").append(bi.toString(16));
-        if (bi.bitLength() <= 32) {
-          sb.append(" (").append(new BigInteger(1, data).toString()).append(") ");
-        }
-
-        index += nPush + 1;
-      } else {
-        sb.append(' ').append(op.name());
-        index++;
-      }
-      sb.append('\n');
-    }
-
-    return sb.toString();
-  }
-
-  static BitSet buildReachableBytecodesMask(byte[] code) {
-    NavigableSet<Integer> gotos = new TreeSet<>();
-    ByteCodeIterator it = new ByteCodeIterator(code);
-    BitSet ret = new BitSet(code.length);
-    int lastPush = 0;
-    int lastPushPC = 0;
-    do {
-      ret.set(it.getPC()); // reachable bytecode
-      if (it.isPush()) {
-        lastPush = new BigInteger(1, it.getCurOpcodeArg()).intValue();
-        lastPushPC = it.getPC();
-      }
-      if (it.getCurOpcode() == OpCode.JUMP || it.getCurOpcode() == OpCode.JUMPI) {
-        if (it.getPC() != lastPushPC + 1) {
-          // some PC arithmetic we totally can't deal with
-          // assuming all bytecodes are reachable as a fallback
-          ret.set(0, code.length);
-          return ret;
-        }
-        int jumpPC = lastPush;
-        if (!ret.get(jumpPC)) {
-          // code was not explored yet
-          gotos.add(jumpPC);
-        }
-      }
-      if (it.getCurOpcode() == OpCode.JUMP || it.getCurOpcode() == OpCode.RETURN
-          || it.getCurOpcode() == OpCode.STOP) {
-        if (gotos.isEmpty()) {
-          break;
-        }
-        it.setPC(gotos.pollFirst());
-      }
-    } while (it.next());
-    return ret;
-  }
-
-  public static String stringify(byte[] code) {
-    int index = 0;
-    StringBuilder sb = new StringBuilder();
-
-    while (index < code.length) {
-      final byte opCode = code[index];
-      OpCode op = OpCode.code(opCode);
-
-      if (op == null) {
-        sb.append(" <UNKNOWN>: ").append(0xFF & opCode).append(" ");
-        index++;
-        continue;
-      }
-
-      if (op.name().startsWith("PUSH")) {
-        sb.append(' ').append(op.name()).append(' ');
-
-        int nPush = op.val() - OpCode.PUSH1.val() + 1;
-        byte[] data = Arrays.copyOfRange(code, index + 1, index + nPush + 1);
-        BigInteger bi = new BigInteger(1, data);
-        sb.append("0x").append(bi.toString(16)).append(" ");
-
-        index += nPush + 1;
-      } else {
-        sb.append(' ').append(op.name());
-        index++;
-      }
-    }
-
-    return sb.toString();
   }
 
   public byte[] getRootTransactionId() {
@@ -828,7 +694,7 @@ public class Program {
             .invalidCodeException());
     }
 
-    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+    long saveCodeEnergy = (long) getLength(code) * NewEnergyCost.getCREATE_DATA();
 
     long afterSpend =
         programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
@@ -1453,7 +1319,7 @@ public class Program {
       }
 
       if (pc != 0) {
-        globalOutput.append("[Op: ").append(OpCode.code(lastOp).name()).append("]\n");
+        globalOutput.append("[Op: ").append(Op.getNameOf(lastOp)).append("]\n");
       }
 
       globalOutput.append(" -- OPS --     ").append(opsString).append("\n");
@@ -1705,15 +1571,6 @@ public class Program {
     }
   }
 
-  public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
-      DataWord availableEnergyReduce = availableEnergy.clone();
-      availableEnergyReduce.div(new DataWord(64));
-      availableEnergy.sub(availableEnergyReduce);
-    }
-    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
-  }
-
   public DataWord getCallEnergy(DataWord requestedEnergy, DataWord availableEnergy) {
     if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
       DataWord availableEnergyReduce = availableEnergy.clone();
@@ -1786,28 +1643,6 @@ public class Program {
       this.pc = pc;
     }
 
-    public OpCode getCurOpcode() {
-      return pc < code.length ? OpCode.code(code[pc]) : null;
-    }
-
-    public boolean isPush() {
-      return getCurOpcode() != null && getCurOpcode().name().startsWith("PUSH");
-    }
-
-    public byte[] getCurOpcodeArg() {
-      if (isPush()) {
-        int nPush = getCurOpcode().val() - OpCode.PUSH1.val() + 1;
-        byte[] data = Arrays.copyOfRange(code, pc + 1, pc + nPush + 1);
-        return data;
-      } else {
-        return new byte[0];
-      }
-    }
-
-    public boolean next() {
-      pc += 1 + getCurOpcodeArg().length;
-      return pc < code.length;
-    }
   }
 
   public boolean freeze(DataWord receiverAddress, DataWord frozenBalance, DataWord resourceType) {
@@ -2161,19 +1996,6 @@ public class Program {
     private Exception() {
     }
 
-    public static OutOfEnergyException notEnoughOpEnergy(OpCode op, long opEnergy,
-        long programEnergy) {
-      return new OutOfEnergyException(
-          "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d];", op,
-          opEnergy,
-          programEnergy);
-    }
-
-    public static OutOfEnergyException notEnoughOpEnergy(OpCode op, DataWord opEnergy,
-        DataWord programEnergy) {
-      return notEnoughOpEnergy(op, opEnergy.longValue(), programEnergy.longValue());
-    }
-
     public static OutOfEnergyException notEnoughSpendEnergy(String hint, long needEnergy,
         long leftEnergy) {
       return new OutOfEnergyException(
@@ -2188,11 +2010,6 @@ public class Program {
 
     public static OutOfTimeException alreadyTimeOut() {
       return new OutOfTimeException("Already Time Out");
-    }
-
-
-    public static OutOfMemoryException memoryOverflow(OpCode op) {
-      return new OutOfMemoryException("Out of Memory when '%s' operation executing", op.name());
     }
 
     public static OutOfMemoryException memoryOverflow(int op) {

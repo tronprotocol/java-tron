@@ -10,6 +10,10 @@ public class OperationRegistry {
     return operations[opcode];
   }
 
+  public static Operation get(final byte opcode) {
+    return operations[opcode & 0xff];
+  }
+
   // only for test
   public static void clearOperations() {
     for (int i = 0; i < NUM_OPERATIONS; i++) {

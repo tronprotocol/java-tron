@@ -273,4 +273,8 @@ public class Op {
   public static String getNameOf(int opCode) {
     return OpName[opCode];
   }
+
+  public static String getNameOf(byte opCode) {
+    return OpName[opCode & 0xff];
+  }
 }
