@@ -612,8 +612,10 @@ public class EventPluginLoader {
       }
       if(eventFilters != null && !eventFilters.isEmpty()) {
         List<FilterQuery> newFilterQuery = parseEventFilters(eventFilters);
-        setFilterQuery(newFilterQuery);
-        this.filterQueryLastUpdate = System.currentTimeMillis();
+        if(!newFilterQuery.isEmpty()) {
+          setFilterQuery(newFilterQuery);
+          this.filterQueryLastUpdate = System.currentTimeMillis();
+        }
       }
     }
     if (this.filterQuery == null || this.filterQuery.isEmpty()) {
@@ -638,38 +640,45 @@ public class EventPluginLoader {
   }
 
   private List<FilterQuery> parseEventFilters(String eventFilters) {
-    JSONArray filterObjs = JSONArray.parseArray(eventFilters);
-    List<FilterQuery> queries = new ArrayList<>(filterObjs.size());
-    for(Object o : filterObjs){
-      JSONObject filterObj = (JSONObject) o;
-      FilterQuery filter = new FilterQuery();
-      long fromBlockLong;
-      long toBlockLong;
+    try {
+      JSONArray filterObjs = JSONArray.parseArray(eventFilters);
+      List<FilterQuery> queries = new ArrayList<>(filterObjs.size());
+      for (Object o : filterObjs) {
+        JSONObject filterObj = (JSONObject) o;
+        FilterQuery filter = new FilterQuery();
+        long fromBlockLong;
+        long toBlockLong;
 
-      String name = filterObj.getString("name");
-      filter.setName(name);
+        String name = filterObj.getString("name");
+        filter.setName(name);
 
-      String fromBlock = filterObj.getString("fromblock");
-      fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
-      filter.setFromBlock(fromBlockLong);
+        String fromBlock = filterObj.getString("fromBlock");
+        fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
+        filter.setFromBlock(fromBlockLong);
 
-      String toBlock = filterObj.getString("toblock");
-      toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
-      filter.setToBlock(toBlockLong);
+        String toBlock = filterObj.getString("toBlock");
+        toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
+        filter.setToBlock(toBlockLong);
 
-      List<String> addressList = filterObj.getObject("contractAddress", List.class);
-      addressList = addressList.stream().filter(org.apache.commons.lang3.StringUtils::isNotEmpty).collect(
-          Collectors.toList());
-      filter.setContractAddressList(addressList);
+        List<String> addressList = filterObj.getObject("contractAddressList", List.class);
+        addressList = addressList.stream().filter(org.apache.commons.lang3.StringUtils::isNotEmpty)
+            .collect(
+                Collectors.toList());
+        filter.setContractAddressList(addressList);
 
-      List<String> topicList = filterObj.getObject("contractTopic", List.class);
-      topicList = topicList.stream().filter(org.apache.commons.lang3.StringUtils::isNotEmpty).collect(
-          Collectors.toList());
-      filter.setContractTopicList(topicList);
-      queries.add(filter);
+        List<String> topicList = filterObj.getObject("contractTopicList", List.class);
+        topicList = topicList.stream().filter(org.apache.commons.lang3.StringUtils::isNotEmpty)
+            .collect(
+                Collectors.toList());
+        filter.setContractTopicList(topicList);
+        queries.add(filter);
+      }
+      logger.info("parseEventFilters:{}", queries);
+      return queries;
+    } catch (Exception e){
+      logger.error("parseEventFilters error:{}", eventFilters, e);
+      return new ArrayList<>();
     }
-    logger.info("parseEventFilters:{}", queries);
-    return queries;
   }
 
   private Map<String, Map<String, List<FilterQuery>>> filterQueryListToMap(List<FilterQuery> filterQueryList){
