@@ -82,10 +82,11 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       for (ContractTrigger trigger : contractTriggerCapsuleList) {
         // boomFilter
         bloomFilterContract.put(trigger.getContractAddress());
-        bloomFilterTopic.put(trigger.getLogInfo().getTopics().get(0).toHexString());
-        bloomFilterContractAndTopic.put(
-            trigger.getContractAddress()+trigger.getLogInfo().getTopics().get(0).toHexString());
-
+        if(!trigger.getLogInfo().getTopics().isEmpty()) {
+          bloomFilterTopic.put(trigger.getLogInfo().getTopics().get(0).toHexString());
+          bloomFilterContractAndTopic.put(
+              trigger.getContractAddress() + trigger.getLogInfo().getTopics().get(0).toHexString());
+        }
         List<String> filterNames = matchFilter(trigger);
         if (filterNames.isEmpty()) {
           continue;
