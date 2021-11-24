@@ -60,7 +60,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.MessageCall;
-import org.tron.core.vm.NewEnergyCost;
+import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VM;
@@ -694,7 +694,7 @@ public class Program {
             .invalidCodeException());
     }
 
-    long saveCodeEnergy = (long) getLength(code) * NewEnergyCost.getCREATE_DATA();
+    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCREATE_DATA();
 
     long afterSpend =
         programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
@@ -1463,11 +1463,12 @@ public class Program {
       this.stackPushZero();
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
-      contract.setCallerAddress(TransactionTrace.convertToTronAddress(
-          getContractAddress().getLast20Bytes()));
       if (msg.getOpCode() == Op.DELEGATECALL) {
         contract.setCallerAddress(TransactionTrace.convertToTronAddress(
             getCallerAddress().getLast20Bytes()));
+      } else {
+        contract.setCallerAddress(TransactionTrace.convertToTronAddress(
+            getContractAddress().getLast20Bytes()));
       }
       // this is the depositImpl, not contractState as above
       contract.setRepository(deposit);

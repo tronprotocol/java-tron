@@ -2,7 +2,6 @@ package org.tron.common.runtime.vm;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -307,15 +306,27 @@ public class OperationsTest {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
 
     // test SHA3 = 0x20
+    byte[] op = {0x60, 0x01, 0x60, 0x01, 0x20};
+    program = new Program(op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 5);
+    Assert.assertEquals(program.getStack().pop().toHexString(),
+        "bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a");
 
     // test ADDRESS = 0x30
-    byte[] op = {0x30};
+    op = new byte[]{0x30};
     program = new Program(op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 48);
     Assert.assertEquals(program.getStack().pop(), invoke.getContractAddress());
 
     // test BALANCE = 0x31
+    op = new byte[]{0x31};
+    program = new Program(op, invoke, interTrx);
+    program.stackPush(invoke.getOriginAddress());
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 0);
+    Assert.assertNull(program.getResult().getRuntimeError());
 
     // test ORIGIN = 0x32
     op = new byte[]{0x32};
@@ -625,6 +636,38 @@ public class OperationsTest {
     // test log(0-4)
   }
 
+  @Test
+  public void testOtherOperations() throws ContractValidateException {
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    // STOP = 0x00
+    byte[] op = {0x00};
+    program = new Program(op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 50);
+    Assert.assertEquals(program.isStopped(), true);
+
+    // return = 0xf3
+    op = new byte[]{0x60, 0x01, 0x60, 0x01, (byte) 0xf3};
+    program = new Program(op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 41);
+    Assert.assertEquals(program.getResult().getHReturn().length, 1);
+    Assert.assertEquals(program.isStopped(), true);
+
+    // revert = 0xfd
+    op = new byte[]{0x60, 0x01, 0x60, 0x01, (byte) 0xfd};
+    program = new Program(op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 41);
+    Assert.assertEquals(program.getResult().getHReturn().length, 1);
+    Assert.assertEquals(program.isStopped(), true);
+    Assert.assertEquals(program.getResult().isRevert(), true);
+  }
+
   public void testOperations(Program program) {
     try {
       while (!program.isStopped()) {
@@ -662,8 +705,6 @@ public class OperationsTest {
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
-        logger.warn("Unknown Exception occurred, tx id: {}",
-            Hex.toHexString(program.getRootTransactionId()), e);
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
       } else {
         program.setRuntimeFailure(e);

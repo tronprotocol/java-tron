@@ -24,9 +24,6 @@ public class VM {
 
   public void play(Program program) {
     try {
-      if (program.byTestingSuite()) {
-        return;
-      }
 
       while (!program.isStopped()) {
         if (VMConfig.vmTrace()) {

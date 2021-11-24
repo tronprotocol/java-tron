@@ -18,7 +18,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.core.vm.NewEnergyCost;
+import org.tron.core.vm.EnergyCost;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -303,7 +303,7 @@ public class TransferFailed002 {
     Assert.assertEquals(0, infoById.get().getResultValue());
 
     Assert.assertNotEquals(energyUsageTotal2,
-        energyUsageTotal + NewEnergyCost.getNewAcctCall());
+        energyUsageTotal + EnergyCost.getNewAcctCall());
 
     nonexistentAddressAccount = PublicMethed.queryAccount(nonexistentAddress, blockingStubFull1);
     Assert.assertEquals(2, nonexistentAddressAccount.getBalance());
@@ -559,7 +559,7 @@ public class TransferFailed002 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    Assert.assertTrue(energyUsageTotal > NewEnergyCost.getNewAcctCall());
+    Assert.assertTrue(energyUsageTotal > EnergyCost.getNewAcctCall());
 
   }
 

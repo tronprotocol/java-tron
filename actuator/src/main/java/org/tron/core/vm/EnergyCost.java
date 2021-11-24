@@ -8,7 +8,7 @@ import java.math.BigInteger;
 
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
-public class NewEnergyCost {
+public class EnergyCost {
 
   private static final long ZERO_TIER = 0;
   private static final long BASE_TIER = 2;
@@ -326,12 +326,11 @@ public class NewEnergyCost {
     DataWord value = stack.get(stack.size() - 3);
     int opOff = 4;
     //check to see if account does not exist and is not a precompiled contract
-    if (isDeadAccount(program, callAddressWord)
-        && !value.isZero()) {
-      energyCost += NEW_ACCT_CALL;
-    }
     if (!value.isZero()) {
       energyCost += VT_CALL;
+      if (isDeadAccount(program, callAddressWord)) {
+        energyCost += NEW_ACCT_CALL;
+      }
     }
     return getCalculateCallCost(stack, program, energyCost, opOff);
   }
@@ -366,16 +365,14 @@ public class NewEnergyCost {
     long energyCost = CALL_ENERGY;
     DataWord callAddressWord = stack.get(stack.size() - 2);
     DataWord value = stack.get(stack.size() - 3);
-    int opOff = 4;
-
+    int opOff = 5;
     //check to see if account does not exist and is not a precompiled contract
-    if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
-      energyCost += NEW_ACCT_CALL;
-    }
     if (!value.isZero()) {
       energyCost += VT_CALL;
+      if (isDeadAccount(program, callAddressWord)) {
+        energyCost += NEW_ACCT_CALL;
+      }
     }
-    opOff++;
     return getCalculateCallCost(stack, program, energyCost, opOff);
   }
 

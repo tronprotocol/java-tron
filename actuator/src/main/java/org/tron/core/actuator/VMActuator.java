@@ -30,13 +30,12 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.LogInfoTriggerParser;
-import org.tron.core.vm.NewEnergyCost;
+import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
@@ -185,7 +184,7 @@ public class VMActuator implements Actuator2 {
                   .invalidCodeException());
             }
           }
-          long saveCodeEnergy = (long) getLength(code) * NewEnergyCost.getCREATE_DATA();
+          long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCREATE_DATA();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
             if (null == result.getException()) {

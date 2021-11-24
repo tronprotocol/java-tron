@@ -22,8 +22,6 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.Op;
-import org.tron.core.vm.Operation;
-import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.config.VMConfig;
 
 
@@ -38,19 +36,14 @@ public class ProgramPrecompile {
   public static ProgramPrecompile compile(byte[] ops) {
     ProgramPrecompile ret = new ProgramPrecompile();
     for (int i = 0; i < ops.length; ++i) {
+      int op = ops[i] & 0xff;
 
-      Operation op = OperationRegistry.get(ops[i]);
-      if (op == null) {
-        continue;
-      }
-
-      if (op.getOpcode() == Op.JUMPDEST) {
-        logger.debug("JUMPDEST:" + i);
+      if (op == Op.JUMPDEST) {
         ret.jumpdest.add(i);
       }
 
-      if (op.getOpcode() >= Op.PUSH1 && op.getOpcode() <= Op.PUSH32) {
-        i += op.getOpcode() - Op.PUSH1 + 1;
+      if (op >= Op.PUSH1 && op <= Op.PUSH32) {
+        i += op - Op.PUSH1 + 1;
       }
     }
     return ret;
@@ -59,17 +52,9 @@ public class ProgramPrecompile {
   public static byte[] getCode(byte[] ops) {
     for (int i = 0; i < ops.length; ++i) {
 
-      Operation op = OperationRegistry.get(ops[i]);
-      if (op == null) {
-        continue;
-      }
+      int op = ops[i] & 0xff;
 
-      if (op.getOpcode() == Op.RETURN) {
-        logger.debug("return");
-      }
-
-      if (op.getOpcode() == Op.RETURN && i + 1 < ops.length && OperationRegistry.get(ops[i + 1])
-          != null && OperationRegistry.get(ops[i + 1]).getOpcode() == Op.STOP) {
+      if (op == Op.RETURN && i + 1 < ops.length && ((ops[i + 1]) & 0xff) == Op.STOP) {
         byte[] ret;
         i++;
         ret = new byte[ops.length - i - 1];
@@ -78,8 +63,8 @@ public class ProgramPrecompile {
         return ret;
       }
 
-      if (op.getOpcode() >= Op.PUSH1 && op.getOpcode() <= Op.PUSH32) {
-        i += op.getOpcode() - Op.PUSH1 + 1;
+      if (op >= Op.PUSH1 && op <= Op.PUSH32) {
+        i += op - Op.PUSH1 + 1;
       }
     }
     if (VMConfig.allowTvmConstantinople()) {

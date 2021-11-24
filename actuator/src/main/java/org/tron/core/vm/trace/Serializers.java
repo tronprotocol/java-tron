@@ -84,7 +84,7 @@ public final class Serializers {
     @Override
     public void serialize(Byte op, JsonGenerator jgen, SerializerProvider provider)
         throws IOException, JsonProcessingException {
-      jgen.writeString(Op.getNameOf(op & 0xff));
+      jgen.writeString(Op.getNameOf(op));
     }
   }
 }
