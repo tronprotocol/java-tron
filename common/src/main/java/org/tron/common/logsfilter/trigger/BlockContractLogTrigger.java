@@ -19,18 +19,18 @@ public class BlockContractLogTrigger extends Trigger {
   @Setter
   private long latestSolidifiedBlockNumber;
 
-  // BloomFilter for Base58(contractAddress)+Hex(topic0)
-  @Getter
-  @Setter
-  private byte[] bloomFilterContractAndTopic;
-  // BloomFilter for Base58(contractAddress)
-  @Getter
-  @Setter
-  private byte[] bloomFilterContract;
-  // BloomFilter for Hex(topic0)
-  @Getter
-  @Setter
-  private byte[] bloomFilterTopic;
+//  // BloomFilter for Base58(contractAddress)+Hex(topic0)
+//  @Getter
+//  @Setter
+//  private byte[] bloomFilterContractAndTopic;
+//  // BloomFilter for Base58(contractAddress)
+//  @Getter
+//  @Setter
+//  private byte[] bloomFilterContract;
+//  // BloomFilter for Hex(topic0)
+//  @Getter
+//  @Setter
+//  private byte[] bloomFilterTopic;
 
   @Getter
   @Setter

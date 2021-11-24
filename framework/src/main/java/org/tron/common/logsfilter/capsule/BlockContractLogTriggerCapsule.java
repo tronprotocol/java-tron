@@ -52,12 +52,12 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
     blockContractLogTrigger.setBlockNumber(block.getNum());
     blockContractLogTrigger.setLatestSolidifiedBlockNumber(solidifiedNumber);
     // bloom filter
-    BloomFilter<String> bloomFilterContractAndTopic = BloomFilter.create(Funnels.stringFunnel(
-        Charsets.UTF_8), 80, 0.01);
-    BloomFilter<String> bloomFilterContract = BloomFilter.create(Funnels.stringFunnel(
-        Charsets.UTF_8), 80, 0.01);
-    BloomFilter<String> bloomFilterTopic = BloomFilter.create(Funnels.stringFunnel(
-        Charsets.UTF_8), 80, 0.01);
+//    BloomFilter<String> bloomFilterContractAndTopic = BloomFilter.create(Funnels.stringFunnel(
+//        Charsets.UTF_8), 80, 0.01);
+//    BloomFilter<String> bloomFilterContract = BloomFilter.create(Funnels.stringFunnel(
+//        Charsets.UTF_8), 80, 0.01);
+//    BloomFilter<String> bloomFilterTopic = BloomFilter.create(Funnels.stringFunnel(
+//        Charsets.UTF_8), 80, 0.01);
 
     // get transaction info
     List<BlockContractLogTrigger.TransactionInBlock> transactionInBlockList = new ArrayList<>(block.getTransactions().size());
@@ -81,12 +81,12 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       transactionInBlock.setLogList(logTriggers);
       for (ContractTrigger trigger : contractTriggerCapsuleList) {
         // boomFilter
-        bloomFilterContract.put(trigger.getContractAddress());
-        if(!trigger.getLogInfo().getTopics().isEmpty()) {
-          bloomFilterTopic.put(trigger.getLogInfo().getTopics().get(0).toHexString());
-          bloomFilterContractAndTopic.put(
-              trigger.getContractAddress() + trigger.getLogInfo().getTopics().get(0).toHexString());
-        }
+//        bloomFilterContract.put(trigger.getContractAddress());
+//        if(!trigger.getLogInfo().getTopics().isEmpty()) {
+//          bloomFilterTopic.put(trigger.getLogInfo().getTopics().get(0).toHexString());
+//          bloomFilterContractAndTopic.put(
+//              trigger.getContractAddress() + trigger.getLogInfo().getTopics().get(0).toHexString());
+//        }
         List<String> filterNames = matchFilter(trigger);
         if (filterNames.isEmpty()) {
           continue;
@@ -101,18 +101,18 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
         transactionInBlockList.add(transactionInBlock);
       }
     }
-    try {
-      ByteArrayOutputStream outStreamContract = new ByteArrayOutputStream();
-      ByteArrayOutputStream outStreamTopic = new ByteArrayOutputStream();
-      ByteArrayOutputStream outStreamContractAndTopic = new ByteArrayOutputStream();
-      bloomFilterContract.writeTo(outStreamContract);
-      bloomFilterTopic.writeTo(outStreamTopic);
-      bloomFilterContractAndTopic.writeTo(outStreamContractAndTopic);
-      blockContractLogTrigger.setBloomFilterContract(outStreamContract.toByteArray());
-      blockContractLogTrigger.setBloomFilterTopic(outStreamTopic.toByteArray());
-      blockContractLogTrigger.setBloomFilterContractAndTopic(outStreamContractAndTopic.toByteArray());
-    } catch (IOException ioE){
-    }
+//    try {
+//      ByteArrayOutputStream outStreamContract = new ByteArrayOutputStream();
+//      ByteArrayOutputStream outStreamTopic = new ByteArrayOutputStream();
+//      ByteArrayOutputStream outStreamContractAndTopic = new ByteArrayOutputStream();
+//      bloomFilterContract.writeTo(outStreamContract);
+//      bloomFilterTopic.writeTo(outStreamTopic);
+//      bloomFilterContractAndTopic.writeTo(outStreamContractAndTopic);
+//      blockContractLogTrigger.setBloomFilterContract(outStreamContract.toByteArray());
+//      blockContractLogTrigger.setBloomFilterTopic(outStreamTopic.toByteArray());
+//      blockContractLogTrigger.setBloomFilterContractAndTopic(outStreamContractAndTopic.toByteArray());
+//    } catch (IOException ioE){
+//    }
   }
 
   private ContractLogTrigger parseContractTriggerToLogTrigger(ContractTrigger contractTrigger) {
