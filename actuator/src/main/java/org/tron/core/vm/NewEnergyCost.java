@@ -205,16 +205,17 @@ public class NewEnergyCost {
     if (oldValue == null && !newValue.isZero()) {
       // set a new not-zero value
       return SET_SSTORE;
-    } else if (oldValue != null && newValue.isZero()) {
+    }
+    if (oldValue != null && newValue.isZero()) {
       // set zero to an old value
       program.futureRefundEnergy(REFUND_SSTORE);
       return CLEAR_SSTORE;
-    } else {
-      // include:
-      // [1] oldValue == null && newValue == 0
-      // [2] oldValue != null && newValue != 0
-      return RESET_SSTORE;
     }
+    // include:
+    // [1] oldValue == null && newValue == 0
+    // [2] oldValue != null && newValue != 0
+    return RESET_SSTORE;
+    
   }
 
   public static long getLogCost(Program program) {
