@@ -1,6 +1,8 @@
 package org.tron.core.vm;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Op {
 
@@ -255,6 +257,8 @@ public class Op {
 
   private static final String[] OpName = new String[256];
 
+  private static final Map<String, Byte> stringToByteMap = new HashMap<>();
+
   static {
     Field[] fields = Op.class.getDeclaredFields();
     for (Field field : fields) {
@@ -266,6 +270,7 @@ public class Op {
           e.printStackTrace();
         }
         OpName[op] = field.getName();
+        stringToByteMap.put(field.getName(), (byte) op);
       }
     }
   }
@@ -276,5 +281,9 @@ public class Op {
 
   public static String getNameOf(byte opCode) {
     return OpName[opCode & 0xff];
+  }
+
+  public static byte getOpOf(String opCode) {
+    return stringToByteMap.get(opCode);
   }
 }

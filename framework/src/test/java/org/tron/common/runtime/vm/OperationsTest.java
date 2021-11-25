@@ -1,7 +1,11 @@
 package org.tron.common.runtime.vm;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -61,7 +65,7 @@ public class OperationsTest {
     for (int i = 0; i < 256; i++) {
       Operation op = OperationRegistry.get(i);
       if (op != null) {
-        Program context = buildEmptyContext(new byte[]{(byte)op.getOpcode()});
+        Program context = buildEmptyContext(new byte[]{(byte) op.getOpcode()});
         new VM().play(context);
 
         if (op.getRequire() != 0) {
@@ -77,7 +81,7 @@ public class OperationsTest {
     for (int i = 0; i < 256; i++) {
       Operation op = OperationRegistry.get(i);
       if (op != null) {
-        Program context = buildEmptyContext(new byte[]{(byte)op.getOpcode()});
+        Program context = buildEmptyContext(new byte[]{(byte) op.getOpcode()});
         for (int j = 0; j < 1024; j++) {
           context.stackPushZero();
         }
@@ -265,7 +269,7 @@ public class OperationsTest {
     program = new Program(op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 44);
-    Assert.assertEquals((program.getStack().pop().getData())[31], (byte)(-0x01));
+    Assert.assertEquals((program.getStack().pop().getData())[31], (byte) (-0x01));
 
     // test BYTE = 0x1a
     op = new byte[]{0x60, 0x01, 0x60, 0x01, 0x1a};
@@ -397,12 +401,12 @@ public class OperationsTest {
     Assert.assertEquals(program.getStack().pop(), new DataWord(0x00));
 
     // RETURNDATACOPY = 0x3e
-    // op = new byte[]{0x60, 0x01, 0x60, 0x01, 0x60, 0x01, 0x3e};
-    // program = new Program(op, invoke, interTrx);
-    // testOperations(program);
-    // Assert.assertEquals(program.getEnergylimitLeftLong(), 35);
-    // Assert.assertNull(
-    //     program.getReturnDataBufferData(new DataWord(0x01), new DataWord(0x01)));
+    op = new byte[]{0x60, 0x01, 0x60, 0x01, 0x60, 0x01, 0x3e};
+    program = new Program(op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 0);
+    Assert.assertNull(
+        program.getReturnDataBufferData(new DataWord(0x01), new DataWord(0x01)));
 
     // GASPRICE = 0x3a
     op = new byte[]{0x3a};
@@ -410,6 +414,26 @@ public class OperationsTest {
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 48);
     Assert.assertEquals(program.getStack().pop(), new DataWord(0));
+
+    // EXTCODESIZE = 0x3b
+    op = new byte[]{0x3b};
+    program = new Program(op, invoke, interTrx);
+    program.stackPush(Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 30);
+    Assert.assertEquals(program.getStack().pop(), new DataWord(0x62));
+
+    // EXTCODECOPY = 0x3c
+    op = Hex.decode("60036007600073471FD3AD3E9EEADEEC4608B92D16CE6B500704CC3C123456");
+    program = new Program(op, invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 12);
+    Assert.assertEquals(Hex.toHexString(program.getMemory()).toUpperCase(),
+        "6000600000000000000000000000000000000000000000000000000000000000");
   }
 
   // test Block Information
@@ -421,9 +445,15 @@ public class OperationsTest {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
 
     // BLOCKHASH = 0x40
+    byte[] op = {0x40};
+    program = new Program(op, invoke, interTrx);
+    program.stackPush(new DataWord(33));
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 30);
+    Assert.assertEquals(program.getStack().pop(), new DataWord(0));
 
     // COINBASE = 0x41
-    byte[] op = {0x41};
+    op = new byte[]{0x41};
     program = new Program(op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 48);
@@ -461,6 +491,10 @@ public class OperationsTest {
     // CHAINID = 0x46
 
     // SELFBALANCE = 0x47
+    op = new byte[]{0x47};
+    program = new Program(op, invoke, interTrx);
+    testOperations(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 0);
 
     // BASEFEE = 0x48
 
@@ -502,19 +536,35 @@ public class OperationsTest {
     Assert.assertEquals(program.getEnergylimitLeftLong(), 41);
     Assert.assertEquals(program.getMemSize(), 32);
 
-    // JUMP = 0x56
-    // op = new byte[]{0x5b, 0x60, 0x00, 0x56};
-    // program = new Program(op, invoke, interTrx);
-    // testOperations(program);
-    // Assert.assertEquals(program.getEnergylimitLeftLong(), 36);
-    // Assert.assertEquals(program.getPC(), 4);
+    // SLOAD = 0x54
+    program = new Program(compile("PUSH1 0xAA SLOAD"), invoke, interTrx);
+    testSingleOperation(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 47);
+    Assert.assertEquals(Hex.toHexString(program.getStack().peek().getData()).toUpperCase(),
+        "00000000000000000000000000000000000000000000000000000000000000AA");
 
+    // SSTORE = 0x55
+    program = new Program(compile("PUSH1 0x22 PUSH1 0xAA SSTORE PUSH1 0x22 PUSH1 0xBB SSTORE"),
+        invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 44);
+    Assert.assertEquals(Hex.toHexString(program.getStack().peek().getData()).toUpperCase(),
+        "00000000000000000000000000000000000000000000000000000000000000AA");
+
+    // JUMP = 0x56
     // JUMPI = 0x57
-    // op = new byte[]{0x60, 0x01, 0x60, 0x00, 0x57};
-    // program = new Program(op, invoke, interTrx);
-    // testOperations(program);
-    // Assert.assertEquals(program.getEnergylimitLeftLong(), 34);
-    // Assert.assertEquals(program.getPC(), 4);
+    // JUMPDEST = 0x5b
+    program = new Program(compile(
+        "PUSH1 0x01 PUSH1 0x05 JUMPI JUMPDEST PUSH1 0xCC"), invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 30);
+    Assert.assertEquals("00000000000000000000000000000000000000000000000000000000000000CC",
+        Hex.toHexString(program.getStack().peek().getData()).toUpperCase());
 
     // PC = 0x58
     op = new byte[]{0x60, 0x01, 0x60, 0x00, 0x58};
@@ -536,8 +586,6 @@ public class OperationsTest {
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 42);
     Assert.assertEquals(program.getStack().pop(), new DataWord(42));
-
-    // JUMPDEST = 0x5b
 
   }
 
@@ -634,6 +682,109 @@ public class OperationsTest {
     }
 
     // test log(0-4)
+    invoke.setEnergyLimit(1000);
+    program = new Program(compile(
+        "PUSH2 0x1234 PUSH1 0x00 MSTORE PUSH1 0x20 PUSH1 0x00 LOG0"), invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    List<LogInfo> logInfoList = program.getResult().getLogInfoList();
+    LogInfo logInfo = logInfoList.get(0);
+    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+        Hex.toHexString(logInfo.getAddress()));
+    assertEquals(0, logInfo.getTopics().size());
+    assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
+        Hex.toHexString(logInfo
+        .getData()));
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 354);
+
+    invoke.setEnergyLimit(2000);
+    program = new Program(compile(
+        "PUSH2 0x1234 PUSH1 0x00 MSTORE PUSH2 0x9999 PUSH1 0x20 PUSH1 0x00 LOG1"),
+        invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    logInfoList = program.getResult().getLogInfoList();
+    logInfo = logInfoList.get(0);
+    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+        Hex.toHexString(logInfo.getAddress()));
+    assertEquals(1, logInfo.getTopics().size());
+    assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
+        Hex.toHexString(logInfo
+        .getData()));
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 976);
+
+    invoke.setEnergyLimit(5000);
+    program = new Program(compile(
+        "PUSH2 0x1234 PUSH1 0x00 MSTORE PUSH2 0x9999 PUSH2 0x6666 PUSH1 0x20 PUSH1 0x00 LOG2"),
+        invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    logInfoList = program.getResult().getLogInfoList();
+    logInfo = logInfoList.get(0);
+    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+        Hex.toHexString(logInfo.getAddress()));
+    assertEquals(2, logInfo.getTopics().size());
+    assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
+        Hex.toHexString(logInfo
+        .getData()));
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 3598);
+
+    program = new Program(compile("PUSH2 0x1234 PUSH1 0x00 MSTORE PUSH2 0x9999"
+        + " PUSH2 0x6666 PUSH2 0x3333 PUSH1 0x20 PUSH1 0x00 LOG3"), invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    logInfoList = program.getResult().getLogInfoList();
+    logInfo = logInfoList.get(0);
+    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+        Hex.toHexString(logInfo.getAddress()));
+    assertEquals(3, logInfo.getTopics().size());
+    assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
+        Hex.toHexString(logInfo
+        .getData()));
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 3220);
+
+    program = new Program(compile("PUSH2 0x1234 PUSH1 0x00 MSTORE PUSH2 0x9999 PUSH2"
+        + " 0x6666 PUSH2 0x3333 PUSH2 0x5555 PUSH1 0x20 PUSH1 0x00 LOG4"), invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    logInfoList = program.getResult().getLogInfoList();
+    logInfo = logInfoList.get(0);
+    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+        Hex.toHexString(logInfo.getAddress()));
+    assertEquals(4, logInfo.getTopics().size());
+    assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
+        Hex.toHexString(logInfo.getData()));
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 2842);
   }
 
   @Test
@@ -648,7 +799,7 @@ public class OperationsTest {
     program = new Program(op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 50);
-    Assert.assertEquals(program.isStopped(), true);
+    Assert.assertTrue(program.isStopped());
 
     // return = 0xf3
     op = new byte[]{0x60, 0x01, 0x60, 0x01, (byte) 0xf3};
@@ -656,7 +807,7 @@ public class OperationsTest {
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 41);
     Assert.assertEquals(program.getResult().getHReturn().length, 1);
-    Assert.assertEquals(program.isStopped(), true);
+    Assert.assertTrue(program.isStopped());
 
     // revert = 0xfd
     op = new byte[]{0x60, 0x01, 0x60, 0x01, (byte) 0xfd};
@@ -664,11 +815,11 @@ public class OperationsTest {
     testOperations(program);
     Assert.assertEquals(program.getEnergylimitLeftLong(), 41);
     Assert.assertEquals(program.getResult().getHReturn().length, 1);
-    Assert.assertEquals(program.isStopped(), true);
-    Assert.assertEquals(program.getResult().isRevert(), true);
+    Assert.assertTrue(program.isStopped());
+    Assert.assertTrue(program.getResult().isRevert());
   }
 
-  public void testOperations(Program program) {
+  private void testOperations(Program program) {
     try {
       while (!program.isStopped()) {
         if (VMConfig.vmTrace()) {
@@ -713,6 +864,51 @@ public class OperationsTest {
       logger.info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
       throw new Program.JVMStackOverFlowException();
     }
+  }
+
+  private void testSingleOperation(Program program) {
+    try {
+      try {
+        Operation op = OperationRegistry.get(program.getCurrentOpIntValue());
+        if (op == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) op.getOpcode());
+        program.verifyStackSize(op.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(op.getRequire(), op.getRet());
+
+        program.spendEnergy(op.getEnergyCost(program), Op.getNameOf(op.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(op.getOpcode()));
+        op.execute(program);
+        program.setPreviouslyExecutedOp((byte) op.getOpcode());
+      } catch (RuntimeException e) {
+        logger.info("VM halted: [{}]", e.getMessage());
+        if (!(e instanceof Program.TransferException)) {
+          program.spendAllEnergy();
+        }
+        program.resetFutureRefund();
+        program.stop();
+        throw e;
+      } finally {
+        program.fullTrace();
+      }
+    } catch (Program.JVMStackOverFlowException | Program.OutOfTimeException e) {
+      throw e;
+    } catch (RuntimeException e) {
+      if (StringUtils.isEmpty(e.getMessage())) {
+        program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
+      } else {
+        program.setRuntimeFailure(e);
+      }
+    } catch (StackOverflowError soe) {
+      logger.info("\n !!! StackOverflowError: update your java run command with -Xss !!!\n", soe);
+      throw new Program.JVMStackOverFlowException();
+    }
+  }
+
+  private byte[] compile(String code) {
+    return new BytecodeCompiler().compile(code);
   }
 
 }
