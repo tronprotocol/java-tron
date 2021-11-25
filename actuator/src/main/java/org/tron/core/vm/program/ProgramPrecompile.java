@@ -70,7 +70,7 @@ public class ProgramPrecompile {
     if (VMConfig.allowTvmConstantinople()) {
       return new byte[0];
     } else {
-      return new DataWord(0).getData();
+      return new byte[DataWord.WORD_SIZE];
     }
   }
 

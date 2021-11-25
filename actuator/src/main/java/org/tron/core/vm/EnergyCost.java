@@ -172,7 +172,7 @@ public class EnergyCost {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     long energyCost = calcMemEnergy(oldMemSize,
-        memNeeded(stack.peek(), new DataWord(1)),
+        memNeeded(stack.peek(), DataWord.ONE()),
         0, Op.MSTORE8);
     return energyCost;
   }
@@ -441,7 +441,6 @@ public class EnergyCost {
   }
 
   private static boolean isDeadAccount(Program program, DataWord address) {
-    return program.getContractState().getAccount(convertToTronAddress(address.getLast20Bytes()))
-        == null;
+    return program.getContractState().getAccount(address.toTronAddress()) == null;
   }
 }

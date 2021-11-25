@@ -379,7 +379,6 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized void putStorageValue(byte[] address, DataWord key, DataWord value) {
-    address = convertToTronAddress(address);
     if (getAccount(address) == null) {
       return;
     }
@@ -396,7 +395,6 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized DataWord getStorageValue(byte[] address, DataWord key) {
-    address = convertToTronAddress(address);
     if (getAccount(address) == null) {
       return null;
     }

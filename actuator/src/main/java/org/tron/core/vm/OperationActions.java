@@ -430,7 +430,7 @@ public class OperationActions {
   }
 
   public static void gasPriceAction(Program program) {
-    DataWord energyPrice = new DataWord(0);
+    DataWord energyPrice = DataWord.ZERO();
     if (VMConfig.allowTvmCompatibleEvm() && program.getContractVersion() == 1) {
       energyPrice = new DataWord(program.getContractState()
           .getDynamicPropertiesStore().getEnergyFee());
@@ -509,14 +509,14 @@ public class OperationActions {
   }
 
   public static void difficultyAction(Program program) {
-    DataWord result = new DataWord(0);
+    DataWord result = DataWord.ZERO();
 
     program.stackPush(result);
     program.step();
   }
 
   public static void gasLimitAction(Program program) {
-    DataWord result = new DataWord(0);
+    DataWord result = DataWord.ZERO();
 
     program.stackPush(result);
     program.step();
@@ -841,7 +841,7 @@ public class OperationActions {
     if (!value.isZero()) {
       adjustedCallEnergy.add(new DataWord(EnergyCost.getStipendCallCost()));
     }
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
+    exeCall(program, adjustedCallEnergy, codeAddress, value, DataWord.ZERO(), false);
   }
 
   public static void callTokenAction(Program program) {
@@ -870,7 +870,7 @@ public class OperationActions {
     if (!value.isZero()) {
       adjustedCallEnergy.add(new DataWord(EnergyCost.getStipendCallCost()));
     }
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
+    exeCall(program, adjustedCallEnergy, codeAddress, value, DataWord.ZERO(), false);
   }
 
   public static void delegateCallAction(Program program) {
@@ -879,7 +879,7 @@ public class OperationActions {
     DataWord value = DataWord.ZERO;
 
     DataWord adjustedCallEnergy = program.getAdjustedCallEnergy();
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
+    exeCall(program, adjustedCallEnergy, codeAddress, value, DataWord.ZERO(), false);
   }
 
   public static void staticCallAction(Program program) {
@@ -889,7 +889,7 @@ public class OperationActions {
 
     DataWord adjustedCallEnergy = program.getAdjustedCallEnergy();
     program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
+    exeCall(program, adjustedCallEnergy, codeAddress, value, DataWord.ZERO(), false);
   }
 
   public static void exeCall(Program program, DataWord adjustedCallEnergy,

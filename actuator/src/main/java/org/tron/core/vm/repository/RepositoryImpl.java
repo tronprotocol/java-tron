@@ -473,7 +473,6 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void putStorageValue(byte[] address, DataWord key, DataWord value) {
-    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return;
     }
@@ -490,7 +489,6 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public DataWord getStorageValue(byte[] address, DataWord key) {
-    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return null;
     }

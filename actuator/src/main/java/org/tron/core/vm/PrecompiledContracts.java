@@ -69,6 +69,7 @@ import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.utils.VoteRewardUtil;
@@ -305,7 +306,7 @@ public class PrecompiledContracts {
     return Arrays.copyOfRange(data, offset, offset + len);
   }
 
-  public static abstract class PrecompiledContract {
+  public abstract static class PrecompiledContract {
 
     protected static final byte[] DATA_FALSE = new byte[WORD_SIZE];
     private byte[] callerAddress;
@@ -832,12 +833,11 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] rawData) {
       DataWord[] words = DataWord.parseArray(rawData);
-      byte[] addr = words[0].getLast20Bytes();
+      byte[] address = words[0].toTronAddress();
       int permissionId = words[1].intValueSafe();
       byte[] data = words[2].getData();
 
-      byte[] combine = ByteUtil
-          .merge(convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
+      byte[] combine = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
       byte[] hash = Sha256Hash.hash(CommonParameter
           .getInstance().isECKeyCryptoEngine(), combine);
 
@@ -848,7 +848,7 @@ public class PrecompiledContracts {
         return Pair.of(true, DATA_FALSE);
       }
 
-      AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
+      AccountCapsule account = this.getDeposit().getAccount(address);
       if (account != null) {
         try {
           Permission permission = account.getPermissionById(permissionId);
@@ -1575,14 +1575,9 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
-      byte[] callerAddress = getCallerAddress();
-      long rewardBalance =
-          VoteRewardUtil.queryReward(convertToTronAddress(callerAddress), getDeposit());
+      long rewardBalance = VoteRewardUtil.queryReward(getCallerAddress(), getDeposit());
       return Pair.of(true, longTo32Bytes(rewardBalance));
-
     }
-
   }
 
   public static class IsSrCandidate extends PrecompiledContract {
@@ -1594,28 +1589,21 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
       if (data == null || data.length != WORD_SIZE) {
         return Pair.of(true, dataBoolean(false));
       }
 
-      DataWord[] words = DataWord.parseArray(data);
-      byte[] addr = words[0].getLast20Bytes();
-
-      WitnessCapsule witnessCapsule = this.getDeposit()
-          .getWitness(convertToTronAddress(addr));
+      byte[] address = new DataWord(data).toTronAddress();
+      WitnessCapsule witnessCapsule = this.getDeposit().getWitness(address);
       if (witnessCapsule != null) {
         return Pair.of(true, dataBoolean(true));
       } else {
         return Pair.of(true, dataBoolean(false));
       }
-
     }
   }
 
   public static class VoteCount extends PrecompiledContract {
-
-    private static final int SIZE = 64;
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -1624,29 +1612,25 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
-      if (data == null || data.length != SIZE) {
+      if (data == null || data.length != 2 * WORD_SIZE) {
         return Pair.of(true, longTo32Bytes(0L));
       }
 
       DataWord[] words = DataWord.parseArray(data);
-      byte[] voteTronAddr = convertToTronAddress(words[0].getLast20Bytes());
-      byte[] targetTronAddr = convertToTronAddress(words[1].getLast20Bytes());
+      byte[] address = words[0].toTronAddress();
+      AccountCapsule accountCapsule = this.getDeposit().getAccount(address);
 
       long voteCount = 0;
-      AccountCapsule voteAccountCapsule = this.getDeposit().getAccount(voteTronAddr);
-      if (voteAccountCapsule != null && !voteAccountCapsule.getVotesList().isEmpty()) {
-        List<Protocol.Vote> voteList =
-            voteAccountCapsule.getVotesList();
-        for (Protocol.Vote vote : voteList) {
-          if (ByteString.copyFrom(targetTronAddr).equals(vote.getVoteAddress())) {
+      if (accountCapsule != null) {
+        ByteString witness = ByteString.copyFrom(words[1].toTronAddress());
+        for (Protocol.Vote vote : accountCapsule.getVotesList()) {
+          if (witness.equals(vote.getVoteAddress())) {
             voteCount += vote.getVoteCount();
           }
         }
       }
 
       return Pair.of(true, longTo32Bytes(voteCount));
-
     }
   }
 
@@ -1659,26 +1643,21 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
       if (data == null || data.length != WORD_SIZE) {
         return Pair.of(true, longTo32Bytes(0L));
       }
 
-      DataWord[] words = DataWord.parseArray(data);
-      byte[] voteTronAddr = convertToTronAddress(words[0].getLast20Bytes());
+      byte[] address = new DataWord(data).toTronAddress();
+      AccountCapsule accountCapsule = this.getDeposit().getAccount(address);
 
-      long voteCount = 0;
-      AccountCapsule voteAccountCapsule = this.getDeposit().getAccount(voteTronAddr);
-      if (voteAccountCapsule != null && !voteAccountCapsule.getVotesList().isEmpty()) {
-        List<Protocol.Vote> voteList =
-            voteAccountCapsule.getVotesList();
-        for (Protocol.Vote vote : voteList) {
-          voteCount += vote.getVoteCount();
+      long usedVoteCount = 0;
+      if (accountCapsule != null) {
+        for (Protocol.Vote vote : accountCapsule.getVotesList()) {
+          usedVoteCount += vote.getVoteCount();
         }
       }
 
-      return Pair.of(true, longTo32Bytes(voteCount));
-
+      return Pair.of(true, longTo32Bytes(usedVoteCount));
     }
   }
 
@@ -1691,23 +1670,15 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
       if (data == null || data.length != WORD_SIZE) {
         return Pair.of(true, longTo32Bytes(0L));
       }
 
-      DataWord[] words = DataWord.parseArray(data);
-      byte[] targetTronAddr = convertToTronAddress(words[0].getLast20Bytes());
+      byte[] address = new DataWord(data).toTronAddress();
+      WitnessCapsule witnessCapsule = this.getDeposit().getWitness(address);
 
-      long voteCount = 0;
-      WitnessCapsule witnessCapsule =
-          this.getDeposit().getWitness(targetTronAddr);
-      if (witnessCapsule != null) {
-        voteCount = witnessCapsule.getVoteCount();
-      }
-
+      long voteCount = witnessCapsule != null ? witnessCapsule.getVoteCount() : 0;
       return Pair.of(true, longTo32Bytes(voteCount));
-
     }
   }
 
@@ -1720,40 +1691,31 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
       if (data == null || data.length != WORD_SIZE) {
         return Pair.of(true, longTo32Bytes(0L));
       }
 
-      DataWord[] words = DataWord.parseArray(data);
-      byte[] voteTronAddr = convertToTronAddress(words[0].getLast20Bytes());
+      byte[] address = new DataWord(data).toTronAddress();
+      AccountCapsule accountCapsule = this.getDeposit().getAccount(address);
 
-      AccountCapsule accountCapsule = this.getDeposit().getAccount(voteTronAddr);
-      if (accountCapsule != null) {
-        return Pair.of(true,
-            longTo32Bytes(accountCapsule.getTronPower() / TRX_PRECISION));
-      }
-
-      return Pair.of(true, longTo32Bytes(0L));
-
+      long tronPower = accountCapsule != null
+          ? accountCapsule.getTronPower() / TRX_PRECISION : 0;
+      return Pair.of(true, longTo32Bytes(tronPower));
     }
   }
 
   public static class EthRipemd160 extends PrecompiledContract {
 
-
     @Override
     public long getEnergyForData(byte[] data) {
-
       if (data == null) {
         return 600;
       }
-      return 600L + (data.length + 31) / 32 * 120;
+      return 600L + (data.length + 31) / 32 * 120L;
     }
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
       byte[] result;
       if (data == null) {
         result = Hash.ripemd160(EMPTY_BYTE_ARRAY);
@@ -1766,10 +1728,8 @@ public class PrecompiledContracts {
 
   public static class Blake2F extends PrecompiledContract {
 
-
     @Override
     public long getEnergyForData(byte[] data) {
-
       if (data.length != 213 || (data[212] & 0xFE) != 0) {
         return 0;
       }
@@ -1780,13 +1740,12 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
       if (data.length != 213) {
-        logger.info("Incorrect input length.  Expected {} and got {}", 213, data.length);
+        logger.warn("Incorrect input length.  Expected {} and got {}", 213, data.length);
         return Pair.of(false, DataWord.ZERO().getData());
       }
       if ((data[212] & 0xFE) != 0) {
-        logger.info("Incorrect finalization flag, expected 0 or 1 and got {}", data[212]);
+        logger.warn("Incorrect finalization flag, expected 0 or 1 and got {}", data[212]);
         return Pair.of(false, DataWord.ZERO().getData());
       }
       final MessageDigest digest = new Blake2bfMessageDigest();
@@ -1800,5 +1759,4 @@ public class PrecompiledContracts {
       return Pair.of(true, result);
     }
   }
-
 }
