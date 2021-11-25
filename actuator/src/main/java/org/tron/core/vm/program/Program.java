@@ -1014,15 +1014,6 @@ public class Program {
     getResult().refundEnergy(energyValue);
   }
 
-  public void futureRefundEnergy(long energyValue) {
-    logger.debug("Future refund added: [{}]", energyValue);
-    getResult().addFutureRefund(energyValue);
-  }
-
-  public void resetFutureRefund() {
-    getResult().resetFutureRefund();
-  }
-
   public void storageSave(DataWord word1, DataWord word2) {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();

@@ -23,7 +23,6 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 public class ProgramResult {
 
   private long energyUsed = 0;
-  private long futureRefund = 0;
 
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
@@ -31,7 +30,6 @@ public class ProgramResult {
   private boolean revert;
 
   private Set<DataWord> deleteAccounts;
-  private ByteArraySet touchedAccounts = new ByteArraySet();
   private List<InternalTransaction> internalTransactions;
   private List<LogInfo> logInfoList;
   private TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -134,20 +132,6 @@ public class ProgramResult {
     }
   }
 
-  public void addTouchAccount(byte[] addr) {
-    touchedAccounts.add(addr);
-  }
-
-  public Set<byte[]> getTouchedAccounts() {
-    return touchedAccounts;
-  }
-
-  public void addTouchAccounts(Set<byte[]> accounts) {
-    if (!isEmpty(accounts)) {
-      getTouchedAccounts().addAll(accounts);
-    }
-  }
-
   public List<LogInfo> getLogInfoList() {
     if (logInfoList == null) {
       logInfoList = new ArrayList<>();
@@ -207,22 +191,9 @@ public class ProgramResult {
     }
   }
 
-  public void addFutureRefund(long energyValue) {
-    futureRefund += energyValue;
-  }
-
-  public long getFutureRefund() {
-    return futureRefund;
-  }
-
-  public void resetFutureRefund() {
-    futureRefund = 0;
-  }
-
   public void reset() {
     getDeleteAccounts().clear();
     getLogInfoList().clear();
-    resetFutureRefund();
   }
 
   public void merge(ProgramResult another) {
@@ -230,8 +201,6 @@ public class ProgramResult {
     if (another.getException() == null && !another.isRevert()) {
       addDeleteAccounts(another.getDeleteAccounts());
       addLogInfos(another.getLogInfoList());
-      addFutureRefund(another.getFutureRefund());
-      addTouchAccounts(another.getTouchedAccounts());
     }
   }
 

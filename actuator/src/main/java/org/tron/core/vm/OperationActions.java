@@ -856,7 +856,6 @@ public class OperationActions {
     if (!value.isZero()) {
       adjustedCallEnergy.add(new DataWord(EnergyCost.getStipendCallCost()));
     }
-    program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
     DataWord tokenId = program.stackPop();
     exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId, VMConfig.allowMultiSign());
   }
@@ -888,7 +887,6 @@ public class OperationActions {
     DataWord value = DataWord.ZERO;
 
     DataWord adjustedCallEnergy = program.getAdjustedCallEnergy();
-    program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
     exeCall(program, adjustedCallEnergy, codeAddress, value, DataWord.ZERO(), false);
   }
 
@@ -940,7 +938,6 @@ public class OperationActions {
     } else {
       DataWord address = program.stackPop();
       program.suicide(address);
-      program.getResult().addTouchAccount(address.getLast20Bytes());
     }
 
     program.stop();

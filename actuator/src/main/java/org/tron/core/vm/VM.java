@@ -48,7 +48,6 @@ public class VM {
           if (!(e instanceof TransferException)) {
             program.spendAllEnergy();
           }
-          program.resetFutureRefund();
           program.stop();
           throw e;
         } finally {

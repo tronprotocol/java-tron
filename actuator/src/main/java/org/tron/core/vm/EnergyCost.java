@@ -208,7 +208,6 @@ public class EnergyCost {
     }
     if (oldValue != null && newValue.isZero()) {
       // set zero to an old value
-      program.futureRefundEnergy(REFUND_SSTORE);
       return CLEAR_SSTORE;
     }
     // include:
