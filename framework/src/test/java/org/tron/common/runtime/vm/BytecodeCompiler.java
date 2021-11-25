@@ -1,12 +1,13 @@
 package org.tron.common.runtime.vm;
 
-import org.bouncycastle.util.encoders.Hex;
-import org.tron.core.vm.Op;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bouncycastle.util.encoders.Hex;
+import org.tron.core.vm.Op;
+
 public class BytecodeCompiler {
+
   public byte[] compile(String code) {
     return compile(code.split("\\s+"));
   }
@@ -15,23 +16,26 @@ public class BytecodeCompiler {
     List<Byte> bytecodes = new ArrayList<>();
     int ntokens = tokens.length;
 
-    for (int i = 0; i < ntokens; i++) {
-      String token = tokens[i].trim().toUpperCase();
+    for (String s : tokens) {
+      String token = s.trim().toUpperCase();
 
-      if (token.isEmpty())
+      if (token.isEmpty()) {
         continue;
+      }
 
-      if (isHexadecimal(token))
+      if (isHexadecimal(token)) {
         compileHexadecimal(token, bytecodes);
-      else
+      } else {
         bytecodes.add(Op.getOpOf(token));
+      }
     }
 
-    int nbytes = bytecodes.size();
-    byte[] bytes = new byte[nbytes];
+    int nBytes = bytecodes.size();
+    byte[] bytes = new byte[nBytes];
 
-    for (int k = 0; k < nbytes; k++)
-      bytes[k] = bytecodes.get(k).byteValue();
+    for (int k = 0; k < nBytes; k++) {
+      bytes[k] = bytecodes.get(k);
+    }
 
     return bytes;
   }
@@ -43,7 +47,8 @@ public class BytecodeCompiler {
   private static void compileHexadecimal(String token, List<Byte> bytecodes) {
     byte[] bytes = Hex.decode(token.substring(2));
 
-    for (int k = 0; k < bytes.length; k++)
-      bytecodes.add(bytes[k]);
+    for (byte aByte : bytes) {
+      bytecodes.add(aByte);
+    }
   }
 }

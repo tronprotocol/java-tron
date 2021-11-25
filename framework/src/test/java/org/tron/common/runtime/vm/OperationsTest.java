@@ -545,7 +545,9 @@ public class OperationsTest {
     invoke.getDeposit().putStorageValue(Hex.decode(
             "41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"), new DataWord(0xCC),
         new DataWord(0x01));
-    program = new Program(compile("PUSH1 0x22 PUSH1 0xAA SSTORE PUSH1 0x33 PUSH1 0xCC SSTORE PUSH1 0xCC SLOAD"), invoke, interTrx);
+    program = new Program(
+        compile("PUSH1 0x22 PUSH1 0xAA SSTORE PUSH1 0x33 PUSH1 0xCC SSTORE PUSH1 0xCC SLOAD"),
+        invoke, interTrx);
     testSingleOperation(program);
     testSingleOperation(program);
     testSingleOperation(program);
@@ -851,7 +853,6 @@ public class OperationsTest {
           if (!(e instanceof Program.TransferException)) {
             program.spendAllEnergy();
           }
-          program.resetFutureRefund();
           program.stop();
           throw e;
         } finally {
@@ -894,7 +895,6 @@ public class OperationsTest {
         if (!(e instanceof Program.TransferException)) {
           program.spendAllEnergy();
         }
-        program.resetFutureRefund();
         program.stop();
         throw e;
       } finally {
