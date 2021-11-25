@@ -841,7 +841,7 @@ public class OperationActions {
     if (!value.isZero()) {
       adjustedCallEnergy.add(new DataWord(EnergyCost.getStipendCallCost()));
     }
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0));
+    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
   }
 
   public static void callTokenAction(Program program) {
@@ -858,7 +858,7 @@ public class OperationActions {
     }
     program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
     DataWord tokenId = program.stackPop();
-    exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId);
+    exeCall(program, adjustedCallEnergy, codeAddress, value, tokenId, VMConfig.allowMultiSign());
   }
 
   public static void callCodeAction(Program program) {
@@ -870,7 +870,7 @@ public class OperationActions {
     if (!value.isZero()) {
       adjustedCallEnergy.add(new DataWord(EnergyCost.getStipendCallCost()));
     }
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0));
+    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
   }
 
   public static void delegateCallAction(Program program) {
@@ -879,7 +879,7 @@ public class OperationActions {
     DataWord value = DataWord.ZERO;
 
     DataWord adjustedCallEnergy = program.getAdjustedCallEnergy();
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0));
+    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
   }
 
   public static void staticCallAction(Program program) {
@@ -889,11 +889,11 @@ public class OperationActions {
 
     DataWord adjustedCallEnergy = program.getAdjustedCallEnergy();
     program.getResult().addTouchAccount(codeAddress.getLast20Bytes());
-    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0));
+    exeCall(program, adjustedCallEnergy, codeAddress, value, new DataWord(0), false);
   }
 
   public static void exeCall(Program program, DataWord adjustedCallEnergy,
-            DataWord codeAddress, DataWord value, DataWord tokenId) {
+            DataWord codeAddress, DataWord value, DataWord tokenId, boolean isTokenTransferMsg) {
 
     DataWord inDataOffs = program.stackPop();
     DataWord inDataSize = program.stackPop();
@@ -905,7 +905,7 @@ public class OperationActions {
     int op = program.getCurrentOpIntValue();
     MessageCall msg = new MessageCall(
         op, adjustedCallEnergy, codeAddress, value, inDataOffs, inDataSize,
-        outDataOffs, outDataSize, tokenId, VMConfig.allowMultiSign());
+        outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
 
     PrecompiledContracts.PrecompiledContract contract =
         PrecompiledContracts.getContractForAddress(codeAddress);

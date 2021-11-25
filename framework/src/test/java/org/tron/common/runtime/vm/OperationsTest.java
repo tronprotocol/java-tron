@@ -327,10 +327,10 @@ public class OperationsTest {
     // test BALANCE = 0x31
     op = new byte[]{0x31};
     program = new Program(op, invoke, interTrx);
-    program.stackPush(invoke.getOriginAddress());
+    program.stackPush(Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
     testOperations(program);
-    Assert.assertEquals(program.getEnergylimitLeftLong(), 0);
-    Assert.assertNull(program.getResult().getRuntimeError());
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 30);
+    Assert.assertEquals(program.getStack().pop(), new DataWord(0));
 
     // test ORIGIN = 0x32
     op = new byte[]{0x32};
@@ -494,7 +494,8 @@ public class OperationsTest {
     op = new byte[]{0x47};
     program = new Program(op, invoke, interTrx);
     testOperations(program);
-    Assert.assertEquals(program.getEnergylimitLeftLong(), 0);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 45);
+    Assert.assertEquals(program.getStack().pop(), new DataWord(0));
 
     // BASEFEE = 0x48
 
@@ -536,21 +537,27 @@ public class OperationsTest {
     Assert.assertEquals(program.getEnergylimitLeftLong(), 41);
     Assert.assertEquals(program.getMemSize(), 32);
 
-    // SLOAD = 0x54
-    program = new Program(compile("PUSH1 0xAA SLOAD"), invoke, interTrx);
+    // SLOAD = 0x54, SSTORE = 0x55
+    invoke.setEnergyLimit(20000);
+    invoke.getDeposit().putStorageValue(Hex.decode(
+            "41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"), new DataWord(0xAA),
+        new DataWord(0x01));
+    invoke.getDeposit().putStorageValue(Hex.decode(
+            "41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"), new DataWord(0xCC),
+        new DataWord(0x01));
+    program = new Program(compile("PUSH1 0x22 PUSH1 0xAA SSTORE PUSH1 0x33 PUSH1 0xCC SSTORE PUSH1 0xCC SLOAD"), invoke, interTrx);
     testSingleOperation(program);
-    Assert.assertEquals(program.getEnergylimitLeftLong(), 47);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    Assert.assertEquals(program.getEnergylimitLeftLong(), 9935);
     Assert.assertEquals(Hex.toHexString(program.getStack().peek().getData()).toUpperCase(),
-        "00000000000000000000000000000000000000000000000000000000000000AA");
-
-    // SSTORE = 0x55
-    program = new Program(compile("PUSH1 0x22 PUSH1 0xAA SSTORE PUSH1 0x22 PUSH1 0xBB SSTORE"),
-        invoke, interTrx);
-    testSingleOperation(program);
-    testSingleOperation(program);
-    Assert.assertEquals(program.getEnergylimitLeftLong(), 44);
-    Assert.assertEquals(Hex.toHexString(program.getStack().peek().getData()).toUpperCase(),
-        "00000000000000000000000000000000000000000000000000000000000000AA");
+        "0000000000000000000000000000000000000000000000000000000000000033");
+    invoke.setEnergyLimit(50);
 
     // JUMP = 0x56
     // JUMPI = 0x57
@@ -693,7 +700,7 @@ public class OperationsTest {
     testSingleOperation(program);
     List<LogInfo> logInfoList = program.getResult().getLogInfoList();
     LogInfo logInfo = logInfoList.get(0);
-    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+    assertEquals("471fd3ad3e9eeadeec4608b92d16ce6b500704cc",
         Hex.toHexString(logInfo.getAddress()));
     assertEquals(0, logInfo.getTopics().size());
     assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
@@ -714,7 +721,7 @@ public class OperationsTest {
     testSingleOperation(program);
     logInfoList = program.getResult().getLogInfoList();
     logInfo = logInfoList.get(0);
-    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+    assertEquals("471fd3ad3e9eeadeec4608b92d16ce6b500704cc",
         Hex.toHexString(logInfo.getAddress()));
     assertEquals(1, logInfo.getTopics().size());
     assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
@@ -736,7 +743,7 @@ public class OperationsTest {
     testSingleOperation(program);
     logInfoList = program.getResult().getLogInfoList();
     logInfo = logInfoList.get(0);
-    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+    assertEquals("471fd3ad3e9eeadeec4608b92d16ce6b500704cc",
         Hex.toHexString(logInfo.getAddress()));
     assertEquals(2, logInfo.getTopics().size());
     assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
@@ -757,7 +764,7 @@ public class OperationsTest {
     testSingleOperation(program);
     logInfoList = program.getResult().getLogInfoList();
     logInfo = logInfoList.get(0);
-    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+    assertEquals("471fd3ad3e9eeadeec4608b92d16ce6b500704cc",
         Hex.toHexString(logInfo.getAddress()));
     assertEquals(3, logInfo.getTopics().size());
     assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
@@ -779,7 +786,7 @@ public class OperationsTest {
     testSingleOperation(program);
     logInfoList = program.getResult().getLogInfoList();
     logInfo = logInfoList.get(0);
-    assertEquals("cd2a3d9f938e13cd947ec05abc7fe734df8dd826",
+    assertEquals("471fd3ad3e9eeadeec4608b92d16ce6b500704cc",
         Hex.toHexString(logInfo.getAddress()));
     assertEquals(4, logInfo.getTopics().size());
     assertEquals("0000000000000000000000000000000000000000000000000000000000001234",
