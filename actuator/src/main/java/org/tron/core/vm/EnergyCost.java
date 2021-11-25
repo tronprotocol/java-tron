@@ -1,12 +1,11 @@
 package org.tron.core.vm;
 
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
+
+import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
-
-import java.math.BigInteger;
-
-import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 public class EnergyCost {
 
@@ -202,44 +201,43 @@ public class EnergyCost {
     Stack stack = program.getStack();
     DataWord newValue = stack.get(stack.size() - 2);
     DataWord oldValue = program.storageLoad(stack.peek());
-    long energyCost;
+
     if (oldValue == null && !newValue.isZero()) {
       // set a new not-zero value
-      energyCost = SET_SSTORE;
-    } else if (oldValue != null && newValue.isZero()) {
+      return SET_SSTORE;
+    }
+    if (oldValue != null && newValue.isZero()) {
       // set zero to an old value
       program.futureRefundEnergy(REFUND_SSTORE);
-      energyCost = CLEAR_SSTORE;
-    } else {
-      // include:
-      // [1] oldValue == null && newValue == 0
-      // [2] oldValue != null && newValue != 0
-      energyCost = RESET_SSTORE;
+      return CLEAR_SSTORE;
     }
-    return energyCost;
+    // include:
+    // [1] oldValue == null && newValue == 0
+    // [2] oldValue != null && newValue != 0
+    return RESET_SSTORE;
+
   }
 
   public static long getLogCost(Program program) {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
-    int nTopics = program.getCurrentOpIntValue() - Op.LOG0;
+    int opIntValue = program.getCurrentOpIntValue();
+    int nTopics = opIntValue - Op.LOG0;
     BigInteger dataSize = stack.get(stack.size() - 2).value();
     BigInteger dataCost = dataSize
         .multiply(BigInteger.valueOf(LOG_DATA_ENERGY));
     if (program.getEnergyLimitLeft().value().compareTo(dataCost) < 0) {
       throw new Program.OutOfEnergyException(
           "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
-          "LOG" + nTopics,
+          Op.getNameOf(opIntValue),
           dataCost.longValueExact(), program.getEnergyLimitLeft().longValueSafe());
     }
     long energyCost = LOG_ENERGY + LOG_TOPIC_ENERGY * nTopics
         + LOG_DATA_ENERGY * stack.get(stack.size() - 2).longValue()
         + calcMemEnergy(oldMemSize,
-        memNeeded(stack.peek(), stack.get(stack.size() - 2)),
-        0, program.getCurrentOpIntValue());
+        memNeeded(stack.peek(), stack.get(stack.size() - 2)), 0, opIntValue);
 
-    checkMemorySize(program.getCurrentOpIntValue(),
-        memNeeded(stack.peek(), stack.get(stack.size() - 2)));
+    checkMemorySize(opIntValue, memNeeded(stack.peek(), stack.get(stack.size() - 2)));
     return energyCost;
   }
 
@@ -252,13 +250,13 @@ public class EnergyCost {
   }
 
   public static long getFreezeCost(Program program) {
-    long energyCost = FREEZE;
+
     Stack stack = program.getStack();
     DataWord receiverAddressWord = stack.get(stack.size() - 3);
     if (isDeadAccount(program, receiverAddressWord)) {
-      energyCost += NEW_ACCT_CALL;
+      return FREEZE + NEW_ACCT_CALL;
     }
-    return energyCost;
+    return FREEZE;
   }
 
   public static long getUnfreezeCost(Program program) {
@@ -270,7 +268,7 @@ public class EnergyCost {
   }
 
   public static long getVoteWitnessCost(Program program) {
-    long energyCost = VOTE_WITNESS;
+
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     DataWord amountArrayLength = stack.get(stack.size() - 1).clone();
@@ -286,11 +284,9 @@ public class EnergyCost {
     witnessArrayLength.mul(wordSize);
     BigInteger witnessArrayMemoryNeeded = memNeeded(witnessArrayOffset, witnessArrayLength);
 
-    energyCost += calcMemEnergy(oldMemSize,
+    return VOTE_WITNESS + calcMemEnergy(oldMemSize,
         (amountArrayMemoryNeeded.compareTo(witnessArrayMemoryNeeded) > 0
-            ? amountArrayMemoryNeeded : witnessArrayMemoryNeeded),
-        0, Op.VOTEWITNESS);
-    return energyCost;
+            ? amountArrayMemoryNeeded : witnessArrayMemoryNeeded), 0, Op.VOTEWITNESS);
   }
 
   public static long getWithdrawRewardCost(Program program) {
@@ -300,10 +296,8 @@ public class EnergyCost {
   public static long getCreateCost(Program program) {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
-    long energyCost = CREATE + calcMemEnergy(oldMemSize,
-        memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)),
-        0, Op.CREATE);
-    return energyCost;
+    return CREATE + calcMemEnergy(oldMemSize,
+        memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, Op.CREATE);
   }
 
   public static long getCreate2Cost(Program program) {
@@ -314,8 +308,7 @@ public class EnergyCost {
     energyCost += calcMemEnergy(oldMemSize,
         memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)),
         0, Op.CREATE2);
-    energyCost += DataWord.sizeInWords(codeSize.intValueSafe()) * SHA3_WORD;
-    return energyCost;
+    return energyCost + DataWord.sizeInWords(codeSize.intValueSafe()) * SHA3_WORD;
   }
 
   public static long getCallCost(Program program) {
