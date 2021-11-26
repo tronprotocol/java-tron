@@ -47,6 +47,25 @@ public class HttpMethed {
   static JSONObject responseContent;
   static JSONObject signResponseContent;
   static JSONObject transactionApprovedListContent;
+  public static volatile Integer witnessNum;
+
+  /**
+   * constructor.
+   */
+  private static volatile String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list")
+      .get(1);
+
+  /**
+   * constructor.
+   */
+  public static Integer getWitnessNum() {
+    if (null == witnessNum) {
+      witnessNum = parseResponseContent(listwitnesses(httpnode)).getJSONArray("witnesses").size();
+    }
+
+    return witnessNum;
+  }
 
   static {
     PoolingClientConnectionManager pccm = new PoolingClientConnectionManager();
@@ -2318,7 +2337,8 @@ public class HttpMethed {
     Integer currentBlockNum = Integer.parseInt(responseContent.get("number").toString());
     Integer nextBlockNum = 0;
     Integer times = 0;
-    while (nextBlockNum <= currentBlockNum && times++ <= 3) {
+    while (nextBlockNum < currentBlockNum + ((getWitnessNum() >= 27)
+        ? 18 : (getWitnessNum() * 70 / 100)) && times++ < getWitnessNum()) {
       response = HttpMethed.getNowBlockFromSolidity(httpSolidityNode);
       responseContent = HttpMethed.parseResponseContent(response);
       responseContent = HttpMethed
