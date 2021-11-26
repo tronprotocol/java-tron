@@ -1,7 +1,5 @@
 package org.tron.core.vm;
 
-import static org.tron.core.db.TransactionTrace.convertToTronAddress;
-
 import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.program.Program;
@@ -30,7 +28,6 @@ public class EnergyCost {
   private static final long CLEAR_SSTORE = 5000;
   private static final long SET_SSTORE = 20000;
   private static final long RESET_SSTORE = 5000;
-  private static final long REFUND_SSTORE = 15000;
   private static final long LOG_DATA_ENERGY = 8;
   private static final long LOG_ENERGY = 375;
   private static final long LOG_TOPIC_ENERGY = 375;
@@ -431,7 +428,7 @@ public class EnergyCost {
 
   private static void checkMemorySize(int op, BigInteger newMemSize) {
     if (newMemSize.compareTo(MEM_LIMIT) > 0) {
-      throw Program.Exception.memoryOverflow(op);
+      throw Program.Exception.memoryOverflow(Op.getNameOf(op));
     }
   }
 

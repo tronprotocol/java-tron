@@ -23,7 +23,6 @@ import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.BIUtil.isZero;
 import static org.tron.common.utils.ByteUtil.*;
-import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import static java.util.Arrays.copyOfRange;
 
 import java.math.BigInteger;

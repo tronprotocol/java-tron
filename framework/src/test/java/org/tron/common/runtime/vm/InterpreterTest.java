@@ -30,7 +30,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
-import org.tron.core.vm.VM;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.protos.Protocol.Transaction;
@@ -54,7 +53,6 @@ public class InterpreterTest {
 
   @Test
   public void testVMException() throws ContractValidateException {
-    VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x5b, 0x60, 0x00, 0x56};
     // 0x5b      - JUMPTEST
@@ -92,7 +90,6 @@ public class InterpreterTest {
 
   @Test
   public void JumpSingleOperation() throws ContractValidateException {
-    VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x56};
     // 0x56      - JUMP
@@ -129,7 +126,6 @@ public class InterpreterTest {
 
   @Test
   public void JumpToInvalidDestination() throws ContractValidateException {
-    VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x60, 0x20, 0x56};
     // 0x60      - PUSH1
@@ -169,7 +165,6 @@ public class InterpreterTest {
 
   @Test
   public void JumpToLargeNumberDestination() throws ContractValidateException {
-    VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x64, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x56};
     // 0x60              - PUSH5

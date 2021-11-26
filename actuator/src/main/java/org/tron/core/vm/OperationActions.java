@@ -475,7 +475,7 @@ public class OperationActions {
   public static void extCodeHashAction(Program program) {
     DataWord address = program.stackPop();
     byte[] codeHash = program.getCodeHashAt(address);
-    program.stackPush(codeHash);
+    program.stackPush(new DataWord(codeHash));
     program.step();
   }
 
@@ -649,7 +649,7 @@ public class OperationActions {
     program.step();
     byte[] data = program.sweep(n);
 
-    program.stackPush(data);
+    program.stackPush(new DataWord(data));
   }
 
   public static void dupAction(Program program) {

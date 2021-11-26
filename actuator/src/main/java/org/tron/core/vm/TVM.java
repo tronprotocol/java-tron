@@ -9,22 +9,11 @@ import org.tron.core.vm.program.Program.JVMStackOverFlowException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.Program.TransferException;
 
-@Slf4j(topic = "VM")
-public class VM {
+@Slf4j(topic = "TVM")
+public class TVM {
 
-  private final VMConfig config;
-
-  public VM() {
-    config = VMConfig.getInstance();
-  }
-
-  public VM(VMConfig config) {
-    this.config = config;
-  }
-
-  public void play(Program program) {
+  public static void play(Program program) {
     try {
-
       while (!program.isStopped()) {
         if (VMConfig.vmTrace()) {
           program.saveOpTrace();
@@ -35,13 +24,20 @@ public class VM {
             throw Program.Exception.invalidOpCode(program.getCurrentOp());
           }
           program.setLastOp((byte) op.getOpcode());
+
+          /* stack underflow/overflow check */
           program.verifyStackSize(op.getRequire());
-          //Check not exceeding stack limits
           program.verifyStackOverflow(op.getRequire(), op.getRet());
 
+          /* spend energy before execution */
           program.spendEnergy(op.getEnergyCost(program), Op.getNameOf(op.getOpcode()));
+
+          /* check if cpu time out */
           program.checkCPUTimeLimit(Op.getNameOf(op.getOpcode()));
+
+          /* exec op action */
           op.execute(program);
+
           program.setPreviouslyExecutedOp((byte) op.getOpcode());
         } catch (RuntimeException e) {
           logger.info("VM halted: [{}]", e.getMessage());
@@ -54,7 +50,6 @@ public class VM {
           program.fullTrace();
         }
       }
-
     } catch (JVMStackOverFlowException | OutOfTimeException e) {
       throw e;
     } catch (RuntimeException e) {

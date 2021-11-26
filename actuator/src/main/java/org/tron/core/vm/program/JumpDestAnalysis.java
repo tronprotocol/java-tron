@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.core.vm.program;
 
 import java.util.HashSet;
@@ -24,22 +7,18 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.config.VMConfig;
 
-
 @Slf4j(topic = "VM")
-/**
- * Created by Anton Nashatyrev on 06.02.2017.
- */
-public class ProgramPrecompile {
+public class JumpDestAnalysis {
 
-  private Set<Integer> jumpdest = new HashSet<>();
+  private final Set<Integer> jumpDest = new HashSet<>();
 
-  public static ProgramPrecompile compile(byte[] ops) {
-    ProgramPrecompile ret = new ProgramPrecompile();
+  public static JumpDestAnalysis compile(byte[] ops) {
+    JumpDestAnalysis ret = new JumpDestAnalysis();
     for (int i = 0; i < ops.length; ++i) {
       int op = ops[i] & 0xff;
 
       if (op == Op.JUMPDEST) {
-        ret.jumpdest.add(i);
+        ret.jumpDest.add(i);
       }
 
       if (op >= Op.PUSH1 && op <= Op.PUSH32) {
@@ -75,6 +54,6 @@ public class ProgramPrecompile {
   }
 
   public boolean hasJumpDest(int pc) {
-    return jumpdest.contains(pc);
+    return jumpDest.contains(pc);
   }
 }

@@ -19,7 +19,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
-import org.tron.core.vm.VM;
+import org.tron.core.vm.TVM;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
@@ -67,7 +67,7 @@ public class OperationsTest {
       Operation op = OperationRegistry.get(i);
       if (op != null) {
         Program context = buildEmptyContext(new byte[]{(byte) op.getOpcode()});
-        new VM().play(context);
+        TVM.play(context);
 
         if (op.getRequire() != 0) {
           Assert.assertTrue(context.getResult().getException()
@@ -86,7 +86,7 @@ public class OperationsTest {
         for (int j = 0; j < 1024; j++) {
           context.stackPushZero();
         }
-        new VM().play(context);
+        TVM.play(context);
 
         if (op.getRet() - op.getRequire() > 0) {
           Assert.assertTrue(context.getResult().getException()
@@ -778,7 +778,7 @@ public class OperationsTest {
     // test BALANCE = 0x31
     byte[] op = new byte[]{0x31};
     program = new Program(op, invoke, interTrx);
-    program.stackPush(Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+    program.stackPush(new DataWord("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
     testOperations(program);
     Assert.assertEquals(20, program.getResult().getEnergyUsed());
     Assert.assertEquals(new DataWord(0), program.getStack().pop());
@@ -816,7 +816,7 @@ public class OperationsTest {
     // EXTCODESIZE = 0x3b
     op = new byte[]{0x3b};
     program = new Program(op, invoke, interTrx);
-    program.stackPush(Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+    program.stackPush(new DataWord("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
     testOperations(program);
     Assert.assertEquals(20, program.getResult().getEnergyUsed());
     Assert.assertEquals(new DataWord(0x62), program.getStack().pop());
@@ -831,7 +831,7 @@ public class OperationsTest {
     testSingleOperation(program);
     Assert.assertEquals(38, program.getResult().getEnergyUsed());
     Assert.assertEquals("6000600000000000000000000000000000000000000000000000000000000000",
-        Hex.toHexString(program.getMemory()).toUpperCase());
+        Hex.toHexString(program.getMemoryBytes()).toUpperCase());
 
   }
 

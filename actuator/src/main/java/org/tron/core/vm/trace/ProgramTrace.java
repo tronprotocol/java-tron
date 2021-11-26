@@ -19,7 +19,6 @@ package org.tron.core.vm.trace;
 
 import static java.lang.String.format;
 import static org.tron.common.utils.ByteArray.toHexString;
-import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import static org.tron.core.vm.trace.Serializers.serializeFieldsOnly;
 
 import java.util.ArrayList;
@@ -36,12 +35,8 @@ public class ProgramTrace {
   private String error;
   private String contractAddress;
 
-  public ProgramTrace() {
-    this(null, null);
-  }
-
-  public ProgramTrace(VMConfig config, ProgramInvoke programInvoke) {
-    if (programInvoke != null && config.vmTrace()) {
+  public ProgramTrace(ProgramInvoke programInvoke) {
+    if (programInvoke != null && VMConfig.vmTrace()) {
       contractAddress = Hex.toHexString(programInvoke.getContractAddress().toTronAddress());
     }
   }
