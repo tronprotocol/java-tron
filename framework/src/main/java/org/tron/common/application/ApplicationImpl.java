@@ -73,6 +73,7 @@ public class ApplicationImpl implements Application {
     dbManager.stopRePushThread();
     dbManager.stopRePushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
+    dbManager.stopFilterProcessThread();
     logger.info("******** end to shutdown ********");
     FullNode.shutDownSign = true;
   }

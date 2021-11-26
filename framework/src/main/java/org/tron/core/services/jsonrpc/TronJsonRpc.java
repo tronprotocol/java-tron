@@ -5,98 +5,31 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.JsonRpcTooManyResultException;
+import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.BuildArguments;
+import org.tron.core.services.jsonrpc.types.CallArguments;
+import org.tron.core.services.jsonrpc.types.TransactionReceipt;
+import org.tron.core.services.jsonrpc.types.TransactionResult;
 
 @Component
 public interface TronJsonRpc {
-
-  @Value
-  @AllArgsConstructor
-  @ToString
-  class SyncingResult {
-
-    private final String startingBlock;
-    private final String currentBlock;
-    private final String highestBlock;
-  }
-
-  @JsonPropertyOrder(alphabetic = true)
-  class BlockResult {
-
-    public String number;
-    public String hash;
-    public String parentHash;
-    public String nonce;
-    public String sha3Uncles;
-    public String logsBloom;
-    public String transactionsRoot;
-    public String stateRoot;
-    public String receiptsRoot;
-    public String miner;
-    public String difficulty;
-    public String totalDifficulty;
-    public String extraData;
-    public String size;
-    public String gasLimit;
-    public String gasUsed;
-    public String timestamp;
-    public Object[] transactions; //TransactionResult or byte32
-    public String[] uncles;
-
-    public String baseFeePerGas = null;
-    public String mixHash = null;
-  }
-
-  class CompilationResult {
-
-    public String code;
-    public CompilationInfo info;
-
-    @Override
-    public String toString() {
-      return "CompilationResult{"
-          + "code='" + code + '\''
-          + ", info=" + info
-          + '}';
-    }
-  }
-
-  class CompilationInfo {
-
-    public String source;
-    public String language;
-    public String languageVersion;
-    public String compilerVersion;
-    // public CallTransaction.Function[] abiDefinition;
-    public String userDoc;
-    public String developerDoc;
-
-    @Override
-    public String toString() {
-      return "CompilationInfo{"
-          + "source='" + source + '\''
-          + ", language='" + language + '\''
-          + ", languageVersion='" + languageVersion + '\''
-          + ", compilerVersion='" + compilerVersion + '\''
-          // + ", abiDefinition=" + abiDefinition + '\''
-          + ", userDoc='" + userDoc + '\''
-          + ", developerDoc='" + developerDoc + '\''
-          + '}';
-    }
-  }
-
-  class TransactionJson {
-
-    public JSONObject transaction;
-  }
 
   @JsonRpcMethod("web3_clientVersion")
   String web3ClientVersion();
@@ -335,4 +268,167 @@ public interface TronJsonRpc {
   })
   CompilationResult ethSubmitHashrate(String hashrate, String id)
       throws JsonRpcMethodNotFoundException;
+
+  // filter
+  @JsonRpcMethod("eth_newFilter")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+  })
+  String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException;
+
+  @JsonRpcMethod("eth_newBlockFilter")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+  })
+  String newBlockFilter() throws JsonRpcMethodNotFoundException;
+
+  @JsonRpcMethod("eth_uninstallFilter")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
+  })
+  boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException, ItemNotFoundException;
+
+  @JsonRpcMethod("eth_getFilterChanges")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
+  })
+  Object[] getFilterChanges(String filterId)
+      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException,
+      JsonRpcMethodNotFoundException, ItemNotFoundException;
+
+  @JsonRpcMethod("eth_getLogs")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcTooManyResultException.class, code = -32005, data = "{}"),
+      @JsonRpcError(exception = BadItemException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
+  })
+  LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException;
+
+  @JsonRpcMethod("eth_getFilterLogs")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
+      @JsonRpcError(exception = JsonRpcTooManyResultException.class, code = -32005, data = "{}"),
+      @JsonRpcError(exception = BadItemException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
+  })
+  LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException;
+
+  @Value
+  @AllArgsConstructor
+  @ToString
+  class SyncingResult {
+
+    private final String startingBlock;
+    private final String currentBlock;
+    private final String highestBlock;
+  }
+
+  @ToString
+  class CompilationResult {
+
+    public String code;
+    public CompilationInfo info;
+  }
+
+  @ToString
+  class CompilationInfo {
+
+    public String source;
+    public String language;
+    public String languageVersion;
+    public String compilerVersion;
+    // public CallTransaction.Function[] abiDefinition;
+    public String userDoc;
+    public String developerDoc;
+
+  }
+
+  class TransactionJson {
+
+    public JSONObject transaction;
+  }
+
+  /**
+   * FILTER OBJECT
+   * <li> address [optional]
+   * - a contract address or a list of addresses from which logs should originate.
+   * <li> fromBlock [optional, default is "latest"]
+   * - an integer block number, or the string "latest", "earliest" or "pending"
+   * <li> toBlock [optional, default is "latest"]
+   * - an integer block number, or the string "latest", "earliest" or "pending"
+   * <li> topics[optional] - Array of 32 Bytes DATA topics. Topics are order-dependent.
+   * <br>
+   * <br> A note on specifying topic filters: Topics are order-dependent.
+   * A transaction with a log with topics [A, B] will be matched by the following topic filters:
+   *
+   * <li> [] - anything"
+   * <li> [A] - A in first position (and anything after)
+   * <li> [null, B] - anything in first position AND B in second position (and anything after)
+   * <li> [A, B] - A in first position AND B in second position (and anything after)"
+   * <li> [[A, B], [A, B]] - (A OR B) in first position AND (A OR B) in second position (and
+   * anything after)
+   *
+   * <br> Filter IDs will be valid for up to fifteen minutes, and can polled by any connection using
+   * the same v3 project ID.
+   */
+  @NoArgsConstructor
+  @AllArgsConstructor
+  class FilterRequest {
+
+    public String fromBlock;
+    public String toBlock;
+    public Object address;
+    public Object[] topics;
+    public String blockHash;  // EIP-234: makes fromBlock = toBlock = blockHash
+
+  }
+
+  @JsonPropertyOrder(alphabetic = true)
+  class LogFilterElement {
+
+    public String logIndex;
+    public String transactionIndex;
+    public String transactionHash;
+    public String blockHash;
+    public String blockNumber;
+    public String address;
+    public String data;
+    public String[] topics;
+    public boolean removed;
+
+    public LogFilterElement(String blockHash, Long blockNum, String txId, Integer txIndex,
+        String contractAddress, List<DataWord> topicList, String logData, int logIdx,
+        boolean removed) {
+      logIndex = ByteArray.toJsonHex(logIdx);
+      this.blockNumber = blockNum == null ? null : ByteArray.toJsonHex(blockNum);
+      this.blockHash = blockHash == null ? null : ByteArray.toJsonHex(blockHash);
+      transactionIndex = txIndex == null ? null : ByteArray.toJsonHex(txIndex);
+      transactionHash = ByteArray.toJsonHex(txId);
+      address = ByteArray.toJsonHex(contractAddress);
+      data = logData == null ? "0x" : ByteArray.toJsonHex(logData);
+      topics = new String[topicList.size()];
+      for (int i = 0; i < topics.length; i++) {
+        topics[i] = ByteArray.toJsonHex(topicList.get(i).getData());
+      }
+      this.removed = removed;
+    }
+  }
 }
