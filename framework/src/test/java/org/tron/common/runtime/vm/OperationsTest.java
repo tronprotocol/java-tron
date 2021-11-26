@@ -406,26 +406,6 @@ public class OperationsTest {
     testOperations(program);
     Assert.assertEquals(2, program.getResult().getEnergyUsed());
     Assert.assertEquals(new DataWord(0), program.getStack().pop());
-
-    // EXTCODESIZE = 0x3b
-    op = new byte[]{0x3b};
-    program = new Program(op, invoke, interTrx);
-    program.stackPush(Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
-    testOperations(program);
-    Assert.assertEquals(20, program.getResult().getEnergyUsed());
-    Assert.assertEquals(new DataWord(0x62), program.getStack().pop());
-
-    // EXTCODECOPY = 0x3c
-    op = Hex.decode("60036007600073471FD3AD3E9EEADEEC4608B92D16CE6B500704CC3C123456");
-    program = new Program(op, invoke, interTrx);
-    testSingleOperation(program);
-    testSingleOperation(program);
-    testSingleOperation(program);
-    testSingleOperation(program);
-    testSingleOperation(program);
-    Assert.assertEquals(38, program.getResult().getEnergyUsed());
-    Assert.assertEquals("6000600000000000000000000000000000000000000000000000000000000000",
-        Hex.toHexString(program.getMemory()).toUpperCase());
   }
 
   // test Block Information
@@ -832,6 +812,26 @@ public class OperationsTest {
     Assert.assertEquals(10065, program.getResult().getEnergyUsed());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000033",
         Hex.toHexString(program.getStack().peek().getData()).toUpperCase());
+
+    // EXTCODESIZE = 0x3b
+    op = new byte[]{0x3b};
+    program = new Program(op, invoke, interTrx);
+    program.stackPush(Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc"));
+    testOperations(program);
+    Assert.assertEquals(20, program.getResult().getEnergyUsed());
+    Assert.assertEquals(new DataWord(0x62), program.getStack().pop());
+
+    // EXTCODECOPY = 0x3c
+    op = Hex.decode("60036007600073471FD3AD3E9EEADEEC4608B92D16CE6B500704CC3C123456");
+    program = new Program(op, invoke, interTrx);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    testSingleOperation(program);
+    Assert.assertEquals(38, program.getResult().getEnergyUsed());
+    Assert.assertEquals("6000600000000000000000000000000000000000000000000000000000000000",
+        Hex.toHexString(program.getMemory()).toUpperCase());
 
   }
 
