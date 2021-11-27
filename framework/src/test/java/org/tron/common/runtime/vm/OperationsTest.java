@@ -831,7 +831,7 @@ public class OperationsTest {
     testSingleOperation(program);
     Assert.assertEquals(38, program.getResult().getEnergyUsed());
     Assert.assertEquals("6000600000000000000000000000000000000000000000000000000000000000",
-        Hex.toHexString(program.getMemoryBytes()).toUpperCase());
+        Hex.toHexString(program.getMemory()).toUpperCase());
 
   }
 
