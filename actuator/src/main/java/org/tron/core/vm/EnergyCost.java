@@ -428,7 +428,7 @@ public class EnergyCost {
 
   private static void checkMemorySize(int op, BigInteger newMemSize) {
     if (newMemSize.compareTo(MEM_LIMIT) > 0) {
-      throw Program.Exception.memoryOverflow(Op.getNameOf(op));
+      throw Program.Exception.memoryOverflow(op);
     }
   }
 
