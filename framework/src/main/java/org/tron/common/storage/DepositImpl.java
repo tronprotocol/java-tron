@@ -25,6 +25,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionStore;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
@@ -377,6 +378,7 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized void putStorageValue(byte[] address, DataWord key, DataWord value) {
+    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return;
     }
@@ -393,6 +395,7 @@ public class DepositImpl implements Deposit {
 
   @Override
   public synchronized DataWord getStorageValue(byte[] address, DataWord key) {
+    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return null;
     }
