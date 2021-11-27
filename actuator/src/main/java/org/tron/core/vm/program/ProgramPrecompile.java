@@ -8,12 +8,12 @@ import org.tron.core.vm.Op;
 import org.tron.core.vm.config.VMConfig;
 
 @Slf4j(topic = "VM")
-public class JumpDestAnalysis {
+public class ProgramPrecompile {
 
   private final Set<Integer> jumpDest = new HashSet<>();
 
-  public static JumpDestAnalysis compile(byte[] ops) {
-    JumpDestAnalysis ret = new JumpDestAnalysis();
+  public static ProgramPrecompile compile(byte[] ops) {
+    ProgramPrecompile ret = new ProgramPrecompile();
     for (int i = 0; i < ops.length; ++i) {
       int op = ops[i] & 0xff;
 

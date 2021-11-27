@@ -163,7 +163,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke =
-        ProgramInvokeFactory.createFromTx(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,
@@ -190,7 +190,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke =
-        ProgramInvokeFactory.createFromTx(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,
@@ -219,7 +219,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke =
-        ProgramInvokeFactory.createFromTx(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,
@@ -247,7 +247,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke =
-        ProgramInvokeFactory.createFromTx(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,

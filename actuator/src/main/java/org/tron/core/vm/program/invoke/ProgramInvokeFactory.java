@@ -24,7 +24,7 @@ public class ProgramInvokeFactory {
   /**
    * Invocation by the wire tx
    */
-  public static ProgramInvoke createFromTx(InternalTransaction.TrxType trxType,
+  public static ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
       InternalTransaction.ExecutorType executorType, Transaction tx, long tokenValue, long tokenId,
       Block block,
       Repository deposit, long vmStartInUs,
@@ -123,7 +123,7 @@ public class ProgramInvokeFactory {
   /**
    * This invocation created for contract call contract
    */
-  public static ProgramInvoke createFromMessageCall(Program program, DataWord toAddress,
+  public static ProgramInvoke createProgramInvoke(Program program, DataWord toAddress,
       DataWord callerAddress,
       DataWord inValue, DataWord tokenValue, DataWord tokenId, long balanceInt, byte[] dataIn,
       Repository deposit, boolean isStaticCall, boolean byTestingSuite, long vmStartInUs,

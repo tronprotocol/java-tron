@@ -35,6 +35,10 @@ public class ProgramTrace {
   private String error;
   private String contractAddress;
 
+  public ProgramTrace() {
+    this(null);
+  }
+
   public ProgramTrace(ProgramInvoke programInvoke) {
     if (programInvoke != null && VMConfig.vmTrace()) {
       contractAddress = Hex.toHexString(programInvoke.getContractAddress().toTronAddress());

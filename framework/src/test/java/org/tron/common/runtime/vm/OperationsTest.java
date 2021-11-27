@@ -19,7 +19,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
-import org.tron.core.vm.TVM;
+import org.tron.core.vm.VM;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
@@ -67,7 +67,7 @@ public class OperationsTest {
       Operation op = OperationRegistry.get(i);
       if (op != null) {
         Program context = buildEmptyContext(new byte[]{(byte) op.getOpcode()});
-        TVM.play(context);
+        VM.play(context);
 
         if (op.getRequire() != 0) {
           Assert.assertTrue(context.getResult().getException()
@@ -86,7 +86,7 @@ public class OperationsTest {
         for (int j = 0; j < 1024; j++) {
           context.stackPushZero();
         }
-        TVM.play(context);
+        VM.play(context);
 
         if (op.getRet() - op.getRequire() > 0) {
           Assert.assertTrue(context.getResult().getException()

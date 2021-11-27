@@ -1,5 +1,13 @@
 package org.tron.core.vm.program;
 
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.protobuf.ByteString;
@@ -8,9 +16,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -23,6 +28,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -34,11 +40,11 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.PrecompiledContracts;
-import org.tron.core.vm.TVM;
+import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
@@ -66,86 +72,72 @@ import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
-@Slf4j(topic = "Program")
+/**
+ * @author Roman Mandeleil
+ * @since 01.06.2014
+ */
+
+@Slf4j(topic = "VM")
 public class Program {
 
-  private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-
-  // Max size for call stack depth
   private static final int MAX_DEPTH = 64;
-
-  // Max size for operand stack checks
+  //Max size for stack checks
   private static final int MAX_STACK_SIZE = 1024;
-
-  private boolean stopped;
-
-  @Getter
-  @Setter
+  private static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
+      "validateForSmartContract failure:%s";
+  private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
+  private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
+  private static final String CALL_PRE_COMPILED = "call pre-compiled";
   private long nonce;
   private byte[] rootTransactionId;
-  private final InternalTransaction internalTx;
-
-  /* list all listeners for different usage */
-  public interface ProgramOutListener {
-    void output(String out);
-  }
+  private InternalTransaction internalTransaction;
+  private ProgramInvoke invoke;
   private ProgramOutListener listener;
-  private final ProgramTraceListener traceListener;
-  private final ProgramStorageChangeListener storageDiffListener;
-  private final CompositeProgramListener programListener;
-
-  /* tvm execution component */
-  @Getter
-  private final ProgramInvoke invoke;
-  @Getter
-  private final Stack stack;
-  @Getter
-  private final Memory memory;
-  @Getter
-  private final ContractState contractState;
-
-  /* return buffer, result and trace */
+  private ProgramTraceListener traceListener;
+  private ProgramStorageChangeListener storageDiffListener = new ProgramStorageChangeListener();
+  private CompositeProgramListener programListener = new CompositeProgramListener();
+  private Stack stack;
+  private Memory memory;
+  private ContractState contractState;
   private byte[] returnDataBuffer;
-  @Getter
-  private final ProgramResult result;
-  @Getter
-  private final ProgramTrace trace;
-
-  /* runtime code and program counter */
-  private final byte[] ops;
+  private ProgramResult result = new ProgramResult();
+  private ProgramTrace trace = new ProgramTrace();
+  private byte[] ops;
   private int pc;
-
-  /* op record for tracing */
   private byte lastOp;
   private byte previouslyExecutedOp;
-
-  /* jump destination analysis */
-  private JumpDestAnalysis jumpDestAnalysis;
-
-  @Getter
-  @Setter
+  private boolean stopped;
+  private ProgramPrecompile programPrecompile;
   private int contractVersion;
-
-  @Getter
-  @Setter
   private DataWord adjustedCallEnergy;
 
-  public Program(byte[] ops, ProgramInvoke invoke, InternalTransaction internalTx) {
-    this.nonce = internalTx.getNonce();
-    this.internalTx = internalTx;
-    this.ops = ArrayUtils.nullToEmpty(ops);
 
-    this.traceListener = new ProgramTraceListener(VMConfig.vmTrace());
-    this.storageDiffListener = new ProgramStorageChangeListener();
-    this.programListener = new CompositeProgramListener();
+  public Program(byte[] ops, ProgramInvoke programInvoke) {
+    this(ops, programInvoke, null);
+  }
 
-    this.invoke = invoke;
+  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction) {
+    this.invoke = programInvoke;
+    this.internalTransaction = internalTransaction;
+    this.ops = nullToEmpty(ops);
+
+    traceListener = new ProgramTraceListener(VMConfig.vmTrace());
     this.memory = setupProgramListener(new Memory());
     this.stack = setupProgramListener(new Stack());
-    this.contractState = setupProgramListener(new ContractState(invoke));
+    this.contractState = setupProgramListener(new ContractState(programInvoke));
+    this.trace = new ProgramTrace(programInvoke);
+    this.nonce = internalTransaction.getNonce();
+  }
 
-    this.result = new ProgramResult();
-    this.trace = new ProgramTrace(invoke);
+
+
+  static String formatBinData(byte[] binData, int startPC) {
+    StringBuilder ret = new StringBuilder();
+    for (int i = 0; i < binData.length; i += 16) {
+      ret.append(Utils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
+      ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
+    }
+    return ret.toString();
   }
 
   public byte[] getRootTransactionId() {
@@ -156,11 +148,35 @@ public class Program {
     this.rootTransactionId = rootTransactionId.clone();
   }
 
-  public JumpDestAnalysis getJumpDestAnalysis() {
-    if (jumpDestAnalysis == null) {
-      jumpDestAnalysis = JumpDestAnalysis.compile(ops);
+  public void setContractVersion(int version) {
+    this.contractVersion = version;
+  }
+
+  public int getContractVersion() {
+    return this.contractVersion;
+  }
+
+  public void setAdjustedCallEnergy(DataWord adjustedCallEnergy) {
+    this.adjustedCallEnergy = adjustedCallEnergy;
+  }
+
+  public DataWord getAdjustedCallEnergy() {
+    return this.adjustedCallEnergy;
+  }
+
+  public long getNonce() {
+    return nonce;
+  }
+
+  public void setNonce(long nonceValue) {
+    nonce = nonceValue;
+  }
+
+  public ProgramPrecompile getProgramPrecompile() {
+    if (programPrecompile == null) {
+      programPrecompile = ProgramPrecompile.compile(ops);
     }
-    return jumpDestAnalysis;
+    return programPrecompile;
   }
 
   public int getCallDeep() {
@@ -168,18 +184,18 @@ public class Program {
   }
 
   /**
-   * @param toAddress the address send TRX to.
+   * @param transferAddress the address send TRX to.
    * @param value the TRX value transferred in the internal transaction
    */
-  private InternalTransaction addInternalTx(
-      byte[] senderAddress, byte[] toAddress,
+  private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
+      byte[] transferAddress,
       long value, byte[] data, String note, long nonce, Map<String, Long> tokenInfo) {
 
     InternalTransaction addedInternalTx = null;
-    if (internalTx != null) {
+    if (internalTransaction != null) {
       addedInternalTx = getResult()
-          .addInternalTransaction(internalTx.getHash(), getCallDeep(),
-              senderAddress, toAddress, value, data, note, nonce, tokenInfo);
+          .addInternalTransaction(internalTransaction.getHash(), getCallDeep(),
+              senderAddress, transferAddress, value, data, note, nonce, tokenInfo);
     }
 
     return addedInternalTx;
@@ -192,6 +208,7 @@ public class Program {
     }
 
     programListenerAware.setProgramListener(programListener);
+
     return programListenerAware;
   }
 
@@ -200,11 +217,11 @@ public class Program {
   }
 
   public byte getOp(int pc) {
-    return (ArrayUtils.getLength(ops) <= pc) ? 0 : ops[pc];
+    return (getLength(ops) <= pc) ? 0 : ops[pc];
   }
 
   public byte getCurrentOp() {
-    return ArrayUtils.isEmpty(ops) ? 0 : ops[pc];
+    return isEmpty(ops) ? 0 : ops[pc];
   }
 
   public int getCurrentOpIntValue() {
@@ -232,31 +249,13 @@ public class Program {
     this.previouslyExecutedOp = op;
   }
 
-  /**
-   * Verifies that the stack is at least <code>stackSize</code>
-   *
-   * @param stackSize int
-   * @throws StackTooSmallException If the stack is smaller than <code>stackSize</code>
-   */
-  public void verifyStackSize(int stackSize) {
-    if (stack.size() < stackSize) {
-      throw Exception.tooSmallStack(stackSize, stack.size());
-    }
+  public void stackPush(byte[] data) {
+    stackPush(new DataWord(data));
   }
 
-  public void verifyStackOverflow(int argsReqs, int returnReqs) {
-    if ((stack.size() - argsReqs + returnReqs) > MAX_STACK_SIZE) {
-      throw Exception.tooLargeStack(MAX_STACK_SIZE);
-    }
-  }
-
-  public DataWord stackPop() {
-    return stack.pop();
-  }
-
-  public void stackPush(DataWord word) {
-    verifyStackOverflow(0, 1); // Sanity Check
-    stack.push(word);
+  public void stackPush(DataWord stackWord) {
+    verifyStackOverflow(0, 1); //Sanity Check
+    stack.push(stackWord);
   }
 
   public void stackPushZero() {
@@ -267,8 +266,16 @@ public class Program {
     stackPush(DataWord.ONE());
   }
 
+  public Stack getStack() {
+    return this.stack;
+  }
+
   public int getPC() {
     return pc;
+  }
+
+  public void setPC(DataWord pc) {
+    this.setPC(pc.intValue());
   }
 
   public void setPC(int pc) {
@@ -288,7 +295,7 @@ public class Program {
   }
 
   public void setHReturn(byte[] buff) {
-    getResult().setHReturn(buff.clone());
+    getResult().setHReturn(buff);
   }
 
   public void step() {
@@ -296,6 +303,11 @@ public class Program {
   }
 
   public byte[] sweep(int n) {
+
+    if (pc + n > ops.length) {
+      stop();
+    }
+
     byte[] data = Arrays.copyOfRange(ops, pc, pc + n);
     pc += n;
     if (pc >= ops.length) {
@@ -305,12 +317,31 @@ public class Program {
     return data;
   }
 
-  public int getMemSize() {
-    return memory.size();
+  public DataWord stackPop() {
+    return stack.pop();
   }
 
-  public byte[] getMemoryBytes() {
-    return memory.read(0, memory.size());
+  /**
+   * . Verifies that the stack is at least <code>stackSize</code>
+   *
+   * @param stackSize int
+   * @throws StackTooSmallException If the stack is smaller than <code>stackSize</code>
+   */
+  public void verifyStackSize(int stackSize) {
+    if (stack.size() < stackSize) {
+      throw Exception.tooSmallStack(stackSize, stack.size());
+    }
+  }
+
+  public void verifyStackOverflow(int argsReqs, int returnReqs) {
+    if ((stack.size() - argsReqs + returnReqs) > MAX_STACK_SIZE) {
+      throw new StackTooLargeException(
+          "Expected: overflow " + MAX_STACK_SIZE + " elements stack limit");
+    }
+  }
+
+  public int getMemSize() {
+    return memory.size();
   }
 
   public void memorySave(DataWord addrB, DataWord value) {
@@ -319,6 +350,17 @@ public class Program {
 
   public void memorySave(int addr, byte[] value) {
     memory.write(addr, value, value.length, false);
+  }
+
+  /**
+   * . Allocates a piece of memory and stores value at given offset address
+   *
+   * @param addr is the offset address
+   * @param allocSize size of memory needed to write
+   * @param value the data to write to memory
+   */
+  public void memorySave(int addr, int allocSize, byte[] value) {
+    memory.extendAndWrite(addr, allocSize, value);
   }
 
   public void memorySaveLimited(int addr, byte[] data, int dataSize) {
@@ -343,80 +385,14 @@ public class Program {
     return memory.read(offset, size);
   }
 
-  public void increaseNonce() {
-    nonce++;
-  }
-
-  public void resetNonce() {
-    nonce = 0;
-  }
-
-  public void spendEnergy(long energyValue, String opName) {
-    if (getEnergyLimitLeftLong() < energyValue) {
-      throw new OutOfEnergyException(
-          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
-              + " curOpEnergy[%d], usedEnergy[%d]",
-          opName, invoke.getEnergyLimit(), energyValue, getResult().getEnergyUsed());
-    }
-    getResult().spendEnergy(energyValue);
-  }
-
-  public void spendAllEnergy() {
-    spendEnergy(getEnergyLimitLeft().longValue(), "Spending all remaining");
-  }
-
-  public void refundEnergy(long energyValue, String cause) {
-    logger.debug("[{}] Refund for cause: [{}], energy: [{}]",
-        invoke.hashCode(), cause, energyValue);
-
-    getResult().refundEnergy(energyValue);
-  }
-
-  public DataWord getCallEnergy(DataWord requestedEnergy, DataWord availableEnergy) {
-    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
-      DataWord availableEnergyReduce = availableEnergy.clone();
-      availableEnergyReduce.div(new DataWord(64));
-      availableEnergy.sub(availableEnergyReduce);
-    }
-    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
-  }
-
-  public DataWord getCreateEnergy(DataWord availableEnergy) {
-    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
-      DataWord availableEnergyReduce = availableEnergy.clone();
-      availableEnergyReduce.div(new DataWord(64));
-      availableEnergy.sub(availableEnergyReduce);
-    }
-    return availableEnergy;
-  }
-
-  public void checkCPUTimeLimit(String opName) {
-    if (CommonParameter.getInstance().isDebug()
-        || CommonParameter.getInstance().isSolidityNode()) {
-      return;
-    }
-
-    long vmNowInUs = System.nanoTime() / 1000;
-    if (vmNowInUs > getVmShouldEndInUs()) {
-      logger.info(
-          "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
-              + "vm now time in us: {}, vm start time in us: {}",
-          CommonParameter.getInstance().getMinTimeRatio(),
-          CommonParameter.getInstance().getMaxTimeRatio(),
-          getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
-      throw Exception.notEnoughTime(opName);
-    }
-  }
-
-  public int verifyJumpDest(DataWord nextPC) {
-    if (nextPC.bytesOccupied() > 4) {
-      throw Exception.badJumpDestination(-1);
-    }
-    int ret = nextPC.intValue();
-    if (!getJumpDestAnalysis().hasJumpDest(ret)) {
-      throw Exception.badJumpDestination(ret);
-    }
-    return ret;
+  /**
+   * . Allocates extra memory in the program for a specified size, calculated from a given offset
+   *
+   * @param offset the memory address offset
+   * @param size the number of bytes to allocate
+   */
+  public void allocateMemory(int offset, int size) {
+    memory.extend(offset, size);
   }
 
   public void suicide(DataWord obtainerAddress) {
@@ -431,12 +407,14 @@ public class Program {
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Transfer to: [{}] heritage: [{}]", Hex.toHexString(obtainer), balance);
+      logger.debug("Transfer to: [{}] heritage: [{}]",
+          Hex.toHexString(obtainer),
+          balance);
     }
 
     increaseNonce();
 
-    addInternalTx(owner, obtainer, balance, null, "suicide", nonce,
+    addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
         getContractState().getAccount(owner).getAssetMapV2());
 
     if (FastByteComparisons.compareTo(owner, 0, 20, obtainer, 0, 20) == 0) {
@@ -471,6 +449,10 @@ public class Program {
       }
     }
     getResult().addDeleteAccount(this.getContractAddress());
+  }
+
+  public Repository getContractState() {
+    return this.contractState;
   }
 
   private void transferDelegatedResourceToInheritor(byte[] ownerAddr, byte[] inheritorAddr, Repository repo) {
@@ -551,39 +533,13 @@ public class Program {
       stackPushZero();
       return;
     }
-
-    // fetch the code from memory
+    // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    // calc address for new contract
-    byte[] newAddress = TransactionUtil.generateContractAddress(rootTransactionId, nonce);
+    byte[] newAddress = TransactionUtil
+        .generateContractAddress(rootTransactionId, nonce);
 
-    // exec contract creation
     createContractImpl(value, programCode, newAddress, false);
-  }
-
-  public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    if (VMConfig.allowTvmCompatibleEvm() && getCallDeep() == MAX_DEPTH) {
-      stackPushZero();
-      return;
-    }
-
-    byte[] senderAddress;
-    if (VMConfig.allowTvmIstanbul()) {
-      senderAddress = getContextAddress();
-    } else {
-      senderAddress = getCallerAddress().toTronAddress();
-    }
-
-    // fetch the code from memory
-    byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
-
-    // calc address for new contract
-    byte[] contractAddress = WalletUtil.generateContractAddress2(
-        senderAddress, salt.getData(), programCode);
-
-    // exec contract creation
-    createContractImpl(value, programCode, contractAddress, true);
   }
 
   private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
@@ -656,7 +612,7 @@ public class Program {
         VMUtils.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       } catch (ContractValidateException e) {
         // TODO: unreachable exception
-        throw new BytecodeExecutionException(VMConstant.VALIDATE_FAILURE, e.getMessage());
+        throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
       }
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
@@ -668,10 +624,10 @@ public class Program {
 
     increaseNonce();
     // [5] COOK THE INVOKE AND EXECUTE
-    InternalTransaction internalTx = addInternalTx(senderAddress, newAddress, endowment,
+    InternalTransaction internalTx = addInternalTx(null, senderAddress, newAddress, endowment,
         programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
-    ProgramInvoke programInvoke = ProgramInvokeFactory.createFromMessageCall(
+    ProgramInvoke programInvoke = ProgramInvokeFactory.createProgramInvoke(
         this, new DataWord(newAddress), getContractAddress(), value, DataWord.ZERO(),
         DataWord.ZERO(),
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
@@ -685,13 +641,13 @@ public class Program {
       createResult.setException(new BytecodeExecutionException(
           "Trying to create a contract with existing contract address: 0x" + Hex
               .toHexString(newAddress)));
-    } else if (ArrayUtils.isNotEmpty(programCode)) {
+    } else if (isNotEmpty(programCode)) {
       Program program = new Program(programCode, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
-      TVM.play(program);
+      VM.play(program);
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
@@ -703,10 +659,11 @@ public class Program {
     byte[] code = createResult.getHReturn();
 
     if (code.length != 0 && VMConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
-        createResult.setException(Program.Exception.invalidCodeException());
+      createResult.setException(Program.Exception
+          .invalidCodeException());
     }
 
-    long saveCodeEnergy = (long) ArrayUtils.getLength(code) * EnergyCost.getCREATE_DATA();
+    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCREATE_DATA();
 
     long afterSpend =
         programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
@@ -728,7 +685,9 @@ public class Program {
           Hex.toHexString(newAddress),
           createResult.getException());
 
-      internalTx.reject();
+      if(internalTx != null){
+        internalTx.reject();
+      }
 
       createResult.rejectInternalTransactions();
 
@@ -752,7 +711,8 @@ public class Program {
     refundEnergyAfterVM(energyLimit, createResult);
   }
 
-  private void refundEnergyAfterVM(DataWord energyLimit, ProgramResult result) {
+  public void refundEnergyAfterVM(DataWord energyLimit, ProgramResult result) {
+
     long refundEnergy = energyLimit.longValueSafe() - result.getEnergyUsed();
     if (refundEnergy > 0) {
       refundEnergy(refundEnergy, "remain energy from the internal call");
@@ -764,8 +724,8 @@ public class Program {
   }
 
   /**
-   * That method is for internal code invocations
-   *
+   * . That method is for internal code invocations
+   * <p/>
    * - Normal calls invoke a specified contract which updates itself - Stateless calls invoke code
    * from another contract, within the context of the caller
    *
@@ -818,7 +778,7 @@ public class Program {
       long senderBalance = deposit.getBalance(senderAddress);
       if (senderBalance < endowment) {
         stackPushZero();
-        refundEnergy(msg.getEnergy().longValue(), VMConstant.REFUND_ENERGY_FROM_MESSAGE_CALL);
+        refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
         return;
       }
     } else {
@@ -827,7 +787,7 @@ public class Program {
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();
-        refundEnergy(msg.getEnergy().longValue(), VMConstant.REFUND_ENERGY_FROM_MESSAGE_CALL);
+        refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
         return;
       }
     }
@@ -835,8 +795,8 @@ public class Program {
     // FETCH THE CODE
     AccountCapsule accountCapsule = getContractState().getAccount(codeAddress);
 
-    byte[] programCode = accountCapsule != null
-        ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
+    byte[] programCode =
+        accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
     // only for TRX, not for token
     long contextBalance = 0L;
@@ -854,10 +814,10 @@ public class Program {
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
-            refundEnergy(msg.getEnergy().longValue(), VMConstant.REFUND_ENERGY_FROM_MESSAGE_CALL);
+            refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
             throw new TransferException("transfer trx failed: %s", e.getMessage());
           }
-          throw new BytecodeExecutionException(VMConstant.VALIDATE_FAILURE, e.getMessage());
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addBalance(senderAddress, -endowment);
         contextBalance = deposit.addBalance(contextAddress, endowment);
@@ -867,10 +827,10 @@ public class Program {
               tokenId, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
-            refundEnergy(msg.getEnergy().longValue(), VMConstant.REFUND_ENERGY_FROM_MESSAGE_CALL);
+            refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
             throw new TransferException("transfer trc10 failed: %s", e.getMessage());
           }
-          throw new BytecodeExecutionException(VMConstant.VALIDATE_FAILURE, e.getMessage());
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -881,19 +841,19 @@ public class Program {
     increaseNonce();
     HashMap<String, Long> tokenInfo = new HashMap<>();
     if (isTokenTransfer) {
-      tokenInfo.put(new String(ByteUtil.stripLeadingZeroes(tokenId)), endowment);
+      tokenInfo.put(new String(stripLeadingZeroes(tokenId)), endowment);
     }
-    InternalTransaction internalTx = addInternalTx(senderAddress, contextAddress,
+    InternalTransaction internalTx = addInternalTx(null, senderAddress, contextAddress,
         !isTokenTransfer ? endowment : 0, data, "call", nonce,
         !isTokenTransfer ? null : tokenInfo);
     ProgramResult callResult = null;
-    if (ArrayUtils.isNotEmpty(programCode)) {
+    if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
       DataWord callValue = msg.getEndowment();
       if (msg.getOpCode() == Op.DELEGATECALL) {
         callValue = getCallValue();
       }
-      ProgramInvoke programInvoke = ProgramInvokeFactory.createFromMessageCall(
+      ProgramInvoke programInvoke = ProgramInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
           msg.getOpCode() == Op.DELEGATECALL ? getCallerAddress() : getContractAddress(),
           !isTokenTransfer ? callValue : DataWord.ZERO(),
@@ -911,7 +871,7 @@ public class Program {
         program.setContractVersion(
             invoke.getDeposit().getContract(codeAddress).getContractVersion());
       }
-      TVM.play(program);
+      VM.play(program);
       callResult = program.getResult();
 
       getTrace().merge(program.getTrace());
@@ -975,109 +935,53 @@ public class Program {
     }
   }
 
-  public void callToPrecompiledAddress(MessageCall msg,
-      PrecompiledContracts.PrecompiledContract contract) {
-    returnDataBuffer = null; // reset return buffer right before the call
-
-    if (getCallDeep() == MAX_DEPTH) {
-      stackPushZero();
-      this.refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
-      return;
-    }
-
-    Repository deposit = getContractState().newRepositoryChild();
-
-    byte[] senderAddress = getContextAddress();
-    byte[] contextAddress = msg.getCodeAddress().toTronAddress();
-    if (msg.getOpCode() == Op.CALLCODE || msg.getOpCode() == Op.DELEGATECALL) {
-      contextAddress = senderAddress;
-    }
-
-    long endowment = msg.getEndowment().value().longValueExact();
-    long senderBalance = 0;
-    byte[] tokenId = null;
-
-    checkTokenId(msg);
-    boolean isTokenTransfer = isTokenTransfer(msg);
-    // transfer TRX validation
-    if (!isTokenTransfer) {
-      senderBalance = deposit.getBalance(senderAddress);
-    } else {
-      // transfer trc10 token validation
-      tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
-      senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
-    }
-    if (senderBalance < endowment) {
-      stackPushZero();
-      refundEnergy(msg.getEnergy().longValue(), VMConstant.REFUND_ENERGY_FROM_MESSAGE_CALL);
-      return;
-    }
-    byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
-        msg.getInDataSize().intValue());
-
-    // Charge for endowment - is not reversible by rollback
-    if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
-        && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
-      if (!isTokenTransfer) {
-        try {
-          MUtil.transfer(deposit, senderAddress, contextAddress,
-              msg.getEndowment().value().longValueExact());
-        } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException("transfer failure");
-        }
-      } else {
-        try {
-          VMUtils
-              .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
-        } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException(VMConstant.VALIDATE_FAILURE, e.getMessage());
-        }
-        deposit.addTokenBalance(senderAddress, tokenId, -endowment);
-        deposit.addTokenBalance(contextAddress, tokenId, endowment);
-      }
-    }
-
-    long requiredEnergy = contract.getEnergyForData(data);
-    if (requiredEnergy > msg.getEnergy().longValue()) {
-      // Not need to throw an exception, method caller needn't know that
-      // regard as consumed the energy
-      this.refundEnergy(0, VMConstant.CALL_PRE_COMPILED); //matches cpp logic
-      this.stackPushZero();
-    } else {
-      // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
-      if (msg.getOpCode() == Op.DELEGATECALL) {
-        contract.setCallerAddress(getCallerAddress().toTronAddress());
-      } else {
-        contract.setCallerAddress(getContextAddress());
-      }
-      // this is the depositImpl, not contractState as above
-      contract.setRepository(deposit);
-      contract.setResult(this.result);
-      contract.setConstantCall(isConstantCall());
-      contract.setVmShouldEndInUs(getVmShouldEndInUs());
-      Pair<Boolean, byte[]> out = contract.execute(data);
-
-      if (out.getLeft()) { // success
-        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, VMConstant.CALL_PRE_COMPILED);
-        this.stackPushOne();
-        returnDataBuffer = out.getRight();
-        deposit.commit();
-      } else {
-        // spend all energy on failure, push zero and revert state changes
-        this.refundEnergy(0, VMConstant.CALL_PRE_COMPILED);
-        this.stackPushZero();
-        if (Objects.nonNull(this.result.getException())) {
-          throw result.getException();
-        }
-      }
-
-      this.memorySave(msg.getOutDataOffs().intValue(), out.getRight());
-    }
+  public void increaseNonce() {
+    nonce++;
   }
 
-  public DataWord storageLoad(DataWord key) {
-    DataWord ret = getContractState().getStorageValue(getContextAddress(), key.clone());
-    return ret == null ? null : ret.clone();
+  public void resetNonce() {
+    nonce = 0;
+  }
+
+  public void spendEnergy(long energyValue, String opName) {
+    if (getEnergylimitLeftLong() < energyValue) {
+      throw new OutOfEnergyException(
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
+              + " curOpEnergy[%d], usedEnergy[%d]",
+          opName, invoke.getEnergyLimit(), energyValue, getResult().getEnergyUsed());
+    }
+    getResult().spendEnergy(energyValue);
+  }
+
+  public void checkCPUTimeLimit(String opName) {
+
+    if (CommonParameter.getInstance().isDebug()) {
+      return;
+    }
+    if (CommonParameter.getInstance().isSolidityNode()) {
+      return;
+    }
+    long vmNowInUs = System.nanoTime() / 1000;
+    if (vmNowInUs > getVmShouldEndInUs()) {
+      logger.info(
+          "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
+              + "vm now time in us: {}, vm start time in us: {}",
+          CommonParameter.getInstance().getMinTimeRatio(),
+          CommonParameter.getInstance().getMaxTimeRatio(),
+          getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
+      throw Exception.notEnoughTime(opName);
+    }
+
+  }
+
+  public void spendAllEnergy() {
+    spendEnergy(getEnergyLimitLeft().longValue(), "Spending all remaining");
+  }
+
+  public void refundEnergy(long energyValue, String cause) {
+    logger
+        .debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
+    getResult().refundEnergy(energyValue);
   }
 
   public void storageSave(DataWord word1, DataWord word2) {
@@ -1092,7 +996,7 @@ public class Program {
 
   public byte[] getCodeAt(DataWord address) {
     byte[] code = invoke.getDeposit().getCode(address.toTronAddress());
-    return ArrayUtils.nullToEmpty(code);
+    return nullToEmpty(code);
   }
 
   public byte[] getCodeHashAt(DataWord address) {
@@ -1118,6 +1022,14 @@ public class Program {
     }
   }
 
+  public byte[] getContextAddress() {
+    return invoke.getContractAddress().toTronAddress();
+  }
+
+  public DataWord getContractAddress() {
+    return invoke.getContractAddress().clone();
+  }
+
   public DataWord getBlockHash(int index) {
     if (index < this.getNumber().longValue()
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
@@ -1132,6 +1044,7 @@ public class Program {
     } else {
       return DataWord.ZERO.clone();
     }
+
   }
 
   public DataWord getBalance(DataWord address) {
@@ -1154,29 +1067,6 @@ public class Program {
     return witnessCapsule != null ? DataWord.ONE() : DataWord.ZERO();
   }
 
-  public DataWord getChainId() {
-    byte[] chainId = getContractState().getBlockByNum(0).getBlockId().getBytes();
-    if (VMConfig.allowTvmCompatibleEvm()) {
-      chainId = Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length);
-    }
-    return new DataWord(chainId);
-  }
-
-  public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
-    checkTokenIdInTokenBalance(tokenId);
-    long ret = getContractState().getTokenBalance(address.toTronAddress(),
-        String.valueOf(tokenId.longValue()).getBytes());
-    return new DataWord(ret);
-  }
-
-  public byte[] getContextAddress() {
-    return invoke.getContractAddress().toTronAddress();
-  }
-
-  public DataWord getContractAddress() {
-    return invoke.getContractAddress().clone();
-  }
-
   public DataWord getOriginAddress() {
     return invoke.getOriginAddress().clone();
   }
@@ -1185,16 +1075,20 @@ public class Program {
     return invoke.getCallerAddress().clone();
   }
 
-  public long getEnergyLimitLeftLong() {
+  public DataWord getChainId() {
+    byte[] chainId = getContractState().getBlockByNum(0).getBlockId().getBytes();
+    if (VMConfig.allowTvmCompatibleEvm()) {
+      chainId = Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length);
+    }
+    return new DataWord(chainId);
+  }
+
+  public long getEnergylimitLeftLong() {
     return invoke.getEnergyLimit() - getResult().getEnergyUsed();
   }
 
   public DataWord getEnergyLimitLeft() {
     return new DataWord(invoke.getEnergyLimit() - getResult().getEnergyUsed());
-  }
-
-  public long getVmStartInUs() {
-    return this.invoke.getVmStartInUs();
   }
 
   public long getVmShouldEndInUs() {
@@ -1234,6 +1128,18 @@ public class Program {
             off.intValueSafe() + size.intValueSafe());
   }
 
+  public DataWord storageLoad(DataWord key) {
+    DataWord ret = getContractState().getStorageValue(getContextAddress(), key.clone());
+    return ret == null ? null : ret.clone();
+  }
+
+  public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
+    checkTokenIdInTokenBalance(tokenId);
+    long ret = getContractState().getTokenBalance(address.toTronAddress(),
+        String.valueOf(tokenId.longValue()).getBytes());
+    return new DataWord(ret);
+  }
+
   public DataWord getTokenValue() {
     return invoke.getTokenValue().clone();
   }
@@ -1270,8 +1176,16 @@ public class Program {
     return invoke.isConstantCall();
   }
 
+  public ProgramResult getResult() {
+    return result;
+  }
+
   public void setRuntimeFailure(RuntimeException e) {
     getResult().setException(e);
+  }
+
+  public String memoryToString() {
+    return memory.toString();
   }
 
   public void fullTrace() {
@@ -1303,7 +1217,7 @@ public class Program {
           oneLine.append(ByteUtil.oneByteToHexString(value)).append(" ");
 
           if ((i + 1) % 16 == 0) {
-            String tmp = String.format("[%4s]-[%4s]", Integer.toString(i - 15, 16),
+            String tmp = format("[%4s]-[%4s]", Integer.toString(i - 15, 16),
                 Integer.toString(i, 16)).replace(" ", "0");
             memoryData.append("").append(tmp).append(" ");
             memoryData.append(oneLine);
@@ -1384,6 +1298,144 @@ public class Program {
     }
   }
 
+  public ProgramTrace getTrace() {
+    return trace;
+  }
+
+  public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
+    if (VMConfig.allowTvmCompatibleEvm() && getCallDeep() == MAX_DEPTH) {
+      stackPushZero();
+      return;
+    }
+
+    byte[] senderAddress;
+    if (VMConfig.allowTvmIstanbul()) {
+      senderAddress = getContextAddress();
+    } else {
+      senderAddress = getCallerAddress().toTronAddress();
+    }
+    byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
+
+    byte[] contractAddress = WalletUtil
+        .generateContractAddress2(senderAddress, salt.getData(), programCode);
+    createContractImpl(value, programCode, contractAddress, true);
+  }
+
+  public void addListener(ProgramOutListener listener) {
+    this.listener = listener;
+  }
+
+  public int verifyJumpDest(DataWord nextPC) {
+    if (nextPC.bytesOccupied() > 4) {
+      throw Exception.badJumpDestination(-1);
+    }
+    int ret = nextPC.intValue();
+    if (!getProgramPrecompile().hasJumpDest(ret)) {
+      throw Exception.badJumpDestination(ret);
+    }
+    return ret;
+  }
+
+  public void callToPrecompiledAddress(MessageCall msg,
+      PrecompiledContracts.PrecompiledContract contract) {
+    returnDataBuffer = null; // reset return buffer right before the call
+
+    if (getCallDeep() == MAX_DEPTH) {
+      stackPushZero();
+      this.refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
+      return;
+    }
+
+    Repository deposit = getContractState().newRepositoryChild();
+
+    byte[] senderAddress = getContextAddress();
+    byte[] contextAddress = msg.getCodeAddress().toTronAddress();
+    if (msg.getOpCode() == Op.CALLCODE || msg.getOpCode() == Op.DELEGATECALL) {
+      contextAddress = senderAddress;
+    }
+
+    long endowment = msg.getEndowment().value().longValueExact();
+    long senderBalance = 0;
+    byte[] tokenId = null;
+
+    checkTokenId(msg);
+    boolean isTokenTransfer = isTokenTransfer(msg);
+    // transfer TRX validation
+    if (!isTokenTransfer) {
+      senderBalance = deposit.getBalance(senderAddress);
+    } else {
+      // transfer trc10 token validation
+      tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
+      senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
+    }
+    if (senderBalance < endowment) {
+      stackPushZero();
+      refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
+      return;
+    }
+    byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
+        msg.getInDataSize().intValue());
+
+    // Charge for endowment - is not reversible by rollback
+    if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
+        && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
+      if (!isTokenTransfer) {
+        try {
+          MUtil.transfer(deposit, senderAddress, contextAddress,
+              msg.getEndowment().value().longValueExact());
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException("transfer failure");
+        }
+      } else {
+        try {
+          VMUtils
+              .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
+        } catch (ContractValidateException e) {
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
+        }
+        deposit.addTokenBalance(senderAddress, tokenId, -endowment);
+        deposit.addTokenBalance(contextAddress, tokenId, endowment);
+      }
+    }
+
+    long requiredEnergy = contract.getEnergyForData(data);
+    if (requiredEnergy > msg.getEnergy().longValue()) {
+      // Not need to throw an exception, method caller needn't know that
+      // regard as consumed the energy
+      this.refundEnergy(0, CALL_PRE_COMPILED); //matches cpp logic
+      this.stackPushZero();
+    } else {
+      // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
+      if (msg.getOpCode() == Op.DELEGATECALL) {
+        contract.setCallerAddress(getCallerAddress().toTronAddress());
+      } else {
+        contract.setCallerAddress(getContextAddress());
+      }
+      // this is the depositImpl, not contractState as above
+      contract.setRepository(deposit);
+      contract.setResult(this.result);
+      contract.setConstantCall(isConstantCall());
+      contract.setVmShouldEndInUs(getVmShouldEndInUs());
+      Pair<Boolean, byte[]> out = contract.execute(data);
+
+      if (out.getLeft()) { // success
+        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, CALL_PRE_COMPILED);
+        this.stackPushOne();
+        returnDataBuffer = out.getRight();
+        deposit.commit();
+      } else {
+        // spend all energy on failure, push zero and revert state changes
+        this.refundEnergy(0, CALL_PRE_COMPILED);
+        this.stackPushZero();
+        if (Objects.nonNull(this.result.getException())) {
+          throw result.getException();
+        }
+      }
+
+      this.memorySave(msg.getOutDataOffs().intValue(), out.getRight());
+    }
+  }
+
   public boolean byTestingSuite() {
     return invoke.byTestingSuite();
   }
@@ -1412,8 +1464,8 @@ public class Program {
         tokenId = msg.getTokenId().sValue().longValueExact();
       } catch (ArithmeticException e) {
         if (VMConfig.allowTvmConstantinople()) {
-          refundEnergy(msg.getEnergy().longValue(), VMConstant.REFUND_ENERGY_FROM_MESSAGE_CALL);
-          throw new TransferException(VMConstant.VALIDATE_FAILURE, VMConstant.INVALID_TOKEN_ID_MSG);
+          refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw e;
       }
@@ -1423,11 +1475,11 @@ public class Program {
           || (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
         if (VMConfig.allowTvmConstantinople()) {
-          refundEnergy(msg.getEnergy().longValue(), VMConstant.REFUND_ENERGY_FROM_MESSAGE_CALL);
-          throw new TransferException(VMConstant.VALIDATE_FAILURE, VMConstant.INVALID_TOKEN_ID_MSG);
+          refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw new BytecodeExecutionException(
-            String.format(VMConstant.VALIDATE_FAILURE, VMConstant.INVALID_TOKEN_ID_MSG));
+            String.format(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG));
       }
     }
   }
@@ -1448,7 +1500,7 @@ public class Program {
         tokenId = tokenIdDataWord.sValue().longValueExact();
       } catch (ArithmeticException e) {
         if (VMConfig.allowTvmConstantinople()) {
-          throw new TransferException(VMConstant.VALIDATE_FAILURE, VMConstant.INVALID_TOKEN_ID_MSG);
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw e;
       }
@@ -1456,9 +1508,45 @@ public class Program {
       // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
       if (tokenId <= VMConstant.MIN_TOKEN_ID) {
         throw new BytecodeExecutionException(
-            String.format(VMConstant.VALIDATE_FAILURE, VMConstant.INVALID_TOKEN_ID_MSG));
+            String.format(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG));
       }
     }
+  }
+
+  public DataWord getCallEnergy(DataWord requestedEnergy, DataWord availableEnergy) {
+    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
+      DataWord availableEnergyReduce = availableEnergy.clone();
+      availableEnergyReduce.div(new DataWord(64));
+      availableEnergy.sub(availableEnergyReduce);
+    }
+    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
+  }
+
+  public DataWord getCreateEnergy(DataWord availableEnergy) {
+    if (VMConfig.allowTvmCompatibleEvm() && getContractVersion() == 1) {
+      DataWord availableEnergyReduce = availableEnergy.clone();
+      availableEnergyReduce.div(new DataWord(64));
+      availableEnergy.sub(availableEnergyReduce);
+    }
+    return availableEnergy;
+  }
+
+  /**
+   * . used mostly for testing reasons
+   */
+  public byte[] getMemory() {
+    return memory.read(0, memory.size());
+  }
+
+  /**
+   * . used mostly for testing reasons
+   */
+  public void initMem(byte[] data) {
+    this.memory.write(0, data, data.length, false);
+  }
+
+  public long getVmStartInUs() {
+    return this.invoke.getVmStartInUs();
   }
 
   private boolean isContractExist(AccountCapsule existingAddr, Repository deposit) {
@@ -1467,13 +1555,36 @@ public class Program {
 
   private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
     if (VMConfig.allowTvmSolidity059()) {
-      // after solidity059 proposal
-      // allow contract transfer trc10 or TRX to non-exist address (would create it)
+      //after solidity059 proposal , allow contract transfer trc10 or TRX to non-exist address(would create one)
       AccountCapsule sender = deposit.getAccount(contextAddress);
       if (sender == null) {
         deposit.createNormalAccount(contextAddress);
       }
     }
+  }
+
+  public interface ProgramOutListener {
+
+    void output(String out);
+  }
+
+  static class ByteCodeIterator {
+
+    private byte[] code;
+    private int pc;
+
+    public ByteCodeIterator(byte[] code) {
+      this.code = code;
+    }
+
+    public int getPC() {
+      return pc;
+    }
+
+    public void setPC(int pc) {
+      this.pc = pc;
+    }
+
   }
 
   public boolean freeze(DataWord receiverAddress, DataWord frozenBalance, DataWord resourceType) {
@@ -1482,7 +1593,7 @@ public class Program {
     byte[] receiver = receiverAddress.toTronAddress();
 
     increaseNonce();
-    InternalTransaction internalTx = addInternalTx(owner, receiver,
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver,
         frozenBalance.longValue(), null,
         "freezeFor" + convertResourceToString(resourceType), nonce, null);
 
@@ -1518,7 +1629,7 @@ public class Program {
     byte[] receiver = receiverAddress.toTronAddress();
 
     increaseNonce();
-    InternalTransaction internalTx = addInternalTx(owner, receiver, 0, null,
+    InternalTransaction internalTx = addInternalTx(null, owner, receiver, 0, null,
         "unfreezeFor" + convertResourceToString(resourceType), nonce, null);
 
     UnfreezeBalanceParam param = new UnfreezeBalanceParam();
@@ -1600,12 +1711,12 @@ public class Program {
   }
 
   public boolean voteWitness(int witnessArrayOffset, int witnessArrayLength,
-                             int amountArrayOffset, int amountArrayLength) {
+      int amountArrayOffset, int amountArrayLength) {
     Repository repository = getContractState().newRepositoryChild();
     byte[] owner = getContextAddress();
 
     increaseNonce();
-    InternalTransaction internalTx = addInternalTx(owner, null, 0, null,
+    InternalTransaction internalTx = addInternalTx(null, owner, null, 0, null,
         "voteWitness", nonce, null);
 
     if (memoryLoad(witnessArrayOffset).intValueSafe() != witnessArrayLength ||
@@ -1664,7 +1775,7 @@ public class Program {
     byte[] owner = getContextAddress();
 
     increaseNonce();
-    InternalTransaction internalTx = addInternalTx(owner, owner, 0, null,
+    InternalTransaction internalTx = addInternalTx(null, owner, owner, 0, null,
         "withdrawReward", nonce, null);
 
     WithdrawRewardParam param = new WithdrawRewardParam();
@@ -1691,10 +1802,11 @@ public class Program {
   }
 
   /**
-   * Denotes problem when executing bytecode. From blockchain and peer perspective this is
+   * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is
    * quite normal situation and doesn't mean exceptional situation in terms of the program
    * execution
    */
+  @SuppressWarnings("serial")
   public static class BytecodeExecutionException extends RuntimeException {
 
     public BytecodeExecutionException(String message) {
@@ -1702,52 +1814,73 @@ public class Program {
     }
 
     public BytecodeExecutionException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
+    }
+  }
+
+  public static class AssetIssueException extends BytecodeExecutionException {
+
+    public AssetIssueException(String message, Object... args) {
+      super(format(message, args));
     }
   }
 
   public static class TransferException extends BytecodeExecutionException {
 
     public TransferException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
+  @SuppressWarnings("serial")
   public static class OutOfEnergyException extends BytecodeExecutionException {
 
     public OutOfEnergyException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
+  @SuppressWarnings("serial")
   public static class OutOfTimeException extends BytecodeExecutionException {
 
     public OutOfTimeException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
+  @SuppressWarnings("serial")
   public static class OutOfMemoryException extends BytecodeExecutionException {
 
     public OutOfMemoryException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
+  @SuppressWarnings("serial")
+  public static class OutOfStorageException extends BytecodeExecutionException {
+
+    public OutOfStorageException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  @SuppressWarnings("serial")
   public static class PrecompiledContractException extends BytecodeExecutionException {
 
     public PrecompiledContractException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
+  @SuppressWarnings("serial")
   public static class IllegalOperationException extends BytecodeExecutionException {
 
     public IllegalOperationException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
+  @SuppressWarnings("serial")
   public static class InvalidCodeException extends BytecodeExecutionException {
 
     public InvalidCodeException(String message) {
@@ -1755,37 +1888,35 @@ public class Program {
     }
   }
 
+  @SuppressWarnings("serial")
   public static class BadJumpDestinationException extends BytecodeExecutionException {
 
     public BadJumpDestinationException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
+  @SuppressWarnings("serial")
   public static class StackTooSmallException extends BytecodeExecutionException {
 
     public StackTooSmallException(String message, Object... args) {
-      super(String.format(message, args));
+      super(format(message, args));
     }
   }
 
-  public static class StackTooLargeException extends BytecodeExecutionException {
-
-    public StackTooLargeException(String message, Object... args) {
-      super(String.format(message, args));
-    }
-  }
-
+  @SuppressWarnings("serial")
   public static class ReturnDataCopyIllegalBoundsException extends BytecodeExecutionException {
 
     public ReturnDataCopyIllegalBoundsException(DataWord off, DataWord size,
         long returnDataSize) {
-      super(String.format(
+      super(String
+          .format(
               "Illegal RETURNDATACOPY arguments: offset (%s) + size (%s) > RETURNDATASIZE (%d)",
               off, size, returnDataSize));
     }
   }
 
+  @SuppressWarnings("serial")
   public static class JVMStackOverFlowException extends BytecodeExecutionException {
 
     public JVMStackOverFlowException() {
@@ -1793,6 +1924,7 @@ public class Program {
     }
   }
 
+  @SuppressWarnings("serial")
   public static class StaticCallModificationException extends BytecodeExecutionException {
 
     public StaticCallModificationException() {
@@ -1821,8 +1953,13 @@ public class Program {
       return new OutOfTimeException("Already Time Out");
     }
 
-    public static OutOfMemoryException memoryOverflow(String op) {
-      return new OutOfMemoryException("Out of Memory when '%s' operation executing", op);
+    public static OutOfMemoryException memoryOverflow(int op) {
+      return new OutOfMemoryException("Out of Memory when '%s' operation executing",
+          Op.getNameOf(op));
+    }
+
+    public static OutOfStorageException notEnoughStorage() {
+      return new OutOfStorageException("Not enough ContractState resource");
     }
 
     public static PrecompiledContractException contractValidateException(TronException e) {
@@ -1831,6 +1968,12 @@ public class Program {
 
     public static PrecompiledContractException contractExecuteException(TronException e) {
       return new PrecompiledContractException(e.getMessage());
+    }
+
+    public static OutOfEnergyException energyOverflow(BigInteger actualEnergy,
+        BigInteger energyLimit) {
+      return new OutOfEnergyException("Energy value overflow: actualEnergy[%d], energyLimit[%d];",
+          actualEnergy.longValueExact(), energyLimit.longValueExact());
     }
 
     public static IllegalOperationException invalidOpCode(byte... opCode) {
@@ -1850,9 +1993,13 @@ public class Program {
       return new StackTooSmallException("Expected stack size %d but actual %d;", expectedSize,
           actualSize);
     }
+  }
 
-    public static StackTooLargeException tooLargeStack(int maxSize) {
-      return new StackTooLargeException("Expected: overflow %d elements stack limit", maxSize);
+  @SuppressWarnings("serial")
+  public class StackTooLargeException extends BytecodeExecutionException {
+
+    public StackTooLargeException(String message) {
+      super(message);
     }
   }
 }

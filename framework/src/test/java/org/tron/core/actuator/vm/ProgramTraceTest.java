@@ -32,8 +32,8 @@ public class ProgramTraceTest {
   @Test
   public void programTraceTest() {
 
-    ProgramTrace programTrace = new ProgramTrace(null);
-    ProgramTrace anotherProgramTrace = new ProgramTrace(null);
+    ProgramTrace programTrace = new ProgramTrace();
+    ProgramTrace anotherProgramTrace = new ProgramTrace();
     DataWord energyDataWord = new DataWord(4);
     OpActions opActions = new OpActions();
     byte addOpCode = org.tron.core.vm.Op.ADD;

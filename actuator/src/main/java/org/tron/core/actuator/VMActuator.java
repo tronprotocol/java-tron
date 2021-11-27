@@ -34,7 +34,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.LogInfoTriggerParser;
-import org.tron.core.vm.TVM;
+import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.ConfigLoader;
@@ -43,7 +43,7 @@ import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.Program.TransferException;
-import org.tron.core.vm.program.JumpDestAnalysis;
+import org.tron.core.vm.program.ProgramPrecompile;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.repository.Repository;
@@ -66,7 +66,7 @@ public class VMActuator implements Actuator2 {
   private BlockCapsule blockCap;
 
   /* tvm execution context */
-  private Repository rootRep;
+  private Repository rootRepository;
   private Program program;
   private InternalTransaction rootInternalTx;
 
@@ -118,7 +118,7 @@ public class VMActuator implements Actuator2 {
     //Route Type
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
     //Prepare Repository
-    rootRep = RepositoryImpl.createRoot(context.getStoreFactory());
+    rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
 
     enableEventListener = context.isEventPluginLoaded();
 
@@ -169,15 +169,14 @@ public class VMActuator implements Actuator2 {
           throw e;
         }
 
-        TVM.play(program);
+        VM.play(program);
         result = program.getResult();
 
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
           byte[] code = program.getResult().getHReturn();
           if (code.length != 0 && VMConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
             if (null == result.getException()) {
-              result.setException(Program.Exception
-                  .invalidCodeException());
+              result.setException(Program.Exception.invalidCodeException());
             }
           }
           long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCREATE_DATA();
@@ -191,7 +190,7 @@ public class VMActuator implements Actuator2 {
           } else {
             result.spendEnergy(saveCodeEnergy);
             if (VMConfig.allowTvmConstantinople()) {
-              rootRep.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
+              rootRepository.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
             }
           }
         }
@@ -208,6 +207,7 @@ public class VMActuator implements Actuator2 {
         if (result.getException() != null || result.isRevert()) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
+          //result.resetFutureRefund();
           result.rejectInternalTransactions();
 
           if (result.getException() != null) {
@@ -220,17 +220,17 @@ public class VMActuator implements Actuator2 {
             result.setRuntimeError("REVERT opcode executed");
           }
         } else {
-          rootRep.commit();
+          rootRepository.commit();
 
           if (logInfoTriggerParser != null) {
             List<ContractTrigger> triggers = logInfoTriggerParser
-                .parseLogInfos(program.getResult().getLogInfoList(), rootRep);
+                .parseLogInfos(program.getResult().getLogInfoList(), rootRepository);
             program.getResult().setTriggerList(triggers);
           }
 
         }
       } else {
-        rootRep.commit();
+        rootRepository.commit();
       }
     } catch (JVMStackOverFlowException e) {
       program.spendAllEnergy();
@@ -282,7 +282,7 @@ public class VMActuator implements Actuator2 {
 
   private void create()
       throws ContractValidateException {
-    if (!rootRep.getDynamicPropertiesStore().supportVM()) {
+    if (!rootRepository.getDynamicPropertiesStore().supportVM()) {
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
     }
 
@@ -314,7 +314,7 @@ public class VMActuator implements Actuator2 {
 
     byte[] contractAddress = WalletUtil.generateContractAddress(trx);
     // insure the new contract address haven't exist
-    if (rootRep.getAccount(contractAddress) != null) {
+    if (rootRepository.getAccount(contractAddress) != null) {
       throw new ContractValidateException(
           "Trying to create a contract with existing contract address: " + StringUtil
               .encode58Check(contractAddress));
@@ -333,12 +333,12 @@ public class VMActuator implements Actuator2 {
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0 || feeLimit > rootRep.getDynamicPropertiesStore().getMaxFeeLimit()) {
+      if (feeLimit < 0 || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
         logger.info("invalid feeLimit {}", feeLimit);
         throw new ContractValidateException(
-            "feeLimit must be >= 0 and <= " + rootRep.getDynamicPropertiesStore().getMaxFeeLimit());
+            "feeLimit must be >= 0 and <= " + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
       }
-      AccountCapsule creator = rootRep
+      AccountCapsule creator = rootRepository
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
 
       long energyLimit;
@@ -368,14 +368,14 @@ public class VMActuator implements Actuator2 {
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       rootInternalTx = new InternalTransaction(trx, trxType);
 
-      long maxCpuTimeOfOneTx = rootRep.getDynamicPropertiesStore()
+      long maxCpuTimeOfOneTx = rootRepository.getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTx() * VMConstant.ONE_THOUSAND;
       long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
       long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
       ProgramInvoke programInvoke = ProgramInvokeFactory
-          .createFromTx(TrxType.TRX_CONTRACT_CREATION_TYPE, executorType, trx,
-              tokenValue, tokenId, blockCap.getInstance(), rootRep, vmStartInUs,
+          .createProgramInvoke(TrxType.TRX_CONTRACT_CREATION_TYPE, executorType, trx,
+              tokenValue, tokenId, blockCap.getInstance(), rootRepository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
       this.program = new Program(ops, programInvoke, rootInternalTx);
       if (VMConfig.allowTvmCompatibleEvm()) {
@@ -393,20 +393,20 @@ public class VMActuator implements Actuator2 {
     }
     program.getResult().setContractAddress(contractAddress);
 
-    rootRep.createAccount(contractAddress, newSmartContract.getName(),
+    rootRepository.createAccount(contractAddress, newSmartContract.getName(),
         Protocol.AccountType.Contract);
 
-    rootRep.createContract(contractAddress, new ContractCapsule(newSmartContract));
+    rootRepository.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
     if (!VMConfig.allowTvmConstantinople()) {
-      rootRep.saveCode(contractAddress, JumpDestAnalysis.getCode(code));
+      rootRepository.saveCode(contractAddress, ProgramPrecompile.getCode(code));
     }
     // transfer from callerAddress to contractAddress according to callValue
     if (callValue > 0) {
-      MUtil.transfer(this.rootRep, callerAddress, contractAddress, callValue);
+      MUtil.transfer(rootRepository, callerAddress, contractAddress, callValue);
     }
     if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
-      MUtil.transferToken(this.rootRep, callerAddress, contractAddress, String.valueOf(tokenId),
+      MUtil.transferToken(rootRepository, callerAddress, contractAddress, String.valueOf(tokenId),
           tokenValue);
     }
 
@@ -419,7 +419,7 @@ public class VMActuator implements Actuator2 {
   private void call()
       throws ContractValidateException {
 
-    if (!rootRep.getDynamicPropertiesStore().supportVM()) {
+    if (!rootRepository.getDynamicPropertiesStore().supportVM()) {
       logger.info("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("VM work is off, need to be opened by the committee");
     }
@@ -435,7 +435,7 @@ public class VMActuator implements Actuator2 {
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
 
-    ContractCapsule deployedContract = rootRep.getContract(contractAddress);
+    ContractCapsule deployedContract = rootRepository.getContract(contractAddress);
     if (null == deployedContract) {
       logger.info("No contract or not a smart contract");
       throw new ContractValidateException("No contract or not a smart contract");
@@ -461,33 +461,33 @@ public class VMActuator implements Actuator2 {
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     checkTokenValueAndId(tokenValue, tokenId);
 
-    byte[] code = rootRep.getCode(contractAddress);
+    byte[] code = rootRepository.getCode(contractAddress);
     if (isNotEmpty(code)) {
       long feeLimit = trx.getRawData().getFeeLimit();
-      if (feeLimit < 0 || feeLimit > rootRep.getDynamicPropertiesStore().getMaxFeeLimit()) {
+      if (feeLimit < 0 || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
         logger.info("invalid feeLimit {}", feeLimit);
         throw new ContractValidateException(
-            "feeLimit must be >= 0 and <= " + rootRep.getDynamicPropertiesStore().getMaxFeeLimit());
+            "feeLimit must be >= 0 and <= " + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
       }
-      AccountCapsule caller = rootRep.getAccount(callerAddress);
+      AccountCapsule caller = rootRepository.getAccount(callerAddress);
       long energyLimit;
       if (isConstantCall) {
         energyLimit = CommonParameter.getInstance().maxEnergyLimitForConstant;
       } else {
-        AccountCapsule creator = rootRep
+        AccountCapsule creator = rootRepository
             .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
         energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
 
-      long maxCpuTimeOfOneTx = rootRep.getDynamicPropertiesStore()
+      long maxCpuTimeOfOneTx = rootRepository.getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTx() * VMConstant.ONE_THOUSAND;
       long thisTxCPULimitInUs =
           (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
       long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
       ProgramInvoke programInvoke = ProgramInvokeFactory
-          .createFromTx(TrxType.TRX_CONTRACT_CALL_TYPE, executorType, trx,
-              tokenValue, tokenId, blockCap.getInstance(), rootRep, vmStartInUs,
+          .createProgramInvoke(TrxType.TRX_CONTRACT_CALL_TYPE, executorType, trx,
+              tokenValue, tokenId, blockCap.getInstance(), rootRepository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
       if (isConstantCall) {
         programInvoke.setConstantCall();
@@ -510,10 +510,10 @@ public class VMActuator implements Actuator2 {
     //transfer from callerAddress to targetAddress according to callValue
 
     if (callValue > 0) {
-      MUtil.transfer(rootRep, callerAddress, contractAddress, callValue);
+      MUtil.transfer(rootRepository, callerAddress, contractAddress, callValue);
     }
     if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
-      MUtil.transferToken(rootRep, callerAddress, contractAddress, String.valueOf(tokenId),
+      MUtil.transferToken(rootRepository, callerAddress, contractAddress, String.valueOf(tokenId),
           tokenValue);
     }
 
@@ -523,11 +523,11 @@ public class VMActuator implements Actuator2 {
       long callValue) {
 
     long sunPerEnergy = VMConstant.SUN_PER_ENERGY;
-    if (rootRep.getDynamicPropertiesStore().getEnergyFee() > 0) {
-      sunPerEnergy = rootRep.getDynamicPropertiesStore().getEnergyFee();
+    if (rootRepository.getDynamicPropertiesStore().getEnergyFee() > 0) {
+      sunPerEnergy = rootRepository.getDynamicPropertiesStore().getEnergyFee();
     }
 
-    long leftFrozenEnergy = rootRep.getAccountLeftEnergyFromFreeze(account);
+    long leftFrozenEnergy = rootRepository.getAccountLeftEnergyFromFreeze(account);
     if (VMConfig.allowTvmFreeze()) {
       receipt.setCallerEnergyLeft(leftFrozenEnergy);
     }
@@ -544,11 +544,11 @@ public class VMActuator implements Actuator2 {
       long callValue) {
 
     long sunPerEnergy = VMConstant.SUN_PER_ENERGY;
-    if (rootRep.getDynamicPropertiesStore().getEnergyFee() > 0) {
-      sunPerEnergy = rootRep.getDynamicPropertiesStore().getEnergyFee();
+    if (rootRepository.getDynamicPropertiesStore().getEnergyFee() > 0) {
+      sunPerEnergy = rootRepository.getDynamicPropertiesStore().getEnergyFee();
     }
     // can change the calc way
-    long leftEnergyFromFreeze = rootRep.getAccountLeftEnergyFromFreeze(account);
+    long leftEnergyFromFreeze = rootRepository.getAccountLeftEnergyFromFreeze(account);
     callValue = max(callValue, 0);
     long energyFromBalance = Math
         .floorDiv(max(account.getBalance() - callValue, 0), sunPerEnergy);
@@ -559,7 +559,7 @@ public class VMActuator implements Actuator2 {
       energyFromFeeLimit =
           feeLimit / sunPerEnergy;
     } else {
-      long totalEnergyFromFreeze = rootRep
+      long totalEnergyFromFreeze = rootRepository
           .calculateGlobalEnergyLimit(account);
       long leftBalanceForEnergyFreeze = getEnergyFee(totalBalanceForEnergyFreeze,
           leftEnergyFromFreeze,
@@ -649,7 +649,7 @@ public class VMActuator implements Actuator2 {
     }
 
     long creatorEnergyLimit = 0;
-    ContractCapsule contractCapsule = rootRep
+    ContractCapsule contractCapsule = rootRepository
         .getContract(contract.getContractAddress().toByteArray());
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
@@ -660,7 +660,7 @@ public class VMActuator implements Actuator2 {
 
     long originEnergyLeft = 0;
     if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
-      originEnergyLeft = rootRep.getAccountLeftEnergyFromFreeze(creator);
+      originEnergyLeft = rootRepository.getAccountLeftEnergyFromFreeze(creator);
       if (VMConfig.allowTvmFreeze()) {
         receipt.setOriginEnergyLeft(originEnergyLeft);
       }
@@ -692,9 +692,9 @@ public class VMActuator implements Actuator2 {
     }
 
     // creatorEnergyFromFreeze
-    long creatorEnergyLimit = rootRep.getAccountLeftEnergyFromFreeze(creator);
+    long creatorEnergyLimit = rootRepository.getAccountLeftEnergyFromFreeze(creator);
 
-    ContractCapsule contractCapsule = rootRep
+    ContractCapsule contractCapsule = rootRepository
         .getContract(contract.getContractAddress().toByteArray());
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 

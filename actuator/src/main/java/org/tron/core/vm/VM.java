@@ -9,8 +9,8 @@ import org.tron.core.vm.program.Program.JVMStackOverFlowException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.Program.TransferException;
 
-@Slf4j(topic = "TVM")
-public class TVM {
+@Slf4j(topic = "VM")
+public class VM {
 
   public static void play(Program program) {
     try {

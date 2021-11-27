@@ -23,6 +23,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 public class ProgramResult {
 
   private long energyUsed = 0;
+  //private long futureRefund = 0;
 
   private byte[] hReturn = EMPTY_BYTE_ARRAY;
   private byte[] contractAddress = EMPTY_BYTE_ARRAY;
@@ -30,6 +31,7 @@ public class ProgramResult {
   private boolean revert;
 
   private Set<DataWord> deleteAccounts;
+  //private ByteArraySet touchedAccounts = new ByteArraySet();
   private List<InternalTransaction> internalTransactions;
   private List<LogInfo> logInfoList;
   private TransactionResultCapsule ret = new TransactionResultCapsule();

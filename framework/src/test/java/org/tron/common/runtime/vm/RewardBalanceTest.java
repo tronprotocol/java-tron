@@ -164,7 +164,7 @@ public class RewardBalanceTest extends VMTestBase {
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke = ProgramInvokeFactory
-        .createFromTx(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
@@ -184,7 +184,7 @@ public class RewardBalanceTest extends VMTestBase {
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = ProgramInvokeFactory
-        .createFromTx(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
@@ -203,7 +203,7 @@ public class RewardBalanceTest extends VMTestBase {
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = ProgramInvokeFactory
-        .createFromTx(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
@@ -222,7 +222,7 @@ public class RewardBalanceTest extends VMTestBase {
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = ProgramInvokeFactory
-        .createFromTx(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
@@ -241,7 +241,7 @@ public class RewardBalanceTest extends VMTestBase {
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke = ProgramInvokeFactory
-        .createFromTx(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
+        .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);

@@ -1127,7 +1127,7 @@ public class PrecompiledContracts {
     }
 
     @Override
-    public Pair<Boolean, byte[]> execute(byte[] data) {
+    public synchronized Pair<Boolean, byte[]> execute(byte[] data) {
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
