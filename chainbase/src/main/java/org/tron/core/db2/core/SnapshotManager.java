@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
@@ -58,6 +58,7 @@ public class SnapshotManager implements RevokingDatabase {
 
   private volatile int flushCount = 0;
 
+  private Thread exitThread;
   private volatile boolean  hitDown;
 
   private Map<String, ListeningExecutorService> flushServices = new HashMap<>();
@@ -75,21 +76,12 @@ public class SnapshotManager implements RevokingDatabase {
 
   @PostConstruct
   public void init() {
-    ExecutorService discoverer = Executors.newSingleThreadExecutor();
-    discoverer.execute(() -> {
-      while (true) {
-        try {
-          Thread.sleep(3);
-          if (hitDown) {
-            System.exit(1);
-          }
-        } catch (InterruptedException e) {
-          logger.error("{}", e);
-          Thread.currentThread().interrupt();
-        }
-      }
+    exitThread =  new Thread(() -> {
+      LockSupport.park();
+      System.exit(1);
     });
-    discoverer.shutdown();
+    exitThread.setName("exit-thread");
+    exitThread.start();
   }
 
   public static String simpleDecode(byte[] bytes) {
@@ -325,6 +317,7 @@ public class SnapshotManager implements RevokingDatabase {
       } catch (TronDBException e) {
         logger.error(" Find fatal error , program will be exited soon", e);
         hitDown = true;
+        LockSupport.unpark(exitThread);
       }
     }
   }
