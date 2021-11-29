@@ -379,14 +379,15 @@ public class TronJsonRpcImpl implements TronJsonRpc {
    * @param data Hash of the method signature and encoded parameters. for example:
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
    */
-  private String call(byte[] ownerAddressByte, byte[] contractAddressByte, byte[] data) {
+  private String call(byte[] ownerAddressByte, byte[] contractAddressByte, long value,
+      byte[] data) {
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     TransactionExtention trxExt;
 
     try {
-      callTriggerConstantContract(ownerAddressByte, contractAddressByte, 0, data,
+      callTriggerConstantContract(ownerAddressByte, contractAddressByte, value, data,
           trxExtBuilder, retBuilder);
 
     } catch (ContractValidateException | VMIllegalException e) {
@@ -690,7 +691,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       byte[] addressData = addressCompatibleToByteArray(transactionCall.from);
       byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.to);
 
-      return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
+      return call(addressData, contractAddressData, transactionCall.parseValue(),
+          ByteArray.fromHexString(transactionCall.data));
     } else {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag).longValue();
