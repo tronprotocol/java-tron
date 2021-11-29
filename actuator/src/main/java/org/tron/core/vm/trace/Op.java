@@ -18,21 +18,20 @@
 package org.tron.core.vm.trace;
 
 import java.math.BigInteger;
-import org.tron.core.vm.OpCode;
 
 public class Op {
 
-  private OpCode code;
+  private int code;
   private int deep;
   private int pc;
   private BigInteger energy;
   private OpActions actions;
 
-  public OpCode getCode() {
+  public int getCode() {
     return code;
   }
 
-  public void setCode(OpCode code) {
+  public void setCode(int code) {
     this.code = code;
   }
 

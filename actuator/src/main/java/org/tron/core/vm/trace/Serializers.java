@@ -29,7 +29,7 @@ import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.vm.OpCode;
+import org.tron.core.vm.Op;
 
 @Slf4j(topic = "VM")
 public final class Serializers {
@@ -84,7 +84,7 @@ public final class Serializers {
     @Override
     public void serialize(Byte op, JsonGenerator jgen, SerializerProvider provider)
         throws IOException, JsonProcessingException {
-      jgen.writeString(OpCode.code(op).name());
+      jgen.writeString(Op.getNameOf(op));
     }
   }
 }

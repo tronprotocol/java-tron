@@ -446,6 +446,9 @@ public class ByteUtil {
   }
 
   public static byte[] longTo32Bytes(long value) {
+    if (value == 0) {
+      return new byte[32];
+    }
     byte[] longBytes = ByteArray.fromLong(value);
     byte[] zeroBytes = new byte[24];
     return ByteUtil.merge(zeroBytes, longBytes);
