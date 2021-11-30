@@ -78,7 +78,10 @@ public class SnapshotManager implements RevokingDatabase {
   public void init() {
     exitThread =  new Thread(() -> {
       LockSupport.park();
-      System.exit(1);
+      // to Guarantee Some other thread invokes unpark with the current thread as the target
+      if (hitDown) {
+        System.exit(1);
+      }
     });
     exitThread.setName("exit-thread");
     exitThread.start();
