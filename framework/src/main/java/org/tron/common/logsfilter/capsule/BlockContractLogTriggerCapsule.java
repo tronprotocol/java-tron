@@ -51,6 +51,7 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
     blockContractLogTrigger.setTimeStamp(block.getTimeStamp());
     blockContractLogTrigger.setBlockNumber(block.getNum());
     blockContractLogTrigger.setLatestSolidifiedBlockNumber(solidifiedNumber);
+    blockContractLogTrigger.setParentHash(block.getParentBlockId().toString());
     // bloom filter
 //    BloomFilter<String> bloomFilterContractAndTopic = BloomFilter.create(Funnels.stringFunnel(
 //        Charsets.UTF_8), 80, 0.01);

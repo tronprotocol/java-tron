@@ -34,6 +34,10 @@ public class BlockContractLogTrigger extends Trigger {
 
   @Getter
   @Setter
+  private String parentHash;
+
+  @Getter
+  @Setter
   private List<TransactionInBlock> transactionList = new ArrayList<>();
 
   public BlockContractLogTrigger() {
