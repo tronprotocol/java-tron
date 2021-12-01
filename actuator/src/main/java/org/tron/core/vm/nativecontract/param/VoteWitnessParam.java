@@ -1,11 +1,11 @@
 package org.tron.core.vm.nativecontract.param;
 
 import com.google.protobuf.ByteString;
-import org.tron.common.utils.StringUtil;
-import org.tron.protos.Protocol;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.tron.common.utils.StringUtil;
+import org.tron.protos.Protocol;
 
 /**
  * Param used by VoteWitnessProcessor

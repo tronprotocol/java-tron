@@ -19,7 +19,7 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 
-@Slf4j(topic = "Processor")
+@Slf4j(topic = "VMProcessor")
 public class UnfreezeBalanceProcessor {
 
   public void validate(UnfreezeBalanceParam param, Repository repo)
