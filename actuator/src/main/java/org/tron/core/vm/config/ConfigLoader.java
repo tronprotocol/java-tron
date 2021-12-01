@@ -1,6 +1,5 @@
 package org.tron.core.vm.config;
 
-
 import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
 
 import lombok.extern.slf4j.Slf4j;

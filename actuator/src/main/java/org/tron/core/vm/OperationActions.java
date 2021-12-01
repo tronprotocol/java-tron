@@ -1,17 +1,17 @@
 package org.tron.core.vm;
 
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.LogInfo;
-import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.program.Program;
-import org.tron.core.vm.program.Stack;
+import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.LogInfo;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Stack;
 
 public class OperationActions {
 
