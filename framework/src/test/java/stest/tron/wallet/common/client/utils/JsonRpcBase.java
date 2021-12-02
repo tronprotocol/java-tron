@@ -68,7 +68,6 @@ public class JsonRpcBase {
   public ManagedChannel channelPbft = null;
   public String data = null;
   public String paramString = null;
-
   public WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   public WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
   public String fullnode =
