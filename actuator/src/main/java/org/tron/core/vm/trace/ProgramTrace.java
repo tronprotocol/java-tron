@@ -19,14 +19,12 @@ package org.tron.core.vm.trace;
 
 import static java.lang.String.format;
 import static org.tron.common.utils.ByteArray.toHexString;
-import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import static org.tron.core.vm.trace.Serializers.serializeFieldsOnly;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.vm.OpCode;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 
@@ -38,13 +36,12 @@ public class ProgramTrace {
   private String contractAddress;
 
   public ProgramTrace() {
-    this(null, null);
+    this(null);
   }
 
-  public ProgramTrace(VMConfig config, ProgramInvoke programInvoke) {
-    if (programInvoke != null && config.vmTrace()) {
-      contractAddress = Hex
-          .toHexString(convertToTronAddress(programInvoke.getContractAddress().getLast20Bytes()));
+  public ProgramTrace(ProgramInvoke programInvoke) {
+    if (programInvoke != null && VMConfig.vmTrace()) {
+      contractAddress = Hex.toHexString(programInvoke.getContractAddress().toTronAddress());
     }
   }
 
@@ -93,7 +90,7 @@ public class ProgramTrace {
   public Op addOp(byte code, int pc, int deep, DataWord energy, OpActions actions) {
     Op op = new Op();
     op.setActions(actions);
-    op.setCode(OpCode.code(code));
+    op.setCode(code & 0xff);
     op.setDeep(deep);
     op.setEnergy(energy.value());
     op.setPc(pc);
