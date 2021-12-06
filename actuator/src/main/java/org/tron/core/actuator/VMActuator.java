@@ -80,7 +80,7 @@ public class VMActuator implements Actuator2 {
 
   @Getter
   @Setter
-  private boolean isConstantCall;
+  private boolean isConstantCall = false;
 
   @Setter
   private boolean enableEventListener;

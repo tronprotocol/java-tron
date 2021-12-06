@@ -134,6 +134,20 @@ public class ProgramResult {
     }
   }
 
+//  public void addTouchAccount(byte[] addr) {
+//    touchedAccounts.add(addr);
+//  }
+
+//  public Set<byte[]> getTouchedAccounts() {
+//    return touchedAccounts;
+//  }
+
+//  public void addTouchAccounts(Set<byte[]> accounts) {
+//    if (!isEmpty(accounts)) {
+//      getTouchedAccounts().addAll(accounts);
+//    }
+//  }
+
   public List<LogInfo> getLogInfoList() {
     if (logInfoList == null) {
       logInfoList = new ArrayList<>();
@@ -193,9 +207,22 @@ public class ProgramResult {
     }
   }
 
+//  public void addFutureRefund(long energyValue) {
+//    futureRefund += energyValue;
+//  }
+
+//  public long getFutureRefund() {
+//    return futureRefund;
+//  }
+
+//  public void resetFutureRefund() {
+//    futureRefund = 0;
+//  }
+
   public void reset() {
     getDeleteAccounts().clear();
     getLogInfoList().clear();
+    //resetFutureRefund();
   }
 
   public void merge(ProgramResult another) {
@@ -203,6 +230,8 @@ public class ProgramResult {
     if (another.getException() == null && !another.isRevert()) {
       addDeleteAccounts(another.getDeleteAccounts());
       addLogInfos(another.getLogInfoList());
+      //addFutureRefund(another.getFutureRefund());
+      //addTouchAccounts(another.getTouchedAccounts());
     }
   }
 

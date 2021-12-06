@@ -1127,7 +1127,7 @@ public class PrecompiledContracts {
     }
 
     @Override
-    public synchronized Pair<Boolean, byte[]> execute(byte[] data) {
+    public Pair<Boolean, byte[]> execute(byte[] data) {
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
@@ -1574,7 +1574,9 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-      long rewardBalance = VoteRewardUtil.queryReward(getCallerAddress(), getDeposit());
+
+      long rewardBalance = VoteRewardUtil.queryReward(
+          TransactionTrace.convertToTronAddress(getCallerAddress()), getDeposit());
       return Pair.of(true, longTo32Bytes(rewardBalance));
     }
   }
@@ -1620,7 +1622,7 @@ public class PrecompiledContracts {
       AccountCapsule accountCapsule = this.getDeposit().getAccount(address);
 
       long voteCount = 0;
-      if (accountCapsule != null) {
+      if (accountCapsule != null && !accountCapsule.getVotesList().isEmpty()) {
         ByteString witness = ByteString.copyFrom(words[1].toTronAddress());
         for (Protocol.Vote vote : accountCapsule.getVotesList()) {
           if (witness.equals(vote.getVoteAddress())) {
@@ -1650,7 +1652,7 @@ public class PrecompiledContracts {
       AccountCapsule accountCapsule = this.getDeposit().getAccount(address);
 
       long usedVoteCount = 0;
-      if (accountCapsule != null) {
+      if (accountCapsule != null && !accountCapsule.getVotesList().isEmpty()) {
         for (Protocol.Vote vote : accountCapsule.getVotesList()) {
           usedVoteCount += vote.getVoteCount();
         }

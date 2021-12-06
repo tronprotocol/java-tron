@@ -40,8 +40,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VM;
@@ -753,6 +753,14 @@ public class Program {
       contextAddress = codeAddress;
     }
 
+    if (logger.isDebugEnabled()) {
+      logger.debug(Op.getNameOf(msg.getOpCode())
+              + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
+          Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(),
+          msg.getOutDataSize().longValue());
+    }
+
+
     Repository deposit = getContractState().newRepositoryChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
@@ -849,9 +857,11 @@ public class Program {
     ProgramResult callResult = null;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
-      DataWord callValue = msg.getEndowment();
+      DataWord callValue;
       if (msg.getOpCode() == Op.DELEGATECALL) {
         callValue = getCallValue();
+      } else {
+        callValue = msg.getEndowment();
       }
       ProgramInvoke programInvoke = ProgramInvokeFactory.createProgramInvoke(
           this, new DataWord(contextAddress),
@@ -983,6 +993,15 @@ public class Program {
         .debug("[{}] Refund for cause: [{}], energy: [{}]", invoke.hashCode(), cause, energyValue);
     getResult().refundEnergy(energyValue);
   }
+
+//  public void futureRefundEnergy(long energyValue) {
+//    logger.debug("Future refund added: [{}]", energyValue);
+//    getResult().addFutureRefund(energyValue);
+//  }
+//
+//  public void resetFutureRefund() {
+//    getResult().resetFutureRefund();
+//  }
 
   public void storageSave(DataWord word1, DataWord word2) {
     DataWord keyWord = word1.clone();
@@ -1303,12 +1322,11 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
+    byte[] senderAddress;
     if (VMConfig.allowTvmCompatibleEvm() && getCallDeep() == MAX_DEPTH) {
       stackPushZero();
       return;
     }
-
-    byte[] senderAddress;
     if (VMConfig.allowTvmIstanbul()) {
       senderAddress = getContextAddress();
     } else {
@@ -1346,12 +1364,15 @@ public class Program {
       return;
     }
 
+
     Repository deposit = getContractState().newRepositoryChild();
 
     byte[] senderAddress = getContextAddress();
-    byte[] contextAddress = msg.getCodeAddress().toTronAddress();
+    byte[] contextAddress;
     if (msg.getOpCode() == Op.CALLCODE || msg.getOpCode() == Op.DELEGATECALL) {
       contextAddress = senderAddress;
+    } else {
+      contextAddress = msg.getCodeAddress().toTronAddress();
     }
 
     long endowment = msg.getEndowment().value().longValueExact();

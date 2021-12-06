@@ -18,6 +18,7 @@ public class VM {
         if (VMConfig.vmTrace()) {
           program.saveOpTrace();
         }
+
         try {
           Operation op = OperationRegistry.get(program.getCurrentOpIntValue());
           if (op == null) {
@@ -44,6 +45,7 @@ public class VM {
           if (!(e instanceof TransferException)) {
             program.spendAllEnergy();
           }
+          //program.resetFutureRefund();
           program.stop();
           throw e;
         } finally {

@@ -186,7 +186,7 @@ public class DataWord implements Comparable<DataWord> {
   public byte[] toTronAddress() {
     byte[] ret = new byte[21];
     ret[0] = DecodeUtil.addressPreFixByte;
-    System.arraycopy(this.data, 12, ret, 1, 20);
+    System.arraycopy(data, 12, ret, 1, 20);
     return ret;
   }
 
