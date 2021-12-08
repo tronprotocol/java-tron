@@ -1,30 +1,21 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.tron.core.vm;
 
+import static java.util.Arrays.copyOfRange;
 import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.BIUtil.isZero;
-import static org.tron.common.utils.ByteUtil.*;
-import static java.util.Arrays.copyOfRange;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.ByteUtil.bytesToBigInteger;
+import static org.tron.common.utils.ByteUtil.longTo32Bytes;
+import static org.tron.common.utils.ByteUtil.merge;
+import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
+import static org.tron.common.utils.ByteUtil.parseBytes;
+import static org.tron.common.utils.ByteUtil.parseWord;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
+import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -38,8 +29,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -71,17 +60,12 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.VoteRewardUtil;
+
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Permission;
-import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
-
-/**
- * @author Roman Mandeleil
- * @since 09.01.2015
- */
 
 @Slf4j(topic = "VM")
 public class PrecompiledContracts {
