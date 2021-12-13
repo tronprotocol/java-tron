@@ -212,6 +212,7 @@ public class Accounts004 extends JsonRpcBase {
     paramBody.addProperty("toBlock", "0x" + (Integer.toHexString(blockNumForTrc20 + 20)));
     JsonArray params = new JsonArray();
     params.add(paramBody);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpFullNode,solidityNode);
     JsonObject requestBody = getJsonRpcBody("eth_getLogs", params);
     logger.info("test10GetLogsOnlyContainAddress_requestBody：" + requestBody);
     response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
@@ -234,6 +235,7 @@ public class Accounts004 extends JsonRpcBase {
     paramBody.addProperty("toBlock", "0x" + (Integer.toHexString(blockNumForTrc20 + 10)));
     JsonArray params = new JsonArray();
     params.add(paramBody);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpFullNode,solidityNode);
     JsonObject requestBody = getJsonRpcBody("eth_getLogs", params);
     logger.info("test11GetLogsContainsTopicAndAddress_requestBody " + requestBody);
     response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
