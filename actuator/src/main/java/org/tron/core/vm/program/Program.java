@@ -72,11 +72,6 @@ import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
-/**
- * @author Roman Mandeleil
- * @since 01.06.2014
- */
-
 @Slf4j(topic = "VM")
 public class Program {
 
@@ -1099,7 +1094,7 @@ public class Program {
     if (VMConfig.allowTvmCompatibleEvm()) {
       chainId = Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length);
     }
-    return new DataWord(chainId);
+    return new DataWord(chainId).clone();
   }
 
   public long getEnergylimitLeftLong() {

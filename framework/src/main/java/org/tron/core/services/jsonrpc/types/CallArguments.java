@@ -21,7 +21,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @ToString
 public class CallArguments {
 
-  public String from;
+  public String from = "0x0000000000000000000000000000000000000000";
   public String to;
   public String gas = ""; //not used
   public String gasPrice = ""; //not used
