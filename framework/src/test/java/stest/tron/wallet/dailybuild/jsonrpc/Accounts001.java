@@ -1058,6 +1058,9 @@ public class Accounts001 extends JsonRpcBase {
             .getJSONObject("block_header")
             .getJSONObject("raw_data")
             .getString("accountStateRoot");
+    if (accountStateRoot == null) {
+      accountStateRoot = "";
+    }
     JsonArray params = new JsonArray();
     params.add(blockHash);
     params.add(false);
