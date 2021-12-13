@@ -29,7 +29,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test01GetNewFilterContainNothing_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test01GetNewFilterContainNothing_responseContent" + responseContent);
     logger.info("result:" + responseContent.getString("result"));
@@ -56,7 +56,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test02GetNewFilterContainAddress_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test02GetNewFilterContainAddress_responseContent" + responseContent);
     newFilterResultIdfrom01 = responseContent.getString("result");
@@ -67,10 +67,11 @@ public class Accounts003 extends JsonRpcBase {
       enabled = true,
       description = "Eth api of eth_newFilter  contains topic fromBlock and toBlock.")
   public void test03GetNewFilterContainTopic() {
-    response = HttpMethed.getBlockByNumFromSolidity(solidityNode, blockNumForTrc20);
+    response = HttpMethed.getBlockByNum(httpFullNode, blockNumForTrc20);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("responseContent:" + responseContent);
     logger.info("blockHash:" + responseContent.getString("blockID"));
+
     blockHash = responseContent.getString("blockID");
     JsonArray topicArray = new JsonArray();
     topicArray.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
@@ -82,7 +83,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test03GetNewFilterContainTopic_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test03GetNewFilterContainTopic_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -106,14 +107,14 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test04GetNewFilterContainsTopicAndAddress_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test04GetNewFilterContainsTopicAndAddress_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
   }
 
   @Test(enabled = true, description = "Eth api of eth_newFilter only contain topic and blockHash.")
-  public void test05GetNewFilterOnlyContainTopic() throws InterruptedException {
+  public void test05GetNewFilterOnlyContainTopic() {
     JsonObject paramBody = new JsonObject();
     paramBody.addProperty("blockHash", blockHash);
     JsonArray topicArray = new JsonArray();
@@ -123,25 +124,25 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test05GetNewFilterOnlyContainTopic_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test05GetNewFilterOnlyContainTopic_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
   }
 
   @Test(enabled = true, description = "Eth api of eth_newFilter which only contains blockHash.")
-  public void test06GetNewFilterHasOnlyBlockHash() throws InterruptedException {
-    response = HttpMethed.getNowBlockFromSolidity(solidityNode);
+  public void test06GetNewFilterHasOnlyBlockHash() {
+
+    response = HttpMethed.getNowBlock(httpFullNode);
     responseContent = HttpMethed.parseResponseContent(response);
     String blockHash = responseContent.getString("blockID");
-    Thread.sleep(30000);
     JsonObject paramBody = new JsonObject();
     paramBody.addProperty("blockHash", blockHash);
     JsonArray params = new JsonArray();
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test06GetNewFilterHasOnlyBlockHash_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test06GetNewFilterHasOnlyBlockHash_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -157,7 +158,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test07GetNewFilterCheckNewBlock_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test07GetNewFilterCheckNewBlock_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -169,7 +170,7 @@ public class Accounts003 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_newBlockFilter", params);
     logger.info("test08GetEthNewBlockFilter_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test08GetEthNewBlockFilter_responseContent：" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -181,7 +182,7 @@ public class Accounts003 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_newBlockFilter", params);
     logger.info("test15EthUninstallFilter_newBlockFilter " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test15EthUninstallFilter_newBlockFilter_responseContentr" + responseContent);
     String ethNewBlockFilterResult = responseContent.get("result").toString();
@@ -192,7 +193,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(newFilterId);
     requestBody = getJsonRpcBody("eth_getFilterChanges", params);
     logger.info("test09GetFilterChanges_requestBody: " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test09GetFilterChanges_responseContent:" + responseContent);
     Assert.assertEquals("[]", responseContent.getString("result"));
@@ -214,7 +215,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_getLogs", params);
     logger.info("test10GetLogsOnlyContainAddress_requestBody：" + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test10GetLogsOnlyContainAddress_responseContent：" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -236,7 +237,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_getLogs", params);
     logger.info("test11GetLogsContainsTopicAndAddress_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test11GetLogsContainsTopicAndAddress_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -252,7 +253,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(newFilterResultIdfrom01);
     JsonObject requestBody = getJsonRpcBody("eth_getFilterLogs", params);
     logger.info("test12GetFilterLogsContainsAddress_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test12GetFilterLogsContainsAddress_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -265,7 +266,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(newFilterResultIdfrom02);
     JsonObject requestBody = getJsonRpcBody("eth_getFilterLogs", params);
     logger.info("test13GetFilterLogsContainsTopic_requestBody " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test13GetFilterLogsContainsTopic_responseContent" + responseContent);
     Assert.assertNotNull(responseContent.getString("result"));
@@ -288,7 +289,7 @@ public class Accounts003 extends JsonRpcBase {
     params.add(paramBody);
     JsonObject requestBody = getJsonRpcBody("eth_newFilter", params);
     logger.info("test14_newfilter " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test14_newfilter_responseContentr" + responseContent);
     String ethNewFilterResult = responseContent.get("result").toString();
@@ -302,13 +303,13 @@ public class Accounts003 extends JsonRpcBase {
     params.add(responseContent.get("result").toString());
     requestBody = getJsonRpcBody("eth_uninstallFilter", params);
     logger.info("test14_eth_uninstallFilter " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test14_eth_uninstallFilter_responseContentr_first" + responseContent);
     Assert.assertEquals(responseContent.get("result"), true);
     // second time
     logger.info("test14_eth_uninstallFilter_second " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test14_eth_uninstallFilter_responseContentr_second " + responseContent);
     Assert.assertEquals(
@@ -318,7 +319,7 @@ public class Accounts003 extends JsonRpcBase {
     params = new JsonArray();
     params.add(ethNewFilterResult);
     requestBody = getJsonRpcBody("getFilterChanges", params);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test14EthUninstallFilter_responseContent" + responseContent);
     String expectResult = "{\"code\":-32000,\"data\":\"{}\",\"message\":\"filter not found\"}";
@@ -336,7 +337,7 @@ public class Accounts003 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_newBlockFilter", params);
     logger.info("test15EthUninstallFilter_newBlockFilter " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test15EthUninstallFilter_newBlockFilter_responseContentr" + responseContent);
     String ethNewBlockFilterResult = responseContent.get("result").toString();
@@ -349,12 +350,12 @@ public class Accounts003 extends JsonRpcBase {
     params.add(responseContent.get("result").toString());
     requestBody = getJsonRpcBody("eth_uninstallFilter", params);
     logger.info("test15_eth_uninstallFilter " + requestBody);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test15_eth_uninstallFilter_responseContentr_first" + responseContent);
     Assert.assertEquals(responseContent.get("result"), true);
     // second time
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test15_eth_uninstallFilter_responseContentr_second" + responseContent);
     Assert.assertEquals(
@@ -363,7 +364,7 @@ public class Accounts003 extends JsonRpcBase {
     params = new JsonArray();
     params.add(ethNewBlockFilterResult);
     requestBody = getJsonRpcBody("getFilterChanges", params);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+    response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("test15EthUninstallFilter_responseContent" + responseContent);
     String expectResult = "{\"code\":-32000,\"data\":\"{}\",\"message\":\"filter not found\"}";
