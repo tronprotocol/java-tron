@@ -56,6 +56,8 @@ public class JsonRpcBase {
             PublicMethed.getAddressString(jsonRpcOwnerKey);
     public static String jsonRpcNode =
             Configuration.getByPath("testng.conf").getStringList("jsonRpcNode.ip.list").get(0);
+    public static String jsonRpcNodeForSolidity =
+            Configuration.getByPath("testng.conf").getStringList("jsonRpcNode.ip.list").get(1);
     public static String httpFullNode =
             Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(0);
     public static String solidityNode =
