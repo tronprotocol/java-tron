@@ -67,7 +67,7 @@ public class Accounts004 extends JsonRpcBase {
       enabled = true,
       description = "Eth api of eth_newFilter  contains topic fromBlock and toBlock.")
   public void test03GetNewFilterContainTopic() {
-    response = HttpMethed.getBlockByNumFromSolidity(solidityNode, blockNumForTrc20);
+    response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, blockNumForTrc20);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("responseContent:" + responseContent);
     logger.info("blockHash:" + responseContent.getString("blockID"));
@@ -131,7 +131,7 @@ public class Accounts004 extends JsonRpcBase {
 
   @Test(enabled = true, description = "Eth api of eth_newFilter which only contains blockHash.")
   public void test06GetNewFilterHasOnlyBlockHash() throws InterruptedException {
-    response = HttpMethed.getNowBlockFromSolidity(solidityNode);
+    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
     String blockHash = responseContent.getString("blockID");
     Thread.sleep(30000);
@@ -212,7 +212,7 @@ public class Accounts004 extends JsonRpcBase {
     paramBody.addProperty("toBlock", "0x" + (Integer.toHexString(blockNumForTrc20 + 20)));
     JsonArray params = new JsonArray();
     params.add(paramBody);
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpFullNode,solidityNode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpFullNode,httpsolidityNode);
     JsonObject requestBody = getJsonRpcBody("eth_getLogs", params);
     logger.info("test10GetLogsOnlyContainAddress_requestBody：" + requestBody);
     response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
@@ -235,7 +235,7 @@ public class Accounts004 extends JsonRpcBase {
     paramBody.addProperty("toBlock", "0x" + (Integer.toHexString(blockNumForTrc20 + 10)));
     JsonArray params = new JsonArray();
     params.add(paramBody);
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpFullNode,solidityNode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpFullNode,httpsolidityNode);
     JsonObject requestBody = getJsonRpcBody("eth_getLogs", params);
     logger.info("test11GetLogsContainsTopicAndAddress_requestBody " + requestBody);
     response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);

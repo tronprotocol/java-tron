@@ -60,8 +60,8 @@ public class JsonRpcBase {
             Configuration.getByPath("testng.conf").getStringList("jsonRpcNode.ip.list").get(1);
     public static String httpFullNode =
             Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(0);
-    public static String solidityNode =
-            Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
+    public static String httpsolidityNode =
+            Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
     public static String ethHttpsNode =
             Configuration.getByPath("testng.conf").getStringList("ethHttpsNode.host.list").get(0);
 
