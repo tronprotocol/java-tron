@@ -3,9 +3,8 @@ package stest.tron.wallet.onlinestress;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.client.HttpClient;
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.BufferedReader;
@@ -21,8 +20,10 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
@@ -49,8 +50,6 @@ import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.JsonRpcBase;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import zmq.ZMQ.Event;
-
-import static java.lang.Thread.sleep;
 
 @Slf4j
 public class ContractEvent001 extends JsonRpcBase {
@@ -454,9 +453,11 @@ public class ContractEvent001 extends JsonRpcBase {
   public void testEthGetFilterChanges() throws InterruptedException {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] event001Address = ecKey1.getAddress();
+    logger.info("event001Address:" + event001Address);
     String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     byte[] event002Address = ecKey2.getAddress();
+    logger.info("event002Address:" + event002Address);
     String event002Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
     PublicMethed.printAddress(event001Key);
     PublicMethed.printAddress(testKey002);
@@ -499,6 +500,7 @@ public class ContractEvent001 extends JsonRpcBase {
     JSONObject responseContent = parseResponseContent(response);
     long blockBefore =
         responseContent.getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
+    logger.info("blockBefore:" + blockBefore);
     Thread.sleep(180000);
     for (int i = 0; i < 5000; i++) {
       String txid =
@@ -536,10 +538,21 @@ public class ContractEvent001 extends JsonRpcBase {
 
       totalTransactionsSize += transactionsSize;
     }
-    logger.info((int)(Thread.currentThread().getId())+"sumLogs:" + totalTransactionsSize * Long.parseLong(param));
+    logger.info(
+        (int) (Thread.currentThread().getId())
+            + "sumLogs:"
+            + totalTransactionsSize * Long.parseLong(param));
   }
 
-  public static String[] arr = new String[] {"00", "0x6b5c9c34aae469576dfcde3655c9036d", "0x450de4565abf4434d66948fb2a568608", "0x02a65b2cc37d2d34808a63b50b86e0cd", "0x7474d244cecf3a943bf8ac6dbd7d60fa", "0x4ab110c02b04d7781f774eeffa6432a3"};
+  public static String[] arr =
+      new String[] {
+        "00",
+        "0x6b5c9c34aae469576dfcde3655c9036d",
+        "0x450de4565abf4434d66948fb2a568608",
+        "0x02a65b2cc37d2d34808a63b50b86e0cd",
+        "0x7474d244cecf3a943bf8ac6dbd7d60fa",
+        "0x4ab110c02b04d7781f774eeffa6432a3"
+      };
 
   @Test(
       enabled = true,
@@ -667,6 +680,7 @@ public class ContractEvent001 extends JsonRpcBase {
     return response;
   }
 
+  /** constructor. */
   public static HttpResponse getJsonRpc(String jsonRpcNode, JsonObject jsonRpcObject) {
     HttpResponse response;
     try {
@@ -691,16 +705,15 @@ public class ContractEvent001 extends JsonRpcBase {
     req.monitor("inproc://reqmoniter", ZMQ.EVENT_CONNECTED | ZMQ.EVENT_DISCONNECTED);
     final ZMQ.Socket moniter = context.socket(ZMQ.PAIR);
     moniter.connect("inproc://reqmoniter");
-    new Thread(
-            new Runnable() {
-              public void run() {
-                while (true) {
-                  Event event = Event.read(moniter.base());
-                  System.out.println(event.event + "  " + event.addr);
-                }
-              }
-            })
-        .start();
+    new Thread(new Runnable() {
+      public void run() {
+        while (true) {
+          Event event = Event.read(moniter.base());
+          System.out.println(event.event + "  " + event.addr);
+        }
+      }
+
+    }).start();
     req.connect("tcp://47.94.197.215:55555");
     req.setReceiveTimeOut(10000);
 
