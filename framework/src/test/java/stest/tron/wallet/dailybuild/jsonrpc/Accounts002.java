@@ -678,7 +678,8 @@ public class Accounts002 extends JsonRpcBase {
                 resultFromTransactionReceipt.getString("transactionHash"));
         Assert.assertEquals(
                 logs.getJSONObject(0).getString("address"), resultFromTransactionReceipt.getString("to"));
-        response = HttpMethed.getTransactionInfoByBlocknumFromSolidity(httpsolidityNode, blockNumForTrc20);
+        response =
+                HttpMethed.getTransactionInfoByBlocknumFromSolidity(httpsolidityNode, blockNumForTrc20);
         List<JSONObject> responseContent1 = HttpMethed.parseResponseContentArray(response);
         logger.info("responseContent1:" + responseContent1);
 
