@@ -93,7 +93,7 @@ public class OperationRegistry {
     operations[Op.NOT] = new Operation(Op.NOT, 1, 1,
         EnergyCost::getVeryLowTierCost, OperationActions::notAction);
 
-    operations[Op.BYTE] = new Operation(Op.BYTE, 1, 1,
+    operations[Op.BYTE] = new Operation(Op.BYTE, 2, 1,
         EnergyCost::getVeryLowTierCost, OperationActions::byteAction);
 
     operations[Op.SHA3] = new Operation(Op.SHA3, 2, 1,
@@ -248,7 +248,7 @@ public class OperationRegistry {
     if (operations[Op.CALLTOKENID] != null) {
       return;
     }
-    operations[Op.CALLTOKEN] = new Operation(Op.CALLTOKEN, 8, 0,
+    operations[Op.CALLTOKEN] = new Operation(Op.CALLTOKEN, 8, 1,
         EnergyCost::getCallTokenCost, OperationActions::callTokenAction);
 
     operations[Op.TOKENBALANCE] = new Operation(Op.TOKENBALANCE, 2, 1,
