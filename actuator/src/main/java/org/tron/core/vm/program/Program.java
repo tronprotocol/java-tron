@@ -663,7 +663,7 @@ public class Program {
           .invalidCodeException());
     }
 
-    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCREATE_DATA();
+    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCreateData();
 
     long afterSpend =
         programInvoke.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;

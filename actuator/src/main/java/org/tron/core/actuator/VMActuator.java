@@ -179,7 +179,7 @@ public class VMActuator implements Actuator2 {
               result.setException(Program.Exception.invalidCodeException());
             }
           }
-          long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCREATE_DATA();
+          long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCreateData();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
             if (null == result.getException()) {
