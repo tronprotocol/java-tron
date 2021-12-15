@@ -96,6 +96,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     PBFT
   }
 
+  private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
   /**
    * for log filter in Full Json-RPC
@@ -1138,13 +1139,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     filterId = ByteArray.fromHex(filterId);
     if (eventFilter2Result.containsKey(filterId)) {
       eventFilter2Result.remove(filterId);
-      return true;
     } else if (blockFilter2Result.containsKey(filterId)) {
       blockFilter2Result.remove(filterId);
-      return true;
     } else {
-      throw new ItemNotFoundException("filter not found");
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
     }
+
+    return true;
   }
 
   @Override
@@ -1195,7 +1196,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     filterId = ByteArray.fromHex(filterId);
     if (!eventFilter2Result.containsKey(filterId)) {
-      throw new ItemNotFoundException("filter not found");
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
     }
 
     LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
@@ -1234,7 +1235,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       eventFilter2Result.get(filterId).updateExpireTime();
 
     } else {
-      throw new ItemNotFoundException("filter not found");
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
     }
 
     return result;
