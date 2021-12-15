@@ -3,7 +3,9 @@ package org.tron.core.vm;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j(topic = "VM")
 public class Op {
 
   // Halts execution (0x00)
@@ -270,7 +272,7 @@ public class Op {
           stringToByteMap.put(field.getName(), (byte) op);
         }
       } catch (IllegalAccessException e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     }
   }
