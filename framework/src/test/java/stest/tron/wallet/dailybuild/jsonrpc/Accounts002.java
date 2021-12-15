@@ -5,11 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.grpc.ManagedChannelBuilder;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -25,7 +27,7 @@ import stest.tron.wallet.common.client.utils.JsonRpcBase;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class Accounts001 extends JsonRpcBase {
+public class Accounts002 extends JsonRpcBase {
   private JSONObject responseContent;
   private HttpResponse response;
   String realGasPrice;
@@ -60,7 +62,7 @@ public class Accounts001 extends JsonRpcBase {
   public void test01JsonRpcApiTestForEthAccounts() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_accounts", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     List result = new ArrayList();
     logger.info(String.valueOf(result));
@@ -71,18 +73,18 @@ public class Accounts001 extends JsonRpcBase {
   public void test02JsonRpcApiTestForEthBlockNumber() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_blockNumber", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     responseContent.get("result");
     String blockNum = responseContent.getString("result").substring(2);
-    long blockNumFromJsonRpcNode = Long.parseLong(blockNum, 16);
-    response = HttpMethed.getNowBlock(httpFullNode);
+    long blockNumFromjsonRpcNodeForSolidity = Long.parseLong(blockNum, 16);
+    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
     long blockNumFromHttp =
         responseContent.getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
-    logger.info("blocknumFromJsonRpcNode：" + blockNumFromJsonRpcNode);
+    logger.info("blocknumFromjsonRpcNodeForSolidity：" + blockNumFromjsonRpcNodeForSolidity);
     logger.info("blocknumFromHttp:" + blockNumFromHttp);
-    Assert.assertTrue(Math.abs(blockNumFromJsonRpcNode - blockNumFromHttp) <= 3);
+    Assert.assertTrue(Math.abs(blockNumFromjsonRpcNodeForSolidity - blockNumFromHttp) <= 3);
   }
 
   @Test(enabled = true, description = "Json rpc api of eth_call")
@@ -101,7 +103,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonObject requestBody = getJsonRpcBody("eth_call", params);
     logger.info("03params:" + params);
     logger.info("requestBody:" + requestBody);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
     Assert.assertEquals(
@@ -116,23 +118,24 @@ public class Accounts001 extends JsonRpcBase {
   public void test04JsonRpcApiTestForEthChainId() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_chainId", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     responseContent.get("result");
-    String blockIdFromJsonRpcNode = responseContent.get("result").toString().substring(2);
-    response = HttpMethed.getBlockByNum(httpFullNode, 0);
+    String blockIdFromjsonRpcNodeForSolidity =
+        responseContent.get("result").toString().substring(2);
+    response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, 0);
     responseContent = HttpMethed.parseResponseContent(response);
     String blockIdFromHttp = responseContent.getString("blockID").substring(56);
-    logger.info("blockIdFromJsonRpcNode:" + blockIdFromJsonRpcNode);
+    logger.info("blockIdFromjsonRpcNodeForSolidity:" + blockIdFromjsonRpcNodeForSolidity);
     logger.info("blockIdFromHttp:" + blockIdFromHttp);
-    Assert.assertEquals(blockIdFromJsonRpcNode, blockIdFromHttp);
+    Assert.assertEquals(blockIdFromjsonRpcNodeForSolidity, blockIdFromHttp);
   }
 
   @Test(enabled = true, description = "Json rpc api of eth_coinbase")
   public void test05JsonRpcApiTestForEthCoinbase() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_coinbase", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
 
     Assert.assertEquals(
@@ -151,7 +154,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add(param);
     JsonObject requestBody = getJsonRpcBody("eth_estimateGas", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     logger.info("test06requestBody:" + requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
@@ -160,7 +163,7 @@ public class Accounts001 extends JsonRpcBase {
 
   @Test(enabled = true, description = "Json rpc api of eth_estimateGasHasPayable")
   public void test07JsonRpcApiTestForEthEstimateGasHasPayable() throws Exception {
-    response = HttpMethed.getTransactionInfoById(httpFullNode, txid);
+    response = HttpMethed.getTransactionInfoByIdFromSolidity(httpsolidityNode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
     Long realEnergyUsed = responseContent.getJSONObject("receipt").getLong("energy_usage_total");
     logger.info("realEnergyUsed:" + realEnergyUsed);
@@ -174,7 +177,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add(param);
     JsonObject requestBody = getJsonRpcBody("eth_estimateGas", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     logger.info("test07requestBody:" + requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
@@ -204,7 +207,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add(param);
     JsonObject requestBody = getJsonRpcBody("eth_estimateGas", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     logger.info("test08requestBody:" + requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
@@ -224,7 +227,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add(param);
     JsonObject requestBody = getJsonRpcBody("eth_estimateGas", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     logger.info("test09requestBody:" + requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
@@ -241,7 +244,7 @@ public class Accounts001 extends JsonRpcBase {
     String gasPrice = responseContent.get("result").toString().substring(2);
     long gasPriceFromJsonrpc = Long.parseLong(gasPrice, 16);
     logger.info(String.valueOf(gasPriceFromJsonrpc));
-    response = HttpMethed.getChainParameter(httpFullNode);
+    response = HttpMethed.getChainParameters(httpFullNode);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONArray temp;
     temp = responseContent.getJSONArray("chainParameter");
@@ -260,11 +263,14 @@ public class Accounts001 extends JsonRpcBase {
     params.add("0x" + ByteArray.toHexString(foundationAccountAddress).substring(2));
     params.add("latest");
     JsonObject requestBody = getJsonRpcBody("eth_getBalance", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String balance = responseContent.getString("result").substring(2);
     Long balance1 = Long.parseLong(balance, 16);
-    Long balance2 = HttpMethed.getBalance(httpFullNode, foundationAccountAddress);
+    logger.info("balance1:" + balance1);
+    response = HttpMethed.getAccountFromSolidity(httpsolidityNode, foundationAccountAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    Long balance2 = responseContent.getLong("balance");
     logger.info(balance1.toString());
     logger.info(balance2.toString());
     Assert.assertEquals(balance1, balance2);
@@ -272,17 +278,17 @@ public class Accounts001 extends JsonRpcBase {
 
   @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber")
   public void test12JsonRpcApiTestForEthGetBlockTransactionCountByNum() throws Exception {
-    response = HttpMethed.getNowBlock(httpFullNode);
+    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
     JsonArray params = new JsonArray();
     params.add("earliest");
     JsonObject requestBody = getJsonRpcBody("eth_getBlockTransactionCountByNumber", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String transactionNum = responseContent.getString("result").substring(2);
     int transactionNum1 = Integer.parseInt(transactionNum, 16);
     logger.info(String.valueOf(transactionNum1));
-    response = HttpMethed.getTransactionCountByBlocknum(httpFullNode, 0);
+    response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpsolidityNode, 0);
     responseContent = HttpMethed.parseResponseContent(response);
     int transactionNum2 = responseContent.getInteger("count");
     logger.info(String.valueOf(transactionNum2));
@@ -317,7 +323,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("latest");
     JsonObject requestBody = getJsonRpcBody("eth_getStorageAt", params);
     logger.info("requestBody:" + requestBody);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("14responseContent:" + responseContent);
     String result = responseContent.getString("result").substring(2);
@@ -337,7 +343,7 @@ public class Accounts001 extends JsonRpcBase {
     paramsForSha3.add(str);
     JsonObject requestBodyForSha3 = getJsonRpcBody("web3_sha3", paramsForSha3);
     logger.info("requestBodyForSha3:" + requestBodyForSha3);
-    response = getJsonRpc(jsonRpcNode, requestBodyForSha3);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBodyForSha3);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("responseContent:" + responseContent);
     String resultForSha3 = responseContent.getString("result");
@@ -348,7 +354,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("latest");
     JsonObject requestBody = getJsonRpcBody("eth_getStorageAt", params);
     logger.info("requestBody:" + requestBody);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("15responseContent:" + responseContent);
     String result = responseContent.getString("result").substring(2);
@@ -365,7 +371,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add(blockNumHex);
     indexNum = 0;
-    response = HttpMethed.getBlockByNum(httpFullNode, blockNum);
+    response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
     parentHash =
         responseContent
@@ -390,12 +396,13 @@ public class Accounts001 extends JsonRpcBase {
             .getString("fee_limit");
     logger.info(feeLimit);
 
-    JSONObject getBlockByNumResult = null;
+    JSONObject getBlockByNumFromSolidityResult = null;
     for (int i = 0; i < responseContent.getJSONArray("transactions").size(); i++) {
       if (txid.equals(
           responseContent.getJSONArray("transactions").getJSONObject(i).getString("txID"))) {
         indexNum = i;
-        getBlockByNumResult = responseContent.getJSONArray("transactions").getJSONObject(i);
+        getBlockByNumFromSolidityResult =
+            responseContent.getJSONArray("transactions").getJSONObject(i);
         bid = responseContent.getString("blockID");
         break;
       }
@@ -414,7 +421,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add(indexHex);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionByBlockNumberAndIndex", params);
     logger.info("13requestBody:" + requestBody);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     result = responseContent.getJSONObject("result");
     logger.info("16 result" + result);
@@ -426,7 +433,7 @@ public class Accounts001 extends JsonRpcBase {
     logger.info("transactionHash：" + transacionHash);
     blockHash = jsonrpcResult.get("blockHash").toString();
     logger.info("jsonrpcResult:" + jsonrpcResult);
-    response = HttpMethed.getTransactionInfoByBlocknum(httpFullNode, blockNum);
+    response = HttpMethed.getTransactionInfoByBlocknumFromSolidity(httpsolidityNode, blockNum);
     logger.info("response:" + response);
     List<JSONObject> responseContent1 = HttpMethed.parseResponseContentArray(response);
     logger.info("responseContent1:" + responseContent1);
@@ -443,14 +450,15 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(jsonrpcResult.get("gas").toString(), "0x" + Long.toHexString(gas));
     Assert.assertNull(jsonrpcResult.get("nonce"));
     Assert.assertEquals(
-        jsonrpcResult.get("hash").toString(), "0x" + getBlockByNumResult.getString("txID"));
+        jsonrpcResult.get("hash").toString(),
+        "0x" + getBlockByNumFromSolidityResult.getString("txID"));
     Assert.assertEquals(jsonrpcResult.get("blockHash").toString(), "0x" + bid);
     Assert.assertEquals(jsonrpcResult.get("blockNumber").toString(), blockNumHex);
     Assert.assertEquals(jsonrpcResult.get("transactionIndex").toString(), indexHex);
     Assert.assertEquals(
         jsonrpcResult.get("from").toString(),
         "0x"
-            + getBlockByNumResult
+            + getBlockByNumFromSolidityResult
                 .getJSONObject("raw_data")
                 .getJSONArray("contract")
                 .getJSONObject(0)
@@ -461,7 +469,7 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(
         jsonrpcResult.get("to").toString(),
         "0x"
-            + getBlockByNumResult
+            + getBlockByNumFromSolidityResult
                 .getJSONObject("raw_data")
                 .getJSONArray("contract")
                 .getJSONObject(0)
@@ -472,25 +480,30 @@ public class Accounts001 extends JsonRpcBase {
 
     Assert.assertEquals(jsonrpcResult.get("value").toString(), "0x1389");
     String data;
-    if (getBlockByNumResult.getJSONObject("raw_data").getString("data") == null) {
+    if (getBlockByNumFromSolidityResult.getJSONObject("raw_data").getString("data") == null) {
       data = "0x";
     } else {
-      data = getBlockByNumResult.getJSONObject("raw_data").getString("data").substring(2);
+      data =
+          getBlockByNumFromSolidityResult.getJSONObject("raw_data").getString("data").substring(2);
     }
     Assert.assertEquals(jsonrpcResult.get("input").toString(), data);
 
-    long temp = Long.parseLong(getBlockByNumResult.getString("signature").substring(130, 131), 16);
-    long v = Long.parseLong(getBlockByNumResult.getString("signature").substring(130, 132), 16);
+    long temp =
+        Long.parseLong(
+            getBlockByNumFromSolidityResult.getString("signature").substring(130, 131), 16);
+    long v =
+        Long.parseLong(
+            getBlockByNumFromSolidityResult.getString("signature").substring(130, 132), 16);
     if (temp < 27) {
       v += 27;
     }
     Assert.assertEquals(Long.parseLong(jsonrpcResult.get("v").toString().substring(2), 16), v);
     Assert.assertEquals(
         jsonrpcResult.get("r").toString().substring(2),
-        getBlockByNumResult.getString("signature").substring(2, 66));
+        getBlockByNumFromSolidityResult.getString("signature").substring(2, 66));
     Assert.assertEquals(
         jsonrpcResult.get("s").toString().substring(2),
-        getBlockByNumResult.getString("signature").substring(66, 130));
+        getBlockByNumFromSolidityResult.getString("signature").substring(66, 130));
   }
 
   @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByHash")
@@ -502,17 +515,18 @@ public class Accounts001 extends JsonRpcBase {
     JsonObject requestBody = getJsonRpcBody("eth_getBlockTransactionCountByHash", params);
     logger.info("requestBody:" + requestBody);
     HttpMethed.waitToProduceOneBlock(httpFullNode);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("responseContent:" + responseContent);
     String transactionNum = responseContent.getString("result").substring(2);
-    int transactionNumFromJsonRpcNode = Integer.parseInt(transactionNum, 16);
-    logger.info("transactionNumFromJsonRpcNode:" + transactionNumFromJsonRpcNode);
-    response = HttpMethed.getTransactionCountByBlocknum(httpFullNode, blockNum);
+    int transactionNumFromjsonRpcNodeForSolidity = Integer.parseInt(transactionNum, 16);
+    logger.info(
+        "transactionNumFromjsonRpcNodeForSolidity:" + transactionNumFromjsonRpcNodeForSolidity);
+    response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpsolidityNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
     int transactionNumFromHttp = responseContent.getInteger("count");
     logger.info("transactionNumFromHttp:" + transactionNumFromHttp);
-    Assert.assertEquals(transactionNumFromHttp, transactionNumFromJsonRpcNode);
+    Assert.assertEquals(transactionNumFromHttp, transactionNumFromjsonRpcNodeForSolidity);
   }
 
   @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber")
@@ -522,7 +536,7 @@ public class Accounts001 extends JsonRpcBase {
     logger.info(String.valueOf(blockNum));
     JsonObject requestBody = getJsonRpcBody("eth_getBlockTransactionCountByNumber", params);
     logger.info("requestBody:" + requestBody);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     logger.info("response:" + response);
     HttpMethed.waitToProduceOneBlock(httpFullNode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -530,7 +544,7 @@ public class Accounts001 extends JsonRpcBase {
     String transactionNum = responseContent.getString("result").substring(2);
     int transactionNum1 = Integer.parseInt(transactionNum, 16);
     logger.info(String.valueOf(transactionNum1));
-    response = HttpMethed.getTransactionCountByBlocknum(httpFullNode, blockNum);
+    response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpsolidityNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
     int transactionNum2 = responseContent.getInteger("count");
     logger.info(String.valueOf(transactionNum2));
@@ -544,7 +558,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add(indexHex);
     logger.info("indexHex:" + indexHex);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionByBlockHashAndIndex", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject resultForGetTransactionByBlockHashAndIndex = responseContent.getJSONObject("result");
     Assert.assertEquals(result, resultForGetTransactionByBlockHashAndIndex);
@@ -555,7 +569,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add(transacionHash);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionByHash", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject result1 = responseContent.getJSONObject("result");
     Assert.assertEquals(result, result1);
@@ -568,7 +582,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add(trc20Txid);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionReceipt", params);
     logger.info("requestBody:" + requestBody);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     logger.info("response:" + response);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject resultFromTransactionReceipt = responseContent.getJSONObject("result");
@@ -576,7 +590,7 @@ public class Accounts001 extends JsonRpcBase {
     JSONArray logs = resultFromTransactionReceipt.getJSONArray("logs");
     logger.info("logs:" + logs);
     logger.info("result:" + resultFromTransactionReceipt.toString());
-    response = HttpMethed.getBlockByNum(httpFullNode, blockNumForTrc20);
+    response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, blockNumForTrc20);
     responseContent = HttpMethed.parseResponseContent(response);
     int index = 0;
     for (int i = 0; i < responseContent.getJSONArray("transactions").size(); i++) {
@@ -593,7 +607,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonObject requestBody1 =
         getJsonRpcBody(
             "eth_getTransactionByBlockNumberAndIndex", paramsForTransactionByBlockNumberAndIndex);
-    response = getJsonRpc(jsonRpcNode, requestBody1);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody1);
     logger.info("requestBody1:" + requestBody1);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject resultFromTransactionByBlockNumberAndIndex = responseContent.getJSONObject("result");
@@ -662,11 +676,12 @@ public class Accounts001 extends JsonRpcBase {
         resultFromTransactionReceipt.getString("transactionHash"));
     Assert.assertEquals(
         logs.getJSONObject(0).getString("address"), resultFromTransactionReceipt.getString("to"));
-    response = HttpMethed.getTransactionInfoByBlocknum(httpFullNode, blockNumForTrc20);
+    response =
+        HttpMethed.getTransactionInfoByBlocknumFromSolidity(httpsolidityNode, blockNumForTrc20);
     List<JSONObject> responseContent1 = HttpMethed.parseResponseContentArray(response);
     logger.info("responseContent1:" + responseContent1);
 
-    response = HttpMethed.getBlockByNum(httpFullNode, blockNumForTrc20);
+    response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, blockNumForTrc20);
     responseContent = HttpMethed.parseResponseContent(response);
     Assert.assertEquals(
         logs.getJSONObject(0).getString("data").substring(2),
@@ -683,7 +698,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("0x0000000000f9cc56243898cbe88685678855e07f51c5af91322c225ce3693868");
     params.add("0x");
     JsonObject requestBody = getJsonRpcBody("eth_getUncleByBlockHashAndIndex", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     logger.info(result);
@@ -696,7 +711,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("0xeb82f0");
     params.add("0x");
     JsonObject requestBody = getJsonRpcBody("eth_getUncleByBlockNumberAndIndex", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     logger.info(result);
@@ -708,7 +723,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add("0x0000000000f9cc56243898cbe88685678855e07f51c5af91322c225ce3693868");
     JsonObject requestBody = getJsonRpcBody("eth_getUncleCountByBlockHash", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     logger.info(result);
@@ -720,35 +735,35 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add("eth_getUncleCountByBlockNumber");
     JsonObject requestBody = getJsonRpcBody("eth_getUncleCountByBlockNumber", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     logger.info(result);
     Assert.assertEquals(result, "0x0");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getWork")
+  @Test(enabled = false, description = "Json rpc api of eth_getWork")
   public void test26JsonRpcApiTestForEthGetWork() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_getWork", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     int resultLen = result.length();
-    String resultFromJsonRpcNode = result.substring(4, resultLen - 12);
-    response = HttpMethed.getNowBlock(httpFullNode);
+    String resultFromjsonRpcNodeForSolidity = result.substring(4, resultLen - 12);
+    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
     String resultFromHttp = responseContent.getString("blockID");
-    logger.info("resultFromJsonRpcNode:" + resultFromJsonRpcNode);
+    logger.info("resultFromjsonRpcNodeForSolidity:" + resultFromjsonRpcNodeForSolidity);
     logger.info("resultFromHttp:" + resultFromHttp);
-    Assert.assertEquals(resultFromJsonRpcNode, resultFromHttp);
+    Assert.assertEquals(resultFromjsonRpcNodeForSolidity, resultFromHttp);
   }
 
   @Test(enabled = true, description = "Json rpc api of eth_hashrate")
   public void test27JsonRpcApiTestForEthHashRate() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_hashrate", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     logger.info(result);
@@ -759,7 +774,7 @@ public class Accounts001 extends JsonRpcBase {
   public void test28JsonRpcApiTestForEthMining() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_mining", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     logger.info(result);
@@ -770,11 +785,11 @@ public class Accounts001 extends JsonRpcBase {
   public void test29JsonRpcApiTestForEthProtocolVersion() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_protocolVersion", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String protocolVersion = responseContent.getString("result").substring(2);
     Long protocolVersion1 = Long.parseLong(protocolVersion, 16);
-    response = HttpMethed.getNowBlock(httpFullNode);
+    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
     Long protocolVersion2 =
         responseContent.getJSONObject("block_header").getJSONObject("raw_data").getLong("version");
@@ -783,17 +798,17 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(protocolVersion1, protocolVersion2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_syncing")
+  @Test(enabled = false, description = "Json rpc api of eth_syncing")
   public void test30JsonRpcApiTestForEthSyncing() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_syncing", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject temp = responseContent.getJSONObject("result");
     String currentNumFromRpc = temp.getString("currentBlock");
     logger.info(currentNumFromRpc);
     logger.info(temp.toString());
-    response = HttpMethed.getNowBlock(httpFullNode);
+    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
     long currentNum =
         responseContent.getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
@@ -805,15 +820,15 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertTrue(temp.containsKey("highestBlock"));
   }
 
-  @Test(enabled = true, description = "Json rpc api of net_listening")
+  @Test(enabled = false, description = "Json rpc api of net_listening")
   public void test31JsonRpcApiTestForNetListening() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("net_listening", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     Boolean temp = responseContent.getBoolean("result");
     logger.info(temp.toString());
-    response = HttpMethed.getNodeInfo(httpFullNode);
+    response = HttpMethed.getNodeInfo(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
     boolean expect = false;
     int num = responseContent.getInteger("activeConnectCount");
@@ -827,7 +842,7 @@ public class Accounts001 extends JsonRpcBase {
   public void test32JsonRpcApiTestForNetPeerCount() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("net_peerCount", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     logger.info(result);
@@ -838,10 +853,10 @@ public class Accounts001 extends JsonRpcBase {
   public void test33JsonRpcApiTestForEthVersion() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("net_version", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String firstBlockHashFromJsonRpc = responseContent.getString("result").substring(2);
-    response = HttpMethed.getBlockByNum(httpFullNode, 0);
+    response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, 0);
     responseContent = HttpMethed.parseResponseContent(response);
     String firstBlockHashFromHttp = responseContent.getString("blockID").substring(56);
     logger.info("firstBlockHashFromJsonRpc" + firstBlockHashFromJsonRpc);
@@ -853,7 +868,7 @@ public class Accounts001 extends JsonRpcBase {
   public void test34JsonRpcApiTestForWeb3ClientVersion() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("web3_clientVersion", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String result = responseContent.getString("result");
     List<String> resultList = new ArrayList<>();
@@ -877,7 +892,7 @@ public class Accounts001 extends JsonRpcBase {
     responseContent = HttpMethed.parseResponseContent(response);
     String result1 = responseContent.getString("result");
     JsonObject requestBody2 = getJsonRpcBody("web3_sha3", params);
-    response = getJsonRpc(jsonRpcNode, requestBody2);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody2);
     responseContent = HttpMethed.parseResponseContent(response);
     String result2 = responseContent.getString("result");
     Assert.assertEquals(result1, result2);
@@ -888,7 +903,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add("(returnlll (suicide (caller)))");
     JsonObject requestBody1 = getJsonRpcBody("eth_compileLLL", params);
-    response = getJsonRpc(jsonRpcNode, requestBody1);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody1);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(errorMessage, "the method eth_compileLLL does not exist/is not available");
@@ -899,7 +914,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add("/* some serpent */");
     JsonObject requestBody = getJsonRpcBody("eth_compileSerpent", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -911,7 +926,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add("contract test { function multiply(uint a) returns(uint d) {   return a * 7;   } }");
     JsonObject requestBody = getJsonRpcBody("eth_compileSolidity", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -922,7 +937,7 @@ public class Accounts001 extends JsonRpcBase {
   public void test39JsonRpcApiTestForEthCompileSolidity() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_getCompilers", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -935,7 +950,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("0x407d73d8a49eeb85d32cf465507dd71d507100c1");
     params.add("latest");
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionCount", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -947,7 +962,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add("0x234");
     JsonObject requestBody = getJsonRpcBody("eth_sendRawTransaction", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -969,7 +984,7 @@ public class Accounts001 extends JsonRpcBase {
     temp.addProperty("value", "0x9184e72a");
 
     JsonObject requestBody = getJsonRpcBody("eth_sendTransaction", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -982,7 +997,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("0x9b2055d370f73ec7d8a03e965129118dc8f5bf83");
     params.add("0xdeadbeaf");
     JsonObject requestBody = getJsonRpcBody("eth_sign", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(errorMessage, "the method eth_sign does not exist/is not available");
@@ -1003,7 +1018,7 @@ public class Accounts001 extends JsonRpcBase {
     temp.addProperty("value", "0x9184e72a");
 
     JsonObject requestBody = getJsonRpcBody("eth_signTransaction", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -1017,7 +1032,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
     params.add("0xD1GE5700000000000000000000000000D1GE5700000000000000000000000000");
     JsonObject requestBody = getJsonRpcBody("eth_submitWork", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(errorMessage, "the method eth_submitWork does not exist/is not available");
@@ -1028,7 +1043,7 @@ public class Accounts001 extends JsonRpcBase {
     JsonArray params = new JsonArray();
     params.add("0x9b2055d370f73ec7d8a03e965129118dc8f5bf83");
     JsonObject requestBody = getJsonRpcBody("parity_nextNonce", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -1041,7 +1056,7 @@ public class Accounts001 extends JsonRpcBase {
     params.add("0x0000000000000000000000000000000000000000000000000000000000500000");
     params.add("0x59daa26581d0acd1fce254fb7e85952f4c09d0915afd33d3886cd914bc7d283c");
     JsonObject requestBody = getJsonRpcBody("eth_submitHashrate", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String errorMessage = responseContent.getJSONObject("error").getString("message");
     Assert.assertEquals(
@@ -1050,22 +1065,19 @@ public class Accounts001 extends JsonRpcBase {
 
   @Test(enabled = true, description = "Json rpc api of eth_getBlockByHash params is false")
   public void test48JsonRpcApiTestForEthGetBlockByHash() throws Exception {
-    response = HttpMethed.getBlockByNum(httpFullNode, blockNum);
+    response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
-    logger.info("45getBlockByNumFromHttp:" + responseContent);
+    logger.info("45getBlockByNumFromSolidityFromHttp:" + responseContent);
     accountStateRoot =
         responseContent
             .getJSONObject("block_header")
             .getJSONObject("raw_data")
             .getString("accountStateRoot");
-    if (accountStateRoot == null) {
-      accountStateRoot = "";
-    }
     JsonArray params = new JsonArray();
     params.add(blockHash);
     params.add(false);
     JsonObject requestBody = getJsonRpcBody("eth_getBlockByHash", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject getBlockByHashResult = responseContent.getJSONObject("result");
 
@@ -1127,31 +1139,37 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(transactionIdListFromGetBlockByHash, transactionIdList);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockByNumber params is true")
-  public void test49JsonRpcApiTestForEthGetBlockByNumber() throws Exception {
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getBlockByNumFromSolidityber params is true")
+  public void test49JsonRpcApiTestForEthgetBlockByNumFromSolidityber() throws Exception {
 
     JsonArray params = new JsonArray();
     params.add(blockNumHex);
     logger.info("46blockNumHex:" + blockNumHex);
     params.add(true);
     JsonObject requestBody = getJsonRpcBody("eth_getBlockByNumber", params);
-    response = getJsonRpc(jsonRpcNode, requestBody);
+    logger.info("requestBody:" + requestBody);
+    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
-    JSONObject getBlockByNumberResult = responseContent.getJSONObject("result");
-    logger.info("getBlockByHashResult:" + getBlockByNumberResult);
+    logger.info("responseContent:" + responseContent);
+    JSONObject getBlockByNumFromSolidityberResult = responseContent.getJSONObject("result");
+    logger.info("getBlockByHashResult:" + getBlockByNumFromSolidityberResult);
 
-    Assert.assertNull(getBlockByNumberResult.getString("nonce"));
-    Assert.assertNull(getBlockByNumberResult.getString("sha3Uncles"));
-    Assert.assertNull(getBlockByNumberResult.getString("receiptsRoot"));
-    Assert.assertNull(getBlockByNumberResult.getString("difficulty"));
-    Assert.assertNull(getBlockByNumberResult.getString("totalDifficulty"));
-    Assert.assertNull(getBlockByNumberResult.getString("extraData"));
-    Assert.assertNull(getBlockByNumberResult.getString("baseFeePerGas"));
-    Assert.assertNull(getBlockByNumberResult.getString("mixHash"));
-    Assert.assertEquals(getBlockByNumberResult.getString("uncles"), new ArrayList<>().toString());
-    Assert.assertEquals(getBlockByNumberResult.getString("stateRoot"), "0x" + accountStateRoot);
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("nonce"));
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("sha3Uncles"));
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("receiptsRoot"));
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("difficulty"));
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("totalDifficulty"));
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("extraData"));
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("baseFeePerGas"));
+    Assert.assertNull(getBlockByNumFromSolidityberResult.getString("mixHash"));
     Assert.assertEquals(
-        getBlockByNumberResult.getString("logsBloom"),
+        getBlockByNumFromSolidityberResult.getString("uncles"), new ArrayList<>().toString());
+    Assert.assertEquals(
+        getBlockByNumFromSolidityberResult.getString("stateRoot"), "0x" + accountStateRoot);
+    Assert.assertEquals(
+        getBlockByNumFromSolidityberResult.getString("logsBloom"),
         "0x00000000000000000000000000000000000000000000000000000000000000000000"
             + "0000000000000000000000000000000000000000000000000000000000000000000000"
             + "00000000000000000000000000000000000000000000000000000000000000000000000"
@@ -1160,25 +1178,30 @@ public class Accounts001 extends JsonRpcBase {
             + "0000000000000000000000000000000000000000000000000000000000000000000000000"
             + "0000000000000000000000000000000000000000000000000000000000000000000000000"
             + "0000000000000");
-    Assert.assertEquals(getBlockByNumberResult.getString("number"), blockNumHex);
-    Assert.assertEquals(getBlockByNumberResult.getString("hash"), "0x" + bid);
-    Assert.assertEquals(getBlockByNumberResult.getString("parentHash"), "0x" + parentHash);
-    Assert.assertEquals(getBlockByNumberResult.getString("transactionsRoot"), "0x" + txTrieRoot);
+    Assert.assertEquals(getBlockByNumFromSolidityberResult.getString("number"), blockNumHex);
+    Assert.assertEquals(getBlockByNumFromSolidityberResult.getString("hash"), "0x" + bid);
     Assert.assertEquals(
-        getBlockByNumberResult.getString("miner"), "0x" + witnessAddress.substring(2));
-    Assert.assertEquals(getBlockByNumberResult.getString("gasUsed"), "0x" + Long.toHexString(gas));
+        getBlockByNumFromSolidityberResult.getString("parentHash"), "0x" + parentHash);
+    Assert.assertEquals(
+        getBlockByNumFromSolidityberResult.getString("transactionsRoot"), "0x" + txTrieRoot);
+    Assert.assertEquals(
+        getBlockByNumFromSolidityberResult.getString("miner"), "0x" + witnessAddress.substring(2));
+    Assert.assertEquals(
+        getBlockByNumFromSolidityberResult.getString("gasUsed"), "0x" + Long.toHexString(gas));
     Assert.assertEquals(
         String.valueOf(
-            Long.parseLong(getBlockByNumberResult.getString("gasLimit").substring(2), 16)),
+            Long.parseLong(
+                getBlockByNumFromSolidityberResult.getString("gasLimit").substring(2), 16)),
         feeLimit);
     Assert.assertEquals(
-        Long.parseLong(getBlockByNumberResult.getString("timestamp").substring(2), 16),
+        Long.parseLong(getBlockByNumFromSolidityberResult.getString("timestamp").substring(2), 16),
         blockTimeStamp);
     logger.info("size:" + size);
     Assert.assertEquals(
-        Long.parseLong(getBlockByNumberResult.getString("size").substring(2), 16), size);
+        Long.parseLong(getBlockByNumFromSolidityberResult.getString("size").substring(2), 16),
+        size);
 
-    JSONArray transactionsList = getBlockByNumberResult.getJSONArray("transactions");
+    JSONArray transactionsList = getBlockByNumFromSolidityberResult.getJSONArray("transactions");
     logger.info("transactionsList:" + transactionsList);
     List<String> transactionInfoListFromGetBlockByHash = new ArrayList<>();
     if (transactionsList.size() > 0) {
@@ -1200,7 +1223,7 @@ public class Accounts001 extends JsonRpcBase {
           getJsonRpcBody(
               "eth_getTransactionByBlockNumberAndIndex",
               paramsForEthGetTransactionByBlockNumberAndIndex);
-      response = getJsonRpc(jsonRpcNode, requestBodyForTransactionByBlockNumberAndIndex);
+      response = getJsonRpc(jsonRpcNodeForSolidity, requestBodyForTransactionByBlockNumberAndIndex);
       responseContent = HttpMethed.parseResponseContent(response);
       logger.info("responseContent:" + responseContent);
       result = responseContent.getJSONObject("result");
