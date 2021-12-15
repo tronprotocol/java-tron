@@ -742,7 +742,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, "0x0");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getWork")
+  @Test(enabled = false, description = "Json rpc api of eth_getWork")
   public void test26JsonRpcApiTestForEthGetWork() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_getWork", params);
@@ -798,7 +798,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(protocolVersion1, protocolVersion2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_syncing")
+  @Test(enabled = false, description = "Json rpc api of eth_syncing")
   public void test30JsonRpcApiTestForEthSyncing() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_syncing", params);
@@ -820,7 +820,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertTrue(temp.containsKey("highestBlock"));
   }
 
-  @Test(enabled = true, description = "Json rpc api of net_listening")
+  @Test(enabled = false, description = "Json rpc api of net_listening")
   public void test31JsonRpcApiTestForNetListening() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("net_listening", params);
