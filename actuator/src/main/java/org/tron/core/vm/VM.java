@@ -30,11 +30,12 @@ public class VM {
           program.verifyStackSize(op.getRequire());
           program.verifyStackOverflow(op.getRequire(), op.getRet());
 
+          String opName = Op.getNameOf(op.getOpcode());
           /* spend energy before execution */
-          program.spendEnergy(op.getEnergyCost(program), Op.getNameOf(op.getOpcode()));
+          program.spendEnergy(op.getEnergyCost(program), opName);
 
           /* check if cpu time out */
-          program.checkCPUTimeLimit(Op.getNameOf(op.getOpcode()));
+          program.checkCPUTimeLimit(opName);
 
           /* exec op action */
           op.execute(program);
