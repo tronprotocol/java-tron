@@ -287,7 +287,4 @@ public class Op {
     return stringToByteMap.get(opCode);
   }
 
-  public static String[] getOpName() {
-    return OpName;
-  }
 }
