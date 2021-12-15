@@ -262,15 +262,15 @@ public class Op {
   static {
     Field[] fields = Op.class.getDeclaredFields();
     for (Field field : fields) {
-      if ("int".equals(field.getType().getName())) {
-        int op = 0;
-        try {
+      try {
+        int op;
+        if (field.getType() == int.class) {
           op = field.getInt(Op.class);
-        } catch (IllegalAccessException e) {
-          e.printStackTrace();
+          OpName[op] = field.getName();
+          stringToByteMap.put(field.getName(), (byte) op);
         }
-        OpName[op] = field.getName();
-        stringToByteMap.put(field.getName(), (byte) op);
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
       }
     }
   }
@@ -285,5 +285,9 @@ public class Op {
 
   public static byte getOpOf(String opCode) {
     return stringToByteMap.get(opCode);
+  }
+
+  public static String[] getOpName() {
+    return OpName;
   }
 }
