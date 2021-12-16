@@ -209,7 +209,7 @@ public class TransactionTrace {
     }
     if (StringUtils.isEmpty(transactionContext.getProgramResult().getRuntimeError())) {
       for (DataWord contract : transactionContext.getProgramResult().getDeleteAccounts()) {
-        deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+        deleteContract(contract.toTronAddress());
       }
     }
   }

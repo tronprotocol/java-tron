@@ -1,7 +1,6 @@
 package org.tron.common.utils;
 
 import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
-import static org.tron.common.utils.DbOptionalsUtils.createDefaultDbOptions;
 
 import java.io.File;
 import org.apache.commons.lang3.StringUtils;
@@ -56,15 +55,6 @@ public class StorageUtils {
     if (hasProperty(dbName)) {
       return getProperty(dbName).getDbOptions();
     }
-    Options options = createDefaultDbOptions();
-    switch (dbName) {
-      case "block":
-      case "transactionHistoryStore":
-      case "transactionRetStore":
-      case "trans": options.writeBufferSize(256 * 1024 * 1024);
-        break;
-      default:
-    }
-    return options;
+    return CommonParameter.getInstance().getStorage().newDefaultDbOptions(dbName);
   }
 }

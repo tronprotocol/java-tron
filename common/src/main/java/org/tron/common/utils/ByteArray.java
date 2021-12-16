@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 
 /*
  * Copyright (c) [2016] [ <ether.camp> ]
@@ -138,6 +139,10 @@ public class ByteArray {
     return toJsonHex((long) x);
   }
 
+  public static String toJsonHex(String x) {
+    return "0x" + x;
+  }
+
   public static BigInteger hexToBigInteger(String input) {
     if (input.startsWith("0x")) {
       return new BigInteger(input.substring(2), 16);
@@ -146,16 +151,18 @@ public class ByteArray {
     }
   }
 
-  public static long jsonHexToLong(String x) throws Exception {
-    if (!x.startsWith("0x"))
-      throw new Exception("Incorrect hex syntax");
+  public static long jsonHexToLong(String x) throws JsonRpcInvalidParamsException {
+    if (!x.startsWith("0x")) {
+      throw new JsonRpcInvalidParamsException("Incorrect hex syntax");
+    }
     x = x.substring(2);
     return Long.parseLong(x, 16);
   }
 
   public static int jsonHexToInt(String x) throws Exception {
-    if (!x.startsWith("0x"))
+    if (!x.startsWith("0x")) {
       throw new Exception("Incorrect hex syntax");
+    }
     x = x.substring(2);
     return Integer.parseInt(x, 16);
   }
@@ -186,5 +193,15 @@ public class ByteArray {
       }
     }
     return false;
+  }
+
+  public static String fromHex(String x) {
+    if (x.startsWith("0x")) {
+      x = x.substring(2);
+    }
+    if (x.length() % 2 != 0) {
+      x = "0" + x;
+    }
+    return x;
   }
 }
