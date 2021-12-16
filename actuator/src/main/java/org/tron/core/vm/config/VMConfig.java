@@ -1,34 +1,12 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.core.vm.config;
 
-
-import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
-
 import lombok.Setter;
+import org.tron.common.parameter.CommonParameter;
 
 /**
  * For developer only
  */
 public class VMConfig {
-
-  //1000 TRX
-  //public static final int MAX_FEE_LIMIT = 1_000_000_000;
 
   private static boolean vmTraceCompressed = false;
 
@@ -58,10 +36,6 @@ public class VMConfig {
   private VMConfig() {
   }
 
-  public static VMConfig getInstance() {
-    return SystemPropertiesInstance.INSTANCE;
-  }
-
   public static boolean vmTrace() {
     return vmTrace;
   }
@@ -71,7 +45,7 @@ public class VMConfig {
   }
 
   public static void initVmHardFork(boolean pass) {
-    ENERGY_LIMIT_HARD_FORK = pass;
+    CommonParameter.ENERGY_LIMIT_HARD_FORK = pass;
   }
 
   public static void initAllowMultiSign(long allow) {
@@ -115,7 +89,7 @@ public class VMConfig {
   }
 
   public static boolean getEnergyLimitHardFork() {
-    return ENERGY_LIMIT_HARD_FORK;
+    return CommonParameter.ENERGY_LIMIT_HARD_FORK;
   }
 
   public static boolean allowTvmTransferTrc10() {
@@ -156,10 +130,5 @@ public class VMConfig {
 
   public static boolean allowTvmCompatibleEvm() {
     return ALLOW_TVM_COMPATIBLE_EVM;
-  }
-
-  private static class SystemPropertiesInstance {
-
-    private static final VMConfig INSTANCE = new VMConfig();
   }
 }

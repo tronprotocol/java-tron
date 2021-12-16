@@ -4,7 +4,8 @@ import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_EXCEPTION;
 import static org.tron.core.services.http.Util.setTransactionExtraData;
 import static org.tron.core.services.http.Util.setTransactionPermissionId;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateFilterId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
@@ -13,40 +14,62 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
-import org.tron.common.parameter.CommonParameter;
+import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
+import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.db2.core.Chainbase;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.JsonRpcInternalException;
 import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.JsonRpcInvalidRequestException;
 import org.tron.core.exception.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.JsonRpcTooManyResultException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
+import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
+import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
+import org.tron.core.services.jsonrpc.filters.LogFilter;
+import org.tron.core.services.jsonrpc.filters.LogFilterAndResult;
+import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
+import org.tron.core.services.jsonrpc.filters.LogMatch;
+import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.BuildArguments;
+import org.tron.core.services.jsonrpc.types.CallArguments;
+import org.tron.core.services.jsonrpc.types.TransactionReceipt;
+import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Storage;
@@ -73,10 +96,38 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     PBFT
   }
 
-  String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
-  private final int chainId = 100;
-  private final int networkId = 100;
+  private static final String FILTER_NOT_FOUND = "filter not found";
+  public static final int EXPIRE_SECONDS = 5 * 60;
+  /**
+   * for log filter in Full Json-RPC
+   */
+  @Getter
+  private static Map<String, LogFilterAndResult> eventFilter2ResultFull = new ConcurrentHashMap<>();
+  /**
+   * for block in Full Json-RPC
+   */
+  @Getter
+  private static Map<String, BlockFilterAndResult> blockFilter2ResultFull =
+      new ConcurrentHashMap<>();
+  /**
+   * for log filter in solidity Json-RPC
+   */
+  @Getter
+  private static Map<String, LogFilterAndResult> eventFilter2ResultSolidity =
+      new ConcurrentHashMap<>();
+  /**
+   * for block in solidity Json-RPC
+   */
+  @Getter
+  private static Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
+      new ConcurrentHashMap<>();
 
+  String regexHash = "(0x)?[a-zA-Z0-9]{64}$";
+
+  /**
+   * thread pool of query section bloom store
+   */
+  private ExecutorService sectionExecutor;
   private NodeInfoService nodeInfoService;
   private Wallet wallet;
   private Manager manager;
@@ -85,6 +136,67 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
     this.manager = manager;
+    this.sectionExecutor = Executors.newFixedThreadPool(5);
+  }
+
+  public static void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
+    Iterator<Entry<String, BlockFilterAndResult>> it;
+
+    if (blockFilterCapsule.isSolidified()) {
+      it = getBlockFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = getBlockFilter2ResultFull().entrySet().iterator();
+    }
+
+    while (it.hasNext()) {
+      Entry<String, BlockFilterAndResult> entry = it.next();
+      if (entry.getValue().isExpire()) {
+        it.remove();
+        continue;
+      }
+      entry.getValue().getResult().add(ByteArray.toJsonHex(blockFilterCapsule.getBlockHash()));
+    }
+  }
+
+  public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
+    Iterator<Entry<String, LogFilterAndResult>> it;
+
+    if (logsFilterCapsule.isSolidified()) {
+      it = getEventFilter2ResultSolidity().entrySet().iterator();
+    } else {
+      it = getEventFilter2ResultFull().entrySet().iterator();
+    }
+
+    while (it.hasNext()) {
+      Entry<String, LogFilterAndResult> entry = it.next();
+      if (entry.getValue().isExpire()) {
+        it.remove();
+        continue;
+      }
+
+      LogFilterAndResult logFilterAndResult = entry.getValue();
+      long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
+      long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
+      if (!(fromBlock <= logsFilterCapsule.getBlockNumber()
+          && logsFilterCapsule.getBlockNumber() <= toBlock)) {
+        continue;
+      }
+
+      if (logsFilterCapsule.getBloom() != null
+          && !logFilterAndResult.getLogFilterWrapper().getLogFilter()
+          .matchBloom(logsFilterCapsule.getBloom())) {
+        continue;
+      }
+
+      LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
+      List<LogFilterElement> elements =
+          LogMatch.matchBlock(logFilter, logsFilterCapsule.getBlockNumber(),
+              logsFilterCapsule.getBlockHash(), logsFilterCapsule.getTxInfoList(),
+              logsFilterCapsule.isRemoved());
+      if (CollectionUtils.isNotEmpty(elements)) {
+        logFilterAndResult.getResult().addAll(elements);
+      }
+    }
   }
 
   @Override
@@ -176,65 +288,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       return null;
     }
 
-    BlockCapsule blockCapsule = new BlockCapsule(block);
-    BlockResult br = new BlockResult();
-    br.number = ByteArray.toJsonHex(blockCapsule.getNum());
-    br.hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
-    br.parentHash = ByteArray.toJsonHex(blockCapsule.getParentBlockId().getBytes());
-    br.nonce = null; // no value
-    br.sha3Uncles = null; // no value
-    br.logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
-    br.transactionsRoot = ByteArray
-        .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
-    br.stateRoot = ByteArray
-        .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
-    br.receiptsRoot = null; // no value
-    br.miner = ByteArray.toJsonHexAddress(blockCapsule.getWitnessAddress().toByteArray());
-    br.difficulty = null; // no value
-    br.totalDifficulty = null; // no value
-    br.extraData = null; // no value
-    br.size = ByteArray.toJsonHex(block.getSerializedSize());
-    br.timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp());
-
-    long gasUsedInBlock = 0;
-    long gasLimitInBlock = 0;
-
-    List<Object> txes = new ArrayList<>();
-    List<Transaction> transactionsList = block.getTransactionsList();
-    List<TransactionInfo> transactionInfoList =
-        wallet.getTransactionInfoByBlockNum(blockCapsule.getNum()).getTransactionInfoList();
-    if (fullTx) {
-      long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
-
-      for (int i = 0; i < transactionsList.size(); i++) {
-        Transaction transaction = transactionsList.get(i);
-        gasLimitInBlock += transaction.getRawData().getFeeLimit();
-
-        long energyUsageTotal = getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
-        gasUsedInBlock += energyUsageTotal;
-
-        txes.add(new TransactionResult(blockCapsule, i, transaction,
-            energyUsageTotal, energyFee, wallet));
-      }
-    } else {
-      for (int i = 0; i < transactionsList.size(); i++) {
-        gasLimitInBlock += transactionsList.get(i).getRawData().getFeeLimit();
-        gasUsedInBlock += getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
-
-        byte[] txHash = Sha256Hash
-            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-                transactionsList.get(i).getRawData().toByteArray());
-        txes.add(ByteArray.toJsonHex(txHash));
-      }
-    }
-    br.transactions = txes.toArray();
-
-    br.gasLimit = ByteArray.toJsonHex(gasLimitInBlock);
-    br.gasUsed = ByteArray.toJsonHex(gasUsedInBlock);
-    List<String> ul = new ArrayList<>();
-    br.uncles = ul.toArray(new String[0]);
-
-    return br;
+    return new BlockResult(block, fullTx, wallet);
   }
 
   @Override
@@ -276,7 +330,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressData = addressHashToByteArray(address);
+      byte[] addressData = addressCompatibleToByteArray(address);
 
       Account account = Account.newBuilder().setAddress(ByteString.copyFrom(addressData)).build();
       Account reply = wallet.getAccount(account);
@@ -326,14 +380,15 @@ public class TronJsonRpcImpl implements TronJsonRpc {
    * @param data Hash of the method signature and encoded parameters. for example:
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
    */
-  private String call(byte[] ownerAddressByte, byte[] contractAddressByte, byte[] data) {
+  private String call(byte[] ownerAddressByte, byte[] contractAddressByte, long value,
+      byte[] data) {
 
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     TransactionExtention trxExt;
 
     try {
-      callTriggerConstantContract(ownerAddressByte, contractAddressByte, 0, data,
+      callTriggerConstantContract(ownerAddressByte, contractAddressByte, value, data,
           trxExtBuilder, retBuilder);
 
     } catch (ContractValidateException | VMIllegalException e) {
@@ -378,7 +433,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressByte = addressHashToByteArray(address);
+      byte[] addressByte = addressCompatibleToByteArray(address);
 
       // get contract from contractStore
       BytesMessage.Builder build = BytesMessage.newBuilder();
@@ -415,7 +470,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressData = addressHashToByteArray(contractAddress);
+      byte[] addressData = addressCompatibleToByteArray(contractAddress);
 
       BytesMessage.Builder build = BytesMessage.newBuilder();
       BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(addressData)).build();
@@ -458,7 +513,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public String estimateGas(CallArguments args) throws JsonRpcInvalidRequestException,
       JsonRpcInvalidParamsException, JsonRpcInternalException {
-    byte[] ownerAddress = addressHashToByteArray(args.from);
+    byte[] ownerAddress = addressCompatibleToByteArray(args.from);
 
     ContractType contractType = args.getContractType(wallet);
     if (contractType == ContractType.TransferContract) {
@@ -473,7 +528,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       byte[] contractAddress;
 
       if (contractType == ContractType.TriggerSmartContract) {
-        contractAddress = addressHashToByteArray(args.to);
+        contractAddress = addressCompatibleToByteArray(args.to);
       } else {
         contractAddress = new byte[0];
       }
@@ -634,10 +689,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressData = addressHashToByteArray(transactionCall.from);
-      byte[] contractAddressData = addressHashToByteArray(transactionCall.to);
+      byte[] addressData = addressCompatibleToByteArray(transactionCall.from);
+      byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.to);
 
-      return call(addressData, contractAddressData, ByteArray.fromHexString(transactionCall.data));
+      return call(addressData, contractAddressData, transactionCall.parseValue(),
+          ByteArray.fromHexString(transactionCall.data));
     } else {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag).longValue();
@@ -787,7 +843,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private TransactionJson buildTriggerSmartContractTransaction(byte[] ownerAddress,
       BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
-    byte[] contractAddress = addressHashToByteArray(args.to);
+    byte[] contractAddress = addressCompatibleToByteArray(args.to);
 
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
@@ -871,7 +927,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     TransferContract.Builder build = TransferContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
-        .setToAddress(ByteString.copyFrom(addressHashToByteArray(args.to)))
+        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.to)))
         .setAmount(amount);
 
     return createTransactionJson(build, ContractType.TransferContract, args);
@@ -888,7 +944,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     TransferAssetContract.Builder build = TransferAssetContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
-        .setToAddress(ByteString.copyFrom(addressHashToByteArray(args.to)))
+        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.to)))
         .setAssetName(ByteString.copyFrom(tokenIdArr))
         .setAmount(args.tokenValue);
 
@@ -907,6 +963,13 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
   }
 
+  private void disableInPBFT(String method) throws JsonRpcMethodNotFoundException {
+    if (getSource() == RequestSource.PBFT) {
+      String msg = String.format("the method %s does not exist/is not available in PBFT", method);
+      throw new JsonRpcMethodNotFoundException(msg);
+    }
+  }
+
   @Override
   public TransactionJson buildTransaction(BuildArguments args)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
@@ -921,7 +984,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     byte[] fromAddressData;
     try {
-      fromAddressData = addressHashToByteArray(args.from);
+      fromAddressData = addressCompatibleToByteArray(args.from);
     } catch (JsonRpcInvalidParamsException e) {
       throw new JsonRpcInvalidRequestException("invalid json request");
     }
@@ -1021,4 +1084,161 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     throw new JsonRpcMethodNotFoundException(
         "the method eth_submitHashrate does not exist/is not available");
   }
+
+  @Override
+  public String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_newFilter");
+
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
+
+    long currentMaxFullNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    LogFilterAndResult logFilterAndResult = new LogFilterAndResult(fr, currentMaxFullNum, wallet);
+    String filterID = generateFilterId();
+    eventFilter2Result.put(filterID, logFilterAndResult);
+    return ByteArray.toJsonHex(filterID);
+  }
+
+  @Override
+  public String newBlockFilter() throws JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_newBlockFilter");
+
+    Map<String, BlockFilterAndResult> blockFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      blockFilter2Result = blockFilter2ResultFull;
+    } else {
+      blockFilter2Result = blockFilter2ResultSolidity;
+    }
+
+    BlockFilterAndResult filterAndResult = new BlockFilterAndResult();
+    String filterID = generateFilterId();
+    blockFilter2Result.put(filterID, filterAndResult);
+    return ByteArray.toJsonHex(filterID);
+  }
+
+  @Override
+  public boolean uninstallFilter(String filterId) throws ItemNotFoundException,
+      JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_uninstallFilter");
+
+    Map<String, BlockFilterAndResult> blockFilter2Result;
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      blockFilter2Result = blockFilter2ResultFull;
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      blockFilter2Result = blockFilter2ResultSolidity;
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
+
+    filterId = ByteArray.fromHex(filterId);
+    if (eventFilter2Result.containsKey(filterId)) {
+      eventFilter2Result.remove(filterId);
+    } else if (blockFilter2Result.containsKey(filterId)) {
+      blockFilter2Result.remove(filterId);
+    } else {
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
+    }
+
+    return true;
+  }
+
+  @Override
+  public Object[] getFilterChanges(String filterId) throws ItemNotFoundException,
+      JsonRpcMethodNotFoundException {
+    disableInPBFT("eth_getFilterChanges");
+
+    Map<String, BlockFilterAndResult> blockFilter2Result;
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      blockFilter2Result = blockFilter2ResultFull;
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      blockFilter2Result = blockFilter2ResultSolidity;
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
+
+    filterId = ByteArray.fromHex(filterId);
+
+    return getFilterResult(filterId, blockFilter2Result, eventFilter2Result);
+  }
+
+  @Override
+  public LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
+      ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
+    disableInPBFT("eth_getLogs");
+
+    long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+    //convert FilterRequest to LogFilterWrapper
+    LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet);
+
+    return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
+  }
+
+  @Override
+  public LogFilterElement[] getFilterLogs(String filterId) throws ExecutionException,
+      InterruptedException, BadItemException, ItemNotFoundException,
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
+    disableInPBFT("eth_getFilterLogs");
+
+    Map<String, LogFilterAndResult> eventFilter2Result;
+    if (getSource() == RequestSource.FULLNODE) {
+      eventFilter2Result = eventFilter2ResultFull;
+    } else {
+      eventFilter2Result = eventFilter2ResultSolidity;
+    }
+
+    filterId = ByteArray.fromHex(filterId);
+    if (!eventFilter2Result.containsKey(filterId)) {
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
+    }
+
+    LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
+    long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+
+    return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
+  }
+
+  private LogFilterElement[] getLogsByLogFilterWrapper(LogFilterWrapper logFilterWrapper,
+      long currentMaxBlockNum) throws JsonRpcTooManyResultException, ExecutionException,
+      InterruptedException, BadItemException, ItemNotFoundException {
+    //query possible block
+    LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, manager.getChainBaseManager()
+        .getSectionBloomStore(), currentMaxBlockNum, sectionExecutor);
+    List<Long> possibleBlockList = logBlockQuery.getPossibleBlock();
+
+    //match event from block one by one exactly
+    LogMatch logMatch =
+        new LogMatch(logFilterWrapper, possibleBlockList, manager);
+    return logMatch.matchBlockOneByOne();
+  }
+
+  public static Object[] getFilterResult(String filterId, Map<String, BlockFilterAndResult>
+      blockFilter2Result, Map<String, LogFilterAndResult> eventFilter2Result)
+      throws ItemNotFoundException {
+    Object[] result;
+
+    if (blockFilter2Result.containsKey(filterId)) {
+      List<String> blockHashList = blockFilter2Result.get(filterId).popAll();
+      result = blockHashList.toArray(new String[blockHashList.size()]);
+      blockFilter2Result.get(filterId).updateExpireTime();
+
+    } else if (eventFilter2Result.containsKey(filterId)) {
+      List<LogFilterElement> logElementList = eventFilter2Result.get(filterId).popAll();
+      result = logElementList.toArray(new LogFilterElement[logElementList.size()]);
+      eventFilter2Result.get(filterId).updateExpireTime();
+
+    } else {
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
+    }
+
+    return result;
+  }
+
 }

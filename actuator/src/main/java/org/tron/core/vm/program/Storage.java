@@ -46,7 +46,7 @@ public class Storage {
 
   private byte[] compose(byte[] key, byte[] addrHash) {
     if (VMConfig.allowTvmCompatibleEvm() && contractVersion == 1) {
-      return Hash.sha3(ByteUtil.merge(addrHash, key));
+      key = Hash.sha3(key);
     }
     byte[] result = new byte[key.length];
     arraycopy(addrHash, 0, result, 0, PREFIX_BYTES);

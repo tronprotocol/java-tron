@@ -1,6 +1,6 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.jsonrpc.types;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramQuantityIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
@@ -65,7 +65,7 @@ public class BuildArguments {
       contractType = ContractType.CreateSmartContract;
     } else {
       // to is not null
-      byte[] contractAddressData = addressHashToByteArray(to);
+      byte[] contractAddressData = addressCompatibleToByteArray(to);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       BytesMessage bytesMessage = build.setValue(ByteString.copyFrom(contractAddressData)).build();
       SmartContract smartContract = wallet.getContract(bytesMessage);
