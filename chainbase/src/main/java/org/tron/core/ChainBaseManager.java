@@ -55,6 +55,7 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.SectionBloomStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.TransactionHistoryStore;
 import org.tron.core.store.TransactionRetStore;
@@ -216,6 +217,10 @@ public class ChainBaseManager {
   @Setter
   private TreeBlockIndexStore merkleTreeIndexStore;
 
+  @Autowired
+  @Getter
+  private SectionBloomStore sectionBloomStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -258,6 +263,7 @@ public class ChainBaseManager {
     closeOneStore(commonStore);
     closeOneStore(commonDataBase);
     closeOneStore(pbftSignDataStore);
+    closeOneStore(sectionBloomStore);
   }
 
   // for test only

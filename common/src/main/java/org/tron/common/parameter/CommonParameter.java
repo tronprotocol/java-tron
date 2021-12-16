@@ -358,7 +358,7 @@ public class CommonParameter {
   public long allowAccountStateRoot;
   @Getter
   @Setter
-  public int validContractProtoThreadNum;
+  public int validContractProtoThreadNum = 1;
   @Getter
   @Setter
   public int shieldedTransInPendingMaxCounts;
@@ -524,5 +524,9 @@ public class CommonParameter {
   public boolean isECKeyCryptoEngine() {
 
     return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
+  }
+
+  public boolean isJsonRpcFilterEnabled() {
+    return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
   }
 }

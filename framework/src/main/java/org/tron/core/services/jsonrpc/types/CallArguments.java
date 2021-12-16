@@ -1,6 +1,6 @@
-package org.tron.core.services.jsonrpc;
+package org.tron.core.services.jsonrpc.types;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressHashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 
@@ -21,7 +21,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @ToString
 public class CallArguments {
 
-  public String from;
+  public String from = "0x0000000000000000000000000000000000000000";
   public String to;
   public String gas = ""; //not used
   public String gasPrice = ""; //not used
@@ -47,7 +47,7 @@ public class CallArguments {
 
       contractType = ContractType.CreateSmartContract;
     } else {
-      byte[] contractAddressData = addressHashToByteArray(to);
+      byte[] contractAddressData = addressCompatibleToByteArray(to);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       BytesMessage bytesMessage =
           build.setValue(ByteString.copyFrom(contractAddressData)).build();
