@@ -58,7 +58,7 @@ public class Accounts002 extends JsonRpcBase {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_accounts")
+  @Test(enabled = true, description = "Json rpc api of eth_accounts from solidity")
   public void test01JsonRpcApiTestForEthAccounts() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_accounts", params);
@@ -69,7 +69,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(responseContent.get("result"), result);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_blockNumber")
+  @Test(enabled = true, description = "Json rpc api of eth_blockNumber from solidity")
   public void test02JsonRpcApiTestForEthBlockNumber() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_blockNumber", params);
@@ -87,7 +87,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertTrue(Math.abs(blockNumFromjsonRpcNodeForSolidity - blockNumFromHttp) <= 3);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_call")
+  @Test(enabled = true, description = "Json rpc api of eth_call from solidity")
   public void test03JsonRpcApiTestForEthCall() throws Exception {
     JsonObject param = new JsonObject();
     HttpMethed.waitToProduceOneBlock(httpFullNode);
@@ -114,7 +114,7 @@ public class Accounts002 extends JsonRpcBase {
         dataResult);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_chainId")
+  @Test(enabled = true, description = "Json rpc api of eth_chainId from solidity")
   public void test04JsonRpcApiTestForEthChainId() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_chainId", params);
@@ -131,7 +131,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(blockIdFromjsonRpcNodeForSolidity, blockIdFromHttp);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_coinbase")
+  @Test(enabled = true, description = "Json rpc api of eth_coinbase from solidity")
   public void test05JsonRpcApiTestForEthCoinbase() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_coinbase", params);
@@ -142,7 +142,7 @@ public class Accounts002 extends JsonRpcBase {
         "0x410be88a918d74d0dfd71dc84bd4abf036d0562991", responseContent.getString("result"));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_estimateGas")
+  @Test(enabled = true, description = "Json rpc api of eth_estimateGas from solidity")
   public void test06JsonRpcApiTestForEthEstimateGas() throws Exception {
     JsonObject param = new JsonObject();
     param.addProperty("from", ByteArray.toHexString(jsonRpcOwnerAddress));
@@ -184,7 +184,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals((long) realEnergyUsed, Long.parseLong(dataResult.substring(2), 16));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_estimateGasWithoutTo")
+  @Test(enabled = true, description = "Json rpc api of eth_estimateGasWithoutTo from solidity")
   public void test08JsonRpcApiTestForEthEstimateGasWithoutTo() throws Exception {
     JsonObject param = new JsonObject();
     param.addProperty("from", "0x6C0214C9995C6F3A61AB23F0EB84B0CDE7FD9C7C");
@@ -215,7 +215,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(energyUsed, dataResult);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_estimateGasSendTrx")
+  @Test(enabled = true, description = "Json rpc api of eth_estimateGasSendTrx from solidity")
   public void test09JsonRpcApiTestForEthEstimateGasSendTrx() throws Exception {
     JsonObject param = new JsonObject();
     param.addProperty("from", ByteArray.toHexString(jsonRpcOwnerAddress));
@@ -234,7 +234,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals("0x0", dataResult);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_gasPrice")
+  @Test(enabled = true, description = "Json rpc api of eth_gasPrice from solidity")
   public void test10JsonRpcApiTestForEthGasPrice() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_gasPrice", params);
@@ -257,7 +257,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(gasPriceFromJsonrpc, gasPriceFromHttp);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBalance")
+  @Test(enabled = true, description = "Json rpc api of eth_getBalance from solidity")
   public void test11JsonRpcApiTestForEthGetBalance() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x" + ByteArray.toHexString(foundationAccountAddress).substring(2));
@@ -276,7 +276,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber")
+  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber from solidity")
   public void test12JsonRpcApiTestForEthGetBlockTransactionCountByNum() throws Exception {
     response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -295,7 +295,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(transactionNum1, transactionNum2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getCode")
+  @Test(enabled = true, description = "Json rpc api of eth_getCode from solidity")
   public void test13JsonRpcApiTestForEthGetCode() throws Exception {
 
     JsonArray params = new JsonArray();
@@ -314,7 +314,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(codeFromJsonRpc, codeFromHttp);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getStorageAt")
+  @Test(enabled = true, description = "Json rpc api of eth_getStorageAt from solidity")
   public void test14JsonRpcApiTestForEthGetStorageAt01() throws Exception {
 
     JsonArray params = new JsonArray();
@@ -332,7 +332,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals("1234", String.valueOf(resultExpect));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getStorageAt")
+  @Test(enabled = true, description = "Json rpc api of eth_getStorageAt from solidity")
   public void test15JsonRpcApiTestForEthGetStorageAt02() throws Exception {
 
     String address =
@@ -363,7 +363,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals("5678", String.valueOf(Integer.parseInt(result, 16)));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByBlockNumberAndIndex")
+  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByBlockNumberAndIndex from solidity")
   public void test16JsonRpcApiTestForEthGetTransactionByBlockNumberAndIndex() throws Exception {
     logger.info("16blockNum:" + blockNum);
     blockNumHex = "0x" + Integer.toHexString(blockNum);
@@ -506,7 +506,7 @@ public class Accounts002 extends JsonRpcBase {
         getBlockByNumFromSolidityResult.getString("signature").substring(66, 130));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByHash")
+  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByHash from solidity")
   public void test17JsonRpcApiTestForEthGetBlockTransactionCountByHash() throws Exception {
     logger.info("blockNum:" + blockNum);
     JsonArray params = new JsonArray();
@@ -529,7 +529,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(transactionNumFromHttp, transactionNumFromjsonRpcNodeForSolidity);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber")
+  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber from solidity")
   public void test18JsonRpcApiTestForEthGetBlockTransactionCountByNum() throws Exception {
     JsonArray params = new JsonArray();
     params.add(blockNum);
@@ -551,7 +551,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(transactionNum1, transactionNum2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByBlockHashAndIndex")
+  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByBlockHashAndIndex from solidity")
   public void test19JsonRpcApiTestForEthGetTransactionByBlockHashAndIndex() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x" + bid);
@@ -564,7 +564,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, resultForGetTransactionByBlockHashAndIndex);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByHash")
+  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByHash from solidity")
   public void test20JsonRpcApiTestForEthGetTransactionByHash() throws Exception {
     JsonArray params = new JsonArray();
     params.add(transacionHash);
@@ -575,7 +575,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, result1);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getTransactionReceipt")
+  @Test(enabled = true, description = "Json rpc api of eth_getTransactionReceipt from solidity")
   public void test21JsonRpcApiTestForEthGetTransactionReceipt() throws Exception {
     JsonArray params = new JsonArray();
     Thread.sleep(6000);
@@ -692,7 +692,7 @@ public class Accounts002 extends JsonRpcBase {
         responseContent1.get(index).getJSONArray("log").getJSONObject(0).getString("topics"));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getUncleByBlockHashAndIndex")
+  @Test(enabled = true, description = "Json rpc api of eth_getUncleByBlockHashAndIndex from solidity")
   public void test22JsonRpcApiTestForEthGetUncleByBlockHashAndIndex() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x0000000000f9cc56243898cbe88685678855e07f51c5af91322c225ce3693868");
@@ -705,7 +705,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertNull(result);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getUncleByBlockNumberAndIndex")
+  @Test(enabled = true, description = "Json rpc api of eth_getUncleByBlockNumberAndIndex from solidity")
   public void test23JsonRpcApiTestForEthGetUncleByBlockNumberAndIndex() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0xeb82f0");
@@ -718,7 +718,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertNull(result);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getUncleCountByBlockHash")
+  @Test(enabled = true, description = "Json rpc api of eth_getUncleCountByBlockHash from solidity")
   public void test24JsonRpcApiTestForEthGetUncleCountByBlockHash() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x0000000000f9cc56243898cbe88685678855e07f51c5af91322c225ce3693868");
@@ -730,7 +730,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, "0x0");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getUncleCountByBlockNumber")
+  @Test(enabled = true, description = "Json rpc api of eth_getUncleCountByBlockNumber from solidity")
   public void test25JsonRpcApiTestForEthGetUncleCountByBlockNumber() throws Exception {
     JsonArray params = new JsonArray();
     params.add("eth_getUncleCountByBlockNumber");
@@ -742,24 +742,32 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, "0x0");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getWork")
+  @Test(enabled = true, description = "Json rpc api of eth_getWork from solidity")
   public void test26JsonRpcApiTestForEthGetWork() throws Exception {
-    JsonArray params = new JsonArray();
-    JsonObject requestBody = getJsonRpcBody("eth_getWork", params);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
-    responseContent = HttpMethed.parseResponseContent(response);
-    String result = responseContent.getString("result");
-    int resultLen = result.length();
-    String resultFromjsonRpcNodeForSolidity = result.substring(4, resultLen - 12);
-    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
-    responseContent = HttpMethed.parseResponseContent(response);
-    String resultFromHttp = responseContent.getString("blockID");
-    logger.info("resultFromjsonRpcNodeForSolidity:" + resultFromjsonRpcNodeForSolidity);
-    logger.info("resultFromHttp:" + resultFromHttp);
+    String resultFromjsonRpcNodeForSolidity = "";
+    String resultFromHttp = "";
+    for (int i = 0; i < 5; i++) {
+      JsonArray params = new JsonArray();
+      JsonObject requestBody = getJsonRpcBody("eth_getWork", params);
+      response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+      responseContent = HttpMethed.parseResponseContent(response);
+      String result = responseContent.getString("result");
+      int resultLen = result.length();
+      resultFromjsonRpcNodeForSolidity = result.substring(4, resultLen - 12);
+      response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      resultFromHttp = responseContent.getString("blockID");
+      logger.info("resultFromjsonRpcNodeForSolidity" + i + ":" + resultFromjsonRpcNodeForSolidity);
+      logger.info("resultFromHttp" + i + ":" + resultFromHttp);
+      if (resultFromjsonRpcNodeForSolidity.equals(resultFromHttp)) {
+        break;
+      }
+      HttpMethed.waitToProduceOneBlock(httpFullNode);
+    }
     Assert.assertEquals(resultFromjsonRpcNodeForSolidity, resultFromHttp);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_hashrate")
+  @Test(enabled = true, description = "Json rpc api of eth_hashrate from solidity ")
   public void test27JsonRpcApiTestForEthHashRate() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_hashrate", params);
@@ -770,7 +778,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals("0x0", result);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_mining")
+  @Test(enabled = true, description = "Json rpc api of eth_mining from solidity")
   public void test28JsonRpcApiTestForEthMining() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_mining", params);
@@ -781,7 +789,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, "true");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_protocolVersion")
+  @Test(enabled = true, description = "Json rpc api of eth_protocolVersion from solidity")
   public void test29JsonRpcApiTestForEthProtocolVersion() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_protocolVersion", params);
@@ -798,47 +806,68 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(protocolVersion1, protocolVersion2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_syncing")
+  @Test(enabled = true, description = "Json rpc api of eth_syncing from solidity")
   public void test30JsonRpcApiTestForEthSyncing() throws Exception {
-    JsonArray params = new JsonArray();
-    JsonObject requestBody = getJsonRpcBody("eth_syncing", params);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
-    responseContent = HttpMethed.parseResponseContent(response);
-    JSONObject temp = responseContent.getJSONObject("result");
-    String currentNumFromRpc = temp.getString("currentBlock");
-    logger.info(currentNumFromRpc);
-    logger.info(temp.toString());
-    response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
-    responseContent = HttpMethed.parseResponseContent(response);
-    long currentNum =
-        responseContent.getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
-    logger.info("currentNum:" + currentNum);
-    logger.info("currentNumFromRpc:" + Long.parseLong(currentNumFromRpc.substring(2), 16));
-    Assert.assertEquals(currentNum, Long.parseLong(currentNumFromRpc.substring(2), 16));
+    long currentNumFromHttp = 0;
+    long currentNumFromJsonRpc = 0;
+    JSONObject temp = responseContent;
+    for (int i = 0; i < 5; i++) {
+      JsonArray params = new JsonArray();
+      JsonObject requestBody = getJsonRpcBody("eth_syncing", params);
+      response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+      responseContent = HttpMethed.parseResponseContent(response);
+      temp = responseContent.getJSONObject("result");
+      String currentNumFromRpc = temp.getString("currentBlock");
+      logger.info(currentNumFromRpc);
+      logger.info(temp.toString());
+      response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      currentNumFromHttp =
+          responseContent.getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
+      currentNumFromJsonRpc = Long.parseLong(currentNumFromRpc.substring(2), 16);
+      logger.info("currentNumFromHttp" + i + ":" + currentNumFromHttp);
+      logger.info("currentNumFromJsonRpc:" + currentNumFromJsonRpc);
+      if (currentNumFromHttp == currentNumFromJsonRpc) {
+        break;
+      }
+      HttpMethed.waitToProduceOneBlock(httpFullNode);
+    }
+    Assert.assertEquals(currentNumFromHttp, currentNumFromJsonRpc);
     Assert.assertTrue(temp.containsKey("startingBlock"));
     Assert.assertTrue(temp.containsKey("currentBlock"));
     Assert.assertTrue(temp.containsKey("highestBlock"));
   }
 
-  @Test(enabled = true, description = "Json rpc api of net_listening")
+  @Test(enabled = true, description = "Json rpc api of net_listening from solidity")
   public void test31JsonRpcApiTestForNetListening() throws Exception {
-    JsonArray params = new JsonArray();
-    JsonObject requestBody = getJsonRpcBody("net_listening", params);
-    response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
-    responseContent = HttpMethed.parseResponseContent(response);
-    Boolean temp = responseContent.getBoolean("result");
-    logger.info(temp.toString());
-    response = HttpMethed.getNodeInfo(httpsolidityNode);
-    responseContent = HttpMethed.parseResponseContent(response);
+    boolean temp = false;
     boolean expect = false;
-    int num = responseContent.getInteger("activeConnectCount");
-    if (num >= 1) {
-      expect = true;
+    for (int i = 0; i < 5; i++) {
+      JsonArray params = new JsonArray();
+      JsonObject requestBody = getJsonRpcBody("net_listening", params);
+      response = getJsonRpc(jsonRpcNodeForSolidity, requestBody);
+      responseContent = HttpMethed.parseResponseContent(response);
+      temp = responseContent.getBoolean("result");
+      response = HttpMethed.getNodeInfo(httpsolidityNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      int num = responseContent.getInteger("activeConnectCount");
+      logger.info("num" + i + "：" + num);
+      if (num >= 1) {
+        expect = true;
+      }
+      logger.info("temp" + i + "：" + temp);
+      logger.info("expect" + i + "：" + expect);
+      Assert.assertEquals(temp, true);
+      Assert.assertEquals(expect, true);
+      if (temp == true && expect == true) {
+        break;
+      }
+      HttpMethed.waitToProduceOneBlock(httpFullNode);
     }
-    Assert.assertEquals(temp, expect);
+    Assert.assertEquals(expect, temp);
   }
 
-  @Test(enabled = true, description = "Json rpc api of net_peerCount")
+  @Test(enabled = true, description = "Json rpc api of net_peerCount from solidity")
   public void test32JsonRpcApiTestForNetPeerCount() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("net_peerCount", params);
@@ -849,7 +878,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertNotNull(result);
   }
 
-  @Test(enabled = true, description = "Json rpc api of net_version")
+  @Test(enabled = true, description = "Json rpc api of net_version from solidity")
   public void test33JsonRpcApiTestForEthVersion() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("net_version", params);
@@ -864,7 +893,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(firstBlockHashFromJsonRpc, firstBlockHashFromHttp);
   }
 
-  @Test(enabled = true, description = "Json rpc api of web3_clientVersion")
+  @Test(enabled = true, description = "Json rpc api of web3_clientVersion from solidity")
   public void test34JsonRpcApiTestForWeb3ClientVersion() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("web3_clientVersion", params);
@@ -883,7 +912,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(resultList.get(4).substring(0, 11), "GreatVoyage");
   }
 
-  @Test(enabled = true, description = "Json rpc api of web3_sha3")
+  @Test(enabled = true, description = "Json rpc api of web3_sha3 from solidity")
   public void test35JsonRpcApiTestForWeb3Sha3() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x08");
@@ -898,7 +927,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result1, result2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_compileLLL")
+  @Test(enabled = true, description = "Json rpc api of eth_compileLLL from solidity")
   public void test36JsonRpcApiTestForEthCompileLll() throws Exception {
     JsonArray params = new JsonArray();
     params.add("(returnlll (suicide (caller)))");
@@ -909,7 +938,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(errorMessage, "the method eth_compileLLL does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_compileSerpent")
+  @Test(enabled = true, description = "Json rpc api of eth_compileSerpent from solidity")
   public void test37JsonRpcApiTestForEthCompileSerpent() throws Exception {
     JsonArray params = new JsonArray();
     params.add("/* some serpent */");
@@ -921,7 +950,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_compileSerpent does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_compileSolidity")
+  @Test(enabled = true, description = "Json rpc api of eth_compileSolidity from solidity")
   public void test38JsonRpcApiTestForEthCompileSolidity() throws Exception {
     JsonArray params = new JsonArray();
     params.add("contract test { function multiply(uint a) returns(uint d) {   return a * 7;   } }");
@@ -933,7 +962,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_compileSolidity does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getCompilers")
+  @Test(enabled = true, description = "Json rpc api of eth_getCompilers from solidity")
   public void test39JsonRpcApiTestForEthCompileSolidity() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject requestBody = getJsonRpcBody("eth_getCompilers", params);
@@ -944,7 +973,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_getCompilers does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getTransactionCount")
+  @Test(enabled = true, description = "Json rpc api of eth_getTransactionCount from solidity")
   public void test40JsonRpcApiTestForEthGetTransactionCount() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x407d73d8a49eeb85d32cf465507dd71d507100c1");
@@ -957,7 +986,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_getTransactionCount does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_sendRawTransaction")
+  @Test(enabled = true, description = "Json rpc api of eth_sendRawTransaction from solidity")
   public void test41JsonRpcApiTestForEthSendRawTransaction() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x234");
@@ -991,7 +1020,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_sendTransaction does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_sign")
+  @Test(enabled = true, description = "Json rpc api of eth_sign from solidity")
   public void test43JsonRpcApiTestForEthSign() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x9b2055d370f73ec7d8a03e965129118dc8f5bf83");
@@ -1003,7 +1032,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(errorMessage, "the method eth_sign does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_signTransaction")
+  @Test(enabled = true, description = "Json rpc api of eth_signTransaction from solidity")
   public void test44JsonRpcApiTestForEthSignTransaction() throws Exception {
     JsonArray params = new JsonArray();
     JsonObject temp = new JsonObject();
@@ -1025,7 +1054,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_signTransaction does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_submitWork")
+  @Test(enabled = true, description = "Json rpc api of eth_submitWork from solidity")
   public void test45JsonRpcApiTestForEthSubmitWork() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x0000000000000001");
@@ -1038,7 +1067,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(errorMessage, "the method eth_submitWork does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of parity_nextNonce")
+  @Test(enabled = true, description = "Json rpc api of parity_nextNonce from solidity")
   public void test46JsonRpcApiTestForParityNextNonce() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x9b2055d370f73ec7d8a03e965129118dc8f5bf83");
@@ -1050,7 +1079,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method parity_nextNonce does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_submitHashrate")
+  @Test(enabled = true, description = "Json rpc api of eth_submitHashrate from solidity")
   public void test47JsonRpcApiTestForEthSubmitHashrate() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x0000000000000000000000000000000000000000000000000000000000500000");
@@ -1063,7 +1092,7 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_submitHashrate does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockByHash params is false")
+  @Test(enabled = true, description = "Json rpc api of eth_getBlockByHash params is false from solidity")
   public void test48JsonRpcApiTestForEthGetBlockByHash() throws Exception {
     response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -1141,7 +1170,7 @@ public class Accounts002 extends JsonRpcBase {
 
   @Test(
       enabled = true,
-      description = "Json rpc api of eth_getBlockByNumFromSolidityber params is true")
+      description = "Json rpc api of eth_getBlockByNumFromSolidityber params is true from solidity")
   public void test49JsonRpcApiTestForEthgetBlockByNumFromSolidityber() throws Exception {
 
     JsonArray params = new JsonArray();
