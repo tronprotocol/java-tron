@@ -19,24 +19,24 @@ import org.tron.protos.Protocol.Transaction.Contract;
 @ToString
 public class TransactionResult {
 
-  private String hash;
-  private String nonce;
-  private String blockHash;
-  private String blockNumber;
-  private String transactionIndex;
+  public String hash;
+  public String nonce;
+  public String blockHash;
+  public String blockNumber;
+  public String transactionIndex;
 
-  private String from;
-  private String to;
-  private String gas;
-  private String gasPrice;
-  private String value;
-  private String input;
+  public String from;
+  public String to;
+  public String gas;
+  public String gasPrice;
+  public String value;
+  public String input;
 
-  private String v;
-  private String r;
-  private String s;
+  public String v;
+  public String r;
+  public String s;
 
-  private String type = "0x0";
+  public String type = "0x0";
 
   private void parseSignature(Transaction tx) {
 
