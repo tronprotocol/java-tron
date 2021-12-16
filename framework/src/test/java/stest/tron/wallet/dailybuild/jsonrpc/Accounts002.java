@@ -276,7 +276,9 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(balance1, balance2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getBlockTransactionCountByNumber from solidity")
   public void test12JsonRpcApiTestForEthGetBlockTransactionCountByNum() throws Exception {
     response = HttpMethed.getNowBlockFromSolidity(httpsolidityNode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -363,7 +365,9 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals("5678", String.valueOf(Integer.parseInt(result, 16)));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByBlockNumberAndIndex from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getTransactionByBlockNumberAndIndex from solidity")
   public void test16JsonRpcApiTestForEthGetTransactionByBlockNumberAndIndex() throws Exception {
     logger.info("16blockNum:" + blockNum);
     blockNumHex = "0x" + Integer.toHexString(blockNum);
@@ -506,7 +510,9 @@ public class Accounts002 extends JsonRpcBase {
         getBlockByNumFromSolidityResult.getString("signature").substring(66, 130));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByHash from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getBlockTransactionCountByHash from solidity")
   public void test17JsonRpcApiTestForEthGetBlockTransactionCountByHash() throws Exception {
     logger.info("blockNum:" + blockNum);
     JsonArray params = new JsonArray();
@@ -529,7 +535,9 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(transactionNumFromHttp, transactionNumFromjsonRpcNodeForSolidity);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByNumber from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getBlockTransactionCountByNumber from solidity")
   public void test18JsonRpcApiTestForEthGetBlockTransactionCountByNum() throws Exception {
     JsonArray params = new JsonArray();
     params.add(blockNum);
@@ -551,7 +559,9 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(transactionNum1, transactionNum2);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getTransactionByBlockHashAndIndex from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getTransactionByBlockHashAndIndex from solidity")
   public void test19JsonRpcApiTestForEthGetTransactionByBlockHashAndIndex() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x" + bid);
@@ -692,7 +702,9 @@ public class Accounts002 extends JsonRpcBase {
         responseContent1.get(index).getJSONArray("log").getJSONObject(0).getString("topics"));
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getUncleByBlockHashAndIndex from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getUncleByBlockHashAndIndex from solidity")
   public void test22JsonRpcApiTestForEthGetUncleByBlockHashAndIndex() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0x0000000000f9cc56243898cbe88685678855e07f51c5af91322c225ce3693868");
@@ -705,7 +717,9 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertNull(result);
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getUncleByBlockNumberAndIndex from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getUncleByBlockNumberAndIndex from solidity")
   public void test23JsonRpcApiTestForEthGetUncleByBlockNumberAndIndex() throws Exception {
     JsonArray params = new JsonArray();
     params.add("0xeb82f0");
@@ -730,7 +744,9 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, "0x0");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getUncleCountByBlockNumber from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getUncleCountByBlockNumber from solidity")
   public void test25JsonRpcApiTestForEthGetUncleCountByBlockNumber() throws Exception {
     JsonArray params = new JsonArray();
     params.add("eth_getUncleCountByBlockNumber");
@@ -742,9 +758,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(result, "0x0");
   }
 
-
   @Test(enabled = true, description = "Json rpc api of eth_getWork from solidity")
-
   public void test26JsonRpcApiTestForEthGetWork() throws Exception {
     String resultFromjsonRpcNodeForSolidity = "";
     String resultFromHttp = "";
@@ -808,9 +822,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertEquals(protocolVersion1, protocolVersion2);
   }
 
-
   @Test(enabled = true, description = "Json rpc api of eth_syncing from solidity")
-
   public void test30JsonRpcApiTestForEthSyncing() throws Exception {
     long currentNumFromHttp = 0;
     long currentNumFromJsonRpc = 0;
@@ -842,9 +854,7 @@ public class Accounts002 extends JsonRpcBase {
     Assert.assertTrue(temp.containsKey("highestBlock"));
   }
 
-
   @Test(enabled = true, description = "Json rpc api of net_listening from solidity")
-
   public void test31JsonRpcApiTestForNetListening() throws Exception {
     boolean temp = false;
     boolean expect = false;
@@ -1098,7 +1108,9 @@ public class Accounts002 extends JsonRpcBase {
         errorMessage, "the method eth_submitHashrate does not exist/is not available");
   }
 
-  @Test(enabled = true, description = "Json rpc api of eth_getBlockByHash params is false from solidity")
+  @Test(
+      enabled = true,
+      description = "Json rpc api of eth_getBlockByHash params is false from solidity")
   public void test48JsonRpcApiTestForEthGetBlockByHash() throws Exception {
     response = HttpMethed.getBlockByNumFromSolidity(httpsolidityNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
