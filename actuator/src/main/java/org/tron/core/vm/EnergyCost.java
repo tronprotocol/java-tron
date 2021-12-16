@@ -398,7 +398,7 @@ public class EnergyCost {
     return NEW_ACCT_CALL;
   }
 
-  public static long getCREATE_DATA() {
+  public static long getCreateData() {
     return CREATE_DATA;
   }
 

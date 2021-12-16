@@ -391,10 +391,10 @@ public class OperationActions {
     int codeOffset = program.stackPop().intValueSafe();
     int lengthData = program.stackPop().intValueSafe();
 
-    int sizeToBeCopied =
-        (long) codeOffset + lengthData > fullCode.length
-            ? (fullCode.length < codeOffset ? 0 : fullCode.length - codeOffset)
-            : lengthData;
+    int sizeToBeCopied = lengthData;
+    if ((long) codeOffset + lengthData > fullCode.length) {
+      sizeToBeCopied = fullCode.length < codeOffset ? 0 : fullCode.length - codeOffset;
+    }
 
     byte[] codeCopy = new byte[lengthData];
 
@@ -457,10 +457,10 @@ public class OperationActions {
     int codeOffset = program.stackPop().intValueSafe();
     int lengthData = program.stackPop().intValueSafe();
 
-    int sizeToBeCopied =
-        (long) codeOffset + lengthData > fullCode.length
-            ? (fullCode.length < codeOffset ? 0 : fullCode.length - codeOffset)
-            : lengthData;
+    int sizeToBeCopied = lengthData;
+    if ((long) codeOffset + lengthData > fullCode.length) {
+      sizeToBeCopied = fullCode.length < codeOffset ? 0 : fullCode.length - codeOffset;
+    }
 
     byte[] codeCopy = new byte[lengthData];
 
