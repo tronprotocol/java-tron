@@ -29,9 +29,9 @@ public class EthSmartContract001 extends JsonRpcBase {
     JsonObject param = new JsonObject();
     param.addProperty("from", ByteArray.toHexString(jsonRpcOwnerAddress));
     param.addProperty("to", trc20AddressHex);
-    param.addProperty("gas", "0");
-    param.addProperty("gasPrice", "0");
-    param.addProperty("value", "0");
+    param.addProperty("gas", "0x0");
+    param.addProperty("gasPrice", "0x0");
+    param.addProperty("value", "0x0");
     param.addProperty("data", "0x06fdde03");
     JsonArray params = new JsonArray();
     params.add(param);

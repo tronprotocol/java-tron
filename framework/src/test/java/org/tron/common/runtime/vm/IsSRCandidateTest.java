@@ -19,7 +19,6 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
-import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.Transaction;
@@ -140,8 +139,6 @@ public class IsSRCandidateTest extends VMTestBase {
 
     Repository repository;
     StoreFactory storeFactory = StoreFactory.getInstance();
-    ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
-    VMConfig vmConfig = VMConfig.getInstance();
 
     // deploy contract
     Transaction trx =
@@ -166,7 +163,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     ProgramInvoke programInvoke =
-        programInvokeFactory.createProgramInvoke(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,
@@ -177,7 +174,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    Program program = new Program(null, programInvoke, rootInternalTransaction);
     byte[] programResult = program.isSRCandidate(new DataWord(nonexistentAddr)).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),
@@ -193,7 +190,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke =
-        programInvokeFactory.createProgramInvoke(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,
@@ -204,7 +201,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    program = new Program(null, programInvoke, rootInternalTransaction);
     programResult = program.isSRCandidate(new DataWord(factoryAddress)).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),
@@ -222,7 +219,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke =
-        programInvokeFactory.createProgramInvoke(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,
@@ -233,7 +230,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    program = new Program(null, programInvoke, rootInternalTransaction);
     programResult = program.isSRCandidate(new DataWord(witnessAddr)).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),
@@ -250,7 +247,7 @@ public class IsSRCandidateTest extends VMTestBase {
         new InternalTransaction(trx, InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
     programInvoke =
-        programInvokeFactory.createProgramInvoke(
+        ProgramInvokeFactory.createProgramInvoke(
             InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE,
             trx,
@@ -261,7 +258,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    program = new Program(null, programInvoke, rootInternalTransaction);
     programResult = program.isSRCandidate(new DataWord()).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),

@@ -9,6 +9,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.netty.util.internal.StringUtil;
+
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Optional;
@@ -55,10 +56,12 @@ public class JsonRpcBase {
       PublicMethed.getAddressString(jsonRpcOwnerKey);
   public static String jsonRpcNode =
       Configuration.getByPath("testng.conf").getStringList("jsonRpcNode.ip.list").get(0);
+  public static String jsonRpcNodeForSolidity =
+      Configuration.getByPath("testng.conf").getStringList("jsonRpcNode.ip.list").get(1);
   public static String httpFullNode =
       Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(0);
-  public static String solidityNode =
-      Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
+  public static String httpsolidityNode =
+      Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
   public static String ethHttpsNode =
       Configuration.getByPath("testng.conf").getStringList("ethHttpsNode.host.list").get(0);
 
@@ -68,7 +71,6 @@ public class JsonRpcBase {
   public ManagedChannel channelPbft = null;
   public static String data = null;
   public String paramString = null;
-
   public WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   public WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
   public String fullnode =
@@ -106,7 +108,6 @@ public class JsonRpcBase {
   public static String blockId;
   public static String txid;
   public static String trc20Txid;
-  public static String NewFilterId;
 
   /** constructor. */
   @BeforeSuite(enabled = true, description = "Deploy json rpc test case resource")

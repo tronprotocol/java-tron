@@ -91,15 +91,16 @@ public class Accounts001 extends JsonRpcBase {
     HttpMethed.waitToProduceOneBlock(httpFullNode);
     param.addProperty("from", ByteArray.toHexString(jsonRpcOwnerAddress));
     param.addProperty("to", trc20AddressHex);
-    param.addProperty("gas", "0");
-    param.addProperty("gasPrice", "0");
-    param.addProperty("value", "0");
+    param.addProperty("gas", "0x0");
+    param.addProperty("gasPrice", "0x0");
+    param.addProperty("value", "0x0");
     param.addProperty("data", "0x06fdde03");
     JsonArray params = new JsonArray();
     params.add(param);
     params.add("latest");
     JsonObject requestBody = getJsonRpcBody("eth_call", params);
-    logger.info("params:" + params);
+    logger.info("03params:" + params);
+    logger.info("requestBody:" + requestBody);
     response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     String dataResult = responseContent.getString("result");
@@ -1057,6 +1058,9 @@ public class Accounts001 extends JsonRpcBase {
             .getJSONObject("block_header")
             .getJSONObject("raw_data")
             .getString("accountStateRoot");
+    if (accountStateRoot == null) {
+      accountStateRoot = "";
+    }
     JsonArray params = new JsonArray();
     params.add(blockHash);
     params.add(false);
