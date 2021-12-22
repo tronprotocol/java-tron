@@ -59,6 +59,8 @@ public class DposTask {
               logger.info("Produce block failed: {}", state);
             }
           }
+        } catch (InterruptedException e) {
+          logger.warn("Produce block task interrupted.");
         } catch (Throwable throwable) {
           logger.error("Produce block error.", throwable);
         }
