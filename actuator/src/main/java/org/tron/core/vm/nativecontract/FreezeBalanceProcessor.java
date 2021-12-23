@@ -9,14 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
-@Slf4j(topic = "Processor")
+@Slf4j(topic = "VMProcessor")
 public class FreezeBalanceProcessor {
 
   public void validate(FreezeBalanceParam param, Repository repo) throws ContractValidateException {

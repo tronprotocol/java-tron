@@ -151,7 +151,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
+    Assert.assertTrue(responseContent.getInteger("exchange_id").equals(exchangeId));
     Assert.assertEquals(responseContent.getString("creator_address"),
         ByteArray.toHexString(exchangeOwnerAddress));
     beforeInjectBalance = responseContent.getLong("first_token_balance");
@@ -167,7 +167,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.getExchangeByIdFromSolidity(httpSoliditynode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
+    Assert.assertTrue(responseContent.getInteger("exchange_id").equals(exchangeId));
     Assert.assertEquals(responseContent.getString("creator_address"),
         ByteArray.toHexString(exchangeOwnerAddress));
     beforeInjectBalance = responseContent.getLong("first_token_balance");
@@ -183,7 +183,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.getExchangeByIdFromPbft(httpPbftNode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
+    Assert.assertTrue(responseContent.getInteger("exchange_id").equals(exchangeId));
     Assert.assertEquals(responseContent.getString("creator_address"),
         ByteArray.toHexString(exchangeOwnerAddress));
     beforeInjectBalance = responseContent.getLong("first_token_balance");

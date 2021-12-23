@@ -325,7 +325,7 @@ public class TransferFailed001 {
     Assert.assertEquals(2, nonexistentAddressAccount.getBalance());
     Assert.assertEquals(0, infoById.get().getResultValue());
 
-    Assert.assertEquals(energyUsageTotal2 + EnergyCost.getInstance().getNewAcctCall(),
+    Assert.assertEquals(energyUsageTotal2 + EnergyCost.getNewAcctCall(),
         energyUsageTotal);
 
   }
@@ -899,7 +899,7 @@ public class TransferFailed001 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    Assert.assertTrue(energyUsageTotal > EnergyCost.getInstance().getNewAcctCall());
+    Assert.assertTrue(energyUsageTotal > EnergyCost.getNewAcctCall());
   }
 
   /**

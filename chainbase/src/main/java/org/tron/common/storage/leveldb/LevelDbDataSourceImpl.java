@@ -39,12 +39,11 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
+import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
-import org.iq80.leveldb.ReadOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
@@ -127,6 +126,9 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     try {
       database = factory.open(dbPath.toFile(), dbOptions);
+      logger.info("DB {} open success with : writeBufferSize {}M,cacheSize {}M,maxOpenFiles {}.",
+          this.getDBName(), dbOptions.writeBufferSize() / 1024 / 1024,
+          dbOptions.cacheSize() / 1024 / 1024, dbOptions.maxOpenFiles());
     } catch (IOException e) {
       if (e.getMessage().contains("Corruption:")) {
         factory.repair(dbPath.toFile(), dbOptions);
@@ -202,12 +204,9 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     resetDbLock.readLock().lock();
     try {
       return database.get(key);
-    } catch (DBException e) {
-      logger.debug(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
-    return null;
   }
 
   @Override

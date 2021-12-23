@@ -30,6 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.P2pException;
@@ -234,7 +235,8 @@ public class TronNetDelegate {
           | NonCommonBlockException
           | ReceiptCheckErrException
           | VMIllegalException
-          | ZksnarkException e) {
+          | ZksnarkException
+          | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
