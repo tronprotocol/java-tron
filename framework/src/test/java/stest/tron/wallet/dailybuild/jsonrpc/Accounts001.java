@@ -55,7 +55,7 @@ public class Accounts001 extends JsonRpcBase {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
-
+  //test git
   @Test(enabled = true, description = "Json rpc api of eth_accounts")
   public void test01JsonRpcApiTestForEthAccounts() throws Exception {
     JsonArray params = new JsonArray();
