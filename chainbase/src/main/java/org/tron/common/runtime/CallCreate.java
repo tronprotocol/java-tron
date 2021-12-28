@@ -28,7 +28,7 @@ public class CallCreate {
   private final byte[] energyLimit;
   private final byte[] value;
 
-  //1111111CallCreate(byte[] data, byte[] destination, byte[] energyLimit, byte[] value) CallCreate(byte[] data, byte[] destination, byte[] energyLimit, byte[] value) CallCreate(byte[] data, byte[] destinat
+
   public CallCreate(byte[] data, byte[] destination, byte[] energyLimit, byte[] value) {
     this.data = data;
     this.destination = destination;
