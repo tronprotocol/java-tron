@@ -908,10 +908,9 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       tx = setTransactionPermissionId(args.getPermissionId(), tx);
       tx = setTransactionExtraData(args.getExtraData(), tx, args.isVisible());
 
-      String jsonString = Util.printCreateTransaction(tx, args.isVisible());
-
       TransactionJson transactionJson = new TransactionJson();
-      transactionJson.transaction = JSON.parseObject(jsonString);
+      transactionJson.transaction =
+          JSON.parseObject(Util.printCreateTransaction(tx, args.isVisible()));
 
       return transactionJson;
     } catch (ContractValidateException e) {
