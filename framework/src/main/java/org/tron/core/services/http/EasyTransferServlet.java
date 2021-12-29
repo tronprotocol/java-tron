@@ -75,7 +75,6 @@ public class EasyTransferServlet extends RateLimiterServlet {
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
-      return;
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
     }

@@ -6,6 +6,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import lombok.Getter;
 import lombok.ToString;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -19,24 +20,39 @@ import org.tron.protos.Protocol.Transaction.Contract;
 @ToString
 public class TransactionResult {
 
-  public String hash;
-  public String nonce;
-  public String blockHash;
-  public String blockNumber;
-  public String transactionIndex;
+  @Getter
+  private String hash;
+  @Getter
+  private String nonce;
+  @Getter
+  private String blockHash;
+  @Getter
+  private String blockNumber;
+  @Getter
+  private String transactionIndex;
 
-  public String from;
-  public String to;
-  public String gas;
-  public String gasPrice;
-  public String value;
-  public String input;
+  @Getter
+  private String from;
+  @Getter
+  private String to;
+  @Getter
+  private String gas;
+  @Getter
+  private String gasPrice;
+  @Getter
+  private String value;
+  @Getter
+  private String input;
 
-  public String v;
-  public String r;
-  public String s;
+  @Getter
+  private String v;
+  @Getter
+  private String r;
+  @Getter
+  private String s;
 
-  public String type = "0x0";
+  @Getter
+  private String type = "0x0";
 
   private void parseSignature(Transaction tx) {
 

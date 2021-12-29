@@ -513,7 +513,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   @Override
   public String estimateGas(CallArguments args) throws JsonRpcInvalidRequestException,
       JsonRpcInvalidParamsException, JsonRpcInternalException {
-    byte[] ownerAddress = addressCompatibleToByteArray(args.from);
+    byte[] ownerAddress = addressCompatibleToByteArray(args.getFrom());
 
     ContractType contractType = args.getContractType(wallet);
     if (contractType == ContractType.TransferContract) {
@@ -528,7 +528,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       byte[] contractAddress;
 
       if (contractType == ContractType.TriggerSmartContract) {
-        contractAddress = addressCompatibleToByteArray(args.to);
+        contractAddress = addressCompatibleToByteArray(args.getTo());
       } else {
         contractAddress = new byte[0];
       }
@@ -536,7 +536,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       callTriggerConstantContract(ownerAddress,
           contractAddress,
           args.parseValue(),
-          ByteArray.fromHexString(args.data),
+          ByteArray.fromHexString(args.getData()),
           trxExtBuilder,
           retBuilder);
 
@@ -689,11 +689,11 @@ public class TronJsonRpcImpl implements TronJsonRpc {
         || "pending".equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG [earliest | pending] not supported");
     } else if ("latest".equalsIgnoreCase(blockNumOrTag)) {
-      byte[] addressData = addressCompatibleToByteArray(transactionCall.from);
-      byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.to);
+      byte[] addressData = addressCompatibleToByteArray(transactionCall.getFrom());
+      byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.getTo());
 
       return call(addressData, contractAddressData, transactionCall.parseValue(),
-          ByteArray.fromHexString(transactionCall.data));
+          ByteArray.fromHexString(transactionCall.getData()));
     } else {
       try {
         ByteArray.hexToBigInteger(blockNumOrTag).longValue();
@@ -790,29 +790,29 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
 
-      build.setCallTokenValue(args.tokenValue)
-          .setTokenId(args.tokenId);
+      build.setCallTokenValue(args.getTokenValue())
+          .setTokenId(args.getTokenId());
 
       ABI.Builder abiBuilder = ABI.newBuilder();
-      if (StringUtils.isNotEmpty(args.abi)) {
-        String abiStr = "{" + "\"entrys\":" + args.abi + "}";
-        JsonFormat.merge(abiStr, abiBuilder, args.visible);
+      if (StringUtils.isNotEmpty(args.getAbi())) {
+        String abiStr = "{" + "\"entrys\":" + args.getAbi() + "}";
+        JsonFormat.merge(abiStr, abiBuilder, args.isVisible());
       }
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
           .setAbi(abiBuilder)
           .setCallValue(args.parseValue())
-          .setConsumeUserResourcePercent(args.consumeUserResourcePercent)
-          .setOriginEnergyLimit(args.originEnergyLimit);
+          .setConsumeUserResourcePercent(args.getConsumeUserResourcePercent())
+          .setOriginEnergyLimit(args.getOriginEnergyLimit());
 
       smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
 
       // bytecode + parameter
-      smartBuilder.setBytecode(ByteString.copyFrom(ByteArray.fromHexString(args.data)));
+      smartBuilder.setBytecode(ByteString.copyFrom(ByteArray.fromHexString(args.getData())));
 
-      if (StringUtils.isNotEmpty(args.name)) {
-        smartBuilder.setName(args.name);
+      if (StringUtils.isNotEmpty(args.getName())) {
+        smartBuilder.setName(args.getName());
       }
 
       build.setNewContract(smartBuilder);
@@ -824,7 +824,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       rawBuilder.setFeeLimit(args.parseGas() * wallet.getEnergyFee());
 
       txBuilder.setRawData(rawBuilder);
-      tx = setTransactionPermissionId(args.permissionId, txBuilder.build());
+      tx = setTransactionPermissionId(args.getPermissionId(), txBuilder.build());
 
       TransactionJson transactionJson = new TransactionJson();
       transactionJson.transaction = JSON.parseObject(Util.printCreateTransaction(tx, false));
@@ -843,7 +843,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private TransactionJson buildTriggerSmartContractTransaction(byte[] ownerAddress,
       BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
-    byte[] contractAddress = addressCompatibleToByteArray(args.to);
+    byte[] contractAddress = addressCompatibleToByteArray(args.getTo());
 
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
@@ -854,14 +854,14 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
           .setContractAddress(ByteString.copyFrom(contractAddress));
 
-      if (StringUtils.isNotEmpty(args.data)) {
-        build.setData(ByteString.copyFrom(ByteArray.fromHexString(args.data)));
+      if (StringUtils.isNotEmpty(args.getData())) {
+        build.setData(ByteString.copyFrom(ByteArray.fromHexString(args.getData())));
       } else {
         build.setData(ByteString.copyFrom(new byte[0]));
       }
 
-      build.setCallTokenValue(args.tokenValue)
-          .setTokenId(args.tokenId)
+      build.setCallTokenValue(args.getTokenValue())
+          .setTokenId(args.getTokenId())
           .setCallValue(args.parseValue());
 
       Transaction tx = wallet
@@ -875,7 +875,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       Transaction trx = wallet
           .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
               retBuilder);
-      trx = setTransactionPermissionId(args.permissionId, trx);
+      trx = setTransactionPermissionId(args.getPermissionId(), trx);
       trxExtBuilder.setTransaction(trx);
     } catch (JsonRpcInvalidParamsException e) {
       throw new JsonRpcInvalidParamsException(e.getMessage());
@@ -890,7 +890,8 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       throw new JsonRpcInternalException(errString);
     }
 
-    String jsonString = Util.printTransaction(trxExtBuilder.build().getTransaction(), args.visible);
+    String jsonString = Util.printTransaction(trxExtBuilder.build().getTransaction(),
+        args.isVisible());
     TransactionJson transactionJson = new TransactionJson();
     transactionJson.transaction = JSON.parseObject(jsonString);
 
@@ -904,10 +905,10 @@ public class TronJsonRpcImpl implements TronJsonRpc {
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), contractTyp)
           .getInstance();
-      tx = setTransactionPermissionId(args.permissionId, tx);
-      tx = setTransactionExtraData(args.extraData, tx, args.visible);
+      tx = setTransactionPermissionId(args.getPermissionId(), tx);
+      tx = setTransactionExtraData(args.getExtraData(), tx, args.isVisible());
 
-      String jsonString = Util.printCreateTransaction(tx, args.visible);
+      String jsonString = Util.printCreateTransaction(tx, args.isVisible());
 
       TransactionJson transactionJson = new TransactionJson();
       transactionJson.transaction = JSON.parseObject(jsonString);
@@ -927,7 +928,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     TransferContract.Builder build = TransferContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
-        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.to)))
+        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.getTo())))
         .setAmount(amount);
 
     return createTransactionJson(build, ContractType.TransferContract, args);
@@ -937,16 +938,16 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   private TransactionJson buildTransferAssetContractTransaction(byte[] ownerAddress,
       BuildArguments args) throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
-    byte[] tokenIdArr = ByteArray.fromString(String.valueOf(args.tokenId));
+    byte[] tokenIdArr = ByteArray.fromString(String.valueOf(args.getTokenId()));
     if (tokenIdArr == null) {
       throw new JsonRpcInvalidParamsException("invalid param value: invalid tokenId");
     }
 
     TransferAssetContract.Builder build = TransferAssetContract.newBuilder();
     build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
-        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.to)))
+        .setToAddress(ByteString.copyFrom(addressCompatibleToByteArray(args.getTo())))
         .setAssetName(ByteString.copyFrom(tokenIdArr))
-        .setAmount(args.tokenValue);
+        .setAmount(args.getTokenValue());
 
     return createTransactionJson(build, ContractType.TransferAssetContract, args);
   }
@@ -984,7 +985,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
     byte[] fromAddressData;
     try {
-      fromAddressData = addressCompatibleToByteArray(args.from);
+      fromAddressData = addressCompatibleToByteArray(args.getFrom());
     } catch (JsonRpcInvalidParamsException e) {
       throw new JsonRpcInvalidRequestException("invalid json request");
     }
