@@ -3,31 +3,27 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class ContractTrcToken081 {
@@ -45,8 +41,8 @@ public class ContractTrcToken081 {
       .get(0);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private byte[] TokenReceiver = null;
-  private byte[] TokenSender = null;
+  private byte[] tokenReceiver = null;
+  private byte[] tokenSender = null;
 
   private String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
@@ -109,7 +105,7 @@ public class ContractTrcToken081 {
         + devAssetCountBefore);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken081.sol";
-    String contractName = "TokenReceiver";
+    String contractName = "tokenReceiver";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -117,38 +113,38 @@ public class ContractTrcToken081 {
 
     String tokenId = assetAccountId.toStringUtf8();
 
-    TokenReceiver = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+    tokenReceiver = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         500000000L, 100, null, dev001Key, dev001Address, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed
-        .getContract(TokenReceiver, blockingStubFull);
+        .getContract(tokenReceiver, blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
 
-    contractName = "TokenSender";
+    contractName = "tokenSender";
     retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     code = retMap.get("byteCode").toString();
     abi = retMap.get("abI").toString();
-    TokenSender = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        500000000L, 100, 10000L,assetAccountId.toStringUtf8(),
+    tokenSender = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        500000000L, 100, 10000L, assetAccountId.toStringUtf8(),
         10L, null, dev001Key, dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    smartContract = PublicMethed.getContract(TokenSender,
+    smartContract = PublicMethed.getContract(tokenSender,
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
     Long contractAssetCount = PublicMethed
-        .getAssetIssueValue(TokenSender, assetAccountId, blockingStubFull);
-    logger.info("TokenSender has AssetId before: " + assetAccountId.toStringUtf8() + ", Count: "
+        .getAssetIssueValue(tokenSender, assetAccountId, blockingStubFull);
+    logger.info("tokenSender has AssetId before: " + assetAccountId.toStringUtf8() + ", Count: "
         + contractAssetCount);
 
     Long devAssetCountAfterDeploy = PublicMethed
         .getAssetIssueValue(dev001Address, assetAccountId, blockingStubFull);
-    logger.info("after deploy tokenSender AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfter: "
-        + devAssetCountAfterDeploy);
-    Assert.assertTrue(10 == devAssetCountBefore-devAssetCountAfterDeploy);
+    logger.info("after deploy tokenSender AssetId: " + assetAccountId.toStringUtf8()
+        + ", devAssetCountAfter: " + devAssetCountAfterDeploy);
+    Assert.assertTrue(10 == devAssetCountBefore - devAssetCountAfterDeploy);
     Assert.assertTrue(10 == contractAssetCount);
 
   }
@@ -157,75 +153,77 @@ public class ContractTrcToken081 {
   @Test(enabled = true, description = "transfer 1 trc10 to contract by assembly")
   public void transferTokenToContract() {
     Long senderAssetCountBefore = PublicMethed
-        .getAssetIssueValue(TokenSender, assetAccountId, blockingStubFull);
-    logger.info("before trigger TokenSender has AssetId before: " + assetAccountId.toStringUtf8() + ", Count: "
-        + senderAssetCountBefore);
+        .getAssetIssueValue(tokenSender, assetAccountId, blockingStubFull);
+    logger.info("before trigger tokenSender has AssetId before: " + assetAccountId.toStringUtf8()
+        + ", Count: " + senderAssetCountBefore);
 
     Long receiverAssetCountBefore = PublicMethed
-        .getAssetIssueValue(TokenReceiver, assetAccountId, blockingStubFull);
-    logger.info("before trigger tokenReceiver AssetId: " + assetAccountId.toStringUtf8() + ", Count: "
-        + receiverAssetCountBefore);
-    String args = "\"" + Base58.encode58Check(TokenReceiver) + "\"";
+        .getAssetIssueValue(tokenReceiver, assetAccountId, blockingStubFull);
+    logger.info("before trigger tokenReceiver AssetId: " + assetAccountId.toStringUtf8()
+        + ", Count: " + receiverAssetCountBefore);
+    String args = "\"" + Base58.encode58Check(tokenReceiver) + "\"";
     logger.info("args: " + args);
     String triggerTxid = PublicMethed
-        .triggerContract(TokenSender, "sendTRC10(address)", args, false, 0,
-            1000000000L, assetAccountId.toStringUtf8(), 0, dev001Address, dev001Key, blockingStubFull);
+        .triggerContract(tokenSender, "sendTRC10(address)", args, false, 0, 1000000000L,
+            assetAccountId.toStringUtf8(), 0, dev001Address, dev001Key, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Optional<Protocol.TransactionInfo>  infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
+    Optional<Protocol.TransactionInfo>  infoById =
+        PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
 
     if (infoById.get().getResultValue() != 0) {
       Assert.fail("transaction failed with message: " + infoById.get().getResMessage());
     }
     Long senderAssetCountAfter = PublicMethed
-        .getAssetIssueValue(TokenSender, assetAccountId, blockingStubFull);
-    logger.info("TokenSender has AssetId After trigger: " + assetAccountId.toStringUtf8() + ", Count: "
-        + senderAssetCountAfter);
+        .getAssetIssueValue(tokenSender, assetAccountId, blockingStubFull);
+    logger.info("tokenSender has AssetId After trigger: " + assetAccountId.toStringUtf8()
+        + ", Count: " + senderAssetCountAfter);
 
     Long receiverAssetCountAfterTrigger = PublicMethed
-        .getAssetIssueValue(TokenReceiver, assetAccountId, blockingStubFull);
+        .getAssetIssueValue(tokenReceiver, assetAccountId, blockingStubFull);
     logger.info("after trigger AssetId: " + assetAccountId.toStringUtf8() + ", Count: "
         + receiverAssetCountAfterTrigger);
-    Assert.assertTrue(1 == senderAssetCountBefore-senderAssetCountAfter);
-    Assert.assertTrue(1 == receiverAssetCountAfterTrigger-receiverAssetCountBefore);
+    Assert.assertTrue(1 == senderAssetCountBefore - senderAssetCountAfter);
+    Assert.assertTrue(1 == receiverAssetCountAfterTrigger - receiverAssetCountBefore);
 
   }
 
   @Test(enabled = true, description = "transfer 1 trc10 to normal address by assembly")
   public void transferTokenToNormalAddress() {
     long senderAssetCountBefore = PublicMethed
-        .getAssetIssueValue(TokenSender, assetAccountId, blockingStubFull);
-    logger.info("TokenSender has AssetId After trigger: " + assetAccountId.toStringUtf8() + ", Count: "
-        + senderAssetCountBefore);
+        .getAssetIssueValue(tokenSender, assetAccountId, blockingStubFull);
+    logger.info("tokenSender has AssetId After trigger: " + assetAccountId.toStringUtf8()
+        + ", Count: " + senderAssetCountBefore);
 
     long devAssetCountBeforeTrigger = PublicMethed
         .getAssetIssueValue(dev001Address, assetAccountId, blockingStubFull);
-    logger.info("after trigger AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfterTrigger: "
-        + devAssetCountBeforeTrigger);
+    logger.info("after trigger AssetId: " + assetAccountId.toStringUtf8()
+        + ", devAssetCountAfterTrigger: " + devAssetCountBeforeTrigger);
 
     String args = "\"" + Base58.encode58Check(dev001Address) + "\"";
     logger.info("args: " + args);
     String triggerTxid = PublicMethed
-        .triggerContract(TokenSender, "sendTRC10(address)", args, false, 0,
-            1000000000L, assetAccountId.toStringUtf8(), 0, dev001Address, dev001Key, blockingStubFull);
+        .triggerContract(tokenSender, "sendTRC10(address)", args, false, 0, 1000000000L,
+            assetAccountId.toStringUtf8(), 0, dev001Address, dev001Key, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Optional<Protocol.TransactionInfo>  infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
+    Optional<Protocol.TransactionInfo>  infoById =
+        PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
 
     if (infoById.get().getResultValue() != 0) {
       Assert.fail("transaction failed with message: " + infoById.get().getResMessage());
     }
     long senderAssetCountAfter = PublicMethed
-        .getAssetIssueValue(TokenSender, assetAccountId, blockingStubFull);
-    logger.info("TokenSender has AssetId After trigger: " + assetAccountId.toStringUtf8() + ", Count: "
-        + senderAssetCountAfter);
+        .getAssetIssueValue(tokenSender, assetAccountId, blockingStubFull);
+    logger.info("tokenSender has AssetId After trigger: " + assetAccountId.toStringUtf8()
+        + ", Count: " + senderAssetCountAfter);
 
     long devAssetCountAfterTrigger = PublicMethed
         .getAssetIssueValue(dev001Address, assetAccountId, blockingStubFull);
-    logger.info("after trigger AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfterTrigger: "
-        + devAssetCountAfterTrigger);
+    logger.info("after trigger AssetId: " + assetAccountId.toStringUtf8()
+        + ", devAssetCountAfterTrigger: " + devAssetCountAfterTrigger);
     Assert.assertTrue(1 == senderAssetCountBefore - senderAssetCountAfter);
     Assert.assertTrue(1 == devAssetCountAfterTrigger - devAssetCountBeforeTrigger);
   }
