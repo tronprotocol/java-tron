@@ -21,7 +21,7 @@ if [ $BUILDKITE_PULL_REQUEST = "false" ]; then
   -Dsoanr.links.issue=https://github.com/tronprotocol/java-tron/issues \
   -Dsonar.branch.name=$BUILDKITE_BRANCH \
   -Dsonar.coverage.jacoco.xmlReportPaths=./common/build/reports/jacoco/test/jacocoTestReport.xml,./consensus/build/reports/jacoco/test/jacocoTestReport.xml,./chainbase/build/reports/jacoco/test/jacocoTestReport.xml,./actuator/build/reports/jacoco/test/jacocoTestReport.xml,./framework/build/reports/jacoco/test/jacocoTestReport.xml \
-  -Dsonar.login=1717c3c748ec2e0ea61e501b05458de243c4abcc > /data/checkStyle/sonar.log
+  -Dsonar.login=tobereplaced > /data/checkStyle/sonar.log
 
   sleep 100
 
@@ -61,7 +61,7 @@ else
   -Dsonar.pullrequest.branch=$BUILDKITE_BRANCH \
   -Dsonar.pullrequest.base=$BUILDKITE_PULL_REQUEST_BASE_BRANCH \
   -Dsonar.coverage.jacoco.xmlReportPaths=./common/build/reports/jacoco/test/jacocoTestReport.xml,./consensus/build/reports/jacoco/test/jacocoTestReport.xml,./chainbase/build/reports/jacoco/test/jacocoTestReport.xml,./actuator/build/reports/jacoco/test/jacocoTestReport.xml,./framework/build/reports/jacoco/test/jacocoTestReport.xml \
-  -Dsonar.login=1717c3c748ec2e0ea61e501b05458de243c4abcc > /data/checkStyle/sonar.log
+  -Dsonar.login=tobereplaced > /data/checkStyle/sonar.log
 
   sleep 100
 
