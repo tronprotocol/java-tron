@@ -21,28 +21,28 @@ import org.tron.protos.Protocol.Transaction.Contract;
 public class TransactionResult {
 
   @Getter
-  private String hash;
+  private final String hash;
   @Getter
-  private String nonce;
+  private final String nonce;
   @Getter
-  private String blockHash;
+  private final String blockHash;
   @Getter
-  private String blockNumber;
+  private final String blockNumber;
   @Getter
-  private String transactionIndex;
+  private final String transactionIndex;
 
   @Getter
-  private String from;
+  private final String from;
   @Getter
-  private String to;
+  private final String to;
   @Getter
-  private String gas;
+  private final String gas;
   @Getter
-  private String gasPrice;
+  private final String gasPrice;
   @Getter
-  private String value;
+  private final String value;
   @Getter
-  private String input;
+  private final String input;
 
   @Getter
   private String v;
@@ -50,9 +50,6 @@ public class TransactionResult {
   private String r;
   @Getter
   private String s;
-
-  @Getter
-  private String type = "0x0";
 
   private void parseSignature(Transaction tx) {
 

@@ -43,13 +43,13 @@ public class LogFilter {
    * construct one LogFilter from part parameters of FilterRequest
    */
   public LogFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
-    if (fr.address instanceof String) {
-      withContractAddress(addressToByteArray((String) fr.address));
+    if (fr.getAddress() instanceof String) {
+      withContractAddress(addressToByteArray((String) fr.getAddress()));
 
-    } else if (fr.address instanceof ArrayList) {
+    } else if (fr.getAddress() instanceof ArrayList) {
       List<byte[]> addr = new ArrayList<>();
       int i = 0;
-      for (Object s : (ArrayList) fr.address) {
+      for (Object s : (ArrayList) fr.getAddress()) {
         try {
           addr.add(addressToByteArray((String) s));
           i++;
@@ -60,16 +60,16 @@ public class LogFilter {
       }
       withContractAddress(addr.toArray(new byte[addr.size()][]));
 
-    } else if (fr.address != null) {
+    } else if (fr.getAddress() != null) {
       throw new JsonRpcInvalidParamsException("invalid addresses in query");
     }
 
-    if (fr.topics != null) {
+    if (fr.getTopics() != null) {
       //restrict depth of topics, because event has a signature and most 3 indexed parameters
-      if (fr.topics.length > 4) {
+      if (fr.getTopics().length > 4) {
         throw new JsonRpcInvalidParamsException("topics size should be <= 4");
       }
-      for (Object topic : fr.topics) {
+      for (Object topic : fr.getTopics()) {
         if (topic == null) {
           withTopic((byte[][]) null);
         } else if (topic instanceof String) {
@@ -100,17 +100,15 @@ public class LogFilter {
   /**
    * add contractAddress
    */
-  private LogFilter withContractAddress(byte[]... orAddress) {
+  private void withContractAddress(byte[]... orAddress) {
     contractAddresses = orAddress;
-    return this;
   }
 
   /**
    * add one or more topic
    */
-  private LogFilter withTopic(byte[]... orTopic) {
+  private void withTopic(byte[]... orTopic) {
     topics.add(orTopic);
-    return this;
   }
 
   /**

@@ -25,12 +25,12 @@ public class LogMatch {
   /**
    * query criteria
    */
-  private LogFilterWrapper logFilterWrapper;
+  private final LogFilterWrapper logFilterWrapper;
   /**
    * possible block number list
    */
-  private List<Long> blockNumList;
-  private Manager manager;
+  private final List<Long> blockNumList;
+  private final Manager manager;
 
   public LogMatch(LogFilterWrapper logFilterWrapper, List<Long> blockNumList, Manager manager) {
     this.logFilterWrapper = logFilterWrapper;
@@ -107,7 +107,7 @@ public class LogMatch {
       }
     }
 
-    return logFilterElementList.toArray(new LogFilterElement[logFilterElementList.size()]);
+    return logFilterElementList.toArray(new LogFilterElement[0]);
   }
 
 }
