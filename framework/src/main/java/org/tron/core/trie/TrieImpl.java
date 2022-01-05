@@ -648,7 +648,7 @@ public class TrieImpl implements Trie<byte[]> {
         return hash != null ? Hash.encodeElement(hash) : rlp;
       } else {
         NodeType type = getType();
-        byte[] ret;
+        byte[] ret = new byte[0];
         if (type == NodeType.BranchNode) {
           if (depth == 1 && async) {
             // parallelize encode() on the first trie level only and if there are at least
@@ -682,6 +682,9 @@ public class TrieImpl implements Trie<byte[]> {
             encoded[16] = constantFuture(Hash.encodeElement(value));
             try {
               ret = encodeRlpListFutures(encoded);
+            } catch (InterruptedException e) {
+              logger.warn("Encode interrupted.");
+              Thread.currentThread().interrupt();
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
