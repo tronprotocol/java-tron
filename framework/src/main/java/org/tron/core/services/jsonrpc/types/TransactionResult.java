@@ -43,6 +43,8 @@ public class TransactionResult {
   private final String value;
   @Getter
   private final String input;
+  @Getter
+  private final String type = "0x0";
 
   @Getter
   private String v;
