@@ -333,14 +333,16 @@ public interface TronJsonRpc {
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
       JsonRpcMethodNotFoundException, JsonRpcTooManyResultException;
 
-  @Value
   @AllArgsConstructor
   @ToString
   class SyncingResult {
 
-    String startingBlock;
-    String currentBlock;
-    String highestBlock;
+    @Getter
+    private final String startingBlock;
+    @Getter
+    private final String currentBlock;
+    @Getter
+    private final String highestBlock;
   }
 
   @ToString
