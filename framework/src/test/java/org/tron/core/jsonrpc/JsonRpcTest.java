@@ -39,9 +39,9 @@ public class JsonRpcTest {
     String data = getMethodSign("balanceOf(address)") + Hex.toHexString(addressDataWord);
 
     CallArguments transactionCall = new CallArguments();
-    transactionCall.from = ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress));
-    transactionCall.to = ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress));
-    transactionCall.data = data;
+    transactionCall.setFrom(ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress)));
+    transactionCall.setTo(ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress)));
+    transactionCall.setData(data);
 
     StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
     sb.append(transactionCall);
@@ -61,9 +61,9 @@ public class JsonRpcTest {
     String data = getMethodSign("name()");
 
     CallArguments transactionCall = new CallArguments();
-    transactionCall.from = ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress));
-    transactionCall.to = ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress));
-    transactionCall.data = data;
+    transactionCall.setFrom(ByteArray.toHexString(Commons.decodeFromBase58Check(ownerAddress)));
+    transactionCall.setTo(ByteArray.toHexString(Commons.decodeFromBase58Check(usdjAddress)));
+    transactionCall.setData(data);
 
     StringBuffer sb = new StringBuffer("{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[");
     sb.append(transactionCall);

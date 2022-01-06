@@ -2,7 +2,6 @@ package org.tron.core.services.jsonrpc;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
@@ -20,7 +19,7 @@ import org.tron.core.services.filter.HttpInterceptor;
 @Slf4j(topic = "API")
 public class FullNodeJsonRpcHttpService implements Service {
 
-  private int port = CommonParameter.getInstance().getJsonRpcHttpFullNodePort();
+  private final int port = CommonParameter.getInstance().getJsonRpcHttpFullNodePort();
 
   private Server server;
 
@@ -29,7 +28,6 @@ public class FullNodeJsonRpcHttpService implements Service {
 
   @Override
   public void init() {
-
   }
 
   @Override
@@ -54,7 +52,7 @@ public class FullNodeJsonRpcHttpService implements Service {
       // filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
-          .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
+          .addFilterWithMapping(HttpInterceptor.class, "/*",
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
 

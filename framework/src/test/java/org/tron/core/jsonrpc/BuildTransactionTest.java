@@ -90,9 +90,9 @@ public class BuildTransactionTest {
   @Test
   public void testTransferContract() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.to = "0x548794500882809695a8a687866e76d4271a1abc";
-    buildArguments.value = "0x1f4";
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setTo("0x548794500882809695a8a687866e76d4271a1abc");
+    buildArguments.setValue("0x1f4");
 
     try {
       ContractType contractType = buildArguments.getContractType(wallet);
@@ -105,10 +105,10 @@ public class BuildTransactionTest {
   @Test
   public void testTransferAssertContract() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.to = "0x548794500882809695a8a687866e76d4271a1abc";
-    buildArguments.tokenId = 1000016L;
-    buildArguments.tokenValue = 20L;
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setTo("0x548794500882809695a8a687866e76d4271a1abc");
+    buildArguments.setTokenId(1000016L);
+    buildArguments.setTokenValue(20L);
 
     try {
       ContractType contractType = buildArguments.getContractType(wallet);
@@ -121,10 +121,10 @@ public class BuildTransactionTest {
   @Test
   public void testCreateSmartContract() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.name = "transferTokenContract";
-    buildArguments.gas = "0x245498";
-    buildArguments.abi =
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setName("transferTokenContract");
+    buildArguments.setGas("0x245498");
+    buildArguments.setAbi(
         "[{\"constant\":false,\"inputs\":[],\"name\":\"getResultInCon\",\"outputs\":"
             + "[{\"name\":\"\",\"type\":\"trcToken\"},{\"name\":\"\",\"type\":\"uint256\"},"
             + "{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,"
@@ -138,8 +138,8 @@ public class BuildTransactionTest {
             + "{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],"
             + "\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},"
             + "{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\","
-            + "\"type\":\"constructor\"}]\n";
-    buildArguments.data =
+            + "\"type\":\"constructor\"}]\n");
+    buildArguments.setData(
         "6080604052d3600055d2600155346002556101418061001f6000396000f30060806040526004361061005657"
             + "63ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166305"
             + "c24200811461005b5780633be9ece71461008157806371dc08ce146100aa575b600080fd5b610063610"
@@ -148,12 +148,12 @@ public class BuildTransactionTest {
             + "b600054600154600254909192565b60405173ffffffffffffffffffffffffffffffffffffffff84169"
             + "082156108fc029083908590600081818185878a8ad0945050505050158015610107573d6000803e3d6"
             + "000fd5b50505050565bd3d2349091925600a165627a7a72305820a2fb39541e90eda9a2f5f9e7905ef"
-            + "98e66e60dd4b38e00b05de418da3154e7570029";
-    buildArguments.consumeUserResourcePercent = 100L;
-    buildArguments.originEnergyLimit = 11111111111111L;
-    buildArguments.value = "0x1f4";
-    buildArguments.tokenId = 1000033L;
-    buildArguments.tokenValue = 100000L;
+            + "98e66e60dd4b38e00b05de418da3154e7570029");
+    buildArguments.setConsumeUserResourcePercent(100L);
+    buildArguments.setOriginEnergyLimit(11111111111111L);
+    buildArguments.setValue("0x1f4");
+    buildArguments.setTokenId(1000033L);
+    buildArguments.setTokenValue(100000L);
 
     try {
       ContractType contractType = buildArguments.getContractType(wallet);
@@ -166,16 +166,16 @@ public class BuildTransactionTest {
   @Test
   public void testTriggerSmartContract() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.to = "0x" + CONTRACT_ADDRESS;
-    buildArguments.data =
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setTo("0x" + CONTRACT_ADDRESS);
+    buildArguments.setData(
         "0x3be9ece7000000000000000000000000ba8e28bdb6e49fbb3f5cd82a9f5ce8363587f1f6000000000000000"
             + "00000000000000000000000000000000000000000000f42630000000000000000000000000000000000"
-            + "000000000000000000000000000001";
-    buildArguments.gas = "0x245498";
-    buildArguments.value = "0xA";
-    buildArguments.tokenId = 1000035L;
-    buildArguments.tokenValue = 20L;
+            + "000000000000000000000000000001");
+    buildArguments.setGas("0x245498");
+    buildArguments.setValue("0xA");
+    buildArguments.setTokenId(1000035L);
+    buildArguments.setTokenValue(20L);
 
     try {
       ContractType contractType = buildArguments.getContractType(wallet);
@@ -188,8 +188,8 @@ public class BuildTransactionTest {
   @Test
   public void testNoToNoData() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.to = "0x548794500882809695a8a687866e76d4271a1abc";
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setTo("0x548794500882809695a8a687866e76d4271a1abc");
 
     try {
       ContractType contractType = buildArguments.getContractType(wallet);
