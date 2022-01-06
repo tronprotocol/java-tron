@@ -109,6 +109,9 @@ public class DiscoverServer {
         logger.warn("Restart discovery server after 5 sec pause...");
         Thread.sleep(5000);
       }
+    } catch (InterruptedException e) {
+      logger.warn("Discover server interrupted.");
+      Thread.currentThread().interrupt();
     } catch (Exception e) {
       logger.error("Start discovery server with port {} failed.", port, e);
     } finally {
