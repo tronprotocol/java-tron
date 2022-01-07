@@ -1,5 +1,6 @@
 package org.tron.core.jsonrpc;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -39,6 +41,8 @@ public class JsonrpcServiceTest {
   private static NodeInfoService nodeInfoService;
 
   private static BlockCapsule blockCapsule;
+  private static TransactionCapsule transactionCapsule1;
+  private static TransactionCapsule transactionCapsule2;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -83,13 +87,23 @@ public class JsonrpcServiceTest {
             (Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"))))
         .build();
 
-    blockCapsule
-        .addTransaction(new TransactionCapsule(transferContract1, ContractType.TransferContract));
-    blockCapsule
-        .addTransaction(new TransactionCapsule(transferContract2, ContractType.TransferContract));
+    transactionCapsule1 =
+        new TransactionCapsule(transferContract1, ContractType.TransferContract);
+    transactionCapsule1.setBlockNum(blockCapsule.getNum());
+    transactionCapsule2 =
+        new TransactionCapsule(transferContract2, ContractType.TransferContract);
+    transactionCapsule2.setBlockNum(2L);
+
+    blockCapsule.addTransaction(transactionCapsule1);
+    blockCapsule.addTransaction(transactionCapsule2);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1L);
     dbManager.getBlockIndexStore().put(blockCapsule.getBlockId());
     dbManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
+
+    dbManager.getTransactionStore()
+        .put(transactionCapsule1.getTransactionId().getBytes(), transactionCapsule1);
+    dbManager.getTransactionStore()
+        .put(transactionCapsule2.getTransactionId().getBytes(), transactionCapsule2);
 
     tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
   }
@@ -218,6 +232,28 @@ public class JsonrpcServiceTest {
         .assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
     Assert.assertNull(blockResult.getNonce());
 
+  }
+
+
+  @Test
+  public void testGetTransactionByHash() {
+    TransactionResult transactionResult = null;
+    try {
+      transactionResult = tronJsonRpc.getTransactionByHash(
+          "0x1111111111111111111111111111111111111111111111111111111111111111");
+    } catch (Exception e) {
+      Assert.fail();
+    }
+    Assert.assertNull(transactionResult);
+
+    try {
+      transactionResult = tronJsonRpc.getTransactionByHash(
+          ByteArray.toJsonHex(transactionCapsule1.getTransactionId().getBytes()));
+    } catch (Exception e) {
+      Assert.fail();
+    }
+    Assert.assertEquals(ByteArray.toJsonHex(transactionCapsule1.getBlockNum()),
+        transactionResult.getBlockNumber());
   }
 
 }
