@@ -193,12 +193,14 @@ public class JsonrpcServiceTest {
   public void testGetBlockByHash() {
     BlockResult blockResult = null;
     try {
-      blockResult = tronJsonRpc.ethGetBlockByHash(Hex.toHexString((blockCapsule.getBlockId().getBytes())), false);
+      blockResult = tronJsonRpc
+          .ethGetBlockByHash(Hex.toHexString((blockCapsule.getBlockId().getBytes())), false);
     } catch (Exception e) {
       Assert.fail();
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getNum()), blockResult.getNumber());
-    Assert.assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
+    Assert
+        .assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
   }
 
   @Test
@@ -212,7 +214,8 @@ public class JsonrpcServiceTest {
     }
 
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getNum()), blockResult.getNumber());
-    Assert.assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
+    Assert
+        .assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
     Assert.assertNull(blockResult.getNonce());
 
   }
