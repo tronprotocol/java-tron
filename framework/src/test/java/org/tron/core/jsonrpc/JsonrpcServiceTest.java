@@ -22,6 +22,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
+import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -179,11 +180,40 @@ public class JsonrpcServiceTest {
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getTransactions().size()), result);
 
     try {
-      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("0x1");
+      result = tronJsonRpc
+          .ethGetBlockTransactionCountByNumber(ByteArray.toJsonHex(blockCapsule.getNum()));
     } catch (Exception e) {
       Assert.fail();
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getTransactions().size()), result);
+
+  }
+
+  @Test
+  public void testGetBlockByHash() {
+    BlockResult blockResult = null;
+    try {
+      blockResult = tronJsonRpc.ethGetBlockByHash(Hex.toHexString((blockCapsule.getBlockId().getBytes())), false);
+    } catch (Exception e) {
+      Assert.fail();
+    }
+    Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getNum()), blockResult.getNumber());
+    Assert.assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
+  }
+
+  @Test
+  public void testGetBlockByNumber() {
+    BlockResult blockResult = null;
+    try {
+      blockResult = tronJsonRpc
+          .ethGetBlockByNumber(ByteArray.toJsonHex(blockCapsule.getNum()), false);
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getNum()), blockResult.getNumber());
+    Assert.assertEquals(blockCapsule.getTransactions().size(), blockResult.getTransactions().length);
+    Assert.assertNull(blockResult.getNonce());
 
   }
 
