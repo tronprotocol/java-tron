@@ -3,6 +3,7 @@ package org.tron.core.jsonrpc;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -10,15 +11,20 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
 
 @Slf4j
@@ -30,6 +36,8 @@ public class JsonrpcServiceTest {
   private static TronJsonRpcImpl tronJsonRpc;
   private static TronApplicationContext context;
   private static NodeInfoService nodeInfoService;
+
+  private static BlockCapsule blockCapsule;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -52,6 +60,35 @@ public class JsonrpcServiceTest {
             Protocol.AccountType.Normal,
             10000_000_000L);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
+
+    blockCapsule = new BlockCapsule(
+        1,
+        Sha256Hash.wrap(ByteString.copyFrom(
+            ByteArray.fromHexString(
+                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))),
+        1,
+        ByteString.copyFromUtf8("testAddress"));
+    TransferContract transferContract1 = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            (Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"))))
+        .build();
+
+    TransferContract transferContract2 = TransferContract.newBuilder()
+        .setAmount(2L)
+        .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            (Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"))))
+        .build();
+
+    blockCapsule
+        .addTransaction(new TransactionCapsule(transferContract1, ContractType.TransferContract));
+    blockCapsule
+        .addTransaction(new TransactionCapsule(transferContract2, ContractType.TransferContract));
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1L);
+    dbManager.getBlockIndexStore().put(blockCapsule.getBlockId());
+    dbManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
 
     tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
   }
@@ -78,6 +115,76 @@ public class JsonrpcServiceTest {
 
     Assert.assertEquals("0x1360118a9c9fd897720cf4e26de80683f402dd7c28e000aa98ea51b85c60161c",
         result);
+
+    try {
+      tronJsonRpc.web3Sha3("1122334455667788");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid input value", e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetBlockTransactionCountByHash() {
+    try {
+      tronJsonRpc.ethGetBlockTransactionCountByHash("0x111111");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid hash value", e.getMessage());
+    }
+
+    String result = "";
+    try {
+      result = tronJsonRpc.ethGetBlockTransactionCountByHash(
+          "0x1111111111111111111111111111111111111111111111111111111111111111");
+    } catch (Exception e) {
+      Assert.fail();
+    }
+    Assert.assertNull(result);
+
+    try {
+      result = tronJsonRpc.ethGetBlockTransactionCountByHash(
+          Hex.toHexString((blockCapsule.getBlockId().getBytes())));
+    } catch (Exception e) {
+      Assert.fail();
+    }
+    Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getTransactions().size()), result);
+
+  }
+
+  @Test
+  public void testGetBlockTransactionCountByNumber() {
+    String result = "";
+    try {
+      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("0x0");
+    } catch (Exception e) {
+      Assert.assertNull(result);
+    }
+
+    try {
+      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("pending");
+    } catch (Exception e) {
+      Assert.assertEquals("TAG pending not supported", e.getMessage());
+    }
+
+    try {
+      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("qqqqq");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    try {
+      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("latest");
+    } catch (Exception e) {
+      Assert.fail();
+    }
+    Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getTransactions().size()), result);
+
+    try {
+      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("0x1");
+    } catch (Exception e) {
+      Assert.fail();
+    }
+    Assert.assertEquals(ByteArray.toJsonHex(blockCapsule.getTransactions().size()), result);
+
   }
 
 }
