@@ -130,6 +130,14 @@ public class WalletCursorTest {
           + "PBFT", e.getMessage());
     }
 
+    String method = "test";
+    try {
+      tronJsonRpc.disableInPBFT(method);
+    } catch (Exception e) {
+      String expMsg = String.format("the method %s does not exist/is not available in PBFT", method);
+      Assert.assertEquals(expMsg, e.getMessage());
+    }
+
     dbManager.resetCursor();
   }
 

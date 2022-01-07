@@ -972,7 +972,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
     }
   }
 
-  private void disableInPBFT(String method) throws JsonRpcMethodNotFoundException {
+  public void disableInPBFT(String method) throws JsonRpcMethodNotFoundException {
     if (getSource() == RequestSource.PBFT) {
       String msg = String.format("the method %s does not exist/is not available in PBFT", method);
       throw new JsonRpcMethodNotFoundException(msg);
