@@ -116,7 +116,6 @@ public class BlockMsgHandler implements TronMsgHandler {
     if (flag) {
       if (fastForward) {
         advService.fastForward(new BlockMessage(block));
-        tronNetDelegate.trustNode(peer);
       } else {
         advService.broadcast(new BlockMessage(block));
       }
