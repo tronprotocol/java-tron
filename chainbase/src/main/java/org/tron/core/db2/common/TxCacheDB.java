@@ -61,14 +61,12 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     } else {
       throw new RuntimeException("db version is not supported.");
     }
-    // init cache from persistent store
-    init();
   }
 
   /**
    * this method only used for init, put all data in tran-cache into the two maps.
    */
-  private void init() {
+  public void init() {
     DBIterator iterator = (DBIterator) persistentStore.iterator();
     while (iterator.hasNext()) {
       Entry<byte[], byte[]> entry = iterator.next();

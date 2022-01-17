@@ -167,7 +167,7 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
   private int maxTransactionPendingSize = Args.getInstance().getMaxTransactionPendingSize();
-  @Autowired(required = false)
+  @Autowired
   @Getter
   private TransactionCache transactionCache;
   @Autowired
@@ -225,6 +225,8 @@ public class Manager {
   // log filter
   private boolean isRunFilterProcessThread = true;
   private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
+  // for test invoke
+  private boolean cacheInit;
 
   /**
    * Cycle thread to rePush Transactions
@@ -689,11 +691,20 @@ public class Manager {
 
   private boolean containsTransaction(byte[] transactionId) {
     if (transactionCache != null) {
+      initCache();
       return transactionCache.has(transactionId);
     }
 
     return chainBaseManager.getTransactionStore()
         .has(transactionId);
+  }
+
+  public void initCache() {
+    if (cacheInit) {
+      return;
+    }
+    transactionCache.initCache();
+    cacheInit = true;
   }
 
   /**

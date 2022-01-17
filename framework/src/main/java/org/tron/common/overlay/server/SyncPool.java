@@ -61,11 +61,20 @@ public class SyncPool {
 
   private int disconnectTimeout = 60_000;
 
+  private int poolLoopDelay = 30000;
+
   public void init() {
 
     channelManager = ctx.getBean(ChannelManager.class);
 
     peerClient = ctx.getBean(PeerClient.class);
+
+    long leftTime =  poolLoopDelay - (System.currentTimeMillis() - nodeManager.getStartTime());
+
+    if (leftTime > 0) {
+      logger.info("poolLoopExecutor initialDelay  {} ms ", leftTime);
+    }
+
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -74,7 +83,7 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, 30000, 3600, TimeUnit.MILLISECONDS);
+    }, leftTime, 3600, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {

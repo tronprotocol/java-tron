@@ -56,6 +56,7 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
+    dbManager.initCache();
     tronNetService.start();
     consensusService.start();
     MetricsUtil.init();

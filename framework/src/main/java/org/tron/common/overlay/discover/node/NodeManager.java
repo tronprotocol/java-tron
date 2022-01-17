@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -63,6 +64,9 @@ public class NodeManager implements EventHandler {
 
   private ScheduledExecutorService pongTimer;
 
+  @Getter
+  private long startTime;
+
   @Autowired
   public NodeManager(ChainBaseManager chainBaseManager) {
     this.chainBaseManager = chainBaseManager;
@@ -80,6 +84,7 @@ public class NodeManager implements EventHandler {
     table = new NodeTable(homeNode);
 
     this.pongTimer = Executors.newSingleThreadScheduledExecutor();
+    this.startTime = System.currentTimeMillis();
   }
 
   public ScheduledExecutorService getPongTimer() {
