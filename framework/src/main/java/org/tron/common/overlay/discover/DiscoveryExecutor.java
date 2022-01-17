@@ -43,6 +43,7 @@ public class DiscoveryExecutor {
     refresher.scheduleWithFixedDelay(
         new RefreshTask(nodeManager),
         1, KademliaOptions.BUCKET_REFRESH, TimeUnit.MILLISECONDS);
+    nodeManager.setStartTime(System.currentTimeMillis());
   }
 
   public void close() {

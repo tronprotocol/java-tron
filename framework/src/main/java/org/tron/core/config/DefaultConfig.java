@@ -15,6 +15,7 @@ import org.tron.core.db.RevokingStore;
 import org.tron.core.db.TransactionCache;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;
+import org.tron.core.db2.common.TxCacheDB;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
@@ -35,6 +36,9 @@ public class DefaultConfig {
 
   @Autowired
   public CommonConfig commonConfig;
+
+  @Autowired
+  private TxCacheDB txCacheDB;
 
   public DefaultConfig() {
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.error("Uncaught exception", e));
@@ -108,7 +112,7 @@ public class DefaultConfig {
   public TransactionCache transactionCache() {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (dbVersion == 2) {
-      return new TransactionCache("trans-cache");
+      return new TransactionCache(txCacheDB);
     }
 
     return null;

@@ -13,6 +13,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -62,6 +64,10 @@ public class NodeManager implements EventHandler {
   private Timer nodeManagerTasksTimer = new Timer("NodeManagerTasks");
 
   private ScheduledExecutorService pongTimer;
+
+  @Getter
+  @Setter
+  private long startTime;
 
   @Autowired
   public NodeManager(ChainBaseManager chainBaseManager) {

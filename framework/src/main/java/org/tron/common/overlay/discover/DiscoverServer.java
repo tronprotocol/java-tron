@@ -28,6 +28,8 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.PacketDecoder;
@@ -38,6 +40,7 @@ import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "discover")
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class DiscoverServer {
 
   @Autowired
