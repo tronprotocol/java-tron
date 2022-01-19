@@ -64,11 +64,7 @@ public class TriggerConstant013 {
   private String soliInPbft = Configuration.getByPath("testng.conf")
           .getStringList("solidityNode.ip.list").get(2);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
