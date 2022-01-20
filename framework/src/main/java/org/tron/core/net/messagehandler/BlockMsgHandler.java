@@ -100,8 +100,6 @@ public class BlockMsgHandler implements TronMsgHandler {
       return;
     }
 
-    Item item = new Item(blockId, InventoryType.BLOCK);
-
     long headNum = tronNetDelegate.getHeadBlockId().getNum();
     if (block.getNum() < headNum) {
       logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
