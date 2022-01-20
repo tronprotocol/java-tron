@@ -41,13 +41,17 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private int maxBlockSize = BLOCK_SIZE + Constant.ONE_THOUSAND;
 
+  private boolean fastForward = Args.getInstance().isFastForward();
+
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
     BlockMessage blockMessage = (BlockMessage) msg;
     BlockId blockId = blockMessage.getBlockId();
 
-    check(peer, blockMessage);
+    if (!fastForward && !peer.isFastForwardPeer()) {
+      check(peer, blockMessage);
+    }
 
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
       peer.getSyncBlockRequested().remove(blockId);
