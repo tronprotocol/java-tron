@@ -53,6 +53,8 @@ public class SyncPool {
 
   private int maxActivePeersWithSameIp = commonParameter.getNodeMaxActiveNodesWithSameIp();
 
+  private long initDelay = commonParameter.getSyncPoolInitDelay();
+
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
   private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -67,6 +69,8 @@ public class SyncPool {
 
     peerClient = ctx.getBean(PeerClient.class);
 
+    logger.info("PoolLoopExecutor initialDelay {} ms ", initDelay);
+
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         check();
@@ -74,7 +78,7 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, 30000, 3600, TimeUnit.MILLISECONDS);
+    }, initDelay, 3600, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {

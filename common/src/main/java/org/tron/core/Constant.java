@@ -294,5 +294,7 @@ public class Constant {
 
   public static final String  ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
 
+  public static final String  SYNC_POOL_INIT_DELAY = "node.syncPoolInitDelay";
+
   public static final String LOCAL_HOST = "127.0.0.1";
 }

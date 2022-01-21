@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -820,6 +821,9 @@ public class Args extends CommonParameter {
             ? config.getStringList(Constant.NODE_DISABLED_API_LIST)
             .stream().map(String::toLowerCase).collect(Collectors.toList())
             : Collections.emptyList();
+
+    PARAMETER.setSyncPoolInitDelay(config.hasPath(Constant.SYNC_POOL_INIT_DELAY) ? config
+        .getDuration(Constant.SYNC_POOL_INIT_DELAY, TimeUnit.MILLISECONDS) : 3000);
 
     logConfig();
   }
