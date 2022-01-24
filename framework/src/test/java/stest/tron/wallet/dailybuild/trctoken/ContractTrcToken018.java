@@ -65,11 +65,7 @@ public class ContractTrcToken018 {
   private byte[] tmpAddress = ecKey3.getAddress();
   private String tmp001Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

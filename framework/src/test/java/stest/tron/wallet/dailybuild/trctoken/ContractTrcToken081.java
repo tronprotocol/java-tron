@@ -53,12 +53,6 @@ public class ContractTrcToken081 {
   private byte[] dev001Address = ecKey1.getAddress();
   private String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
-
   /**
    * constructor.
    */
@@ -105,7 +99,7 @@ public class ContractTrcToken081 {
         + devAssetCountBefore);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken081.sol";
-    String contractName = "tokenReceiver";
+    String contractName = "TokenReceiver";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -122,7 +116,7 @@ public class ContractTrcToken081 {
     Assert.assertNotNull(smartContract.getAbi());
 
 
-    contractName = "tokenSender";
+    contractName = "TokenSender";
     retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     code = retMap.get("byteCode").toString();

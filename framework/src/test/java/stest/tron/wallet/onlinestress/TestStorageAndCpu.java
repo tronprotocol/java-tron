@@ -57,11 +57,7 @@ public class TestStorageAndCpu {
   private String fullnode = "47.94.243.150:50051";
   private String fullnode1 = "47.94.243.150:50051";
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
