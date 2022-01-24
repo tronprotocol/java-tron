@@ -99,7 +99,7 @@ public class ContractTrcToken081 {
         + devAssetCountBefore);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken081.sol";
-    String contractName = "tokenReceiver";
+    String contractName = "TokenReceiver";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -116,7 +116,7 @@ public class ContractTrcToken081 {
     Assert.assertNotNull(smartContract.getAbi());
 
 
-    contractName = "tokenSender";
+    contractName = "TokenSender";
     retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     code = retMap.get("byteCode").toString();
