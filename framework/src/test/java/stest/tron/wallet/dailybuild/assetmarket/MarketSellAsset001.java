@@ -60,6 +60,7 @@ public class MarketSellAsset001 {
       Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list").get(1);
   public String solidityNode =
       Configuration.getByPath("testng.conf").getStringList("solidityNode.ip.list").get(0);
+
   /** constructor. */
   @BeforeClass
   public void beforeClass() {
