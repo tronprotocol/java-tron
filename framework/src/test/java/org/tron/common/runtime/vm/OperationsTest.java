@@ -16,6 +16,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.vm.JumpTable;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
@@ -30,6 +31,7 @@ public class OperationsTest {
 
   private ProgramInvokeMockImpl invoke;
   private Program program;
+  private final JumpTable jumpTable = OperationRegistry.newTronV1OperationSet();
 
   @BeforeClass
   public static void init() {
@@ -40,14 +42,6 @@ public class OperationsTest {
     VMConfig.initAllowTvmIstanbul(1);
     VMConfig.initAllowTvmLondon(1);
     VMConfig.initAllowTvmCompatibleEvm(1);
-    OperationRegistry.newBaseOperation();
-    OperationRegistry.newAllowTvmTransferTrc10Operation();
-    OperationRegistry.newAllowTvmConstantinopleOperation();
-    OperationRegistry.newAllowTvmSolidity059Operation();
-    OperationRegistry.newAllowTvmIstanbulOperation();
-    OperationRegistry.newAllowTvmFreezeOperation();
-    OperationRegistry.newAllowTvmVoteOperation();
-    OperationRegistry.newAllowTvmLondonOperation();
   }
 
   @AfterClass
@@ -63,9 +57,10 @@ public class OperationsTest {
 
   @Test
   public void testStackUnderFlow() {
+    VM.setJumpTable(jumpTable);
     for (int i = 0; i < 256; i++) {
-      Operation op = OperationRegistry.get(i);
-      if (op != null) {
+      Operation op = jumpTable.get(i);
+      if (op.isEnabled()) {
         Program context = buildEmptyContext(new byte[]{(byte) op.getOpcode()});
         VM.play(context);
 
@@ -79,9 +74,10 @@ public class OperationsTest {
 
   @Test
   public void testStackOverFlow() {
+    VM.setJumpTable(jumpTable);
     for (int i = 0; i < 256; i++) {
-      Operation op = OperationRegistry.get(i);
-      if (op != null) {
+      Operation op = jumpTable.get(i);
+      if (op.isEnabled()) {
         Program context = buildEmptyContext(new byte[]{(byte) op.getOpcode()});
         for (int j = 0; j < 1024; j++) {
           context.stackPushZero();
@@ -842,8 +838,8 @@ public class OperationsTest {
           program.saveOpTrace();
         }
         try {
-          Operation op = OperationRegistry.get(program.getCurrentOpIntValue());
-          if (op == null) {
+          Operation op = jumpTable.get(program.getCurrentOpIntValue());
+          if (!op.isEnabled()) {
             throw Program.Exception.invalidOpCode(program.getCurrentOp());
           }
           program.setLastOp((byte) op.getOpcode());
@@ -884,8 +880,8 @@ public class OperationsTest {
   private void testSingleOperation(Program program) {
     try {
       try {
-        Operation op = OperationRegistry.get(program.getCurrentOpIntValue());
-        if (op == null) {
+        Operation op = jumpTable.get(program.getCurrentOpIntValue());
+        if (!op.isEnabled()) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
         program.setLastOp((byte) op.getOpcode());

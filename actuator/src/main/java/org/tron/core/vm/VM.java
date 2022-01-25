@@ -1,5 +1,6 @@
 package org.tron.core.vm;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
@@ -12,6 +13,9 @@ import org.tron.core.vm.program.Program.TransferException;
 @Slf4j(topic = "VM")
 public class VM {
 
+  @Setter
+  private static JumpTable jumpTable;
+
   public static void play(Program program) {
     try {
       while (!program.isStopped()) {
@@ -20,8 +24,8 @@ public class VM {
         }
 
         try {
-          Operation op = OperationRegistry.get(program.getCurrentOpIntValue());
-          if (op == null) {
+          Operation op = jumpTable.get(program.getCurrentOpIntValue());
+          if (!op.isEnabled()) {
             throw Program.Exception.invalidOpCode(program.getCurrentOp());
           }
           program.setLastOp((byte) op.getOpcode());

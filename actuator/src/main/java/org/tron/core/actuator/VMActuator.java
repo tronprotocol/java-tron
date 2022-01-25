@@ -34,6 +34,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.LogInfoTriggerParser;
+import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
@@ -80,7 +81,7 @@ public class VMActuator implements Actuator2 {
 
   @Getter
   @Setter
-  private boolean isConstantCall = false;
+  private boolean isConstantCall;
 
   @Setter
   private boolean enableEventListener;
@@ -111,6 +112,7 @@ public class VMActuator implements Actuator2 {
     //Load Config
     ConfigLoader.load(context.getStoreFactory());
     trx = context.getTrxCap().getInstance();
+    VM.setJumpTable(OperationRegistry.getTableByTx(trx));
     blockCap = context.getBlockCap();
     if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {
       receipt = context.getTrxCap().getTrxTrace().getReceipt();
@@ -335,8 +337,8 @@ public class VMActuator implements Actuator2 {
       long feeLimit = trx.getRawData().getFeeLimit();
       if (feeLimit < 0 || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
         logger.info("invalid feeLimit {}", feeLimit);
-        throw new ContractValidateException(
-            "feeLimit must be >= 0 and <= " + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
+        throw new ContractValidateException("feeLimit must be >= 0 and <= "
+            + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
       }
       AccountCapsule creator = rootRepository
           .getAccount(newSmartContract.getOriginAddress().toByteArray());
@@ -466,8 +468,8 @@ public class VMActuator implements Actuator2 {
       long feeLimit = trx.getRawData().getFeeLimit();
       if (feeLimit < 0 || feeLimit > rootRepository.getDynamicPropertiesStore().getMaxFeeLimit()) {
         logger.info("invalid feeLimit {}", feeLimit);
-        throw new ContractValidateException(
-            "feeLimit must be >= 0 and <= " + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
+        throw new ContractValidateException("feeLimit must be >= 0 and <= "
+            + rootRepository.getDynamicPropertiesStore().getMaxFeeLimit());
       }
       AccountCapsule caller = rootRepository.getAccount(callerAddress);
       long energyLimit;
@@ -670,7 +672,8 @@ public class VMActuator implements Actuator2 {
     } else {
       if (consumeUserResourcePercent < VMConstant.ONE_HUNDRED) {
         // creatorEnergyLimit =
-        // min(callerEnergyLimit * (100 - percent) / percent, creatorLeftFrozenEnergy, originEnergyLimit)
+        // min(callerEnergyLimit * (100 - percent) / percent,
+        //   creatorLeftFrozenEnergy, originEnergyLimit)
 
         creatorEnergyLimit = min(
             BigInteger.valueOf(callerEnergyLimit)
