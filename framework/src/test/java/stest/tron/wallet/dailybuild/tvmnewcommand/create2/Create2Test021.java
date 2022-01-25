@@ -63,11 +63,7 @@ public class Create2Test021 {
   private byte[] contractExcAddress = ecKey3.getAddress();
   private String contractExcKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
