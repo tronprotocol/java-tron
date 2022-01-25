@@ -1,342 +1,540 @@
 package org.tron.core.vm;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BooleanSupplier;
+
+import org.tron.core.vm.config.VMConfig;
+import org.tron.protos.Protocol;
+
 public class OperationRegistry {
 
-  private static final int NUM_OPERATIONS = 256;
-
-  private static final Operation[] operations = new Operation[NUM_OPERATIONS];
-
-  public static Operation get(final int opcode) {
-    return operations[opcode];
+  public enum Version {
+    TRON_V1,
+    // add more
+    // TRON_V2,
+    // ETH
   }
 
-  public static Operation get(final byte opcode) {
-    return operations[opcode & 0xff];
+  private static final Map<Version, JumpTable> tableMap = new HashMap<>();
+
+  static {
+    tableMap.put(Version.TRON_V1, newTronV1OperationSet());
   }
 
-  // only for test
-  public static void clearOperations() {
-    for (int i = 0; i < NUM_OPERATIONS; i++) {
-      operations[i] = null;
-    }
+  public static JumpTable newTronV1OperationSet() {
+    JumpTable table = newBaseOperationSet();
+    appendTransferTrc10Operations(table);
+    appendConstantinopleOperations(table);
+    appendSolidity059Operations(table);
+    appendIstanbulOperations(table);
+    appendFreezeOperations(table);
+    appendVoteOperations(table);
+    appendLondonOperations(table);
+    return table;
   }
 
-  public static void newBaseOperation() {
-    // if already loaded, return
-    if (operations[Op.SUICIDE] != null) {
-      return;
-    }
+  public static JumpTable getTableByTx(Protocol.Transaction ignored) {
+    Version ver = Version.TRON_V1;
+    // implement as needed
+    // switch (tx.getType()) {
+    // }
+    return tableMap.get(ver);
+  }
 
-    operations[Op.STOP] = new Operation(Op.STOP, 0, 0,
-        EnergyCost::getZeroTierCost, OperationActions::stopAction);
+  public static JumpTable newBaseOperationSet() {
+    JumpTable table = new JumpTable();
 
-    operations[Op.ADD] = new Operation(Op.ADD, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::addAction);
+    table.set(new Operation(
+        Op.STOP, 0, 0,
+        EnergyCost::getZeroTierCost,
+        OperationActions::stopAction));
 
-    operations[Op.MUL] = new Operation(Op.MUL, 2, 1,
-        EnergyCost::getLowTierCost, OperationActions::mulAction);
+    table.set(new Operation(
+        Op.ADD, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::addAction));
 
-    operations[Op.SUB] = new Operation(Op.SUB, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::subAction);
+    table.set(new Operation(
+        Op.MUL, 2, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::mulAction));
 
-    operations[Op.DIV] = new Operation(Op.DIV, 2, 1,
-        EnergyCost::getLowTierCost, OperationActions::divAction);
+    table.set(new Operation(
+        Op.SUB, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::subAction));
 
-    operations[Op.SDIV] = new Operation(Op.SDIV, 2, 1,
-        EnergyCost::getLowTierCost, OperationActions::sdivAction);
+    table.set(new Operation(
+        Op.DIV, 2, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::divAction));
 
-    operations[Op.MOD] = new Operation(Op.MOD, 2, 1,
-        EnergyCost::getLowTierCost, OperationActions::modAction);
+    table.set(new Operation(
+        Op.SDIV, 2, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::sdivAction));
 
-    operations[Op.SMOD] = new Operation(Op.SMOD, 2, 1,
-        EnergyCost::getLowTierCost, OperationActions::sModAction);
+    table.set(new Operation(
+        Op.MOD, 2, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::modAction));
 
-    operations[Op.ADDMOD] = new Operation(Op.ADDMOD, 3, 1,
-        EnergyCost::getMidTierCost, OperationActions::addModAction);
+    table.set(new Operation(
+        Op.SMOD, 2, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::sModAction));
 
-    operations[Op.MULMOD] = new Operation(Op.MULMOD, 3, 1,
-        EnergyCost::getMidTierCost, OperationActions::mulModAction);
+    table.set(new Operation(
+        Op.ADDMOD, 3, 1,
+        EnergyCost::getMidTierCost,
+        OperationActions::addModAction));
 
-    operations[Op.EXP] = new Operation(Op.EXP, 2, 1,
-        EnergyCost::getExpCost, OperationActions::expAction);
+    table.set(new Operation(
+        Op.MULMOD, 3, 1,
+        EnergyCost::getMidTierCost,
+        OperationActions::mulModAction));
 
-    operations[Op.SIGNEXTEND] = new Operation(Op.SIGNEXTEND, 2, 1,
-        EnergyCost::getLowTierCost, OperationActions::signExtendAction);
+    table.set(new Operation(
+        Op.EXP, 2, 1,
+        EnergyCost::getExpCost,
+        OperationActions::expAction));
 
-    operations[Op.LT] = new Operation(Op.LT, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::ltAction);
+    table.set(new Operation(
+        Op.SIGNEXTEND, 2, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::signExtendAction));
 
-    operations[Op.GT] = new Operation(Op.GT, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::gtAction);
+    table.set(new Operation(
+        Op.LT, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::ltAction));
 
-    operations[Op.SLT] = new Operation(Op.SLT, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::sltAction);
+    table.set(new Operation(
+        Op.GT, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::gtAction));
 
-    operations[Op.SGT] = new Operation(Op.SGT, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::sgtAction);
+    table.set(new Operation(
+        Op.SLT, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::sltAction));
 
-    operations[Op.EQ] = new Operation(Op.EQ, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::eqAction);
+    table.set(new Operation(
+        Op.SGT, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::sgtAction));
 
-    operations[Op.ISZERO] = new Operation(Op.ISZERO, 1, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::isZeroAction);
+    table.set(new Operation(
+        Op.EQ, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::eqAction));
 
-    operations[Op.AND] = new Operation(Op.AND, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::andAction);
+    table.set(new Operation(
+        Op.ISZERO, 1, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::isZeroAction));
 
-    operations[Op.OR] = new Operation(Op.OR, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::orAction);
+    table.set(new Operation(
+        Op.AND, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::andAction));
 
-    operations[Op.XOR] = new Operation(Op.XOR, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::xorAction);
+    table.set(new Operation(
+        Op.OR, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::orAction));
 
-    operations[Op.NOT] = new Operation(Op.NOT, 1, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::notAction);
+    table.set(new Operation(
+        Op.XOR, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::xorAction));
 
-    operations[Op.BYTE] = new Operation(Op.BYTE, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::byteAction);
+    table.set(new Operation(
+        Op.NOT, 1, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::notAction));
 
-    operations[Op.SHA3] = new Operation(Op.SHA3, 2, 1,
-        EnergyCost::getSha3Cost, OperationActions::sha3Action);
+    table.set(new Operation(
+        Op.BYTE, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::byteAction));
 
-    operations[Op.ADDRESS] = new Operation(Op.ADDRESS, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::addressAction);
+    table.set(new Operation(
+        Op.SHA3, 2, 1,
+        EnergyCost::getSha3Cost,
+        OperationActions::sha3Action));
 
-    operations[Op.BALANCE] = new Operation(Op.BALANCE, 1, 1,
-        EnergyCost::getBalanceCost, OperationActions::balanceAction);
+    table.set(new Operation(
+        Op.ADDRESS, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::addressAction));
 
-    operations[Op.ORIGIN] = new Operation(Op.ORIGIN, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::originAction);
+    table.set(new Operation(
+        Op.BALANCE, 1, 1,
+        EnergyCost::getBalanceCost,
+        OperationActions::balanceAction));
 
-    operations[Op.CALLER] = new Operation(Op.CALLER, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::callerAction);
+    table.set(new Operation(
+        Op.ORIGIN, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::originAction));
 
-    operations[Op.CALLVALUE] = new Operation(Op.CALLVALUE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::callValueAction);
+    table.set(new Operation(
+        Op.CALLER, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::callerAction));
 
-    operations[Op.CALLDATALOAD] = new Operation(Op.CALLDATALOAD, 1, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::callDataLoadAction);
+    table.set(new Operation(
+        Op.CALLVALUE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::callValueAction));
 
-    operations[Op.CALLDATASIZE] = new Operation(Op.CALLDATASIZE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::callDataSizeAction);
+    table.set(new Operation(
+        Op.CALLDATALOAD, 1, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::callDataLoadAction));
 
-    operations[Op.CALLDATACOPY] = new Operation(Op.CALLDATACOPY, 3, 0,
-        EnergyCost::getCallDataCopyCost, OperationActions::callDataCopyAction);
+    table.set(new Operation(
+        Op.CALLDATASIZE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::callDataSizeAction));
 
-    operations[Op.CODESIZE] = new Operation(Op.CODESIZE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::codeSizeAction);
+    table.set(new Operation(
+        Op.CALLDATACOPY, 3, 0,
+        EnergyCost::getCallDataCopyCost,
+        OperationActions::callDataCopyAction));
 
-    operations[Op.CODECOPY] = new Operation(Op.CODECOPY, 3, 0,
-        EnergyCost::getCodeCopyCost, OperationActions::codeCopyAction);
+    table.set(new Operation(
+        Op.CODESIZE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::codeSizeAction));
 
-    operations[Op.RETURNDATASIZE] = new Operation(Op.RETURNDATASIZE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::returnDataSizeAction);
+    table.set(new Operation(
+        Op.CODECOPY, 3, 0,
+        EnergyCost::getCodeCopyCost,
+        OperationActions::codeCopyAction));
 
-    operations[Op.RETURNDATACOPY] = new Operation(Op.RETURNDATACOPY, 3, 0,
-        EnergyCost::getReturnDataCopyCost, OperationActions::returnDataCopyAction);
+    table.set(new Operation(
+        Op.RETURNDATASIZE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::returnDataSizeAction));
 
-    operations[Op.GASPRICE] = new Operation(Op.GASPRICE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::gasPriceAction);
+    table.set(new Operation(
+        Op.RETURNDATACOPY, 3, 0,
+        EnergyCost::getReturnDataCopyCost,
+        OperationActions::returnDataCopyAction));
 
-    operations[Op.EXTCODESIZE] = new Operation(Op.EXTCODESIZE, 1, 1,
-        EnergyCost::getExtCodeSizeCost, OperationActions::extCodeSizeAction);
+    table.set(new Operation(
+        Op.GASPRICE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::gasPriceAction));
 
-    operations[Op.EXTCODECOPY] = new Operation(Op.EXTCODECOPY, 4, 0,
-        EnergyCost::getExtCodeCopyCost, OperationActions::extCodeCopyAction);
+    table.set(new Operation(
+        Op.EXTCODESIZE, 1, 1,
+        EnergyCost::getExtCodeSizeCost,
+        OperationActions::extCodeSizeAction));
 
-    operations[Op.BLOCKHASH] = new Operation(Op.BLOCKHASH, 1, 1,
-        EnergyCost::getExtTierCost, OperationActions::blockHashAction);
+    table.set(new Operation(
+        Op.EXTCODECOPY, 4, 0,
+        EnergyCost::getExtCodeCopyCost,
+        OperationActions::extCodeCopyAction));
 
-    operations[Op.COINBASE] = new Operation(Op.COINBASE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::coinBaseAction);
+    table.set(new Operation(
+        Op.BLOCKHASH, 1, 1,
+        EnergyCost::getExtTierCost,
+        OperationActions::blockHashAction));
 
-    operations[Op.TIMESTAMP] = new Operation(Op.TIMESTAMP, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::timeStampAction);
+    table.set(new Operation(
+        Op.COINBASE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::coinBaseAction));
 
-    operations[Op.NUMBER] = new Operation(Op.NUMBER, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::numberAction);
+    table.set(new Operation(
+        Op.TIMESTAMP, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::timeStampAction));
 
-    operations[Op.DIFFICULTY] = new Operation(Op.DIFFICULTY, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::difficultyAction);
+    table.set(new Operation(
+        Op.NUMBER, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::numberAction));
 
-    operations[Op.GASLIMIT] = new Operation(Op.GASLIMIT, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::gasLimitAction);
+    table.set(new Operation(
+        Op.DIFFICULTY, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::difficultyAction));
 
-    operations[Op.POP] = new Operation(Op.POP, 1, 0,
-        EnergyCost::getBaseTierCost, OperationActions::popAction);
+    table.set(new Operation(
+        Op.GASLIMIT, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::gasLimitAction));
 
-    operations[Op.MLOAD] = new Operation(Op.MLOAD, 1, 1,
-        EnergyCost::getMloadCost, OperationActions::mLoadAction);
+    table.set(new Operation(
+        Op.POP, 1, 0,
+        EnergyCost::getBaseTierCost,
+        OperationActions::popAction));
 
-    operations[Op.MSTORE] = new Operation(Op.MSTORE, 2, 0,
-        EnergyCost::getMStoreCost, OperationActions::mStoreAction);
+    table.set(new Operation(
+        Op.MLOAD, 1, 1,
+        EnergyCost::getMloadCost,
+        OperationActions::mLoadAction));
 
-    operations[Op.MSTORE8] = new Operation(Op.MSTORE8, 2, 0,
-        EnergyCost::getMStore8Cost, OperationActions::mStore8Action);
+    table.set(new Operation(
+        Op.MSTORE, 2, 0,
+        EnergyCost::getMStoreCost,
+        OperationActions::mStoreAction));
 
-    operations[Op.SLOAD] = new Operation(Op.SLOAD, 1, 1,
-        EnergyCost::getSloadCost, OperationActions::sLoadAction);
+    table.set(new Operation(
+        Op.MSTORE8, 2, 0,
+        EnergyCost::getMStore8Cost,
+        OperationActions::mStore8Action));
 
-    operations[Op.SSTORE] = new Operation(Op.SSTORE, 2, 0,
-        EnergyCost::getSstoreCost, OperationActions::sStoreAction);
+    table.set(new Operation(
+        Op.SLOAD, 1, 1,
+        EnergyCost::getSloadCost,
+        OperationActions::sLoadAction));
 
-    operations[Op.JUMP] = new Operation(Op.JUMP, 1, 0,
-        EnergyCost::getMidTierCost, OperationActions::jumpAction);
+    table.set(new Operation(
+        Op.SSTORE, 2, 0,
+        EnergyCost::getSstoreCost,
+        OperationActions::sStoreAction));
 
-    operations[Op.JUMPI] = new Operation(Op.JUMPI, 2, 0,
-        EnergyCost::getHighTierCost, OperationActions::jumpIAction);
+    table.set(new Operation(
+        Op.JUMP, 1, 0,
+        EnergyCost::getMidTierCost,
+        OperationActions::jumpAction));
 
-    operations[Op.PC] = new Operation(Op.PC, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::pcAction);
+    table.set(new Operation(
+        Op.JUMPI, 2, 0,
+        EnergyCost::getHighTierCost,
+        OperationActions::jumpIAction));
 
-    operations[Op.MSIZE] = new Operation(Op.MSIZE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::mSizeAction);
+    table.set(new Operation(
+        Op.PC, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::pcAction));
 
-    operations[Op.GAS] = new Operation(Op.GAS, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::gasAction);
+    table.set(new Operation(
+        Op.MSIZE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::mSizeAction));
 
-    operations[Op.JUMPDEST] = new Operation(Op.JUMPDEST, 0, 0,
-        EnergyCost::getSpecialTierCost, OperationActions::jumpDestAction);
+    table.set(new Operation(
+        Op.GAS, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::gasAction));
+
+    table.set(new Operation(
+        Op.JUMPDEST, 0, 0,
+        EnergyCost::getSpecialTierCost,
+        OperationActions::jumpDestAction));
 
     for (int i = 0; i < 32; i++) {
-      operations[Op.PUSH1 + i] = new Operation(Op.PUSH1 + i, 0, 1,
-          EnergyCost::getVeryLowTierCost, OperationActions::pushAction);
+      table.set(new Operation(
+          Op.PUSH1 + i, 0, 1,
+          EnergyCost::getVeryLowTierCost,
+          OperationActions::pushAction));
     }
 
     for (int i = 0; i < 16; i++) {
-      operations[Op.DUP1 + i] = new Operation(Op.DUP1 + i, 1 + i, 2 + i,
-          EnergyCost::getVeryLowTierCost, OperationActions::dupAction);
+      table.set(new Operation(
+          Op.DUP1 + i, 1 + i, 2 + i,
+          EnergyCost::getVeryLowTierCost,
+          OperationActions::dupAction));
     }
 
     for (int i = 0; i < 16; i++) {
-      operations[Op.SWAP1 + i] = new Operation(Op.SWAP1 + i, 2 + i, 2 + i,
-          EnergyCost::getVeryLowTierCost, OperationActions::swapAction);
+      table.set(new Operation(
+          Op.SWAP1 + i, 2 + i, 2 + i,
+          EnergyCost::getVeryLowTierCost,
+          OperationActions::swapAction));
     }
 
     for (int i = 0; i <= 4; i++) {
-      operations[Op.LOG0 + i] = new Operation(Op.LOG0 + i, 2 + i, 0,
-          EnergyCost::getLogCost, OperationActions::logAction);
+      table.set(new Operation(
+          Op.LOG0 + i, 2 + i, 0,
+          EnergyCost::getLogCost,
+          OperationActions::logAction));
     }
 
-    operations[Op.CREATE] = new Operation(Op.CREATE, 3, 1,
-        EnergyCost::getCreateCost, OperationActions::createAction);
+    table.set(new Operation(
+        Op.CREATE, 3, 1,
+        EnergyCost::getCreateCost,
+        OperationActions::createAction));
 
-    operations[Op.CALL] = new Operation(Op.CALL, 7, 1,
-        EnergyCost::getCallCost, OperationActions::callAction);
+    table.set(new Operation(
+        Op.CALL, 7, 1,
+        EnergyCost::getCallCost,
+        OperationActions::callAction));
 
-    operations[Op.CALLCODE] = new Operation(Op.CALLCODE, 7, 1,
-        EnergyCost::getCallCodeCost, OperationActions::callCodeAction);
+    table.set(new Operation(
+        Op.CALLCODE, 7, 1,
+        EnergyCost::getCallCodeCost,
+        OperationActions::callCodeAction));
 
-    operations[Op.RETURN] = new Operation(Op.RETURN, 2, 0,
-        EnergyCost::getReturnCost, OperationActions::returnAction);
+    table.set(new Operation(
+        Op.RETURN, 2, 0,
+        EnergyCost::getReturnCost,
+        OperationActions::returnAction));
 
-    operations[Op.DELEGATECALL] = new Operation(Op.DELEGATECALL, 6, 1,
-        EnergyCost::getDelegateCallCost, OperationActions::delegateCallAction);
+    table.set(new Operation(
+        Op.DELEGATECALL, 6, 1,
+        EnergyCost::getDelegateCallCost,
+        OperationActions::delegateCallAction));
 
-    operations[Op.STATICCALL] = new Operation(Op.STATICCALL, 6, 1,
-        EnergyCost::getStaticCallCost, OperationActions::staticCallAction);
+    table.set(new Operation(
+        Op.STATICCALL, 6, 1,
+        EnergyCost::getStaticCallCost,
+        OperationActions::staticCallAction));
 
-    operations[Op.REVERT] = new Operation(Op.REVERT, 2, 0,
-        EnergyCost::getRevertCost, OperationActions::revertAction);
+    table.set(new Operation(
+        Op.REVERT, 2, 0,
+        EnergyCost::getRevertCost,
+        OperationActions::revertAction));
 
-    operations[Op.SUICIDE] = new Operation(Op.SUICIDE, 1, 0,
-        EnergyCost::getSuicideCost, OperationActions::suicideAction);
+    table.set(new Operation(
+        Op.SUICIDE, 1, 0,
+        EnergyCost::getSuicideCost,
+        OperationActions::suicideAction));
+
+    return table;
   }
 
-  public static void newAllowTvmTransferTrc10Operation() {
-    // if already loaded, return
-    if (operations[Op.CALLTOKENID] != null) {
-      return;
-    }
-    operations[Op.CALLTOKEN] = new Operation(Op.CALLTOKEN, 8, 1,
-        EnergyCost::getCallTokenCost, OperationActions::callTokenAction);
+  public static void appendTransferTrc10Operations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmTransferTrc10;
 
-    operations[Op.TOKENBALANCE] = new Operation(Op.TOKENBALANCE, 2, 1,
-        EnergyCost::getBalanceCost, OperationActions::tokenBalanceAction);
+    table.set(new Operation(
+        Op.CALLTOKEN, 8, 1,
+        EnergyCost::getCallTokenCost,
+        OperationActions::callTokenAction,
+        proposal));
 
-    operations[Op.CALLTOKENVALUE] = new Operation(Op.CALLTOKENVALUE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::callTokenValueAction);
+    table.set(new Operation(
+        Op.TOKENBALANCE, 2, 1,
+        EnergyCost::getBalanceCost,
+        OperationActions::tokenBalanceAction,
+        proposal));
 
-    operations[Op.CALLTOKENID] = new Operation(Op.CALLTOKENID, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::callTokenIdAction);
+    table.set(new Operation(
+        Op.CALLTOKENVALUE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::callTokenValueAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.CALLTOKENID, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::callTokenIdAction,
+        proposal));
   }
 
-  public static void newAllowTvmConstantinopleOperation() {
-    // if already loaded, return
-    if (operations[Op.EXTCODEHASH] != null) {
-      return;
-    }
-    operations[Op.SHL] = new Operation(Op.SHL, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::shlAction);
+  public static void appendConstantinopleOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmConstantinople;
 
-    operations[Op.SHR] = new Operation(Op.SHR, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::shrAction);
+    table.set(new Operation(
+        Op.SHL, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::shlAction,
+        proposal));
 
-    operations[Op.SAR] = new Operation(Op.SAR, 2, 1,
-        EnergyCost::getVeryLowTierCost, OperationActions::sarAction);
+    table.set(new Operation(
+        Op.SHR, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::shrAction,
+        proposal));
 
-    operations[Op.CREATE2] = new Operation(Op.CREATE2, 4, 1,
-        EnergyCost::getCreate2Cost, OperationActions::create2Action);
+    table.set(new Operation(
+        Op.SAR, 2, 1,
+        EnergyCost::getVeryLowTierCost,
+        OperationActions::sarAction,
+        proposal));
 
-    operations[Op.EXTCODEHASH] = new Operation(Op.EXTCODEHASH, 1, 1,
-        EnergyCost::getExtCodeHashCost, OperationActions::extCodeHashAction);
+    table.set(new Operation(
+        Op.CREATE2, 4, 1,
+        EnergyCost::getCreate2Cost,
+        OperationActions::create2Action,
+        proposal));
+
+    table.set(new Operation(
+        Op.EXTCODEHASH, 1, 1,
+        EnergyCost::getExtCodeHashCost,
+        OperationActions::extCodeHashAction,
+        proposal));
   }
 
-  public static void newAllowTvmSolidity059Operation() {
-    // if already loaded, return
-    if (operations[Op.ISCONTRACT] != null) {
-      return;
-    }
-    operations[Op.ISCONTRACT] = new Operation(Op.ISCONTRACT, 1, 1,
-        EnergyCost::getBalanceCost, OperationActions::isContractAction);
+  public static void appendSolidity059Operations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmSolidity059;
+
+    table.set(new Operation(
+        Op.ISCONTRACT, 1, 1,
+        EnergyCost::getBalanceCost,
+        OperationActions::isContractAction,
+        proposal));
   }
 
-  public static void newAllowTvmIstanbulOperation() {
-    // if already loaded, return
-    if (operations[Op.SELFBALANCE] != null) {
-      return;
-    }
-    operations[Op.CHAINID] = new Operation(Op.CHAINID, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::chainIdAction);
+  public static void appendIstanbulOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmIstanbul;
 
-    operations[Op.SELFBALANCE] = new Operation(Op.SELFBALANCE, 0, 1,
-        EnergyCost::getLowTierCost, OperationActions::selfBalanceAction);
+    table.set(new Operation(
+        Op.CHAINID, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::chainIdAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.SELFBALANCE, 0, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::selfBalanceAction,
+        proposal));
   }
 
-  public static void newAllowTvmFreezeOperation() {
-    // if already loaded, return
-    if (operations[Op.FREEZEEXPIRETIME] != null) {
-      return;
-    }
-    operations[Op.FREEZE] = new Operation(Op.FREEZE, 3, 1,
-        EnergyCost::getFreezeCost, OperationActions::freezeAction);
+  public static void appendFreezeOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmFreeze;
 
-    operations[Op.UNFREEZE] = new Operation(Op.UNFREEZE, 2, 1,
-        EnergyCost::getUnfreezeCost, OperationActions::unfreezeAction);
+    table.set(new Operation(
+        Op.FREEZE, 3, 1,
+        EnergyCost::getFreezeCost,
+        OperationActions::freezeAction,
+        proposal));
 
-    operations[Op.FREEZEEXPIRETIME] = new Operation(Op.FREEZEEXPIRETIME, 2, 1,
-        EnergyCost::getFreezeExpireTimeCost, OperationActions::freezeExpireTimeAction);
+    table.set(new Operation(
+        Op.UNFREEZE, 2, 1,
+        EnergyCost::getUnfreezeCost,
+        OperationActions::unfreezeAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.FREEZEEXPIRETIME, 2, 1,
+        EnergyCost::getFreezeExpireTimeCost,
+        OperationActions::freezeExpireTimeAction,
+        proposal));
   }
 
-  public static void newAllowTvmVoteOperation() {
-    // if already loaded, return
-    if (operations[Op.WITHDRAWREWARD] != null) {
-      return;
-    }
-    operations[Op.VOTEWITNESS] = new Operation(Op.VOTEWITNESS, 4, 1,
-        EnergyCost::getVoteWitnessCost, OperationActions::voteWitnessAction);
+  public static void appendVoteOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmVote;
 
-    operations[Op.WITHDRAWREWARD] = new Operation(Op.WITHDRAWREWARD, 0, 1,
-        EnergyCost::getWithdrawRewardCost, OperationActions::withdrawRewardAction);
+    table.set(new Operation(
+        Op.VOTEWITNESS, 4, 1,
+        EnergyCost::getVoteWitnessCost,
+        OperationActions::voteWitnessAction,
+        proposal));
+
+    table.set(new Operation(
+        Op.WITHDRAWREWARD, 0, 1,
+        EnergyCost::getWithdrawRewardCost,
+        OperationActions::withdrawRewardAction,
+        proposal));
   }
 
-  public static void newAllowTvmLondonOperation() {
-    // if already loaded, return
-    if (operations[Op.BASEFEE] != null) {
-      return;
-    }
-    operations[Op.BASEFEE] = new Operation(Op.BASEFEE, 0, 1,
-        EnergyCost::getBaseTierCost, OperationActions::baseFeeAction);
+  public static void appendLondonOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmLondon;
+
+    table.set(new Operation(
+        Op.BASEFEE, 0, 1,
+        EnergyCost::getBaseTierCost,
+        OperationActions::baseFeeAction,
+        proposal));
   }
 
 }
