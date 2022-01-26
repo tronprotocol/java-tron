@@ -91,7 +91,8 @@ public class BandWidthRuntimeWithCheckTest {
             "--output-directory", dbPath,
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
-            "-w"
+            "-w",
+            "--debug"
         },
         "config-test-mainnet.conf"
     );
