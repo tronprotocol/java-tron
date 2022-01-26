@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 import org.tron.core.vm.config.VMConfig;
-import org.tron.protos.Protocol;
+import org.tron.protos.contract.SmartContractOuterClass;
 
 public class OperationRegistry {
 
@@ -34,7 +34,8 @@ public class OperationRegistry {
     return table;
   }
 
-  public static JumpTable getTableByTx(Protocol.Transaction ignored) {
+
+  public static JumpTable getTableByContract(SmartContractOuterClass.SmartContract ignored) {
     Version ver = Version.TRON_V1;
     // implement as needed
     // switch (tx.getType()) {

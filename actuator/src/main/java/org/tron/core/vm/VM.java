@@ -13,10 +13,7 @@ import org.tron.core.vm.program.Program.TransferException;
 @Slf4j(topic = "VM")
 public class VM {
 
-  @Setter
-  private static JumpTable jumpTable;
-
-  public static void play(Program program) {
+  public static void play(Program program, JumpTable jumpTable) {
     try {
       while (!program.isStopped()) {
         if (VMConfig.vmTrace()) {

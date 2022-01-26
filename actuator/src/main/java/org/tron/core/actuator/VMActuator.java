@@ -63,6 +63,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 public class VMActuator implements Actuator2 {
 
   /* tx and block info */
+  private SmartContract contract;
   private Transaction trx;
   private BlockCapsule blockCap;
 
@@ -112,7 +113,6 @@ public class VMActuator implements Actuator2 {
     //Load Config
     ConfigLoader.load(context.getStoreFactory());
     trx = context.getTrxCap().getInstance();
-    VM.setJumpTable(OperationRegistry.getTableByTx(trx));
     blockCap = context.getBlockCap();
     if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {
       receipt = context.getTrxCap().getTrxTrace().getReceipt();
@@ -171,7 +171,7 @@ public class VMActuator implements Actuator2 {
           throw e;
         }
 
-        VM.play(program);
+        VM.play(program, OperationRegistry.getTableByContract(contract));
         result = program.getResult();
 
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
@@ -399,6 +399,7 @@ public class VMActuator implements Actuator2 {
         Protocol.AccountType.Contract);
 
     rootRepository.createContract(contractAddress, new ContractCapsule(newSmartContract));
+    this.contract = newSmartContract;
     byte[] code = newSmartContract.getBytecode().toByteArray();
     if (!VMConfig.allowTvmConstantinople()) {
       rootRepository.saveCode(contractAddress, ProgramPrecompile.getCode(code));
@@ -442,6 +443,7 @@ public class VMActuator implements Actuator2 {
       logger.info("No contract or not a smart contract");
       throw new ContractValidateException("No contract or not a smart contract");
     }
+    this.contract = deployedContract.getInstance();
 
     long callValue = contract.getCallValue();
     long tokenValue = 0;
