@@ -30,7 +30,6 @@ import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -46,9 +45,6 @@ import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.vm.JumpTable;
-import org.tron.core.vm.Operation;
-import org.tron.core.vm.OperationRegistry;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -57,7 +53,6 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import stest.tron.wallet.common.client.Parameter;
 
 /**
  * pragma solidity ^0.4.2;
