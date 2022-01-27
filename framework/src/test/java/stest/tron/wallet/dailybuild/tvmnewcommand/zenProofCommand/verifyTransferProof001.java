@@ -45,11 +45,7 @@ public class verifyTransferProof001 {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   @BeforeClass(enabled = true)
   public void beforeClass() {

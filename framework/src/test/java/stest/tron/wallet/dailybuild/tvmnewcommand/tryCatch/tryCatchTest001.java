@@ -40,11 +40,7 @@ public class tryCatchTest001 {
   private byte[] contractAddress;
   private byte[] errorContractAddress;
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
 
   /**

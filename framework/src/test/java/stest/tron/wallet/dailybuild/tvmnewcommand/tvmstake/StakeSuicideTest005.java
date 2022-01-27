@@ -55,11 +55,7 @@ public class StakeSuicideTest005 {
   String code = "";
   String abi = "";
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   @BeforeClass(enabled = false)
   public void beforeClass() {

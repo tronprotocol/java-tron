@@ -64,7 +64,6 @@ public class WalletTestZenToken001 {
    */
   @BeforeSuite
   public void beforeSuite() {
-
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();

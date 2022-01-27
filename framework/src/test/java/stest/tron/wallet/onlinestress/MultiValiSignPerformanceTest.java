@@ -59,11 +59,7 @@ public class MultiValiSignPerformanceTest {
   private byte[] ecrecoverContractAddress = null;
   private byte[] multiValiSignContractAddress = null;
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

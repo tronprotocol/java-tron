@@ -56,8 +56,6 @@ public class FreezeSuicideTest001 {
 
   @BeforeSuite
   public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     PublicMethed.printAddress(testKey001);
     PublicMethed.printAddress(testKey002);
   }

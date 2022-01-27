@@ -49,11 +49,7 @@ public class TvmVote {
   int freezeCount = 100000000;
   int voteCount = 1;
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
 
   /**

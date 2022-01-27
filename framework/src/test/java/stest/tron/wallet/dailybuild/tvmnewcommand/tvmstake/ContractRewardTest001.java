@@ -46,8 +46,6 @@ public class ContractRewardTest001 {
 
   @BeforeSuite(enabled = false, description = "stake beforeSuite delete")
   public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
     PublicMethed.printAddress(testKey001);
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();

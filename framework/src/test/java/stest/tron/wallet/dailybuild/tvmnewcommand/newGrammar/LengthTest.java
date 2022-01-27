@@ -38,11 +38,7 @@ public class LengthTest {
   String testKey001 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private byte[] contractAddress;
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
 
   /**
