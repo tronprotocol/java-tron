@@ -57,12 +57,11 @@ public class OperationsTest {
 
   @Test
   public void testStackUnderFlow() {
-    VM.setJumpTable(jumpTable);
     for (int i = 0; i < 256; i++) {
       Operation op = jumpTable.get(i);
       if (op.isEnabled()) {
         Program context = buildEmptyContext(new byte[]{(byte) op.getOpcode()});
-        VM.play(context);
+        VM.play(context, jumpTable);
 
         if (op.getRequire() != 0) {
           Assert.assertTrue(context.getResult().getException()
@@ -74,7 +73,6 @@ public class OperationsTest {
 
   @Test
   public void testStackOverFlow() {
-    VM.setJumpTable(jumpTable);
     for (int i = 0; i < 256; i++) {
       Operation op = jumpTable.get(i);
       if (op.isEnabled()) {
@@ -82,7 +80,7 @@ public class OperationsTest {
         for (int j = 0; j < 1024; j++) {
           context.stackPushZero();
         }
-        VM.play(context);
+        VM.play(context, jumpTable);
 
         if (op.getRet() - op.getRequire() > 0) {
           Assert.assertTrue(context.getResult().getException()
