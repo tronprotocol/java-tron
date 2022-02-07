@@ -107,7 +107,6 @@ public class Program {
   private int contractVersion;
   private DataWord adjustedCallEnergy;
 
-
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
   }
@@ -124,8 +123,6 @@ public class Program {
     this.trace = new ProgramTrace(programInvoke);
     this.nonce = internalTransaction.getNonce();
   }
-
-
 
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();

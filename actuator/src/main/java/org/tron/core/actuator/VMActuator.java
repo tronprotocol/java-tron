@@ -110,8 +110,10 @@ public class VMActuator implements Actuator2 {
       throw new RuntimeException("TransactionContext is null");
     }
 
-    //Load Config
+    // Load Config
     ConfigLoader.load(context.getStoreFactory());
+    // Warm up registry class
+    OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
     if (VMConfig.allowTvmFreeze() && context.getTrxCap().getTrxTrace() != null) {

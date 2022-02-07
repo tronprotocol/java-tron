@@ -34,6 +34,8 @@ public class OperationRegistry {
     return table;
   }
 
+  // Just for warming up class to avoid out_of_time
+  public static void init() {}
 
   public static JumpTable getTableByContract(SmartContractOuterClass.SmartContract ignored) {
     Version ver = Version.TRON_V1;
