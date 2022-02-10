@@ -640,8 +640,7 @@ public class Program {
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTableByContract(
-          deposit.getContract(newAddress).getInstance()));
+      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
@@ -869,11 +868,10 @@ public class Program {
       }
       Program program = new Program(programCode, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
-      ContractCapsule codeContract = deposit.getContract(codeAddress);
       if (VMConfig.allowTvmCompatibleEvm()) {
-        program.setContractVersion(codeContract.getContractVersion());
+        program.setContractVersion(deposit.getContract(codeAddress).getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTableByContract(codeContract.getInstance()));
+      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
       callResult = program.getResult();
 
       getTrace().merge(program.getTrace());
