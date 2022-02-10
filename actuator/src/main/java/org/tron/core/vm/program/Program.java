@@ -868,7 +868,6 @@ public class Program {
       }
       Program program = new Program(programCode, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
-      ContractCapsule codeContract = deposit.getContract(codeAddress);
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(deposit.getContract(codeAddress).getContractVersion());
       }
