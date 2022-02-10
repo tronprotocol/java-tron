@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 import org.tron.core.vm.config.VMConfig;
-import org.tron.protos.contract.SmartContractOuterClass;
 
 public class OperationRegistry {
 
@@ -37,8 +36,7 @@ public class OperationRegistry {
   // Just for warming up class to avoid out_of_time
   public static void init() {}
 
-  public static JumpTable getTableByContract(SmartContractOuterClass.SmartContract ignored) {
-    Version ver = Version.TRON_V1;
+  public static JumpTable getTable(Version ver) {
     // implement as needed
     // switch (tx.getType()) {
     // }
