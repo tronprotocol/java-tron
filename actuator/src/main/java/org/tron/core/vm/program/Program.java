@@ -869,7 +869,8 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
-        program.setContractVersion(deposit.getContract(codeAddress).getContractVersion());
+        program.setContractVersion(invoke.getDeposit()
+            .getContract(codeAddress).getContractVersion());
       }
       VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
       callResult = program.getResult();
