@@ -1096,18 +1096,22 @@ public class Manager {
 
           return;
         }
+        logger.info("#### pushblock-1 cost:{}ms", System.currentTimeMillis() - start);
         try (ISession tmpSession = revokingStore.buildSession()) {
 
           long oldSolidNum =
               chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
 
           applyBlock(newBlock, txs);
+          logger.info("#### pushblock-2 cost:{}ms", System.currentTimeMillis() - start);
           tmpSession.commit();
+          logger.info("#### pushblock-3 cost:{}ms", System.currentTimeMillis() - start);
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
           // if event subscribe is enabled, post solidity trigger to queue
           postSolidityTrigger(oldSolidNum,
               getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          logger.info("#### pushblock-4 cost:{}ms", System.currentTimeMillis() - start);
         } catch (Throwable throwable) {
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
@@ -1128,6 +1132,8 @@ public class Manager {
       ownerAddressSet.clear();
       ownerAddressSet.addAll(result);
     }
+    logger.info("#### pushblock-5 s1:{}, s2:{}, cost:{}ms",
+            rePushTransactions.size(), pushTransactionQueue.size(), System.currentTimeMillis() - start);
 
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME,
         System.currentTimeMillis() - start);
