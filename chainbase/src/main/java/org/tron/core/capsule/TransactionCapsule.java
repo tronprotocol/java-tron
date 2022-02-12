@@ -633,10 +633,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       //Do not support multi contracts in one transaction
       Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
       if (contract.getType() != ContractType.ShieldedTransferContract) {
-        long start = System.currentTimeMillis();
         validatePubSignature(accountStore, dynamicPropertiesStore);
-        logger.info("@@@@ is ShieldedTransferContract cost:{}.", System.currentTimeMillis() - start);
       } else {  //ShieldedTransfer
+        long start = System.currentTimeMillis();
         byte[] owner = getOwner(contract);
         if (!ArrayUtils.isEmpty(owner)) { //transfer from transparent address
           validatePubSignature(accountStore, dynamicPropertiesStore);
@@ -646,6 +645,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
                     + "transparent address when transfer from shielded address");
           }
         }
+        logger.info("@@@@ is ShieldedTransferContract cost:{}.", System.currentTimeMillis() - start);
       }
       isVerified = true;
     }  
