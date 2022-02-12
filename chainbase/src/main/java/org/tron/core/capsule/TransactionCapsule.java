@@ -596,6 +596,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       DynamicPropertiesStore dynamicPropertiesStore)
       throws ValidateSignatureException {
     if (!isVerified) {
+      long start = System.currentTimeMillis();
+      logger.info("@@@ getSignatureCount: {}", this.transaction.getSignatureCount());
       if (this.transaction.getSignatureCount() <= 0
               || this.transaction.getRawData().getContractCount() <= 0) {
         throw new ValidateSignatureException("miss sig or contract");
@@ -617,6 +619,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new ValidateSignatureException(e.getMessage());
       }
       isVerified = true;
+      logger.info("@@@ signature cost: {}", System.currentTimeMillis() - start);
     }
     return true;
   }
@@ -630,7 +633,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       //Do not support multi contracts in one transaction
       Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
       if (contract.getType() != ContractType.ShieldedTransferContract) {
+        long start = System.currentTimeMillis();
         validatePubSignature(accountStore, dynamicPropertiesStore);
+        logger.info("@@@@ is ShieldedTransferContract cost:{}.", System.currentTimeMillis() - start);
       } else {  //ShieldedTransfer
         byte[] owner = getOwner(contract);
         if (!ArrayUtils.isEmpty(owner)) { //transfer from transparent address
