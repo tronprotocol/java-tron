@@ -1489,6 +1489,7 @@ public class Manager {
       long start2 = System.currentTimeMillis();
       int cnt = 0;
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        long tt = System.currentTimeMillis();
         transactionCapsule.setBlockNum(block.getNum());
         cnt += transactionCapsule.getInstance().getSignatureCount();
         if (block.generatedByMyself) {
@@ -1499,6 +1500,11 @@ public class Manager {
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
           transactionRetCapsule.addTransactionInfo(result);
+        }
+        long cost = System.currentTimeMillis() - tt;
+        logger.info("@@@ tttt cost:{}", tt);
+        if (cost > 3) {
+          logger.info("@@@ dddd {}", transactionCapsule.toString());
         }
       }
       accountStateCallBack.executePushFinish();
