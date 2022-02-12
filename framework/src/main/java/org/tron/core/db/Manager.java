@@ -1471,7 +1471,10 @@ public class Manager {
     //parallel check sign
     if (!block.generatedByMyself) {
       try {
+        long start = System.currentTimeMillis();
         preValidateTransactionSign(txs);
+        logger.info("### preValidateTransactionSign cost:{}",
+                System.currentTimeMillis() -start);
       } catch (InterruptedException e) {
         logger.error("parallel check sign interrupted exception! block info: {}", block, e);
         Thread.currentThread().interrupt();
@@ -1483,8 +1486,11 @@ public class Manager {
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
+      long start2 = System.currentTimeMillis();
+      int cnt = 0;
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
+        cnt += transactionCapsule.getInstance().getSignatureCount();
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
@@ -1496,6 +1502,8 @@ public class Manager {
         }
       }
       accountStateCallBack.executePushFinish();
+      logger.info("### processTransaction cost:{}, sig cnt: {}",
+              System.currentTimeMillis() -start2, cnt);
     } finally {
       accountStateCallBack.exceptionFinish();
     }
