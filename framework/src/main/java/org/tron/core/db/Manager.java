@@ -1197,6 +1197,7 @@ public class Manager {
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
+    long start = System.currentTimeMillis();
     if (trxCap == null) {
       return null;
     }
@@ -1207,13 +1208,14 @@ public class Manager {
 
     validateTapos(trxCap);
     validateCommon(trxCap);
-
+    logger.info("@@@ processTransaction 1-1 cost:{}", System.currentTimeMillis() - start);
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
 
     validateDup(trxCap);
+    logger.info("@@@ processTransaction 1-2 cost:{}", System.currentTimeMillis() - start);
 
     if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
         chainBaseManager.getDynamicPropertiesStore())) {
@@ -1226,11 +1228,11 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
-
+    logger.info("@@@ processTransaction 1-3 cost:{}", System.currentTimeMillis() - start);
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
     trace.exec();
-
+    logger.info("@@@ processTransaction 1-4 cost:{}", System.currentTimeMillis() - start);
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
       if (blockCap.hasWitnessSignature()) {
@@ -1260,7 +1262,7 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionUtil
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
-
+    logger.info("@@@ processTransaction 1-5 cost:{}", System.currentTimeMillis() - start);
     // if event subscribe is enabled, post contract triggers to queue
     // only trigger when process block
     if (Objects.nonNull(blockCap) && !blockCap.isMerkleRootEmpty()) {
@@ -1284,6 +1286,7 @@ public class Manager {
     if (!eventPluginLoaded) {
       trxCap.setTrxTrace(null);
     }
+    logger.info("@@@ processTransaction 1-6 cost:{}", System.currentTimeMillis() - start);
     return transactionInfo.getInstance();
   }
 
@@ -1293,7 +1296,7 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(Miner miner, long blockTime, long timeout) {
 
     long postponedTrxCount = 0;
-
+    long startG = System.currentTimeMillis();
     BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
         chainBaseManager.getHeadBlockId(),
         blockTime, miner.getWitnessAddress());
@@ -1320,6 +1323,7 @@ public class Manager {
     while (pendingTransactions.size() > 0 || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
+      long start = System.currentTimeMillis();
       if (pendingTransactions.size() > 0) {
         trx = pendingTransactions.peek();
         if (Args.getInstance().isOpenTransactionSort()) {
@@ -1379,6 +1383,8 @@ public class Manager {
         if (fromPending) {
           pendingTransactions.poll();
         }
+        logger.info("@@@ generate block pro trx:{}, cost:{}",
+                trx.getTransactionId().toString(), System.currentTimeMillis() - start);
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
             e.getMessage());
@@ -1395,7 +1401,7 @@ public class Manager {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
-
+    logger.info("### generate block cost:{}", System.currentTimeMillis() - startG);
     BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
     capsule.generatedByMyself = true;
     return capsule;
@@ -1488,6 +1494,9 @@ public class Manager {
       accountStateCallBack.preExecute(block);
       long start2 = System.currentTimeMillis();
       int cnt = 0;
+      int c30 = 0;
+      int c10 = 0;
+      int c5 = 0;
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         long tt = System.currentTimeMillis();
         transactionCapsule.setBlockNum(block.getNum());
@@ -1502,14 +1511,21 @@ public class Manager {
           transactionRetCapsule.addTransactionInfo(result);
         }
         long cost = System.currentTimeMillis() - tt;
-        logger.info("@@@ tttt cost:{}", tt);
-        if (cost > 3) {
-          logger.info("@@@ dddd {}", transactionCapsule.toString());
+        logger.info("@@@ tttt trx:{}, cost:{}", transactionCapsule.getTransactionId(), cost);
+        if (cost > 30) {
+          c30++;
+          logger.info("@@@ dddd 30 {}", transactionCapsule.toString());
+        } else if (cost > 10){
+          c10++;
+          logger.info("@@@ dddd 10 {}", transactionCapsule.toString());
+        } else if (cost > 3){
+          c5++;
+          logger.info("@@@ dddd 3 {}", transactionCapsule.toString());
         }
       }
       accountStateCallBack.executePushFinish();
-      logger.info("### processTransaction cost:{}, sig cnt: {}",
-              System.currentTimeMillis() -start2, cnt);
+      logger.info("### processTransaction cost:{}, sig cnt: {}, c30:{}, c10:{}, c3:{}",
+              System.currentTimeMillis() -start2, cnt, c30, c10, c5);
     } finally {
       accountStateCallBack.exceptionFinish();
     }
