@@ -1286,7 +1286,8 @@ public class Manager {
     if (!eventPluginLoaded) {
       trxCap.setTrxTrace(null);
     }
-    logger.info("@@@ processTransaction 1-6 cost:{}", System.currentTimeMillis() - start);
+    logger.info("@@@ processTransaction 1-6 id:{}, cost:{}",
+            trxCap.getTransactionId(), System.currentTimeMillis() - start);
     return transactionInfo.getInstance();
   }
 

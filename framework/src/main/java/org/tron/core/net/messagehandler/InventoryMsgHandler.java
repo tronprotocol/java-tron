@@ -66,11 +66,10 @@ public class InventoryMsgHandler implements TronMsgHandler {
       }
 
       if (transactionsMsgHandler.isBusy()) {
-        logger.warn("Drop inv: {} size: {} from Peer {}, transactionsMsgHandler is busy.",
-            type, size, peer.getInetAddress());
-        if (Args.getInstance().isOpenPrintLog()) {
-          logger.warn("[isBusy]Drop tx list is: {}", inventoryMessage.getHashList());
-        }
+        logger.warn("Drop kkk");
+//        if (Args.getInstance().isOpenPrintLog()) {
+//          logger.warn("[isBusy]Drop tx list is: {}", inventoryMessage.getHashList());
+//        }
         return false;
       }
     }
