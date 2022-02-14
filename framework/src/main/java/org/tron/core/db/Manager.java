@@ -119,6 +119,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.net.messagehandler.InventoryMsgHandler;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
@@ -1138,8 +1139,9 @@ public class Manager {
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME,
         System.currentTimeMillis() - start);
 
-    logger.info("pushBlock block number:{}, cost/txs:{}/{}",
+    logger.info("pushBlock block number:{}, timeoutCnt:{}, cost/txs:{}/{}",
         block.getNum(),
+        InventoryMsgHandler.timeoutCnt,
         System.currentTimeMillis() - start,
         block.getTransactions().size());
   }
