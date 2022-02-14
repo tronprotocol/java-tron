@@ -28,6 +28,8 @@ public class InventoryMsgHandler implements TronMsgHandler {
 
   private int maxCountIn10s = 10_000;
 
+  public static volatile long timeoutCnt = 0;
+
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) {
     InventoryMessage inventoryMessage = (InventoryMessage) msg;
@@ -66,7 +68,8 @@ public class InventoryMsgHandler implements TronMsgHandler {
       }
 
       if (transactionsMsgHandler.isBusy()) {
-        logger.warn("Drop kkk");
+        timeoutCnt++;
+//        logger.warn("Drop kkk");
 //        if (Args.getInstance().isOpenPrintLog()) {
 //          logger.warn("[isBusy]Drop tx list is: {}", inventoryMessage.getHashList());
 //        }
