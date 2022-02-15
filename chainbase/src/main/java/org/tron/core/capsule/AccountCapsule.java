@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -319,7 +320,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setBalance(long balance) {
+    long s = System.currentTimeMillis();
     this.account = this.account.toBuilder().setBalance(balance).build();
+    long e = System.currentTimeMillis();
+    if (e - s > 3) {
+      logger.info("3 account setBalance : {}, cost {} ms",
+          StringUtil.encode58Check(this.account.getAddress().toByteArray()), e -s);
+    }
   }
 
   public long getLatestOperationTime() {
