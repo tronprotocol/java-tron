@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -63,12 +64,31 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public AccountCapsule get(byte[] key) {
+    long s = System.currentTimeMillis();
+    String k = StringUtil.encode58Check(key);
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+
+    long e1 = System.currentTimeMillis();
+    if (e1 - s > 3) {
+      logger.info("@@@1 account get from db : {}, cost {} ms",k, e1 -s);
+    }
+    AccountCapsule res = ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+
+    long e2 = System.currentTimeMillis();
+    if (e2 - e1 > 3) {
+      logger.info("@@@2 account capsule : {}, cost {} ms", k, e2 -e1);
+    }
+    if (e2 - s > 3) {
+      logger.info("@@@3 account get : {}, cost {} {} {} ms", k, e1 -s, e2 -e1, e2 - s);
+    }
+
+    return res;
   }
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
+    long s = System.currentTimeMillis();
+    String k = StringUtil.encode58Check(key);
     if (CommonParameter.getInstance().isHistoryBalanceLookup()) {
       AccountCapsule old = super.getUnchecked(key);
       if (old == null) {
@@ -87,7 +107,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         }
       }
     }
-
+    long e1 = System.currentTimeMillis();
+    if (e1 - s > 3) {
+      logger.info("@@@1 account put isHistoryBalanceLookup: {}, cost {} ms", k, e1 - s);
+    }
     if (AssetUtil.isAllowAssetOptimization()) {
       Account account = item.getInstance();
       AccountAsset accountAsset = AssetUtil.getAsset(account);
@@ -99,8 +122,26 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         item.setInstance(account);
       }
     }
+
+    long e2 = System.currentTimeMillis();
+    if (e2 - e1 > 3) {
+      logger.info("@@@2 account put isAllowAssetOptimization: {}, cost {} ms", k, e2 -e1);
+    }
+
     super.put(key, item);
+    long e3 = System.currentTimeMillis();
+    if (e3 - e2 > 3) {
+      logger.info("@@@3 account put super: {}, cost {} ms", k, e3 -e2);
+    }
     accountStateCallBackUtils.accountCallBack(key, item);
+    long e4 = System.currentTimeMillis();
+    if (e4 - e3 > 3) {
+      logger.info("@@@4 account put accountCallBack : {}, cost {} ms", k, e4 -e3);
+    }
+    if (e4 - s > 3) {
+      logger.info("@@@5 account put {} ,cost {} ms,{} ms,{} ms,{} ms,{} ms", k, e1 - s,
+          e2 - e1, e3 - e2, e4 - e3, e4 - s );
+    }
   }
 
   @Override
