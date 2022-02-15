@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -48,6 +49,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
 import org.tron.core.db2.common.Instance;
@@ -201,11 +203,16 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public byte[] getData(byte[] key) {
+    long s = System.currentTimeMillis();
     resetDbLock.readLock().lock();
     try {
       return database.get(key);
     } finally {
       resetDbLock.readLock().unlock();
+      long e = System.currentTimeMillis();
+      if (e - s >= 2) {
+        logger.info("@@@ DB {}, cost {} ms key: {}",  this.getDBName(), e -s , Hex.toHexString(key));
+      }
     }
   }
 
