@@ -1199,7 +1199,6 @@ public class Manager {
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
-    long start = System.currentTimeMillis();
     if (trxCap == null) {
       return null;
     }
@@ -1210,14 +1209,12 @@ public class Manager {
 
     validateTapos(trxCap);
     validateCommon(trxCap);
-    logger.info("@@@ processTransaction 1-1 cost:{}", System.currentTimeMillis() - start);
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
 
     validateDup(trxCap);
-    logger.info("@@@ processTransaction 1-2 cost:{}", System.currentTimeMillis() - start);
 
     if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
         chainBaseManager.getDynamicPropertiesStore())) {
@@ -1230,11 +1227,15 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
-    logger.info("@@@ processTransaction 1-3 cost:{}", System.currentTimeMillis() - start);
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
+    long start = System.currentTimeMillis();
     trace.exec();
-    logger.info("@@@ processTransaction 1-4 cost:{}", System.currentTimeMillis() - start);
+    long end = System.currentTimeMillis() - start;
+    if (end > 30) {
+      logger.info("@@@ trace.exec() id  {} 1-4 cost:{}", trxCap.getTransactionId(), end);
+    }
+
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
       if (blockCap.hasWitnessSignature()) {
@@ -1264,7 +1265,7 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionUtil
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
-    logger.info("@@@ processTransaction 1-5 cost:{}", System.currentTimeMillis() - start);
+    //logger.info("@@@ processTransaction 1-5 cost:{}", System.currentTimeMillis() - start);
     // if event subscribe is enabled, post contract triggers to queue
     // only trigger when process block
     if (Objects.nonNull(blockCap) && !blockCap.isMerkleRootEmpty()) {
@@ -1288,8 +1289,8 @@ public class Manager {
     if (!eventPluginLoaded) {
       trxCap.setTrxTrace(null);
     }
-    logger.info("@@@ processTransaction 1-6 id:{}, cost:{}",
-            trxCap.getTransactionId(), System.currentTimeMillis() - start);
+    //logger.info("@@@ processTransaction 1-6 id:{}, cost:{}",
+            //trxCap.getTransactionId(), System.currentTimeMillis() - start);
     return transactionInfo.getInstance();
   }
 
