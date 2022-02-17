@@ -41,14 +41,16 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#deploy">Deploy</a> •
-  <a href="#Deployment">Deployment</a> •
-  <a href="#Channel">Channel</a> •
-  <a href="#Contribution">Contribution</a> •
-  <a href="#Resources">Resources</a>
-</p>
+## Table of Contents
+1. [What’s TRON?](#What’s-TRON)
+2. [Building the Source Code](#Building-the-source)
+ 1. [Prepare](#Prepare)
+ 2. [Getting the Source Code](#Getting-the-Source-Code)
+ 3. [Build](#Build)
+4. [Running java-tron](#Running-java-tron)
+5. [Community](#Community)
+6. [Resources](#Resources)
+7. [License](#License)
 
 ## What's TRON?
 
@@ -60,19 +62,54 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
-# Quick Start
-This guide walks the user through the TRON Quickstart (v2.0.0) image setup.
-[TRON Quick Start](./quickstart.md)
+# Building the source
 
-# Deploy
-* [Build](./build.md) Please build java-tron after cloning the project
-* [Run](./run.md) Run java-tron
-* [Build & Run by shell script](./shell.md)
-# Deployment
-[Deployment Guide](https://tronprotocol.github.io/documentation-en/developers/deployment/)
- walks the user through how to deploy a FullNode and an SR node.
+## Prepare
 
-# Channel
+* `Oracle JDK 1.8` (Other versions are not supported yet)
+* Support OS:
+ * `Linux`
+ * `OSX`
+
+## Getting the Source Code
+
+  ```bash
+  $ git clone https://github.com/tronprotocol/java-tron.git
+  $ git checkout -t origin/master
+  ```
+
+## Build
+
+```bash
+$ cd java-tron
+$ ./gradlew clean build -x test
+```
+
+After executing the compile command, the FullNode.jar file will be generated in `java-tron/build/libs/FullNode.jar`
+
+# Running java-tron
+
+Get the mainnet configurate file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
+
+
+* **Running a Full Node for mainnet**
+   ```bash
+   $ java -jar FullNode.jar -c main_net_config.conf
+   ```
+* **Running a Super Representative Node for mainnet**
+   ```bash
+   $ java -jar FullNode.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c main_net_config.conf
+   ```
+
+**Common command line parameters**
+* `-c`: specify the configuration file path
+* `-p`: specify the private key of the witness.
+* `--witness`: enable the witness function
+
+An easier way to build and run java-tron with shell tools: [Build & Run by shell script](./shell.md)
+
+
+# Community
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
 
 [Core Devs Community](https://t.me/troncoredevscommunity) is the Telegram channel for java-tron community developers. If you want to contribute to java-tron, please join this channel.
@@ -83,7 +120,6 @@ This guide walks the user through the TRON Quickstart (v2.0.0) image setup.
 If you'd like to contribute to java-tron, please read the following instructions.
 
 - [Contribution](./CONTRIBUTING.md)
-- [Community Developers Incentives Programme](./CONTRIBUTING.md#community-developers-incentives-programme)
 
 # Resources
 * [Medium](https://medium.com/@coredevs) java-tron's official technical articles are published there.
@@ -93,7 +129,6 @@ If you'd like to contribute to java-tron, please read the following instructions
 * [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
 * [TIP](https://github.com/tronprotocol/tips) TRON Improvement Proposal (TIP) describes standards for the TRON network.
 * [TP](https://github.com/tronprotocol/tips/tree/master/tp) TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.
-* [White Paper](https://tron.network/resources?lng=&name=1) White paper of TRON network.
 
 # License
 java-tron is released under the [LGPLv3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).
