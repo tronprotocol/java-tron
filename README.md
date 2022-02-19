@@ -44,9 +44,9 @@
 ## Table of Contents
 1. [What’s TRON?](#What’s-TRON)
 2. [Building the Source Code](#Building-the-source)
- 1. [Prepare](#Prepare)
- 2. [Getting the Source Code](#Getting-the-Source-Code)
- 3. [Build](#Build)
+   1. [Prepare](#Prepare)
+   2. [Getting the Source Code](#Getting-the-Source-Code)
+   3. [Build](#Build)
 4. [Running java-tron](#Running-java-tron)
 5. [Community](#Community)
 6. [Resources](#Resources)
@@ -107,7 +107,7 @@ Get the mainnet configurate file: [main_net_config.conf](https://github.com/tron
 * `--witness`: enable the witness function
 
 An easier way to build and run java-tron with shell tools: [Build & Run by shell script](./shell.md)
-
+sdfasdfasdfasdf
 
 # Community
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
