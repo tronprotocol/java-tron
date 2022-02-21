@@ -42,15 +42,15 @@
 </p>
 
 ## Table of Contents
-1. [What’s TRON?](#What’s-TRON)
-2. [Building the Source Code](#Building-the-source)
-   1. [Prepare](#Prepare)
-   2. [Getting the Source Code](#Getting-the-Source-Code)
-   3. [Build](#Build)
-4. [Running java-tron](#Running-java-tron)
-5. [Community](#Community)
-6. [Resources](#Resources)
-7. [License](#License)
+* [What’s TRON?](#What’s-TRON)
+* [Building the Source Code](#Building-the-source) 
+   * [Prepare](#Prepare)
+   * [Getting the Source Code](#Getting-the-Source-Code)
+   * [Build](#Build)
+* [Running java-tron](#Running-java-tron)
+* [Community](#Community)
+* [Resources](#Resources)
+* [License](#License)
 
 ## What's TRON?
 
