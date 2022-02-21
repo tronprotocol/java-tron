@@ -68,8 +68,8 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 * `Oracle JDK 1.8` (Other versions are not supported yet)
 * Support OS:
- * `Linux`
- * `OSX`
+  * `Linux`
+  * `OSX`
 
 ## Getting the Source Code
 
