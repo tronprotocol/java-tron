@@ -6,7 +6,7 @@ Below are the instructions. We understand that there is much left to be desired,
 
 ## How to Participate
 1. **Issue submission**  
-   If you have any suggestions or ideas to improve the java-tron protocol, you can submit an issue to the java-tron repository. If your idea is well-thought-out, you can submit an issue to the TIP repository to detail your motive and implementation plan, etc.
+   If you encounter any problem or bug while using java-tron, you can submit an issue to the java-tron repository. If your idea is well-thought-out, you can submit an issue to the TIP repository to detail your motive and implementation plan, etc.
 
 2. **Community discussion**  
    As the author of this issue, you are expected to encourage developers to discuss this issue, flesh out your issue by collecting their feedback, and eventually put your issue into practice.
