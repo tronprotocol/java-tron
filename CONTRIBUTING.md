@@ -5,25 +5,25 @@ java-tron is an open-source project which needs the support of open-source contr
 Below are the instructions. We understand that there is much left to be desired, and if you see any room for improvement, please let us know. Thank you.
 
 ## How to Participate
-1. Issue submission
+1. **Issue submission**  
    If you have any suggestions or ideas to improve the java-tron protocol, you can submit an issue to the java-tron repository. If your idea is well-thought-out, you can submit an issue to the TIP repository to detail your motive and implementation plan, etc.
 
-2. Community discussion
+2. **Community discussion**  
    As the author of this issue, you are expected to encourage developers to discuss this issue, flesh out your issue by collecting their feedback, and eventually put your issue into practice.
 
-3. Code submission
+3. **Code submission**  
    After community discussion, you can follow the development specs to submit your codes when your issue is fully mature.
 
 ## Contribution Guide
 We hope that more developers can engage in the community discussion to contribute more ideas. We now provide a development guide to avoid developers getting into any trouble.
 
 1. Participate in the community discussion
-  * [java-tron issues](#how-to-submit-java-tron-issue)
-  * [TIP issues](#how-to-submit-TIP-issue)
+* [java-tron issues](#how-to-submit-java-tron-issue)
+* [TIP issues](#how-to-submit-TIP-issue)
 
 2. Development guide
-  * [Git Flow](#Git-flow)
-  * [Coding Style](#coding-style)
+* [Git Flow](#Git-flow)
+* [Coding Style](#coding-style)
 
 
 ## Participate in the Community Discussion
