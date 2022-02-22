@@ -22,11 +22,12 @@ import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.config.Parameter.ChainConstant.WITNESS_STANDBY_LENGTH;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -40,7 +41,6 @@ import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -48,12 +48,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.apache.commons.lang3.tuple.Pair;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -103,14 +103,13 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -124,8 +123,10 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -147,11 +148,14 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -159,6 +163,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -174,13 +179,13 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.AccountTraceStore;
+import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.ContractStore;
-import org.tron.core.store.DelegationStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -210,8 +215,9 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
@@ -244,6 +250,7 @@ public class Wallet {
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
+
   @Getter
   private final SignInterface cryptoEngine;
   @Autowired
@@ -261,11 +268,9 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
+  private boolean trxCacheEnable = Args.getInstance().isTrxCacheEnable();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
-  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
-
-  @Autowired
-  private TransactionUtil transactionUtil;
+  public static final String CONTRACT_VALIDATE_ERROR = "Contract validate error : ";
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -327,6 +332,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -357,6 +363,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
+    accountCapsule.importAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -474,14 +481,14 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     trx.setTime(System.currentTimeMillis());
+    Sha256Hash txID = trx.getTransactionId();
     try {
-      Message message = new TransactionMessage(signedTransaction.toByteArray());
+      TransactionMessage message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
-          logger
-              .warn("Broadcast transaction {} has failed, no connection.", trx.getTransactionId());
+          logger.warn("Broadcast transaction {} has failed, no connection.", txID);
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
-              .setMessage(ByteString.copyFromUtf8("no connection"))
+              .setMessage(ByteString.copyFromUtf8("No connection."))
               .build();
         }
 
@@ -490,9 +497,9 @@ public class Wallet {
             .count();
 
         if (count < minEffectiveConnection) {
-          String info = "effective connection:" + count + " lt minEffectiveConnection:"
+          String info = "Effective connection:" + count + " lt minEffectiveConnection:"
               + minEffectiveConnection;
-          logger.warn("Broadcast transaction {} has failed, {}.", trx.getTransactionId(), info);
+          logger.warn("Broadcast transaction {} has failed. {}.", txID, info);
           return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
               .setMessage(ByteString.copyFromUtf8(info))
               .build();
@@ -500,69 +507,77 @@ public class Wallet {
       }
 
       if (dbManager.isTooManyPending()) {
-        logger
-            .warn("Broadcast transaction {} has failed, too many pending.", trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+        logger.warn("Broadcast transaction {} has failed, too many pending.", txID);
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY)
+            .setMessage(ByteString.copyFromUtf8("Server busy.")).build();
       }
 
-      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-        logger.warn("Broadcast transaction {} has failed, it already exists.",
-            trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
-      } else {
-        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
+      if (trxCacheEnable) {
+        if (dbManager.getTransactionIdCache().getIfPresent(txID) != null) {
+          logger.warn("Broadcast transaction {} has failed, it already exists.", txID);
+          return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
+              .setMessage(ByteString.copyFromUtf8("Transaction already exists.")).build();
+        } else {
+          dbManager.getTransactionIdCache().put(txID, true);
+        }
       }
+
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      tronNetService.broadcast(message);
-      logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
-      return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      int num = tronNetService.fastBroadcastTransaction(message);
+      if (num == 0 && minEffectiveConnection != 0) {
+        return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+            .setMessage(ByteString.copyFromUtf8("P2P broadcast failed.")).build();
+      } else {
+        logger.info("Broadcast transaction {} to {} peers successfully.", txID, num);
+        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      }
     } catch (ValidateSignatureException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
-          .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Validate signature error: " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
-          .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
+          .setMessage(ByteString.copyFromUtf8("Account resource insufficient error."))
           .build();
     } catch (DupTransactionException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("dup transaction"))
+          .setMessage(ByteString.copyFromUtf8("Dup transaction."))
           .build();
     } catch (TaposException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
-          .setMessage(ByteString.copyFromUtf8("Tapos check error"))
+          .setMessage(ByteString.copyFromUtf8("Tapos check error."))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
+          .setMessage(ByteString.copyFromUtf8("Transaction size is too big."))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction expired"))
+          .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
+          .setMessage(ByteString.copyFromUtf8("Error: " + e.getMessage()))
           .build();
     }
   }
@@ -648,6 +663,15 @@ public class Wallet {
     }
   }
 
+  public BlockCapsule getBlockCapsuleByNum(long blockNum) {
+    try {
+      return chainBaseManager.getBlockByNum(blockNum);
+    } catch (StoreException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
   public long getTransactionCountByBlockNum(long blockNum) {
     long count = 0;
 
@@ -659,6 +683,35 @@ public class Wallet {
     }
 
     return count;
+  }
+
+  public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
+    if (EARLIEST_STR.equalsIgnoreCase(id)) {
+      return getBlockByNum(0);
+    } else if ("latest".equalsIgnoreCase(id)) {
+      return getNowBlock();
+    } else if ("pending".equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else {
+      long blockNumber;
+      try {
+        blockNumber = ByteArray.hexToBigInteger(id).longValue();
+      } catch (Exception e) {
+        throw new JsonRpcInvalidParamsException("invalid block number");
+      }
+
+      return getBlockByNum(blockNumber);
+    }
+  }
+
+  public List<Transaction> getTransactionsByJsonBlockId(String id)
+      throws JsonRpcInvalidParamsException {
+    if ("pending".equalsIgnoreCase(id)) {
+      throw new JsonRpcInvalidParamsException("TAG pending not supported");
+    } else {
+      Block block = getByJsonBlockId(id);
+      return block != null ? block.getTransactionsList() : null;
+    }
   }
 
   public WitnessList getWitnessList() {
@@ -889,7 +942,7 @@ public class Wallet {
         .setKey("getAllowTvmSolidity059")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
-    
+
     // ALLOW_TVM_ISTANBUL
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder().setKey("getAllowTvmIstanbul")
@@ -974,14 +1027,59 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowTvmStake")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmStake())
+        .setKey("getAllowTransactionFeePool")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTransactionFeePool())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmAssetIssue")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmAssetIssue())
-            .build());
+        .setKey("getMaxFeeLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxFeeLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOptimizeBlackHole")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowBlackHoleOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowNewResourceModel")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowNewResourceModel())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmFreeze")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmFreeze())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmVote")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmLondon")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmLondon())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmCompatibleEvm")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmCompatibleEvm())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountAssetOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getFreeNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getFreeNetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getTotalNetLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
+        .build());
 
     return builder.build();
   }
@@ -1110,6 +1208,8 @@ public class Wallet {
     long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long totalTronPowerWeight = chainBaseManager.getDynamicPropertiesStore()
+        .getTotalTronPowerWeight();
     long energyLimit = energyProcessor
         .calculateGlobalEnergyLimit(accountCapsule);
     long totalEnergyLimit =
@@ -1119,6 +1219,8 @@ public class Wallet {
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+    long allTronPowerUsage = accountCapsule.getTronPowerUsage();
+    long allTronPower = accountCapsule.getAllTronPower() / TRX_PRECISION;
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
@@ -1129,8 +1231,11 @@ public class Wallet {
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
+        .setTotalTronPowerWeight(totalTronPowerWeight)
         .setEnergyLimit(energyLimit)
         .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTronPowerUsed(allTronPowerUsage)
+        .setTronPowerLimit(allTronPower)
         .setTotalEnergyLimit(totalEnergyLimit)
         .setTotalEnergyWeight(totalEnergyWeight)
         .setStorageLimit(storageLimit)
@@ -1282,14 +1387,29 @@ public class Wallet {
     return null;
   }
 
+  public TransactionCapsule getTransactionCapsuleById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = chainBaseManager.getTransactionStore()
+          .get(transactionId.toByteArray());
+    } catch (StoreException e) {
+      return null;
+    }
+
+    return transactionCapsule;
+  }
+
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
     }
     TransactionInfoCapsule transactionInfoCapsule;
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
-          .get(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
+          .getTransactionInfo(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1297,8 +1417,8 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
-          .getTransactionInfo(transactionId.toByteArray());
+      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
+          .get(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
@@ -2437,13 +2557,19 @@ public class Wallet {
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = chainBaseManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    SmartContract.ABI abi = contractStore.getABI(contractAddress);
-    if (abi == null) {
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(contractAddress);
+    if (contractCapsule == null) {
       throw new ContractValidateException(
           "No contract or not a valid smart contract");
+    }
+    AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(contractAddress);
+    SmartContract.ABI abi;
+    if (abiCapsule == null || abiCapsule.getData() == null) {
+      abi = SmartContract.ABI.getDefaultInstance();
+    } else {
+      abi = abiCapsule.getInstance();
     }
 
     byte[] selector = WalletUtil.getSelector(
@@ -2456,33 +2582,36 @@ public class Wallet {
     }
   }
 
-  public Transaction triggerConstantContract(TriggerSmartContract
-      triggerSmartContract,
-      TransactionCapsule trxCap, Builder builder,
-      Return.Builder retBuilder)
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = chainBaseManager.getContractStore();
-    byte[] contractAddress = triggerSmartContract.getContractAddress()
-        .toByteArray();
-    byte[] isContractExist = contractStore
-        .findContractByHash(contractAddress);
-
-    if (ArrayUtils.isEmpty(isContractExist)) {
-      throw new ContractValidateException(
-          "No contract or not a smart contract");
+    if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
+      CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
+      deployBuilder.setOwnerAddress(triggerSmartContract.getOwnerAddress());
+      deployBuilder.setNewContract(SmartContract.newBuilder()
+          .setOriginAddress(triggerSmartContract.getOwnerAddress())
+          .setBytecode(triggerSmartContract.getData())
+          .setCallValue(triggerSmartContract.getCallValue())
+          .setConsumeUserResourcePercent(100)
+          .setOriginEnergyLimit(1)
+          .build()
+      );
+      deployBuilder.setCallTokenValue(triggerSmartContract.getCallTokenValue());
+      deployBuilder.setTokenId(triggerSmartContract.getTokenId());
+      trxCap = createTransactionCapsule(deployBuilder.build(), ContractType.CreateSmartContract);
+    } else { // call contract
+      ContractStore contractStore = chainBaseManager.getContractStore();
+      byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
+      if (contractStore.get(contractAddress) == null) {
+        throw new ContractValidateException("Smart contract is not exist.");
+      }
     }
-
-    if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node does not support constant");
-    }
-
     return callConstantContract(trxCap, builder, retBuilder);
   }
 
-  public Transaction callConstantContract(TransactionCapsule trxCap, Builder
-      builder,
-      Return.Builder retBuilder)
+  public Transaction callConstantContract(TransactionCapsule trxCap,
+      Builder builder, Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -2499,8 +2628,7 @@ public class Wallet {
     }
 
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
-        StoreFactory.getInstance(), true,
-        false);
+        StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
     vmActuator.validate(context);
@@ -2514,8 +2642,12 @@ public class Wallet {
     }
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
-
+    builder.setEnergyUsed(result.getEnergyUsed());
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
+    result.getLogInfoList().forEach(logInfo ->
+        builder.addLogs(LogInfo.buildLog(logInfo)));
+    result.getInternalTransactions().forEach(it ->
+        builder.addInternalTransactions(TransactionUtil.buildInternalTransaction(it)));
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
@@ -2542,24 +2674,28 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = chainBaseManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
+      }
       return contractCapsule.getInstance();
     }
     return null;
   }
 
   /**
-   * Add a wrapper for smart contract.
-   * Current additional information including runtime code for a smart contract.
+   * Add a wrapper for smart contract. Current additional information including runtime code for a
+   * smart contract.
+   *
    * @param bytesMessage the contract address message
    * @return contract info
-   *
    */
   public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
           "Get contract failed, the account does not exist or the account does not have a code "
@@ -2567,14 +2703,20 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = dbManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(address);
     if (Objects.nonNull(contractCapsule)) {
-      CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
-      if (Objects.nonNull(codeCapsule)) {
-        contractCapsule.setRuntimecode(codeCapsule.getData());
-        return contractCapsule.generateWrapper();
+      AbiCapsule abiCapsule = chainBaseManager.getAbiStore().get(address);
+      if (abiCapsule != null && abiCapsule.getInstance() != null) {
+        contractCapsule = new ContractCapsule(
+            contractCapsule.getInstance().toBuilder().setAbi(abiCapsule.getInstance()).build());
       }
+      CodeCapsule codeCapsule = chainBaseManager.getCodeStore().get(address);
+      if (Objects.nonNull(codeCapsule) && Objects.nonNull(codeCapsule.getData())) {
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+      } else {
+        contractCapsule.setRuntimecode(new byte[0]);
+      }
+      return contractCapsule.generateWrapper();
     }
     return null;
   }
@@ -2617,187 +2759,6 @@ public class Wallet {
     return builder.build();
   }
 
-  public List<Vote> getVoteList(byte[] address, long cycle) {
-    long current = dbManager.getDynamicPropertiesStore()
-        .getCurrentCycleNumber();
-    for (long i = cycle; i <= current; i++) {
-      AccountCapsule accountCapsule = dbManager.getDelegationStore()
-          .getAccountVote(i, address);
-      if (accountCapsule != null) {
-        return accountCapsule.getVotesList();
-      }
-      BytesCapsule remark = dbManager.getDelegationStore()
-          .getRemark(i, address);
-
-      if (remark != null) {
-        return null;
-      }
-    }
-
-    return dbManager.getAccountStore()
-        .get(address) == null ? null : dbManager.getAccountStore()
-        .get(address).getVotesList();
-  }
-
-  public HashMap<String, Long> computeUnwithdrawReward(byte[] address) {
-    HashMap<String, Long> rewardMap = new HashMap<>();
-    long beginCycle = dbManager.getDelegationStore()
-        .getLastWithdrawCycle(address);
-    long endCycle = dbManager.getDynamicPropertiesStore()
-        .getCurrentCycleNumber();
-    if (address.length == 0) {
-      return rewardMap;
-    }
-
-    for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
-      List<Vote> voteList = getVoteList(address, cycle);
-      if (voteList != null) {
-        for (Vote vote : voteList) {
-          byte[] srAddress = vote.getVoteAddress().toByteArray();
-          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
-          long totalVote = dbManager.getDelegationStore()
-              .getWitnessVote(cycle, srAddress);
-          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
-            continue;
-          }
-          long userVote = vote.getVoteCount();
-          double voteRate = (double) userVote / totalVote;
-          String SR = StringUtil
-              .encode58Check(srAddress);
-          if (!rewardMap.containsKey(SR)) {
-            rewardMap.put(SR, (long) (voteRate * totalReward));
-          } else {
-            long reward = rewardMap.get(SR) + (long) (voteRate * totalReward);
-            rewardMap.put(SR, reward);
-          }
-        }
-      }
-    }
-    return rewardMap;
-  }
-
-  public HashMap<String, Long> computeRewardByCycle(byte[] address,
-      long beginCycle, long endCycle) {
-    HashMap<String, Long> rewardMap = new HashMap<>();
-    if (address.length == 0) {
-      return rewardMap;
-    }
-
-    for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-      List<Vote> voteList = getVoteList(address, cycle);
-      if (voteList != null) {
-        for (Vote vote : voteList) {
-          byte[] srAddress = vote.getVoteAddress().toByteArray();
-          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
-          long totalVote = dbManager.getDelegationStore()
-              .getWitnessVote(cycle, srAddress);
-          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
-            continue;
-          }
-          long userVote = vote.getVoteCount();
-          double voteRate = (double) userVote / totalVote;
-          String SR = StringUtil
-              .encode58Check(srAddress);
-
-          logger.debug("Account-userVote: {}, Account-totalVote: {},Account-SR: {},",
-              userVote, totalVote, SR);
-
-          if (!rewardMap.containsKey(SR)) {
-            rewardMap.put(SR, (long) (voteRate * totalReward));
-          } else {
-            long reward = rewardMap.get(SR) + (long) (voteRate * totalReward);
-            rewardMap.put(SR, reward);
-          }
-        }
-      }
-    }
-    logger.debug("Account-rewardMap: {}",
-        rewardMap);
-    return rewardMap;
-  }
-
-  public HashMap<String, Long> queryPayByCycle(byte[] address,
-      long beginCycle, long endCycle) {
-    HashMap<String, Long> rewardMap = new HashMap<>();
-    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
-      return rewardMap;
-    }
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    long reward = 0;
-    if (accountCapsule == null) {
-      return rewardMap;
-    }
-
-    long blockPayReward = 0;
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
-        blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
-        if (brokerage == 100) {
-          reward += dbManager.getDelegationStore().getBlockReward(cycle, address) + dbManager
-              .getDelegationStore().getVoteReward(cycle, address);
-        } else {
-          double brokerageRate = (double) brokerage / 100;
-          reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
-        }
-      }
-    }
-    rewardMap.put("total", reward);
-    rewardMap.put("produceBlock", blockPayReward);
-    rewardMap.put("vote", reward - blockPayReward);
-
-    return rewardMap;
-  }
-
-  public double percentageOfBlockReward(long beginCycle, long endCycle, byte[] address) {
-    long reward = 0;
-    long blockPayReward = 0;
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
-        if (brokerage == 100) {
-          continue;
-        }
-
-        double brokerageRate = (double) brokerage / 100;
-        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
-        blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
-      }
-    }
-
-    if (reward == 0 || blockPayReward == 0) {
-      return 0;
-    }
-    return (double) blockPayReward / (double) reward;
-  }
-
-  public HashMap<String, Long> queryRewardByCycle(byte[] address,
-      long beginCycle, long endCycle) {
-    HashMap<String, Long> rewardMap = new HashMap<>();
-    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
-      return rewardMap;
-    }
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    long bonus = 0;
-    if (accountCapsule == null) {
-      return rewardMap;
-    }
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        bonus += dbManager.getDelegationStore().getReward(cycle, address);
-      }
-    }
-    double percentage = percentageOfBlockReward(beginCycle, endCycle, address);
-    Double blockBonus = new Double(bonus * percentage);
-
-    rewardMap.put("total", bonus);
-    rewardMap.put("produceBlock", blockBonus.longValue());
-    rewardMap.put("vote", bonus - blockBonus.longValue());
-    return rewardMap;
-  }
-
   public ExchangeList getPaginatedExchangeList(long offset, long limit) {
     if (limit < 0 || offset < 0) {
       return null;
@@ -2830,85 +2791,6 @@ public class Wallet {
             .addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
 
-  }
-
-  public double queryVoteNumber(byte[] address, long beginCycle, long endCycle) {
-
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    long voteNumber = 0;
-    if (accountCapsule == null) {
-      return 0;
-    }
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle, address);
-      }
-      voteNumber = voteNumber / (endCycle - beginCycle + 1);
-    }
-    return voteNumber;
-  }
-
-  public double queryTotalVoteNumber(long beginCycle, long endCycle) {
-    AtomicLong voteNumber = new AtomicLong();
-    double voteNumberTotal = 0;
-
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        List<WitnessCapsule> allWitnesses = dbManager.getWitnessStore().getAllWitnesses();
-        long finalCycle = cycle;
-        allWitnesses.forEach(witness -> {
-          voteNumber.addAndGet(dbManager.getDelegationStore()
-              .getWitnessVote(finalCycle, witness.getAddress().toByteArray()));
-        });
-      }
-      voteNumberTotal = voteNumber.doubleValue() / (double) (endCycle - beginCycle + 1);
-    }
-    return voteNumberTotal;
-  }
-
-  public double querySrRatio(byte[] address, long beginCycle, long endCycle) {
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    double borkerage = 0;
-    if (accountCapsule == null) {
-      return 0;
-    }
-    if (beginCycle <= endCycle) {
-      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        borkerage += dbManager.getDelegationStore().getBrokerage(cycle, address);
-      }
-    }
-    borkerage = borkerage / (endCycle - beginCycle + 1);
-    return 100 - borkerage;
-  }
-
-  public long getRewardOfVoteEachBlock() {
-    return dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock();
-  }
-
-  public long getRewardOfBlockEachBlock() {
-    return dbManager.getDynamicPropertiesStore().getWitnessPayPerBlock();
-  }
-
-  public int getSrNumber() {
-    return dbManager.getWitnessStore().getAllWitnesses().size();
-  }
-
-  public double queryNowVoteNumber(byte[] address) {
-    return dbManager.getWitnessStore().get(address).getVoteCount();
-  }
-
-  public double queryNowTotalVoteNumber() {
-    AtomicLong voteNumber = new AtomicLong();
-    List<ByteString> allWitnesses = getStandbyWitness();
-    allWitnesses.forEach(witness -> {
-      voteNumber.addAndGet(dbManager.getWitnessStore()
-          .get(witness.toByteArray()).getVoteCount());
-    });
-    return voteNumber.doubleValue();
-  }
-
-  public double queryNowSrRatio(byte[] address) {
-    return 100 - dbManager.getDelegationStore().getBrokerage(address);
   }
 
   /*
@@ -3911,63 +3793,175 @@ public class Wallet {
     return bytesBuilder.setValue(ByteString.copyFrom(Hex.decode(input))).build();
   }
 
-  public double getBlockNumberEachDay() {
-    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
-    if (maintenanceTimeInterval == 0) {
-      maintenanceTimeInterval = 21600000L;
+  public BalanceContract.AccountBalanceResponse getAccountBalance(
+      BalanceContract.AccountBalanceRequest request)
+      throws ItemNotFoundException {
+    BalanceContract.AccountIdentifier accountIdentifier = request.getAccountIdentifier();
+    checkAccountIdentifier(accountIdentifier);
+    BlockBalanceTrace.BlockIdentifier blockIdentifier = request.getBlockIdentifier();
+    checkBlockIdentifier(blockIdentifier);
+
+    AccountTraceStore accountTraceStore = chainBaseManager.getAccountTraceStore();
+    BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
+    BlockId blockId = blockIndexStore.get(blockIdentifier.getNumber());
+    if (!blockId.getByteString().equals(blockIdentifier.getHash())) {
+      throw new IllegalArgumentException("number and hash do not match");
     }
-    double blockNumberEachDay = FROZEN_PERIOD / BLOCK_PRODUCED_INTERVAL
-        - 2 * (FROZEN_PERIOD / maintenanceTimeInterval);
-    return blockNumberEachDay;
+
+    Pair<Long, Long> pair = accountTraceStore.getPrevBalance(
+        accountIdentifier.getAddress().toByteArray(), blockIdentifier.getNumber());
+    BalanceContract.AccountBalanceResponse.Builder builder =
+        BalanceContract.AccountBalanceResponse.newBuilder();
+    if (pair.getLeft() == blockIdentifier.getNumber()) {
+      builder.setBlockIdentifier(blockIdentifier);
+    } else {
+      blockId = blockIndexStore.get(pair.getLeft());
+      builder.setBlockIdentifier(BlockBalanceTrace.BlockIdentifier.newBuilder()
+          .setNumber(pair.getLeft())
+          .setHash(blockId.getByteString()));
+    }
+
+    builder.setBalance(pair.getRight());
+    return builder.build();
   }
 
-  public double getAnnualizedRateOfReturn(long rewardOfBlockEachBlock, double blockNumberEachDay,
-      double srNumber, double srVote, double totalVote,
-      long rewardOfVoteEachBlock, double ratio)
-      throws Exception {
-    if ((int) srVote == 0) {
-      return 0;
+  public BalanceContract.BlockBalanceTrace getBlockBalance(
+      BlockBalanceTrace.BlockIdentifier request) throws ItemNotFoundException, BadItemException {
+    checkBlockIdentifier(request);
+    BalanceTraceStore balanceTraceStore = chainBaseManager.getBalanceTraceStore();
+    BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
+    BlockId blockId = blockIndexStore.get(request.getNumber());
+    if (!blockId.getByteString().equals(request.getHash())) {
+      throw new IllegalArgumentException("number and hash do not match");
     }
-    if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {
-      throw new Exception("bad parameters");
+
+    BlockBalanceTraceCapsule blockBalanceTraceCapsule =
+        balanceTraceStore.getBlockBalanceTrace(blockId);
+    if (blockBalanceTraceCapsule == null) {
+      throw new ItemNotFoundException("This block does not exist");
     }
-    double annualizedRateOfReturn = (rewardOfBlockEachBlock / srNumber / srVote
-        + rewardOfVoteEachBlock / totalVote) * blockNumberEachDay * ratio * 365;
-    return annualizedRateOfReturn;
+
+    return blockBalanceTraceCapsule.getInstance();
   }
 
-  public boolean checkAddress(byte[] address) {
-    return consensusDelegate.getActiveWitnesses().contains(ByteString.copyFrom(address));
+  public void checkBlockIdentifier(BlockBalanceTrace.BlockIdentifier blockIdentifier) {
+    if (blockIdentifier == blockIdentifier.getDefaultInstanceForType()) {
+      throw new IllegalArgumentException("block_identifier null");
+    }
+    if (blockIdentifier.getNumber() < 0) {
+      throw new IllegalArgumentException("block_identifier number less than 0");
+    }
+    if (blockIdentifier.getHash().size() != 32) {
+      throw new IllegalArgumentException("block_identifier hash length not equals 32");
+    }
+
   }
 
-  public boolean existAddress(byte[] address) {
-    WitnessCapsule witnessCapsule = dbManager.getWitnessStore().get(address);
-    if (witnessCapsule != null) {
-      return true;
+  public void checkAccountIdentifier(BalanceContract.AccountIdentifier accountIdentifier) {
+    if (accountIdentifier == accountIdentifier.getDefaultInstanceForType()) {
+      throw new IllegalArgumentException("account_identifier is null");
     }
+    if (accountIdentifier.getAddress().isEmpty()) {
+      throw new IllegalArgumentException("account_identifier address is null");
+    }
+  }
+
+  public long getEnergyFee() {
+    return chainBaseManager.getDynamicPropertiesStore().getEnergyFee();
+  }
+
+  // this function should be called after EnergyPriceHistoryLoader done
+  public long getEnergyFee(long timestamp) {
+    try {
+      String energyPriceHistory =
+          chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+      long energyFee = parseEnergyFee(timestamp, energyPriceHistory);
+
+      if (energyFee == -1) {
+        energyFee = getEnergyFee();
+      }
+
+      return energyFee;
+    } catch (Exception e) {
+      logger.error("getEnergyFee timestamp={} failed, error is {}", timestamp, e.getMessage());
+      return getEnergyFee();
+    }
+  }
+
+  public String getEnergyPrices() {
+    try {
+      return chainBaseManager.getDynamicPropertiesStore().getEnergyPriceHistory();
+    } catch (Exception e) {
+      logger.error("getEnergyPrices failed, error is {}", e.getMessage());
+    }
+
+    return null;
+  }
+
+  public String getCoinbase() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return null;
+    }
+
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get all witnesses
+    List<WitnessCapsule> witnesses = consensusDelegate.getAllWitnesses();
+    List<String> witnessAddresses = new ArrayList<>();
+    for (WitnessCapsule witnessCapsule : witnesses) {
+      witnessAddresses.add(Hex.toHexString(witnessCapsule.getAddress().toByteArray()));
+    }
+
+    // check if witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (witnessAddresses.contains(localWitnessAddress)) {
+        return "0x" + localWitnessAddress;
+      }
+    }
+
+    return null;
+  }
+
+  public boolean isMining() {
+    if (!CommonParameter.getInstance().isWitness()) {
+      return false;
+    }
+
+    // get local witnesses
+    List<String> localPrivateKeys = Args.getLocalWitnesses().getPrivateKeys();
+    List<String> localWitnessAddresses = new ArrayList<>();
+    for (String privateKey : localPrivateKeys) {
+      localWitnessAddresses.add(Hex.toHexString(SignUtils
+          .fromPrivate(ByteArray.fromHexString(privateKey),
+              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+    }
+
+    // get active witnesses
+    List<ByteString> activeWitnesses = consensusDelegate.getActiveWitnesses();
+    List<String> activeWitnessAddresses = new ArrayList<>();
+    for (ByteString activeWitness : activeWitnesses) {
+      activeWitnessAddresses.add(Hex.toHexString(activeWitness.toByteArray()));
+    }
+
+    // check if active witnesses contains local witness
+    for (String localWitnessAddress : localWitnessAddresses) {
+      if (activeWitnessAddresses.contains(localWitnessAddress)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
-  public List<ByteString> getStandbyWitness() {
-    List<ByteString> witnessAddressList = new ArrayList<>();
-    for (WitnessCapsule witnessCapsule : consensusDelegate.getAllWitnesses()) {
-      witnessAddressList.add(witnessCapsule.getAddress());
-    }
-    witnessAddressList.sort(Comparator.comparingLong((ByteString b) ->
-        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
-
-    if (witnessAddressList.size() > WITNESS_STANDBY_LENGTH) {
-      witnessAddressList = witnessAddressList.subList(0, WITNESS_STANDBY_LENGTH);
-    }
-    return witnessAddressList;
-
-  }
-
-  public boolean checkStandbyWitness(byte[] address) {
-    boolean contains = getStandbyWitness().contains(ByteString.copyFrom(address));
-    return contains;
+  public Chainbase.Cursor getCursor() {
+    return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
   }
 }
 

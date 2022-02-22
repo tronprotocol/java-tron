@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -59,8 +60,8 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.exception.CipherException;
 import org.tron.core.store.AccountStore;
-import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
@@ -76,12 +77,12 @@ public class Args extends CommonParameter {
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
+  private static ConcurrentHashMap<Long, BlockingQueue<ContractLogTrigger>>
       solidityContractLogTriggerMap = new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
+  private static ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
   public static void clearParam() {
@@ -122,6 +123,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDiscoveryBindIp = "";
     PARAMETER.nodeExternalIp = "";
     PARAMETER.nodeDiscoveryPublicHomeNode = false;
+    PARAMETER.nodeDiscoveryPingTimeout = 15000;
     PARAMETER.nodeP2pPingInterval = 0L;
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.rpcPort = 0;
@@ -130,6 +132,9 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
     PARAMETER.pBFTHttpPort = 0;
+    PARAMETER.jsonRpcHttpFullNodePort = 0;
+    PARAMETER.jsonRpcHttpSolidityPort = 0;
+    PARAMETER.jsonRpcHttpPBFTPort = 0;
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -171,15 +176,28 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
+    PARAMETER.jsonRpcHttpFullNodeEnable = false;
+    PARAMETER.jsonRpcHttpSolidityNodeEnable = false;
+    PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
     PARAMETER.allowMarketTransaction = 0;
+    PARAMETER.allowTransactionFeePool = 0;
+    PARAMETER.allowBlackHoleOptimization = 0;
+    PARAMETER.allowNewResourceModel = 0;
     PARAMETER.allowTvmIstanbul = 0;
-    PARAMETER.allowTvmStake = 0;
-    PARAMETER.allowTvmAssetIssue = 0;
+    PARAMETER.allowTvmFreeze = 0;
+    PARAMETER.allowTvmVote = 0;
+    PARAMETER.allowTvmLondon = 0;
+    PARAMETER.allowTvmCompatibleEvm = 0;
+    PARAMETER.historyBalanceLookup = false;
+    PARAMETER.openPrintLog = true;
+    PARAMETER.openTransactionSort = false;
+    PARAMETER.allowAccountAssetOptimization = 0;
+    PARAMETER.disabledApiList = Collections.emptyList();
   }
 
   /**
@@ -226,17 +244,7 @@ public class Args extends CommonParameter {
       localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
       localWitnesses.setPrivateKeys(localwitness);
-
-      if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
-        byte[] bytes = Commons
-            .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
-        if (bytes != null) {
-          localWitnesses.setWitnessAccountAddress(bytes);
-          logger.debug("Got localWitnessAccountAddress from config.conf");
-        } else {
-          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
-        }
-      }
+      witnessAddressCheck(config);
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
@@ -269,17 +277,7 @@ public class Args extends CommonParameter {
         }
       }
       localWitnesses.setPrivateKeys(privateKeys);
-
-      if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
-        byte[] bytes = Commons
-            .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
-        if (bytes != null) {
-          localWitnesses.setWitnessAccountAddress(bytes);
-          logger.debug("Got localWitnessAccountAddress from config.conf");
-        } else {
-          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
-        }
-      }
+      witnessAddressCheck(config);
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
       logger.debug("Got privateKey from keystore");
     }
@@ -293,6 +291,11 @@ public class Args extends CommonParameter {
       PARAMETER.supportConstant = config.getBoolean(Constant.VM_SUPPORT_CONSTANT);
     }
 
+    if (config.hasPath(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT)) {
+      long configLimit = config.getLong(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT);
+      PARAMETER.maxEnergyLimitForConstant = max(3_000_000L, configLimit);
+    }
+
     if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
       PARAMETER.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
     }
@@ -301,9 +304,19 @@ public class Args extends CommonParameter {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
     }
 
-    if (config.hasPath(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH)) {
-      PARAMETER.nodeHttpStatisticsSRRewardEnable = config
-          .getBoolean(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH);
+    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_FULLNODE_ENABLE)) {
+      PARAMETER.jsonRpcHttpFullNodeEnable =
+          config.getBoolean(Constant.NODE_JSONRPC_HTTP_FULLNODE_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_SOLIDITY_ENABLE)) {
+      PARAMETER.jsonRpcHttpSolidityNodeEnable =
+          config.getBoolean(Constant.NODE_JSONRPC_HTTP_SOLIDITY_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE)) {
+      PARAMETER.jsonRpcHttpPBFTNodeEnable =
+          config.getBoolean(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
@@ -361,6 +374,7 @@ public class Args extends CommonParameter {
                 .filter(StringUtils::isNotEmpty)
                 .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
 
+    PARAMETER.storage.setDefaultDbOptions(config);
     PARAMETER.storage.setPropertyMapFromConfig(config);
 
     PARAMETER.seedNode = new SeedNode();
@@ -431,6 +445,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE) && config
             .getBoolean(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE);
 
+    PARAMETER.nodeDiscoveryPingTimeout =
+        config.hasPath(Constant.NODE_DISCOVERY_PING_TIMEOUT)
+            ? config.getLong(Constant.NODE_DISCOVERY_PING_TIMEOUT) : 15000;
+
     PARAMETER.nodeP2pPingInterval =
         config.hasPath(Constant.NODE_P2P_PING_INTERVAL)
             ? config.getLong(Constant.NODE_P2P_PING_INTERVAL) : 0;
@@ -462,6 +480,18 @@ public class Args extends CommonParameter {
     PARAMETER.pBFTHttpPort =
         config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
             ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
+
+    PARAMETER.jsonRpcHttpFullNodePort =
+        config.hasPath(Constant.NODE_JSONRPC_HTTP_FULLNODE_PORT)
+            ? config.getInt(Constant.NODE_JSONRPC_HTTP_FULLNODE_PORT) : 8545;
+
+    PARAMETER.jsonRpcHttpSolidityPort =
+        config.hasPath(Constant.NODE_JSONRPC_HTTP_SOLIDITY_PORT)
+            ? config.getInt(Constant.NODE_JSONRPC_HTTP_SOLIDITY_PORT) : 8555;
+
+    PARAMETER.jsonRpcHttpPBFTPort =
+        config.hasPath(Constant.NODE_JSONRPC_HTTP_PBFT_PORT)
+            ? config.getInt(Constant.NODE_JSONRPC_HTTP_PBFT_PORT) : 8565;
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
@@ -622,6 +652,9 @@ public class Args extends CommonParameter {
     PARAMETER.minEffectiveConnection = config.hasPath(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION)
         ? config.getInt(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION) : 1;
 
+    PARAMETER.trxCacheEnable = config.hasPath(Constant.NODE_RPC_TRX_CACHE_ENABLE)
+            && config.getBoolean(Constant.NODE_RPC_TRX_CACHE_ENABLE);
+
     PARAMETER.blockNumForEnergyLimit = config.hasPath(Constant.ENERGY_LIMIT_BLOCK_NUM)
         ? config.getInt(Constant.ENERGY_LIMIT_BLOCK_NUM) : 4727890L;
 
@@ -643,6 +676,19 @@ public class Args extends CommonParameter {
     PARAMETER.allowMarketTransaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
+
+
+    PARAMETER.allowTransactionFeePool =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) : 0;
+
+    PARAMETER.allowBlackHoleOptimization =
+        config.hasPath(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) : 0;
+
+    PARAMETER.allowNewResourceModel =
+        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) : 0;
 
     PARAMETER.allowTvmIstanbul =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
@@ -708,13 +754,22 @@ public class Args extends CommonParameter {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
-    PARAMETER.allowTvmStake =
-            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_STAKE) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_TVM_STAKE) : 0;
+    PARAMETER.allowTvmFreeze =
+            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
 
-    PARAMETER.allowTvmAssetIssue =
-            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_TVM_ASSETISSUE) : 0;
+    PARAMETER.allowTvmVote =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
+
+    PARAMETER.allowTvmLondon =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_LONDON) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_LONDON) : 0;
+
+    PARAMETER.allowTvmCompatibleEvm =
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
             .getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -734,7 +789,7 @@ public class Args extends CommonParameter {
     PARAMETER.metricsStorageEnable = config.hasPath(Constant.METRICS_STORAGE_ENABLE) && config
             .getBoolean(Constant.METRICS_STORAGE_ENABLE);
     PARAMETER.influxDbIp = config.hasPath(Constant.METRICS_INFLUXDB_IP) ? config
-            .getString(Constant.METRICS_INFLUXDB_IP) : "127.0.0.1";
+            .getString(Constant.METRICS_INFLUXDB_IP) : Constant.LOCAL_HOST;
     PARAMETER.influxDbPort = config.hasPath(Constant.METRICS_INFLUXDB_PORT) ? config
             .getInt(Constant.METRICS_INFLUXDB_PORT) : 8086;
     PARAMETER.influxDbDatabase = config.hasPath(Constant.METRICS_INFLUXDB_DATABASE) ? config
@@ -747,6 +802,24 @@ public class Args extends CommonParameter {
     PARAMETER.setOpenHistoryQueryWhenLiteFN(
             config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
                     && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
+
+    PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
+        .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
+
+    PARAMETER.openPrintLog = config.hasPath(Constant.OPEN_PRINT_LOG) && config
+        .getBoolean(Constant.OPEN_PRINT_LOG);
+    PARAMETER.openTransactionSort = config.hasPath(Constant.OPEN_TRANSACTION_SORT) && config
+        .getBoolean(Constant.OPEN_TRANSACTION_SORT);
+
+    PARAMETER.allowAccountAssetOptimization = config
+            .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
+            .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
+
+    PARAMETER.disabledApiList =
+        config.hasPath(Constant.NODE_DISABLED_API_LIST)
+            ? config.getStringList(Constant.NODE_DISABLED_API_LIST)
+            .stream().map(String::toLowerCase).collect(Collectors.toList())
+            : Collections.emptyList();
 
     logConfig();
   }
@@ -810,7 +883,7 @@ public class Args extends CommonParameter {
       Node n = Node.instanceOf(configString);
       if (!(PARAMETER.nodeDiscoveryBindIp.equals(n.getHost())
           || PARAMETER.nodeExternalIp.equals(n.getHost())
-          || "127.0.0.1".equals(n.getHost()))
+          || Constant.LOCAL_HOST.equals(n.getHost()))
           || PARAMETER.nodeListenPort != n.getPort()) {
         ret.add(n);
       }
@@ -891,6 +964,21 @@ public class Args extends CommonParameter {
 
     String topic = triggerObject.get("topic").unwrapped().toString();
     triggerConfig.setTopic(topic);
+
+    if (triggerObject.containsKey("redundancy")) {
+      String redundancy = triggerObject.get("redundancy").unwrapped().toString();
+      triggerConfig.setRedundancy("true".equalsIgnoreCase(redundancy));
+    }
+
+    if (triggerObject.containsKey("ethCompatible")) {
+      String ethCompatible = triggerObject.get("ethCompatible").unwrapped().toString();
+      triggerConfig.setEthCompatible("true".equalsIgnoreCase(ethCompatible));
+    }
+
+    if (triggerObject.containsKey("solidified")) {
+      String solidified = triggerObject.get("solidified").unwrapped().toString();
+      triggerConfig.setSolidified("true".equalsIgnoreCase(solidified));
+    }
 
     return triggerConfig;
   }
@@ -1105,6 +1193,19 @@ public class Args extends CommonParameter {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
+  }
+  
+  private static void witnessAddressCheck(Config config) {
+    if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
+      byte[] bytes = Commons
+              .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
+      if (bytes != null) {
+        localWitnesses.setWitnessAccountAddress(bytes);
+        logger.debug("Got localWitnessAccountAddress from config.conf");
+      } else {
+        logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
+      }
+    }
   }
 }
 

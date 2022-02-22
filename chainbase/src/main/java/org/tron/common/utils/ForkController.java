@@ -83,7 +83,8 @@ public class ForkController {
         ++count;
       }
     }
-    return count >= versionEnum.getHardForkCount();
+    return count >= Math
+        .ceil((double) versionEnum.getHardForkRate() * manager.getWitnesses().size() / 100);
   }
 
 
@@ -154,13 +155,13 @@ public class ForkController {
     downgrade(version, slot);
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
+    if (Objects.isNull(stats) || stats.length != witnesses.size()) {
+      stats = new byte[witnesses.size()];
+    }
+
     if (check(stats)) {
       upgrade(version, stats.length);
       return;
-    }
-
-    if (Objects.isNull(stats) || stats.length != witnesses.size()) {
-      stats = new byte[witnesses.size()];
     }
 
     stats[slot] = VERSION_UPGRADE;
@@ -184,7 +185,7 @@ public class ForkController {
     for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
       int versionValue = versionEnum.getValue();
       byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
-      if (!check(stats) && Objects.nonNull(stats)) {
+      if (Objects.nonNull(stats) && !pass(versionValue)) {
         Arrays.fill(stats, VERSION_DOWNGRADE);
         manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
       }

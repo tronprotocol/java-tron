@@ -1,11 +1,11 @@
-//pragma solidity ^0.4.16;
+
 
 interface token {
     function transfer(address receiver, uint amount) external;
 }
 
 contract Crowdsale {
-    address payable public beneficiary = 0x1b228F5D9f934c7bb18Aaa86F90418932888E7b4;  // 募资成功后的收款方
+    address payable public beneficiary = payable(address(uint160(0x1b228F5D9f934c7bb18Aaa86F90418932888E7b4)));  // 募资成功后的收款方
     uint public fundingGoal = 10000000;   // 募资额度
     uint public amountRaised = 1000000;   // 参与数量
     uint public deadline;      // 募资截止期
@@ -35,7 +35,7 @@ contract Crowdsale {
         address addressOfTokenUsedAsReward) public{
             beneficiary = ifSuccessfulSendTo;
             fundingGoal = fundingGoalInEthers * 1 sun;
-            deadline = now + durationInMinutes * 1 minutes;
+            deadline = block.timestamp + durationInMinutes * 1 minutes;
             price = finneyCostOfEachToken * 1 trx;
             tokenReward = token(addressOfTokenUsedAsReward);   // 传入已发布的 token 合约的地址来创建实例
     }
@@ -44,7 +44,7 @@ contract Crowdsale {
      * 无函数名的Fallback函数，
      * 在向合约转账时，这个函数会被调用
      */
-    function () payable external{
+    fallback() payable external{
         require(!crowdsaleClosed);
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
@@ -58,7 +58,7 @@ contract Crowdsale {
     * 用于在函数执行前检查某种前置条件（判断通过之后才会继续执行该方法）
     * _ 表示继续执行之后的代码
     **/
-    modifier afterDeadline() { if (now >= deadline) _; }
+    modifier afterDeadline() { if (block.timestamp >= deadline) _; }
 
     /**
      * 判断众筹是否完成融资目标， 这个方法使用了afterDeadline函数修改器
@@ -83,7 +83,7 @@ contract Crowdsale {
             uint amount = balanceOf[msg.sender];
             balanceOf[msg.sender] = 0;
             if (amount > 0) {
-                if (msg.sender.send(amount)) {
+                if (payable(msg.sender).send(amount)) {
                     emit FundTransfer(msg.sender, amount, false);
                 } else {
                     balanceOf[msg.sender] = amount;
@@ -92,7 +92,7 @@ contract Crowdsale {
         }
 
         if (fundingGoalReached && beneficiary == msg.sender) {
-            if (address(beneficiary).send(amountRaised)) {
+            if (payable(beneficiary).send(amountRaised)) {
                 emit FundTransfer(beneficiary, amountRaised, false);
             } else {
                 //If we fail to send the funds to beneficiary, unlock funders balance

@@ -40,11 +40,7 @@ public class VerifyBurnProof001 {
   private byte[] testAddress001 = ecKey1.getAddress();
   private String testPriKey001 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -207,7 +203,7 @@ public class VerifyBurnProof001 {
         + "dfc2aabf584106dfb2f6d3eb7f4584f5f2d9cba8340b0f73ba5fab4a4a024db2"
         + "d00c5f0b3aba1f98cba6d1c9750591628daca165bac2de6fd694df833110ee01"
 
-        + "0000000000000000000000ffffffffffffffffffffffffffffffffffffffffff"
+        + "0000000000000000000000000000000000000000000000000fffffffffffffff"
 
         + "19389f87908cb5f1ede2a9fe0c3047d2ad5fce424d133bacb655ae1179a81084"
         + "102ce5ad22d815a64374da9e2207d722b1c9a3099b292eaea0862edc886ff70d"

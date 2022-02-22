@@ -45,19 +45,7 @@ public class BN128G1 extends BN128Fp {
       return null;
     }
 
-    if (!isGroupMember(p)) {
-      return null;
-    }
-
     return new BN128G1(p);
-  }
-
-  /**
-   * Formally we have to do this check but in our domain it's not necessary, thus always return
-   * true
-   */
-  private static boolean isGroupMember(BN128<Fp> p) {
-    return true;
   }
 
   @Override

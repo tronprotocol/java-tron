@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountOnPBFTServlet;
@@ -24,21 +25,31 @@ import org.tron.core.services.interfaceOnPBFT.http.GetBlockByLatestNumOnPBFTServ
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByLimitNextOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBlockByNumOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetBrokerageOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetBurnTrxOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceAccountIndexOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetDelegatedResourceOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetEnergyPricesOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetExchangeByIdOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderByAccountOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderByIdOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketOrderListByPairOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketPairListOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetMarketPriceByPairOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetMerkleTreeVoucherInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNodeInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNowBlockOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetPaginatedAssetIssueListOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetRewardOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetTransactionCountByBlockNumOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.IsShieldedTRC20ContractNoteSpentOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.IsSpendOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ListExchangesOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ListWitnessesOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ScanAndMarkNoteByIvkOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ScanNoteByIvkOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.ScanNoteByOvkOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.ScanShieldedTRC20NotesByIvkOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.ScanShieldedTRC20NotesByOvkOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.TriggerConstantContractOnPBFTServlet;
 
 @Slf4j(topic = "API")
@@ -114,6 +125,31 @@ public class HttpApiOnPBFTService implements Service {
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
+
+  @Autowired
+  private GetMarketOrderByAccountOnPBFTServlet getMarketOrderByAccountOnPBFTServlet;
+  @Autowired
+  private GetMarketOrderByIdOnPBFTServlet getMarketOrderByIdOnPBFTServlet;
+  @Autowired
+  private GetMarketPriceByPairOnPBFTServlet getMarketPriceByPairOnPBFTServlet;
+  @Autowired
+  private GetMarketOrderListByPairOnPBFTServlet getMarketOrderListByPairOnPBFTServlet;
+  @Autowired
+  private GetMarketPairListOnPBFTServlet getMarketPairListOnPBFTServlet;
+
+  @Autowired
+  private ScanShieldedTRC20NotesByIvkOnPBFTServlet scanShieldedTRC20NotesByIvkOnPBFTServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesByOvkOnPBFTServlet scanShieldedTRC20NotesByOvkOnPBFTServlet;
+  @Autowired
+  private IsShieldedTRC20ContractNoteSpentOnPBFTServlet
+      isShieldedTRC20ContractNoteSpentOnPBFTServlet;
+  @Autowired
+  private GetBurnTrxOnPBFTServlet getBurnTrxOnPBFTServlet;
+  @Autowired
+  private GetEnergyPricesOnPBFTServlet getEnergyPricesOnPBFTServlet;
 
   @Override
   public void init() {
@@ -179,6 +215,29 @@ public class HttpApiOnPBFTService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
+
+      context.addServlet(new ServletHolder(getMarketOrderByAccountOnPBFTServlet),
+          "/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdOnPBFTServlet),
+          "/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairOnPBFTServlet),
+          "/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairOnPBFTServlet),
+          "/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListOnPBFTServlet),
+          "/getmarketpairlist");
+
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkOnPBFTServlet),
+          "/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkOnPBFTServlet),
+          "/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentOnPBFTServlet),
+          "/isshieldedtrc20contractnotespent");
+      context.addServlet(new ServletHolder(getBurnTrxOnPBFTServlet),
+          "/getburntrx");
+      context.addServlet(new ServletHolder(getEnergyPricesOnPBFTServlet),
+          "/getenergyprices");
+
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
@@ -187,7 +246,11 @@ public class HttpApiOnPBFTService implements Service {
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
-              EnumSet.allOf(DispatcherType.class));
+          EnumSet.allOf(DispatcherType.class));
+
+      // api access filter
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
 
       server.start();
     } catch (Exception e) {

@@ -2,7 +2,7 @@ package org.tron.core.store;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -11,12 +11,15 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
+import java.math.BigInteger;
+
 @Slf4j
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public static final long REMARK = -1L;
   public static final int DEFAULT_BROKERAGE = 20;
+  public static final BigInteger DECIMAL_OF_VI_REWARD = BigInteger.valueOf(10).pow(18);
 
   @Autowired
   public DelegationStore(@Value("delegation") String dbName) {
@@ -27,48 +30,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   public BytesCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
     return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
-  }
-
-  public void addBlockReward(long cycle, byte[] address, long value) {
-    byte[] key = buildRewardBlockKey(cycle, address);
-    BytesCapsule bytesCapsule = get(key);
-
-    if (bytesCapsule == null) {
-      put(key, new BytesCapsule(ByteArray.fromLong(value)));
-    } else {
-      put(key, new BytesCapsule(ByteArray
-          .fromLong(ByteArray.toLong(bytesCapsule.getData()) + value)));
-    }
-  }
-
-  public long getBlockReward(long cycle, byte[] address) {
-    BytesCapsule bytesCapsule = get(buildRewardBlockKey(cycle, address));
-    if (bytesCapsule == null) {
-      return 0L;
-    } else {
-      return ByteArray.toLong(bytesCapsule.getData());
-    }
-  }
-
-  public void addVoteReward(long cycle, byte[] address, long value) {
-    byte[] key = buildRewardVoteKey(cycle, address);
-    BytesCapsule bytesCapsule = get(key);
-
-    if (bytesCapsule == null) {
-      put(key, new BytesCapsule(ByteArray.fromLong(value)));
-    } else {
-      put(key, new BytesCapsule(ByteArray
-          .fromLong(ByteArray.toLong(bytesCapsule.getData()) + value)));
-    }
-  }
-
-  public long getVoteReward(long cycle, byte[] address) {
-    BytesCapsule bytesCapsule = get(buildRewardVoteKey(cycle, address));
-    if (bytesCapsule == null) {
-      return 0L;
-    } else {
-      return ByteArray.toLong(bytesCapsule.getData());
-    }
   }
 
   public void addReward(long cycle, byte[] address, long value) {
@@ -93,23 +54,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void setBeginCycle(byte[] address, long number) {
     put(address, new BytesCapsule(ByteArray.fromLong(number)));
-  }
-
-  public BytesCapsule getRemark(long cycle, byte[] address) {
-    return get(buildRemarkKey(cycle, address));
-  }
-
-  public void setLastWithdrawCycle(long cycle, byte[] address) {
-    put(buildLastWithdrawCycleKey(address), new BytesCapsule(ByteArray.fromLong(cycle)));
-  }
-
-  public long getLastWithdrawCycle(byte[] address) {
-    BytesCapsule bytesCapsule = get(buildLastWithdrawCycleKey(address));
-    return bytesCapsule == null ? REMARK : ByteArray.toLong(bytesCapsule.getData());
-  }
-
-  public void setRemark(long cycle, byte[] address) {
-    put(buildRemarkKey(cycle, address), new BytesCapsule(ByteArray.fromLong(REMARK)));
   }
 
   public long getBeginCycle(byte[] address) {
@@ -173,28 +117,40 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     return getBrokerage(-1, address);
   }
 
+  public void setWitnessVi(long cycle, byte[] address, BigInteger value) {
+    put(buildViKey(cycle, address), new BytesCapsule(value.toByteArray()));
+  }
+
+  public BigInteger getWitnessVi(long cycle, byte[] address) {
+    BytesCapsule bytesCapsule = get(buildViKey(cycle, address));
+    if (bytesCapsule == null) {
+      return BigInteger.ZERO;
+    } else {
+      return new BigInteger(bytesCapsule.getData());
+    }
+  }
+
+  public void accumulateWitnessVi(long cycle, byte[] address, long voteCount) {
+    BigInteger preVi = getWitnessVi(cycle - 1, address);
+    long reward = getReward(cycle, address);
+    if (reward == 0 || voteCount == 0) { // Just forward pre vi
+      if (!BigInteger.ZERO.equals(preVi)) { // Zero vi will not be record
+        setWitnessVi(cycle, address, preVi);
+      }
+    } else { // Accumulate delta vi
+      BigInteger deltaVi = BigInteger.valueOf(reward)
+          .multiply(DECIMAL_OF_VI_REWARD)
+          .divide(BigInteger.valueOf(voteCount));
+      setWitnessVi(cycle, address, preVi.add(deltaVi));
+    }
+  }
+
   private byte[] buildVoteKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-vote").getBytes();
   }
 
   private byte[] buildRewardKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-reward").getBytes();
-  }
-
-  private byte[] buildRewardBlockKey(long cycle, byte[] address) {
-    return (cycle + "-" + Hex.toHexString(address) + "-block").getBytes();
-  }
-
-  private byte[] buildRewardVoteKey(long cycle, byte[] address) {
-    return (cycle + "-" + Hex.toHexString(address) + "-reward-vote").getBytes();
-  }
-
-  private byte[] buildRemarkKey(long cycle, byte[] address) {
-    return (cycle + "-" + Hex.toHexString(address) + "-remark").getBytes();
-  }
-
-  private byte[] buildLastWithdrawCycleKey(byte[] address) {
-    return ("lastWithdraw-" + Hex.toHexString(address)).getBytes();
   }
 
   private byte[] buildAccountVoteKey(long cycle, byte[] address) {
@@ -207,6 +163,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildBrokerageKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-brokerage").getBytes();
+  }
+
+  private byte[] buildViKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "-vi").getBytes();
   }
 
 }

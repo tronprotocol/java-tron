@@ -21,10 +21,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import org.spongycastle.util.Arrays;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.db.ByteArrayWrapper;
 
@@ -180,6 +181,13 @@ public class DataWord implements Comparable<DataWord> {
 
   public byte[] getLast20Bytes() {
     return Arrays.copyOfRange(data, 12, data.length);
+  }
+
+  public byte[] toTronAddress() {
+    byte[] ret = new byte[21];
+    ret[0] = DecodeUtil.addressPreFixByte;
+    System.arraycopy(data, 12, ret, 1, 20);
+    return ret;
   }
 
   public BigInteger value() {

@@ -56,11 +56,7 @@ public class ContractTrcToken036 {
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -91,13 +87,6 @@ public class ContractTrcToken036 {
         "user001Address:" + Base58.encode58Check(user001Address));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    // freeze balance
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
-        0, 1, dev001Key, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
-        0, 1, user001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -120,8 +109,8 @@ public class ContractTrcToken036 {
     //            0L, 0, originEnergyLimit, "0",
     //            0, null, dev001Key, dev001Address,
     //            blockingStubFull);
-    //    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    //    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
     //
     //    // devAddress transfer token to userAddress
     //    PublicMethed

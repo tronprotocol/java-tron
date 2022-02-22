@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -58,11 +58,7 @@ public class VoteWitnessAccount2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -143,17 +139,17 @@ public class VoteWitnessAccount2Test {
     ret1 = voteWitness2(zeroVoteMap, fromAddress, testKey002);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : vote count must be greater than 0");
+        "Contract validate error : vote count must be greater than 0");
 
     ret1 = voteWitness2(wrongVoteMap, fromAddress, testKey002);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : vote count must be greater than 0");
+        "Contract validate error : vote count must be greater than 0");
 
     ret1 = voteWitness2(wrongDropMap, fromAddress, testKey002);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : overflow: checkedMultiply(10000000000000000, 1000000)");
+        "Contract validate error : overflow: checkedMultiply(10000000000000000, 1000000)");
     ret1 = voteWitness2(smallVoteMap, fromAddress, testKey002);
     Assert.assertEquals(ret1.getCode(), Return.response_code.SUCCESS);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(), "");

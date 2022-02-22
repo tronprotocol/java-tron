@@ -1,150 +1,150 @@
-//pragma solidity ^0.4.24;
+
 
     contract A{
         uint256 public num = 0;
         constructor() public payable{}
-        function () payable external{}
+        fallback() payable external{}
         function transfer()  payable public{
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            B  b1=(new B).value(1)();//1
-            address payable aaa=address(this);
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            B  b1=(new B){value:1}();//1
+            address payable aaa=payable(address(this));
             b1.suicide1(aaa);
         }
         function transfer2()  payable public{
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            B  b1=(new B).value(1)();//1
-            address payable aaa=address(this);
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            (new B){value:1}();//1
+            B  b1=(new B){value:1}();//1
+            address payable aaa=payable(address(this));
             b1.suicide1(aaa);
         }
         function getBalance() public  returns(uint256){
@@ -166,7 +166,7 @@
         function getBalance() public returns(uint256){
             return address(this).balance;
         }
-        function () payable external{}
+        fallback() payable external{}
         function suicide1(address payable toAddress) public payable{
         selfdestruct(toAddress);
     }

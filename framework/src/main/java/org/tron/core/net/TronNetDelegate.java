@@ -8,7 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupServer;
@@ -30,6 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.P2pException;
@@ -84,6 +85,8 @@ public class TronNetDelegate {
   private volatile boolean backupServerStartFlag;
 
   private int blockIdCacheSize = 100;
+
+  private long timeout = 1000;
 
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
@@ -232,7 +235,8 @@ public class TronNetDelegate {
           | NonCommonBlockException
           | ReceiptCheckErrException
           | VMIllegalException
-          | ZksnarkException e) {
+          | ZksnarkException
+          | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
@@ -261,14 +265,25 @@ public class TronNetDelegate {
     }
   }
 
-  public boolean validBlock(BlockCapsule block) throws P2pException {
+  public void validSignature(BlockCapsule block) throws P2pException {
     try {
-      return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())
-          && block
-          .validateSignature(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+      if (!block.validateSignature(dbManager.getDynamicPropertiesStore(),
+              dbManager.getAccountStore())) {
+        throw new P2pException(TypeEnum.BAD_BLOCK, "valid signature failed.");
+      }
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public boolean validBlock(BlockCapsule block) throws P2pException {
+    long time = System.currentTimeMillis();
+    if (block.getTimeStamp() - time > timeout) {
+      throw new P2pException(TypeEnum.BAD_BLOCK,
+              "time:" + time + ",block time:" + block.getTimeStamp());
+    }
+    validSignature(block);
+    return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress());
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {

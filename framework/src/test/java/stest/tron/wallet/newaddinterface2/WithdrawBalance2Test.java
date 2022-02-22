@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -58,11 +58,7 @@ public class WithdrawBalance2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -87,14 +83,14 @@ public class WithdrawBalance2Test {
     //Withdraw failed when you are not witness
     Return ret1 = withdrawBalance2(notWitness, notWitnessTestKey);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : "
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : "
         + "Account[41688b08971e740d7cecfa5d768f2787c1bb4c1268] is not a witnessAccount");
 
     //Withdraw failed when the latest time to withdraw within 1 day.
     ret1 = withdrawBalance2(fromAddress, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : witnessAccount does not have any allowance");
+        " Contract validate error : witnessAccount does not have any allowance");
   }
 
   /**

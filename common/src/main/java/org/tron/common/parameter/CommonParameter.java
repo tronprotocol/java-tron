@@ -45,6 +45,10 @@ public class CommonParameter {
   public boolean supportConstant = false;
   @Getter
   @Setter
+  @Parameter(names = {"--max-energy-limit-for-constant"})
+  public long maxEnergyLimitForConstant = 100_000_000L;
+  @Getter
+  @Setter
   @Parameter(names = {"--debug"})
   public boolean debug = false;
   @Getter
@@ -138,6 +142,9 @@ public class CommonParameter {
   public boolean nodeDiscoveryPublicHomeNode;
   @Getter
   @Setter
+  public long nodeDiscoveryPingTimeout;
+  @Getter
+  @Setter
   public long nodeP2pPingInterval;
   @Getter
   @Setter
@@ -165,6 +172,15 @@ public class CommonParameter {
   @Getter
   @Setter
   public int solidityHttpPort;
+  @Getter
+  @Setter
+  public int jsonRpcHttpFullNodePort;
+  @Getter
+  @Setter
+  public int jsonRpcHttpSolidityPort;
+  @Getter
+  @Setter
+  public int jsonRpcHttpPBFTPort;
   @Getter
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
@@ -293,10 +309,24 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minEffectiveConnection;
-
+  @Getter
+  @Setter
+  public boolean trxCacheEnable;
   @Getter
   @Setter
   public long allowMarketTransaction; //committee parameter
+
+  @Getter
+  @Setter
+  public long allowTransactionFeePool;
+
+  @Getter
+  @Setter
+  public long allowBlackHoleOptimization;
+
+  @Getter
+  @Setter
+  public long allowNewResourceModel;
 
   // @Getter
   // @Setter
@@ -328,7 +358,7 @@ public class CommonParameter {
   public long allowAccountStateRoot;
   @Getter
   @Setter
-  public int validContractProtoThreadNum;
+  public int validContractProtoThreadNum = 1;
   @Getter
   @Setter
   public int shieldedTransInPendingMaxCounts;
@@ -376,7 +406,13 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
-  public boolean nodeHttpStatisticsSRRewardEnable = false;
+  public boolean jsonRpcHttpFullNodeEnable = false;
+  @Getter
+  @Setter
+  public boolean jsonRpcHttpSolidityNodeEnable = false;
+  @Getter
+  @Setter
+  public boolean jsonRpcHttpPBFTNodeEnable = false;
   @Getter
   @Setter
   public int maxTransactionPendingSize;
@@ -434,11 +470,19 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowTvmStake;
+  public long allowTvmFreeze;
 
   @Getter
   @Setter
-  public long allowTvmAssetIssue;
+  public long allowTvmVote;
+
+  @Getter
+  @Setter
+  public long allowTvmLondon;
+
+  @Getter
+  @Setter
+  public long allowTvmCompatibleEvm;
 
   @Getter
   @Setter
@@ -447,6 +491,26 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean isLiteFullNode = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--history-balance-lookup"})
+  public boolean historyBalanceLookup = false;
+
+  @Getter
+  @Setter
+  public boolean openPrintLog = true;
+  @Getter
+  @Setter
+  public boolean openTransactionSort = false;
+
+  @Getter
+  @Setter
+  public long allowAccountAssetOptimization;
+
+  @Getter
+  @Setter
+  public List<String> disabledApiList;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
@@ -460,5 +524,9 @@ public class CommonParameter {
   public boolean isECKeyCryptoEngine() {
 
     return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
+  }
+
+  public boolean isJsonRpcFilterEnabled() {
+    return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
   }
 }

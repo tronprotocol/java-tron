@@ -3,7 +3,7 @@ contract Counter {
     address payable owner;
     event LogResult(bytes32 _hashBefore, bytes32 _hashAfter);
     constructor() public{
-        owner = msg.sender;
+        owner = payable(msg.sender);
     }
     function getCodeHashSuicide(address addr) public returns (bytes32 _hashBefore){
         assembly{
@@ -29,7 +29,7 @@ contract Counter {
     }
 
     function getCodeHashCreate() public  returns (bytes32 _hashBefore){
-        TestContract A = (new TestContract).value(0)();
+        TestContract A = (new TestContract){value:0}();
         address addr = address(A);
         assembly{
                     _hashBefore := extcodehash(addr)

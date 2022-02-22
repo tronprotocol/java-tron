@@ -1,14 +1,19 @@
 package org.tron.core.service;
 
 import com.google.protobuf.ByteString;
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -47,37 +52,41 @@ public class MortgageService {
   }
 
   public void payStandbyWitness() {
+    List<WitnessCapsule> witnessCapsules = witnessStore.getAllWitnesses();
+    Map<ByteString, WitnessCapsule> witnessCapsuleMap = new HashMap<>();
     List<ByteString> witnessAddressList = new ArrayList<>();
-    for (WitnessCapsule witnessCapsule : witnessStore.getAllWitnesses()) {
+    for (WitnessCapsule witnessCapsule : witnessCapsules) {
       witnessAddressList.add(witnessCapsule.getAddress());
+      witnessCapsuleMap.put(witnessCapsule.getAddress(), witnessCapsule);
     }
-    sortWitness(witnessAddressList);
+    witnessAddressList.sort(Comparator.comparingLong((ByteString b) -> witnessCapsuleMap.get(b).getVoteCount())
+            .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
     if (witnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
       witnessAddressList = witnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH);
     }
-
     long voteSum = 0;
     long totalPay = dynamicPropertiesStore.getWitness127PayPerBlock();
     for (ByteString b : witnessAddressList) {
-      voteSum += getWitnessByAddress(b).getVoteCount();
+      voteSum += witnessCapsuleMap.get(b).getVoteCount();
     }
+
     if (voteSum > 0) {
       for (ByteString b : witnessAddressList) {
         double eachVotePay = (double) totalPay / voteSum;
-        long pay = (long) (getWitnessByAddress(b).getVoteCount() * eachVotePay);
+        long pay = (long) (witnessCapsuleMap.get(b).getVoteCount() * eachVotePay);
         logger.debug("pay {} stand reward {}", Hex.toHexString(b.toByteArray()), pay);
-        delegationStore.addVoteReward(dynamicPropertiesStore
-            .getCurrentCycleNumber(), b.toByteArray(), pay);
         payReward(b.toByteArray(), pay);
       }
     }
-
   }
 
   public void payBlockReward(byte[] witnessAddress, long value) {
     logger.debug("pay {} block reward {}", Hex.toHexString(witnessAddress), value);
-    long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
-    delegationStore.addBlockReward(cycle, witnessAddress, value);
+    payReward(witnessAddress, value);
+  }
+
+  public void payTransactionFeeReward(byte[] witnessAddress, long value) {
+    logger.debug("pay {} transaction fee reward {}", Hex.toHexString(witnessAddress), value);
     payReward(witnessAddress, value);
   }
 
@@ -113,7 +122,7 @@ public class MortgageService {
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
-        reward = computeReward(beginCycle, account);
+        reward = computeReward(beginCycle, endCycle, account);
         adjustAllowance(address, reward);
         reward = 0;
         logger.info("latest cycle reward {},{}", beginCycle, account.getVotesList());
@@ -123,14 +132,11 @@ public class MortgageService {
     //
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
-      delegationStore.setRemark(endCycle, address);
       delegationStore.setBeginCycle(address, endCycle + 1);
       return;
     }
     if (beginCycle < endCycle) {
-      for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-        reward += computeReward(cycle, accountCapsule);
-      }
+      reward += computeReward(beginCycle, endCycle, accountCapsule);
       adjustAllowance(address, reward);
     }
     delegationStore.setBeginCycle(address, endCycle);
@@ -161,7 +167,7 @@ public class MortgageService {
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       if (account != null) {
-        reward = computeReward(beginCycle, account);
+        reward = computeReward(beginCycle, endCycle, account);
       }
       beginCycle += 1;
     }
@@ -171,9 +177,7 @@ public class MortgageService {
       return reward + accountCapsule.getAllowance();
     }
     if (beginCycle < endCycle) {
-      for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-        reward += computeReward(cycle, accountCapsule);
-      }
+      reward += computeReward(beginCycle, endCycle, accountCapsule);
     }
     return reward + accountCapsule.getAllowance();
   }
@@ -193,6 +197,46 @@ public class MortgageService {
       logger.debug("computeReward {} {} {} {},{},{},{}", cycle,
           Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
           userVote, totalVote, totalReward, reward);
+    }
+    return reward;
+  }
+
+  /**
+   * Compute reward from begin cycle to end cycle, which endCycle must greater than beginCycle.
+   * While computing reward after new reward algorithm taking effective cycle number,
+   * it will use new algorithm instead of old way.
+   * @param beginCycle begin cycle (include)
+   * @param endCycle end cycle (exclude)
+   * @param accountCapsule account capsule
+   * @return total reward
+   */
+  private long computeReward(long beginCycle, long endCycle, AccountCapsule accountCapsule) {
+    if (beginCycle >= endCycle) {
+      return 0;
+    }
+
+    long reward = 0;
+    long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
+    if (beginCycle < newAlgorithmCycle) {
+      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
+      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+        reward += computeReward(cycle, accountCapsule);
+      }
+      beginCycle = oldEndCycle;
+    }
+    if (beginCycle < endCycle) {
+      for (Vote vote : accountCapsule.getVotesList()) {
+        byte[] srAddress = vote.getVoteAddress().toByteArray();
+        BigInteger beginVi = delegationStore.getWitnessVi(beginCycle - 1, srAddress);
+        BigInteger endVi = delegationStore.getWitnessVi(endCycle - 1, srAddress);
+        BigInteger deltaVi = endVi.subtract(beginVi);
+        if (deltaVi.signum() <= 0) {
+          continue;
+        }
+        long userVote = vote.getVoteCount();
+        reward += deltaVi.multiply(BigInteger.valueOf(userVote))
+            .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
+      }
     }
     return reward;
   }

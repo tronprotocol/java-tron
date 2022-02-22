@@ -70,11 +70,7 @@ public class MultiSign09 {
       .getString("defaultParameter.assetUrl");
 
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -190,24 +186,6 @@ public class MultiSign09 {
     Assert.assertEquals("contract validate error : permission's parent should be owner",
         response.getMessage().toStringUtf8());
 
-    // parent_id = 123
-    accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
-            + "\"active_permissions\":["
-            + "{\"parent_id\":123,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
-            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
-            + "\",\"weight\":1}" + "]}]}";
-
-    response = PublicMethed
-        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
-            blockingStubFull);
-    Assert.assertFalse(response.getResult());
-    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : permission's parent should be owner",
-        response.getMessage().toStringUtf8());
 
     // parent_id = "abc"
     accountPermissionJson =

@@ -18,9 +18,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.commons.lang3.text.StrBuilder;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.utils.FastByteComparisons;
@@ -648,7 +648,7 @@ public class TrieImpl implements Trie<byte[]> {
         return hash != null ? Hash.encodeElement(hash) : rlp;
       } else {
         NodeType type = getType();
-        byte[] ret;
+        byte[] ret = new byte[0];
         if (type == NodeType.BranchNode) {
           if (depth == 1 && async) {
             // parallelize encode() on the first trie level only and if there are at least
@@ -682,6 +682,9 @@ public class TrieImpl implements Trie<byte[]> {
             encoded[16] = constantFuture(Hash.encodeElement(value));
             try {
               ret = encodeRlpListFutures(encoded);
+            } catch (InterruptedException e) {
+              logger.warn("Encode interrupted.");
+              Thread.currentThread().interrupt();
             } catch (Exception e) {
               throw new RuntimeException(e);
             }

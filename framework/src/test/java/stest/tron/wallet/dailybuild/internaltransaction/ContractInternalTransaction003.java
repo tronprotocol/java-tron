@@ -1,7 +1,5 @@
 package stest.tron.wallet.dailybuild.internaltransaction;
 
-import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -11,8 +9,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -23,12 +21,12 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.Retry;
 
 @Slf4j
 
@@ -54,11 +52,7 @@ public class ContractInternalTransaction003 {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -448,7 +442,8 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time")
+  @Test(enabled = true,retryAnalyzer = Retry.class,
+      description = "Test maxfeelimit can trigger call create call max time")
   public void testInternalTransaction018() {
     Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -489,7 +484,7 @@ public class ContractInternalTransaction003 {
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed
-        .sendcoin(internalTxsAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(internalTxsAddress, 2000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -505,43 +500,49 @@ public class ContractInternalTransaction003 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("InfoById:" + infoById);
-    if (infoById.get().getResultValue() == 0) {
-      int transactionsCount = infoById.get().getInternalTransactionsCount();
-      Assert.assertEquals(184, transactionsCount);
-      for (int i = 0; i < transactionsCount; i++) {
-        Assert.assertFalse(infoById.get().getInternalTransactions(i).getRejected());
-      }
-      dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
-      String note = ByteArray
-          .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
-      String note1 = ByteArray
-          .toStr(infoById.get().getInternalTransactions(1).getNote().toByteArray());
-      String note2 = ByteArray
-          .toStr(infoById.get().getInternalTransactions(2).getNote().toByteArray());
-      String note3 = ByteArray
-          .toStr(infoById.get().getInternalTransactions(3).getNote().toByteArray());
-      Long vaule1 = infoById.get().getInternalTransactions(0).getCallValueInfo(0).getCallValue();
-      Long vaule2 = infoById.get().getInternalTransactions(1).getCallValueInfo(0).getCallValue();
-      Long vaule3 = infoById.get().getInternalTransactions(2).getCallValueInfo(0).getCallValue();
-      Long vaule4 = infoById.get().getInternalTransactions(3).getCallValueInfo(0).getCallValue();
 
-      Assert.assertEquals("call", note);
-      Assert.assertEquals("create", note1);
-      Assert.assertEquals("call", note2);
-      Assert.assertEquals("call", note3);
-      Assert.assertTrue(1 == vaule1);
-      Assert.assertTrue(100 == vaule2);
-      Assert.assertTrue(0 == vaule3);
-      Assert.assertTrue(1 == vaule4);
-    } else if (infoById.get().getResultValue() == 1) {
-      Assert.assertEquals(FAILED, infoById.get().getResult());
-      Assert
-          .assertEquals(infoById.get().getContractResult(0).toStringUtf8(),
-              "");
-      Assert.assertEquals(contractResult.OUT_OF_TIME, infoById.get().getReceipt().getResult());
-      Assert.assertEquals("CPU timeout for 'PUSH1' operation executing",
-          infoById.get().getResMessage().toStringUtf8());
+    int retryTimes = 1;
+    while (retryTimes++ < 5 && infoById.get().getResultValue() != 0) {
+      // retry 5 times
+      txid = PublicMethed.triggerContract(contractAddress,
+          "test1(address,address)", initParmes, false,
+          100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+      logger.info("InfoById retry "  + retryTimes +  " : " + infoById);
     }
+
+
+
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    int transactionsCount = infoById.get().getInternalTransactionsCount();
+    Assert.assertEquals(184, transactionsCount);
+    for (int i = 0; i < transactionsCount; i++) {
+      Assert.assertFalse(infoById.get().getInternalTransactions(i).getRejected());
+    }
+    dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
+    String note = ByteArray
+        .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
+    String note1 = ByteArray
+        .toStr(infoById.get().getInternalTransactions(1).getNote().toByteArray());
+    String note2 = ByteArray
+        .toStr(infoById.get().getInternalTransactions(2).getNote().toByteArray());
+    String note3 = ByteArray
+        .toStr(infoById.get().getInternalTransactions(3).getNote().toByteArray());
+    Long vaule1 = infoById.get().getInternalTransactions(0).getCallValueInfo(0).getCallValue();
+    Long vaule2 = infoById.get().getInternalTransactions(1).getCallValueInfo(0).getCallValue();
+    Long vaule3 = infoById.get().getInternalTransactions(2).getCallValueInfo(0).getCallValue();
+    Long vaule4 = infoById.get().getInternalTransactions(3).getCallValueInfo(0).getCallValue();
+
+    Assert.assertEquals("call", note);
+    Assert.assertEquals("create", note1);
+    Assert.assertEquals("call", note2);
+    Assert.assertEquals("call", note3);
+    Assert.assertTrue(1 == vaule1);
+    Assert.assertTrue(100 == vaule2);
+    Assert.assertTrue(0 == vaule3);
+    Assert.assertTrue(1 == vaule4);
   }
 
   /**

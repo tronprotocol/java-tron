@@ -1,7 +1,6 @@
 package org.tron.common.utils;
 
 import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
-import static org.tron.common.utils.DbOptionalsUtils.createDefaultDbOptions;
 
 import java.io.File;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +55,6 @@ public class StorageUtils {
     if (hasProperty(dbName)) {
       return getProperty(dbName).getDbOptions();
     }
-    return createDefaultDbOptions();
+    return CommonParameter.getInstance().getStorage().newDefaultDbOptions(dbName);
   }
 }

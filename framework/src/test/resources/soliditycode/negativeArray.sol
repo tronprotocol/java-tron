@@ -1,3 +1,4 @@
+pragma abicoder v1;
 contract NegativeArray  {
     event LogNote(
     int64 a

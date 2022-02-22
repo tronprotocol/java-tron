@@ -16,12 +16,17 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.IvkDecryptTRC20Parameters;
+import org.tron.api.GrpcAPI.NfTRC20Parameters;
 import org.tron.api.GrpcAPI.NoteParameters;
+import org.tron.api.GrpcAPI.NullifierResult;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -36,10 +41,16 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
+import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.MarketOrder;
+import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketOrderPair;
+import org.tron.protos.Protocol.MarketOrderPairList;
+import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -64,6 +75,9 @@ public class RpcApiServiceOnPBFT implements Service {
 
   @Autowired
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
+
+  @Autowired
+  private RpcApiAccessInterceptor apiAccessInterceptor;
 
   @Override
   public void init() {
@@ -95,11 +109,14 @@ public class RpcApiServiceOnPBFT implements Service {
           .flowControlWindow(args.getFlowControlWindow())
           .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
           .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(args.getMaxMessageSize())
+          .maxInboundMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
       // add a ratelimiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
@@ -404,6 +421,85 @@ public class RpcApiServiceOnPBFT implements Service {
     public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
       walletOnPBFT.futureGet(
           () -> rpcApiService.getWalletSolidityApi().isSpend(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketOrderByAccount(BytesMessage request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketOrderByAccount(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketOrderById(BytesMessage request,
+        StreamObserver<MarketOrder> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketOrderById(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketPriceByPair(MarketOrderPair request,
+        StreamObserver<MarketPriceList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketPriceByPair(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketOrderListByPair(MarketOrderPair request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketOrderListByPair(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMarketPairList(EmptyMessage request,
+        StreamObserver<MarketOrderPairList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMarketPairList(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesByIvk(IvkDecryptTRC20Parameters request,
+        StreamObserver<DecryptNotesTRC20> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesByIvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesByOvk(OvkDecryptTRC20Parameters request,
+        StreamObserver<DecryptNotesTRC20> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesByOvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
+        StreamObserver<NullifierResult> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .isShieldedTRC20ContractNoteSpent(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
       );
     }
 

@@ -16,6 +16,7 @@ import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -30,11 +31,15 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.service.MortgageService;
+import org.tron.core.store.AbiStore;
+import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.AccountTraceStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
@@ -50,6 +55,7 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.SectionBloomStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.TransactionHistoryStore;
 import org.tron.core.store.TransactionRetStore;
@@ -67,6 +73,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private AccountStore accountStore;
+  @Autowired
+  @Getter
+  private AccountAssetStore accountAssetStore;
   @Autowired
   @Getter
   private BlockStore blockStore;
@@ -118,6 +127,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private MarketPairToPriceStore marketPairToPriceStore;
+  @Autowired
+  @Getter
+  private AbiStore abiStore;
   @Autowired
   @Getter
   private CodeStore codeStore;
@@ -189,6 +201,14 @@ public class ChainBaseManager {
   @Getter
   private PbftSignDataStore pbftSignDataStore;
 
+  @Autowired
+  @Getter
+  private BalanceTraceStore balanceTraceStore;
+
+  @Autowired
+  @Getter
+  private AccountTraceStore accountTraceStore;
+
   @Getter
   private ForkController forkController = ForkController.instance();
 
@@ -196,6 +216,10 @@ public class ChainBaseManager {
   @Getter
   @Setter
   private TreeBlockIndexStore merkleTreeIndexStore;
+
+  @Autowired
+  @Getter
+  private SectionBloomStore sectionBloomStore;
 
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
@@ -221,6 +245,7 @@ public class ChainBaseManager {
     closeOneStore(witnessScheduleStore);
     closeOneStore(assetIssueStore);
     closeOneStore(dynamicPropertiesStore);
+    closeOneStore(abiStore);
     closeOneStore(codeStore);
     closeOneStore(contractStore);
     closeOneStore(storageRowStore);
@@ -238,6 +263,7 @@ public class ChainBaseManager {
     closeOneStore(commonStore);
     closeOneStore(commonDataBase);
     closeOneStore(pbftSignDataStore);
+    closeOneStore(sectionBloomStore);
   }
 
   // for test only
@@ -327,7 +353,7 @@ public class ChainBaseManager {
    * judge has blocks.
    */
   public boolean hasBlocks() {
-    return getBlockStore().iterator().hasNext() || this.khaosDb.hasData();
+    return getBlockStore().isNotEmpty() || this.khaosDb.hasData();
   }
 
   public void setBlockReference(TransactionCapsule trans) {
@@ -362,4 +388,8 @@ public class ChainBaseManager {
     return getBlockById(getBlockIdByNum(num));
   }
 
+  public void init() {
+    AssetUtil.setAccountAssetStore(accountAssetStore);
+    AssetUtil.setDynamicPropertiesStore(dynamicPropertiesStore);
+  }
 }

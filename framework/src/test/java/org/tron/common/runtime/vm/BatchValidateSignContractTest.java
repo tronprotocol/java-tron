@@ -5,9 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.StringUtil;
@@ -25,7 +26,7 @@ public class BatchValidateSignContractTest {
 
   static {
     smellData = new byte[10];
-    longData = new byte[100000000];
+    longData = new byte[1000];
     Arrays.fill(smellData, (byte) 1);
     Arrays.fill(longData, (byte) 2);
   }
@@ -33,7 +34,7 @@ public class BatchValidateSignContractTest {
   PrecompiledContracts.BatchValidateSign contract = new BatchValidateSign();
 
   @Test
-  void staticCallTest() {
+  public void staticCallTest() {
     contract.setConstantCall(true);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -57,9 +58,7 @@ public class BatchValidateSignContractTest {
     Pair<Boolean, byte[]> ret;
     ret = validateMultiSign(hash, signatures, addresses);
     for (int i = 0; i < 16; i++) {
-      if (i >= 27) {
-        Assert.assertEquals(ret.getValue()[i], 0);
-      } else if (i % 5 == 0) {
+      if (i % 5 == 0) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else if (i == 13) {
         Assert.assertEquals(ret.getValue()[i], 0);
@@ -67,27 +66,19 @@ public class BatchValidateSignContractTest {
         Assert.assertEquals(ret.getValue()[i], 1);
       }
     }
-    signatures = new ArrayList<>();
-    addresses = new ArrayList<>();
 
     //test when length >= 16
-    for (int i = 0; i < 100; i++) {
-      ECKey key = new ECKey();
-      byte[] sign = key.sign(hash).toByteArray();
-      if (i == 11) {
-        signatures.add(Hex.toHexString(DataWord.ONE().getData()));
-      } else {
-        signatures.add(Hex.toHexString(sign));
-      }
-      addresses.add(StringUtil.encode58Check(key.getAddress()));
-    }
+    signatures.add(Hex.toHexString(DataWord.ONE().getData()));
+    addresses
+        .add(StringUtil.encode58Check(TransactionTrace.convertToTronAddress(new byte[20])));
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
     Assert.assertEquals(ret.getValue(), new byte[32]);
+    System.gc(); // force triggering full gc to avoid timeout for next test
   }
-
+  
   @Test
-  void correctionTest() {
+  public void correctionTest() {
     contract.setConstantCall(false);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -129,25 +120,7 @@ public class BatchValidateSignContractTest {
     incorrectSigns.remove(incorrectSigns.size() - 1);
     ret = validateMultiSign(hash, incorrectSigns, addresses);
     Assert.assertEquals(ret.getValue(), DataWord.ZERO().getData());
-
-    //test when length >= 32
-    signatures = new ArrayList<>();
-    addresses = new ArrayList<>();
-    for (int i = 0; i < 80; i++) {
-      ECKey key = new ECKey();
-      byte[] sign = key.sign(hash).toByteArray();
-      if (i == 13) {
-        signatures.add(Hex.toHexString(DataWord.ONE().getData()));
-      } else {
-        signatures.add(Hex.toHexString(sign));
-      }
-      addresses.add(StringUtil.encode58Check(key.getAddress()));
-    }
-    ret = validateMultiSign(hash, signatures, addresses);
-    Assert.assertEquals(ret.getValue().length, 32);
-    Assert.assertEquals(ret.getValue(), new byte[32]);
-
-
+    System.gc(); // force triggering full gc to avoid timeout for next test
   }
 
   Pair<Boolean, byte[]> validateMultiSign(byte[] hash, List<Object> signatures,

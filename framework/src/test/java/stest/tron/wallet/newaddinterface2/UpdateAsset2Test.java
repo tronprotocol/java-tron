@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -71,11 +71,7 @@ public class UpdateAsset2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -165,7 +161,7 @@ public class UpdateAsset2Test {
             -1L, testKeyForAssetIssue010, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid PublicFreeAssetNetLimit");
+        "Contract validate error : Invalid PublicFreeAssetNetLimit");
     //publicFreeAssetNetLimit is 0
     ret1 = PublicMethed
         .updateAsset2(asset010Address, updateDescription.getBytes(), updateUrl.getBytes(),
@@ -179,7 +175,7 @@ public class UpdateAsset2Test {
             publicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid FreeAssetNetLimit");
+        "Contract validate error : Invalid FreeAssetNetLimit");
     //FreeAssetNetLimit is 0
     ret1 = PublicMethed
         .updateAsset2(asset010Address, updateDescription.getBytes(), updateUrl.getBytes(), 0,
@@ -197,7 +193,7 @@ public class UpdateAsset2Test {
         .updateAsset2(asset010Address, description.getBytes(), "".getBytes(), freeAssetNetLimit,
             publicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : Invalid url");
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : Invalid url");
     //Too long discription
     ret1 = PublicMethed
         .updateAsset2(asset010Address, tooLongDescription.getBytes(), url.getBytes(),
@@ -205,14 +201,14 @@ public class UpdateAsset2Test {
             publicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid description");
+        "Contract validate error : Invalid description");
     //Too long URL
     ret1 = PublicMethed
         .updateAsset2(asset010Address, description.getBytes(), tooLongUrl.getBytes(),
             freeAssetNetLimit,
             publicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : Invalid url");
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : Invalid url");
   }
 
   /**

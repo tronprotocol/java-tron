@@ -56,11 +56,7 @@ public class Create2Test019 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -253,7 +249,7 @@ public class Create2Test019 {
             containsString("CONTRACT_VALIDATE_ERROR"));
     Assert
         .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("contract validate error : No contract or not a valid smart contract"));
+            containsString("Contract validate error : No contract or not a valid smart contract"));
 
     txid = PublicMethed
         .triggerContract(contractAddress,

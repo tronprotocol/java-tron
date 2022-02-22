@@ -56,6 +56,15 @@ public class Chainbase implements IRevokingDB {
     this.offset.set(offset);
   }
 
+  @Override
+  public Cursor getCursor() {
+    if (cursor.get() == null) {
+      return Cursor.HEAD;
+    } else {
+      return cursor.get();
+    }
+  }
+
   private Snapshot head() {
     if (cursor.get() == null) {
       return head;
@@ -85,7 +94,7 @@ public class Chainbase implements IRevokingDB {
     }
   }
 
-  public synchronized Snapshot getHead() {
+  public Snapshot getHead() {
     return head();
   }
 
@@ -119,7 +128,7 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public synchronized byte[] get(byte[] key) throws ItemNotFoundException {
+  public byte[] get(byte[] key) throws ItemNotFoundException {
     byte[] value = getUnchecked(key);
     if (value == null) {
       throw new ItemNotFoundException();
@@ -129,12 +138,12 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public synchronized byte[] getUnchecked(byte[] key) {
+  public byte[] getUnchecked(byte[] key) {
     return head().get(key);
   }
 
   @Override
-  public synchronized boolean has(byte[] key) {
+  public boolean has(byte[] key) {
     return getUnchecked(key) != null;
   }
 
@@ -226,8 +235,7 @@ public class Chainbase implements IRevokingDB {
     }
 
     // just get the same token pair
-    List<WrappedByteArray> levelDBListFiltered;
-    levelDBListFiltered = levelDBList.stream()
+    List<WrappedByteArray> levelDBListFiltered = levelDBList.stream()
         .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
         .collect(Collectors.toList());
 
@@ -287,5 +295,46 @@ public class Chainbase implements IRevokingDB {
     }
 
     return result;
+  }
+
+  // for accout-trace
+  @Override
+  public Map<byte[], byte[]> getNext(byte[] key, long limit) {
+    return getNext(head(), key, limit);
+  }
+
+  // for accout-trace
+  private Map<byte[], byte[]> getNext(Snapshot head, byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyMap();
+    }
+
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collect(collection);
+    }
+
+    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    }
+
+    levelDBMap.putAll(collection);
+
+    return levelDBMap.entrySet().stream()
+        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+        .sorted((e1, e2) -> ByteUtil.compare(e1.getKey(), e2.getKey()))
+        .filter(e -> ByteUtil.greaterOrEquals(e.getKey(), key))
+        .limit(limit)
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 }

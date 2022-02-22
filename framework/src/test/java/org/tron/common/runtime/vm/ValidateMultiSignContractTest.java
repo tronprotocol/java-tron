@@ -1,14 +1,16 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
+import org.junit.AfterClass;
+import org.junit.Test;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -17,6 +19,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -34,7 +37,7 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 @Slf4j
 public class ValidateMultiSignContractTest {
 
-  private static final String dbPath = "output_PrecompiledContracts_test";
+  private static final String dbPath = "output_ValidateMultiSignContract_test";
   private static final String METHOD_SIGN = "validatemultisign(address,uint256,bytes32,bytes[])";
   private static final byte[] longData;
   private static TronApplicationContext context;
@@ -49,14 +52,28 @@ public class ValidateMultiSignContractTest {
     dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
     dbManager.getDynamicPropertiesStore().saveTotalSignNum(5);
 
-    longData = new byte[100000000];
+    longData = new byte[1000000];
     Arrays.fill(longData, (byte) 2);
   }
 
   ValidateMultiSign contract = new ValidateMultiSign();
 
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
+
   @Test
-  void testAddressNonExist() {
+  public void testAddressNonExist() {
     byte[] hash = Hash.sha3(longData);
     ECKey key = new ECKey();
     byte[] sign = key.sign(hash).toByteArray();
@@ -70,7 +87,7 @@ public class ValidateMultiSignContractTest {
   }
 
   @Test
-  void testDifferentCase() {
+  public void testDifferentCase() {
     //Create an account with permission
 
     ECKey key = new ECKey();

@@ -28,6 +28,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
@@ -57,6 +58,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private List<TransactionCapsule> transactions = new ArrayList<>();
   private StringBuilder toStringBuff = new StringBuilder();
   private boolean isSwitch;
+  @Getter
+  @Setter
+  private Bloom bloom;
 
   public boolean isSwitch() {
     return isSwitch;
@@ -257,6 +261,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public ByteString getWitnessAddress() {
     return this.block.getBlockHeader().getRawData().getWitnessAddress();
+  }
+
+  public boolean isMerkleRootEmpty() {
+    return this.block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray().length == 0;
   }
 
   @Override

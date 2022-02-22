@@ -1,10 +1,10 @@
-//pragma solidity ^0.4.24;
+
 
 contract ConvertType {
 
 constructor() payable public{}
 
-function() payable external{}
+fallback() payable external{}
 
 //function trcTokenOnStorage(trcToken storage token) internal { // ERROR: Data location can only be specified for array, struct or mapping types, but "storage" was given.
 //}
@@ -22,8 +22,8 @@ r = u2;
 
 function trcTokenToAddress(trcToken token) public pure returns(address r){
 //r = token; // ERROR
-token = 0x1234567812345678123456781234567812345678123456781234567812345678;
-address a2 = address(token); // OK
+token = 1000001;
+address a2 = address(uint160(token)); // OK
 r = a2;
 }
 

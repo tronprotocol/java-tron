@@ -17,37 +17,27 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class HttpRateLimite001 {
 
-  private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+  private final String testKey002 =
+      Configuration.getByPath("testng.conf").getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private JSONObject responseContent;
   private HttpResponse response;
-  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(0);
-  private String httpSoliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(3);
-  private String realHttpSoliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(2);
-  private String httpPbftNode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(4);
+  private String httpnode =
+      Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(0);
+  private String httpSoliditynode =
+      Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(3);
+  private String realHttpSoliditynode =
+      Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode =
+      Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(4);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
-  /**
-   * constructor.
-   */
-
+  /** constructor. */
   @BeforeClass
-  public void beforeClass() {
-  }
+  public void beforeClass() {}
 
-  /**
-   * constructor.
-   */
+  /** constructor. */
   @Test(enabled = true, description = "Rate limit QpsStrategy for ListWitness interface")
   public void test1QpsStrategyForListWitnessInterface() {
     Long startTimeStamp = System.currentTimeMillis();
@@ -60,9 +50,7 @@ public class HttpRateLimite001 {
     Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
   }
 
-  /**
-   * constructor.
-   */
+  /** constructor. */
   @Test(enabled = true, description = "Rate limit IpQpsStrategy for ListNodes interface")
   public void test2IpQpsStrategyForListNodesInterface() {
     Long startTimeStamp = System.currentTimeMillis();
@@ -75,11 +63,12 @@ public class HttpRateLimite001 {
     Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
   }
 
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Rate limit IpQpsStrategy for GetBlockByLatestNumOnSolidity "
-      + "interface on fullnode's solidity service")
+  /** constructor. */
+  @Test(
+      enabled = true,
+      description =
+          "Rate limit IpQpsStrategy for GetBlockByLatestNumOnSolidity "
+              + "interface on fullnode's solidity service")
   public void test3IpQpsStrategyForGetBlockByLatestNumOnSolidityInterface() {
     Long startTimeStamp = System.currentTimeMillis();
     Integer repeatTimes = 0;
@@ -92,11 +81,11 @@ public class HttpRateLimite001 {
     Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
   }
 
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Rate limit QpsStrategy for getBlockByNum "
-      + "interface on fullnode's solidity service")
+  /** constructor. */
+  @Test(
+      enabled = true,
+      description =
+          "Rate limit QpsStrategy for getBlockByNum " + "interface on fullnode's solidity service")
   public void test4QpsStrategyForgetBlockByNumResourceInterfaceOnFullnodeSolidityService() {
     Long startTimeStamp = System.currentTimeMillis();
     Integer repeatTimes = 0;
@@ -109,8 +98,12 @@ public class HttpRateLimite001 {
     Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
   }
 
-  @Test(enabled = false, description = "Rate limit QpsStrategy for "
-      + "getTransactionsFromThisFromSolidity " + "interface on real solidity")
+  @Test(
+      enabled = false,
+      description =
+          "Rate limit QpsStrategy for "
+              + "getTransactionsFromThisFromSolidity "
+              + "interface on real solidity")
   public void test6QpsStrategyForgetTransactionsToThisFromSolidity() {
     Long startTimeStamp = System.currentTimeMillis();
     Integer repeatTimes = 0;
@@ -123,12 +116,17 @@ public class HttpRateLimite001 {
     Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
   }
 
-
-  /**
-   * constructor.
-   */
-
-  @AfterClass
-  public void shutdown() throws InterruptedException {
+  @Test(enabled = true, description = "Verify getstatsinfo Interface has been disabled")
+  public void test7GetStatsInfo() {
+    response = HttpMethed.getStatsInfo(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    logger.info("responseContent:" + responseContent);
+    String resultForGetstatsinfo = responseContent.getString("Error");
+    logger.info("resultForGetstatsinfo:" + resultForGetstatsinfo);
+    Assert.assertEquals(resultForGetstatsinfo, "this API is unavailable due to config");
   }
+
+  /** constructor. */
+  @AfterClass
+  public void shutdown() throws InterruptedException {}
 }

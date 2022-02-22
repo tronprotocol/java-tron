@@ -1,10 +1,10 @@
-//pragma solidity ^0.4.24;
+
 
 contract ConvertType {
 
 constructor() payable public{}
 
-function() payable external{}
+fallback() payable external{}
 
 //function stringToTrctoken(address payable toAddress, string memory tokenStr, uint256 tokenValue) public {
 // trcToken t = trcToken(tokenStr); // ERROR
@@ -18,7 +18,7 @@ function uint256ToTrctoken(address payable toAddress, uint256 tokenValue, uint25
 }
 
 function addressToTrctoken(address payable toAddress, uint256 tokenValue, address adr) public {
-  trcToken t = trcToken(adr); // OK
+  trcToken t = trcToken(uint256(uint160(adr))); // OK
   toAddress.transferToken(tokenValue, t); // OK
 //toAddress.transferToken(tokenValue, adr); // ERROR
 }

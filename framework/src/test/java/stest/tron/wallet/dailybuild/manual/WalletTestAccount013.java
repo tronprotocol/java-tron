@@ -71,15 +71,6 @@ public class WalletTestAccount013 {
   private String soliInPbft = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(2);
 
-  /**
-   * constructor.
-   */
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-
-  }
 
   /**
    * constructor.
@@ -225,8 +216,8 @@ public class WalletTestAccount013 {
     logger.info("After receiver net limit is " + receiverResource.getNetLimit());
   }
 
-  @Test(enabled = true, description = "Get delegate resource  index")
-  public void test2getDelegatedResourceAndDelegateResourceAccountIndex() {
+  @Test(enabled = true, description = "Get delegate resource")
+  public void test2getDelegatedResource() {
     //Create Account4
     ECKey ecKey4 = new ECKey(Utils.getRandom());
     account4DelegatedResourceAddress = ecKey4.getAddress();

@@ -2,14 +2,14 @@ package org.tron.common.logsfilter.capsule;
 
 import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.bouncycastle.util.encoders.Hex;
 import org.pf4j.util.StringUtils;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -36,6 +36,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     contractTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
+  public void setBlockHash(String blockHash) {
+    contractTrigger.setBlockHash(blockHash);
+  }
+
   @Override
   public void processTrigger() {
     ContractTrigger event;
@@ -50,8 +54,8 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     ABI.Entry eventEntry = null;
 
     if (abi != null && abi.getEntrysCount() > 0 && topics != null && !topics.isEmpty()
-        && !ArrayUtils.isEmpty(topics.get(0).getData()) && Args.getInstance().getStorage()
-        .isContractParseSwitch()) {
+        && !ArrayUtils.isEmpty(topics.get(0).getData())
+        && Args.getInstance().getStorage().isContractParseSwitch()) {
       String logHash = topics.get(0).toString();
 
       for (ABI.Entry entry : abi.getEntrysList()) {
@@ -123,6 +127,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     event.setCreatorAddress(contractTrigger.getCreatorAddress());
     event.setBlockNumber(contractTrigger.getBlockNumber());
     event.setTimeStamp(contractTrigger.getTimeStamp());
+    event.setBlockHash(contractTrigger.getBlockHash());
 
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
@@ -131,18 +136,54 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
 
         if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-          Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractEventTrigger) event);
+          boolean result = Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
+              .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                  .offer((ContractEventTrigger) event);
+
+          if (!result) {
+            logger.info("too many triggers, solidity event trigger lost: {}",
+                event.getUniqueId());
+          }
         }
 
+        // enable process contractEvent as contractLog
+        if ((EventPluginLoader.getInstance().isContractLogTriggerEnable()
+            && EventPluginLoader.getInstance().isContractLogTriggerRedundancy())
+            || (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()
+            && EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy())) {
+          ContractLogTrigger logTrigger = new ContractLogTrigger((ContractEventTrigger) event);
+          logTrigger.setTopicList(logInfo.getHexTopics());
+          logTrigger.setData(logInfo.getHexData());
+
+          if (EventPluginLoader.getInstance().isContractLogTriggerRedundancy()) {
+            EventPluginLoader.getInstance().postContractLogTrigger(logTrigger);
+          }
+
+          if (EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy()) {
+            boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+                .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                .offer(logTrigger);
+
+            if (!result) {
+              logger.info("too many triggers, solidity log trigger lost: {}",
+                  logTrigger.getUniqueId());
+            }
+          }
+        }
       } else {
         if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
           EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
         }
 
         if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-          Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractLogTrigger) event);
+          boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
+              .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
+                  .offer((ContractLogTrigger) event);
+
+          if (!result) {
+            logger.info("too many triggers, solidity log trigger lost: {}",
+                event.getUniqueId());
+          }
         }
       }
     }

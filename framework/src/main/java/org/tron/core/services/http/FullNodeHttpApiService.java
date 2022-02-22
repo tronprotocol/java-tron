@@ -22,6 +22,7 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 
@@ -228,6 +229,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private BroadcastHexServlet broadcastHexServlet;
   @Autowired
+  private GetBurnTrxServlet getBurnTrxServlet;
+  @Autowired
   private GetBrokerageServlet getBrokerageServlet;
   @Autowired
   private GetRewardServlet getRewardServlet;
@@ -254,18 +257,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private MetricsServlet metricsServlet;
   @Autowired
-  private GetAccountRewardByCycleServlet getAccountRewardByCycleServlet;
-  @Autowired
-  private GetSRProfitByCycleServlet getSRProfitByCycleServlet;
-  @Autowired
-  private GetSRDividendsByCycleServlet getSRDividendsByCycleServlet;
-  @Autowired
-  private GetAccountLastUnwithdrawRewardServlet getAccountLastUnwithdrawRewardServlet;
-  @Autowired
-  private GetCurrentCycleService getCurrentCycleServlet;
-  @Autowired
-  private GetNowSRAnnualizedRateOfReturnServlet getNowSRAnnualizedRateOfReturnServlet;
-  @Autowired
   private MarketSellAssetServlet marketSellAssetServlet;
   @Autowired
   private MarketCancelOrderServlet marketCancelOrderServlet;
@@ -281,7 +272,23 @@ public class FullNodeHttpApiService implements Service {
   private GetMarketPairListServlet getMarketPairListServlet;
 
   @Autowired
+  private GetAccountBalanceServlet getAccountBalanceServlet;
+
+  @Autowired
+  private GetBlockBalanceServlet getBlockBalanceServlet;
+
+  @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
+  @Autowired
+  private GetTransactionFromPendingServlet getTransactionFromPendingServlet;
+  @Autowired
+  private GetTransactionListFromPendingServlet getTransactionListFromPendingServlet;
+  @Autowired
+  private GetPendingSizeServlet getPendingSizeServlet;
+  @Autowired
+  private GetEnergyPricesServlet getEnergyPricesServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -498,21 +505,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
-      if (Args.getInstance().isNodeHttpStatisticsSRRewardEnable()) {
-        context.addServlet(new ServletHolder(getAccountRewardByCycleServlet),
-            "/wallet/getAccountRewardByCycleServlet");
-        context.addServlet(new ServletHolder(getSRProfitByCycleServlet),
-            "/wallet/getSRProfitByCycleServlet");
-        context.addServlet(new ServletHolder(getSRDividendsByCycleServlet),
-            "/wallet/getSRDividendsByCycleServlet");
-        context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet),
-            "/wallet/getNowSRAnnualizedRateOfReturnServlet");
-        context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet),
-            "/wallet/getAccountLastUnwithdrawRewardServlet");
-        context.addServlet(new ServletHolder(getCurrentCycleServlet),
-            "/wallet/getCurrentCycleServlet");
-      }
-
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/wallet/gettransactioninfobyblocknum");
       context.addServlet(new ServletHolder(listNodesServlet), "/net/listnodes");
@@ -532,6 +524,18 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getMarketPairListServlet),
           "/wallet/getmarketpairlist");
 
+      context.addServlet(new ServletHolder(getAccountBalanceServlet),
+          "/wallet/getaccountbalance");
+      context.addServlet(new ServletHolder(getBlockBalanceServlet),
+          "/wallet/getblockbalance");
+      context.addServlet(new ServletHolder(getBurnTrxServlet), "/wallet/getburntrx");
+      context.addServlet(new ServletHolder(getTransactionFromPendingServlet),
+          "/wallet/gettransactionfrompending");
+      context.addServlet(new ServletHolder(getTransactionListFromPendingServlet),
+          "/wallet/gettransactionlistfrompending");
+      context.addServlet(new ServletHolder(getPendingSizeServlet), "/wallet/getpendingsize");
+      context.addServlet(new ServletHolder(getEnergyPricesServlet), "/wallet/getenergyprices");
+
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
@@ -540,9 +544,19 @@ public class FullNodeHttpApiService implements Service {
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
-              EnumSet.allOf(DispatcherType.class));
+          EnumSet.allOf(DispatcherType.class));
 
-      // filter
+      // http access filter, it should have higher priority than HttpInterceptor
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
+          EnumSet.allOf(DispatcherType.class));
+      // note: if the pathSpec of servlet is not started with wallet, it should be included here
+      context.getServletHandler().getFilterMappings()[1]
+          .setPathSpecs(new String[] {"/wallet/*",
+              "/net/listnodes",
+              "/monitor/getstatsinfo",
+              "/monitor/getnodeinfo"});
+
+      // metrics filter
       ServletHandler handler = new ServletHandler();
       FilterHolder fh = handler
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",

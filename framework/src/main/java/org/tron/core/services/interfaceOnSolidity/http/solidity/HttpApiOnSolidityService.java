@@ -2,16 +2,19 @@ package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
@@ -24,8 +27,10 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSoli
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBurnTrxOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetEnergyPricesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetMarketOrderByIdOnSolidityServlet;
@@ -126,6 +131,8 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetRewardOnSolidityServlet getRewardServlet;
   @Autowired
+  private GetBurnTrxOnSolidityServlet getBurnTrxOnSolidityServlet;
+  @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
   @Autowired
   private GetTransactionInfoByBlockNumOnSolidityServlet
@@ -140,9 +147,14 @@ public class HttpApiOnSolidityService implements Service {
   private GetMarketOrderListByPairOnSolidityServlet getMarketOrderListByPairOnSolidityServlet;
   @Autowired
   private GetMarketPairListOnSolidityServlet getMarketPairListOnSolidityServlet;
+  @Autowired
+  private GetEnergyPricesOnSolidityServlet getEnergyPricesOnSolidityServlet;
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+
+  @Autowired
+  private HttpApiAccessFilter httpApiAccessFilter;
 
   @Override
   public void init() {
@@ -237,13 +249,26 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
+      context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet),
+          "/walletsolidity/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+      context
+          .addServlet(new ServletHolder(getBurnTrxOnSolidityServlet), "/walletsolidity/getburntrx");
+      context.addServlet(new ServletHolder(getEnergyPricesOnSolidityServlet),
+          "/walletsolidity/getenergyprices");
 
       // filters the specified APIs
       // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
       context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
-              EnumSet.allOf(DispatcherType.class));
+          EnumSet.allOf(DispatcherType.class));
+
+      // api access filter
+      context.addFilter(new FilterHolder(httpApiAccessFilter), "/walletsolidity/*",
+          EnumSet.allOf(DispatcherType.class));
+      context.getServletHandler().getFilterMappings()[1]
+          .setPathSpecs(new String[] {"/walletsolidity/*",
+              "/wallet/getnodeinfo"});
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

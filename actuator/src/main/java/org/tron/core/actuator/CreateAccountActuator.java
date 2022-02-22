@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
@@ -17,8 +19,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
-
-import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 
 @Slf4j(topic = "actuator")
 public class CreateAccountActuator extends AbstractActuator {
@@ -51,8 +51,11 @@ public class CreateAccountActuator extends AbstractActuator {
       Commons
           .adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
-
+      if (dynamicStore.supportBlackHoleOptimization()) {
+        dynamicStore.burnTrx(fee);
+      } else {
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+      }
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);

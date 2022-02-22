@@ -151,7 +151,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
+    Assert.assertTrue(responseContent.getInteger("exchange_id").equals(exchangeId));
     Assert.assertEquals(responseContent.getString("creator_address"),
         ByteArray.toHexString(exchangeOwnerAddress));
     beforeInjectBalance = responseContent.getLong("first_token_balance");
@@ -167,7 +167,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.getExchangeByIdFromSolidity(httpSoliditynode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
+    Assert.assertTrue(responseContent.getInteger("exchange_id").equals(exchangeId));
     Assert.assertEquals(responseContent.getString("creator_address"),
         ByteArray.toHexString(exchangeOwnerAddress));
     beforeInjectBalance = responseContent.getLong("first_token_balance");
@@ -183,7 +183,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.getExchangeByIdFromPbft(httpPbftNode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
+    Assert.assertTrue(responseContent.getInteger("exchange_id").equals(exchangeId));
     Assert.assertEquals(responseContent.getString("creator_address"),
         ByteArray.toHexString(exchangeOwnerAddress));
     beforeInjectBalance = responseContent.getLong("first_token_balance");
@@ -271,13 +271,19 @@ public class HttpTestExchange001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get asset issue list by name from solidity by http")
-  public void test12GetAssetIssueListByNameFromSolidity() {
+  @Test(enabled = true, description = "Get asset issue list by name from solidity and pbft by http")
+  public void test12GetAssetIssueListByNameFromSolidityAndPbft() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getAssetIssueListByNameFromSolidity(httpSoliditynode, name);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("assetIssue").toString());
+    Assert.assertTrue(jsonArray.size() >= 2);
+
+    response = HttpMethed.getAssetIssueListByNameFromPbft(httpPbftNode, name);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    jsonArray = JSONArray.parseArray(responseContent.get("assetIssue").toString());
     Assert.assertTrue(jsonArray.size() >= 2);
   }
 

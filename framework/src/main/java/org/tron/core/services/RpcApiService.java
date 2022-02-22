@@ -74,6 +74,7 @@ import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -112,6 +113,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
+import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -140,6 +142,9 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
+import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
+import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
@@ -172,7 +177,6 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
-  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
   private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
@@ -198,6 +202,8 @@ public class RpcApiService implements Service {
   private RateLimiterInterceptor rateLimiterInterceptor;
   @Autowired
   private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
+  @Autowired
+  private RpcApiAccessInterceptor apiAccessInterceptor;
 
   @Autowired
   private MetricsApiService metricsApiService;
@@ -249,11 +255,14 @@ public class RpcApiService implements Service {
           .flowControlWindow(parameter.getFlowControlWindow())
           .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
           .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(parameter.getMaxMessageSize())
+          .maxInboundMessageSize(parameter.getMaxMessageSize())
           .maxHeaderListSize(parameter.getMaxHeaderListSize());
 
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
+
+      // add api access interceptor
+      serverBuilder.intercept(apiAccessInterceptor);
 
       // add lite fullnode query interceptor
       serverBuilder.intercept(liteFnQueryGrpcInterceptor);
@@ -295,7 +304,7 @@ public class RpcApiService implements Service {
       trxExtBuilder.setResult(retBuilder);
     } catch (ContractValidateException | VMIllegalException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+          .setMessage(ByteString.copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
       logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
     } catch (RuntimeException e) {
@@ -668,6 +677,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
+      getBurnTrxCommon(request, responseObserver);
+    }
+
+    @Override
     public void getMerkleTreeVoucherInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
@@ -893,7 +907,6 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
-
   }
 
   /**
@@ -953,6 +966,34 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    /**
+     *
+     */
+    public void getAccountBalance(AccountBalanceRequest request,
+        StreamObserver<AccountBalanceResponse> responseObserver) {
+      try {
+        AccountBalanceResponse accountBalanceResponse = wallet.getAccountBalance(request);
+        responseObserver.onNext(accountBalanceResponse);
+        responseObserver.onCompleted();
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+    }
+
+    /**
+     *
+     */
+    public void getBlockBalanceTrace(BlockBalanceTrace.BlockIdentifier request,
+        StreamObserver<BlockBalanceTrace> responseObserver) {
+      try {
+        BlockBalanceTrace blockBalanceTrace = wallet.getBlockBalance(request);
+        responseObserver.onNext(blockBalanceTrace);
+        responseObserver.onCompleted();
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+    }
+
     @Override
     public void createTransaction(TransferContract request,
         StreamObserver<Transaction> responseObserver) {
@@ -985,7 +1026,8 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString
+                .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -1235,8 +1277,13 @@ public class RpcApiService implements Service {
 
       int votesCount = req.getVotesCount();
       Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
-      Preconditions.checkArgument(account.getTronPower() < votesCount,
-          "tron power[" + account.getTronPower() + "] <  VotesCount[" + votesCount + "]");
+      if (dbManager.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
+        Preconditions.checkArgument(account.getAllTronPower() < votesCount,
+            "tron power[" + account.getAllTronPower() + "] <  VotesCount[" + votesCount + "]");
+      } else {
+        Preconditions.checkArgument(account.getTronPower() < votesCount,
+            "tron power[" + account.getTronPower() + "] <  VotesCount[" + votesCount + "]");
+      }
 
       req.getVotesList().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
@@ -1862,7 +1909,8 @@ public class RpcApiService implements Service {
         trxExtBuilder.setResult(retBuilder);
       } catch (ContractValidateException | VMIllegalException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString.copyFromUtf8(Wallet
+                .CONTRACT_VALIDATE_ERROR + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
         logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (RuntimeException e) {
@@ -2035,7 +2083,8 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString
+                .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -2065,7 +2114,8 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+            .setMessage(ByteString
+                .copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -2476,6 +2526,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
+      getBurnTrxCommon(request, responseObserver);
+    }
+
+    @Override
     public void updateBrokerage(UpdateBrokerageContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UpdateBrokerageContract,
@@ -2584,6 +2639,24 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getTransactionFromPending(BytesMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      getTransactionFromPendingCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getTransactionListFromPending(EmptyMessage request,
+        StreamObserver<TransactionIdList> responseObserver) {
+      getTransactionListFromPendingCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getPendingSize(EmptyMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      getPendingSizeCommon(request, responseObserver);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
@@ -2624,6 +2697,19 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
 
+  public void getBurnTrxCommon(EmptyMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      long value = dbManager.getDynamicPropertiesStore().getBurnTrxAmount();
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(value);
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
   public void getBrokerageInfoCommon(BytesMessage request,
       StreamObserver<NumberMessage> responseObserver) {
     try {
@@ -2653,4 +2739,39 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
 
+  public void getTransactionFromPendingCommon(BytesMessage request,
+      StreamObserver<Transaction> responseObserver) {
+    try {
+      String txId = ByteArray.toHexString(request.getValue().toByteArray());
+      TransactionCapsule transactionCapsule = dbManager.getTxFromPending(txId);
+      responseObserver.onNext(transactionCapsule == null ? null : transactionCapsule.getInstance());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getTransactionListFromPendingCommon(EmptyMessage request,
+      StreamObserver<TransactionIdList> responseObserver) {
+    try {
+      TransactionIdList.Builder builder = TransactionIdList.newBuilder();
+      builder.addAllTxId(dbManager.getTxListFromPending());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getPendingSizeCommon(EmptyMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(dbManager.getPendingSize());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
 }

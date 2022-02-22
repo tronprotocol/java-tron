@@ -4,7 +4,6 @@ plugins {
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = 'org.tron.program.FullNode'
 
@@ -44,8 +43,7 @@ dependencies {
 
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
 
-    compile "com.madgag.spongycastle:core:1.58.0.0"
-    compile "com.madgag.spongycastle:prov:1.58.0.0"
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
 
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
 
@@ -59,7 +57,7 @@ dependencies {
 
     compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
 
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.3'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
 
     compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
@@ -76,9 +74,15 @@ dependencies {
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
-    compile 'com.alibaba:fastjson:1.2.60'
+    compile 'com.alibaba:fastjson:1.2.70'
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     // end http
+
+    // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
+    compile group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
+
+    // https://mvnrepository.com/artifact/javax.portlet/portlet-api
+    compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
 
     compile "io.vavr:vavr:0.9.2"
     compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
@@ -131,18 +135,11 @@ run {
     }
 }
 
-shadowJar {
-    baseName = 'java-tron'
-    classifier = null
-    version = null
-}
-
 test {
     testLogging {
         exceptionFormat = 'full'
     }
     jacoco {
-        append = true
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
@@ -172,7 +169,6 @@ task stest(type: Test) {
     }
 
     jacoco {
-        append = false
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
@@ -193,7 +189,7 @@ jacocoTestReport {
         csv.enabled false
         html.destination file("${buildDir}/jacocoHtml")
     }
-    executionData = files('build/jacoco/jacocoTest.exec')
+    executionData.from = 'build/jacoco/jacocoTest.exec'
 }
 
 def binaryRelease(taskName, jarName, mainClass) {
@@ -210,9 +206,16 @@ def binaryRelease(taskName, jarName, mainClass) {
             }
         }
 
+        // exclude these files for bouncycastle
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+
         manifest {
             attributes "Main-Class": "${mainClass}"
         }
+
+//        classifier(jarName)
     }
 }
 
@@ -262,12 +265,15 @@ createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
 createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
 createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
-artifacts {
-    archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
-            binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-            binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+if (releaseBinary == 'true') {
+    artifacts {
+        archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
+                binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
+                binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+                binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
+                binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+    }
 }
 
 task copyToParent(type: Copy) {

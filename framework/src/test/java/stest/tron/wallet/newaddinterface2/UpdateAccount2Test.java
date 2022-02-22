@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -82,11 +82,7 @@ public class UpdateAccount2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -168,7 +164,7 @@ public class UpdateAccount2Test {
       ret1 = voteWitness2(voteToInvaildAddress, fromAddress, testKey002);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
       Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-          "contract validate error : VoteNumber must more than 0");
+          "Contract validate error : VoteNumber must more than 0");
 
     } else {
       logger.info(
@@ -184,23 +180,23 @@ public class UpdateAccount2Test {
           lowBalTest);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
       Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-          "contract validate error : Invalid accountName");
+          "Contract validate error : Invalid accountName");
 
       ret1 = updateAccount2(lowBalAddress, "".getBytes(), lowBalTest);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
       Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-          "contract validate error : This name has existed");
+          "Contract validate error : This name is existed");
 
       System.out.println("dingwei2:");
       ret1 = updateAccount2(lowBalAddress, mostLongName.getBytes(), lowBalTest);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
       Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-          "contract validate error : This name has existed");
+          "Contract validate error : This name is existed");
 
       ret1 = updateAccount2(lowBalAddress, "secondUpdateName".getBytes(), lowBalTest);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
       Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-          "contract validate error : This name has existed");
+          "Contract validate error : This name is existed");
 
     }
   }
@@ -218,7 +214,7 @@ public class UpdateAccount2Test {
         10000L, 1L, 1L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : No enough balance for fee!");
+        "Contract validate error : No enough balance for fee!");
     logger.info("nobalancecreateassetissue");
   }
 
@@ -236,7 +232,7 @@ public class UpdateAccount2Test {
     GrpcAPI.Return ret1 = createWitness2(lowBalAddress, fromAddress, lowBalTest);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : balance < AccountUpgradeCost");
+        "Contract validate error : balance < AccountUpgradeCost");
 
   }
 
@@ -248,7 +244,7 @@ public class UpdateAccount2Test {
       GrpcAPI.Return ret1 = unFreezeBalance2(lowBalAddress, lowBalTest);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
       Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-          "contract validate error : no frozenBalance");
+          "Contract validate error : no frozenBalance(BANDWIDTH)");
     } else {
       logger.info("This account has freeze balance, please test this case for manual");
     }

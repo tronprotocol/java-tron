@@ -75,6 +75,10 @@ public class ProposalService extends ProposalUtil {
         }
         case ENERGY_FEE: {
           manager.getDynamicPropertiesStore().saveEnergyFee(entry.getValue());
+          // update energy price history
+          manager.getDynamicPropertiesStore().saveEnergyPriceHistory(
+              manager.getDynamicPropertiesStore().getEnergyPriceHistory()
+                  + "," + proposalCapsule.getExpirationTime() + ":" + entry.getValue());
           break;
         }
         case EXCHANGE_CREATE_FEE: {
@@ -206,14 +210,6 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(entry.getValue());
           break;
         }
-        case ALLOW_TVM_STAKE: {
-          manager.getDynamicPropertiesStore().saveAllowTvmStake(entry.getValue());
-          break;
-        }
-        case ALLOW_TVM_ASSET_ISSUE: {
-          manager.getDynamicPropertiesStore().saveAllowTvmAssetIssue(entry.getValue());
-          break;
-        }
         case ALLOW_MARKET_TRANSACTION: {
           if (manager.getDynamicPropertiesStore().getAllowMarketTransaction() == 0) {
             manager.getDynamicPropertiesStore().saveAllowMarketTransaction(entry.getValue());
@@ -228,6 +224,52 @@ public class ProposalService extends ProposalUtil {
         }
         case MARKET_CANCEL_FEE: {
           manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
+          break;
+        }
+        case MAX_FEE_LIMIT: {
+          manager.getDynamicPropertiesStore().saveMaxFeeLimit(entry.getValue());
+          break;
+        }
+        case ALLOW_TRANSACTION_FEE_POOL: {
+          manager.getDynamicPropertiesStore().saveAllowTransactionFeePool(entry.getValue());
+          break;
+        }
+        case ALLOW_BLACKHOLE_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().saveAllowBlackHoleOptimization(entry.getValue());
+          break;
+        }
+        case ALLOW_NEW_RESOURCE_MODEL: {
+          manager.getDynamicPropertiesStore().saveAllowNewResourceModel(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_FREEZE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmFreeze(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_VOTE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmVote(entry.getValue());
+          manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
+          break;
+        }
+        case ALLOW_TVM_LONDON: {
+          manager.getDynamicPropertiesStore().saveAllowTvmLondon(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_COMPATIBLE_EVM: {
+          manager.getDynamicPropertiesStore().saveAllowTvmCompatibleEvm(entry.getValue());
+          break;
+        }
+        case FREE_NET_LIMIT: {
+          manager.getDynamicPropertiesStore().saveFreeNetLimit(entry.getValue());
+          break;
+        }
+        case TOTAL_NET_LIMIT: {
+          manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
+          break;
+        }
+
+        case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
           break;
         }
         default:

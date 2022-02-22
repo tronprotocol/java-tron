@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
@@ -43,7 +44,9 @@ public class PbftManager {
     }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        doAction(PbftMessage.prePrepareBlockMsg(block, epoch));
+        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
+          doAction(PbftMessage.prePrepareBlockMsg(block, epoch, miner));
+        }
       } else {
         doAction(PbftMessage.fullNodePrePrepareBlockMsg(block, epoch));
       }
@@ -56,7 +59,9 @@ public class PbftManager {
     }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        doAction(PbftMessage.prePrepareSRLMsg(block, currentWitness, epoch));
+        for (Miner miner : pbftMessageHandle.getSrMinerList()) {
+          doAction(PbftMessage.prePrepareSRLMsg(block, currentWitness, epoch, miner));
+        }
       } else {
         doAction(PbftMessage.fullNodePrePrepareSRLMsg(block, currentWitness, epoch));
       }

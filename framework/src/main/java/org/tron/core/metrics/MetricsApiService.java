@@ -3,6 +3,7 @@ package org.tron.core.metrics;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.Constant;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
 import org.tron.core.metrics.blockchain.BlockChainMetricManager;
 import org.tron.core.metrics.net.NetInfo;
@@ -35,7 +36,7 @@ public class MetricsApiService {
 
     MetricsInfo metricsInfo = new MetricsInfo();
 
-    metricsInfo.setInterval((System.currentTimeMillis() - time) / 1000);
+    metricsInfo.setInterval((System.currentTimeMillis() - time) / Constant.ONE_THOUSAND);
 
     NodeInfo nodeInfo = nodeMetricManager.getNodeInfo();
     metricsInfo.setNode(nodeInfo);
@@ -52,7 +53,7 @@ public class MetricsApiService {
   public Protocol.MetricsInfo getMetricProtoInfo() {
 
     Protocol.MetricsInfo.Builder builder = Protocol.MetricsInfo.newBuilder();
-    builder.setInterval((System.currentTimeMillis() - time) / 1000);
+    builder.setInterval((System.currentTimeMillis() - time) / Constant.ONE_THOUSAND);
 
     Protocol.MetricsInfo.NodeInfo nodeInfo = nodeMetricManager.getNodeProtoInfo();
     builder.setNode(nodeInfo);

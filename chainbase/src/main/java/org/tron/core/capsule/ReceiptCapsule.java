@@ -24,6 +24,18 @@ public class ReceiptCapsule {
   @Setter
   private long multiSignFee;
 
+  /**
+   * Available energy of contract deployer before executing transaction
+   */
+  @Setter
+  private long originEnergyLeft;
+
+  /**
+   * Available energy of caller before executing transaction
+   */
+  @Setter
+  private long callerEnergyLeft;
+
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
@@ -124,13 +136,13 @@ public class ReceiptCapsule {
 
     if (Objects.isNull(origin) && dynamicPropertiesStore.getAllowTvmConstantinople() == 1) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
-          receipt.getEnergyUsageTotal(), energyProcessor, now);
+          receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
       return;
     }
 
-    if (caller.getAddress().equals(origin.getAddress())) {
+    if ((!Objects.isNull(origin))&&caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController, caller,
-          receipt.getEnergyUsageTotal(), energyProcessor, now);
+          receipt.getEnergyUsageTotal(), receipt.getResult(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
       originUsage = getOriginUsage(dynamicPropertiesStore, origin, originEnergyLimit,
@@ -141,13 +153,17 @@ public class ReceiptCapsule {
       energyProcessor.useEnergy(origin, originUsage, now);
       this.setOriginEnergyUsage(originUsage);
       payEnergyBill(dynamicPropertiesStore, accountStore, forkController,
-          caller, callerUsage, energyProcessor, now);
+          caller, callerUsage, receipt.getResult(), energyProcessor, now);
     }
   }
 
   private long getOriginUsage(DynamicPropertiesStore dynamicPropertiesStore, AccountCapsule origin,
       long originEnergyLimit,
       EnergyProcessor energyProcessor, long originUsage) {
+
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+      return Math.min(originUsage, Math.min(originEnergyLeft, originEnergyLimit));
+    }
 
     if (checkForEnergyLimit(dynamicPropertiesStore)) {
       return Math.min(originUsage,
@@ -161,9 +177,15 @@ public class ReceiptCapsule {
       ForkController forkController,
       AccountCapsule account,
       long usage,
+      contractResult contractResult,
       EnergyProcessor energyProcessor,
       long now) throws BalanceInsufficientException {
-    long accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);
+    long accountEnergyLeft;
+    if (dynamicPropertiesStore.getAllowTvmFreeze() == 1) {
+      accountEnergyLeft = callerEnergyLeft;
+    } else {
+      accountEnergyLeft = energyProcessor.getAccountLeftEnergyFromFreeze(account);
+    }
     if (accountEnergyLeft >= usage) {
       energyProcessor.useEnergy(account, usage, now);
       this.setEnergyUsage(usage);
@@ -193,9 +215,17 @@ public class ReceiptCapsule {
       }
       account.setBalance(balance - energyFee);
 
-      //send to blackHole
-      Commons.adjustBalance(accountStore, accountStore.getBlackhole().getAddress().toByteArray(),
-          energyFee);
+      if (dynamicPropertiesStore.supportTransactionFeePool() &&
+          !contractResult.equals(contractResult.OUT_OF_TIME)) {
+        dynamicPropertiesStore.addTransactionFeePool(energyFee);
+      } else if (dynamicPropertiesStore.supportBlackHoleOptimization()) {
+        dynamicPropertiesStore.burnTrx(energyFee);
+      } else {
+        //send to blackHole
+        Commons.adjustBalance(accountStore, accountStore.getBlackhole(),
+            energyFee);
+      }
+
     }
 
     accountStore.put(account.getAddress().toByteArray(), account);
