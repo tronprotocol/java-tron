@@ -484,7 +484,6 @@ public class FullNodeHttpApiService implements Service {
       //          "/wallet/createshieldnullifier");
       //      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
       //      "/wallet/getshieldtransactionhash");
-
       context
           .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
               "/wallet/isshieldedtrc20contractnotespent");
