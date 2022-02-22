@@ -7,7 +7,9 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 
 import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -22,33 +24,65 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @ToString
 public class BuildArguments {
 
-  public String from;
-  public String to;
-  public String gas = "0x0";
-  public String gasPrice = ""; //not used
-  public String value;
-  public String data;
-  public String nonce = ""; //not used
+  @Getter
+  @Setter
+  private String from;
+  @Getter
+  @Setter
+  private String to;
+  @Getter
+  @Setter
+  private String gas = "0x0";
+  @Getter
+  @Setter
+  private String gasPrice = ""; //not used
+  @Getter
+  @Setter
+  private String value;
+  @Getter
+  @Setter
+  private String data;
+  @Getter
+  @Setter
+  private String nonce = ""; //not used
 
-  public Long tokenId = 0L;
-  public Long tokenValue = 0L;
-  public String abi = "";
-  public Long consumeUserResourcePercent = 0L;
-  public Long originEnergyLimit = 0L;
-  public String name = "";
+  @Getter
+  @Setter
+  private Long tokenId = 0L;
+  @Getter
+  @Setter
+  private Long tokenValue = 0L;
+  @Getter
+  @Setter
+  private String abi = "";
+  @Getter
+  @Setter
+  private Long consumeUserResourcePercent = 0L;
+  @Getter
+  @Setter
+  private Long originEnergyLimit = 0L;
+  @Getter
+  @Setter
+  private String name = "";
 
-  public Integer permissionId = 0;
-  public String extraData = "";
+  @Getter
+  @Setter
+  private Integer permissionId = 0;
+  @Getter
+  @Setter
+  private String extraData = "";
 
-  public boolean visible = false;
+  @Getter
+  @Setter
+  private boolean visible = false;
 
   public BuildArguments(CallArguments args) {
-    from = args.from;
-    to = args.to;
-    gas = args.gas;
-    gasPrice = args.gasPrice;
-    value = args.value;
-    data = args.data;
+    from = args.getFrom();
+    to = args.getTo();
+    gas = args.getGas();
+    gasPrice = args.getGasPrice();
+    value = args.getValue();
+    data = args.getData();
   }
 
   public ContractType getContractType(Wallet wallet) throws JsonRpcInvalidRequestException,

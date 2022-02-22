@@ -361,7 +361,7 @@ public class Accounts001 extends JsonRpcBase {
   public void test16JsonRpcApiTestForEthGetTransactionByBlockNumberAndIndex() throws Exception {
     logger.info("16blockNum:" + blockNum);
     blockNumHex = "0x" + Integer.toHexString(blockNum);
-    logger.info("blockNumHex:" + blockNumHex);
+    logger.info("16blockNumHex:" + blockNumHex);
     JsonArray params = new JsonArray();
     params.add(blockNumHex);
     indexNum = 0;
@@ -410,10 +410,10 @@ public class Accounts001 extends JsonRpcBase {
     logger.info("16transactionIdList:" + transactionIdList);
     logger.info(String.valueOf(indexNum));
     indexHex = "0x" + Integer.toHexString(indexNum);
-    logger.info("indexHex：" + indexHex);
+    logger.info("16indexHex：" + indexHex);
     params.add(indexHex);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionByBlockNumberAndIndex", params);
-    logger.info("13requestBody:" + requestBody);
+    logger.info("16requestBody:" + requestBody);
     response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     result = responseContent.getJSONObject("result");
@@ -423,13 +423,13 @@ public class Accounts001 extends JsonRpcBase {
       jsonrpcResult.put(entry.getKey(), entry.getValue());
     }
     transacionHash = jsonrpcResult.get("hash").toString();
-    logger.info("transactionHash：" + transacionHash);
+    logger.info("16transactionHash：" + transacionHash);
     blockHash = jsonrpcResult.get("blockHash").toString();
-    logger.info("jsonrpcResult:" + jsonrpcResult);
+    logger.info("16jsonrpcResult:" + jsonrpcResult);
     response = HttpMethed.getTransactionInfoByBlocknum(httpFullNode, blockNum);
-    logger.info("response:" + response);
+    logger.info("16response:" + response);
     List<JSONObject> responseContent1 = HttpMethed.parseResponseContentArray(response);
-    logger.info("responseContent1:" + responseContent1);
+    logger.info("16responseContent1:" + responseContent1);
     blockTimeStamp = responseContent1.get(0).getLong("blockTimeStamp");
 
     for (int i = 0; i < responseContent1.size(); i++) {
@@ -495,19 +495,19 @@ public class Accounts001 extends JsonRpcBase {
 
   @Test(enabled = true, description = "Json rpc api of eth_getBlockTransactionCountByHash")
   public void test17JsonRpcApiTestForEthGetBlockTransactionCountByHash() throws Exception {
-    logger.info("blockNum:" + blockNum);
+    logger.info("17blockNum:" + blockNum);
     JsonArray params = new JsonArray();
     params.add(blockHash);
-    logger.info("blockHash:" + blockHash);
+    logger.info("17blockHash:" + blockHash);
     JsonObject requestBody = getJsonRpcBody("eth_getBlockTransactionCountByHash", params);
-    logger.info("requestBody:" + requestBody);
+    logger.info("17requestBody:" + requestBody);
     HttpMethed.waitToProduceOneBlock(httpFullNode);
     response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
-    logger.info("responseContent:" + responseContent);
+    logger.info("17responseContent:" + responseContent);
     String transactionNum = responseContent.getString("result").substring(2);
     int transactionNumFromJsonRpcNode = Integer.parseInt(transactionNum, 16);
-    logger.info("transactionNumFromJsonRpcNode:" + transactionNumFromJsonRpcNode);
+    logger.info("17transactionNumFromJsonRpcNode:" + transactionNumFromJsonRpcNode);
     response = HttpMethed.getTransactionCountByBlocknum(httpFullNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
     int transactionNumFromHttp = responseContent.getInteger("count");
@@ -552,30 +552,33 @@ public class Accounts001 extends JsonRpcBase {
 
   @Test(enabled = true, description = "Json rpc api of eth_getTransactionByHash")
   public void test20JsonRpcApiTestForEthGetTransactionByHash() throws Exception {
+    logger.info("20transacionHash:" + transacionHash);
     JsonArray params = new JsonArray();
     params.add(transacionHash);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionByHash", params);
     response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
+    logger.info("20responseContent:" + responseContent);
     JSONObject result1 = responseContent.getJSONObject("result");
     Assert.assertEquals(result, result1);
   }
 
   @Test(enabled = true, description = "Json rpc api of eth_getTransactionReceipt")
   public void test21JsonRpcApiTestForEthGetTransactionReceipt() throws Exception {
+    logger.info("trc20Txid:" + trc20Txid);
     JsonArray params = new JsonArray();
     Thread.sleep(6000);
     params.add(trc20Txid);
     JsonObject requestBody = getJsonRpcBody("eth_getTransactionReceipt", params);
-    logger.info("requestBody:" + requestBody);
+    logger.info("21requestBody:" + requestBody);
     response = getJsonRpc(jsonRpcNode, requestBody);
-    logger.info("response:" + response);
+    logger.info("21response:" + response);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject resultFromTransactionReceipt = responseContent.getJSONObject("result");
-    logger.info("resultFromTransactionReceipt:" + resultFromTransactionReceipt);
+    logger.info("21resultFromTransactionReceipt:" + resultFromTransactionReceipt);
     JSONArray logs = resultFromTransactionReceipt.getJSONArray("logs");
-    logger.info("logs:" + logs);
-    logger.info("result:" + resultFromTransactionReceipt.toString());
+    logger.info("21logs:" + logs);
+    logger.info("21result:" + resultFromTransactionReceipt.toString());
     response = HttpMethed.getBlockByNum(httpFullNode, blockNumForTrc20);
     responseContent = HttpMethed.parseResponseContent(response);
     int index = 0;
@@ -664,7 +667,7 @@ public class Accounts001 extends JsonRpcBase {
         logs.getJSONObject(0).getString("address"), resultFromTransactionReceipt.getString("to"));
     response = HttpMethed.getTransactionInfoByBlocknum(httpFullNode, blockNumForTrc20);
     List<JSONObject> responseContent1 = HttpMethed.parseResponseContentArray(response);
-    logger.info("responseContent1:" + responseContent1);
+    logger.info("21responseContent1:" + responseContent1);
 
     response = HttpMethed.getBlockByNum(httpFullNode, blockNumForTrc20);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -1052,7 +1055,7 @@ public class Accounts001 extends JsonRpcBase {
   public void test48JsonRpcApiTestForEthGetBlockByHash() throws Exception {
     response = HttpMethed.getBlockByNum(httpFullNode, blockNum);
     responseContent = HttpMethed.parseResponseContent(response);
-    logger.info("45getBlockByNumFromHttp:" + responseContent);
+    logger.info("48getBlockByNumFromHttp:" + responseContent);
     accountStateRoot =
         responseContent
             .getJSONObject("block_header")
@@ -1107,9 +1110,9 @@ public class Accounts001 extends JsonRpcBase {
         GrpcAPI.NumberMessage.newBuilder().setNum(blockNum).build();
     HttpMethed.waitToProduceOneBlock(httpFullNode);
     Block block = blockingStubFull.getBlockByNum(message);
-    logger.info("sizeFromJrpc:" + block.getSerializedSize());
+    logger.info("48sizeFromJrpc:" + block.getSerializedSize());
     logger.info(
-        "sizeFromJsonRPc:"
+        "48sizeFromJsonRPc:"
             + Long.parseLong(getBlockByHashResult.getString("size").substring(2), 16));
     size = block.getSerializedSize();
     Assert.assertEquals(
@@ -1132,13 +1135,13 @@ public class Accounts001 extends JsonRpcBase {
 
     JsonArray params = new JsonArray();
     params.add(blockNumHex);
-    logger.info("46blockNumHex:" + blockNumHex);
+    logger.info("49blockNumHex:" + blockNumHex);
     params.add(true);
     JsonObject requestBody = getJsonRpcBody("eth_getBlockByNumber", params);
     response = getJsonRpc(jsonRpcNode, requestBody);
     responseContent = HttpMethed.parseResponseContent(response);
     JSONObject getBlockByNumberResult = responseContent.getJSONObject("result");
-    logger.info("getBlockByHashResult:" + getBlockByNumberResult);
+    logger.info("49getBlockByHashResult:" + getBlockByNumberResult);
 
     Assert.assertNull(getBlockByNumberResult.getString("nonce"));
     Assert.assertNull(getBlockByNumberResult.getString("sha3Uncles"));
@@ -1174,12 +1177,12 @@ public class Accounts001 extends JsonRpcBase {
     Assert.assertEquals(
         Long.parseLong(getBlockByNumberResult.getString("timestamp").substring(2), 16),
         blockTimeStamp);
-    logger.info("size:" + size);
+    logger.info("49size:" + size);
     Assert.assertEquals(
         Long.parseLong(getBlockByNumberResult.getString("size").substring(2), 16), size);
 
     JSONArray transactionsList = getBlockByNumberResult.getJSONArray("transactions");
-    logger.info("transactionsList:" + transactionsList);
+    logger.info("49transactionsList:" + transactionsList);
     List<String> transactionInfoListFromGetBlockByHash = new ArrayList<>();
     if (transactionsList.size() > 0) {
       for (int i = 0; i < transactionsList.size(); i++) {
@@ -1191,7 +1194,7 @@ public class Accounts001 extends JsonRpcBase {
       JsonArray paramsForEthGetTransactionByBlockNumberAndIndex = new JsonArray();
       paramsForEthGetTransactionByBlockNumberAndIndex.add(blockNumHex);
       String index = "0x" + Integer.toHexString(i);
-      logger.info("index:" + index);
+      logger.info("49index:" + index);
       paramsForEthGetTransactionByBlockNumberAndIndex.add(index);
       logger.info(
           "paramsForEthGetTransactionByBlockNumberAndIndex:"
@@ -1202,9 +1205,9 @@ public class Accounts001 extends JsonRpcBase {
               paramsForEthGetTransactionByBlockNumberAndIndex);
       response = getJsonRpc(jsonRpcNode, requestBodyForTransactionByBlockNumberAndIndex);
       responseContent = HttpMethed.parseResponseContent(response);
-      logger.info("responseContent:" + responseContent);
+      logger.info("49responseContent:" + responseContent);
       result = responseContent.getJSONObject("result");
-      logger.info("result:" + result);
+      logger.info("49result:" + result);
       transactionInfoListFromTransactionByBlockNumberAndIndex.add(result.toString());
     }
     Assert.assertEquals(

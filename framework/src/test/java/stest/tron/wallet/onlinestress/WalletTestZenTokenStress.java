@@ -94,14 +94,7 @@ public class WalletTestZenTokenStress {
   private Long costTokenAmount = 1 * zenTokenFee + 1;
   private Long sendTokenAmount = 1 * zenTokenFee;
 
-  /**
-   * constructor.
-   */
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

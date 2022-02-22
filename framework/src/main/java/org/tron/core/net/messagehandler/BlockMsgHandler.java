@@ -100,12 +100,6 @@ public class BlockMsgHandler implements TronMsgHandler {
       return;
     }
 
-    Item item = new Item(blockId, InventoryType.BLOCK);
-    if (fastForward || peer.isFastForwardPeer()) {
-      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
-      advService.addInvToCache(item);
-    }
-
     long headNum = tronNetDelegate.getHeadBlockId().getNum();
     if (block.getNum() < headNum) {
       logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
@@ -114,22 +108,13 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     boolean flag = tronNetDelegate.validBlock(block);
     if (flag) {
-      if (fastForward) {
-        advService.fastForward(new BlockMessage(block));
-        tronNetDelegate.trustNode(peer);
-      } else {
-        advService.broadcast(new BlockMessage(block));
-      }
+      advService.broadcast(new BlockMessage(block));
     }
 
     try {
       tronNetDelegate.processBlock(block, false);
       if (!flag) {
-        if (fastForward) {
-          advService.fastForward(new BlockMessage(block));
-        } else {
-          advService.broadcast(new BlockMessage(block));
-        }
+        advService.broadcast(new BlockMessage(block));
       }
 
       witnessProductBlockService.validWitnessProductTwoBlock(block);

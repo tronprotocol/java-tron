@@ -74,11 +74,7 @@ public class MultiSign23 {
   private String url = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetUrl");
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
