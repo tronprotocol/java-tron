@@ -1,0 +1,30 @@
+name: release to DockerHub
+
+on:
+  push:
+    tags: 
+      - release_v*
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Log into registry
+        env:
+          DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+        run: |
+          echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+
+      - name: create name
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo ::set-output name=tag_name::${TAG}
+          IMAGE_ID='tronprotocol/java-tron'
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+      - name: push image
+        run: |
+          docker build -t java-tron-local:1.0  .
+          
