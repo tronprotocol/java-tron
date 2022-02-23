@@ -27,6 +27,7 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.vm.JumpTable;
 import org.tron.core.vm.Op;
 import org.tron.core.vm.Operation;
 import org.tron.core.vm.OperationRegistry;
@@ -39,10 +40,10 @@ public class InterpreterTest {
 
   private ProgramInvokeMockImpl invoke;
   private Program program;
+  private final JumpTable jumpTable = OperationRegistry.newBaseOperationSet();
 
   @BeforeClass
   public static void init() {
-    OperationRegistry.newBaseOperation();
     CommonParameter.getInstance().setDebug(true);
   }
 
@@ -66,7 +67,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -101,7 +102,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -139,7 +140,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
@@ -178,7 +179,7 @@ public class InterpreterTest {
 
     try {
       while (!program.isStopped()) {
-        Operation operation = OperationRegistry.get(program.getCurrentOpIntValue());
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
         if (operation == null) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }

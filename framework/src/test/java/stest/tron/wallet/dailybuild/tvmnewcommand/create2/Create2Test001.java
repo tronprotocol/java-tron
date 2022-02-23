@@ -108,7 +108,7 @@ public class Create2Test001 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "Trigger create2 command with test bytecode using factory")
+  @Test(enabled = true, description = "Trigger create2 command with test bytecode using factory. ")
   public void test02TriggerCreate2ToDeployTestContract() {
 
     Long callValue = Long.valueOf(0);
