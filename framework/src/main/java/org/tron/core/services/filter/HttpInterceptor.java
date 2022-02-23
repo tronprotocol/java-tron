@@ -15,6 +15,8 @@ import org.tron.core.metrics.MetricsUtil;
 public class HttpInterceptor implements Filter {
 
   private String endpoint;
+  private final int HTTP_NOT_FOUND = 404;
+  private final int HTTP_SUCCESS = 200;
 
   @Override
   public void init(FilterConfig filterConfig) {
@@ -32,7 +34,7 @@ public class HttpInterceptor implements Filter {
 
         HttpServletResponse resp = (HttpServletResponse) response;
 
-        if (resp.getStatus() != 404) {  // correct endpoint
+        if (resp.getStatus() != HTTP_NOT_FOUND) {  // correct endpoint
           String endpointQPS = MetricsKey.NET_API_DETAIL_QPS + endpoint;
           MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
           MetricsUtil.meterMark(endpointQPS);
@@ -43,7 +45,7 @@ public class HttpInterceptor implements Filter {
               reposeContentSize);
           MetricsUtil.meterMark(endpointOutTraffic, reposeContentSize);
 
-          if (resp.getStatus() != 200) {  //http fail
+          if (resp.getStatus() != HTTP_SUCCESS) {  //http fail
             String endpointFailQPS = MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint;
             MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
             MetricsUtil.meterMark(endpointFailQPS);

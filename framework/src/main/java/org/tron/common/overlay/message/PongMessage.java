@@ -1,6 +1,6 @@
 package org.tron.common.overlay.message;
 
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.core.net.message.MessageTypes;
 
 public class PongMessage extends P2pMessage {

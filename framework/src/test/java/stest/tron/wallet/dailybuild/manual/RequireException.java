@@ -50,11 +50,7 @@ public class RequireException {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -85,11 +81,11 @@ public class RequireException {
     testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Assert.assertTrue(PublicMethed
         .sendcoin(asset016Address, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath =
         "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
     String contractName = "TestThrowsContract";

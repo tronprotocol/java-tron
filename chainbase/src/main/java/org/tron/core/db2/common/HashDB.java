@@ -3,10 +3,11 @@ package org.tron.core.db2.common;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HashDB implements DB<Key, Value> {
 
-  private Map<Key, Value> db = new HashMap<>();
+  private Map<Key, Value> db = new ConcurrentHashMap<>();
   private String name;
 
   public HashDB(String name) {

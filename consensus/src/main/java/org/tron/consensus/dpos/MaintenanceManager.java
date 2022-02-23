@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.ConsensusDelegate;
@@ -90,6 +90,15 @@ public class MaintenanceManager {
 
     tryRemoveThePowerOfTheGr();
 
+    DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
+    DelegationStore delegationStore = consensusDelegate.getDelegationStore();
+    if (dynamicPropertiesStore.useNewRewardAlgorithm()) {
+      long curCycle = dynamicPropertiesStore.getCurrentCycleNumber();
+      consensusDelegate.getAllWitnesses().forEach(witness -> {
+        delegationStore.accumulateWitnessVi(curCycle, witness.createDbKey(), witness.getVoteCount());
+      });
+    }
+
     Map<ByteString, Long> countWitness = countVote(votesStore);
     if (!countWitness.isEmpty()) {
       List<ByteString> currentWits = consensusDelegate.getActiveWitnesses();
@@ -139,8 +148,6 @@ public class MaintenanceManager {
           getAddressStringList(newWits));
     }
 
-    DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
-    DelegationStore delegationStore = consensusDelegate.getDelegationStore();
     if (dynamicPropertiesStore.allowChangeDelegation()) {
       long nextCycle = dynamicPropertiesStore.getCurrentCycleNumber() + 1;
       dynamicPropertiesStore.saveCurrentCycleNumber(nextCycle);

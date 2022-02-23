@@ -51,11 +51,7 @@ public class Create2Test003 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -195,7 +191,7 @@ public class Create2Test003 {
     Assert.assertEquals(1, infoById.get().getResultValue());
     Assert
         .assertThat(infoById.get().getResMessage().toStringUtf8(),
-            containsString("Not enough energy for 'SWAP1' operation executing"));
+            containsString("REVERT opcode executed"));
   }
 
   @Test(enabled = true, description = "Trigger create2 command with empty bytecode")
@@ -458,8 +454,8 @@ public class Create2Test003 {
           "deploy(bytes,uint256)", param, false, callValue,
           1000000000L, "0", 0, user001Address, user001Key,
           blockingStubFull);
-    } catch (org.spongycastle.util.encoders.DecoderException e) {
-      logger.info("Expected org.spongycastle.util.encoders.DecoderException!");
+    } catch (org.bouncycastle.util.encoders.DecoderException e) {
+      logger.info("Expected org.bouncycastle.util.encoders.DecoderException!");
       ret = true;
     }
     Assert.assertTrue(ret);

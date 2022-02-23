@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -62,11 +62,7 @@ public class WalletTestWitness001 {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -107,8 +103,8 @@ public class WalletTestWitness001 {
     //Assert.assertFalse(VoteWitness(smallVoteMap, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
     //Freeze balance to get vote ability.
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 1200000L, 3L,
-        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceGetTronPower(fromAddress, 1200000L, 3L,
+        2,null,testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Vote failed when the vote is large than the freeze balance.
     Assert.assertFalse(voteWitness(veryLargeMap, fromAddress, testKey002));
@@ -186,7 +182,7 @@ public class WalletTestWitness001 {
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     }
@@ -262,7 +258,7 @@ public class WalletTestWitness001 {
     transaction = TransactionUtils.sign(transaction, ecKey);
     Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    if (response.getResult() == false) {
+    if (!response.getResult()) {
       return false;
     }
 
@@ -343,11 +339,7 @@ public class WalletTestWitness001 {
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
-      return true;
-    }
+    return response.getResult();
   }
 
   /**

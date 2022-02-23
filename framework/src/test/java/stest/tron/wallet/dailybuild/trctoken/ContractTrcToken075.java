@@ -53,11 +53,7 @@ public class ContractTrcToken075 {
   private byte[] dev001Address = ecKey1.getAddress();
   private String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -77,7 +73,6 @@ public class ContractTrcToken075 {
   public void testTokenBalanceContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 11000_000_000L, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 130000L,
@@ -99,18 +94,9 @@ public class ContractTrcToken075 {
     logger.info("The token name: " + tokenName);
     logger.info("The token ID: " + assetAccountId.toStringUtf8());
 
-    //before deploy, check account resource
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-        blockingStubFull);
-    long energyLimit = accountResource.getEnergyLimit();
-    long energyUsage = accountResource.getEnergyUsed();
-    long balanceBefore = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
+
     Long devAssetCountBefore = PublicMethed.getAssetIssueValue(dev001Address,
         assetAccountId, blockingStubFull);
-
-    logger.info("before energyLimit is " + Long.toString(energyLimit));
-    logger.info("before energyUsage is " + Long.toString(energyUsage));
-    logger.info("before balanceBefore is " + Long.toString(balanceBefore));
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
@@ -143,23 +129,11 @@ public class ContractTrcToken075 {
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    energyLimit = accountResource.getEnergyLimit();
-    energyUsage = accountResource.getEnergyUsed();
-    long balanceAfter = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
     Long devAssetCountAfter = PublicMethed.getAssetIssueValue(dev001Address,
         assetAccountId, blockingStubFull);
-
-    logger.info("after energyLimit is " + Long.toString(energyLimit));
-    logger.info("after energyUsage is " + Long.toString(energyUsage));
-    logger.info("after balanceAfter is " + Long.toString(balanceAfter));
     logger.info("after AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfter: "
         + devAssetCountAfter);
 
-    Assert.assertFalse(PublicMethed.transferAsset(transferTokenContractAddress,
-        assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull));
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long contractAssetCount = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
         assetAccountId, blockingStubFull);
     logger.info("Contract has AssetId: " + assetAccountId.toStringUtf8() + ", Count: "
@@ -275,11 +249,6 @@ public class ContractTrcToken075 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    // unfreeze resource
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        dev001Address, blockingStubFull);
   }
 
   /**
@@ -289,6 +258,7 @@ public class ContractTrcToken075 {
   public void shutdown() throws InterruptedException {
     PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
     PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1, dev001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

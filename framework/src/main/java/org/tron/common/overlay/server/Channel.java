@@ -10,6 +10,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -61,6 +63,9 @@ public class Channel {
   private boolean isActive;
 
   private volatile boolean isDisconnect;
+
+  @Getter
+  private volatile long disconnectTime;
 
   private boolean isTrustPeer;
 
@@ -124,6 +129,7 @@ public class Channel {
 
   public void disconnect(ReasonCode reason) {
     this.isDisconnect = true;
+    this.disconnectTime = System.currentTimeMillis();
     channelManager.processDisconnect(this, reason);
     DisconnectMessage msg = new DisconnectMessage(reason);
     logger.info("Send to {} online-time {}s, {}",
@@ -154,6 +160,7 @@ public class Channel {
 
   public void close() {
     this.isDisconnect = true;
+    this.disconnectTime = System.currentTimeMillis();
     p2pHandler.close();
     msgQueue.close();
     ctx.close();

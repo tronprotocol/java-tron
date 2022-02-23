@@ -1,104 +1,69 @@
 package org.tron.core.vm.nativecontract;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.STORE_NOT_EXIST;
+
 import com.google.common.math.LongMath;
 import java.util.Arrays;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.VoteRewardUtil;
 
-import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
-import static org.tron.core.vm.nativecontract.ContractProcessorConstant.ACCOUNT_EXCEPTION_STR;
-import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT_NULL;
-
-@Slf4j(topic = "Processor")
+@Slf4j(topic = "VMProcessor")
 public class WithdrawRewardProcessor {
 
-  public long execute(Object contract, Repository repository, long now) {
-    WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
-    byte[] targetAddress = withdrawRewardParam.getTargetAddress();
-
-    ContractService contractService = ContractService.getInstance();
-    contractService.withdrawReward(targetAddress, repository);
-
-    AccountCapsule accountCapsule = repository.getAccount(targetAddress);
-    repository.updateLastWithdrawCycle(targetAddress,
-        repository.getDynamicPropertiesStore().getCurrentCycleNumber()
-    );
-
-    long oldBalance = accountCapsule.getBalance();
-    long allowance = accountCapsule.getAllowance();
-
-    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-        .setBalance(oldBalance + allowance)
-        .setAllowance(0L)
-        .setLatestWithdrawTime(now)
-        .build());
-    // todo internal tx
-    repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
-    return allowance;
-  }
-
-  public void validate(Object contract, Repository repository, long now) throws ContractValidateException {
-    if (Objects.isNull(contract)) {
-      throw new ContractValidateException(CONTRACT_NULL);
-    }
-    if (repository == null) {
-      throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
-    }
-    if (!(contract instanceof WithdrawRewardParam)) {
-      throw new ContractValidateException(
-          "contract type error, expected type [WithdrawRewardParam], real type[" + contract
-              .getClass() + "]");
-    }
-    WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
-    byte[] targetAddress = withdrawRewardParam.getTargetAddress();
-    if (!DecodeUtil.addressValid(targetAddress)) {
-      throw new ContractValidateException("Invalid address");
-    }
-    AccountCapsule accountCapsule = repository.getAccount(targetAddress);
-    DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
-    ContractService contractService = ContractService.getInstance();
-    String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
-    if (accountCapsule == null) {
-      throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+  public void validate(WithdrawRewardParam param, Repository repo) throws ContractValidateException {
+    if (repo == null) {
+      throw new ContractValidateException(STORE_NOT_EXIST);
     }
 
-    boolean isGp = CommonParameter.getInstance()
+    byte[] ownerAddress = param.getOwnerAddress();
+
+    boolean isGP = CommonParameter.getInstance()
         .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
-            Arrays.equals(targetAddress, witness.getAddress()));
-    if (isGp) {
+            Arrays.equals(ownerAddress, witness.getAddress()));
+    if (isGP) {
       throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress
+          ACCOUNT_EXCEPTION_STR + StringUtil.encode58Check(ownerAddress)
               + "] is a guard representative and is not allowed to withdraw Balance");
     }
+  }
 
-    long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
-    long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * FROZEN_PERIOD;
+  public long execute(WithdrawRewardParam param, Repository repo) throws ContractExeException {
+    byte[] ownerAddress = param.getOwnerAddress();
 
-    boolean needCheckFrozenTime = CommonParameter.getInstance()
-            .getCheckFrozenTime() == 1;//for test
-    if (needCheckFrozenTime && (now - latestWithdrawTime < witnessAllowanceFrozenTime)) {
-      throw new ContractValidateException("The last withdraw time is "
-          + latestWithdrawTime + ", less than 24 hours");
-    }
+    VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
-    if (accountCapsule.getAllowance() <= 0 &&
-        contractService.queryReward(targetAddress, repository) <= 0) {
-      throw new ContractValidateException("witnessAccount does not have any reward");
-    }
+    AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
+    long oldBalance = accountCapsule.getBalance();
+    long allowance = accountCapsule.getAllowance();
+    long newBalance = 0;
+
     try {
-      LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());
+      newBalance = LongMath.checkedAdd(oldBalance, allowance);
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
-      throw new ContractValidateException(e.getMessage());
+      throw new ContractExeException(e.getMessage());
     }
+
+    // If no allowance, do nothing and just return zero.
+    if (allowance <= 0) {
+      return 0;
+    }
+
+    accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
+        .setBalance(newBalance)
+        .setAllowance(0L)
+        .setLatestWithdrawTime(param.getNowInMs())
+        .build());
+
+    repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
+    return allowance;
   }
 }

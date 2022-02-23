@@ -20,6 +20,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   public SnapshotRoot(DB<byte[], byte[]> db) {
     this.db = db;
     solidity = this;
+    isOptimized = "properties".equalsIgnoreCase(db.getDbName());
   }
 
   @Override

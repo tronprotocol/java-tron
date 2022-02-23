@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -86,11 +86,7 @@ public class UnfreezeAsset2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -132,13 +128,13 @@ public class UnfreezeAsset2Test {
         9000000000000000000L, 1L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Frozen supply cannot exceed total supply");
+        "Contract validate error : Frozen supply cannot exceed total supply");
     //Freeze day is 0, create failed
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
         start, end, 2, description, url, 10000L, 10000L,
         100L, 0L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : "
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : "
         + "frozenDuration must be less than 3652 days and more than 1 days");
     //Freeze amount is 0, create failed
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
@@ -146,13 +142,13 @@ public class UnfreezeAsset2Test {
         0L, 1L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Frozen supply must be greater than 0!");
+        "Contract validate error : Frozen supply must be greater than 0!");
     //Freeze day is -1, create failed
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
         start, end, 2, description, url, 1000L, 1000L,
         1000L, -1L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : "
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : "
         + "frozenDuration must be less than 3652 days and more than 1 days");
     //Freeze amount is -1, create failed
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
@@ -160,13 +156,13 @@ public class UnfreezeAsset2Test {
         -1L, 1L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Frozen supply must be greater than 0!");
+        "Contract validate error : Frozen supply must be greater than 0!");
     //Freeze day is 3653(10 years + 1 day), create failed
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3653L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : "
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : "
         + "frozenDuration must be less than 3652 days and more than 1 days");
     //Start time is late than end time.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
@@ -174,96 +170,96 @@ public class UnfreezeAsset2Test {
         1L, 2L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : End time should be greater than start time");
+        "Contract validate error : End time should be greater than start time");
     //Start time is early than currently time.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
         start - 1000000L, end, 2, description, url, 10000L,
         10000L, 1L, 2L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Start time should be greater than HeadBlockTime");
+        "Contract validate error : Start time should be greater than HeadBlockTime");
     //totalSupply is zero.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, 0L, 1, 10,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : TotalSupply must greater than 0!");
+        "Contract validate error : TotalSupply must greater than 0!");
     //Totalsupply is -1.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, -1L, 1, 10,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : TotalSupply must greater than 0!");
+        "Contract validate error : TotalSupply must greater than 0!");
     //TrxNum is zero.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 0, 10,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : TrxNum must greater than 0!");
+        "Contract validate error : TrxNum must greater than 0!");
     //TrxNum is -1.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, -1, 10,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : TrxNum must greater than 0!");
+        "Contract validate error : TrxNum must greater than 0!");
     //IcoNum is 0.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 0,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, testKey002, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Num must greater than 0!");
+        "Contract validate error : Num must greater than 0!");
     //IcoNum is -1.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, -1,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Num must greater than 0!");
+        "Contract validate error : Num must greater than 0!");
     //The asset issue name is null.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, "", totalSupply, 1, 10,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid assetName");
+        "Contract validate error : Invalid assetName");
     //The asset issue name is large than 33 char.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, tooLongName, totalSupply, 1, 10,
         start, end, 2, description, url, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid assetName");
+        "Contract validate error : Invalid assetName");
     //The asset issue name is chinese name.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, chineseAssetIssuename, totalSupply, 1,
         10, start, end, 2, description, url, 10000L,
         10000L, 1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid assetName");
+        "Contract validate error : Invalid assetName");
     //The URL is null.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
         start, end, 2, description, "", 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : Invalid url");
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : Invalid url");
     //The URL is too long.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
         start, end, 2, description, tooLongUrl, 10000L, 10000L,
         1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : Invalid url");
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : Invalid url");
     //The description is too long, create failed.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress, name, totalSupply, 1, 10,
         start, end, 2, tooLongDescription, url, 10000L,
         10000L, 1L, 3652L, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid description");
+        "Contract validate error : Invalid description");
 
     //FreezeBalance
     Assert.assertTrue(PublicMethed.freezeBalance(lowBalAddress, 10000000L, 3, lowBalTest,
@@ -281,7 +277,7 @@ public class UnfreezeAsset2Test {
         toAddress, lowBalTest, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : No longer valid period!");
+        "Contract validate error : No longer valid period!");
     //Test another address try to create the same name asset issue, create failed.
     ret1 = PublicMethed.createAssetIssue2(lowBalAddress2, name, totalSupply, 1, 10,
         start, end, 2, description, url, 10000L, 10000L,
@@ -311,7 +307,7 @@ public class UnfreezeAsset2Test {
         1L, 3652L, testKey002, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : An account can only issue one asset");
+        "Contract validate error : An account can only issue one asset");
     logger.info("FROM ADDRESS create asset issue in this case!!!");
 
     assetIssueList = blockingStubFull

@@ -15,8 +15,13 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 @Slf4j
 public class HttpShieldTrc20Token003 extends ZenTrc20Base {
 
+  JSONArray shieldedReceives = new JSONArray();
+  String txid;
+  JSONArray shieldSpends = new JSONArray();
   private String httpnode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(0);
+  private String anotherHttpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(1);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
   private JSONObject responseContent;
@@ -33,9 +38,6 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
   private Long account1Receive2V2Amount = 13L;
   private Long account2Receive2V2Amount = publicFromAmount
       + account2Receive1V2Amount - account1Receive2V2Amount;
-  JSONArray shieldedReceives = new JSONArray();
-  String txid;
-  JSONArray shieldSpends = new JSONArray();
 
   /**
    * constructor.
@@ -59,7 +61,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
     responseContent = HttpMethed.parseResponseContent(response);
     //HttpMethed.printJsonContent(responseContent);
 
-    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,anotherHttpnode,
         zenTrc20TokenOwnerAddressString, shieldAddress, mint, responseContent
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
@@ -74,7 +76,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
     responseContent = HttpMethed.parseResponseContent(response);
     //HttpMethed.printJsonContent(responseContent);
 
-    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,anotherHttpnode,
         zenTrc20TokenOwnerAddressString, shieldAddress, mint, responseContent
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
@@ -98,7 +100,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
-    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,anotherHttpnode,
         zenTrc20TokenOwnerAddressString, shieldAddress, transfer, responseContent
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
@@ -142,7 +144,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.containsKey("trigger_contract_input"));
 
-    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,anotherHttpnode,
         zenTrc20TokenOwnerAddressString, shieldAddress, transfer, responseContent
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
@@ -187,7 +189,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.containsKey("trigger_contract_input"));
 
-    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,anotherHttpnode,
         zenTrc20TokenOwnerAddressString, shieldAddress, transfer, responseContent
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);
@@ -238,7 +240,7 @@ public class HttpShieldTrc20Token003 extends ZenTrc20Base {
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.containsKey("trigger_contract_input"));
 
-    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,anotherHttpnode,
         zenTrc20TokenOwnerAddressString, shieldAddress, transfer, responseContent
             .getString("trigger_contract_input"), maxFeeLimit, 0L, 0, 0L,
         zenTrc20TokenOwnerKey);

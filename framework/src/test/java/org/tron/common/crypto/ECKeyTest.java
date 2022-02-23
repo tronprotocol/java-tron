@@ -14,8 +14,8 @@ import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.core.Wallet;
 

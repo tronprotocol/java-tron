@@ -81,8 +81,8 @@ public class MultiSign35 {
 
   }
 
-  @Test(enabled = true, description = "Test perimissionID is "
-      + "7fff1fc0037e0000000000000000000000000000000000000000000000000000")
+  @Test(enabled = true, description = "update active operation,"
+      + " use active address meet all requirement")
   public void testMultiUpdatepermissions_45() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -175,8 +175,8 @@ public class MultiSign35 {
 
   }
 
-  @Test(enabled = true, description = "Test perimissionID is "
-      + "7fff1fc0033e0000000000000000000000000000000000000000000000000000")
+  @Test(enabled = true, description = "update active operation,"
+      + " use active address no right update sign, broadcast")
   public void testMultiUpdatepermissions_46() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();

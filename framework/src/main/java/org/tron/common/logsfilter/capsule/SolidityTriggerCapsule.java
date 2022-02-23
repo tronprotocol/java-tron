@@ -16,6 +16,10 @@ public class SolidityTriggerCapsule extends TriggerCapsule {
     solidityTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNum);
   }
 
+  public void setTimeStamp(long timeStamp) {
+    solidityTrigger.setTimeStamp(timeStamp);
+  }
+
   @Override
   public void processTrigger() {
     EventPluginLoader.getInstance().postSolidityTrigger(solidityTrigger);

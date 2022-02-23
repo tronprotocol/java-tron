@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -66,11 +66,7 @@ public class CreateaAndUpdateWitness2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -93,7 +89,7 @@ public class CreateaAndUpdateWitness2Test {
     GrpcAPI.Return ret1 = createWitness2(INVAILD_ADDRESS, createUrl, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Invalid address");
+        "Contract validate error : Invalid address");
   }
 
   @Test(enabled = true)
@@ -103,14 +99,14 @@ public class CreateaAndUpdateWitness2Test {
     GrpcAPI.Return ret1 = createWitness2(fromAddress, createUrl, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Witness[415624c12e308b03a1a6b21d9b86e3942fac1ab92b] "
+        "Contract validate error : Witness[415624c12e308b03a1a6b21d9b86e3942fac1ab92b] "
             + "has existed");
     //balance is not enouhg,try to create witness.
     Assert.assertTrue(sendcoin(lowBalAddress, 1000000L, fromAddress, testKey002));
     ret1 = createWitness2(lowBalAddress, createUrl, lowBalTest);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : balance < AccountUpgradeCost");
+        "Contract validate error : balance < AccountUpgradeCost");
     //Send enough coin to the apply account to make that account
     // has ability to apply become witness.
     WitnessList witnesslist = blockingStubFull
@@ -136,7 +132,7 @@ public class CreateaAndUpdateWitness2Test {
       GrpcAPI.Return ret1 = updateWitness2(lowBalAddress, wrongUrl, lowBalTest);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
       Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-          "contract validate error : Invalid url");
+          "Contract validate error : Invalid url");
       //Content space and special char, update success
       ret1 = updateWitness2(lowBalAddress, updateSpaceUrl, lowBalTest);
       Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.SUCCESS);

@@ -69,11 +69,7 @@ public class MultiSign05 {
       .getString("defaultParameter.assetUrl");
 
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -730,81 +726,7 @@ public class MultiSign05 {
     Assert.assertEquals(balanceBefore, balanceAfter);
   }
 
-  @Test(enabled = true, description = "Owner key-address count is 1")
-  public void testOwnerKeyAddress08() {
-    ECKey ecKey1 = new ECKey(Utils.getRandom());
-    ownerAddress = ecKey1.getAddress();
-    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-    long needCoin = updateAccountPermissionFee * 2;
-
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
-        testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
-    logger.info("balanceBefore: " + balanceBefore);
-    List<String> ownerPermissionKeys = new ArrayList<>();
-
-    PublicMethed.printAddress(ownerKey);
-    PublicMethed.printAddress(tmpKey02);
-
-    ownerPermissionKeys.add(ownerKey);
-
-    String accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":5,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-            + "\",\"weight\":5}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
-            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-    Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
-        ownerAddress, ownerKey, blockingStubFull,
-        ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Assert.assertEquals(2,
-        PublicMethedForMutiSign.getActivePermissionKeyCount(PublicMethed.queryAccount(ownerAddress,
-            blockingStubFull).getActivePermissionList()));
-
-    Assert.assertEquals(1, PublicMethed.queryAccount(ownerAddress,
-        blockingStubFull).getOwnerPermission().getKeysCount());
-
-    PublicMethedForMutiSign.printPermissionList(PublicMethed.queryAccount(ownerAddress,
-        blockingStubFull).getActivePermissionList());
-
-    System.out
-        .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
-            blockingStubFull).getOwnerPermission()));
-
-    ownerPermissionKeys.clear();
-    ownerPermissionKeys.add(witnessKey001);
-
-    logger.info("** trigger a permission transaction");
-    accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
-            + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
-            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1}"
-            + "]}]}";
-
-    Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
-        ownerAddress, ownerKey, blockingStubFull,
-        ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
-    logger.info("balanceAfter: " + balanceAfter);
-
-    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
-  }
 
   @AfterMethod
   public void aftertest() {

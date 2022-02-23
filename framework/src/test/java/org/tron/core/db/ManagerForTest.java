@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -77,6 +78,7 @@ public class ManagerForTest {
             chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 3000L;
         long number =
             chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
+        chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
         BlockCapsule blockCapsule = createTestBlockCapsule(time, number, hash);
         dbManager.pushBlock(blockCapsule);
       }

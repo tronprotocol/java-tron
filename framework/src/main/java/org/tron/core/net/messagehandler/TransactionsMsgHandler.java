@@ -37,7 +37,6 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   @Autowired
   private AdvService advService;
 
-  //  private static int TIME_OUT = 10 * 60 * 1000;
   private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
@@ -97,6 +96,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
           TrxEvent event = smartContractQueue.take();
           trxHandlePool.submit(() -> handleTransaction(event.getPeer(), event.getMsg()));
         }
+      } catch (InterruptedException e) {
+        logger.warn("Handle smart server interrupted.");
+        Thread.currentThread().interrupt();
       } catch (Exception e) {
         logger.error("Handle smart contract exception.", e);
       }

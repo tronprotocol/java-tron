@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -66,11 +66,7 @@ public class ParticipateAssetIssue2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -127,7 +123,7 @@ public class ParticipateAssetIssue2Test {
         name.getBytes(), 9100000000000000000L, toAddress, testKey003, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : No enough balance !");
+        "Contract validate error : No enough balance !");
     //The asset issue name is not correct, participate failed.
     ret1 = PublicMethed.participateAssetIssue2(participateAccountAddress,
         (name + "wrong").getBytes(), 100L, toAddress, testKey003, blockingStubFull);
@@ -137,14 +133,14 @@ public class ParticipateAssetIssue2Test {
         name.getBytes(), 0L, toAddress, testKey003, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Amount must greater than 0!");
+        "Contract validate error : Amount must greater than 0!");
 
     //The amount is -1, participate asset issue failed.
     ret1 = PublicMethed.participateAssetIssue2(participateAccountAddress,
         name.getBytes(), -1L, toAddress, testKey003, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Amount must greater than 0!");
+        "Contract validate error : Amount must greater than 0!");
     //The asset issue owner address is not correct, participate asset issue failed.
     ret1 = PublicMethed.participateAssetIssue2(fromAddress, name.getBytes(), 100L,
         toAddress, testKey003, blockingStubFull);

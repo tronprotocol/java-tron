@@ -14,19 +14,19 @@ import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.db.DelegationService;
 import org.tron.core.db.Manager;
+import org.tron.core.service.MortgageService;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 @Slf4j
 public class DelegationServiceTest {
 
   private static String fullnode = "127.0.0.1:50051";
-  private DelegationService delegationService;
+  private MortgageService mortgageService;
   private Manager manager;
 
   public DelegationServiceTest(TronApplicationContext context) {
-    delegationService = context.getBean(DelegationService.class);
+    mortgageService = context.getBean(MortgageService.class);
     manager = context.getBean(Manager.class);
   }
 
@@ -56,7 +56,7 @@ public class DelegationServiceTest {
     } else if (cycle == 1) {
       rate = 0.2;
     }
-    delegationService.payStandbyWitness();
+    mortgageService.payStandbyWitness();
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     byte[] sr1 = decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     long value = manager.getDelegationStore().getReward(cycle, sr1);
@@ -69,7 +69,7 @@ public class DelegationServiceTest {
     long brokerageAmount = (long) (rate * expect);
     expect -= brokerageAmount;
     Assert.assertEquals(expect, value);
-    delegationService.payBlockReward(sr1, 32000000);
+    mortgageService.payBlockReward(sr1, 32000000);
     expect += 32000000;
     brokerageAmount = (long) (rate * 32000000);
     expect -= brokerageAmount;
@@ -90,7 +90,7 @@ public class DelegationServiceTest {
     manager.getAccountStore().put(sr1, accountCapsule);
     //
     long allowance = accountCapsule.getAllowance();
-    long value = delegationService.queryReward(sr1) - allowance;
+    long value = mortgageService.queryReward(sr1) - allowance;
     long reward1 = (long) ((double) manager.getDelegationStore().getReward(0, sr27) / 100000000
         * 10000000);
     long reward2 = (long) ((double) manager.getDelegationStore().getReward(1, sr27) / 100000000
@@ -98,7 +98,7 @@ public class DelegationServiceTest {
     long reward = reward1 + reward2;
     System.out.println("testWithdraw:" + value + ", reward:" + reward);
     Assert.assertEquals(reward, value);
-    delegationService.withdrawReward(sr1);
+    mortgageService.withdrawReward(sr1);
     accountCapsule = manager.getAccountStore().get(sr1);
     allowance = accountCapsule.getAllowance() - allowance;
     System.out.println("withdrawReward:" + allowance);

@@ -1,31 +1,12 @@
 /*
  * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
  * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 package org.tron.common.utils;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * <p>A convenience class to represent name-value pairs.</p>
@@ -123,10 +104,8 @@ public class Pair<K, V> implements Serializable {
     }
     if (o instanceof Pair) {
       Pair pair = (Pair) o;
-      return !((key != null ? !key.equals(pair.key) : pair.key != null) || (value != null ? !value
-          .equals(pair.value) : pair.value != null));
+      return !((!Objects.equals(key, pair.key)) || (!Objects.equals(value, pair.value)));
     }
     return false;
   }
 }
-

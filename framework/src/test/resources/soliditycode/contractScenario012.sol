@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+
 contract PayTest {
 
 uint256 public n;
@@ -23,7 +23,7 @@ address public user;
 
 //deposit 1 coin to msg.sender
 function depositOneCoin() payable public returns(bool success){
-return msg.sender.send(1);
+return payable(msg.sender).send(1);
 }
 
 // function transferOneCoin() payable public returns(){
@@ -36,13 +36,13 @@ return msg.sender.send(1);
 
 //deposit coin to msg.sender
 function deposit(uint256 money) payable public returns(bool success){
-return msg.sender.send(money);
+return payable(msg.sender).send(money);
 }
 // function deposit(uint money) payable public returns(address addr, uint amount, bool success){
 // return (msg.sender, msg.value, msg.sender.send(money));
 // }
 
-// function () payable {
+// fallback() payable {
 // msg.sender.send(1);
 // }
 

@@ -55,11 +55,7 @@ public class ContractUnknownException {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -260,7 +256,7 @@ public class ContractUnknownException {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     logger.info("afterenergyLimit:" + aftereenergyLimit);
     logger.info("s:" + s);
-    Assert.assertThat(s, containsString("Not enough energy for"));
+    Assert.assertThat(s, containsString("REVERT opcode executed"));
     Assert.assertTrue(beforeBalance - fee == afterBalance);
     PublicMethed.unFreezeBalance(grammarAddress3, testKeyForGrammarAddress3, 1, grammarAddress3,
         blockingStubFull);

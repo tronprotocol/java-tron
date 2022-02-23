@@ -4,9 +4,10 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
@@ -38,7 +39,7 @@ public class BlockMsgHandler implements TronMsgHandler {
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
 
-  private int maxBlockSize = BLOCK_SIZE + 1000;
+  private int maxBlockSize = BLOCK_SIZE + Constant.ONE_THOUSAND;
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
@@ -99,34 +100,33 @@ public class BlockMsgHandler implements TronMsgHandler {
       return;
     }
 
-    Item item = new Item(blockId, InventoryType.BLOCK);
-    if (fastForward || peer.isFastForwardPeer()) {
-      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
-      advService.addInvToCache(item);
+    long headNum = tronNetDelegate.getHeadBlockId().getNum();
+    if (block.getNum() < headNum) {
+      logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
+      return;
     }
 
-    if (fastForward) {
-      if (block.getNum() < tronNetDelegate.getHeadBlockId().getNum()) {
-        logger.warn("Receive a low block {}, head {}",
-            blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
-        return;
-      }
-      if (tronNetDelegate.validBlock(block)) {
-        advService.fastForward(new BlockMessage(block));
-        tronNetDelegate.trustNode(peer);
-      }
-    }
-
-    tronNetDelegate.processBlock(block, false);
-    witnessProductBlockService.validWitnessProductTwoBlock(block);
-    tronNetDelegate.getActivePeer().forEach(p -> {
-      if (p.getAdvInvReceive().getIfPresent(blockId) != null) {
-        p.setBlockBothHave(blockId);
-      }
-    });
-
-    if (!fastForward) {
+    boolean flag = tronNetDelegate.validBlock(block);
+    if (flag) {
       advService.broadcast(new BlockMessage(block));
+    }
+
+    try {
+      tronNetDelegate.processBlock(block, false);
+      if (!flag) {
+        advService.broadcast(new BlockMessage(block));
+      }
+
+      witnessProductBlockService.validWitnessProductTwoBlock(block);
+
+      tronNetDelegate.getActivePeer().forEach(p -> {
+        if (p.getAdvInvReceive().getIfPresent(blockId) != null) {
+          p.setBlockBothHave(blockId);
+        }
+      });
+    } catch (Exception e) {
+      logger.warn("Process adv block {} from peer {} failed. reason: {}",
+              blockId, peer.getInetAddress(), e.getMessage());
     }
   }
 

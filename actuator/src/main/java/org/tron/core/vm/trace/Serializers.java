@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.core.vm.trace;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -27,9 +10,9 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.vm.OpCode;
+import org.tron.core.vm.Op;
 
 @Slf4j(topic = "VM")
 public final class Serializers {
@@ -84,7 +67,7 @@ public final class Serializers {
     @Override
     public void serialize(Byte op, JsonGenerator jgen, SerializerProvider provider)
         throws IOException, JsonProcessingException {
-      jgen.writeString(OpCode.code(op).name());
+      jgen.writeString(Op.getNameOf(op));
     }
   }
 }

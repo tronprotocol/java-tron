@@ -7,7 +7,7 @@ import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -57,11 +57,7 @@ public class FreezeBalance2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -86,42 +82,42 @@ public class FreezeBalance2Test {
     Return ret1 = freezeBalance2(fromAddress, 9000000000000000000L, 3L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : frozenBalance must be less than accountBalance");
+        "Contract validate error : frozenBalance must be less than accountBalance");
     //Freeze failed when freeze amount less than 1Trx
     ret1 = freezeBalance2(fromAddress, 999999L, 3L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : frozenBalance must be more than 1TRX");
+        "Contract validate error : frozenBalance must be more than 1TRX");
     //Freeze failed when freeze duration isn't 3 days.
     ret1 = freezeBalance2(fromAddress, 1000000L, 2L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : frozenDuration must be less than 3 days and more than 3 days");
+        "Contract validate error : frozenDuration must be less than 3 days and more than 3 days");
     //Unfreeze balance failed when 3 days hasn't come.
     ret1 = unFreezeBalance2(fromAddress, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : It's not time to unfreeze.");
+        "Contract validate error : It's not time to unfreeze.");
     //Freeze failed when freeze amount is 0.
     ret1 = freezeBalance2(fromAddress, 0L, 3L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : frozenBalance must be positive");
+        "Contract validate error : frozenBalance must be positive");
     //Freeze failed when freeze amount is -1.
     ret1 = freezeBalance2(fromAddress, -1L, 3L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : frozenBalance must be positive");
+        "Contract validate error : frozenBalance must be positive");
     //Freeze failed when freeze duration is -1.
     ret1 = freezeBalance2(fromAddress, 1000000L, -1L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : frozenDuration must be less than 3 days and more than 3 days");
+        "Contract validate error : frozenDuration must be less than 3 days and more than 3 days");
     //Freeze failed when freeze duration is 0.
     ret1 = freezeBalance2(fromAddress, 1000000L, 0L, testKey002);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : frozenDuration must be less than 3 days and more than 3 days");
+        "Contract validate error : frozenDuration must be less than 3 days and more than 3 days");
 
     try {
       Thread.sleep(16000);
@@ -141,7 +137,7 @@ public class FreezeBalance2Test {
     logger.info("Test unfreezebalance");
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : no frozenBalance");
+        "Contract validate error : no frozenBalance(BANDWIDTH)");
   }
 
   /**

@@ -29,8 +29,8 @@ public class Reputation {
   }
 
   private int getNetLatencyScore() {
-    return (int) (nodeStatistics.discoverMessageLatency.getAvrg() == 0 ? 0
-        : min(1000 / nodeStatistics.discoverMessageLatency.getAvrg(), 20));
+    return (int) (nodeStatistics.discoverMessageLatency.getAvg() == 0 ? 0
+        : min(1000 / nodeStatistics.discoverMessageLatency.getAvg(), 20));
   }
 
   private int getHandshakeScore() {

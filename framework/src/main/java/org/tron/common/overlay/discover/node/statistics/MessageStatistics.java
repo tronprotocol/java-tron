@@ -174,44 +174,20 @@ public class MessageStatistics {
       case INVENTORY:
         InventoryMessage inventoryMessage = (InventoryMessage) msg;
         int inventorySize = inventoryMessage.getInventory().getIdsCount();
-        if (flag) {
-          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX) {
-            tronInTrxInventory.add();
-            tronInTrxInventoryElement.add(inventorySize);
-          } else {
-            tronInBlockInventory.add();
-            tronInBlockInventoryElement.add(inventorySize);
-          }
-        } else {
-          if (inventoryMessage.getInvMessageType() == MessageTypes.TRX) {
-            tronOutTrxInventory.add();
-            tronOutTrxInventoryElement.add(inventorySize);
-          } else {
-            tronOutBlockInventory.add();
-            tronOutBlockInventoryElement.add(inventorySize);
-          }
-        }
+        messageProcess(inventoryMessage.getInvMessageType(),
+                tronInTrxInventory,tronInTrxInventoryElement,tronInBlockInventory,
+                tronInBlockInventoryElement,tronOutTrxInventory,tronOutTrxInventoryElement,
+                tronOutBlockInventory,tronOutBlockInventoryElement,
+                flag, inventorySize);
         break;
       case FETCH_INV_DATA:
         FetchInvDataMessage fetchInvDataMessage = (FetchInvDataMessage) msg;
         int fetchSize = fetchInvDataMessage.getInventory().getIdsCount();
-        if (flag) {
-          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX) {
-            tronInTrxFetchInvData.add();
-            tronInTrxFetchInvDataElement.add(fetchSize);
-          } else {
-            tronInBlockFetchInvData.add();
-            tronInBlockFetchInvDataElement.add(fetchSize);
-          }
-        } else {
-          if (fetchInvDataMessage.getInvMessageType() == MessageTypes.TRX) {
-            tronOutTrxFetchInvData.add();
-            tronOutTrxFetchInvDataElement.add(fetchSize);
-          } else {
-            tronOutBlockFetchInvData.add();
-            tronOutBlockFetchInvDataElement.add(fetchSize);
-          }
-        }
+        messageProcess(fetchInvDataMessage.getInvMessageType(),
+                tronInTrxFetchInvData,tronInTrxFetchInvDataElement,tronInBlockFetchInvData,
+                tronInBlockFetchInvDataElement,tronOutTrxFetchInvData,tronOutTrxFetchInvDataElement,
+                tronOutBlockFetchInvData,tronOutBlockFetchInvDataElement,
+                flag, fetchSize);
         break;
       case TRXS:
         TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
@@ -238,6 +214,36 @@ public class MessageStatistics {
         break;
       default:
         break;
+    }
+  }
+  
+  
+  private void messageProcess(MessageTypes messageType,
+                              MessageCount inTrx,
+                              MessageCount inTrxEle,
+                              MessageCount inBlock,
+                              MessageCount inBlockEle,
+                              MessageCount outTrx,
+                              MessageCount outTrxEle,
+                              MessageCount outBlock,
+                              MessageCount outBlockEle,
+                              boolean flag, int size) {
+    if (flag) {
+      if (messageType == MessageTypes.TRX) {
+        inTrx.add();
+        inTrxEle.add(size);
+      } else {
+        inBlock.add();
+        inBlockEle.add(size);
+      }
+    } else {
+      if (messageType == MessageTypes.TRX) {
+        outTrx.add();
+        outTrxEle.add(size);
+      } else {
+        outBlock.add();
+        outBlockEle.add(size);
+      }
     }
   }
 

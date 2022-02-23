@@ -38,11 +38,7 @@ public class ContractScenario007 {
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -75,12 +71,12 @@ public class ContractScenario007 {
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String filePath = "./src/test/resources/soliditycode/contractScenario007.sol";
     String contractName = "ERC721Token";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
+    String code = Configuration.getByPath("testng.conf")
+        .getString("code.code_ContractScenario007_deployErc721CardMigration");
+    String abi = Configuration.getByPath("testng.conf")
+        .getString("abi.abi_ContractScenario007_deployErc721CardMigration");
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contract007Key, contract007Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);

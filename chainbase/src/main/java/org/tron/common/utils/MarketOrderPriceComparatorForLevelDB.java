@@ -1,8 +1,6 @@
 package org.tron.common.utils;
 
-import org.spongycastle.util.Arrays;
 import org.tron.core.capsule.utils.MarketUtils;
-import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketOrderPriceComparatorForLevelDB implements org.iq80.leveldb.DBComparator {
 

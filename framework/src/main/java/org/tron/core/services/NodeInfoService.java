@@ -131,7 +131,7 @@ public class NodeInfoService {
       PeerInfo peerInfo = new PeerInfo();
       peerInfo.setHeadBlockWeBothHave(peerConnection.getBlockBothHave().getString());
       peerInfo.setActive(peerConnection.isActive());
-      peerInfo.setAvgLatency(peerConnection.getNodeStatistics().pingMessageLatency.getAvrg());
+      peerInfo.setAvgLatency(peerConnection.getNodeStatistics().pingMessageLatency.getAvg());
       peerInfo.setBlockInPorcSize(peerConnection.getSyncBlockInProcess().size());
       peerInfo.setConnectTime(peerConnection.getStartTime());
       peerInfo.setDisconnectTimes(peerConnection.getNodeStatistics().getDisconnectTimes());
@@ -169,7 +169,7 @@ public class NodeInfoService {
   private void setConfigNodeInfo(NodeInfo nodeInfo) {
     ConfigNodeInfo configNodeInfo = new ConfigNodeInfo();
     configNodeInfo.setCodeVersion(Version.getVersion());
-    configNodeInfo.setVersionNum(Version.versionCode);
+    configNodeInfo.setVersionNum(Version.VERSION_CODE);
     configNodeInfo.setP2pVersion(String.valueOf(parameter.getNodeP2pVersion()));
     configNodeInfo.setListenPort(parameter.getNodeListenPort());
     configNodeInfo.setDiscoverEnable(parameter.isNodeDiscoveryEnable());

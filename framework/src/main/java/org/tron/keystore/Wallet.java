@@ -14,16 +14,17 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
-import org.spongycastle.crypto.generators.SCrypt;
-import org.spongycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
+import org.bouncycastle.crypto.generators.SCrypt;
+import org.bouncycastle.crypto.params.KeyParameter;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.CipherException;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">

@@ -1,27 +1,18 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.core.vm.program;
 
-
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.*;
-import org.tron.core.store.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DelegationStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
@@ -29,8 +20,6 @@ import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
-
-import java.util.Optional;
 
 public class ContractState implements Repository, ProgramListenerAware {
 
@@ -85,13 +74,18 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getAccount(addr);
   }
 
-  public BytesCapsule getDynamic(byte[] bytesKey) {
-    return repository.getDynamic(bytesKey);
+  public BytesCapsule getDynamicProperty(byte[] bytesKey) {
+    return repository.getDynamicProperty(bytesKey);
   }
 
   @Override
-  public WitnessCapsule getWitnessCapsule(byte[] address) {
-    return repository.getWitnessCapsule(address);
+  public DelegatedResourceCapsule getDelegatedResource(byte[] key) {
+    return repository.getDelegatedResource(key);
+  }
+
+  @Override
+  public WitnessCapsule getWitness(byte[] address) {
+    return repository.getWitness(address);
   }
 
   @Override
@@ -204,13 +198,8 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void putAssetIssue(Key key, Value value) {
-    repository.putAssetIssue(key, value);
-  }
-
-  @Override
-  public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
-    repository.putAssetIssueValue(tokenId, assetIssueCapsule);
+  public void putDelegatedResource(Key key, Value value) {
+    repository.putDelegatedResource(key, value);
   }
 
   @Override
@@ -254,33 +243,13 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void saveTokenIdNum(long num) {
-    this.updateDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
-            new BytesCapsule(ByteArray.fromLong(num)));
-  }
-
-  @Override
-  public long getTokenIdNum() {
-    return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("error in contract not found TOKEN_ID_NUM"));
-  }
-
-  @Override
   public DelegationStore getDelegationStore() {
     return repository.getDelegationStore();
   }
 
   @Override
-  public WitnessStore getWitnessStore() {
-    return repository.getWitnessStore();
-  }
-
-  @Override
-  public VotesCapsule getVotesCapsule(byte[] address) {
-    return repository.getVotesCapsule(address);
+  public VotesCapsule getVotes(byte[] address) {
+    return repository.getVotes(address);
   }
 
   @Override
@@ -299,18 +268,23 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public BytesCapsule getDelegationCache(Key key) {
-    return repository.getDelegationCache(key);
+  public BytesCapsule getDelegation(Key key) {
+    return repository.getDelegation(key);
   }
 
   @Override
-  public void updateDynamic(byte[] word, BytesCapsule bytesCapsule) {
-    repository.updateDynamic(word, bytesCapsule);
+  public void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule) {
+    repository.updateDynamicProperty(word, bytesCapsule);
   }
 
   @Override
-  public void updateVotesCapsule(byte[] word, VotesCapsule votesCapsule) {
-    repository.updateVotesCapsule(word, votesCapsule);
+  public void updateDelegatedResource(byte[] word, DelegatedResourceCapsule delegatedResourceCapsule) {
+    repository.updateDelegatedResource(word, delegatedResourceCapsule);
+  }
+
+  @Override
+  public void updateVotes(byte[] word, VotesCapsule votesCapsule) {
+    repository.updateVotes(word, votesCapsule);
   }
 
   @Override
@@ -329,28 +303,18 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public void updateRemark(byte[] word, long cycle) {
-    repository.updateRemark(word, cycle);
-  }
-
-  @Override
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDelegation(word, bytesCapsule);
   }
 
   @Override
-  public void updateLastWithdrawCycle(byte[] address, long cycle) {
-    repository.updateLastWithdrawCycle(address, cycle);
+  public void putDynamicProperty(Key key, Value value) {
+    repository.putDynamicProperty(key, value);
   }
 
   @Override
-  public void putDynamic(Key key, Value value) {
-    repository.putDynamic(key, value);
-  }
-
-  @Override
-  public void putVotesCapsule(Key key, Value value) {
-    repository.putVotesCapsule(key, value);
+  public void putVotes(Key key, Value value) {
+    repository.putVotes(key, value);
   }
 
   @Override
@@ -359,12 +323,28 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void addTotalEnergyWeight(long amount) {
+    repository.addTotalEnergyWeight(amount);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
+  }
+
+  @Override
+  public void saveTotalEnergyWeight(long totalEnergyWeight) {
+    repository.saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
   }
+
+  @Override
+  public long getTotalEnergyWeight() {
+    return repository.getTotalEnergyWeight();
+  }
+
 }

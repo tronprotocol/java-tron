@@ -1,8 +1,8 @@
 package org.tron.core.capsule.utils;
 
 import static java.util.Arrays.copyOfRange;
-import static org.spongycastle.util.Arrays.concatenate;
-import static org.spongycastle.util.BigIntegers.asUnsignedByteArray;
+import static org.bouncycastle.util.Arrays.concatenate;
+import static org.bouncycastle.util.BigIntegers.asUnsignedByteArray;
 import static org.tron.common.utils.ByteUtil.byteArrayToInt;
 import static org.tron.common.utils.ByteUtil.intToBytesNoLeadZeroes;
 import static org.tron.common.utils.ByteUtil.isNullOrZeroArray;
@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Value;

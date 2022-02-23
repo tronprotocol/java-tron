@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter;
 
+import com.beust.jcommander.internal.Sets;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -9,11 +10,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.ManifestPluginDescriptorFinder;
 import org.pf4j.PluginManager;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
@@ -43,15 +44,25 @@ public class EventPluginLoader {
 
   private boolean blockLogTriggerEnable = false;
 
+  private boolean blockLogTriggerSolidified = false;
+
   private boolean transactionLogTriggerEnable = false;
+
+  private boolean transactionLogTriggerSolidified = false;
+
+  private boolean transactionLogTriggerEthCompatible = false;
 
   private boolean contractEventTriggerEnable = false;
 
   private boolean contractLogTriggerEnable = false;
 
+  private boolean contractLogTriggerRedundancy = false;
+
   private boolean solidityEventTriggerEnable = false;
 
   private boolean solidityLogTriggerEnable = false;
+
+  private boolean solidityLogTriggerRedundancy = false;
 
   private boolean solidityTriggerEnable = false;
 
@@ -112,6 +123,7 @@ public class EventPluginLoader {
     if (!matched) {
       return false;
     }
+
     return filterContractAddress(trigger, filterQuery.getContractAddressList())
         && filterContractTopicList(trigger, filterQuery.getContractTopicList());
   }
@@ -144,12 +156,12 @@ public class EventPluginLoader {
       return true;
     }
 
-    Set<String> hset = null;
+    Set<String> hset = Sets.newHashSet();
     if (trigger instanceof ContractLogTrigger) {
       hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
     } else if (trigger instanceof ContractEventTrigger) {
       hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
-    } else if (trigger instanceof ContractTrigger) {
+    } else if (trigger != null) {
       hset = trigger.getLogInfo().getClonedTopics()
               .stream().map(Hex::toHexString).collect(Collectors.toSet());
     }
@@ -239,8 +251,12 @@ public class EventPluginLoader {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         blockLogTriggerEnable = true;
+        if (triggerConfig.isSolidified()) {
+          blockLogTriggerSolidified = true;
+        }
       } else {
         blockLogTriggerEnable = false;
+        blockLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -251,8 +267,16 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         transactionLogTriggerEnable = true;
+        if (triggerConfig.isEthCompatible()) {
+          transactionLogTriggerEthCompatible = true;
+        }
+        if (triggerConfig.isSolidified()) {
+          transactionLogTriggerSolidified = true;
+        }
       } else {
         transactionLogTriggerEnable = false;
+        transactionLogTriggerEthCompatible = false;
+        transactionLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -275,8 +299,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         contractLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          contractLogTriggerRedundancy = true;
+        }
       } else {
         contractLogTriggerEnable = false;
+        contractLogTriggerRedundancy = false;
       }
 
       if (!useNativeQueue) {
@@ -307,8 +335,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         solidityLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          solidityLogTriggerRedundancy = true;
+        }
       } else {
         solidityLogTriggerEnable = false;
+        solidityLogTriggerRedundancy = false;
       }
       if (!useNativeQueue) {
         setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
@@ -330,6 +362,10 @@ public class EventPluginLoader {
     return blockLogTriggerEnable;
   }
 
+  public synchronized boolean isBlockLogTriggerSolidified() {
+    return blockLogTriggerSolidified;
+  }
+
   public synchronized boolean isSolidityTriggerEnable() {
     return solidityTriggerEnable;
   }
@@ -342,8 +378,20 @@ public class EventPluginLoader {
     return solidityLogTriggerEnable;
   }
 
+  public synchronized boolean isSolidityLogTriggerRedundancy() {
+    return solidityLogTriggerRedundancy;
+  }
+
   public synchronized boolean isTransactionLogTriggerEnable() {
     return transactionLogTriggerEnable;
+  }
+
+  public synchronized boolean isTransactionLogTriggerEthCompatible() {
+    return transactionLogTriggerEthCompatible;
+  }
+
+  public synchronized boolean isTransactionLogTriggerSolidified() {
+    return transactionLogTriggerSolidified;
   }
 
   public synchronized boolean isContractEventTriggerEnable() {
@@ -352,6 +400,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isContractLogTriggerEnable() {
     return contractLogTriggerEnable;
+  }
+
+  public synchronized boolean isContractLogTriggerRedundancy() {
+    return contractLogTriggerRedundancy;
   }
 
   private void setPluginTopic(int eventType, String topic) {

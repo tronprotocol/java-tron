@@ -20,6 +20,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -92,6 +93,19 @@ public class ExchangeTransactionActuatorTest {
    */
   @Before
   public void initTest() {
+    AccountAssetCapsule ownerAddressFirstAsset =
+            new AccountAssetCapsule(ByteString.copyFrom(
+                    ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
+    AccountAssetCapsule ownerAddressSecondAsset =
+            new AccountAssetCapsule(ByteString.copyFrom(
+                    ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
+    dbManager.getAccountAssetStore().put(
+            ownerAddressFirstAsset.getAddress().toByteArray(),
+            ownerAddressFirstAsset);
+    dbManager.getAccountAssetStore().put(
+            ownerAddressSecondAsset.getAddress().toByteArray(),
+            ownerAddressSecondAsset);
+
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),

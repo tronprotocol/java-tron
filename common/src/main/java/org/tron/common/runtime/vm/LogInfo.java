@@ -22,7 +22,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 

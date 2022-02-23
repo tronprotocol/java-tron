@@ -52,11 +52,7 @@ public class Create2Test020 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -220,10 +216,10 @@ public class Create2Test020 {
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
     String txid = "";
-    String num = "\"" + code1 + "\"" + "," + 1000001;
+    String num = "\"" + code1 + "\"" + "," + 1000031;
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy1(bytes,uint8)", num, false,
+            "deploy1(bytes,uint256)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -516,7 +512,8 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
+  @Test(enabled = true, description = "TriggerContract a constant function created by create2"
+      + "can not create2 twice if salt type is string")
   public void testTriggerContract4() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -630,11 +627,12 @@ public class Create2Test020 {
     Assert
         .assertThat(ByteArray
                 .toStr(infoById2.get().getResMessage().toByteArray()),
-            containsString("Not enough energy"));
+            containsString("REVERT opcode executed"));
   }
 
 
-  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
+  @Test(enabled = true, description = "TriggerContract a constant function created by create2"
+      + "can not create2 twice if salt type is string")
   public void testTriggerContract5() {
 
     Account info;
@@ -750,11 +748,12 @@ public class Create2Test020 {
     Assert
         .assertThat(ByteArray
                 .toStr(infoById2.get().getResMessage().toByteArray()),
-            containsString("Not enough energy"));
+            containsString("REVERT opcode executed"));
   }
 
 
-  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
+  @Test(enabled = true, description = "TriggerContract a constant function created by create2"
+      + "can not create2 twice if salt type is string")
   public void testTriggerContract6() {
 
     Account info;
@@ -872,7 +871,7 @@ public class Create2Test020 {
     Assert
         .assertThat(ByteArray
                 .toStr(infoById2.get().getResMessage().toByteArray()),
-            containsString("Not enough energy"));
+            containsString("REVERT opcode executed"));
   }
 
   /**

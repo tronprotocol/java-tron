@@ -51,8 +51,9 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
       return null;
     }
 
+    ByteString id = ByteString.copyFrom(key);
     for (TransactionInfo transactionResultInfo : result.getInstance().getTransactioninfoList()) {
-      if (transactionResultInfo.getId().equals(ByteString.copyFrom(key))) {
+      if (transactionResultInfo.getId().equals(id)) {
         return new TransactionInfoCapsule(transactionResultInfo);
       }
     }

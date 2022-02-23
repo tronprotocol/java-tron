@@ -95,6 +95,8 @@ public abstract class RateLimiterServlet extends HttpServlet {
     }
 
     try {
+      resp.setContentType("application/json; charset=utf-8");
+
       if (acquireResource) {
         super.service(req, resp);
       } else {

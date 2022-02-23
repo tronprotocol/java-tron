@@ -4,23 +4,23 @@ contract EnergyOfTransferFailedTest {
     }
     // InsufficientBalance
     function testTransferTrxInsufficientBalance(uint256 i) payable public{
-        msg.sender.transfer(i);
+        payable(msg.sender).transfer(i);
     }
 
     function testSendTrxInsufficientBalance(uint256 i) payable public{
-        msg.sender.send(i);
+        payable(msg.sender).send(i);
     }
 
     function testTransferTokenInsufficientBalance(uint256 i,trcToken tokenId) payable public{
-        msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
 
     function testCallTrxInsufficientBalance(uint256 i,address payable caller) public returns (bool,bytes memory){
-        return caller.call.value(i)(abi.encodeWithSignature("test()"));
+        return caller.call{value:i}(abi.encodeWithSignature("test()"));
     }
 
     function testCreateTrxInsufficientBalance(uint256 i) payable public {
-        (new Caller).value(i)();
+        (new Caller){value:i}();
     }
 
     // NonexistentTarget
@@ -42,7 +42,7 @@ contract EnergyOfTransferFailedTest {
 
     function testCallTrxNonexistentTarget(uint256 i,address payable nonexistentTarget) payable public {
         require(address(this).balance >= i);
-        nonexistentTarget.call.value(i)(abi.encodeWithSignature("test()"));
+        nonexistentTarget.call{value:i}(abi.encodeWithSignature("test()"));
     }
 
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
@@ -52,19 +52,19 @@ contract EnergyOfTransferFailedTest {
     // target is self
     function testTransferTrxSelf(uint256 i) payable public{
         require(address(this).balance >= i);
-        address payable self = address(uint160(address(this)));
+        address payable self = payable(address(uint160(address(this))));
         self.transfer(i);
     }
 
     function testSendTrxSelf(uint256 i) payable public{
         require(address(this).balance >= i);
-        address payable self = address(uint160(address(this)));
+        address payable self = payable(address(uint160(address(this))));
         self.send(i);
     }
 
     function testTransferTokenSelf(uint256 i,trcToken tokenId) payable public{
         require(address(this).balance >= i);
-        address payable self = address(uint160(address(this)));
+        address payable self = payable(address(uint160(address(this))));
         self.transferToken(i, tokenId);
     }
 

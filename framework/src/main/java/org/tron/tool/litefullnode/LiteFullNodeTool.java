@@ -26,6 +26,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db2.core.SnapshotManager;
@@ -41,7 +42,6 @@ public class LiteFullNodeTool {
   private static final String SNAPSHOT_DIR_NAME = "snapshot";
   private static final String HISTORY_DIR_NAME = "history";
   private static final String INFO_FILE_NAME = "info.properties";
-  private static final String SPLIT_BLOCK_NUM = "split_block_num";
   private static final String BACKUP_DIR_PREFIX = ".bak_";
   private static final String CHECKPOINT_DB = "tmp";
   private static final long VM_NEED_RECENT_BLKS = 256;
@@ -242,7 +242,7 @@ public class LiteFullNodeTool {
     if (!FileUtil.createFileIfNotExists(propertyfile)) {
       throw new RuntimeException("create properties file failed...");
     }
-    if (!PropUtil.writeProperty(propertyfile, SPLIT_BLOCK_NUM,
+    if (!PropUtil.writeProperty(propertyfile, Constant.SPLIT_BLOCK_NUM,
             Long.toString(getLatestBlockHeaderNum(databaseDir)))) {
       throw new RuntimeException("write properties file failed...");
     }
@@ -376,8 +376,10 @@ public class LiteFullNodeTool {
     if (!FileUtil.isExists(historyInfo)) {
       throw new FileNotFoundException("history property file is not found.");
     }
-    long snapshotBlkNum = Long.parseLong(PropUtil.readProperty(snapshotInfo, SPLIT_BLOCK_NUM));
-    long historyBlkNum = Long.parseLong(PropUtil.readProperty(historyInfo, SPLIT_BLOCK_NUM));
+    long snapshotBlkNum = Long.parseLong(PropUtil.readProperty(snapshotInfo, Constant
+            .SPLIT_BLOCK_NUM));
+    long historyBlkNum = Long.parseLong(PropUtil.readProperty(historyInfo, Constant
+            .SPLIT_BLOCK_NUM));
     if (historyBlkNum < snapshotBlkNum) {
       logger.error("history latest block number is lower than snapshot, history: {}, snapshot: {}",
               historyBlkNum, snapshotBlkNum);

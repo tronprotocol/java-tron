@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -62,11 +62,7 @@ public class TransferAsset2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -113,27 +109,27 @@ public class TransferAsset2Test {
     ret1 = transferAsset2(toAddress, name.getBytes(), 100L, toAddress, testKey003);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Cannot transfer asset to yourself.");
+        "Contract validate error : Cannot transfer asset to yourself.");
     //Transfer Asset failed when the transfer amount is large than the asset balance you have.
     ret1 =
         transferAsset2(fromAddress, name.getBytes(), 9100000000000000000L, toAddress, testKey003);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : assetBalance is not sufficient.");
+        "Contract validate error : assetBalance is not sufficient.");
     //Transfer Asset failed when the transfer amount is 0
     ret1 = transferAsset2(fromAddress, name.getBytes(), 0L, toAddress, testKey003);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Amount must greater than 0.");
+        "Contract validate error : Amount must greater than 0.");
     //Transfer Asset failed when the transfer amount is -1
     ret1 = transferAsset2(fromAddress, name.getBytes(), -1L, toAddress, testKey003);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Amount must greater than 0.");
+        "Contract validate error : Amount must greater than 0.");
     ret1 =
         transferAsset2(fromAddress, (name + "wrong").getBytes(), 1L, toAddress, testKey003);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
-    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : No asset !");
+    Assert.assertEquals(ret1.getMessage().toStringUtf8(), "Contract validate error : No asset !");
     //Transfer success.
     ret1 = transferAsset2(fromAddress, name.getBytes(), 1L, toAddress, testKey003);
     Assert.assertEquals(ret1.getCode(), Return.response_code.SUCCESS);

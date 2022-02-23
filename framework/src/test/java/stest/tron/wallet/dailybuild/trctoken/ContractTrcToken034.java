@@ -53,11 +53,7 @@ public class ContractTrcToken034 {
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -70,32 +66,20 @@ public class ContractTrcToken034 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
+    Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L,
+        fromAddress, testKey002, blockingStubFull));
+    logger.info(
+        "dev001Address:" + Base58.encode58Check(dev001Address));
+    Assert.assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L,
+        fromAddress, testKey002, blockingStubFull));
+    logger.info(
+        "user001Address:" + Base58.encode58Check(user001Address));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
 
   @Test(enabled = true, description = "Deploy after transfertoken execute require contract")
   public void deploy01TransferTokenContract() {
-
-    Assert
-        .assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L, fromAddress,
-            testKey002, blockingStubFull));
-    logger.info(
-        "dev001Address:" + Base58.encode58Check(dev001Address));
-    Assert
-        .assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L, fromAddress,
-            testKey002, blockingStubFull));
-    logger.info(
-        "user001Address:" + Base58.encode58Check(user001Address));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    // freeze balance
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
-        0, 1, dev001Key, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
-        0, 1, user001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -115,19 +99,11 @@ public class ContractTrcToken034 {
     String abi = retMap.get("abI").toString();
     transferTokenContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 0, originEnergyLimit, "0",
-            0, null, dev001Key, dev001Address,
+            100000000L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
+            50, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    // devAddress transfer token to userAddress
-    PublicMethed
-        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
-            dev001Address,
-            dev001Key,
-            blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true, description = "Trigger after transfertoken execute require contract")
@@ -141,16 +117,12 @@ public class ContractTrcToken034 {
     Long beforeNetUsed = resourceInfo.getNetUsed();
     Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
     Long beforeAssetIssueDevAddress = PublicMethed
-        .getAssetIssueValue(dev001Address, assetAccountId,
-            blockingStubFull);
+        .getAssetIssueValue(dev001Address, assetAccountId, blockingStubFull);
     Long beforeAssetIssueUserAddress = PublicMethed
-        .getAssetIssueValue(user001Address, assetAccountId,
-            blockingStubFull);
+        .getAssetIssueValue(user001Address, assetAccountId, blockingStubFull);
 
     Long beforeAssetIssueContractAddress = PublicMethed
-        .getAssetIssueValue(transferTokenContractAddress,
-            assetAccountId,
-            blockingStubFull);
+        .getAssetIssueValue(transferTokenContractAddress, assetAccountId, blockingStubFull);
 
     logger.info("beforeBalance:" + beforeBalance);
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
@@ -160,13 +132,8 @@ public class ContractTrcToken034 {
     logger.info("beforeAssetIssueDevAddress:" + beforeAssetIssueDevAddress);
     logger.info("beforeAssetIssueUserAddress:" + beforeAssetIssueUserAddress);
 
-    // user trigger A to transfer token to B
-    ByteString assetAccountDev = PublicMethed
-        .queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
-    ByteString fakeTokenId = ByteString
-        .copyFromUtf8(Long.toString(Long.valueOf(assetAccountDev.toStringUtf8()) + 100));
     String param =
-        "\"" + Base58.encode58Check(user001Address) + "\",1,\"" + fakeTokenId
+        "\"" + Base58.encode58Check(user001Address) + "\",1,\"" + assetAccountId
             .toStringUtf8()
             + "\"";
 
@@ -176,6 +143,9 @@ public class ContractTrcToken034 {
         0, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+            .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(dev001Address,
@@ -183,17 +153,13 @@ public class ContractTrcToken034 {
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterAssetIssueDevAddress = PublicMethed
-        .getAssetIssueValue(dev001Address, assetAccountId,
-            blockingStubFull);
+        .getAssetIssueValue(dev001Address, assetAccountId, blockingStubFull);
     Long afterNetUsed = resourceInfoafter.getNetUsed();
     Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
     Long afterAssetIssueContractAddress = PublicMethed
-        .getAssetIssueValue(transferTokenContractAddress,
-            assetAccountId,
-            blockingStubFull);
+        .getAssetIssueValue(transferTokenContractAddress, assetAccountId, blockingStubFull);
     Long afterAssetIssueUserAddress = PublicMethed
-        .getAssetIssueValue(user001Address, assetAccountId,
-            blockingStubFull);
+        .getAssetIssueValue(user001Address, assetAccountId, blockingStubFull);
 
     logger.info("afterBalance:" + afterBalance);
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
@@ -203,18 +169,10 @@ public class ContractTrcToken034 {
     logger.info("afterAssetIssueDevAddress:" + afterAssetIssueContractAddress);
     logger.info("afterAssetIssueUserAddress:" + afterAssetIssueUserAddress);
 
-    Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertEquals(beforeBalance, afterBalance);
     Assert.assertEquals(beforeAssetIssueDevAddress, afterAssetIssueDevAddress);
     Assert.assertEquals(beforeAssetIssueUserAddress, afterAssetIssueUserAddress);
     Assert.assertEquals(beforeAssetIssueContractAddress, afterAssetIssueContractAddress);
 
-    PublicMethed.unFreezeBalance(dev001Address, dev001Key, 1,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(user001Address, user001Key, 1,
-        user001Address, blockingStubFull);
   }
 
   /**
@@ -224,8 +182,8 @@ public class ContractTrcToken034 {
   public void shutdown() throws InterruptedException {
     PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
     PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(dev001Address, dev001Key, 1, dev001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(user001Address, user001Key, 1, user001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

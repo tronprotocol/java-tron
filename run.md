@@ -6,12 +6,12 @@ https://github.com/tronprotocol/Documentation/blob/master/TRX/Solidity_and_Full_
 
 ## Running a local node and connecting to the public testnet 
 
-* Use the [Testnet Config](https://github.com/tronprotocol/TronDeployment/blob/master/test_net_config.conf) or use the [Tron Deployment Scripts](https://github.com/tronprotocol/TronDeployment) 
+Use the [Testnet Config](https://github.com/tronprotocol/TronDeployment/blob/master/test_net_config.conf) or use the [Tron Deployment Scripts](https://github.com/tronprotocol/TronDeployment).
 
 
 ### Running a Super Representative Node for mainnet
 
-* Use the executable JAR(Recommended way)
+**Use the executable JAR(Recommended way):**
 
 ```bash
 java -jar FullNode.jar -p your private key --witness -c your config.conf(Example：/data/java-tron/config.conf)

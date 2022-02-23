@@ -75,6 +75,20 @@ public class TransactionUtil {
     long fee =
         programResult.getRet().getFee() + traceReceipt.getEnergyFee()
             + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
+
+    boolean supportTransactionFeePool = trace.getTransactionContext().getStoreFactory()
+        .getChainBaseManager().getDynamicPropertiesStore().supportTransactionFeePool();
+    if (supportTransactionFeePool) {
+      long packingFee = 0L;
+      if (trace.isNetFeeForBandwidth()) {
+        packingFee += traceReceipt.getNetFee();
+      }
+      if (!traceReceipt.getResult().equals(Transaction.Result.contractResult.OUT_OF_TIME)) {
+        packingFee += traceReceipt.getEnergyFee();
+      }
+      builder.setPackingFee(packingFee);
+    }
+
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
     ByteString ContractAddress = ByteString.copyFrom(programResult.getContractAddress());
 
@@ -108,39 +122,42 @@ public class TransactionUtil {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (CommonParameter.getInstance().isSaveInternalTx() && null != programResult
-        .getInternalTransactions()) {
-      for (InternalTransaction internalTransaction : programResult
-          .getInternalTransactions()) {
-        Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction
-            .newBuilder();
-        // set hash
-        internalTrxBuilder.setHash(ByteString.copyFrom(internalTransaction.getHash()));
-        // set caller
-        internalTrxBuilder.setCallerAddress(ByteString.copyFrom(internalTransaction.getSender()));
-        // set TransferTo
-        internalTrxBuilder
-            .setTransferToAddress(ByteString.copyFrom(internalTransaction.getTransferToAddress()));
-        //TODO: "for loop" below in future for multiple token case, we only have one for now.
-        Protocol.InternalTransaction.CallValueInfo.Builder callValueInfoBuilder =
-            Protocol.InternalTransaction.CallValueInfo.newBuilder();
-        // trx will not be set token name
-        callValueInfoBuilder.setCallValue(internalTransaction.getValue());
-        // Just one transferBuilder for now.
-        internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
-        internalTransaction.getTokenInfo().forEach((tokenId, amount) -> {
-          internalTrxBuilder.addCallValueInfo(
-              Protocol.InternalTransaction.CallValueInfo.newBuilder().setTokenId(tokenId)
-                  .setCallValue(amount));
-        });
-        // Token for loop end here
-        internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));
-        internalTrxBuilder.setRejected(internalTransaction.isRejected());
-        builder.addInternalTransactions(internalTrxBuilder);
-      }
+    if (CommonParameter.getInstance().isSaveInternalTx()) {
+      programResult.getInternalTransactions().forEach(it ->
+          builder.addInternalTransactions(buildInternalTransaction(it)));
     }
 
     return new TransactionInfoCapsule(builder.build());
+  }
+
+  public static Protocol.InternalTransaction buildInternalTransaction(InternalTransaction it) {
+    Protocol.InternalTransaction.Builder itBuilder = Protocol.InternalTransaction
+        .newBuilder();
+    // set hash
+    itBuilder.setHash(ByteString.copyFrom(it.getHash()));
+    // set caller
+    itBuilder.setCallerAddress(ByteString.copyFrom(it.getSender()));
+    // set TransferTo
+    itBuilder.setTransferToAddress(ByteString.copyFrom(it.getTransferToAddress()));
+    //TODO: "for loop" below in future for multiple token case, we only have one for now.
+    Protocol.InternalTransaction.CallValueInfo.Builder callValueInfoBuilder =
+        Protocol.InternalTransaction.CallValueInfo.newBuilder();
+    // trx will not be set token name
+    callValueInfoBuilder.setCallValue(it.getValue());
+    // Just one transferBuilder for now.
+    itBuilder.addCallValueInfo(callValueInfoBuilder);
+    it.getTokenInfo().forEach((tokenId, amount) ->
+      itBuilder.addCallValueInfo(
+          Protocol.InternalTransaction.CallValueInfo.newBuilder()
+              .setTokenId(tokenId)
+              .setCallValue(amount)
+      )
+    );
+    // Token for loop end here
+    itBuilder.setNote(ByteString.copyFrom(it.getNote().getBytes()));
+    itBuilder.setRejected(it.isRejected());
+    itBuilder.setExtra(it.getExtra());
+    return itBuilder.build();
   }
 
   public static boolean isNumber(byte[] id) {

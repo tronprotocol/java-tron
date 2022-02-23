@@ -263,6 +263,7 @@ public class SyncService {
     boolean flag = true;
     BlockId blockId = block.getBlockId();
     try {
+      tronNetDelegate.validSignature(block);
       tronNetDelegate.processBlock(block, true);
       pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (Exception e) {

@@ -17,6 +17,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -93,6 +94,19 @@ public class ParticipateAssetIssueActuatorTest {
    */
   @Before
   public void createCapsule() {
+    AccountAssetCapsule ownerAddressFirstAsset =
+            new AccountAssetCapsule(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    AccountAssetCapsule ownerAddressSecondAsset =
+            new AccountAssetCapsule(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)));
+    AccountAssetCapsule ownerAddressSecondAsset2 =
+            new AccountAssetCapsule(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS_2)));
+    dbManager.getAccountAssetStore().put(ownerAddressFirstAsset.getAddress().toByteArray(),
+            ownerAddressFirstAsset);
+    dbManager.getAccountAssetStore().put(ownerAddressSecondAsset.getAddress().toByteArray(),
+            ownerAddressSecondAsset);
+    dbManager.getAccountAssetStore().put(ownerAddressSecondAsset2.getAddress().toByteArray(),
+            ownerAddressSecondAsset2);
+
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8("owner"),

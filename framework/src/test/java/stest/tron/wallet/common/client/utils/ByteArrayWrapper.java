@@ -19,7 +19,7 @@ package stest.tron.wallet.common.client.utils;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.FastByteComparisons;
 
 public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializable {

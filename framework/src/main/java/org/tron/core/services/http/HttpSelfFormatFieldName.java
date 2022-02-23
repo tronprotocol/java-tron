@@ -183,6 +183,9 @@ public class HttpSelfFormatFieldName {
     AddressFieldNameMap.put("protocol.DelegatedResourceAccountIndex.fromAccounts", 1);
     AddressFieldNameMap.put("protocol.DelegatedResourceAccountIndex.toAccounts", 1);
 
+    AddressFieldNameMap.put("protocol.AccountIdentifier.address", 1);
+    AddressFieldNameMap.put("protocol.TransactionBalanceTrace.Operation.address", 1);
+
     //***** api.proto *****
     //Return
     NameFieldNameMap.put("protocol.Return.message", 1);

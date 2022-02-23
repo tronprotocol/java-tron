@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -51,11 +51,7 @@ public class ShiftCommand006 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -86,6 +82,7 @@ public class ShiftCommand006 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);

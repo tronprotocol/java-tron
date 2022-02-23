@@ -18,10 +18,10 @@ contract Factory {
 contract TestConstract {
     uint public i=1;
     function testTransfer(uint256 i) payable public{
-          msg.sender.transfer(i);
+          payable(msg.sender).transfer(i);
     }
     function testTransferToken(uint256 i,trcToken tokenId) payable public{
-          msg.sender.transferToken(i, tokenId);
+        payable(msg.sender).transferToken(i, tokenId);
     }
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);

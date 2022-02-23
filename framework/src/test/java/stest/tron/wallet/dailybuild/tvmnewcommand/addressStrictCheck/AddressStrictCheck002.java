@@ -108,7 +108,7 @@ public class AddressStrictCheck002 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
+    Assert.assertEquals(1, infoById.get().getResultValue());
     logger.info(infoById.toString());
 
     transactionExtention = PublicMethed
@@ -116,6 +116,8 @@ public class AddressStrictCheck002 {
             "checkAddress2(address)", num, true,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
   }
 
 

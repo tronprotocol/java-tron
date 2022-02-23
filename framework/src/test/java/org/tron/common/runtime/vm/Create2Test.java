@@ -6,8 +6,8 @@ import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
@@ -143,7 +143,12 @@ public class Create2Test extends VMTestBase {
         contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    for (int i = 0; i < 3; i++) {
+      runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+      if (runtime.getRuntimeError() == null) {
+        break;
+      }
+    }
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: deploy(bytes,uint)

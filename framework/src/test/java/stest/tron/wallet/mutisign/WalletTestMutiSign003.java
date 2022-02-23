@@ -58,11 +58,7 @@ public class WalletTestMutiSign003 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -162,7 +158,7 @@ public class WalletTestMutiSign003 {
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
         ownerAddress, 1000000L, 0, 0, ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(
-        ownerAddress, 1000000L, 0, 1, ownerKey, blockingStubFull, ownerKeyString));
+        ownerAddress, 1000000L, 0, 2, ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(
         ownerAddress, 1000000L, 0, 0, ByteString.copyFrom(newAddress),
         ownerKey, blockingStubFull, ownerKeyString));

@@ -20,6 +20,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.TronNetDelegate;
@@ -42,9 +43,13 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private HelloMessage helloMessage;
+  private HelloMessage helloMessageReceive;
 
-  private int invCacheSize = 100_000;
+  @Setter
+  @Getter
+  private HelloMessage helloMessageSend;
+
+  private int invCacheSize = 20_000;
 
   @Setter
   @Getter
@@ -113,12 +118,11 @@ public class PeerConnection extends Channel {
   }
 
   public void onConnect() {
-    long headBlockNum = tronNetDelegate.getHeadBlockId().getNum();
-    long peerHeadBlockNum = getHelloMessage().getHeadBlockId().getNum();
+    long headBlockNum = helloMessageSend.getHeadBlockId().getNum();
+    long peerHeadBlockNum = helloMessageReceive.getHeadBlockId().getNum();
 
     if (peerHeadBlockNum > headBlockNum) {
       needSyncFromUs = false;
-      setTronState(TronState.SYNCING);
       syncService.startSync(this);
     } else {
       needSyncFromPeer = false;
@@ -162,11 +166,11 @@ public class PeerConnection extends Channel {
 
         getNodeStatistics().pingMessageLatency.getCount(),
         getNodeStatistics().pingMessageLatency.getMax(),
-        getNodeStatistics().pingMessageLatency.getAvrg(),
+        getNodeStatistics().pingMessageLatency.getAvg(),
         getNodeStatistics().pingMessageLatency.getMin(),
         getNodeStatistics().pingMessageLatency.getLast(),
 
-        (now - getStartTime()) / 1000,
+        (now - getStartTime()) / Constant.ONE_THOUSAND,
         fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
@@ -174,7 +178,8 @@ public class PeerConnection extends Channel {
         !syncBlockToFetch.isEmpty() ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
-        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / 1000,
+        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue())
+                / Constant.ONE_THOUSAND,
         syncBlockInProcess.size())
         + nodeStatistics.toString() + "\n";
   }

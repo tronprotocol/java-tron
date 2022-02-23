@@ -31,7 +31,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import org.spongycastle.crypto.digests.SM3Digest;
+import org.bouncycastle.crypto.digests.SM3Digest;
 
 
 /**

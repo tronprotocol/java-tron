@@ -19,6 +19,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
@@ -106,6 +107,17 @@ public class MarketSellAssetActuatorTest {
   public void initTest() {
     byte[] ownerAddressFirstBytes = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     byte[] ownerAddressSecondBytes = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+
+    AccountAssetCapsule ownerAddressFirstAsset =
+            new AccountAssetCapsule(ByteString.copyFrom(
+                    ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
+    AccountAssetCapsule ownerAddressSecondAsset =
+            new AccountAssetCapsule(
+                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
+    dbManager.getAccountAssetStore().put(ownerAddressFirstAsset.getAddress().toByteArray(),
+            ownerAddressFirstAsset);
+    dbManager.getAccountAssetStore().put(ownerAddressSecondAsset.getAddress().toByteArray(),
+            ownerAddressSecondAsset);
 
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(

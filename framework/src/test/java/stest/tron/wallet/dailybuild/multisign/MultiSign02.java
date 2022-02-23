@@ -70,11 +70,7 @@ public class MultiSign02 {
       .getString("defaultParameter.assetUrl");
 
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -417,10 +413,8 @@ public class MultiSign02 {
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     ownerPermissionKeys.clear();
     ownerPermissionKeys.add(tmpKey02);
-
     Assert.assertEquals(2,
         PublicMethedForMutiSign.getActivePermissionKeyCount(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getActivePermissionList()));

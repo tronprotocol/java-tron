@@ -7,7 +7,7 @@ import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -155,7 +155,5 @@ public class AssetUpdateHelperTest {
       Assert.assertEquals(
           30000000L, accountCapsule.getLatestAssetOperationTimeMapV2().get("1000001").longValue());
     }
-
-    removeDb();
   }
 }

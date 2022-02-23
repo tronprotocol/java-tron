@@ -70,11 +70,7 @@ public class MultiSign08 {
       .getString("defaultParameter.assetUrl");
 
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -103,7 +99,7 @@ public class MultiSign08 {
 
     ownerPermissionKeys.add(ownerKey);
 
-    // threshold = Integer.Max_Value
+    // threshold = Integer.Min_Value
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
@@ -347,7 +343,7 @@ public class MultiSign08 {
     Assert.assertEquals("contract validate error : long overflow",
         response.getMessage().toStringUtf8());
 
-    // theshold = 1.1 < sum(weight)
+    // theshold = 1.1 > sum(weight)
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1},"
@@ -474,57 +470,6 @@ public class MultiSign08 {
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : sum of all key's weight should not"
         + " be less than threshold in permission Active", response.getMessage().toStringUtf8());
-
-    // threshold = Integer.MAX_VALUE  > sum(weight)
-    accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
-            + "\",\"weight\":2147483647}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\","
-            + "\"threshold\":2147483647,"
-            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
-            + "\",\"weight\":1}," + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey01)
-            + "\",\"weight\":1}" + "]}]}";
-
-    response = PublicMethed
-        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
-            blockingStubFull);
-
-    Assert.assertFalse(response.getResult());
-    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : sum of all key's weight "
-            + "should not be less than threshold in permission Active",
-        response.getMessage().toStringUtf8());
-
-    // theshold = Long.MAX_VALUE + 1 > sum(weight)
-    accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\","
-            + "\"threshold\":9223372036854775808,"
-            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-            + "\",\"weight\":9223372036854775806}," + "{\"address\":\"" + PublicMethed
-            .getAddressString(ownerKey) + "\",\"weight\":1}" + "]}]}";
-
-    boolean ret = false;
-    try {
-      PublicMethed.accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
-          blockingStubFull);
-    } catch (NumberFormatException e) {
-      logger.info("NumberFormatException !");
-      ret = true;
-    }
-    Assert.assertTrue(ret);
-
-    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
-    logger.info("balanceAfter: " + balanceAfter);
-
-    Assert.assertEquals(balanceBefore, balanceAfter);
 
   }
 

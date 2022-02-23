@@ -61,6 +61,4 @@ public class NodeMetricManager {
     nodeInfo.setBackupStatus(node.getBackupStatus());
     return nodeInfo.build();
   }
-
-
 }

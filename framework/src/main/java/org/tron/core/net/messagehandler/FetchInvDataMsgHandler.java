@@ -146,8 +146,6 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       int maxCount = advService.getTrxCount().getCount(60);
       if (fetchCount > maxCount) {
         logger.error("maxCount: " + maxCount + ", fetchCount: " + fetchCount);
-        //        throw new P2pException(TypeEnum.BAD_MESSAGE,
-        //            "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
       }
     } else {
       boolean isAdv = true;
@@ -165,9 +163,6 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         if (outBlockCountIn1min > producedBlockIn2min) {
           logger.error("producedBlockIn2min: " + producedBlockIn2min + ", outBlockCountIn1min: "
               + outBlockCountIn1min);
-          //throw new P2pException(TypeEnum.BAD_MESSAGE, "producedBlockIn2min: "
-          // + producedBlockIn2min
-          //  + ", outBlockCountIn1min: " + outBlockCountIn1min);
         }
       } else {
         if (!peer.isNeedSyncFromUs()) {

@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -112,7 +114,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] does not exist");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
     if (accountCapsule.getFrozenSupplyCount() <= 0) {

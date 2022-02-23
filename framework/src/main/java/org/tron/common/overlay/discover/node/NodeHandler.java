@@ -35,7 +35,7 @@ import org.tron.core.config.args.Args;
 @Slf4j(topic = "discover")
 public class NodeHandler {
 
-  private static long pingTimeout = 15000;
+  private static long pingTimeout = Args.getInstance().getNodeDiscoveryPingTimeout();
   private Node sourceNode;
   private Node node;
   private State state;

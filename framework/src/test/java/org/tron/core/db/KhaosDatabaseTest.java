@@ -176,4 +176,14 @@ public class KhaosDatabaseTest {
       System.out.println(e.getMessage());
     }
   }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testIsNotEmpty() {
+    BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+            ByteArray.fromHexString(
+                "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))))).build());
+    khaosDatabase.start(blockCapsule);
+    khaosDatabase.isNotEmpty();
+  }
 }

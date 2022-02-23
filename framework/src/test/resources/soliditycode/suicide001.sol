@@ -3,12 +3,12 @@ contract factory {
     }
 
     function create1() payable public returns (address){
-        Caller add = (new Caller).value(0)();
+        Caller add = (new Caller){value:0}();
         return address(add);
     }
 
     function kill() payable public{
-             selfdestruct(msg.sender);
+             selfdestruct(payable(msg.sender));
      }
 
     function create2(bytes memory code, uint256 salt) public returns(address){

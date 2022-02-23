@@ -5,11 +5,13 @@ import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.store.StorageRowStore;
+import org.tron.core.vm.config.VMConfig;
 
 public class Storage {
 
@@ -22,6 +24,8 @@ public class Storage {
   private StorageRowStore store;
   @Getter
   private byte[] address;
+  @Setter
+  private int contractVersion;
 
   public Storage(byte[] address, StorageRowStore store) {
     addrHash = addrHash(address);
@@ -33,13 +37,17 @@ public class Storage {
     this.addrHash = storage.addrHash.clone();
     this.address = storage.getAddress().clone();
     this.store = storage.store;
+    this.contractVersion = storage.contractVersion;
     storage.getRowCache().forEach((DataWord rowKey, StorageRowCapsule row) -> {
       StorageRowCapsule newRow = new StorageRowCapsule(row);
       this.rowCache.put(rowKey.clone(), newRow);
     });
   }
 
-  private static byte[] compose(byte[] key, byte[] addrHash) {
+  private byte[] compose(byte[] key, byte[] addrHash) {
+    if (VMConfig.allowTvmCompatibleEvm() && contractVersion == 1) {
+      key = Hash.sha3(key);
+    }
     byte[] result = new byte[key.length];
     arraycopy(addrHash, 0, result, 0, PREFIX_BYTES);
     arraycopy(key, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);

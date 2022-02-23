@@ -54,7 +54,7 @@ public class NodeEntry {
     byte[] hash = new byte[Math.min(h1.length, h2.length)];
 
     for (int i = 0; i < hash.length; i++) {
-      hash[i] = (byte) (((int) h1[i]) ^ ((int) h2[i]));
+      hash[i] = (byte) (h1[i] ^ h2[i]);
     }
 
     int d = KademliaOptions.BINS;

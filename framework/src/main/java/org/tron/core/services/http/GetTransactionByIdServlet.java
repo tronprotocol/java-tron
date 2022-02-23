@@ -33,13 +33,10 @@ public class GetTransactionByIdServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
-      fillResponse(build.getValue(), visible, response);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(build.getValue(), params.isVisible(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }

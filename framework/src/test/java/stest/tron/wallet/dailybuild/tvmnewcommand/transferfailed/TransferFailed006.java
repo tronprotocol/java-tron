@@ -49,11 +49,7 @@ public class TransferFailed006 {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -82,12 +78,12 @@ public class TransferFailed006 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    String Txid1 = PublicMethed
+    String txid1 = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
             null, accountExcKey, accountExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(Txid1, blockingStubFull);
+        .getTransactionInfoById(txid1, blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
     Assert.assertEquals(0, infoById.get().getResultValue());
 
@@ -97,12 +93,12 @@ public class TransferFailed006 {
     code = retMap.get("byteCode").toString();
     abi = retMap.get("abI").toString();
 
-    Txid1 = PublicMethed
+    txid1 = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
             null, accountExcKey, accountExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
-        .getTransactionInfoById(Txid1, blockingStubFull);
+        .getTransactionInfoById(txid1, blockingStubFull);
     contractAddress1 = infoById.get().getContractAddress().toByteArray();
     logger.info("caller address : " + Base58.encode58Check(contractAddress1));
     Assert.assertEquals(0, infoById.get().getResultValue());

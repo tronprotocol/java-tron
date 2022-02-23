@@ -7,7 +7,7 @@ import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -67,11 +67,7 @@ public class CreateTransaction2Test {
     return String.valueOf(buf, 32, 130);
   }
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -123,27 +119,27 @@ public class CreateTransaction2Test {
             blockingStubFull);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Validate TransferContract error, balance is not sufficient.");
+        "Contract validate error : Validate TransferContract error, balance is not sufficient.");
     //Send coin failed due to the amount is 0.
     ret1 = PublicMethed
         .sendcoin2(receiptAccountAddress, 0L, sendAccountAddress, sendAccountKey, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Amount must greater than 0.");
+        "Contract validate error : Amount must be greater than 0.");
     //Send coin failed due to the amount is -1Trx.
     ret1 = PublicMethed
         .sendcoin2(receiptAccountAddress, -1000000L, sendAccountAddress, sendAccountKey,
             blockingStubFull);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Amount must greater than 0.");
+        "Contract validate error : Amount must be greater than 0..");
 
     //Send coin to yourself
     ret1 = PublicMethed.sendcoin2(sendAccountAddress, 1000000L, sendAccountAddress, sendAccountKey,
         blockingStubFull);
     Assert.assertEquals(ret1.getCode(), Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
-        "contract validate error : Cannot transfer trx to yourself.");
+        "Contract validate error : Cannot transfer trx to yourself.");
     //transfer all balance
     ret1 = PublicMethed.sendcoin2(receiptAccountAddress, 40119900000L,
         sendAccountAddress, sendAccountKey, blockingStubFull);

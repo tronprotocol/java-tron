@@ -578,4 +578,117 @@ public class VoteWitnessActuatorTest {
     actuatorTest.nullDBManger();
   }
 
+
+  @Test
+  public void voteWitnessWithoutEnoughOldTronPowerAfterNewResourceModel() {
+
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
+    AccountCapsule owner =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setFrozenForEnergy(1L,0L);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS),owner);
+
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 100L));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
+  }
+
+  @Test
+  public void voteWitnessWithOldTronPowerAfterNewResourceModel() {
+
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
+    AccountCapsule owner =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setFrozenForEnergy(2000000L,0L);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS),owner);
+
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(2000000L, owner.getInstance().getOldTronPower());
+    } catch (ContractValidateException e) {
+      e.printStackTrace();
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
+  }
+
+
+  @Test
+  public void voteWitnessWithOldAndNewTronPowerAfterNewResourceModel() {
+
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
+    AccountCapsule owner =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setFrozenForEnergy(2000000L,0L);
+    owner.setFrozenForTronPower(1000000L,0L);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS),owner);
+
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals(3000000L, owner.getAllTronPower());
+      Assert.assertEquals(2000000L, owner.getInstance().getOldTronPower());
+      Assert.assertEquals(1000000L, owner.getInstance().getTronPower().getFrozenBalance());
+    } catch (ContractValidateException e) {
+      e.printStackTrace();
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
+  }
+
+
+  @Test
+  public void voteWitnessWithoutEnoughOldAndNewTronPowerAfterNewResourceModel() {
+
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1L);
+
+    AccountCapsule owner =
+        dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    owner.setFrozenForEnergy(2000000L,0L);
+    owner.setFrozenForTronPower(1000000L,0L);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS),owner);
+
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 4000000L));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+    }
+    dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
+  }
+
 }

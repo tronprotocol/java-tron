@@ -81,6 +81,11 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
 
   public abstract boolean has(byte[] key);
 
+  @Override
+  public  boolean isNotEmpty() {
+    throw new UnsupportedOperationException();
+  }
+
   public String getName() {
     return this.getClass().getSimpleName();
   }

@@ -51,11 +51,7 @@ public class EventQuery003 {
   byte[] event001Address = ecKey1.getAddress();
   String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -124,7 +120,10 @@ public class EventQuery003 {
             "triggerUintEvent()", "#", false,
             0, maxFeeLimit, event001Address, event001Key, blockingStubFull);
         logger.info(txid);
-        sendTransaction = false;
+        if (PublicMethed.getTransactionInfoById(txid,blockingStubFull).get()
+            .getResultValue() == 0) {
+          sendTransaction = false;
+        }
       }
 
       if (message != null) {
@@ -166,7 +165,7 @@ public class EventQuery003 {
     req.setReceiveTimeOut(10000);
     String transactionMessage = "";
     Boolean sendTransaction = true;
-    Integer retryTimes = 20;
+    Integer retryTimes = 40;
 
     while (retryTimes-- > 0) {
       byte[] message = req.recv();
@@ -175,7 +174,10 @@ public class EventQuery003 {
             "triggerUintEvent()", "#", false,
             0, maxFeeLimit, event001Address, event001Key, blockingStubFull);
         logger.info(txid);
-        sendTransaction = false;
+        if (PublicMethed.getTransactionInfoById(txid,blockingStubFull).get()
+            .getResultValue() == 0) {
+          sendTransaction = false;
+        }
       }
 
       if (message != null) {

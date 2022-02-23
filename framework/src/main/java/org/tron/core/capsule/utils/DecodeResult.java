@@ -1,7 +1,7 @@
 package org.tron.core.capsule.utils;
 
 import java.io.Serializable;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 
 @SuppressWarnings("serial")
 public class DecodeResult implements Serializable {

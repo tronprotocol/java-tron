@@ -3,10 +3,10 @@ package org.tron.common.overlay.discover.node;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.net.udp.message.UdpMessageTypeEnum;
 import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
@@ -64,7 +64,7 @@ public class NodeStatisticsTest {
     this.nodeStatistics.resetTcpFlow();
     this.nodeStatistics.discoverMessageLatency.add(10);
     this.nodeStatistics.discoverMessageLatency.add(20);
-    long avg = this.nodeStatistics.discoverMessageLatency.getAvrg();
+    long avg = this.nodeStatistics.discoverMessageLatency.getAvg();
     Assert.assertEquals(15, avg);
 
   }

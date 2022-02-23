@@ -8,6 +8,8 @@ import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -44,6 +46,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -66,6 +69,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
@@ -129,7 +133,7 @@ public class ManagerTest extends BlockGenerate {
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
       NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
-      TooBigTransactionResultException, ZksnarkException {
+      TooBigTransactionResultException, ZksnarkException, EventBloomException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -223,23 +227,6 @@ public class ManagerTest extends BlockGenerate {
         chainManager.getExchangeV2Store()) instanceof ExchangeV2Store);
 
   }
-
-
-  @Test
-  public void pushBlockInvalidSignature() {
-    // invalid witness address cause invalid signature
-    String invalidWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
-    blockCapsule2.setWitness(invalidWitness);
-    try {
-      dbManager.pushBlock(blockCapsule2);
-      Assert.assertTrue(false);
-    } catch (BadBlockException e) {
-      Assert.assertEquals("The signature is not validated", e.getMessage());
-    } catch (Exception e) {
-      Assert.assertFalse(e instanceof Exception);
-    }
-  }
-
 
   @Test
   public void getHeadTest() {
@@ -448,7 +435,7 @@ public class ManagerTest extends BlockGenerate {
       BadNumberBlockException, DupTransactionException, ContractExeException,
       ValidateSignatureException, TooBigTransactionResultException, TransactionExpirationException,
       TaposException, ReceiptCheckErrException, TooBigTransactionException,
-      AccountResourceInsufficientException {
+      AccountResourceInsufficientException, EventBloomException {
 
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
@@ -456,12 +443,14 @@ public class ManagerTest extends BlockGenerate {
     byte[] address = ecKey.getAddress();
 
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     ByteString latestHeadHash =
@@ -554,7 +543,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, EventBloomException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
@@ -563,6 +552,7 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
@@ -570,6 +560,7 @@ public class ManagerTest extends BlockGenerate {
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
@@ -623,6 +614,46 @@ public class ManagerTest extends BlockGenerate {
   }
 
   @Test
+  public void getVerifyTxsTest() {
+    TransferContract c1 = TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+            .setAmount(1).build();
+
+    TransferContract c2 = TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+            .setAmount(2).build();
+
+    AccountContract.AccountPermissionUpdateContract c3 =
+            AccountContract.AccountPermissionUpdateContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom("f1".getBytes())).build();
+
+    TransactionCapsule t1 = new TransactionCapsule(c1, ContractType.TransferContract);
+    TransactionCapsule t2 = new TransactionCapsule(c2, ContractType.TransferContract);
+    TransactionCapsule t3 =
+            new TransactionCapsule(c3, ContractType.AccountPermissionUpdateContract);
+
+    List<Transaction> list = new ArrayList<>();
+
+    list.add(t1.getInstance());
+    BlockCapsule capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    List<TransactionCapsule> txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
+
+    dbManager.getPendingTransactions().add(t1);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 0);
+
+    list.add(t2.getInstance());
+    capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
+
+    dbManager.getPendingTransactions().add(t3);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 2);
+  }
+
+  @Test
   public void doNotSwitch()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
@@ -631,7 +662,7 @@ public class ManagerTest extends BlockGenerate {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, EventBloomException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -639,13 +670,16 @@ public class ManagerTest extends BlockGenerate {
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
@@ -734,7 +768,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, EventBloomException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -743,12 +777,14 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+    addressToProvateKeys.put(ByteString.copyFrom(address), key);
 
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =

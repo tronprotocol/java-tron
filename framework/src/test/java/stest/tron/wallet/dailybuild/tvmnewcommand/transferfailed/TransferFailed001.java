@@ -56,11 +56,7 @@ public class TransferFailed001 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -89,6 +85,7 @@ public class TransferFailed001 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
     String contractName = "EnergyOfTransferFailedTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -324,7 +321,7 @@ public class TransferFailed001 {
     Assert.assertEquals(2, nonexistentAddressAccount.getBalance());
     Assert.assertEquals(0, infoById.get().getResultValue());
 
-    Assert.assertEquals(energyUsageTotal2 + EnergyCost.getInstance().getNEW_ACCT_CALL(),
+    Assert.assertEquals(energyUsageTotal2 + EnergyCost.getNewAcctCall(),
         energyUsageTotal);
 
   }
@@ -898,7 +895,7 @@ public class TransferFailed001 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    Assert.assertTrue(energyUsageTotal > EnergyCost.getInstance().getNEW_ACCT_CALL());
+    Assert.assertTrue(energyUsageTotal > EnergyCost.getNewAcctCall());
   }
 
   /**
@@ -907,7 +904,7 @@ public class TransferFailed001 {
   @AfterClass
   public void shutdown() throws InterruptedException {
     PublicMethed
-        .freedResource(contractAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

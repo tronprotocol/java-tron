@@ -26,7 +26,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -123,6 +123,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
         chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
         chainBaseManager.getHeadBlockId());
     fastForward.fillHelloMessage(message, channel);
+    ((PeerConnection) channel).setHelloMessageSend(message);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC,
@@ -174,7 +175,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    ((PeerConnection) channel).setHelloMessage(msg);
+    ((PeerConnection) channel).setHelloMessageReceive(msg);
 
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
 

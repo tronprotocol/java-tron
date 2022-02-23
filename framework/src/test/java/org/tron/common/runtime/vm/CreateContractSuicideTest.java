@@ -2,8 +2,8 @@ package org.tron.common.runtime.vm;
 
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;

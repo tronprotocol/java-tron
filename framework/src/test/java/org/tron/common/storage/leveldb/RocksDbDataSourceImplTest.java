@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
@@ -49,16 +50,23 @@ public class RocksDbDataSourceImplTest {
    */
   @AfterClass
   public static void destroy() {
+    String directory = Args.getInstance().getStorage().getDbDirectory();
     Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
+
+    if (FileUtil.deleteDir(new File(dbPath  + directory))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
-  @Before
-  public void initDb() {
+  @BeforeClass
+  public static void initDb() {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-dbbackup.conf");
     dataSourceTest = new RocksDbDataSourceImpl(dbPath + File.separator, "test_rocksDb");
   }

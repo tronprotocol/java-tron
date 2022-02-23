@@ -11,6 +11,6 @@ public class NeedBeanCondition implements Condition {
   public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
     return (Args.getInstance().getStorage().getDbVersion() == 2 && "ROCKSDB"
         .equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) && Args.getInstance()
-        .getDbBackupConfig().isEnable();
+        .getDbBackupConfig().isEnable() && !Args.getInstance().isWitness();
   }
 }

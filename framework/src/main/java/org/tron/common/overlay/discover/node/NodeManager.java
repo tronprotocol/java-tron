@@ -288,6 +288,11 @@ public class NodeManager implements EventHandler {
     return homeNode;
   }
 
+  // just for test
+  public void clearNodeHandlerMap() {
+    nodeHandlerMap.clear();
+  }
+
   public void close() {
     try {
       nodeManagerTasksTimer.cancel();

@@ -21,11 +21,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
-import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
-import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPreemptibleRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.IRateLimiter;
-import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
 
 
 @Slf4j
@@ -33,7 +30,6 @@ import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
 public class RateLimiterInterceptor implements ServerInterceptor {
 
   private static final String KEY_PREFIX_RPC = "rpc_";
-  private static final String ADAPTER_PREFIX = "org.tron.core.services.ratelimiter.adapter.";
 
   @Autowired
   private RateLimiterContainer container;
@@ -68,18 +64,29 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
       // init the rpc api rate limiter.
       try {
-        Class<?> c = Class.forName(ADAPTER_PREFIX + cName);
+        Class<?> cls;
         Constructor constructor;
-        if (c == GlobalPreemptibleAdapter.class || c == QpsRateLimiterAdapter.class
-            || c == IPQPSRateLimiterAdapter.class) {
-          constructor = c.getConstructor(String.class);
-          obj = constructor.newInstance(params);
-          container.add(KEY_PREFIX_RPC, component, (IRateLimiter) obj);
-
-        } else {
-          constructor = c.getConstructor();
-          obj = constructor.newInstance();
-          container.add(KEY_PREFIX_RPC, component, (IRateLimiter) obj);
+        switch (cName) {
+          case "GlobalPreemptibleAdapter":
+            cls = org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter.class;
+            constructor = cls.getConstructor(String.class);
+            obj = constructor.newInstance(params);
+            container.add(KEY_PREFIX_RPC, component, (IRateLimiter) obj);
+            break;
+          case "QpsRateLimiterAdapter":
+            cls = org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter.class;
+            constructor = cls.getConstructor(String.class);
+            obj = constructor.newInstance(params);
+            container.add(KEY_PREFIX_RPC, component, (IRateLimiter) obj);
+            break;
+          case "IPQPSRateLimiterAdapter":
+            cls = org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter.class;
+            constructor = cls.getConstructor(String.class);
+            obj = constructor.newInstance(params);
+            container.add(KEY_PREFIX_RPC, component, (IRateLimiter) obj);
+            break;
+          default:
+            throw new Exception("undefined rate limiter adaptor");
         }
 
       } catch (Exception e) {

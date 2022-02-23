@@ -31,13 +31,8 @@ public class GetMarketPriceByPairServlet extends RateLimiterServlet {
         buyTokenId = Util.getHexString(buyTokenId);
       }
 
-      MarketPriceList reply = wallet.getMarketPriceByPair(ByteArray.fromHexString(sellTokenId),
-          ByteArray.fromHexString(buyTokenId));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteArray.fromHexString(sellTokenId),
+          ByteArray.fromHexString(buyTokenId), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -53,15 +48,20 @@ public class GetMarketPriceByPairServlet extends RateLimiterServlet {
       MarketOrderPair.Builder build = MarketOrderPair.newBuilder();
       JsonFormat.merge(input, build, visible);
 
-      MarketPriceList reply = wallet.getMarketPriceByPair(build.getSellTokenId().toByteArray(),
-          build.getBuyTokenId().toByteArray());
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, build.getSellTokenId().toByteArray(),
+          build.getBuyTokenId().toByteArray(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, byte[] sellTokenId, byte[] buyTokenId,
+      HttpServletResponse response) throws Exception {
+    MarketPriceList reply = wallet.getMarketPriceByPair(sellTokenId, buyTokenId);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

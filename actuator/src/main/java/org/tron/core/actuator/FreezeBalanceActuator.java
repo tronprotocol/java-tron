@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -56,6 +57,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore
         .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
+    if (dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
+
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     long duration = freezeBalanceContract.getFrozenDuration() * FROZEN_PERIOD;
 
@@ -96,6 +102,14 @@ public class FreezeBalanceActuator extends AbstractActuator {
         }
         dynamicStore
             .addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
+        break;
+      case TRON_POWER:
+        long newFrozenBalanceForTronPower =
+            frozenBalance + accountCapsule.getTronPowerFrozenBalance();
+        accountCapsule.setFrozenForTronPower(newFrozenBalanceForTronPower, expireTime);
+
+        dynamicStore
+            .addTotalTronPowerWeight(frozenBalance / TRX_PRECISION);
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -142,7 +156,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+          ActuatorConstant.ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
     long frozenBalance = freezeBalanceContract.getFrozenBalance();
@@ -181,12 +195,28 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
     switch (freezeBalanceContract.getResource()) {
       case BANDWIDTH:
-        break;
       case ENERGY:
         break;
+      case TRON_POWER:
+        if (dynamicStore.supportAllowNewResourceModel()) {
+          byte[] receiverAddress = freezeBalanceContract.getReceiverAddress().toByteArray();
+          if (!ArrayUtils.isEmpty(receiverAddress)) {
+            throw new ContractValidateException(
+                "TRON_POWER is not allowed to delegate to other accounts.");
+          }
+        } else {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
+        }
+        break;
       default:
-        throw new ContractValidateException(
-            "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+        if (dynamicStore.supportAllowNewResourceModel()) {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY、TRON_POWER]");
+        } else {
+          throw new ContractValidateException(
+              "ResourceCode error, valid ResourceCode[BANDWIDTH、ENERGY]");
+        }
     }
 
     //todo：need version control and config for delegating resource
@@ -207,7 +237,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
         String readableOwnerAddress = StringUtil.createReadableString(receiverAddress);
         throw new ContractValidateException(
             ActuatorConstant.ACCOUNT_EXCEPTION_STR
-                + readableOwnerAddress + "] not exists");
+                + readableOwnerAddress + NOT_EXIST_STR);
       }
 
       if (dynamicStore.getAllowTvmConstantinople() == 1

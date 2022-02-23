@@ -39,13 +39,10 @@ public class GetDelegatedResourceServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input =
-          request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
       DelegatedResourceMessage.Builder build = DelegatedResourceMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
-      fillResponse(visible, build.getFromAddress(), build.getToAddress(), response);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(params.isVisible(), build.getFromAddress(), build.getToAddress(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }

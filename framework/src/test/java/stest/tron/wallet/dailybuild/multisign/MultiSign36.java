@@ -14,7 +14,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
-import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -24,7 +23,6 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 import org.tron.protos.contract.BalanceContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -87,7 +85,8 @@ public class MultiSign36 {
 
   }
 
-  @Test(enabled = true, description = "MultiSign permission transaction")
+  @Test(enabled = true, description = "two owner address sign update permission transaction "
+      + "sum(weight)==threshold,get approve list")
   public void getTransactionApprovedList_01() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -157,7 +156,10 @@ public class MultiSign36 {
   }
 
 
-  @Test(enabled = true, description = "After sign success,delete the address")
+  @Test(enabled = true, description =
+      "sendcoin,use active address sign meet all requirement,delete "
+      + "the used active address,"
+      + "and change active no right to sendcoin. get first transaction approve list")
   public void getTransactionApprovedList_02() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -253,7 +255,8 @@ public class MultiSign36 {
 
   }
 
-  @Test(enabled = true, description = "MultiSign ordinary transaction")
+  @Test(enabled = true, description = "sendcoin,use active address sign,"
+      + "sum(weight)==threshold,get approve list")
   public void getTransactionApprovedList_03() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -324,171 +327,9 @@ public class MultiSign36 {
     Assert.assertEquals(2,
         transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
             .getPermissionId());
-    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
-    Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
-    Permission witnessPermission2 = test001AddressAccount2.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList2);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission2));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
-
-
   }
 
-  @Test(enabled = true, description = "One time sign ordinary transaction")
-  public void getTransactionApprovedList_04() {
-    ECKey ecKey = new ECKey(Utils.getRandom());
-    test001Address = ecKey.getAddress();
-    long amount = updateAccountPermissionFee + 1;
-
-    Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, amount, fromAddress, testKey002,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
-    Permission ownerPermission = test001AddressAccount.getOwnerPermission();
-    Permission witnessPermission = test001AddressAccount.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-    String[] permissionKeyString = new String[1];
-    permissionKeyString[0] = dev001Key;
-
-    String accountPermissionJson1 =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\""
-            + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\""
-            + ":\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
-            + "\"active0\",\"threshold\":1,\"operations\""
-            + ":\"0200000000000000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey2)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
-            + "\",\"weight\":1}]}]} ";
-
-    Assert.assertTrue(PublicMethedForMutiSign
-        .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
-
-    Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
-    Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
-    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList1);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-
-    Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
-            blockingStubFull);
-    Transaction transaction1 = PublicMethed
-        .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
-
-    TransactionApprovedList transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction1, blockingStubFull);
-
-    logger.info("transactionSignWeight:" + transactionApprovedList);
-    logger.info("test001Address:" + Base58.encode58Check(test001Address));
-    logger.info(
-        "transactionApprovedList:" + Base58
-            .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
-    Assert.assertEquals(Base58.encode58Check(test002Address), Base58
-        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
-    Assert.assertEquals(2,
-        transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
-            .getPermissionId());
-    Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
-    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
-    Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
-    Permission witnessPermission2 = test001AddressAccount2.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList2);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission2));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
-
-
-  }
-
-  @Test(enabled = true, description = "No sign transaction")
-  public void getTransactionApprovedList_05() {
-    ECKey ecKey = new ECKey(Utils.getRandom());
-    test001Address = ecKey.getAddress();
-    long amount = updateAccountPermissionFee + 1;
-
-    Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, amount, fromAddress, testKey002,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
-    Permission ownerPermission = test001AddressAccount.getOwnerPermission();
-    Permission witnessPermission = test001AddressAccount.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-    String[] permissionKeyString = new String[1];
-    permissionKeyString[0] = dev001Key;
-
-    String accountPermissionJson1 =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\""
-            + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\""
-            + ":\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
-            + "\"active0\",\"threshold\":1,\"operations\""
-            + ":\"0200000000000000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey2)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
-            + "\",\"weight\":1}]}]} ";
-
-    Assert.assertTrue(PublicMethedForMutiSign
-        .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
-
-    Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
-    Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
-    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList1);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-
-    Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
-            blockingStubFull);
-
-    TransactionApprovedList transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction, blockingStubFull);
-
-    logger.info("transactionSignWeight:" + transactionApprovedList);
-    logger.info("test001Address:" + Base58.encode58Check(test001Address));
-
-    Assert.assertEquals(0, transactionApprovedList.getApprovedListCount());
-    Assert.assertEquals(2,
-        transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
-            .getPermissionId());
-
-    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
-    Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
-    Permission witnessPermission2 = test001AddressAccount2.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList2);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission2));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
-
-
-  }
-
-  @Test(enabled = true, description = "Multi-signature unfinished transaction")
+  @Test(enabled = true, description = "Multi-signature unfinished transaction,get approve list")
   public void getTransactionApprovedList_06() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -552,20 +393,12 @@ public class MultiSign36 {
     Assert.assertEquals(2,
         transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
             .getPermissionId());
-
-    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
-    Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
-    Permission witnessPermission2 = test001AddressAccount2.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList2);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission2));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
-
-
   }
 
 
-  @Test(enabled = true, description = "Signature not success  transaction")
+  @Test(enabled = true, description = "sendcoin transaction in owner permission,"
+      + "but sign use active address,"
+      + "get approve list")
   public void getTransactionApprovedList_07() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     test001Address = ecKey.getAddress();
@@ -629,211 +462,8 @@ public class MultiSign36 {
     Assert.assertEquals(0,
         transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
             .getPermissionId());
-    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
-    Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
-    Permission witnessPermission2 = test001AddressAccount2.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList2);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission2));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
-
-
   }
 
-
-  @Test(enabled = true, description = "The timeout transaction")
-  public void getTransactionApprovedList_08() {
-    ECKey ecKey = new ECKey(Utils.getRandom());
-    test001Address = ecKey.getAddress();
-    long amount = updateAccountPermissionFee + 1;
-
-    Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, amount, fromAddress, testKey002,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
-    Permission ownerPermission = test001AddressAccount.getOwnerPermission();
-    Permission witnessPermission = test001AddressAccount.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-    String[] permissionKeyString = new String[1];
-    permissionKeyString[0] = dev001Key;
-
-    String accountPermissionJson1 =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\""
-            + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\""
-            + ":\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
-            + "\"active0\",\"threshold\":2,\"operations\""
-            + ":\"0200000000000000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey2)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
-            + "\",\"weight\":1}]}]} ";
-
-    Assert.assertTrue(PublicMethedForMutiSign
-        .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
-
-    Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
-    Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
-    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList1);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-
-    Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 0, dev001Key,
-            blockingStubFull);
-
-    try {
-      Thread.sleep(100000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    Transaction transaction1 = PublicMethedForMutiSign
-        .addTransactionSignWithPermissionId(transaction, sendAccountKey2, 0, blockingStubFull);
-    TransactionApprovedList transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction1, blockingStubFull);
-
-    logger.info("transactionSignWeight:" + transactionApprovedList);
-    logger.info("Base58.encode58Check(test001Address):" + Base58.encode58Check(test002Address));
-    logger.info("Base58.encode58Check(test001Address)1:" + Base58
-        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
-    Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
-    Assert.assertEquals(Base58.encode58Check(test002Address), Base58
-        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
-    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
-    Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
-    Permission witnessPermission2 = test001AddressAccount2.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList2);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission2));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
-
-
-  }
-
-  @Test(enabled = true, description = "The error transaction")
-  public void getTransactionApprovedList_09() {
-    ECKey ecKey = new ECKey(Utils.getRandom());
-    test001Address = ecKey.getAddress();
-    long amount = updateAccountPermissionFee + 1;
-
-    Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, amount, fromAddress, testKey002,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
-    Permission ownerPermission = test001AddressAccount.getOwnerPermission();
-    Permission witnessPermission = test001AddressAccount.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-    String[] permissionKeyString = new String[1];
-    permissionKeyString[0] = dev001Key;
-
-    String accountPermissionJson1 =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\""
-            + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\""
-            + ":\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
-            + "\"active0\",\"threshold\":2,\"operations\""
-            + ":\"0200000000000000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey2)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
-            + "\",\"weight\":1}]}]} ";
-
-    Assert.assertTrue(PublicMethedForMutiSign
-        .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
-            blockingStubFull, 0,
-            permissionKeyString));
-
-    Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
-    Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
-    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList1);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-    Transaction transaction = createFakeTransaction(test001Address, 1L, test001Address);
-
-    Transaction transaction1 = PublicMethed
-        .addTransactionSign(transaction, dev001Key, blockingStubFull);
-    TransactionApprovedList transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction1, blockingStubFull);
-
-    logger.info("transactionSignWeight:" + transactionApprovedList);
-
-    Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
-    Assert.assertEquals(Base58.encode58Check(test001Address), Base58
-        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
-    Assert.assertEquals(0,
-        transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
-            .getPermissionId());
-
-    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
-    List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
-    Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
-    Permission witnessPermission2 = test001AddressAccount2.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList2);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission2));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
-
-
-  }
-
-  @Test(enabled = true, description = "The null transaction")
-  public void getTransactionApprovedList_10() {
-    ECKey ecKey = new ECKey(Utils.getRandom());
-    test001Address = ecKey.getAddress();
-    long amount = updateAccountPermissionFee;
-
-    Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, amount, fromAddress, testKey002,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    AccountPermissionUpdateContract.Builder builder =
-        AccountPermissionUpdateContract.newBuilder();
-
-    AccountPermissionUpdateContract contract = builder.build();
-    TransactionExtention transactionExtention = blockingStubFull.accountPermissionUpdate(contract);
-    Transaction transaction = transactionExtention.getTransaction();
-    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-    final Transaction transaction1 = PublicMethed
-        .addTransactionSign(transaction, dev001Key, blockingStubFull);
-
-    logger.info("transaction hex string is " + ByteArray.toHexString(transaction.toByteArray()));
-
-    TransactionApprovedList transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction, blockingStubFull);
-    logger.info("Before broadcast transactionApprovedList info :\n" + transactionApprovedList);
-    Assert.assertEquals("class java.lang.IndexOutOfBoundsException : Index: 0",
-        transactionApprovedList.getResult().getMessage());
-
-    Assert
-        .assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
-
-    logger.info("transaction hex string is " + ByteArray.toHexString(transaction1.toByteArray()));
-    transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction1, blockingStubFull);
-
-    Assert.assertEquals("class java.lang.IndexOutOfBoundsException : Index: 0",
-        transactionApprovedList.getResult().getMessage());
-  }
 
   /**
    * constructor.

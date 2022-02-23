@@ -49,11 +49,6 @@ public class WalletTestAccount009 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
 
   /**
    * constructor.
@@ -108,7 +103,7 @@ public class WalletTestAccount009 {
     Assert.assertFalse(PublicMethed.freezeBalanceGetEnergy(account009InvalidAddress, 1000000L,
         3, -1, account009InvalidKey, blockingStubFull));
     Assert.assertFalse(PublicMethed.freezeBalanceGetEnergy(account009InvalidAddress, 1000000L,
-        3, 2, account009InvalidKey, blockingStubFull));
+        3, 3, account009InvalidKey, blockingStubFull));
 
   }
 

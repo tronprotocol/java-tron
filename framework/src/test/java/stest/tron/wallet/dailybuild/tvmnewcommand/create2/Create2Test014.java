@@ -55,11 +55,7 @@ public class Create2Test014 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -329,10 +325,11 @@ public class Create2Test014 {
     Assert.assertEquals(1, infoById.get().getResultValue());
     Assert
         .assertThat(infoById.get().getResMessage().toStringUtf8(),
-            containsString("Not enough energy for 'SWAP1' operation executing"));
+            containsString("REVERT opcode executed"));
   }
 
-  @Test(enabled = true, description = "Same code, salt and address,"
+  // Istanbul change create2 algorithm
+  @Test(enabled = false, description = "Same code, salt and address,"
       + " create contract using develop account")
   public void test03TriggerCreate2ToDeployTestContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -532,7 +529,8 @@ public class Create2Test014 {
     logger.info("ConsumeURPercent: " + consumeUserPercent);
   }
 
-  @Test(enabled = true, description = "Trigger test2 contract")
+  // Istanbul change create2 algorithm
+  @Test(enabled = false, description = "Trigger test2 contract")
   public void test05TriggerTest2Contract() {
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,

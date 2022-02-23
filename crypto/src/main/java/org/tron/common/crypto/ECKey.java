@@ -31,25 +31,26 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.asn1.sec.SECNamedCurves;
-import org.spongycastle.asn1.x9.X9ECParameters;
-import org.spongycastle.asn1.x9.X9IntegerConverter;
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.params.ECDomainParameters;
-import org.spongycastle.crypto.params.ECPrivateKeyParameters;
-import org.spongycastle.crypto.signers.ECDSASigner;
-import org.spongycastle.crypto.signers.HMacDSAKCalculator;
-import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
-import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
-import org.spongycastle.jce.spec.ECParameterSpec;
-import org.spongycastle.jce.spec.ECPrivateKeySpec;
-import org.spongycastle.math.ec.ECAlgorithms;
-import org.spongycastle.math.ec.ECCurve;
-import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.util.encoders.Base64;
-import org.spongycastle.util.encoders.Hex;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.asn1.x9.X9IntegerConverter;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.signers.ECDSASigner;
+import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.jce.spec.ECPrivateKeySpec;
+import org.bouncycastle.math.ec.ECAlgorithms;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECKeyPairGenerator;
 import org.tron.common.crypto.jce.TronCastleProvider;
@@ -284,6 +285,9 @@ public class ECKey implements Serializable, SignInterface {
    * @return -
    */
   public static ECKey fromPrivate(byte[] privKeyBytes) {
+    if (Objects.isNull(privKeyBytes)) {
+      return null;
+    }
     return fromPrivate(new BigInteger(1, privKeyBytes));
   }
 
@@ -639,33 +643,6 @@ public class ECKey implements Serializable, SignInterface {
   }
 
   /**
-   * Returns a copy of this key, but with the public point represented in uncompressed form.
-   * Normally you would never need this: it's for specialised scenarios or when backwards
-   * compatibility in encoded form is necessary.
-   *
-   * @return -
-   * @deprecated per-point compression property will be removed in Bouncy Castle
-   */
-  public ECKey decompress() {
-    if (!pub.isCompressed()) {
-      return this;
-    } else {
-      return new ECKey(this.provider, this.privKey, decompressPoint(pub));
-    }
-  }
-
-  /**
-   * @deprecated per-point compression property will be removed in Bouncy Castle
-   */
-  public ECKey compress() {
-    if (pub.isCompressed()) {
-      return this;
-    } else {
-      return new ECKey(this.provider, this.privKey, compressPoint(pub));
-    }
-  }
-
-  /**
    * Returns true if this key doesn't have access to private key bytes. This may be because it was
    * never given any private key bytes to begin with (a watching key).
    *
@@ -758,16 +735,6 @@ public class ECKey implements Serializable, SignInterface {
     } else {
       throw new MissingPrivateKeyException();
     }
-  }
-
-  /**
-   * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33
-   * bytes, not 64.
-   *
-   * @return -
-   */
-  public boolean isCompressed() {
-    return pub.isCompressed();
   }
 
   public String toString() {
@@ -873,6 +840,8 @@ public class ECKey implements Serializable, SignInterface {
       return null;
     } else if (privKey instanceof BCECPrivateKey) {
       return ByteUtil.bigIntegerToBytes(((BCECPrivateKey) privKey).getD(), 32);
+    } else if (privKey instanceof ECPrivateKey) {
+      return ByteUtil.bigIntegerToBytes(((ECPrivateKey) privKey).getS(), 32);
     } else {
       return null;
     }

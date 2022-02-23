@@ -52,11 +52,7 @@ public class Create2Test006 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -533,7 +529,8 @@ public class Create2Test006 {
         Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
   }
 
-  @Test(enabled = true, description = "Trigger create2 with salt f * 64")
+  // Istanbul change create2 algorithm
+  @Test(enabled = false, description = "Trigger create2 with salt f * 64")
   public void test06TriggerCreate2ToDeployTestContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,

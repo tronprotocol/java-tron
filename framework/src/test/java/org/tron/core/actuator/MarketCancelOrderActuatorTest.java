@@ -18,6 +18,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
@@ -106,6 +107,16 @@ public class MarketCancelOrderActuatorTest {
   public void initTest() {
     byte[] ownerAddressFirstBytes = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     byte[] ownerAddressSecondBytes = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+
+    AccountAssetCapsule ownerAddressFirstAsset =
+            new AccountAssetCapsule(ByteString.copyFrom(ownerAddressFirstBytes));
+    AccountAssetCapsule ownerAddressSecondAsset =
+            new AccountAssetCapsule(ByteString.copyFrom(ownerAddressSecondBytes));
+
+    dbManager.getAccountAssetStore().put(ownerAddressFirstAsset.getAddress().toByteArray(),
+            ownerAddressFirstAsset);
+    dbManager.getAccountAssetStore().put(ownerAddressSecondAsset.getAddress().toByteArray(),
+            ownerAddressSecondAsset);
 
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
@@ -658,8 +669,6 @@ public class MarketCancelOrderActuatorTest {
         300L, OWNER_ADDRESS_FIRST);//cancel this one
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
         400L, OWNER_ADDRESS_FIRST);
-
-
 
     //record account state
     AccountCapsule accountCapsule = accountStore

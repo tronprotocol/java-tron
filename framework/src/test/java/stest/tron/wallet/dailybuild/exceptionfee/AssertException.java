@@ -52,11 +52,7 @@ public class AssertException {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.
@@ -130,13 +126,14 @@ public class AssertException {
     logger.info("getContractRet:" + ById.get().getRet(0).getContractRet());
 
     Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
-        contractResult.ILLEGAL_OPERATION_VALUE);
-    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), 8);
-    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.ILLEGAL_OPERATION);
+        contractResult.REVERT.getNumber());
+    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), 2);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.REVERT);
 
     Assert
-        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()), "");
-    Assert.assertEquals(contractResult.ILLEGAL_OPERATION, infoById.get().getReceipt().getResult());
+        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()),
+            "4e487b710000000000000000000000000000000000000000000000000000000000000012");
+    Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
 
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
@@ -159,7 +156,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -222,7 +219,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -285,7 +282,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -349,13 +346,13 @@ public class AssertException {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "Trigger contract move a negative value to a binary")
+  @Test(enabled = false, description = "Trigger contract move a negative value to a binary")
   public void test5MoveRight() {
     String filePath = "src/test/resources/soliditycode/assertExceptiontest5MoveRight.sol";
     String contractName = "binaryRightContract";
@@ -385,7 +382,7 @@ public class AssertException {
     String txid = "";
     Integer triggerNum = -1;
     txid = PublicMethed.triggerContract(contractAddress,
-        "binaryMoveR(int256)", triggerNum.toString(), false,
+        "binaryMoveR(uint256)", triggerNum.toString(), false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -478,7 +475,7 @@ public class AssertException {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(afterBalance + maxFeeLimit + netFee == beforeBalance);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
@@ -541,7 +538,7 @@ public class AssertException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue((beforeBalance - maxFeeLimit - netFee) == afterBalance);
+    Assert.assertTrue((beforeBalance - fee) == afterBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);

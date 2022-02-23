@@ -41,6 +41,7 @@ public class TronApplicationContext extends AnnotationConfigApplicationContext {
     Manager dbManager = getBean(Manager.class);
     dbManager.stopRePushThread();
     dbManager.stopRePushTriggerThread();
+    dbManager.stopFilterProcessThread();
     super.destroy();
   }
 }
