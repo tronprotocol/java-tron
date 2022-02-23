@@ -141,10 +141,10 @@ Please do not be discouraged if your pull request is not accepted, as it may be 
 
 Please make sure your submission meets the following code style:
 
-- The code must conform to [Google Code Style](https://google.github.io/styleguide/javaguide.html);
-- The code must have passed the Sonar scanner test;
-- The code has to be pulled from the `develop` branch;
-- The commit message should start with a verb, whose initial should not be capitalized;
+- The code must conform to [Google Code Style](https://google.github.io/styleguide/javaguide.html).
+- The code must have passed the Sonar scanner test.
+- The code has to be pulled from the `develop` branch.
+- The commit message should start with a verb, whose initial should not be capitalized.
 - The commit message should be less than 50 characters in length.
 
 
@@ -168,10 +168,10 @@ The message header is a single line that contains succinct description of the ch
 * feat     (new feature)
 * fix      (bug fix)
 * docs     (changes to documentation)
-* style    (formatting, missing semi colons, etc; no code change)
+* style    (formatting, missing semi colons, etc. no code change)
 * refactor (refactoring production code)
-* test     (adding or refactoring tests; no production code change)
-* chore    (updating grunt tasks etc; no production code change)
+* test     (adding or refactoring tests. no production code change)
+* chore    (updating grunt tasks etc. no production code change)
 
 The `scope` can be anything specifying place of the commit change. For example:`protobuf`,`api`,`test`,`docs`,`build`,`db`,`net`.You can use * if there isn't a more fitting scope.
 
