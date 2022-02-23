@@ -94,7 +94,7 @@ Get the mainnet configurate file: [main_net_config.conf](https://github.com/tron
   Adding the `--witness` parameter to the startup command, full node will run as a super representative node. In addition to including all the functions of fullnode, it also has the ability to produce blocks. Before running , you need to create an address and apply to become a super representative to get votes from others，once the number of votes obtained ranks in the top 27, you can run a super representative node to participate in block production.
 
   Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`, here is an example:
-   ```json
+   ```
     localwitness = [
         650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812
     ]
