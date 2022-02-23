@@ -86,11 +86,13 @@ Get the mainnet configurate file: [main_net_config.conf](https://github.com/tron
 
 
 * **Running a full node for mainnet**
+
   Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c ` parameter specifies a configuration file to run a full node:
    ```bash
    $ java -jar FullNode.jar -c main_net_config.conf
    ```
 * **Running a super representative node for mainnet**
+
   Adding the `--witness` parameter to the startup command, full node will run as a super representative node. The super representative node supports all the functions of the full node and also supports block production. Before running, make sure you have a super representative account and get votes from others，once the number of obtained votes ranks in the top 27, your super representative node will participate in block production.
 
   Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`, here is an example:
