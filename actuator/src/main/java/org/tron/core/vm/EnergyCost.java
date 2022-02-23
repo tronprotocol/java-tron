@@ -49,35 +49,35 @@ public class EnergyCost {
   private static final long STOP = 0;
   private static final long CREATE_DATA = 200;
 
-  public static long getZeroTierCost(Program program) {
+  public static long getZeroTierCost(Program ignored) {
     return ZERO_TIER;
   }
 
-  public static long getVeryLowTierCost(Program program) {
+  public static long getVeryLowTierCost(Program ignored) {
     return VERY_LOW_TIER;
   }
 
-  public static long getLowTierCost(Program program) {
+  public static long getLowTierCost(Program ignored) {
     return LOW_TIER;
   }
 
-  public static long getMidTierCost(Program program) {
+  public static long getMidTierCost(Program ignored) {
     return MID_TIER;
   }
 
-  public static long getBaseTierCost(Program program) {
+  public static long getBaseTierCost(Program ignored) {
     return BASE_TIER;
   }
 
-  public static long getExtTierCost(Program program) {
+  public static long getExtTierCost(Program ignored) {
     return EXT_TIER;
   }
 
-  public static long getHighTierCost(Program program) {
+  public static long getHighTierCost(Program ignored) {
     return HIGH_TIER;
   }
 
-  public static long getSpecialTierCost(Program program) {
+  public static long getSpecialTierCost(Program ignored) {
     return SPECIAL_TIER;
   }
 
@@ -92,8 +92,8 @@ public class EnergyCost {
     return EXP_ENERGY  + EXP_BYTE_ENERGY * bytesOccupied;
   }
 
-  public static long getExtCodeSizeCost(Program program) {
-     return EXT_CODE_SIZE;
+  public static long getExtCodeSizeCost(Program ignored) {
+    return EXT_CODE_SIZE;
   }
 
   public static long getSha3Cost(Program program) {
@@ -143,7 +143,7 @@ public class EnergyCost {
     return energyCost;
   }
 
-  public static long getExtCodeHashCost(Program program) {
+  public static long getExtCodeHashCost(Program ignored) {
     return EXT_CODE_HASH;
   }
 
@@ -174,7 +174,7 @@ public class EnergyCost {
     return energyCost;
   }
 
-  public static long getSloadCost(Program program) {
+  public static long getSloadCost(Program ignored) {
     return SLOAD;
   }
 
@@ -237,11 +237,11 @@ public class EnergyCost {
     return energyCost;
   }
 
-  public static long getSuicideCost(Program program) {
+  public static long getSuicideCost(Program ignored) {
     return SUICIDE;
   }
 
-  public static long getBalanceCost(Program program) {
+  public static long getBalanceCost(Program ignored) {
     return BALANCE;
   }
 
@@ -255,11 +255,11 @@ public class EnergyCost {
     return FREEZE;
   }
 
-  public static long getUnfreezeCost(Program program) {
+  public static long getUnfreezeCost(Program ignored) {
     return UNFREEZE;
   }
 
-  public static long getFreezeExpireTimeCost(Program program) {
+  public static long getFreezeExpireTimeCost(Program ignored) {
     return FREEZE_EXPIRE_TIME;
   }
 
@@ -285,7 +285,7 @@ public class EnergyCost {
             ? amountArrayMemoryNeeded : witnessArrayMemoryNeeded), 0, Op.VOTEWITNESS);
   }
 
-  public static long getWithdrawRewardCost(Program program) {
+  public static long getWithdrawRewardCost(Program ignored) {
     return WITHDRAW_REWARD;
   }
 

@@ -6,7 +6,9 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 
 import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -21,13 +23,27 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @ToString
 public class CallArguments {
 
-  public String from = "0x0000000000000000000000000000000000000000";
-  public String to;
-  public String gas = ""; //not used
-  public String gasPrice = ""; //not used
-  public String value = "";
-  public String data;
-  public String nonce; // not used
+  @Getter
+  @Setter
+  private String from = "0x0000000000000000000000000000000000000000";
+  @Getter
+  @Setter
+  private String to;
+  @Getter
+  @Setter
+  private String gas = ""; //not used
+  @Getter
+  @Setter
+  private String gasPrice = ""; //not used
+  @Getter
+  @Setter
+  private String value = "";
+  @Getter
+  @Setter
+  private String data;
+  @Getter
+  @Setter
+  private String nonce; // not used
 
   /**
    * just support TransferContract, CreateSmartContract and TriggerSmartContract

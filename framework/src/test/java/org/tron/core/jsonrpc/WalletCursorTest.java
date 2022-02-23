@@ -94,10 +94,10 @@ public class WalletCursorTest {
   @Test
   public void testDisableInSolidity() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.to = "0x548794500882809695a8a687866e76d4271a1abc";
-    buildArguments.tokenId = 1000016L;
-    buildArguments.tokenValue = 20L;
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setTo("0x548794500882809695a8a687866e76d4271a1abc");
+    buildArguments.setTokenId(1000016L);
+    buildArguments.setTokenValue(20L);
 
     dbManager.setCursor(Cursor.SOLIDITY);
 
@@ -115,10 +115,10 @@ public class WalletCursorTest {
   @Test
   public void testDisableInPBFT() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.to = "0x548794500882809695a8a687866e76d4271a1abc";
-    buildArguments.tokenId = 1000016L;
-    buildArguments.tokenValue = 20L;
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setTo("0x548794500882809695a8a687866e76d4271a1abc");
+    buildArguments.setTokenId(1000016L);
+    buildArguments.setTokenValue(20L);
 
     dbManager.setCursor(Cursor.PBFT);
 
@@ -130,15 +130,24 @@ public class WalletCursorTest {
           + "PBFT", e.getMessage());
     }
 
+    String method = "test";
+    try {
+      tronJsonRpc.disableInPBFT(method);
+    } catch (Exception e) {
+      String expMsg = String.format("the method %s does not exist/is not available in PBFT",
+          method);
+      Assert.assertEquals(expMsg, e.getMessage());
+    }
+
     dbManager.resetCursor();
   }
 
   @Test
   public void testEnableInFullNode() {
     BuildArguments buildArguments = new BuildArguments();
-    buildArguments.from = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
-    buildArguments.to = "0x548794500882809695a8a687866e76d4271a1abc";
-    buildArguments.value = "0x1f4";
+    buildArguments.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    buildArguments.setTo("0x548794500882809695a8a687866e76d4271a1abc");
+    buildArguments.setValue("0x1f4");
 
     TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
 

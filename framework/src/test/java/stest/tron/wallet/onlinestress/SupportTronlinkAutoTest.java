@@ -52,11 +52,7 @@ public class SupportTronlinkAutoTest {
   //dappchain fullnode
   //private String fullnode =       "47.252.7.241:50051";
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

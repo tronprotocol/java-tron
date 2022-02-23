@@ -53,11 +53,7 @@ public class Create2Test001 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.
@@ -112,7 +108,7 @@ public class Create2Test001 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "Trigger create2 command with test bytecode using factory")
+  @Test(enabled = true, description = "Trigger create2 command with test bytecode using factory. ")
   public void test02TriggerCreate2ToDeployTestContract() {
 
     Long callValue = Long.valueOf(0);

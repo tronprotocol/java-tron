@@ -70,7 +70,6 @@ public class EasyTransferAssetByPrivateServlet extends RateLimiterServlet {
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }
-      return;
     }
   }
 }

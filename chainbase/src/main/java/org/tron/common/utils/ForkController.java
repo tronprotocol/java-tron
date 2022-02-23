@@ -185,7 +185,7 @@ public class ForkController {
     for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
       int versionValue = versionEnum.getValue();
       byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(versionValue);
-      if (!check(stats) && Objects.nonNull(stats)) {
+      if (Objects.nonNull(stats) && !pass(versionValue)) {
         Arrays.fill(stats, VERSION_DOWNGRADE);
         manager.getDynamicPropertiesStore().statsByVersion(versionValue, stats);
       }

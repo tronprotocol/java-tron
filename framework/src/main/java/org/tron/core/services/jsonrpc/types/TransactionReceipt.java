@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -24,39 +26,83 @@ public class TransactionReceipt {
   @JsonPropertyOrder(alphabetic = true)
   public static class TransactionLog {
 
-    public String logIndex;
-    public String blockHash;
-    public String blockNumber;
-    public String transactionIndex;
-    public String transactionHash;
-    public String address;
-    public String data;
-    public String[] topics;
-    public boolean removed = false;
+    @Getter
+    @Setter
+    private String logIndex;
+    @Getter
+    @Setter
+    private String blockHash;
+    @Getter
+    @Setter
+    private String blockNumber;
+    @Getter
+    @Setter
+    private String transactionIndex;
+    @Getter
+    @Setter
+    private String transactionHash;
+    @Getter
+    @Setter
+    private String address;
+    @Getter
+    @Setter
+    private String data;
+    @Getter
+    @Setter
+    private String[] topics;
+    @Getter
+    @Setter
+    private boolean removed = false;
 
     public TransactionLog() {
     }
   }
 
-  public String blockHash;
-  public String blockNumber;
-  public String transactionIndex;
-  public String transactionHash;
-  public String from;
-  public String to;
+  @Getter
+  @Setter
+  private String blockHash;
+  @Getter
+  @Setter
+  private String blockNumber;
+  @Getter
+  @Setter
+  private String transactionIndex;
+  @Getter
+  @Setter
+  private String transactionHash;
+  @Getter
+  @Setter
+  private String from;
+  @Getter
+  @Setter
+  private String to;
 
-  public String cumulativeGasUsed;
-  public String effectiveGasPrice;
-  public String gasUsed;
-  public String contractAddress;
-  public TransactionLog[] logs;
-  public String logsBloom;
+  @Getter
+  @Setter
+  private String cumulativeGasUsed;
+  @Getter
+  @Setter
+  private String effectiveGasPrice;
+  @Getter
+  @Setter
+  private String gasUsed;
+  @Getter
+  @Setter
+  private String contractAddress;
+  @Getter
+  @Setter
+  private TransactionLog[] logs;
+  @Getter
+  @Setter
+  private String logsBloom;
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public String root;  // 32 bytes of post-transaction stateroot (pre Byzantium)
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public String status;  //  either 1 (success) or 0 (failure) (post Byzantium)
 
-  public String type = "0x0";
+  @Getter
+  @Setter
+  private String type = "0x0";
 
   public TransactionReceipt(Protocol.Block block, TransactionInfo txInfo, Wallet wallet) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
