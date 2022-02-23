@@ -50,7 +50,11 @@ subprojects {
         compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         compile "org.apache.commons:commons-collections4:4.0"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
-
+        implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
+        implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+        implementation 'javax.annotation:javax.annotation-api:1.3.2'
+        annotationProcessor 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
+        annotationProcessor 'javax.annotation:javax.annotation-api:1.3.2'
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
