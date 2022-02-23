@@ -42,15 +42,14 @@
 </p>
 
 ## Table of Contents
-* [What’s TRON?](#What’s-TRON)
-* [Building the Source Code](#Building-the-source) 
-   * [Prepare](#Prepare)
-   * [Getting the Source Code](#Getting-the-Source-Code)
-   * [Build](#Build)
-* [Running java-tron](#Running-java-tron)
-* [Community](#Community)
-* [Resources](#Resources)
-* [License](#License)
+- [What’s TRON?](#What’s-TRON)
+- [Building the Source Code](#Building-the-source)
+  - [Getting the Source Code](#Getting-the-Source-Code)
+  - [Build](#Build)
+- [Running java-tron](#Running-java-tron)
+- [Community](#Community)
+- [Resources](#Resources)
+- [License](#License)
 
 ## What's TRON?
 
@@ -63,13 +62,7 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency, and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
 # Building the source
-
-## Prepare
-
-* `Oracle JDK 1.8` (Other versions are not supported yet)
-* Support OS:
-  * `Linux`
-  * `OSX`
+Building java-tron requires `git` and `Oracle JDK 1.8` to be installed, other JDK versions are not supported yet. It is recommended to operate on `Linux` and `OSX` operating systems.
 
 ## Getting the Source Code
 
@@ -92,21 +85,33 @@ After executing the compile command, the FullNode.jar file will be generated in 
 Get the mainnet configurate file: [main_net_config.conf](https://github.com/tronprotocol/tron-deployment/blob/master/main_net_config.conf), other network configuration files can be find [here](https://github.com/tronprotocol/tron-deployment).
 
 
-* **Running a Full Node for mainnet**
+* **Running a full node for mainnet**
+  Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and more. `-c ` parameter specifies a configuration file to run a full node, to do so:
    ```bash
    $ java -jar FullNode.jar -c main_net_config.conf
    ```
-* **Running a Super Representative Node for mainnet**
-   ```bash
-   $ java -jar FullNode.jar -p 650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812 --witness -c main_net_config.conf
+* **Running a super representative node for mainnet**
+  Adding the `--witness` parameter to the startup command, full node will run as a super representative node. In addition to including all the functions of fullnode, it also has the ability to produce blocks. Before running , you need to create an address and apply to become a super representative to get votes from others，once the number of votes obtained ranks in the top 27, you can run a super representative node to participate in block production.
+
+  Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`, here is an example:
+   ```json
+    localwitness = [
+        650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812
+    ]
    ```
 
-**Common command line parameters**
-* `-c`: specify the configuration file path
-* `-p`: specify the private key of the witness.
-* `--witness`: enable the witness function
+  then run the following command to start the node:
+    ```bash
+    $ java -jar FullNode.jar --witness -c main_net_config.conf
+    ```
 
-An easier way to build and run java-tron with shell tools: [Build & Run by shell script](./shell.md)
+## Quick Start Scripting Tool
+An easier way to build and run java-tron  is to use `start.sh`, `start.sh` is a quick start script written in shell language, you can use it to build and run java-tron quickly and easily.
+
+If you already downloaded the FullNode.jar, you can use `start.sh` to run it, or if you have not downloaded jar package or java-tron source code, you can use `start.sh` to get the latest release jar package，run or download the source code, compile, run.
+
+For more details, please refer to [here](./shell.md).
+
 
 # Community
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
