@@ -78,7 +78,7 @@ $ cd java-tron
 $ ./gradlew clean build -x test
 ```
 
-After executing the compile command, the FullNode.jar file will be generated in `java-tron/build/libs/FullNode.jar`
+The `FullNode.jar` file can be found in `java-tron/build/libs/FullNode.jar` after build successful.
 
 # Running java-tron
 
@@ -86,12 +86,12 @@ Get the mainnet configurate file: [main_net_config.conf](https://github.com/tron
 
 
 * **Running a full node for mainnet**
-  Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and more. `-c ` parameter specifies a configuration file to run a full node, to do so:
+  Full node has full historical data, it is the entry point into the TRON network , it can be used by other processes as a gateway into the TRON network via HTTP and GRPC endpoints. You can interact with the TRON network through full node：transfer assets, deploy contracts, interact with contracts and so on. `-c ` parameter specifies a configuration file to run a full node:
    ```bash
    $ java -jar FullNode.jar -c main_net_config.conf
    ```
 * **Running a super representative node for mainnet**
-  Adding the `--witness` parameter to the startup command, full node will run as a super representative node. In addition to including all the functions of fullnode, it also has the ability to produce blocks. Before running , you need to create an address and apply to become a super representative to get votes from others，once the number of votes obtained ranks in the top 27, you can run a super representative node to participate in block production.
+  Adding the `--witness` parameter to the startup command, full node will run as a super representative node. The super representative node supports all the functions of the full node and also supports block production. Before running, make sure you have a super representative account and get votes from others，once the number of obtained votes ranks in the top 27, your super representative node will participate in block production.
 
   Fill in the private key of super representative address into the `localwitness` list in the `main_net_config.conf`, here is an example:
    ```
@@ -105,12 +105,15 @@ Get the mainnet configurate file: [main_net_config.conf](https://github.com/tron
     $ java -jar FullNode.jar --witness -c main_net_config.conf
     ```
 
-## Quick Start Scripting Tool
-An easier way to build and run java-tron  is to use `start.sh`, `start.sh` is a quick start script written in shell language, you can use it to build and run java-tron quickly and easily.
+## Quick Start Tool
+An easier way to build and run java-tron is to use `start.sh`, `start.sh` is a quick start script written in shell language, you can use it to build and run java-tron quickly and easily.
 
-If you already downloaded the FullNode.jar, you can use `start.sh` to run it, or if you have not downloaded jar package or java-tron source code, you can use `start.sh` to get the latest release jar package，run or download the source code, compile, run.
+Here are some common use cases of the scripting tool
+* Use `start.sh` to start a full node with the downloaded `FullNode.jar`
+* Use `start.sh` to download the latest `FullNode.jar` and start a full node.
+* Use `start.sh` to download the latest source code and compile a `FullNode.jar` and then start a full node.
 
-For more details, please refer to [here](./shell.md).
+For more details, please refer to the tool [guide](./shell.md).
 
 
 # Community
