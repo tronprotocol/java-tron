@@ -1,20 +1,37 @@
 #!/bin/bash
-# build FullNode config
+#############################################################################
+#
+#                    GNU LESSER GENERAL PUBLIC LICENSE
+#                        Version 3, 29 June 2007
+#
+#  Copyright (C) [2007] [TRON Foundation], Inc. <https://fsf.org/>
+#  Everyone is permitted to copy and distribute verbatim copies
+#  of this license document, but changing it is not allowed.
+#
+#
+#   This version of the GNU Lesser General Public License incorporates
+# the terms and conditions of version 3 of the GNU General Public
+# License, supplemented by the additional permissions listed below.
+#
+# You can find java-tron at https://github.com/tronprotocol/java-tron/
+#
+##############################################################################
+
+# Build FullNode config
 FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG="main_net_config.conf"
 DEFAULT_FULL_NODE_CONFIG='config.conf'
-#FULL_NODE_SHELL="start.sh"
 JAR_NAME="FullNode.jar"
 FULL_START_OPT=''
 GITHUB_BRANCH='master'
 
-# shell option
+# Shell option
 ALL_OPT_LENGTH=$#
-
-# start service option
+# Start service option
 MAX_STOP_TIME=60
-# modify this option to allow the minimum memory to be started, unit MB
+# Modify this option to allow the minimum memory to be started, unit MB
 ALLOW_MIN_MEMORY=8192
+
 # JVM option
 MAX_DIRECT_MEMORY=1g
 JVM_MS=4g
@@ -24,17 +41,39 @@ SPECIFY_MEMORY=0
 RUN=false
 UPGRADE=false
 
-# rebuild manifest
+# Rebuild manifest
 REBUILD_MANIFEST=true
 REBUILD_DIR="$PWD/output-directory/database"
 REBUILD_MANIFEST_SIZE=0
 REBUILD_BATCH_SIZE=80000
 
-# download and upgrade
+# Download and upgrade
 DOWNLOAD=false
 RELEASE_URL='https://github.com/tronprotocol/java-tron/releases'
 QUICK_START=false
 CLONE_BUILD=false
+
+# Determine the Java command to use to start the JVM.
+if [ -n "$JAVA_HOME" ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+        # IBM's JDK on AIX uses strange locations for the executables
+        JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+        JAVACMD="$JAVA_HOME/bin/java"
+    fi
+    if [ ! -x "$JAVACMD" ] ; then
+        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+    fi
+else
+    JAVACMD="java"
+    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+fi
 
 getLatestReleaseVersion() {
   full_node_version=`git ls-remote --tags git@github.com:tronprotocol/java-tron.git |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
