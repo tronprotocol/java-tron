@@ -337,13 +337,13 @@ rebuildManifest() {
   ARCHIVE_JAR='ArchiveManifest.jar'
   if [[ -f $ARCHIVE_JAR ]]; then
     echo 'info: execute rebuild manifest.'
-    java -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
+    $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
   else
     echo 'info: download the rebuild manifest plugin from the github'
     download $RELEASE_URL/download/GreatVoyage-v4.3.0/$ARCHIVE_JAR $ARCHIVE_JAR
     if [[ $download == 0 ]]; then
       echo 'info: download success, rebuild manifest'
-      java -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
+      $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
     fi
   fi
   if [[ $? == 0 ]]; then
@@ -532,3 +532,4 @@ if [[ $RUN == true ]]; then
   restart
   exit
 fi
+
