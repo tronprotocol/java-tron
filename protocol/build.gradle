@@ -11,7 +11,7 @@ dependencies {
     compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.14.0'
     compile group: 'io.grpc', name: 'grpc-stub', version: '1.14.0'
     // end google grpc
-
+    compile group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2'
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 }
 
