@@ -48,6 +48,7 @@
   - [Build](#Build)
 - [Running java-tron](#Running-java-tron)
 - [Community](#Community)
+- [Contribution](#Contribution)
 - [Resources](#Resources)
 - [License](#License)
 
