@@ -48,20 +48,20 @@ As the author of TIP issue, you are expected to encourage developers to discuss 
 ### Key Branches
 java-tron only has `master`, `develop`, `release-*`, `feature-*`, and `hotfix-*` branches, which are described below:
 
-- ``develop`` branch
-  The `develop` branch only accept merge request from other forked branches or`release-*` branches. It is not allowed to directly push changes to the `develop` branch. A `release-*` branch has to be pulled from the develop branch when a new build is to be released.
+- ``develop`` branch  
+  The `develop` branch only accept merge request from other forked branches or`release_*` branches. It is not allowed to directly push changes to the `develop` branch. A `release_*` branch has to be pulled from the develop branch when a new build is to be released.
 
-- ``master`` branch
-  `release-*` branches and `hotfix-*` branches should only be merged into the master branch when a new build is released.
+- ``master`` branch  
+  `release_*` branches and `hotfix/*` branches should only be merged into the `master` branch when a new build is released.
 
-- ``release`` branch
-  `release-*` is a branch pulled from the `develop` branch for release. It should be merged into `master` after a regression test and will be permanently kept in the repository. If a bug is identified in a `release-*` branch, its fixes should be directly merged into the branch. After passing the regression test, the `release-*` branch should be merged back into the `develop` branch. Essentially, a `release-*` branch serves as a snapshot for each release.
+- ``release`` branch  
+  `release_*` is a branch pulled from the `develop` branch for release. It should be merged into `master` after a regression test and will be permanently kept in the repository. If a bug is identified in a `release_*` branch, its fixes should be directly merged into the branch. After passing the regression test, the `release_*` branch should be merged back into the `develop` branch. Essentially, a `release_*` branch serves as a snapshot for each release.
 
-- ``feature`` branch
-  `feature-*` is an important feature branch pulled from the `develop` branch. After the `feature-*` branch is code-complete, it should be merged back to the `develop` branch. The `feature-*` branch is maintainable.
+- ``feature`` branch  
+  `feature/*` is an important feature branch pulled from the `develop` branch. After the `feature/*` branch is code-complete, it should be merged back to the `develop` branch. The `feature/*` branch is maintainable.
 
-- ``hotfix`` branch
-  It is pulled from the `master` branch and should be merged back into the master branch and the `develop` branch. Only pull requests of the fork repository (pull requests for bug fixes) should be merged into the `hotfix` branch. `hotfix` branches are used only for fixing bugs found after release.
+- ``hotfix`` branch  
+  It is pulled from the `master` branch and should be merged back into the master branch and the `develop` branch. Only pull requests of the fork repository (pull requests for bug fixes) should be merged into the `hotfix/` branch. `hotfix/` branches are used only for fixing bugs found after release.
 
 
 ### Submitting Code
@@ -198,10 +198,12 @@ If the purpose of this submission is to modify one issue, you need to refer to t
 
 
 ### Branch Naming Conventions
-1. Always name the `Master` branch and `Develop` branch as "master" and "develop".
-2. Name the `release-*` branch using version numbers, which are assigned by the project lead (e.g., Odyssey-v3.1.3, 3.1.3, etc.).
-3. Use `hotfix/` as the prefix of the `hotfix` branch, briefly describe the bug in the name, and connect words with hyphens (e.g., hotfix/typo, hotfix/null-point-exception, etc.).
+1. Always name the `master` branch and `develop` branch as "master" and "develop".
+2. Name the `release_*` branch using version numbers, which are assigned by the project lead (e.g., Odyssey-v3.1.3, 3.1.3, etc.).
+3. Use `hotfix/` as the prefix of the `hotfix` branch, briefly describe the bug in the name, and connect words with underline (e.g., hotfix/typo, hotfix/null_point_exception, etc.).
+4. Use `feature/` as the prefix of the `feature` branch, briefly describe the feature in the name, and connect words with underline (e.g., feature/new_resource_model, etc.).
 ### Pull Request Guidelines
+
 1. Create one PR for one issue.
 2. Avoid massive PRs.
 3. Write an overview of the purpose of the PR in its title.
@@ -209,6 +211,7 @@ If the purpose of this submission is to modify one issue, you need to refer to t
 5. Elaborate on the feedback you need (if any).
 6. Do not capitalize the first letter.
 7. Do not put a period (.) in the end.
+
 
 
 
