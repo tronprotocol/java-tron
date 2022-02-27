@@ -18,11 +18,10 @@
 ##############################################################################
 
 BASE_DIR="/java-tron"
-DOCKER_REPOSITORY="forfreeday"
-#DOCKER_REPOSITORY="tronprotocol"
+DOCKER_REPOSITORY="tronprotocol"
 DOCKER_IMAGES="java-tron-test"
+# latest or version
 #DOCKER_TARGET="latest"
-DOCKER_TARGET="1.3"
 
 HOST_HTTP_PORT=8090
 HOST_RPC_PORT=50051
@@ -56,7 +55,7 @@ docker_image() {
 
 run() {
   docker_image
-  
+
   if [ ! $image ] ; then
     echo 'warning: no java-tron mirror image, do you need to get the mirror image?'
     read need
@@ -111,7 +110,7 @@ stop() {
 }
 
 rm_container() {
-  stop 
+  stop
   if [ $cid ]; then
     echo "containerID: $cid"
     echo "docker rm $cid"
@@ -128,7 +127,7 @@ log() {
     echo "containerID: $cid"
     echo "docker rm $cid"
     docker exec -it 1e98eb9695b0  tail -222f /java-tron/logs/tron.log
-    docker exec -it $cid tail -100f $BASE_DIR/$LOG_FILE 
+    docker exec -it $cid tail -100f $BASE_DIR/$LOG_FILE
   else
     echo "container not exists!"
   fi
