@@ -19,7 +19,7 @@
 
 BASE_DIR="/java-tron"
 DOCKER_REPOSITORY="tronprotocol"
-DOCKER_IMAGES="java-tron-test"
+DOCKER_IMAGES="java-tron"
 # latest or version
 #DOCKER_TARGET="latest"
 
