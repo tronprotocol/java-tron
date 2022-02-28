@@ -126,7 +126,6 @@ log() {
   if [ $cid ]; then
     echo "containerID: $cid"
     echo "docker rm $cid"
-    docker exec -it 1e98eb9695b0  tail -222f /java-tron/logs/tron.log
     docker exec -it $cid tail -100f $BASE_DIR/$LOG_FILE
   else
     echo "container not exists!"
