@@ -41,6 +41,9 @@ LOG_FILE="/logs/tron.log"
 
 if test docker; then
     docker -v
+else
+  echo "warning: docker must be installed, please install docker first."
+  exit
 fi
 
 docker_ps() {
