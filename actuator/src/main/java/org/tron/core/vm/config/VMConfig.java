@@ -33,8 +33,7 @@ public class VMConfig {
 
   private static boolean ALLOW_TVM_COMPATIBLE_EVM = false;
 
-  private VMConfig() {
-  }
+  private VMConfig() {}
 
   public static boolean vmTrace() {
     return vmTrace;

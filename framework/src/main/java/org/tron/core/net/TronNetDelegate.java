@@ -98,10 +98,6 @@ public class TronNetDelegate {
     }
   };
 
-  public void trustNode(PeerConnection peer) {
-    channelManager.getTrustNodes().put(peer.getInetAddress(), peer.getNode());
-  }
-
   public Collection<PeerConnection> getActivePeer() {
     return syncPool.getActivePeers();
   }

@@ -87,10 +87,6 @@ public class TronNetService {
     advService.broadcast(msg);
   }
 
-  public void fastForward(BlockMessage msg) {
-    advService.fastForward(msg);
-  }
-
   protected void onMessage(PeerConnection peer, TronMessage msg) {
     try {
       switch (msg.getType()) {
