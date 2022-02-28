@@ -21,7 +21,7 @@ BASE_DIR="/java-tron"
 DOCKER_REPOSITORY="tronprotocol"
 DOCKER_IMAGES="java-tron"
 # latest or version
-DOCKER_TARGET="latest"
+DOCKER_TARGET="1.3"
 
 HOST_HTTP_PORT=8090
 HOST_RPC_PORT=50051
@@ -60,10 +60,14 @@ run() {
   docker_image
 
   if [ ! $image ] ; then
-    echo 'warning: no java-tron mirror image, do you need to get the mirror image?'
+    echo 'warning: no java-tron mirror image, do you need to get the mirror image?[y/n]'
     read need
-    if [ $need ]; then
+
+    if [[ $need == 'y' || $need == 'yes' ]]; then
       pull
+    else
+      echo "warning: no mirror image found, go ahead and download a mirror."
+      exit
     fi
   fi
 
@@ -75,7 +79,53 @@ run() {
       wget -P config/ https://raw.githubusercontent.com/tronprotocol/tron-deployment/master/main_net_config.conf
     fi
   fi
+
+  volume=""
+  parameter=""
+  tron_parameter=""
+  if [ $# > 0 ]; then
+    while [ -n "$1" ]; do
+      case "$1" in
+        -v)
+          volume="$volume -v $2"
+          shift 2
+          ;;
+        -p)
+          parameter="$parameter -p $2"
+          shift 2
+          ;;
+        -c)
+          tron_parameter="$tron_parameter -c $2"
+          shift 2
+          ;;
+        *)
+          echo "arg: $1 is not a valid parameter"
+          exit
+          ;;
+      esac
+    done
+
+  if [ -z "$volume" ]; then
+    volume=" -v $CONFIG:/java-tron/config -v $OUTPUT_DIRECTORY:/java-tron/output-directory"
+  fi
+
+  if [ -z "$parameter" ]; then
+    parameter=" -p $HOST_HTTP_PORT:$DOCKER_HTTP_PORT -p $HOST_RPC_PORT:$DOCKER_RPC_PORT -p $HOST_LISTEN_PORT:$DOCKER_LISTEN_PORT"
+  fi
+
+  if [ -z "$tron_parameter" ]; then
+    tron_parameter=" -c $CONFIG_PATH$CONFIG_FILE"
+  fi
+  # Using custom parameters
   docker run -d -it --name "$DOCKER_REPOSITORY-$DOCKER_IMAGES" \
+      $volume \
+      $parameter \
+      --restart always \
+      "$DOCKER_REPOSITORY/$DOCKER_IMAGES:$DOCKER_TARGET" \
+      $tron_parameter
+  else
+    # Default parameters
+    docker run -d -it --name "$DOCKER_REPOSITORY-$DOCKER_IMAGES" \
       -v $CONFIG:/java-tron/config \
       -v $OUTPUT_DIRECTORY:/java-tron/output-directory \
       -p $HOST_HTTP_PORT:$DOCKER_HTTP_PORT \
@@ -84,6 +134,7 @@ run() {
       --restart always \
       "$DOCKER_REPOSITORY/$DOCKER_IMAGES:$DOCKER_TARGET" \
       -c "$CONFIG_PATH$CONFIG_FILE"
+  fi
 }
 
 build() {
@@ -96,8 +147,20 @@ build() {
 }
 
 pull() {
-  echo 'docker pull'
+  echo "docker pull $DOCKER_REPOSITORY/$DOCKER_IMAGES:$DOCKER_TARGET"
   docker pull "$DOCKER_REPOSITORY/$DOCKER_IMAGES:$DOCKER_TARGET"
+}
+
+start() {
+  docker_ps
+  if [ $cid ]; then
+    echo "containerID: $cid"
+    echo "docker stop $cid"
+    docker start $cid
+    docker ps
+  else
+    echo "container not running!"
+  fi
 }
 
 stop() {
@@ -126,6 +189,7 @@ rm_container() {
 
 log() {
   docker_ps
+
   if [ $cid ]; then
     echo "containerID: $cid"
     echo "docker rm $cid"
@@ -139,6 +203,10 @@ log() {
 case "$1" in
 --pull)
   pull ${@: 2}
+  exit
+  ;;
+--start)
+  start ${@: 2}
   exit
   ;;
 --stop)
