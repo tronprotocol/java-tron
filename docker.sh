@@ -39,6 +39,10 @@ CONFIG_PATH="/java-tron/config/"
 CONFIG_FILE="main_net_config.conf"
 LOG_FILE="/logs/tron.log"
 
+JAVA_TRON_REPOSITORY="https://raw.githubusercontent.com/tronprotocol/java-tron/develop/"
+DOCKER_FILE="Dockerfile"
+ENDPOINT_SHELL="docker-entrypoint.sh"
+
 if test docker; then
     docker -v
 else
@@ -83,7 +87,7 @@ run() {
   volume=""
   parameter=""
   tron_parameter=""
-  if [ $# > 0 ]; then
+  if [ $# -gt 0 ]; then
     while [ -n "$1" ]; do
       case "$1" in
         -v)
@@ -141,7 +145,18 @@ build() {
   echo 'docker build'
   if [ ! -f "Dockerfile" ]; then
     echo 'warning: Dockerfile not exists.'
-    exit
+    if test curl; then
+      DOWNLOAD_CMD="curl -LJO "
+    elif test wget; then
+      DOWNLOAD_CMD="wget "
+    else
+      echo "Dockerfile cannot be downloaded, you need to install 'curl' or 'wget'!"
+      exit
+    fi
+    # download Dockerfile
+   `$DOWNLOAD_CMD "$JAVA_TRON_REPOSITORY$DOCKER_FILE"`
+   `$DOWNLOAD_CMD "$JAVA_TRON_REPOSITORY$ENDPOINT_SHELL"`
+   chmod u+rwx $ENDPOINT_SHELL
   fi
   docker build -t "$DOCKER_REPOSITORY/$DOCKER_IMAGES:$DOCKER_TARGET" .
 }
@@ -183,7 +198,7 @@ rm_container() {
     docker rm $cid
     docker_ps
   else
-    echo "container not exists!"
+    echo "image not exists!"
   fi
 }
 
@@ -192,7 +207,6 @@ log() {
 
   if [ $cid ]; then
     echo "containerID: $cid"
-    echo "docker rm $cid"
     docker exec -it $cid tail -100f $BASE_DIR/$LOG_FILE
   else
     echo "container not exists!"
