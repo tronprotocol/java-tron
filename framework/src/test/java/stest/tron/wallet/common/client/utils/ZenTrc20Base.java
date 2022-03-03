@@ -89,7 +89,6 @@ public class ZenTrc20Base {
    */
   @BeforeSuite(enabled = true, description = "Deploy shield trc20 depend contract")
   public void deployShieldTrc20DependContract() {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();

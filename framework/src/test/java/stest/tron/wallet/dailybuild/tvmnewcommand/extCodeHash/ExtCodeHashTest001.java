@@ -61,11 +61,7 @@ public class ExtCodeHashTest001 {
   private byte[] testAddress = ecKey3.getAddress();
   private String testKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.

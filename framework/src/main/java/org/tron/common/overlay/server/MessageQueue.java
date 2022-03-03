@@ -71,6 +71,9 @@ public class MessageQueue {
               logger.error("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
             }
           });
+        } catch (InterruptedException e) {
+          logger.warn("Send message server interrupted.");
+          Thread.currentThread().interrupt();
         } catch (Exception e) {
           logger.error("Failed to send to {}, error info: {}", ctx.channel().remoteAddress(),
               e.getMessage());
@@ -141,6 +144,9 @@ public class MessageQueue {
       try {
         sendMsgThread.join(20);
         sendMsgThread = null;
+      } catch (InterruptedException e) {
+        logger.warn("Send message join interrupted.");
+        Thread.currentThread().interrupt();
       } catch (Exception e) {
         logger.warn("Join send thread failed, peer {}", ctx.channel().remoteAddress());
       }

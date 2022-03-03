@@ -43,6 +43,7 @@ import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.Op;
+import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
@@ -106,7 +107,6 @@ public class Program {
   private int contractVersion;
   private DataWord adjustedCallEnergy;
 
-
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
   }
@@ -123,8 +123,6 @@ public class Program {
     this.trace = new ProgramTrace(programInvoke);
     this.nonce = internalTransaction.getNonce();
   }
-
-
 
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
@@ -642,12 +640,11 @@ public class Program {
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
-      VM.play(program);
+      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
       this.nonce = program.nonce;
-
     }
 
     // 4. CREATE THE CONTRACT OUT OF RETURN
@@ -680,7 +677,7 @@ public class Program {
           Hex.toHexString(newAddress),
           createResult.getException());
 
-      if(internalTx != null){
+      if (internalTx != null) {
         internalTx.reject();
       }
 
@@ -754,7 +751,6 @@ public class Program {
           Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(),
           msg.getOutDataSize().longValue());
     }
-
 
     Repository deposit = getContractState().newRepositoryChild();
 
@@ -873,10 +869,10 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
-        program.setContractVersion(
-            invoke.getDeposit().getContract(codeAddress).getContractVersion());
+        program.setContractVersion(invoke.getDeposit()
+            .getContract(codeAddress).getContractVersion());
       }
-      VM.play(program);
+      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
       callResult = program.getResult();
 
       getTrace().merge(program.getTrace());

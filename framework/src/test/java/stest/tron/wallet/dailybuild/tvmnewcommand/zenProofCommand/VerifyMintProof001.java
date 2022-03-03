@@ -40,11 +40,7 @@ public class VerifyMintProof001 {
   private byte[] testAddress001 = ecKey1.getAddress();
   private String testPriKey001 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.

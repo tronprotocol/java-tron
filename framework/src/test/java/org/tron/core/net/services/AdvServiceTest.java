@@ -55,7 +55,7 @@ public class AdvServiceTest {
   public void test() {
     testAddInv();
     testBroadcast();
-    testFastSend();
+    //testFastSend();
     testTrxBroadcast();
   }
 
@@ -100,7 +100,7 @@ public class AdvServiceTest {
       System.out.println(e);
     }
   }
-
+  /*
   private void testFastSend() {
 
     try {
@@ -126,6 +126,7 @@ public class AdvServiceTest {
       System.out.println(e);
     }
   }
+  */
 
   private void testTrxBroadcast() {
     Protocol.Transaction trx = Protocol.Transaction.newBuilder().build();
