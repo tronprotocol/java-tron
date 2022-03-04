@@ -5,7 +5,7 @@ java-tron provides docker images to build projects quickly. To simplify the use 
 
 
 ## Features
-
+* Building the mirror image
 * Get docker mirrors
 * Start Service
 * Stop the service
@@ -66,32 +66,6 @@ Output run log,you can see the log output from java-tron.
 sh docker.sh --log
 ```
 
-**Detail log**
-
-```
-07:32:01.732 INFO  [main] [app](FullNode.java:53) Full node running.
-07:32:02.830 WARN  [main] [app](LocalWitnesses.java:104) privateKey is null
-07:32:03.562 INFO  [main] [app](Args.java:1029) Bind address wasn't set, Punching to identify it...
-07:32:03.745 INFO  [main] [app](Args.java:1032) UDP local bound to: 172.17.0.2
-07:32:03.748 INFO  [main] [app](Args.java:1047) External IP wasn't set, using checkip.amazonaws.com to identify it...
-07:32:04.446 INFO  [main] [app](Args.java:1061) External address identified: 203.12.203.3
-07:32:04.477 INFO  [main] [app](Args.java:1144)
-
-07:32:04.477 INFO  [main] [app](Args.java:1145) ************************ Net config ************************
-07:32:04.477 INFO  [main] [app](Args.java:1146) P2P version: 11111
-07:32:04.477 INFO  [main] [app](Args.java:1147) Bind IP: 172.17.0.2
-07:32:04.477 INFO  [main] [app](Args.java:1148) External IP: 203.12.203.3
-07:32:04.478 INFO  [main] [app](Args.java:1149) Listen port: 18888
-07:32:04.478 INFO  [main] [app](Args.java:1150) Discover enable: true
-07:32:04.479 INFO  [main] [app](Args.java:1151) Active node size: 0
-07:32:04.479 INFO  [main] [app](Args.java:1152) Passive node size: 0
-07:32:04.480 INFO  [main] [app](Args.java:1153) FastForward node size: 2
-07:32:04.480 INFO  [main] [app](Args.java:1154) Seed node size: 29
-07:32:04.480 INFO  [main] [app](Args.java:1155) Max connection: 30
-07:32:04.480 INFO  [main] [app](Args.java:1156) Max connection with same IP: 2
-07:32:04.480 INFO  [main] [app](Args.java:1157) Solidity threads: 4
-```
-
 If you need to see key information, you can filter directly using grep:
 
 ```shell
@@ -100,31 +74,74 @@ sh docker.sh --log | grep 'pushBlock'
 
 When you need to stop the container of java-tron, you can execute: 
 
-```sh
+```shell
 sh docker.sh --stop
 ```
 
+## Build Image
 
+The default mirror name for constructing a mirror image has the following parameters: 
+
+```shell
+...
+DOCKER_REPOSITORY="tronprotocol"
+DOCKER_IMAGES="java-tron"
+# latest or version
+DOCKER_TARGET="latest"
+...
+```
+
+You can change the parameters to your own mirror name:
+
+```shell
+...
+DOCKER_REPOSITORY="you_repository"
+DOCKER_IMAGES="java-tron"
+# latest or version
+DOCKER_TARGET="1.0"
+...
+```
+
+Execute the build
+
+```shell
+sh docker.sh --build
+```
+
+## Pull Image
+
+Get the `tronprotocol/java-tron` image from the docker hub, this image contains the full JDK environment and the host network configuration file, using the script for simple docker operations.
+
+```shell
+sh docker.sh --pull
+```
+
+## Run
+
+Three necessary ports need to be open for java-tron to start.
+1. HTTP: 8090
+2. RPC: 50051
+3. LISTEN: 18888
+
+When started with `docker.sh`, the `config` and `database` directories will be mounted in the
+directory to the directory where host executes `docker.sh`
+
+```shell
+sh docker.sh --run
+```
 
 ## Options
 
-* **--pull**  
+Parameters for all functions：
 
-  download a docker mirror from **DockerHub**
+* **`--build`** Building a local mirror image
 
-* **--run**  
+* **`--pull`**  download a docker mirror from **DockerHub**
 
-  run the **tronprotocol/java-tron** docker mirror
+* **`--run`**  run the **tronprotocol/java-tron** docker mirror
 
-* **--log**  
+* **`--log`**  exporting the java-tron run log on the container
 
-  exporting the java-tron run log on the container
-
-* **--stop**  
+* **`--stop`**  stopping a running container
   
-  stopping a running container
-  
-* **--rm**
-
-  remove mirror image
-
+* **`--rm`** remove mirror image
