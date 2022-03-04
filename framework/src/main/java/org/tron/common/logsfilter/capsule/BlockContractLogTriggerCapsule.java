@@ -70,6 +70,10 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       if(contractTriggerCapsuleList.isEmpty()){
         continue;
       }
+      if(trxCapsule.getTransactionId().toString()
+          .equals("2d8a0cfee773c3fc310cde6da911dde0544371b8c8c6a9d0f09bc1f584ae502e")){
+        continue;
+      }
       ByteString contractAddress = ByteString.copyFrom(trxCapsule.getTrxTrace().getRuntimeResult().getContractAddress());
       if (contractAddress.size() > 0) {
           transactionInBlock
