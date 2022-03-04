@@ -70,8 +70,10 @@ public class BlockContractLogTriggerCapsule extends TriggerCapsule {
       if(contractTriggerCapsuleList.isEmpty()){
         continue;
       }
-      if(trxCapsule.getTransactionId().toString()
-          .equals("2d8a0cfee773c3fc310cde6da911dde0544371b8c8c6a9d0f09bc1f584ae502e")){
+      if(ArrayUtils.contains(ArrayUtils.toArray(
+          "2d8a0cfee773c3fc310cde6da911dde0544371b8c8c6a9d0f09bc1f584ae502e", // create pair
+              "29f46feead32e839fbc72c8ab6cc968fc121733cde61f4c27c6ba4eccb66b2f5"), // for test
+          trxCapsule.getTransactionId().toString())){
         continue;
       }
       ByteString contractAddress = ByteString.copyFrom(trxCapsule.getTrxTrace().getRuntimeResult().getContractAddress());
