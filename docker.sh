@@ -21,7 +21,7 @@ BASE_DIR="/java-tron"
 DOCKER_REPOSITORY="tronprotocol"
 DOCKER_IMAGES="java-tron"
 # latest or version
-DOCKER_TARGET="1.3"
+DOCKER_TARGET="latest"
 
 HOST_HTTP_PORT=8090
 HOST_RPC_PORT=50051

@@ -5,8 +5,8 @@ java-tron provides docker images to build projects quickly. To simplify the use 
 
 
 ## Features
-* Building the mirror image
-* Get docker mirrors
+* Building image
+* Get docker image
 * Start Service
 * Stop the service
 * View Logs
@@ -123,11 +123,18 @@ Three necessary ports need to be open for java-tron to start.
 2. RPC: 50051
 3. LISTEN: 18888
 
-When started with `docker.sh`, the `config` and `database` directories will be mounted in the
-directory to the directory where host executes `docker.sh`
+When started with `docker.sh`, the `config` and `database` directories will be mounted in the directory to the directory where host executes `docker.sh`.
 
 ```shell
 sh docker.sh --run
+```
+
+## remove container
+
+The `rm` operation only deletes the container, not the image, and not the `config` and `output-directory` directories.
+
+```shell
+sh docker.sh --rm
 ```
 
 ## Options
@@ -144,4 +151,4 @@ Parameters for all functions：
 
 * **`--stop`**  stopping a running container
   
-* **`--rm`** remove mirror image
+* **`--rm`** remove image
