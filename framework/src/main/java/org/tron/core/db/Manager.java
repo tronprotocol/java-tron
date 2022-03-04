@@ -426,7 +426,7 @@ public class Manager {
       this.pendingTransactions = new LinkedBlockingQueue<>();
       this.rePushTransactions = new LinkedBlockingQueue<>();
     }
-    this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
+    this.triggerCapsuleQueue = new LinkedBlockingQueue<>(19);
     this.filterCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
@@ -2107,8 +2107,12 @@ public class Manager {
         new BlockContractLogTriggerCapsule(blockCapsule, getDynamicPropertiesStore()
         .getLatestSolidifiedBlockNum());
 
-    if (!triggerCapsuleQueue.offer(blockContractLogTriggerCapsule)) {
-      logger.info("too many triggers, BlockContractLog trigger lost: {}", blockCapsule.getBlockId());
+    try{
+      triggerCapsuleQueue.put(blockContractLogTriggerCapsule);
+    } catch (InterruptedException e){
+      logger.info(e.getMessage());
+      while (!triggerCapsuleQueue.offer(blockContractLogTriggerCapsule)){
+      }
     }
   }
 
