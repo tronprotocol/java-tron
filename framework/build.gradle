@@ -88,7 +88,8 @@ dependencies {
     compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
 
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
-    compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
+    compile 'com.github.tronprotocol:zksnark-java-sdk:java_v11_upgrade-SNAPSHOT'
+    compile 'commons-io:commons-io:2.11.0'
     compile project(":chainbase")
     compile project(":protocol")
     compile project(":actuator")
