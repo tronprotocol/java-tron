@@ -224,7 +224,7 @@ public class Manager {
       Collections.synchronizedList(Lists.newArrayList());
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
-  private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+  public BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
   // log filter
   private boolean isRunFilterProcessThread = true;
   private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
@@ -2099,7 +2099,7 @@ public class Manager {
     return value;
   }
 
-  private void postBlockContractLogTrigger(final BlockCapsule blockCapsule) {
+  public void postBlockContractLogTrigger(final BlockCapsule blockCapsule) {
     if (!eventPluginLoaded || !EventPluginLoader.getInstance().isBlockContractLogTriggerEnable()) {
       return;
     }

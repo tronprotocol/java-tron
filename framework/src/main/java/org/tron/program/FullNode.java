@@ -3,6 +3,10 @@ package org.tron.program;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -11,8 +15,12 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
+import org.tron.core.actuator.VMActuator;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.BlockIndexStore;
+import org.tron.core.db.BlockStore;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
@@ -22,6 +30,9 @@ import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.TransactionRetStore;
+import org.tron.core.db.Manager;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -29,6 +40,14 @@ public class FullNode {
   public static final int dbVersion = 2;
 
   public static volatile boolean shutDownSign = false;
+
+
+  private static Manager dbManager;
+  private static TransactionRetStore transactionRetStore;
+  private static BlockStore blockStore;
+  private static BlockIndexStore blockIndexStore;
+  private static AccountStore accountStore;
+
 
   public static void load(String path) {
     try {
@@ -77,68 +96,57 @@ public class FullNode {
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
-    // grpc api server
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    appT.addService(rpcApiService);
+    System.out.println(" >>>>>>>>>>> start");
 
-    // http api server
-    FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
-    if (CommonParameter.getInstance().fullNodeHttpEnable) {
-      appT.addService(httpApiService);
-    }
+    dbManager = appT.getDbManager();
+    blockStore = dbManager.getBlockStore();
+    blockIndexStore = dbManager.getBlockIndexStore();
+    transactionRetStore = dbManager.getTransactionRetStore();
+    accountStore = dbManager.getAccountStore();
 
-    // JSON-RPC http server
-    if (CommonParameter.getInstance().jsonRpcHttpFullNodeEnable) {
-      FullNodeJsonRpcHttpService jsonRpcHttpService =
-          context.getBean(FullNodeJsonRpcHttpService.class);
-      appT.addService(jsonRpcHttpService);
-    }
+    final long headBlockNum = dbManager.getHeadBlockNum();
+    System.out.println(" >>>>>>>>>>> headBlockNum" + headBlockNum);
 
-    // full node and solidity node fuse together
-    // provide solidity rpc and http server on the full node.
-    if (CommonParameter.getInstance().getStorage().getDbVersion() == dbVersion) {
-      RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
-          .getBean(RpcApiServiceOnSolidity.class);
-      appT.addService(rpcApiServiceOnSolidity);
-      HttpApiOnSolidityService httpApiOnSolidityService = context
-          .getBean(HttpApiOnSolidityService.class);
-      if (CommonParameter.getInstance().solidityNodeHttpEnable) {
-        appT.addService(httpApiOnSolidityService);
-      }
+    List<Long> blockNums = LongStream.rangeClosed(38582727L, 38583836L).boxed().collect(Collectors.toList());
+    handleBlock(blockNums);
 
-      // JSON-RPC on solidity
-      if (CommonParameter.getInstance().jsonRpcHttpSolidityNodeEnable) {
-        JsonRpcServiceOnSolidity jsonRpcServiceOnSolidity = context
-            .getBean(JsonRpcServiceOnSolidity.class);
-        appT.addService(jsonRpcServiceOnSolidity);
+    while (!allOver()) {
+      try {
+        Thread.sleep(1000);
+      } catch (Exception ex) {
+        logger.error("", ex);
       }
     }
 
-    // PBFT API (HTTP and GRPC)
-    if (CommonParameter.getInstance().getStorage().getDbVersion() == dbVersion) {
-      RpcApiServiceOnPBFT rpcApiServiceOnPBFT = context
-          .getBean(RpcApiServiceOnPBFT.class);
-      appT.addService(rpcApiServiceOnPBFT);
-      HttpApiOnPBFTService httpApiOnPBFTService = context
-          .getBean(HttpApiOnPBFTService.class);
-      appT.addService(httpApiOnPBFTService);
-
-      // JSON-RPC on PBFT
-      if (CommonParameter.getInstance().jsonRpcHttpPBFTNodeEnable) {
-        JsonRpcServiceOnPBFT jsonRpcServiceOnPBFT = context.getBean(JsonRpcServiceOnPBFT.class);
-        appT.addService(jsonRpcServiceOnPBFT);
-      }
-    }
-
-    appT.initServices(parameter);
-    appT.startServices();
-    appT.startup();
-
-    rpcApiService.blockUntilShutdown();
+    System.out.println(" >>>>>>>>>>> main is end!!!!!!!!");
+    context.destroy();
+    context.close();
+    System.exit(0);
   }
 
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+  }
+
+  private static void handleBlock(List<Long> blockNums) {
+    for(long blockNum : blockNums){
+      BlockCapsule blockCapsule = getBlockByNum(blockNum);
+      dbManager.postBlockContractLogTrigger(blockCapsule);
+    }
+  }
+
+  private static BlockCapsule getBlockByNum(long num) {
+    BlockCapsule blockCapsule = null;
+    try {
+      blockCapsule = blockStore.get(blockIndexStore.get(num).getBytes());
+    } catch (Exception e) {
+      logger.error(" >>> get block error, num:{}", num);
+    }
+    return blockCapsule;
+  }
+
+  private static boolean allOver(){
+    return dbManager.triggerCapsuleQueue.isEmpty();
   }
 }
