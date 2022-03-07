@@ -31,6 +31,18 @@ then start the java-tron service with the `--run` parameter
 ```shell
 $ sh docker.sh --run
 ```
+
+Custom parameters can be specified
+1. **-p**: custom port mapping
+2. **-c**: custom configuration files
+3. **-v**: custom mount directory
+
+**Example**
+
+```shell
+sh docker.sh --run -v /mydata:/containerdata -p 8080:8090 -p 40051:50051 -c /data/config.conf
+```
+
 If you want to see the logs of the java-tron service, please use the `--log` parameter
 
 ```shell
