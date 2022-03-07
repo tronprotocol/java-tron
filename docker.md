@@ -1,140 +1,61 @@
 # Docker Shell Guide
 
-java-tron provides docker images to build projects quickly. To simplify the use of Docker, common docker commands are simplified. We provide a shell script to use. Please make sure you have docker installed on your computer before using it.
-
-
-
-## Features
-* Building image
-* Get docker image
-* Start Service
-* Stop the service
-* View Logs
-* Delete containers
-
+java-tron support containerized processes, we maintain a Docker image with latest version build from our master branch on DockerHub. To simplify the use of Docker and common docker commands, we also provide a shell script to help you better manage container services，this guide describes how to use the script tool.
 
 
 ## Prerequisites
 
-Requires docker to be installed on the system. Docker version >=20.10.12.
-
-
-
-## Getting
-
-Shell can be obtained from the java-tron project or independently.
-
-You can get the script from [here](https://github.com/tronprotocol/java-tron/docker.sh),Or download via the tool:
-
-* wget
-
-  ```shell
-  wget https://raw.githubusercontent.com/tronprotocol/java-tron/develop/docker.sh
-  ```
-
-* curl
-
-  ```shell
-  curl -LO https://raw.githubusercontent.com/tronprotocol/java-tron/develop/docker.sh
-  ```
-
-* git clone
-
-  ```shell
-  git clone https://github.com/tronprotocol/java-tron.git
-  cd java-tron
-  ```
-  
+Requires docker to be installed on the system. Docker version >=20.10.12. 
   
 
 ## Quick Start
 
-This guide will help you to quickly build **java-tron** services using docker.
-Get the script here and pull the mirror image and run the service.
+Shell can be obtained from the java-tron project or independently, you can get the script from [here](https://github.com/tronprotocol/java-tron/docker.sh) or download via the wget:
+  ```shell
+ $ wget https://raw.githubusercontent.com/tronprotocol/java-tron/develop/docker.sh
+  ```
 
+### Pull the mirror image
+Get the `tronprotocol/java-tron` image from the DockerHub, this image contains the full JDK environment and the host network configuration file, using the script for simple docker operations.
 ```shell
-git clone https://github.com/tronprotocol/java-tron.git
-cd java-tron
-sh docker.sh --pull
-sh docker.sh --run
-docker ps 
+$ sh docker.sh --pull
 ```
 
-Output run log,you can see the log output from java-tron.
+### Running the service
+Before running the java-tron service, make sure the necessary ports are opened：
+- `8090`: provides `HTTP` interface
+- `50051`: provides `RPC` interface
+- `18888`: P2P service listening interface
+
+then start the java-tron service with the `--run` parameter
+```shell
+$ sh docker.sh --run
+```
+If you want to see the logs of the java-tron service, please use the `--log` parameter
 
 ```shell
-sh docker.sh --log
+$ sh docker.sh --log | grep 'pushBlock'
 ```
 
-If you need to see key information, you can filter directly using grep:
+If you want to stop the container of java-tron, you can execute
 
 ```shell
-sh docker.sh --log | grep 'pushBlock'
-```
-
-When you need to stop the container of java-tron, you can execute: 
-
-```shell
-sh docker.sh --stop
+$ sh docker.sh --stop
 ```
 
 ## Build Image
 
-The default mirror name for constructing a mirror image has the following parameters: 
-
+If you do not want to use the default official image, you can also compile your own local image, first you need to change some parameters in the shell script to specify your own mirror info，`DOCKER_REPOSITORY` is your repository name, `DOCKER_IMAGES` is the image name,`DOCKER_TARGET` is the version number, here is an example：
 ```shell
-...
-DOCKER_REPOSITORY="tronprotocol"
-DOCKER_IMAGES="java-tron"
-# latest or version
-DOCKER_TARGET="latest"
-...
-```
-
-You can change the parameters to your own mirror name:
-
-```shell
-...
 DOCKER_REPOSITORY="you_repository"
 DOCKER_IMAGES="java-tron"
-# latest or version
 DOCKER_TARGET="1.0"
-...
 ```
 
-Execute the build
+then execute the build:
 
 ```shell
-sh docker.sh --build
-```
-
-## Pull Image
-
-Get the `tronprotocol/java-tron` image from the docker hub, this image contains the full JDK environment and the host network configuration file, using the script for simple docker operations.
-
-```shell
-sh docker.sh --pull
-```
-
-## Run
-
-Three necessary ports need to be open for java-tron to start.
-1. HTTP: 8090
-2. RPC: 50051
-3. LISTEN: 18888
-
-When started with `docker.sh`, the `config` and `database` directories will be mounted in the directory to the directory where host executes `docker.sh`.
-
-```shell
-sh docker.sh --run
-```
-
-## remove container
-
-The `rm` operation only deletes the container, not the image, and not the `config` and `output-directory` directories.
-
-```shell
-sh docker.sh --rm
+$ sh docker.sh --build
 ```
 
 ## Options
@@ -145,10 +66,10 @@ Parameters for all functions：
 
 * **`--pull`**  download a docker mirror from **DockerHub**
 
-* **`--run`**  run the **tronprotocol/java-tron** docker mirror
+* **`--run`**  run the docker mirror
 
 * **`--log`**  exporting the java-tron run log on the container
 
 * **`--stop`**  stopping a running container
   
-* **`--rm`** remove image
+* **`--rm`** remove container,only deletes the container, not the image, the `config` and `output-directory` directories.
