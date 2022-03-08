@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.LRUMap;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -66,6 +67,9 @@ public class RepositoryImpl implements Repository {
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
 
+  private static final LRUMap<Key, ContractCapsule> contractLruCache = new LRUMap<>();
+  private static final LRUMap<Key, byte[]> codeLruCode = new LRUMap<>();
+
   private StoreFactory storeFactory;
   @Getter
   private DynamicPropertiesStore dynamicPropertiesStore;
@@ -110,6 +114,12 @@ public class RepositoryImpl implements Repository {
   private HashMap<Key, Value> delegatedResourceCache = new HashMap<>();
   private HashMap<Key, Value> votesCache = new HashMap<>();
   private HashMap<Key, Value> delegationCache = new HashMap<>();
+
+  public static void removeLruCache(byte[] address) {
+    Key key = Key.create(address);
+    contractLruCache.remove(key);
+    codeLruCode.remove(key);
+  }
 
   public RepositoryImpl(StoreFactory storeFactory, RepositoryImpl repository) {
     init(storeFactory, repository);
@@ -354,6 +364,10 @@ public class RepositoryImpl implements Repository {
   @Override
   public ContractCapsule getContract(byte[] address) {
     Key key = Key.create(address);
+    if (contractLruCache.containsKey(key)) {
+      return contractLruCache.get(key);
+    }
+
     if (contractCache.containsKey(key)) {
       return contractCache.get(key).getContract();
     }
@@ -367,6 +381,7 @@ public class RepositoryImpl implements Repository {
 
     if (contractCapsule != null) {
       contractCache.put(key, Value.create(contractCapsule.getData()));
+      contractLruCache.put(key, contractCapsule);
     }
     return contractCapsule;
   }
@@ -450,6 +465,10 @@ public class RepositoryImpl implements Repository {
   @Override
   public byte[] getCode(byte[] address) {
     Key key = Key.create(address);
+    if (codeLruCode.containsKey(key)) {
+      return codeLruCode.get(key);
+    }
+
     if (codeCache.containsKey(key)) {
       return codeCache.get(key).getCode().getData();
     }
@@ -466,6 +485,7 @@ public class RepositoryImpl implements Repository {
     }
     if (code != null) {
       codeCache.put(key, Value.create(code));
+      codeLruCode.put(key, code);
     }
     return code;
   }

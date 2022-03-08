@@ -21,6 +21,7 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
@@ -234,6 +235,9 @@ public class VMActuator implements Actuator2 {
         }
       } else {
         rootRepository.commit();
+      }
+      for (DataWord account : result.getDeleteAccounts()) {
+        RepositoryImpl.removeLruCache(account.toTronAddress());
       }
     } catch (JVMStackOverFlowException e) {
       program.spendAllEnergy();
@@ -714,6 +718,5 @@ public class VMActuator implements Actuator2 {
     return this.blockCap != null && !this.blockCap.getInstance().getBlockHeader()
         .getWitnessSignature().isEmpty();
   }
-
 
 }
