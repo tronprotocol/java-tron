@@ -213,12 +213,17 @@ public class TronJsonRpcImpl implements TronJsonRpc {
   public String web3ClientVersion() {
     Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
     Matcher matcher = shortVersion.matcher(System.getProperty("java.version"));
-    matcher.matches();
+    boolean matched = matcher.matches();
+
+    String javaVersion = "Java";
+    if (matched) {
+      javaVersion = javaVersion + matcher.group(1);
+    }
 
     return String.join("/", Arrays.asList(
         "TRON", "v" + Version.getVersion(),
         System.getProperty("os.name"),
-        "Java" + matcher.group(1),
+        javaVersion,
         Version.VERSION_NAME));
   }
 

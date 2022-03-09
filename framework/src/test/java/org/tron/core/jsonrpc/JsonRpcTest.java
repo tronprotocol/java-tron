@@ -7,8 +7,11 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getMethodSign;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,6 +27,7 @@ import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
 import org.tron.core.services.jsonrpc.filters.LogFilter;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.CallArguments;
+import org.tron.program.Version;
 
 
 public class JsonRpcTest {
@@ -415,5 +419,38 @@ public class JsonRpcTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testGetVersion() {
+    Pattern shortVersion = Pattern.compile("(\\d\\.\\d+).*");
+    String javaVersion = "Java";
+
+    Matcher matcher = shortVersion.matcher("1.ss.0");
+    boolean matched = matcher.matches();
+    Assert.assertFalse(matched);
+    if (matched) {
+      javaVersion = javaVersion + matcher.group(1);
+    }
+    Assert.assertEquals("Java", javaVersion);
+
+    javaVersion = "Java";
+    matcher = shortVersion.matcher("1.11.0");
+    matched = matcher.matches();
+    Assert.assertTrue(matched);
+    if (matched) {
+      javaVersion = javaVersion + matcher.group(1);
+    }
+    Assert.assertEquals("Java1.11", javaVersion);
+
+    javaVersion = "Java";
+    matcher = shortVersion.matcher("1.8.0");
+    matched = matcher.matches();
+    Assert.assertTrue(matched);
+    if (matched) {
+      javaVersion = javaVersion + matcher.group(1);
+    }
+    Assert.assertEquals("Java1.8", javaVersion);
+
   }
 }
