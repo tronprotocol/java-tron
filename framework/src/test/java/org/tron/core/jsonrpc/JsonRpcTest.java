@@ -452,5 +452,13 @@ public class JsonRpcTest {
     }
     Assert.assertEquals("Java1.8", javaVersion);
 
+    javaVersion = "Java";
+    matcher = shortVersion.matcher("11.0.14");
+    matched = matcher.matches();
+    Assert.assertTrue(matched);
+    if (matched) {
+      javaVersion = javaVersion + matcher.group(1);
+    }
+    Assert.assertEquals("Java11.0", javaVersion);
   }
 }
