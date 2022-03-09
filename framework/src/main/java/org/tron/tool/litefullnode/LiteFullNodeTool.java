@@ -79,6 +79,7 @@ public class LiteFullNodeTool {
       "properties",
       "proposal",
       "recent-block",
+      "recent-transaction",
       "storage-row",
       //TRANS_CACHE_DB_NAME,
       //"tree-block-index",
