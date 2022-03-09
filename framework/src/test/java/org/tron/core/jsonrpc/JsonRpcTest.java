@@ -423,7 +423,7 @@ public class JsonRpcTest {
 
   @Test
   public void testGetVersion() {
-    Pattern shortVersion = Pattern.compile("(\\d\\.\\d+).*");
+    Pattern shortVersion = Pattern.compile("(\\d+\\.\\d+).*");
     String javaVersion = "Java";
 
     Matcher matcher = shortVersion.matcher("1.ss.0");
