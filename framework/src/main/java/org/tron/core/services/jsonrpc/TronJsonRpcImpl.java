@@ -211,7 +211,7 @@ public class TronJsonRpcImpl implements TronJsonRpc {
 
   @Override
   public String web3ClientVersion() {
-    Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
+    Pattern shortVersion = Pattern.compile("(\\d\\.\\d+).*");
     Matcher matcher = shortVersion.matcher(System.getProperty("java.version"));
     boolean matched = matcher.matches();
 
