@@ -5,9 +5,16 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.primitives.Longs;
+
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -100,35 +107,29 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     long start = System.currentTimeMillis();
     List<byte[]> l1 = new ArrayList<>();
     List<RecentTransactionItem> l2 = new ArrayList<>();
-    Iterator<Map.Entry<byte[], BytesCapsule>> iterator = recentTransactionStore.iterator();
+    Iterator<Entry<byte[], BytesCapsule>> iterator = recentTransactionStore.iterator();
     while (iterator.hasNext()) {
       l1.add(iterator.next().getValue().getData());
     }
 
     l1.forEach(v -> l2.add(JsonUtil.json2Obj(new String(v), RecentTransactionItem.class)));
 
-    l2.forEach(v -> v.getTransactionIds().forEach(tid -> put2(tid, v.getNum())));
+    l2.forEach(v -> v.getTransactionIds().forEach(tid -> putTransaction(tid, v.getNum())));
 
     logger.info("Transaction cache init-2 db-size:{}, blockNumMap-size:{}, cost:{}ms",
             db.size(), blockNumMap.size(), System.currentTimeMillis() - start);
   }
 
-  public void put2(String key, long value) {
+  private void putTransaction(String key, long value) {
     Key k = Key.copyOf(Hex.decode(key));
     Long v = Longs.fromByteArray(ByteArray.fromLong(value));
     blockNumMap.put(v, k);
     db.put(k, v);
-    return;
   }
 
 
   @Override
   public byte[] get(byte[] key) {
-    if (db == null || key == null) {
-      System.out.println("\n\n##### " + db + " ### " + key + "\n\n");
-      logger.info("### {}, {}", db, key);
-    }
-
     Long v = db.get(Key.of(key));
     return v == null ? null : Longs.toByteArray(v);
   }
