@@ -21,21 +21,29 @@ Get the `tronprotocol/java-tron` image from the DockerHub, this image contains t
 $ sh docker.sh --pull
 ```
 
-### Running the service
-Before running the java-tron service, make sure the necessary ports are opened：
-- `8090`: provides `HTTP` interface
-- `50051`: provides `RPC` interface
-- `18888`: P2P service listening interface
+### Run the service
+Before running the java-tron service, make sure some ports on your local machine are open,the image has the following ports automatically exposed:
+- `8090`: used by the HTTP based JSON API
+- `50051`: used by the GRPC based API
+- `18888`: TCP and UDP, used by the P2P protocol running the network
 
 then start the java-tron service with the `--run` parameter
 ```shell
 $ sh docker.sh --run
 ```
+or you can use `-p` to customize  the port mapping, more custom parameters, please refer to [Options](#Options)
+
+```shell
+$ sh docker.sh --run  -p 8080:8090 -p 40051:50051 
+```
+
+### View logs
 If you want to see the logs of the java-tron service, please use the `--log` parameter
 
 ```shell
 $ sh docker.sh --log | grep 'pushBlock'
 ```
+### Stop the service
 
 If you want to stop the container of java-tron, you can execute
 
@@ -72,4 +80,7 @@ Parameters for all functions：
 
 * **`--stop`**  stopping a running container
   
-* **`--rm`** remove container,only deletes the container, not the image, the `config` and `output-directory` directories.
+* **`--rm`** remove container,only deletes the container, not the image
+* **`-p`** Publish a container's port to the host, format:`-p hostPort:containerPort`
+* **`-c`** Specify other java-tron configuration file in the container
+* **`-v`**  Bind mount a volume for container,format: `-v host-src:container-dest`, the `host-src` is an absolute path
