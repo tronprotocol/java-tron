@@ -128,7 +128,7 @@ $ docker run -d --name="java-tron" \
               -c /java-tron/config/main_net_config.conf
 ```
 
-This will mount the `output-directory` and `logs` directories on the host, the docker.sh tool can also be used to simplify the use of docker, see more [here](docker.md).
+This will mount the `output-directory` and `logs` directories on the host, the docker.sh tool can also be used to simplify the use of docker, see more [here](docker/docker.md).
 
 # Community
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
