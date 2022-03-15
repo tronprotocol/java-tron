@@ -26,12 +26,13 @@ RUN set -o errexit -o nounset \
     && cd build/distributions \
     && unzip -o java-tron-1.0.0.zip \
     && mv java-tron-1.0.0 $BASE_DIR \
-    && wget -P $BASE_DIR/config https://raw.githubusercontent.com/tronprotocol/tron-deployment/master/main_net_config.conf \
     && rm -rf $TMP_DIR \
     && rm -rf ~/.gradle \
     && mv $JAVA_HOME/jre /usr/local \
     && rm -rf $JAVA_HOME \
     && yum clean all
+
+RUN wget -P $BASE_DIR/config https://raw.githubusercontent.com/tronprotocol/tron-deployment/master/main_net_config.conf
 
 ENV JAVA_HOME="/usr/local/jre"
 ENV PATH=$PATH:$JAVA_HOME/bin
