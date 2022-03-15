@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.LockSupport;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,7 @@ public class TronNetDelegate {
   private ChannelManager channelManager;
 
   @Autowired
+  @Getter // for test
   private Manager dbManager;
 
   @Autowired
@@ -90,16 +92,21 @@ public class TronNetDelegate {
 
   private long timeout = 1000;
 
+  @Getter // for test
   private volatile boolean  hitDown = false;
 
   private Thread hitThread;
+
+  // for Test
+  @Setter
+  private volatile boolean  test = false;
 
   @PostConstruct
   public void init() {
     hitThread =  new Thread(() -> {
       LockSupport.park();
       // to Guarantee Some other thread invokes unpark with the current thread as the target
-      if (hitDown) {
+      if (hitDown && !test) {
         System.exit(0);
       }
     });
