@@ -116,6 +116,19 @@ Here are some common use cases of the scripting tool
 
 For more details, please refer to the tool [guide](./shell.md).
 
+## Run inside Docker container 
+
+One of the quickest ways to get `java-tron` up and running on your machine is by using Docker:
+```shell
+$ docker run -d --name="java-tron" \
+              -v /Users/tron/output-directory:/java-tron/output-directory \
+              -v /Users/tron/logs:/java-tron/logs \
+              -p 8090:8090 -p 18888:18888 -p 50051:50051 \
+              tronprotocol/java-tron \
+              -c /java-tron/config/main_net_config.conf
+```
+
+This will mount the `output-directory` and `logs` directories on the host, the docker.sh tool can also be used to simplify the use of docker, see more [here](docker.md).
 
 # Community
 [Tron Developers & SRs](https://discord.gg/hqKvyAM) is Tron's official Discord channel. Feel free to join this channel if you have any questions.
