@@ -49,6 +49,10 @@ public class CommonParameter {
   public long maxEnergyLimitForConstant = 100_000_000L;
   @Getter
   @Setter
+  @Parameter(names = {"--lru-cache-size"})
+  public int lruCacheSize = 100;
+  @Getter
+  @Setter
   @Parameter(names = {"--debug"})
   public boolean debug = false;
   @Getter

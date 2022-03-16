@@ -67,8 +67,9 @@ public class RepositoryImpl implements Repository {
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
 
-  private static final LRUMap<Key, ContractCapsule> contractLruCache = new LRUMap<>();
-  private static final LRUMap<Key, byte[]> codeLruCode = new LRUMap<>();
+  private static final int lruCacheSize = CommonParameter.getInstance().lruCacheSize;
+  private static final LRUMap<Key, ContractCapsule> contractLruCache = new LRUMap<>(lruCacheSize);
+  private static final LRUMap<Key, byte[]> codeLruCache = new LRUMap<>(lruCacheSize);
 
   private StoreFactory storeFactory;
   @Getter
@@ -118,7 +119,7 @@ public class RepositoryImpl implements Repository {
   public static void removeLruCache(byte[] address) {
     Key key = Key.create(address);
     contractLruCache.remove(key);
-    codeLruCode.remove(key);
+    codeLruCache.remove(key);
   }
 
   public RepositoryImpl(StoreFactory storeFactory, RepositoryImpl repository) {
@@ -381,7 +382,9 @@ public class RepositoryImpl implements Repository {
 
     if (contractCapsule != null) {
       contractCache.put(key, Value.create(contractCapsule.getData()));
-      contractLruCache.put(key, contractCapsule);
+      if (!contractLruCache.containsKey(key)) {
+        contractLruCache.put(key, contractCapsule);
+      }
     }
     return contractCapsule;
   }
@@ -465,8 +468,8 @@ public class RepositoryImpl implements Repository {
   @Override
   public byte[] getCode(byte[] address) {
     Key key = Key.create(address);
-    if (codeLruCode.containsKey(key)) {
-      return codeLruCode.get(key);
+    if (codeLruCache.containsKey(key)) {
+      return codeLruCache.get(key);
     }
 
     if (codeCache.containsKey(key)) {
@@ -485,7 +488,9 @@ public class RepositoryImpl implements Repository {
     }
     if (code != null) {
       codeCache.put(key, Value.create(code));
-      codeLruCode.put(key, code);
+      if (!codeLruCache.containsKey(key)) {
+        codeLruCache.put(key, code);
+      }
     }
     return code;
   }
