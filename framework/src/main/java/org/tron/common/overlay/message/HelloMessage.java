@@ -3,9 +3,12 @@ package org.tron.common.overlay.message;
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.server.HandshakeHandler;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.CommonStore;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
@@ -21,8 +24,7 @@ public class HelloMessage extends P2pMessage {
     this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
   }
 
-  public HelloMessage(Node from, long timestamp, BlockCapsule.BlockId genesisBlockId,
-      BlockCapsule.BlockId solidBlockId, BlockCapsule.BlockId headBlockId) {
+  public HelloMessage(Node from, long timestamp, ChainBaseManager chainBaseManager) {
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
@@ -30,20 +32,35 @@ public class HelloMessage extends P2pMessage {
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
         .build();
 
+    BlockCapsule.BlockId gid = chainBaseManager.getGenesisBlockId();
     Protocol.HelloMessage.BlockId gBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-        .setHash(genesisBlockId.getByteString())
-        .setNumber(genesisBlockId.getNum())
+        .setHash(gid.getByteString())
+        .setNumber(gid.getNum())
         .build();
 
+    BlockCapsule.BlockId sid = chainBaseManager.getSolidBlockId();
     Protocol.HelloMessage.BlockId sBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-        .setHash(solidBlockId.getByteString())
-        .setNumber(solidBlockId.getNum())
+        .setHash(sid.getByteString())
+        .setNumber(sid.getNum())
         .build();
 
+    BlockCapsule.BlockId hid = chainBaseManager.getHeadBlockId();
     Protocol.HelloMessage.BlockId hBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-        .setHash(headBlockId.getByteString())
-        .setNumber(headBlockId.getNum())
+        .setHash(hid.getByteString())
+        .setNumber(hid.getNum())
         .build();
+
+    CommonStore commonStore = chainBaseManager.getCommonStore();
+    int nodeType = HandshakeHandler.NODE_TYPE_FULL_NODE;
+    byte[] c1 = commonStore.get(HandshakeHandler.DB_KEY_NODE_TYPE).getData();
+    if (c1 != null) {
+      nodeType = ByteArray.toInt(c1);
+    }
+    long lowestBlockNum = 0;
+    if (nodeType == HandshakeHandler.NODE_TYPE_LIGHT_NODE) {
+      byte[] c2 = commonStore.get(HandshakeHandler.DB_KEY_LOWEST_BLOCK_NUM).getData();
+      lowestBlockNum = ByteArray.toLong(c2);
+    }
 
     Builder builder = Protocol.HelloMessage.newBuilder();
 
@@ -53,6 +70,8 @@ public class HelloMessage extends P2pMessage {
     builder.setGenesisBlockId(gBlockId);
     builder.setSolidBlockId(sBlockId);
     builder.setHeadBlockId(hBlockId);
+    builder.setNodeType(nodeType);
+    builder.setLowestBlockNum(lowestBlockNum);
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
@@ -66,6 +85,14 @@ public class HelloMessage extends P2pMessage {
 
   public int getVersion() {
     return this.helloMessage.getVersion();
+  }
+
+  public int getNodeType() {
+    return this.helloMessage.getNodeType();
+  }
+
+  public long getLowestBlockNum() {
+    return this.helloMessage.getLowestBlockNum();
   }
 
   public long getTimestamp() {

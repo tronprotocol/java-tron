@@ -72,6 +72,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   @Autowired
   private SyncPool syncPool;
 
+  public static final byte[] DB_KEY_LOWEST_BLOCK_NUM = "lowest_block_num".getBytes();
+  public static final byte[] DB_KEY_NODE_TYPE = "node_type".getBytes();
+
+  public static int NODE_TYPE_FULL_NODE = 0;
+  public static int NODE_TYPE_LIGHT_NODE = 1;
+
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
     logger.info("channel active, {}", ctx.channel().remoteAddress());
@@ -119,9 +125,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
-    HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
-        chainBaseManager.getHeadBlockId());
+    HelloMessage message = new HelloMessage(
+            nodeManager.getPublicHomeNode(), time, chainBaseManager);
     fastForward.fillHelloMessage(message, channel);
     ((PeerConnection) channel).setHelloMessageSend(message);
     ctx.writeAndFlush(message.getSendData());
@@ -132,7 +137,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
-
     channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
 
     if (!fastForward.checkHelloMessage(msg, channel)) {
@@ -140,13 +144,22 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
+    InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
     if (remoteId.length != 64) {
-      InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
       if (channelManager.getTrustNodes().getIfPresent(address) == null && !syncPool
           .isCanConnect()) {
         channel.disconnect(ReasonCode.TOO_MANY_PEERS);
         return;
       }
+    }
+
+    long headBlockNum = chainBaseManager.getHeadBlockNum();
+    long lowestBlockNum =  msg.getLowestBlockNum();
+    if (lowestBlockNum > headBlockNum) {
+      logger.info("Peer {} miss block, lowestBlockNum:{}, headBlockNum:{}",
+              ctx.channel().remoteAddress(), lowestBlockNum, headBlockNum);
+      channel.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
+      return;
     }
 
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
@@ -173,6 +186,10 @@ public class HandshakeHandler extends ByteToMessageDecoder {
           msg.getSolidBlockId().getString(), chainBaseManager.getSolidBlockId().getString());
       channel.disconnect(ReasonCode.FORKED);
       return;
+    }
+
+    if (msg.getFrom().getHost().equals(address.getHostAddress())) {
+      channelManager.getHelloMessageCache().put(msg.getFrom().getHost(), msg.getHelloMessage());
     }
 
     ((PeerConnection) channel).setHelloMessageReceive(msg);
