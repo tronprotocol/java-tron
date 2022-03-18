@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
@@ -62,6 +63,7 @@ import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.listener.CompositeProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 import org.tron.core.vm.program.listener.ProgramStorageChangeListener;
+import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
@@ -84,6 +86,7 @@ public class Program {
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
   private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
   private static final String CALL_PRE_COMPILED = "call pre-compiled";
+  private static final LRUMap<Key, ProgramPrecompile> programPrecompileLRUMap = new LRUMap<>();
   private long nonce;
   private byte[] rootTransactionId;
   private InternalTransaction internalTransaction;
@@ -167,7 +170,13 @@ public class Program {
 
   public ProgramPrecompile getProgramPrecompile() {
     if (programPrecompile == null) {
-      programPrecompile = ProgramPrecompile.compile(ops);
+      Key key = getCodeHashKey();
+      if (programPrecompileLRUMap.containsKey(key)) {
+        programPrecompile = programPrecompileLRUMap.get(key);
+      } else {
+        programPrecompile = ProgramPrecompile.compile(ops);
+        programPrecompileLRUMap.put(key, programPrecompile);
+      }
     }
     return programPrecompile;
   }
@@ -1030,6 +1039,16 @@ public class Program {
     } else {
       return EMPTY_BYTE_ARRAY;
     }
+  }
+
+  private byte[] getCodeHash() {
+    ContractCapsule contract = getContractState().getContract(getContextAddress());
+    return contract.getCodeHash();
+  }
+
+  private Key getCodeHashKey() {
+    byte[] codeHash = getCodeHash();
+    return Key.create(codeHash);
   }
 
   public byte[] getContextAddress() {
