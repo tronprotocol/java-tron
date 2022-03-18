@@ -22,6 +22,7 @@ import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.RocksDBException;
+import org.tron.common.overlay.server.HandshakeHandler;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -49,6 +50,7 @@ public class LiteFullNodeTool {
   private static final String BLOCK_DB_NAME = "block";
   private static final String BLOCK_INDEX_DB_NAME = "block-index";
   private static final String TRANS_CACHE_DB_NAME = "trans-cache";
+  private static final String COMMON_DB_NAME = "common";
 
   private static final String DIR_FORMAT_STRING = "%s%s%s";
 
@@ -301,6 +303,11 @@ public class LiteFullNodeTool {
           // put latest blocks into snapshot
           destBlockDb.put(blockId, block);
         });
+
+    DBInterface commonDb = DbTool.getDB(sourceDir, COMMON_DB_NAME);
+    commonDb.put(HandshakeHandler.DB_KEY_NODE_TYPE,
+            ByteArray.fromInt(HandshakeHandler.NODE_TYPE_LIGHT_NODE));
+    commonDb.put(HandshakeHandler.DB_KEY_LOWEST_BLOCK_NUM, ByteArray.fromLong(startIndex));
   }
 
   private void checkTranCacheStore(String sourceDir, String snapshotDir)
