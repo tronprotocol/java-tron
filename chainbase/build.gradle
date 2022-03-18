@@ -39,7 +39,7 @@ dependencies {
     compile "org.fusesource.jansi:jansi:$jansiVersion"
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-    compile 'com.github.tronprotocol:zksnark-java-sdk:java_v11_upgrade-SNAPSHOT'
+    compile 'com.github.tronprotocol:zksnark-java-sdk:feature~zk_param_pointer-SNAPSHOT'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.10.3'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile project(":protocol")
