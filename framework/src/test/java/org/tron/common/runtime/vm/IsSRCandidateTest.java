@@ -146,7 +146,7 @@ public class IsSRCandidateTest extends VMTestBase {
             contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent, null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: isSRCandidateTest(address)
