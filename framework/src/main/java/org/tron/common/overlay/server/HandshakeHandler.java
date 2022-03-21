@@ -72,12 +72,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   @Autowired
   private SyncPool syncPool;
 
-  public static final byte[] DB_KEY_LOWEST_BLOCK_NUM = "lowest_block_num".getBytes();
-  public static final byte[] DB_KEY_NODE_TYPE = "node_type".getBytes();
-
-  public static int NODE_TYPE_FULL_NODE = 0;
-  public static int NODE_TYPE_LIGHT_NODE = 1;
-
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
     logger.info("channel active, {}", ctx.channel().remoteAddress());
