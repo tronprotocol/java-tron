@@ -6,6 +6,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.HandshakeHandler;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.CommonStore;
@@ -51,15 +52,10 @@ public class HelloMessage extends P2pMessage {
         .build();
 
     CommonStore commonStore = chainBaseManager.getCommonStore();
-    int nodeType = HandshakeHandler.NODE_TYPE_FULL_NODE;
-    byte[] c1 = commonStore.get(HandshakeHandler.DB_KEY_NODE_TYPE).getData();
-    if (c1 != null) {
-      nodeType = ByteArray.toInt(c1);
-    }
     long lowestBlockNum = 0;
-    if (nodeType == HandshakeHandler.NODE_TYPE_LIGHT_NODE) {
-      byte[] c2 = commonStore.get(HandshakeHandler.DB_KEY_LOWEST_BLOCK_NUM).getData();
-      lowestBlockNum = ByteArray.toLong(c2);
+    int nodeType = commonStore.getNodeType();
+    if (nodeType == Constant.NODE_TYPE_LIGHT_NODE) {
+      lowestBlockNum = commonStore.getLowestBlockNum();
     }
 
     Builder builder = Protocol.HelloMessage.newBuilder();

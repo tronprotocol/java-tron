@@ -38,6 +38,9 @@ import org.tron.tool.litefullnode.iterator.DBIterator;
 @Slf4j(topic = "tool")
 public class LiteFullNodeTool {
 
+  private static final byte[] DB_KEY_LOWEST_BLOCK_NUM = "lowest_block_num".getBytes();
+  private static final byte[] DB_KEY_NODE_TYPE = "node_type".getBytes();
+
   private static final long START_TIME = System.currentTimeMillis() / 1000;
 
   private static final String SNAPSHOT_DIR_NAME = "snapshot";
@@ -305,9 +308,8 @@ public class LiteFullNodeTool {
         });
 
     DBInterface commonDb = DbTool.getDB(sourceDir, COMMON_DB_NAME);
-    commonDb.put(HandshakeHandler.DB_KEY_NODE_TYPE,
-            ByteArray.fromInt(HandshakeHandler.NODE_TYPE_LIGHT_NODE));
-    commonDb.put(HandshakeHandler.DB_KEY_LOWEST_BLOCK_NUM, ByteArray.fromLong(startIndex));
+    commonDb.put(DB_KEY_NODE_TYPE,  ByteArray.fromInt(Constant.NODE_TYPE_LIGHT_NODE));
+    commonDb.put(DB_KEY_LOWEST_BLOCK_NUM, ByteArray.fromLong(startIndex));
   }
 
   private void checkTranCacheStore(String sourceDir, String snapshotDir)
