@@ -139,12 +139,11 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     }
 
     InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
-    if (remoteId.length != 64) {
-      if (channelManager.getTrustNodes().getIfPresent(address) == null && !syncPool
-          .isCanConnect()) {
-        channel.disconnect(ReasonCode.TOO_MANY_PEERS);
-        return;
-      }
+    if (remoteId.length != 64
+        && channelManager.getTrustNodes().getIfPresent(address) == null
+        && !syncPool.isCanConnect()) {
+      channel.disconnect(ReasonCode.TOO_MANY_PEERS);
+      return;
     }
 
     long headBlockNum = chainBaseManager.getHeadBlockNum();
