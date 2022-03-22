@@ -20,6 +20,7 @@ import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.FetchBlockService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -61,12 +62,16 @@ public class TronNetService {
   @Autowired
   private PbftDataSyncHandler pbftDataSyncHandler;
 
+  @Autowired
+  private FetchBlockService fetchBlockService;
+
   public void start() {
     channelManager.init();
     advService.init();
     syncService.init();
     peerStatusCheck.init();
     transactionsMsgHandler.init();
+    fetchBlockService.init();
     logger.info("TronNetService start successfully.");
   }
 
@@ -76,6 +81,7 @@ public class TronNetService {
     syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
+    fetchBlockService.close();
     logger.info("TronNetService closed successfully.");
   }
 
