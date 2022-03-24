@@ -3,6 +3,9 @@ package org.tron.core.services.stop;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,17 +41,19 @@ import org.tron.protos.Protocol;
 public abstract class ConditionallyStopTest extends BlockGenerate {
 
 
-  protected static ChainBaseManager chainManager;
-  protected static ConsensusService consensusService;
-  protected static DposSlot dposSlot;
+  static ChainBaseManager chainManager;
+  private static DposSlot dposSlot;
   private final String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
   private final byte[] privateKey = ByteArray.fromHexString(key);
   private final AtomicInteger port = new AtomicInteger(0);
   protected String dbPath;
   protected Manager dbManager;
-  protected long currentHeader = -1;
-  protected TronNetDelegate tronNetDelegate;
+  long currentHeader = -1;
+  private TronNetDelegate tronNetDelegate;
   private TronApplicationContext context;
+
+  static LocalDateTime localDateTime = LocalDateTime.now();
+  private long time = ZonedDateTime.of(localDateTime, ZoneId.systemDefault()).toInstant().toEpochMilli();
 
   protected abstract void initParameter(CommonParameter parameter);
 
@@ -71,7 +76,7 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
     dbManager = context.getBean(Manager.class);
     setManager(dbManager);
     dposSlot = context.getBean(DposSlot.class);
-    consensusService = context.getBean(ConsensusService.class);
+    ConsensusService consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
     chainManager = dbManager.getChainBaseManager();
     tronNetDelegate = context.getBean(TronNetDelegate.class);
@@ -87,7 +92,7 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
     FileUtil.deleteDir(new File(dbPath));
   }
 
-  public void generateBlock(Map<ByteString, String> witnessAndAccount) throws Exception {
+  private void generateBlock(Map<ByteString, String> witnessAndAccount) throws Exception {
 
     BlockCapsule block =
         createTestBlockCapsule(
@@ -109,7 +114,7 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
 
-    Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
+    Protocol.Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
 
     tronNetDelegate.processBlock(new BlockCapsule(block), false);
 
