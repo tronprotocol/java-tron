@@ -67,7 +67,7 @@ public class RepositoryImpl implements Repository {
   private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
   private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
 
-  private static final int lruCacheSize = CommonParameter.getInstance().getLruCacheSize();
+  private static final int lruCacheSize = CommonParameter.getInstance().getSafeLruCacheSize();
   private static final LRUMap<Key, ContractCapsule> contractLruCache = new LRUMap<>(lruCacheSize);
   private static final LRUMap<Key, byte[]> codeLruCache = new LRUMap<>(lruCacheSize);
 
