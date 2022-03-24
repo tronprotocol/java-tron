@@ -13,7 +13,7 @@ import org.tron.common.parameter.CommonParameter;
 public class BlockTimeStopTest extends ConditionallyStopTest {
   private static final DateTimeFormatter pattern = DateTimeFormatter
       .ofPattern("ss mm HH dd MM ? yyyy");
-  private static final String time = LocalDateTime.now().plusSeconds(12 * 3).format(pattern);
+  private static final String time = localDateTime.plusSeconds(12 * 3).format(pattern);
 
   private static CronExpression cronExpression;
 
