@@ -296,6 +296,10 @@ public class Args extends CommonParameter {
       PARAMETER.maxEnergyLimitForConstant = max(3_000_000L, configLimit);
     }
 
+    if (config.hasPath(Constant.VM_LRU_CACHE_SIZE)) {
+      PARAMETER.lruCacheSize = config.getInt(Constant.VM_LRU_CACHE_SIZE);
+    }
+
     if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
       PARAMETER.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
     }
@@ -1196,7 +1200,7 @@ public class Args extends CommonParameter {
     }
     return this.outputDirectory;
   }
-  
+
   private static void witnessAddressCheck(Config config) {
     if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
       byte[] bytes = Commons

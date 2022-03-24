@@ -86,7 +86,9 @@ public class Program {
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
   private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
   private static final String CALL_PRE_COMPILED = "call pre-compiled";
-  private static final LRUMap<Key, ProgramPrecompile> programPrecompileLRUMap = new LRUMap<>();
+  private static final int lruCacheSize = CommonParameter.getInstance().getLruCacheSize();
+  private static final LRUMap<Key, ProgramPrecompile> programPrecompileLRUMap
+      = new LRUMap<>(lruCacheSize);
   private long nonce;
   private byte[] rootTransactionId;
   private InternalTransaction internalTransaction;

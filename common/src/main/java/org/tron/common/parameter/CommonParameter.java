@@ -50,7 +50,7 @@ public class CommonParameter {
   @Getter
   @Setter
   @Parameter(names = {"--lru-cache-size"})
-  public int lruCacheSize = 100;
+  public int lruCacheSize = 500;
   @Getter
   @Setter
   @Parameter(names = {"--debug"})
@@ -532,5 +532,9 @@ public class CommonParameter {
 
   public boolean isJsonRpcFilterEnabled() {
     return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
+  }
+
+  public int getLruCacheSize() {
+    return lruCacheSize < 1 ? 500 : lruCacheSize;
   }
 }
