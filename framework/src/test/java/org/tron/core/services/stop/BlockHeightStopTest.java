@@ -16,8 +16,8 @@ public class BlockHeightStopTest extends ConditionallyStopTest {
   }
 
   @Override
-  protected void check() {
-    Assert.assertEquals(height, tronNetDelegate.getDbManager().getDynamicPropertiesStore()
+  protected void check() throws Exception {
+    Assert.assertEquals(height, dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumberFromDB());
   }
 
