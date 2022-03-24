@@ -1,18 +1,19 @@
 package org.tron.core.services.stop;
 
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.quartz.CronExpression;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.exception.P2pException;
 
 @Slf4j
 public class BlockTimeStopTest extends ConditionallyStopTest {
-
-  // @see https://tronscan.org/#/block/12
-  private static final String time = "00 52 09 25 06 ? 2018";
+  private static final DateTimeFormatter pattern = DateTimeFormatter
+      .ofPattern("ss mm HH dd MM ? yyyy");
+  private static final String time = LocalDateTime.now().plusSeconds(12 * 3).format(pattern);
 
   private static CronExpression cronExpression;
 
@@ -35,15 +36,11 @@ public class BlockTimeStopTest extends ConditionallyStopTest {
   }
 
   @Override
-  protected void check() {
-    try {
-      long height = tronNetDelegate.getDbManager()
-          .getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB();
-      Assert.assertTrue(cronExpression.isSatisfiedBy(new Date(tronNetDelegate
-          .getBlockTime(tronNetDelegate.getBlockIdByNum(height)))));
-    } catch (P2pException e) {
-      logger.error("{}", e.getMessage());
-    }
+  protected void check() throws Exception {
+    long height = dbManager
+        .getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB();
+    Assert.assertTrue(cronExpression.isSatisfiedBy(new Date(chainManager
+        .getBlockById(chainManager.getBlockIdByNum(height)).getTimeStamp())));
   }
 
   @Override

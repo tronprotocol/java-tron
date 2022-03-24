@@ -16,9 +16,9 @@ public class BlockSyncCountStopTest extends ConditionallyStopTest {
   }
 
   @Override
-  protected void check() {
+  protected void check() throws Exception {
 
-    Assert.assertEquals(sync + currentHeader, tronNetDelegate.getDbManager()
+    Assert.assertEquals(sync + currentHeader, dbManager
         .getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB());
   }
 

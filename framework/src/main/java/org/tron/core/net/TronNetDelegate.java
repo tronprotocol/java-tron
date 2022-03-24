@@ -68,7 +68,6 @@ public class TronNetDelegate {
   private ChannelManager channelManager;
 
   @Autowired
-  @Getter // for test
   private Manager dbManager;
 
   @Autowired
