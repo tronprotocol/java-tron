@@ -109,6 +109,7 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
 
 
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    Assert.assertNotNull(ecKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
