@@ -641,7 +641,7 @@ public class Args extends CommonParameter {
             .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET)
             : true;
     PARAMETER.trxReferenceBlock = config.hasPath(Constant.TRX_REFERENCE_BLOCK)
-        ? config.getString(Constant.TRX_REFERENCE_BLOCK) : "head";
+        ? config.getString(Constant.TRX_REFERENCE_BLOCK) : "solid";
 
     PARAMETER.trxExpirationTimeInMilliseconds =
         config.hasPath(Constant.TRX_EXPIRATION_TIME_IN_MILLIS_SECONDS)
