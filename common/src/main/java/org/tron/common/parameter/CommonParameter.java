@@ -534,7 +534,7 @@ public class CommonParameter {
     return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
   }
 
-  public int getLruCacheSize() {
+  public int getSafeLruCacheSize() {
     return lruCacheSize < 1 ? 500 : lruCacheSize;
   }
 }
