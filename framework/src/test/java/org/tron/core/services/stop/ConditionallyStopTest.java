@@ -53,7 +53,8 @@ public abstract class ConditionallyStopTest extends BlockGenerate {
   private TronApplicationContext context;
 
   static LocalDateTime localDateTime = LocalDateTime.now();
-  private long time = ZonedDateTime.of(localDateTime, ZoneId.systemDefault()).toInstant().toEpochMilli();
+  private long time = ZonedDateTime.of(localDateTime,
+      ZoneId.systemDefault()).toInstant().toEpochMilli();
 
   protected abstract void initParameter(CommonParameter parameter);
 
