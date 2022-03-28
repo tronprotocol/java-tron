@@ -26,7 +26,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
@@ -153,7 +152,6 @@ public class BandWidthRuntimeTest {
           new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
-      DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
       trace.init(blockCapsule);
       trace.exec();
@@ -187,7 +185,7 @@ public class BandWidthRuntimeTest {
       dbManager.consumeBandwidth(trxCap, trace);
       long bandWidth = trxCap.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       BlockCapsule blockCapsule = null;
-      DepositImpl deposit = DepositImpl.createRoot(dbManager);
+
       trace.init(blockCapsule);
       trace.exec();
       trace.finalization();
@@ -242,7 +240,6 @@ public class BandWidthRuntimeTest {
         new RuntimeImpl());
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
     trace.init(blockCapsule);
     trace.exec();
     trace.finalization();
