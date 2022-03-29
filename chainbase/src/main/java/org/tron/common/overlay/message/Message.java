@@ -27,7 +27,9 @@ public abstract class Message {
   private static DynamicPropertiesStore dynamicPropertiesStore;
 
   static {
-    ReflectionUtils.makeAccessible(field);
+    if (field != null) {
+      ReflectionUtils.makeAccessible(field);
+    }
   }
 
   protected byte[] data;
