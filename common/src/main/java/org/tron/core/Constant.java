@@ -219,6 +219,8 @@ public class Constant {
 
   public static final String NODE_FAST_FORWARD = "node.fastForward";
 
+  public static final String NODE_MAX_FAST_FORWARD_NUM = "node.maxFastForwardNum";
+
   public static final String NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = "node.shieldedTransInPendingMaxCounts";
 
   public static final String RATE_LIMITER = "rate.limiter";

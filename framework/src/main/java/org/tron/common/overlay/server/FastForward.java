@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -107,11 +108,12 @@ public class FastForward {
 
     Protocol.HelloMessage msg = message.getHelloMessage();
 
-    // todo, just to solve the compatibility problem
     if (msg.getAddress() == null || msg.getAddress().isEmpty()) {
       logger.info("HelloMessage from {}, address is empty.", channel.getInetAddress());
       return false;
     }
+
+    channel.setAddress(msg.getAddress());
 
     if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())) {
       logger.error("HelloMessage from {}, {} is not a schedule witness.",
