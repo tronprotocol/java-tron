@@ -21,7 +21,8 @@ public class GetBlockByLimitNextServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      fillResponse(Util.getVisible(request), Long.parseLong(request.getParameter("startNum")),
+      fillResponse(Util.getVisible(request),Util.getDetail(request),
+          Long.parseLong(request.getParameter("startNum")),
           Long.parseLong(request.getParameter("endNum")), response);
     } catch (Exception e) {
       Util.processError(e, response);
@@ -33,17 +34,18 @@ public class GetBlockByLimitNextServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       BlockLimit.Builder build = BlockLimit.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      fillResponse(params.isVisible(), build.getStartNum(), build.getEndNum(), response);
+      fillResponse(params.isVisible(),params.isDetail(),
+          build.getStartNum(), build.getEndNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void fillResponse(boolean visible, long startNum, long endNum,
+  private void fillResponse(boolean visible, boolean detail, long startNum, long endNum,
       HttpServletResponse response)
       throws IOException {
     if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-      BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
+      BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum, detail);
       if (reply != null) {
         response.getWriter().println(Util.printBlockList(reply, visible));
         return;

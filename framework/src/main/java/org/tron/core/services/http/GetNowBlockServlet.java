@@ -18,10 +18,9 @@ public class GetNowBlockServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = Util.getVisible(request);
-      Block reply = wallet.getNowBlock();
+      Block reply = wallet.getNowBlock(Util.getDetail(request));
       if (reply != null) {
-        response.getWriter().println(Util.printBlock(reply, visible));
+        response.getWriter().println(Util.printBlock(reply, Util.getVisible(request)));
       } else {
         response.getWriter().println("{}");
       }

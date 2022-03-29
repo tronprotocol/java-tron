@@ -21,7 +21,8 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      fillResponse(Util.getVisible(request), Long.parseLong(request.getParameter("num")), response);
+      fillResponse(Util.getVisible(request), Util.getDetail(request),
+          Long.parseLong(request.getParameter("num")), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -32,16 +33,16 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      fillResponse(params.isVisible(), build.getNum(), response);
+      fillResponse(params.isVisible(), params.isDetail(), build.getNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void fillResponse(boolean visible, long num, HttpServletResponse response)
+  private void fillResponse(boolean visible, boolean detail, long num, HttpServletResponse response)
       throws IOException {
     if (num > 0 && num < BLOCK_LIMIT_NUM) {
-      BlockList reply = wallet.getBlockByLatestNum(num);
+      BlockList reply = wallet.getBlockByLatestNum(num, detail);
       if (reply != null) {
         response.getWriter().println(Util.printBlockList(reply, visible));
         return;

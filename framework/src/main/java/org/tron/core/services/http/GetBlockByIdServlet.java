@@ -22,9 +22,9 @@ public class GetBlockByIdServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(input)), response);
+      fillResponse(Util.getVisible(request),Util.getDetail(request),
+          ByteString.copyFrom(ByteArray.fromHexString(input)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -35,15 +35,16 @@ public class GetBlockByIdServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      fillResponse(params.isVisible(), build.getValue(), response);
+      fillResponse(params.isVisible(), params.isDetail(), build.getValue(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void fillResponse(boolean visible, ByteString blockId, HttpServletResponse response)
+  private void fillResponse(boolean visible, boolean detail,
+                            ByteString blockId, HttpServletResponse response)
       throws IOException {
-    Block reply = wallet.getBlockById(blockId);
+    Block reply = wallet.getBlockById(blockId, detail);
     if (reply != null) {
       response.getWriter().println(Util.printBlock(reply, visible));
     } else {

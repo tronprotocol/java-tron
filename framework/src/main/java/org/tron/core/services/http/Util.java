@@ -61,6 +61,7 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
+  public static final String DETAIL = "detail";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -310,6 +311,14 @@ public class Util {
     return visible;
   }
 
+  public static boolean getDetail(final HttpServletRequest request) {
+    boolean detail = true;
+    if (StringUtil.isNotBlank(request.getParameter(DETAIL))) {
+      detail = Boolean.parseBoolean(request.getParameter(DETAIL));
+    }
+    return detail;
+  }
+
   public static boolean getVisiblePost(final String input) {
     boolean visible = false;
     if (StringUtil.isNotBlank(input)) {
@@ -320,6 +329,18 @@ public class Util {
     }
 
     return visible;
+  }
+
+  public static boolean getDetailPost(final String input) {
+    boolean detail = true;
+    if (StringUtil.isNotBlank(input)) {
+      JSONObject jsonObject = JSON.parseObject(input);
+      if (jsonObject.containsKey(DETAIL)) {
+        detail = jsonObject.getBoolean(DETAIL);
+      }
+    }
+
+    return detail;
   }
 
   public static String getContractType(final String input) {
