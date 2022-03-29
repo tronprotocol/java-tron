@@ -1,6 +1,6 @@
 apply plugin: 'com.google.protobuf'
 
-def protobufVersion = "3.16.1"
+def protobufVersion = "3.19.2"
 
 def grpcVersion = "1.14.0"
 
