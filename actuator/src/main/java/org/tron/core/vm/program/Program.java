@@ -104,6 +104,7 @@ public class Program {
   private ProgramResult result = new ProgramResult();
   private ProgramTrace trace = new ProgramTrace();
   private byte[] ops;
+  private byte[] codeAddress;
   private int pc;
   private byte lastOp;
   private byte previouslyExecutedOp;
@@ -112,14 +113,12 @@ public class Program {
   private int contractVersion;
   private DataWord adjustedCallEnergy;
 
-  public Program(byte[] ops, ProgramInvoke programInvoke) {
-    this(ops, programInvoke, null);
-  }
-
-  public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction) {
+  public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
+                 InternalTransaction internalTransaction) {
     this.invoke = programInvoke;
     this.internalTransaction = internalTransaction;
     this.ops = nullToEmpty(ops);
+    this.codeAddress = codeAddress;
 
     traceListener = new ProgramTraceListener(VMConfig.vmTrace());
     this.memory = setupProgramListener(new Memory());
@@ -646,7 +645,7 @@ public class Program {
           "Trying to create a contract with existing contract address: 0x" + Hex
               .toHexString(newAddress)));
     } else if (isNotEmpty(programCode)) {
-      Program program = new Program(programCode, programInvoke, internalTx);
+      Program program = new Program(programCode, newAddress, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
@@ -877,7 +876,7 @@ public class Program {
       if (isConstantCall()) {
         programInvoke.setConstantCall();
       }
-      Program program = new Program(programCode, programInvoke, internalTx);
+      Program program = new Program(programCode, codeAddress, programInvoke, internalTx);
       program.setRootTransactionId(this.rootTransactionId);
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(invoke.getDeposit()
@@ -1043,9 +1042,18 @@ public class Program {
     }
   }
 
-  private byte[] getCodeHash() {
-    ContractCapsule contract = getContractState().getContract(getContextAddress());
-    return contract.getCodeHash();
+  public byte[] getCodeHash() {
+    ContractCapsule contract = getContractState().getContract(codeAddress);
+    byte[] codeHash;
+    if (contract == null) {
+      codeHash = Hash.sha3(ops);
+    } else {
+      codeHash = contract.getCodeHash();
+      if (ByteUtil.isNullOrZeroArray(codeHash)) {
+        codeHash = Hash.sha3(ops);
+      }
+    }
+    return codeHash;
   }
 
   private Key getCodeHashKey() {
