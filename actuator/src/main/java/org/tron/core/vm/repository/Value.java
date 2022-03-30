@@ -35,7 +35,7 @@ public class Value<T> {
   }
 
   public static Value<byte[]> create(byte[] value, int type) {
-    return value == null ? new Value<>(null, type) :
+    return (value == null || value.length ==0) ? new Value<>(null, type) :
         new Value<>(Arrays.copyOf(value, value.length), type);
   }
 
