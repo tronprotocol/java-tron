@@ -29,8 +29,8 @@ public class RelayService {
 
   private int maxFastForwardNum = Args.getInstance().getMaxFastForwardNum();
 
-  private static volatile long nextMaintenanceTime = -1;
-  private static volatile List<ByteString> witnesses;
+  private volatile long nextMaintenanceTime = -1;
+  private volatile List<ByteString> witnesses;
 
   private List<ByteString> getSortedScheduleWitness() {
     long time = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
