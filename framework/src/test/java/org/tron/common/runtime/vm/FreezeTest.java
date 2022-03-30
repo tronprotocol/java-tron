@@ -526,7 +526,7 @@ public class FreezeTest {
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
-    long salt = 1;
+    long salt = 2;
     byte[] predictedAddr = getCreate2Addr(factory, salt);
     freezeForOther(contract, predictedAddr, frozenBalance, 0);
     freezeForOther(contract, predictedAddr, frozenBalance, 1);
