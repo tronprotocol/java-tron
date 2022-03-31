@@ -403,8 +403,9 @@ public class RpcApiService implements Service {
     }
   }
 
-  public void generateAddressCommon(EmptyMessage request,
-                                    StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
+  public void generateAddressCommon(
+      EmptyMessage request,
+      StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
     SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
         Args.getInstance().isECKeyCryptoEngine());
     byte[] priKey = cryptoEngine.getPrivateKey();
@@ -485,8 +486,9 @@ public class RpcApiService implements Service {
     responseObserver.onCompleted();
   }
 
-  public void getTransactionListFromPendingCommon(EmptyMessage request,
-                                                  StreamObserver<TransactionIdList> responseObserver) {
+  public void getTransactionListFromPendingCommon(
+      EmptyMessage request,
+      StreamObserver<TransactionIdList> responseObserver) {
     try {
       TransactionIdList.Builder builder = TransactionIdList.newBuilder();
       builder.addAllTxId(dbManager.getTxListFromPending());
@@ -515,8 +517,9 @@ public class RpcApiService implements Service {
   public class DatabaseApi extends DatabaseImplBase {
 
     @Override
-    public void getBlockReference(org.tron.api.GrpcAPI.EmptyMessage request,
-                                  io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BlockReference> responseObserver) {
+    public void getBlockReference(
+        org.tron.api.GrpcAPI.EmptyMessage request,
+        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BlockReference> responseObserver) {
       long headBlockNum = dbManager.getDynamicPropertiesStore()
           .getLatestBlockHeaderNumber();
       byte[] blockHeaderHash = dbManager.getDynamicPropertiesStore()
@@ -711,8 +714,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getDelegatedResourceAccountIndex(BytesMessage request,
-                                                 StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+    public void getDelegatedResourceAccountIndex(
+        BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
       responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
       responseObserver.onCompleted();
@@ -796,8 +800,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
-                                         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
+    public void getMerkleTreeVoucherInfo(
+        OutputPointInfo request,
+        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
       try {
         checkSupportShieldedTransaction();
@@ -922,8 +927,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
-                                                 StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+    public void isShieldedTRC20ContractNoteSpent(
+        NfTRC20Parameters request,
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
         checkSupportShieldedTRC20Transaction();
         responseObserver.onNext(wallet.isShieldedTRC20ContractNoteSpent(request));
@@ -1211,8 +1217,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getTransactionApprovedList(Transaction req,
-                                           StreamObserver<TransactionApprovedList> responseObserver) {
+    public void getTransactionApprovedList(
+        Transaction req,
+        StreamObserver<TransactionApprovedList> responseObserver) {
       TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
       responseObserver.onNext(tal);
       responseObserver.onCompleted();
@@ -1387,16 +1394,20 @@ public class RpcApiService implements Service {
 
       AccountCapsule account = dbManager.getAccountStore().get(ownerAddress.toByteArray());
       Preconditions.checkNotNull(account,
-          "OwnerAddress[" + StringUtil.createReadableString(ownerAddress) + "] not exists");
+          "OwnerAddress["
+              + StringUtil.createReadableString(ownerAddress) + "] not exists");
 
       int votesCount = req.getVotesCount();
-      Preconditions.checkArgument(votesCount <= 0, "VotesCount[" + votesCount + "] <= 0");
+      Preconditions.checkArgument(votesCount <= 0,
+          "VotesCount[" + votesCount + "] <= 0");
       if (dbManager.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
         Preconditions.checkArgument(account.getAllTronPower() < votesCount,
-            "tron power[" + account.getAllTronPower() + "] <  VotesCount[" + votesCount + "]");
+            "tron power[" + account.getAllTronPower()
+                + "] <  VotesCount[" + votesCount + "]");
       } else {
         Preconditions.checkArgument(account.getTronPower() < votesCount,
-            "tron power[" + account.getTronPower() + "] <  VotesCount[" + votesCount + "]");
+            "tron power[" + account.getTronPower()
+                + "] <  VotesCount[" + votesCount + "]");
       }
 
       req.getVotesList().forEach(vote -> {
@@ -1405,7 +1416,8 @@ public class RpcApiService implements Service {
             .get(voteAddress.toByteArray());
         String readableWitnessAddress = StringUtil.createReadableString(voteAddress);
 
-        Preconditions.checkNotNull(witness, "witness[" + readableWitnessAddress + "] not exists");
+        Preconditions.checkNotNull(witness,
+            "witness[" + readableWitnessAddress + "] not exists");
         Preconditions.checkArgument(vote.getVoteCount() <= 0,
             "VoteAddress[" + readableWitnessAddress + "], VotesCount[" + vote
                 .getVoteCount() + "] <= 0");
@@ -2098,8 +2110,9 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    public void getDelegatedResourceAccountIndex(BytesMessage request,
-                                                 StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+    public void getDelegatedResourceAccountIndex(
+        BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
       responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
       responseObserver.onCompleted();
@@ -2175,8 +2188,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
-                                         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
+    public void getMerkleTreeVoucherInfo(
+        OutputPointInfo request,
+        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
       try {
         checkSupportShieldedTransaction();
@@ -2224,8 +2238,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createShieldedTransactionWithoutSpendAuthSig(PrivateParametersWithoutAsk request,
-                                                             StreamObserver<TransactionExtention> responseObserver) {
+    public void createShieldedTransactionWithoutSpendAuthSig(
+        PrivateParametersWithoutAsk request,
+        StreamObserver<TransactionExtention> responseObserver) {
 
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
@@ -2299,8 +2314,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getExpandedSpendingKey(BytesMessage request,
-                                       StreamObserver<ExpandedSpendingKeyMessage> responseObserver) {
+    public void getExpandedSpendingKey(
+        BytesMessage request,
+        StreamObserver<ExpandedSpendingKeyMessage> responseObserver) {
       ByteString spendingKey = request.getValue();
 
       try {
@@ -2608,8 +2624,9 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
-                                                 StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+    public void isShieldedTRC20ContractNoteSpent(
+        NfTRC20Parameters request,
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
         checkSupportShieldedTRC20Transaction();
 
