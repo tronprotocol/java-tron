@@ -1110,19 +1110,17 @@ message Address {
   bytes host = 1;
   int32 port = 2;
 }
-message BaseMessage {
-  bool detail = 1;
-}
+
 message EmptyMessage {
-  oneof baseMessage {BaseMessage base_ = 1;}
+  bool only_header = 1;
 }
 message NumberMessage {
   int64 num = 1;
-  oneof baseMessage {BaseMessage base_ = 2;}
+  bool only_header = 2;
 }
 message BytesMessage {
   bytes value = 1;
-  oneof baseMessage {BaseMessage base_ = 2;}
+  bool only_header = 2;
 }
 message TimeMessage {
   int64 beginInMilliseconds = 1;
@@ -1131,7 +1129,7 @@ message TimeMessage {
 message BlockLimit {
   int64 startNum = 1;
   int64 endNum = 2;
-  oneof baseMessage {BaseMessage base_ = 3;}
+  bool only_header = 3;
 }
 message TransactionLimit {
   bytes transactionId = 1;

@@ -18,7 +18,7 @@ public class GetNowBlockServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      Block reply = wallet.getNowBlock(Util.getDetail(request));
+      Block reply = wallet.clearTrxForBlock(wallet.getNowBlock(), Util.getOnlyHeader(request));
       if (reply != null) {
         response.getWriter().println(Util.printBlock(reply, Util.getVisible(request)));
       } else {
@@ -30,6 +30,16 @@ public class GetNowBlockServlet extends RateLimiterServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
+    try {
+      PostParams params = PostParams.getPostParams(request);
+      Block reply = wallet.clearTrxForBlock(wallet.getNowBlock(), params.isOnlyHeader());
+      if (reply != null) {
+        response.getWriter().println(Util.printBlock(reply, Util.getVisible(request)));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
   }
 }

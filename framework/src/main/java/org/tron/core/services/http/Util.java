@@ -61,7 +61,7 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
-  public static final String DETAIL = "detail";
+  public static final String ONLY_HEADER = "only_header";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -311,12 +311,12 @@ public class Util {
     return visible;
   }
 
-  public static boolean getDetail(final HttpServletRequest request) {
-    boolean detail = true;
-    if (StringUtil.isNotBlank(request.getParameter(DETAIL))) {
-      detail = Boolean.parseBoolean(request.getParameter(DETAIL));
+  public static boolean getOnlyHeader(final HttpServletRequest request) {
+    boolean onlyHeader = false;
+    if (StringUtil.isNotBlank(request.getParameter(ONLY_HEADER))) {
+      onlyHeader = Boolean.parseBoolean(request.getParameter(ONLY_HEADER));
     }
-    return detail;
+    return onlyHeader;
   }
 
   public static boolean getVisiblePost(final String input) {
@@ -324,23 +324,27 @@ public class Util {
     if (StringUtil.isNotBlank(input)) {
       JSONObject jsonObject = JSON.parseObject(input);
       if (jsonObject.containsKey(VISIBLE)) {
-        visible = jsonObject.getBoolean(VISIBLE);
+        Boolean tmp = jsonObject.getBoolean(VISIBLE);
+        if (tmp != null) {
+          visible = tmp;
+        }
       }
     }
-
     return visible;
   }
 
-  public static boolean getDetailPost(final String input) {
-    boolean detail = true;
+  public static boolean getOnlyHeaderPost(final String input) {
+    boolean onlyHeader = false;
     if (StringUtil.isNotBlank(input)) {
       JSONObject jsonObject = JSON.parseObject(input);
-      if (jsonObject.containsKey(DETAIL)) {
-        detail = jsonObject.getBoolean(DETAIL);
+      if (jsonObject.containsKey(ONLY_HEADER)) {
+        Boolean tmp = jsonObject.getBoolean(ONLY_HEADER);
+        if (tmp != null) {
+          onlyHeader = tmp;
+        }
       }
     }
-
-    return detail;
+    return onlyHeader;
   }
 
   public static String getContractType(final String input) {

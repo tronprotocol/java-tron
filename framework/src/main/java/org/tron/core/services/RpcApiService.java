@@ -535,26 +535,24 @@ public class RpcApiService implements Service {
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
       try {
         block = chainBaseManager.getHead().getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
-      responseObserver.onNext(wallet.dealBlock(block, detail));
+      responseObserver.onNext(wallet.clearTrxForBlock(block, request.getOnlyHeader()));
       responseObserver.onCompleted();
     }
 
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
       try {
         block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
-      responseObserver.onNext(wallet.dealBlock(block, detail));
+      responseObserver.onNext(wallet.clearTrxForBlock(block, request.getOnlyHeader()));
       responseObserver.onCompleted();
     }
 
@@ -664,16 +662,16 @@ public class RpcApiService implements Service {
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
-      responseObserver.onNext(wallet.getNowBlock(detail));
+      responseObserver.onNext(wallet.clearTrxForBlock(wallet.getNowBlock(),
+          request.getOnlyHeader()));
       responseObserver.onCompleted();
     }
 
     @Override
     public void getNowBlock2(EmptyMessage request,
                              StreamObserver<BlockExtention> responseObserver) {
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
-      responseObserver.onNext(block2Extention(wallet.getNowBlock(detail)));
+      responseObserver.onNext(block2Extention(wallet.clearTrxForBlock(wallet.getNowBlock(),
+          request.getOnlyHeader())));
       responseObserver.onCompleted();
     }
 
@@ -681,9 +679,8 @@ public class RpcApiService implements Service {
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       long num = request.getNum();
       if (num >= 0) {
-        boolean detail = !request.hasBase() || request.getBase().getDetail();
-        Block reply = wallet.getBlockByNum(num, detail);
-        responseObserver.onNext(reply);
+        Block reply = wallet.getBlockByNum(num);
+        responseObserver.onNext(wallet.clearTrxForBlock(reply, request.getOnlyHeader()));
       } else {
         responseObserver.onNext(null);
       }
@@ -695,9 +692,9 @@ public class RpcApiService implements Service {
                                StreamObserver<BlockExtention> responseObserver) {
       long num = request.getNum();
       if (num >= 0) {
-        boolean detail = !request.hasBase() || request.getBase().getDetail();
-        Block reply = wallet.getBlockByNum(num, detail);
-        responseObserver.onNext(block2Extention(reply));
+        Block reply = wallet.getBlockByNum(num);
+        responseObserver.onNext(block2Extention(wallet.clearTrxForBlock(reply,
+            request.getOnlyHeader())));
       } else {
         responseObserver.onNext(null);
       }
@@ -1689,32 +1686,31 @@ public class RpcApiService implements Service {
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
-      responseObserver.onNext(wallet.getNowBlock(detail));
+      responseObserver.onNext(wallet.clearTrxForBlock(wallet.getNowBlock(),
+          request.getOnlyHeader()));
       responseObserver.onCompleted();
     }
 
     @Override
     public void getNowBlock2(EmptyMessage request,
                              StreamObserver<BlockExtention> responseObserver) {
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
-      Block block = wallet.getNowBlock(detail);
+      Block block = wallet.clearTrxForBlock(wallet.getNowBlock(), request.getOnlyHeader());
       responseObserver.onNext(block2Extention(block));
       responseObserver.onCompleted();
     }
 
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
-      responseObserver.onNext(wallet.getBlockByNum(request.getNum(), detail));
+      responseObserver.onNext(wallet.clearTrxForBlock(wallet.getBlockByNum(request.getNum()),
+          request.getOnlyHeader()));
       responseObserver.onCompleted();
     }
 
     @Override
     public void getBlockByNum2(NumberMessage request,
                                StreamObserver<BlockExtention> responseObserver) {
-      boolean detail = !request.hasBase() || request.getBase().getDetail();
-      Block block = wallet.getBlockByNum(request.getNum(), detail);
+      Block block = wallet.clearTrxForBlock(wallet.getBlockByNum(request.getNum()),
+          request.getOnlyHeader());
       responseObserver.onNext(block2Extention(block));
       responseObserver.onCompleted();
     }
@@ -1877,13 +1873,8 @@ public class RpcApiService implements Service {
     @Override
     public void getBlockById(BytesMessage request, StreamObserver<Block> responseObserver) {
       ByteString blockId = request.getValue();
-
-      if (Objects.nonNull(blockId)) {
-        boolean detail = !request.hasBase() || request.getBase().getDetail();
-        responseObserver.onNext(wallet.getBlockById(blockId, detail));
-      } else {
-        responseObserver.onNext(null);
-      }
+      responseObserver.onNext(wallet.clearTrxForBlock(wallet.getBlockById(blockId),
+          request.getOnlyHeader()));
       responseObserver.onCompleted();
     }
 
@@ -1920,9 +1911,8 @@ public class RpcApiService implements Service {
       long endNum = request.getEndNum();
 
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-        boolean detail = !request.hasBase() || request.getBase().getDetail();
-        responseObserver.onNext(wallet.getBlocksByLimitNext(startNum,
-            endNum - startNum, detail));
+        responseObserver.onNext(wallet.clearTrxBlockList(wallet.getBlocksByLimitNext(startNum,
+            endNum - startNum), request.getOnlyHeader()));
       } else {
         responseObserver.onNext(null);
       }
@@ -1936,9 +1926,9 @@ public class RpcApiService implements Service {
       long endNum = request.getEndNum();
 
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-        boolean detail = !request.hasBase() || request.getBase().getDetail();
-        responseObserver.onNext(blockList2Extention(wallet.getBlocksByLimitNext(startNum,
-            endNum - startNum, detail)));
+        responseObserver.onNext(blockList2Extention(wallet.clearTrxBlockList(
+            wallet.getBlocksByLimitNext(startNum, endNum - startNum),
+            request.getOnlyHeader())));
       } else {
         responseObserver.onNext(null);
       }
@@ -1951,8 +1941,8 @@ public class RpcApiService implements Service {
       long getNum = request.getNum();
 
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-        boolean detail = !request.hasBase() || request.getBase().getDetail();
-        responseObserver.onNext(wallet.getBlockByLatestNum(getNum, detail));
+        responseObserver.onNext(wallet.clearTrxBlockList(wallet.getBlockByLatestNum(getNum),
+            request.getOnlyHeader()));
       } else {
         responseObserver.onNext(null);
       }
@@ -1965,8 +1955,8 @@ public class RpcApiService implements Service {
       long getNum = request.getNum();
 
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-        boolean detail = !request.hasBase() || request.getBase().getDetail();
-        responseObserver.onNext(blockList2Extention(wallet.getBlockByLatestNum(getNum, detail)));
+        responseObserver.onNext(blockList2Extention(wallet.clearTrxBlockList(
+            wallet.getBlockByLatestNum(getNum), request.getOnlyHeader())));
       } else {
         responseObserver.onNext(null);
       }

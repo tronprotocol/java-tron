@@ -645,36 +645,18 @@ public class Wallet {
     return ecKey.getAddress();
   }
 
-  public Block dealBlock(Block block, boolean detail) {
-    if (Objects.isNull(block)) {
-      return null;
-    }
-    if (detail) {
-      return block;
-    }
-    return block.toBuilder().clearTransactions().build();
-  }
-
   public Block getNowBlock() {
-    return getNowBlock(true);
-  }
-
-  public Block getNowBlock(boolean detail) {
     List<BlockCapsule> blockList = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     if (CollectionUtils.isEmpty(blockList)) {
       return null;
+    } else {
+      return blockList.get(0).getInstance();
     }
-    return dealBlock(blockList.get(0).getInstance(), detail);
-
   }
 
   public Block getBlockByNum(long blockNum) {
-    return getBlockByNum(blockNum, true);
-  }
-
-  public Block getBlockByNum(long blockNum, boolean detail) {
     try {
-      return dealBlock(chainBaseManager.getBlockByNum(blockNum).getInstance(),detail);
+      return chainBaseManager.getBlockByNum(blockNum).getInstance();
     } catch (StoreException e) {
       logger.info(e.getMessage());
       return null;
@@ -1359,10 +1341,6 @@ public class Wallet {
   }
 
   public Block getBlockById(ByteString blockId) {
-    return getBlockById(blockId, true);
-  }
-
-  public Block getBlockById(ByteString blockId, boolean detail) {
     if (Objects.isNull(blockId)) {
       return null;
     }
@@ -1372,31 +1350,23 @@ public class Wallet {
     } catch (StoreException e) {
       logger.error(e.getMessage());
     }
-    return dealBlock(block, detail);
+    return block;
   }
 
   public BlockList getBlocksByLimitNext(long number, long limit) {
-    return getBlocksByLimitNext(number, limit, true);
-  }
-
-  public BlockList getBlocksByLimitNext(long number, long limit, boolean detail) {
     if (limit <= 0) {
       return null;
     }
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
     chainBaseManager.getBlockStore().getLimitNumber(number, limit).forEach(
-        blockCapsule -> blockListBuilder.addBlock(dealBlock(blockCapsule.getInstance(), detail)));
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
     return blockListBuilder.build();
   }
 
   public BlockList getBlockByLatestNum(long getNum) {
-    return getBlockByLatestNum(getNum, true);
-  }
-
-  public BlockList getBlockByLatestNum(long getNum, boolean detail) {
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
     chainBaseManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
-        blockCapsule -> blockListBuilder.addBlock(dealBlock(blockCapsule.getInstance(), detail)));
+        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
     return blockListBuilder.build();
   }
 
@@ -3992,6 +3962,30 @@ public class Wallet {
 
   public Chainbase.Cursor getCursor() {
     return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
+  }
+
+  public Block clearTrxForBlock(Block block, boolean onlyHeader) {
+    if (Objects.isNull(block)) {
+      return null;
+    }
+    if (onlyHeader) {
+      return block.toBuilder().clearTransactions().build();
+    }
+    return block;
+  }
+
+  public BlockList clearTrxBlockList(BlockList blockList, boolean onlyHeader) {
+    if (Objects.isNull(blockList) || blockList.getBlockList().isEmpty()) {
+      return blockList;
+    }
+    if (onlyHeader) {
+      BlockList.Builder blockListBuilder = BlockList.newBuilder();
+      blockList.getBlockList().forEach(block -> blockListBuilder.addBlock(clearTrxForBlock(block,
+          true)));
+      return blockListBuilder.build();
+    }
+    return blockList;
+
   }
 }
 

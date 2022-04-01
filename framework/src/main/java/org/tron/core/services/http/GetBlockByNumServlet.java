@@ -20,7 +20,7 @@ public class GetBlockByNumServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      fillResponse(Util.getVisible(request),Util.getDetail(request),
+      fillResponse(Util.getVisible(request), Util.getOnlyHeader(request),
           Long.parseLong(request.getParameter("num")), response);
     } catch (Exception e) {
       Util.processError(e, response);
@@ -32,7 +32,7 @@ public class GetBlockByNumServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      fillResponse(params.isVisible(), params.isDetail(), build.getNum(), response);
+      fillResponse(params.isVisible(), params.isOnlyHeader(), build.getNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -40,7 +40,7 @@ public class GetBlockByNumServlet extends RateLimiterServlet {
 
   private void fillResponse(boolean visible, boolean detail, long num, HttpServletResponse response)
       throws IOException {
-    Block reply = wallet.getBlockByNum(num, detail);
+    Block reply = wallet.clearTrxForBlock(wallet.getBlockByNum(num), detail);
     if (reply != null) {
       response.getWriter().println(Util.printBlock(reply, visible));
     } else {
