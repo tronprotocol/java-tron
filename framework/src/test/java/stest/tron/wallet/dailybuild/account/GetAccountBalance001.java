@@ -47,11 +47,7 @@ public class GetAccountBalance001 {
   private final String blackHoleAdd = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.blackHoleAddress");
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

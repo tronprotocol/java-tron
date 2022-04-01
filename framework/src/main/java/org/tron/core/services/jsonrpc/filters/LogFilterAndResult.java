@@ -12,7 +12,7 @@ import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 public class LogFilterAndResult extends FilterResult<LogFilterElement> {
 
   @Getter
-  private LogFilterWrapper logFilterWrapper;
+  private final LogFilterWrapper logFilterWrapper;
 
   public LogFilterAndResult(FilterRequest fr, long currentMaxBlockNum, Wallet wallet)
       throws JsonRpcInvalidParamsException {

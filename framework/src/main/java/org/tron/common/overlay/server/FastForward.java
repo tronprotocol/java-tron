@@ -110,7 +110,7 @@ public class FastForward {
     // todo, just to solve the compatibility problem
     if (msg.getAddress() == null || msg.getAddress().isEmpty()) {
       logger.info("HelloMessage from {}, address is empty.", channel.getInetAddress());
-      return true;
+      return false;
     }
 
     if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())) {
@@ -120,6 +120,7 @@ public class FastForward {
       return false;
     }
 
+    boolean flag;
     try {
       Sha256Hash hash = Sha256Hash.of(CommonParameter
           .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(msg.getTimestamp()));
@@ -128,13 +129,16 @@ public class FastForward {
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
           Args.getInstance().isECKeyCryptoEngine());
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
-        return Arrays.equals(sigAddress, msg.getAddress().toByteArray());
+        flag = Arrays.equals(sigAddress, msg.getAddress().toByteArray());
       } else {
         byte[] witnessPermissionAddress = manager.getAccountStore()
-            .get(msg.getAddress().toByteArray())
-            .getWitnessPermissionAddress();
-        return Arrays.equals(sigAddress, witnessPermissionAddress);
+            .get(msg.getAddress().toByteArray()).getWitnessPermissionAddress();
+        flag = Arrays.equals(sigAddress, witnessPermissionAddress);
       }
+      if (flag) {
+        channelManager.getTrustNodes().put(channel.getInetAddress(), channel.getNode());
+      }
+      return flag;
     } catch (Exception e) {
       logger.error("Check hello message failed, msg: {}, {}", message, e);
       return false;

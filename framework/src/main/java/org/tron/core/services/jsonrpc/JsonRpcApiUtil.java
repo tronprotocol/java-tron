@@ -1,6 +1,8 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.common.utils.DecodeUtil.addressPreFixString;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
+import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
 
 import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
@@ -8,7 +10,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -146,14 +147,14 @@ public class JsonRpcApiUtil {
         case FreezeBalanceContract:
           ByteString receiverAddress = contractParameter.unpack(FreezeBalanceContract.class)
               .getReceiverAddress();
-          if (receiverAddress != null && !receiverAddress.isEmpty()) {
+          if (!receiverAddress.isEmpty()) {
             list.add(receiverAddress);
           }
           break;
         case UnfreezeBalanceContract:
           receiverAddress = contractParameter.unpack(UnfreezeBalanceContract.class)
               .getReceiverAddress();
-          if (receiverAddress != null && !receiverAddress.isEmpty()) {
+          if (!receiverAddress.isEmpty()) {
             list.add(receiverAddress);
           }
           break;
@@ -182,8 +183,6 @@ public class JsonRpcApiUtil {
       return list;
     } catch (Exception ex) {
       ex.printStackTrace();
-    } catch (Throwable t) {
-      t.printStackTrace();
     }
     return list;
   }
@@ -210,8 +209,6 @@ public class JsonRpcApiUtil {
     } catch (Exception e) {
       logger.error("Exception happens when get amount. Exception = [{}]",
           Throwables.getStackTraceAsString(e));
-    } catch (Throwable t) {
-      t.printStackTrace();
     }
 
     return amount;
@@ -245,14 +242,6 @@ public class JsonRpcApiUtil {
           amount = 1024_000_000L;
           break;
         case ParticipateAssetIssueContract:
-          // long token = DataImporter.getTokenID(blockNum,
-          //     contractParameter.unpack(ParticipateAssetIssueContract.class).getAssetName());
-          // long trxNum = contractParameter.unpack(ParticipateAssetIssueContract.class)
-          // .getAmount();
-          // Token10Entity entity = DataImporter.getTokenEntity(token);
-          // long exchangeAmount = Math.multiplyExact(trxNum, entity.getNum());
-          // exchangeAmount = Math.floorDiv(exchangeAmount, entity.getTrxNum());
-          // amount = exchangeAmount;
           break;
         case FreezeBalanceContract:
           amount = contractParameter.unpack(FreezeBalanceContract.class).getFrozenBalance();
@@ -294,8 +283,6 @@ public class JsonRpcApiUtil {
     } catch (Exception e) {
       logger.error("Exception happens when get amount. Exception = [{}]",
           Throwables.getStackTraceAsString(e));
-    } catch (Throwable t) {
-      t.printStackTrace();
     }
     return amount;
   }
@@ -352,9 +339,7 @@ public class JsonRpcApiUtil {
           return amount;
         } else {
           AssetIssueContract assetIssue = assetIssueList.getAssetIssue(0);
-          Iterator<FrozenSupply> iterator = assetIssue.getFrozenSupplyList().iterator();
-          while (iterator.hasNext()) {
-            FrozenSupply frozenSupply = iterator.next();
+          for (FrozenSupply frozenSupply : assetIssue.getFrozenSupplyList()) {
             amount += frozenSupply.getFrozenAmount();
           }
         }
@@ -400,8 +385,7 @@ public class JsonRpcApiUtil {
     if (addressByte.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
       throw new JsonRpcInvalidParamsException("invalid address: " + hexAddress);
     }
-    byte[] last20Bytes = new DataWord(addressByte).getLast20Bytes();
-    return last20Bytes;
+    return new DataWord(addressByte).getLast20Bytes();
   }
 
   /**
@@ -500,12 +484,12 @@ public class JsonRpcApiUtil {
   }
 
   public static long getByJsonBlockId(String blockNumOrTag) throws JsonRpcInvalidParamsException {
-    if ("pending".equalsIgnoreCase(blockNumOrTag)) {
+    if (PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException("TAG pending not supported");
     }
-    if (StringUtils.isEmpty(blockNumOrTag) || "latest".equalsIgnoreCase(blockNumOrTag)) {
+    if (StringUtils.isEmpty(blockNumOrTag) || LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       return -1;
-    } else if ("earliest".equalsIgnoreCase(blockNumOrTag)) {
+    } else if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)) {
       return 0;
     } else {
       return ByteArray.jsonHexToLong(blockNumOrTag);

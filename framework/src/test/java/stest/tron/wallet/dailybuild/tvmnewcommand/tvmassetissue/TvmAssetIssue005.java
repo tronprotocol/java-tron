@@ -61,11 +61,7 @@ public class TvmAssetIssue005 {
   private byte[] dev004Address = ecKey4.getAddress();
   private String dev004Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /**
    * constructor.

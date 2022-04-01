@@ -5,6 +5,8 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -17,28 +19,70 @@ import org.tron.protos.Protocol.TransactionInfo;
 @JsonPropertyOrder(alphabetic = true)
 public class BlockResult {
 
-  public String number;
-  public String hash;
-  public String parentHash;
-  public String nonce;
-  public String sha3Uncles;
-  public String logsBloom;
-  public String transactionsRoot;
-  public String stateRoot;
-  public String receiptsRoot;
-  public String miner;
-  public String difficulty;
-  public String totalDifficulty;
-  public String extraData;
-  public String size;
-  public String gasLimit;
-  public String gasUsed;
-  public String timestamp;
-  public Object[] transactions; //TransactionResult or byte32
-  public String[] uncles;
+  @Getter
+  @Setter
+  private String number;
+  @Getter
+  @Setter
+  private String hash;
+  @Getter
+  @Setter
+  private String parentHash;
+  @Getter
+  @Setter
+  private String nonce;
+  @Getter
+  @Setter
+  private String sha3Uncles;
+  @Getter
+  @Setter
+  private String logsBloom;
+  @Getter
+  @Setter
+  private String transactionsRoot;
+  @Getter
+  @Setter
+  private String stateRoot;
+  @Getter
+  @Setter
+  private String receiptsRoot;
+  @Getter
+  @Setter
+  private String miner;
+  @Getter
+  @Setter
+  private String difficulty;
+  @Getter
+  @Setter
+  private String totalDifficulty;
+  @Getter
+  @Setter
+  private String extraData;
+  @Getter
+  @Setter
+  private String size;
+  @Getter
+  @Setter
+  private String gasLimit;
+  @Getter
+  @Setter
+  private String gasUsed;
+  @Getter
+  @Setter
+  private String timestamp;
+  @Getter
+  @Setter
+  private Object[] transactions; //TransactionResult or byte32
+  @Getter
+  @Setter
+  private String[] uncles;
 
-  public String baseFeePerGas = null;
-  public String mixHash = null;
+  @Getter
+  @Setter
+  private String baseFeePerGas = null;
+  @Getter
+  @Setter
+  private String mixHash = null;
 
   public BlockResult(Block block, boolean fullTx, Wallet wallet) {
     BlockCapsule blockCapsule = new BlockCapsule(block);

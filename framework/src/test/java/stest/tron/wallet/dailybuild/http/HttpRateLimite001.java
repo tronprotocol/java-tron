@@ -31,11 +31,7 @@ public class HttpRateLimite001 {
   private String httpPbftNode =
       Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(4);
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+  
 
   /** constructor. */
   @BeforeClass

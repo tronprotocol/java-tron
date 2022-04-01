@@ -90,11 +90,7 @@ public class ScanBlockTools {
   private String fullnode =  "39.106.110.245:50051";
   private String fullnode1 =  "39.106.110.245:50051";
 
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
+
 
   /**
    * constructor.

@@ -12,7 +12,7 @@ import org.tron.core.vm.program.Program.TransferException;
 @Slf4j(topic = "VM")
 public class VM {
 
-  public static void play(Program program) {
+  public static void play(Program program, JumpTable jumpTable) {
     try {
       while (!program.isStopped()) {
         if (VMConfig.vmTrace()) {
@@ -20,8 +20,8 @@ public class VM {
         }
 
         try {
-          Operation op = OperationRegistry.get(program.getCurrentOpIntValue());
-          if (op == null) {
+          Operation op = jumpTable.get(program.getCurrentOpIntValue());
+          if (!op.isEnabled()) {
             throw Program.Exception.invalidOpCode(program.getCurrentOp());
           }
           program.setLastOp((byte) op.getOpcode());

@@ -77,10 +77,6 @@ public class AdvService {
 
   public void init() {
 
-    if (fastForward) {
-      return;
-    }
-
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToSpread();
@@ -179,10 +175,6 @@ public class AdvService {
 
   public void broadcast(Message msg) {
 
-    if (fastForward) {
-      return;
-    }
-
     if (invToSpread.size() > MAX_SPREAD_SIZE) {
       logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
       return;
@@ -201,6 +193,9 @@ public class AdvService {
       });
       blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
+      if (fastForward) {
+        return;
+      }
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
@@ -217,6 +212,7 @@ public class AdvService {
     }
   }
 
+  /*
   public void fastForward(BlockMessage msg) {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
@@ -235,7 +231,7 @@ public class AdvService {
       peer.setFastForwardBlock(msg.getBlockId());
     });
   }
-
+  */
 
   public void onDisconnect(PeerConnection peer) {
     if (!peer.getAdvInvRequest().isEmpty()) {

@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.Value;
 import org.springframework.stereotype.Component;
@@ -331,39 +333,50 @@ public interface TronJsonRpc {
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
       JsonRpcMethodNotFoundException, JsonRpcTooManyResultException;
 
-  @Value
   @AllArgsConstructor
   @ToString
   class SyncingResult {
 
+    @Getter
     private final String startingBlock;
+    @Getter
     private final String currentBlock;
+    @Getter
     private final String highestBlock;
   }
 
   @ToString
   class CompilationResult {
 
-    public String code;
-    public CompilationInfo info;
+    @Getter
+    private String code;
+    @Getter
+    private CompilationInfo info;
   }
 
   @ToString
   class CompilationInfo {
 
-    public String source;
-    public String language;
-    public String languageVersion;
-    public String compilerVersion;
-    // public CallTransaction.Function[] abiDefinition;
-    public String userDoc;
-    public String developerDoc;
+    @Getter
+    private String source;
+    @Getter
+    private String language;
+    @Getter
+    private String languageVersion;
+    @Getter
+    private String compilerVersion;
+    @Getter
+    private String userDoc;
+    @Getter
+    private String developerDoc;
 
   }
 
   class TransactionJson {
 
-    public JSONObject transaction;
+    @Getter
+    @Setter
+    private JSONObject transaction;
   }
 
   /**
@@ -393,26 +406,45 @@ public interface TronJsonRpc {
   @AllArgsConstructor
   class FilterRequest {
 
-    public String fromBlock;
-    public String toBlock;
-    public Object address;
-    public Object[] topics;
-    public String blockHash;  // EIP-234: makes fromBlock = toBlock = blockHash
+    @Getter
+    @Setter
+    private String fromBlock;
+    @Getter
+    @Setter
+    private String toBlock;
+    @Getter
+    @Setter
+    private Object address;
+    @Getter
+    @Setter
+    private Object[] topics;
+    @Getter
+    @Setter
+    private String blockHash;  // EIP-234: makes fromBlock = toBlock = blockHash
 
   }
 
   @JsonPropertyOrder(alphabetic = true)
   class LogFilterElement {
 
-    public String logIndex;
-    public String transactionIndex;
-    public String transactionHash;
-    public String blockHash;
-    public String blockNumber;
-    public String address;
-    public String data;
-    public String[] topics;
-    public boolean removed;
+    @Getter
+    private final String logIndex;
+    @Getter
+    private final String transactionIndex;
+    @Getter
+    private final String transactionHash;
+    @Getter
+    private final String blockHash;
+    @Getter
+    private final String blockNumber;
+    @Getter
+    private final String address;
+    @Getter
+    private final String data;
+    @Getter
+    private final String[] topics;
+    @Getter
+    private final boolean removed;
 
     public LogFilterElement(String blockHash, Long blockNum, String txId, Integer txIndex,
         String contractAddress, List<DataWord> topicList, String logData, int logIdx,

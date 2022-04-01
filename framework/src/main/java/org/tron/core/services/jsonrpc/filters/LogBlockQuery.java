@@ -21,15 +21,15 @@ import org.tron.core.store.SectionBloomStore;
 public class LogBlockQuery {
 
   public static final int MAX_RESULT = 10000;
-  private LogFilterWrapper logFilterWrapper;
-  private SectionBloomStore sectionBloomStore;
-  private ExecutorService sectionExecutor;
+  private final LogFilterWrapper logFilterWrapper;
+  private final SectionBloomStore sectionBloomStore;
+  private final ExecutorService sectionExecutor;
 
-  private int minSection;
-  private int maxSection;
-  private long minBlock;
+  private final int minSection;
+  private final int maxSection;
+  private final long minBlock;
   private long maxBlock;
-  private long currentMaxBlockNum;
+  private final long currentMaxBlockNum;
 
   public LogBlockQuery(LogFilterWrapper logFilterWrapper, SectionBloomStore sectionBloomStore,
       long currentMaxBlockNum, ExecutorService executor) {
@@ -72,8 +72,8 @@ public class LogBlockQuery {
     blockNumBitSet.set(0, capacity);
 
     //works serial
-    for (int conditionIndex = 0; conditionIndex < allConditionsIndex.length; conditionIndex++) {
-      BitSet bitSet = subMatch(allConditionsIndex[conditionIndex]);
+    for (int[][] conditionsIndex : allConditionsIndex) {
+      BitSet bitSet = subMatch(conditionsIndex);
       blockNumBitSet.and(bitSet);
     }
 
@@ -82,7 +82,7 @@ public class LogBlockQuery {
       if (i == Integer.MAX_VALUE) {
         break; // or (i+1) would overflow
       }
-      long blockNum = minSection * SectionBloomStore.BLOCK_PER_SECTION + i;
+      long blockNum = (long) minSection * SectionBloomStore.BLOCK_PER_SECTION + i;
       if (minBlock <= blockNum && blockNum <= maxBlock) {
         blockNumList.add(blockNum);
       }
@@ -131,10 +131,9 @@ public class LogBlockQuery {
       throws ExecutionException, InterruptedException {
     List<List<Future<BitSet>>> bitSetList = new ArrayList<>();
 
-    for (int i = 0; i < bitIndexes.length; i++) {
+    for (int[] index : bitIndexes) {
       List<Future<BitSet>> futureList = new ArrayList<>();
-      for (int j = 0; j < bitIndexes[i].length; j++) { //must be 3
-        final int bitIndex = bitIndexes[i][j];
+      for (final int bitIndex : index) { //must be 3
         Future<BitSet> bitSetFuture =
             sectionExecutor.submit(() -> sectionBloomStore.get(section, bitIndex));
         futureList.add(bitSetFuture);

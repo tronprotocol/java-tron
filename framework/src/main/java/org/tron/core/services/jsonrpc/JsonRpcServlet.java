@@ -29,7 +29,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   @Autowired
   private Manager manager;
 
-  // @Override
+  @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
 
@@ -59,6 +59,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     rpcServer.setShouldLogInvocationErrors(false);
   }
 
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     rpcServer.handle(req, resp);
   }
