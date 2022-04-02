@@ -313,16 +313,8 @@ public class Util {
   }
 
   public static GrpcAPI.BlockType getBlockType(final HttpServletRequest request) {
-    int type = 0;
-    if (StringUtil.isNotBlank(request.getParameter(TYPE))) {
-      try {
-        type = Integer.parseInt(request.getParameter(TYPE));
-      } catch (Exception e) {
-        logger.debug("GetType : {}", e.getMessage());
-        return GrpcAPI.BlockType.valueOf(request.getParameter(TYPE));
-      }
-    }
-    return GrpcAPI.BlockType.forNumber(type);
+    String type = request.getParameter(TYPE);
+    return GrpcAPI.BlockType.forNumber(StringUtil.isNotBlank(type) ? Integer.parseInt(type) : 0);
   }
 
   public static boolean getVisiblePost(final String input) {
@@ -330,12 +322,10 @@ public class Util {
     if (StringUtil.isNotBlank(input)) {
       JSONObject jsonObject = JSON.parseObject(input);
       if (jsonObject.containsKey(VISIBLE)) {
-        Boolean tmp = jsonObject.getBoolean(VISIBLE);
-        if (tmp != null) {
-          visible = tmp;
-        }
+        visible = jsonObject.getBoolean(VISIBLE);
       }
     }
+
     return visible;
   }
 

@@ -3965,27 +3965,22 @@ public class Wallet {
   }
 
   public Block clearTrxForBlock(Block block, GrpcAPI.BlockType type) {
-    if (Objects.isNull(block)) {
-      return null;
+    if (Objects.isNull(block) || block.getTransactionsList().isEmpty()
+        || type == GrpcAPI.BlockType.ALL) {
+      return block;
     }
-    if (type == GrpcAPI.BlockType.HEADER) {
-      return block.toBuilder().clearTransactions().build();
-    }
-    return block;
+    return block.toBuilder().clearTransactions().build();
   }
 
   public BlockList clearTrxBlockList(BlockList blockList, GrpcAPI.BlockType type) {
-    if (Objects.isNull(blockList) || blockList.getBlockList().isEmpty()) {
+    if (Objects.isNull(blockList) || blockList.getBlockList().isEmpty()
+        || type == GrpcAPI.BlockType.ALL) {
       return blockList;
     }
-    if (type == GrpcAPI.BlockType.HEADER) {
-      BlockList.Builder blockListBuilder = BlockList.newBuilder();
-      blockList.getBlockList().forEach(block -> blockListBuilder.addBlock(clearTrxForBlock(block,
-          type)));
-      return blockListBuilder.build();
-    }
-    return blockList;
-
+    BlockList.Builder blockListBuilder = BlockList.newBuilder();
+    blockList.getBlockList().forEach(block -> blockListBuilder.addBlock(clearTrxForBlock(block,
+        type)));
+    return blockListBuilder.build();
   }
 }
 
