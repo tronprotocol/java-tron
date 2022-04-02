@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.util.StringUtil;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -61,7 +62,7 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
-  public static final String ONLY_HEADER = "only_header";
+  public static final String TYPE = "type";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -311,12 +312,17 @@ public class Util {
     return visible;
   }
 
-  public static boolean getOnlyHeader(final HttpServletRequest request) {
-    boolean onlyHeader = false;
-    if (StringUtil.isNotBlank(request.getParameter(ONLY_HEADER))) {
-      onlyHeader = Boolean.parseBoolean(request.getParameter(ONLY_HEADER));
+  public static GrpcAPI.BlockType getBlockType(final HttpServletRequest request) {
+    int type = 0;
+    if (StringUtil.isNotBlank(request.getParameter(TYPE))) {
+      try {
+        type = Integer.parseInt(request.getParameter(TYPE));
+      } catch (Exception e) {
+        logger.debug("GetType : {}", e.getMessage());
+        return GrpcAPI.BlockType.valueOf(request.getParameter(TYPE));
+      }
     }
-    return onlyHeader;
+    return GrpcAPI.BlockType.forNumber(type);
   }
 
   public static boolean getVisiblePost(final String input) {
@@ -331,20 +337,6 @@ public class Util {
       }
     }
     return visible;
-  }
-
-  public static boolean getOnlyHeaderPost(final String input) {
-    boolean onlyHeader = false;
-    if (StringUtil.isNotBlank(input)) {
-      JSONObject jsonObject = JSON.parseObject(input);
-      if (jsonObject.containsKey(ONLY_HEADER)) {
-        Boolean tmp = jsonObject.getBoolean(ONLY_HEADER);
-        if (tmp != null) {
-          onlyHeader = tmp;
-        }
-      }
-    }
-    return onlyHeader;
   }
 
   public static String getContractType(final String input) {

@@ -1,10 +1,12 @@
 package org.tron.core.services.http;
 
+import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
@@ -18,12 +20,7 @@ public class GetNowBlockServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      Block reply = wallet.clearTrxForBlock(wallet.getNowBlock(), Util.getOnlyHeader(request));
-      if (reply != null) {
-        response.getWriter().println(Util.printBlock(reply, Util.getVisible(request)));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(Util.getVisible(request), Util.getBlockType(request), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -32,14 +29,22 @@ public class GetNowBlockServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      Block reply = wallet.clearTrxForBlock(wallet.getNowBlock(), params.isOnlyHeader());
-      if (reply != null) {
-        response.getWriter().println(Util.printBlock(reply, Util.getVisible(request)));
-      } else {
-        response.getWriter().println("{}");
-      }
+      GrpcAPI.EmptyMessage.Builder build = GrpcAPI.EmptyMessage.newBuilder();
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(params.isVisible(), build.getType(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, GrpcAPI.BlockType type, HttpServletResponse response)
+      throws
+      IOException {
+    Block reply = wallet.clearTrxForBlock(wallet.getNowBlock(), type);
+    if (reply != null) {
+      response.getWriter().println(Util.printBlock(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

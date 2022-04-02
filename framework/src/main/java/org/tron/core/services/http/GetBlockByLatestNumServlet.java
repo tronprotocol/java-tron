@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.Wallet;
@@ -21,7 +22,7 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      fillResponse(Util.getVisible(request), Util.getOnlyHeader(request),
+      fillResponse(Util.getVisible(request), Util.getBlockType(request),
           Long.parseLong(request.getParameter("num")), response);
     } catch (Exception e) {
       Util.processError(e, response);
@@ -33,17 +34,17 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      fillResponse(params.isVisible(), params.isOnlyHeader(), build.getNum(), response);
+      fillResponse(params.isVisible(), build.getType(), build.getNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void fillResponse(boolean visible, boolean onlyHeader, long num,
+  private void fillResponse(boolean visible, GrpcAPI.BlockType type, long num,
                             HttpServletResponse response)
       throws IOException {
     if (num > 0 && num < BLOCK_LIMIT_NUM) {
-      BlockList reply = wallet.clearTrxBlockList(wallet.getBlockByLatestNum(num), onlyHeader);
+      BlockList reply = wallet.clearTrxBlockList(wallet.getBlockByLatestNum(num), type);
       if (reply != null) {
         response.getWriter().println(Util.printBlockList(reply, visible));
         return;

@@ -13,27 +13,15 @@ public class PostParams {
   @Getter
   private boolean visible;
 
-  @Getter
-  private boolean onlyHeader;
-
   public PostParams(String params, boolean visible) {
     this.params = params;
     this.visible = visible;
   }
 
-  public PostParams(String params, boolean visible, boolean onlyHeader) {
-    this.params = params;
-    this.visible = visible;
-    this.onlyHeader = onlyHeader;
-  }
-
-
-
   public static PostParams getPostParams(HttpServletRequest request) throws Exception {
     String input = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     Util.checkBodySize(input);
     boolean visible = Util.getVisiblePost(input);
-    boolean detail = Util.getOnlyHeaderPost(input);
-    return new PostParams(input, visible, detail);
+    return new PostParams(input, visible);
   }
 }

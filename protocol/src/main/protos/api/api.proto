@@ -1111,16 +1111,21 @@ message Address {
   int32 port = 2;
 }
 
+enum BlockType {
+  ALL = 0; // 0 for all block msg
+  HEADER = 1; //1 for block header;
+}
+
 message EmptyMessage {
-  bool only_header = 1;
+  BlockType type = 1;
 }
 message NumberMessage {
   int64 num = 1;
-  bool only_header = 2;
+  BlockType type = 2;
 }
 message BytesMessage {
   bytes value = 1;
-  bool only_header = 2;
+  BlockType type = 2;
 }
 message TimeMessage {
   int64 beginInMilliseconds = 1;
@@ -1129,7 +1134,7 @@ message TimeMessage {
 message BlockLimit {
   int64 startNum = 1;
   int64 endNum = 2;
-  bool only_header = 3;
+  BlockType type = 3;
 }
 message TransactionLimit {
   bytes transactionId = 1;

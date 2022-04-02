@@ -3964,24 +3964,24 @@ public class Wallet {
     return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
   }
 
-  public Block clearTrxForBlock(Block block, boolean onlyHeader) {
+  public Block clearTrxForBlock(Block block, GrpcAPI.BlockType type) {
     if (Objects.isNull(block)) {
       return null;
     }
-    if (onlyHeader) {
+    if (type == GrpcAPI.BlockType.HEADER) {
       return block.toBuilder().clearTransactions().build();
     }
     return block;
   }
 
-  public BlockList clearTrxBlockList(BlockList blockList, boolean onlyHeader) {
+  public BlockList clearTrxBlockList(BlockList blockList, GrpcAPI.BlockType type) {
     if (Objects.isNull(blockList) || blockList.getBlockList().isEmpty()) {
       return blockList;
     }
-    if (onlyHeader) {
+    if (type == GrpcAPI.BlockType.HEADER) {
       BlockList.Builder blockListBuilder = BlockList.newBuilder();
       blockList.getBlockList().forEach(block -> blockListBuilder.addBlock(clearTrxForBlock(block,
-          true)));
+          type)));
       return blockListBuilder.build();
     }
     return blockList;
