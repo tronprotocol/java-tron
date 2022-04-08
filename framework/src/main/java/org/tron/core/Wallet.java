@@ -3966,7 +3966,7 @@ public class Wallet {
 
   public Block clearTrxForBlock(Block block, GrpcAPI.BlockType type) {
     if (Objects.isNull(block) || block.getTransactionsList().isEmpty()
-        || type == GrpcAPI.BlockType.ALL) {
+        || type != GrpcAPI.BlockType.HEADER) {
       return block;
     }
     return block.toBuilder().clearTransactions().build();
@@ -3974,7 +3974,7 @@ public class Wallet {
 
   public BlockList clearTrxBlockList(BlockList blockList, GrpcAPI.BlockType type) {
     if (Objects.isNull(blockList) || blockList.getBlockList().isEmpty()
-        || type == GrpcAPI.BlockType.ALL) {
+        || type != GrpcAPI.BlockType.HEADER) {
       return blockList;
     }
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
