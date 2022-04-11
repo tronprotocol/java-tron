@@ -6,7 +6,9 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
@@ -50,9 +52,6 @@ public class RelayServiceTest {
     chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
-  /**
-   * destroy.
-   */
   @After
   public void destroy() {
     Args.clearParam();
@@ -62,56 +61,45 @@ public class RelayServiceTest {
 
   @Test
   public void test() throws Exception {
-    testGetSortedScheduleWitness();
+    initWitness();
     testGetNextWitnesses();
     testBroadcast();
   }
 
-  private void testGetSortedScheduleWitness() throws Exception {
-    Method method = service.getClass().getDeclaredMethod("getSortedScheduleWitness");
-    method.setAccessible(true);
+  private void initWitness() {
+    byte[] key = Hex.decode("A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F");
+    WitnessCapsule witnessCapsule = chainBaseManager.getWitnessStore().get(key);
+    witnessCapsule.setVoteCount(1000);
+    chainBaseManager.getWitnessStore().put(key, witnessCapsule);
     List<ByteString> list = new ArrayList<>();
     List<WitnessCapsule> witnesses = chainBaseManager.getWitnessStore().getAllWitnesses();
+    witnesses.sort(Comparator.comparingLong(w -> -w.getVoteCount()));
     witnesses.forEach(witness -> list.add(witness.getAddress()));
     chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(list);
-    chainBaseManager.getDynamicPropertiesStore().saveNextMaintenanceTime(10);
-    List<ByteString> l1 = (List<ByteString>) method.invoke(service);
-    Assert.assertEquals(11, l1.size());
-    assertEquals(l1.get(0), "A0299F3DB80A24B20A254B89CE639D59132F157F13");
-    assertEquals(l1.get(10), "A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F");
-
-    byte[] key = Hex.decode("A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F");
-    WitnessCapsule witness = chainBaseManager.getWitnessStore().get(key);
-    witness.setVoteCount(1000);
-    chainBaseManager.getWitnessStore().put(key, witness);
-    chainBaseManager.getDynamicPropertiesStore().saveNextMaintenanceTime(20);
-    List<ByteString> l2 = (List<ByteString>) method.invoke(service);
-    assertEquals(l2.get(0), "A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F");
-    assertEquals(l2.get(1), "A0299F3DB80A24B20A254B89CE639D59132F157F13");
   }
 
   public void testGetNextWitnesses() throws Exception {
     Method method = service.getClass().getDeclaredMethod(
             "getNextWitnesses", ByteString.class, Integer.class);
     method.setAccessible(true);
-    List<ByteString> l1 = (List<ByteString>) method.invoke(
+    Set<ByteString> s1 = (Set<ByteString>) method.invoke(
             service, getFromHexString("A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F"), 3);
-    Assert.assertEquals(l1.size(), 3);
-    assertEquals(l1.get(0), "A0299F3DB80A24B20A254B89CE639D59132F157F13");
-    assertEquals(l1.get(1), "A0807337F180B62A77576377C1D0C9C24DF5C0DD62");
-    assertEquals(l1.get(2), "A05430A3F089154E9E182DDD6FE136A62321AF22A7");
+    Assert.assertEquals(s1.size(), 3);
+    assertContains(s1, "A0299F3DB80A24B20A254B89CE639D59132F157F13");
+    assertContains(s1, "A0807337F180B62A77576377C1D0C9C24DF5C0DD62");
+    assertContains(s1, "A05430A3F089154E9E182DDD6FE136A62321AF22A7");
 
-    List<ByteString> l2 = (List<ByteString>) method.invoke(
+    Set<ByteString> s2 = (Set<ByteString>) method.invoke(
             service, getFromHexString("A0FAB5FBF6AFB681E4E37E9D33BDDB7E923D6132E5"), 3);
-    Assert.assertEquals(l2.size(), 3);
-    assertEquals(l2.get(0), "A014EEBE4D30A6ACB505C8B00B218BDC4733433C68");
-    assertEquals(l2.get(1), "A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F");
-    assertEquals(l2.get(2), "A0299F3DB80A24B20A254B89CE639D59132F157F13");
+    Assert.assertEquals(s2.size(), 3);
+    assertContains(s2, "A014EEBE4D30A6ACB505C8B00B218BDC4733433C68");
+    assertContains(s2, "A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F");
+    assertContains(s2, "A0299F3DB80A24B20A254B89CE639D59132F157F13");
 
-    List<ByteString> l3 = (List<ByteString>) method.invoke(
+    Set<ByteString> s3 = (Set<ByteString>) method.invoke(
             service, getFromHexString("A04711BF7AFBDF44557DEFBDF4C4E7AA6138C6331F"), 1);
-    Assert.assertEquals(l3.size(), 1);
-    assertEquals(l3.get(0), "A0299F3DB80A24B20A254B89CE639D59132F157F13");
+    Assert.assertEquals(s3.size(), 1);
+    assertContains(s3, "A0299F3DB80A24B20A254B89CE639D59132F157F13");
   }
 
   private void testBroadcast() {
@@ -140,8 +128,9 @@ public class RelayServiceTest {
     }
   }
 
-  private void assertEquals(ByteString byteString, String string) {
-    Assert.assertEquals(byteString, ByteString.copyFrom(Hex.decode(string)));
+  private void assertContains(Set<ByteString> set, String string) {
+    ByteString bytes = getFromHexString(string);
+    Assert.assertTrue(set.contains(bytes));
   }
 
   private ByteString getFromHexString(String s) {
