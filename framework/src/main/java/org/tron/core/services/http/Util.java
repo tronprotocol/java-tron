@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.util.StringUtil;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -61,6 +62,7 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
+  public static final String TYPE = "type";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -308,6 +310,11 @@ public class Util {
       visible = Boolean.valueOf(request.getParameter(VISIBLE));
     }
     return visible;
+  }
+
+  public static GrpcAPI.BlockType getBlockType(final HttpServletRequest request) {
+    String type = request.getParameter(TYPE);
+    return GrpcAPI.BlockType.forNumber(StringUtil.isNotBlank(type) ? Integer.parseInt(type) : 0);
   }
 
   public static boolean getVisiblePost(final String input) {
