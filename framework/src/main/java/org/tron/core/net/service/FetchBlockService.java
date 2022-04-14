@@ -84,10 +84,11 @@ public class FetchBlockService {
 
 
   public void blockFetchSuccess(Sha256Hash sha256Hash) {
-    if (null == fetchBlockInfo || !fetchBlockInfo.getHash().equals(sha256Hash)) {
+    FetchBlockInfo fetchBlockInfoTemp = this.fetchBlockInfo;
+    if (null == fetchBlockInfoTemp || !fetchBlockInfoTemp.getHash().equals(sha256Hash)) {
       return;
     }
-    fetchBlockInfo = null;
+    this.fetchBlockInfo = null;
   }
 
   private void fetchBlockProcess(FetchBlockInfo fetchBlock) {
@@ -111,6 +112,7 @@ public class FetchBlockService {
     if (optionalPeerConnection.isPresent()) {
       optionalPeerConnection.ifPresent(firstPeer -> {
         if (shouldFetchBlock(firstPeer, fetchBlock)) {
+          firstPeer.getAdvInvRequest().put(item, System.currentTimeMillis());
           firstPeer.fastSend(new FetchInvDataMessage(Collections.singletonList(item.getHash()),
               item.getType()));
           this.fetchBlockInfo = null;
