@@ -19,6 +19,9 @@ public class Constant {
   public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
   public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
 
+  public static final int NODE_TYPE_FULL_NODE = 0;
+  public static final int NODE_TYPE_LIGHT_NODE = 1;
+
   // config for transaction
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day

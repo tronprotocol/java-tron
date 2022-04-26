@@ -24,6 +24,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -45,6 +46,10 @@ public class ChannelManager {
 
   private Cache<InetAddress, ReasonCode> recentlyDisconnected = CacheBuilder.newBuilder()
       .maximumSize(1000).expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
+
+  @Getter
+  private Cache<String, Protocol.HelloMessage> helloMessageCache = CacheBuilder.newBuilder()
+          .maximumSize(2000).expireAfterWrite(24, TimeUnit.HOURS).recordStats().build();
 
   @Getter
   private Cache<InetAddress, Node> trustNodes = CacheBuilder.newBuilder().maximumSize(100).build();
