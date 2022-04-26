@@ -115,6 +115,7 @@ public class Args extends CommonParameter {
     PARAMETER.activeNodes = Collections.emptyList();
     PARAMETER.passiveNodes = Collections.emptyList();
     PARAMETER.fastForwardNodes = Collections.emptyList();
+    PARAMETER.maxFastForwardNum = 3;
     PARAMETER.nodeChannelReadTimeout = 0;
     PARAMETER.nodeMaxActiveNodes = 30;
     PARAMETER.nodeMaxActiveNodesWithSameIp = 2;
@@ -726,6 +727,16 @@ public class Args extends CommonParameter {
     PARAMETER.passiveNodes = getNodes(config, Constant.NODE_PASSIVE);
 
     PARAMETER.fastForwardNodes = getNodes(config, Constant.NODE_FAST_FORWARD);
+
+    PARAMETER.maxFastForwardNum = config.hasPath(Constant.NODE_MAX_FAST_FORWARD_NUM) ? config
+            .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 3;
+    if (PARAMETER.maxFastForwardNum > MAX_ACTIVE_WITNESS_NUM) {
+      PARAMETER.maxFastForwardNum = MAX_ACTIVE_WITNESS_NUM;
+    }
+    if (PARAMETER.maxFastForwardNum < 1) {
+      PARAMETER.maxFastForwardNum = 1;
+    }
+
     PARAMETER.shieldedTransInPendingMaxCounts =
         config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
             .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
@@ -1151,10 +1162,12 @@ public class Args extends CommonParameter {
     logger.info("Active node size: {}", parameter.getActiveNodes().size());
     logger.info("Passive node size: {}", parameter.getPassiveNodes().size());
     logger.info("FastForward node size: {}", parameter.getFastForwardNodes().size());
+    logger.info("FastForward node number: {}", parameter.getMaxFastForwardNum());
     logger.info("Seed node size: {}", parameter.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", parameter.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", parameter.getNodeMaxActiveNodesWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
+    logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());

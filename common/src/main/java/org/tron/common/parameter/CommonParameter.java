@@ -386,6 +386,8 @@ public class CommonParameter {
   @Getter
   public List<Node> fastForwardNodes;
   @Getter
+  public int maxFastForwardNum;
+  @Getter
   public Storage storage;
   @Getter
   public Overlay overlay;
