@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.google.common.base.Throwables;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ public class GetTransactionByIdServlet extends RateLimiterServlet {
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       fillResponse(build.getValue(), params.isVisible(), response);
     } catch (Exception e) {
+      logger.error("[GetBlockByNumServlet] {}", Throwables.getStackTraceAsString(e));
       Util.processError(e, response);
     }
   }

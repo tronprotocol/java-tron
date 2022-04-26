@@ -30,6 +30,7 @@ package org.tron.core.services.http;
 */
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -162,6 +163,7 @@ public class JsonFormat {
       print(message, text, selfType);
       return text.toString();
     } catch (IOException e) {
+      e.printStackTrace();
       throw new RuntimeException(WRITING_STRING_BUILDER_EXCEPTION, e);
     }
   }

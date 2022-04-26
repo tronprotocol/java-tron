@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.google.common.base.Throwables;
 import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +34,7 @@ public class GetBlockByNumServlet extends RateLimiterServlet {
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       fillResponse(params.isVisible(), build.getNum(), response);
     } catch (Exception e) {
+      logger.error("[GetBlockByNumServlet] {}", Throwables.getStackTraceAsString(e));
       Util.processError(e, response);
     }
   }
