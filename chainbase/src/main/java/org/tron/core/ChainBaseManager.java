@@ -25,6 +25,7 @@ import org.tron.core.db.CommonStore;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
+import org.tron.core.db.RecentTransactionStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
@@ -185,6 +186,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private RecentBlockStore recentBlockStore;
+  @Autowired
+  @Getter
+  private RecentTransactionStore recentTransactionStore;
   @Autowired
   @Getter
   private TransactionHistoryStore transactionHistoryStore;
