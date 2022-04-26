@@ -48,6 +48,7 @@ public class GetTransactionByIdServlet extends RateLimiterServlet {
       throws IOException {
     Transaction reply = wallet.getTransactionById(txId);
     if (reply != null) {
+      logger.info("[fillResponse] is {}", reply.toString());
       response.getWriter().println(Util.printTransaction(reply, visible));
     } else {
       response.getWriter().println("{}");
