@@ -119,6 +119,9 @@ public class CommonParameter {
   public int nodeConnectionTimeout;
   @Getter
   @Setter
+  public int fetchBlockTimeout;
+  @Getter
+  @Setter
   public int nodeChannelReadTimeout;
   @Getter
   @Setter

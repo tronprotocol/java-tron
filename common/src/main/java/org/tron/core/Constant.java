@@ -80,6 +80,7 @@ public class Constant {
   public static final String NODE_DISCOVERY_ENABLE = "node.discovery.enable";
   public static final String NODE_DISCOVERY_PERSIST = "node.discovery.persist";
   public static final String NODE_CONNECTION_TIMEOUT = "node.connection.timeout";
+  public static final String NODE_FETCH_BLOCK_TIMEOUT = "node.fetchBlock.timeout";
   public static final String NODE_CHANNEL_READ_TIMEOUT = "node.channel.read.timeout";
   public static final String NODE_MAX_ACTIVE_NODES = "node.maxActiveNodes";
   public static final String NODE_MAX_ACTIVE_NODES_WITH_SAMEIP = "node.maxActiveNodesWithSameIp";

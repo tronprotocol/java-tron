@@ -1,5 +1,6 @@
 package org.tron.common.overlay.server;
 
+import com.codahale.metrics.Snapshot;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -25,6 +26,8 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol;
 
@@ -138,8 +141,19 @@ public class SyncPool {
     StringBuilder sb = new StringBuilder(str);
     for (PeerConnection peer : new ArrayList<>(activePeers)) {
       sb.append(peer.log()).append('\n');
+      appendPeerLatencyLog(sb, peer);
     }
     logger.info(sb.toString());
+  }
+
+  private void appendPeerLatencyLog(StringBuilder builder, PeerConnection peer) {
+    Snapshot peerSnapshot = MetricsUtil.getHistogram(MetricsKey.NET_LATENCY_FETCH_BLOCK
+        + peer.getNode().getHost()).getSnapshot();
+    builder.append(String.format(
+        "top99 : %f, top95 : %f, top75 : %f, max : %d, min : %d, mean : %f, median : %f",
+        peerSnapshot.get99thPercentile(), peerSnapshot.get95thPercentile(),
+        peerSnapshot.get75thPercentile(), peerSnapshot.getMax(), peerSnapshot.getMin(),
+        peerSnapshot.getMean(), peerSnapshot.getMedian())).append("\n");
   }
 
   public List<PeerConnection> getActivePeers() {

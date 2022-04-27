@@ -50,6 +50,9 @@ public class AdvService {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
+  @Autowired
+  private FetchBlockService fetchBlockService;
+
   private ConcurrentHashMap<Item, Long> invToFetch = new ConcurrentHashMap<>();
 
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
@@ -365,6 +368,7 @@ public class AdvService {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
           peer.fastSend(new FetchInvDataMessage(value, key));
+          fetchBlockService.fetchBlock(value, peer);
         } else {
           peer.sendMessage(new FetchInvDataMessage(value, key));
         }

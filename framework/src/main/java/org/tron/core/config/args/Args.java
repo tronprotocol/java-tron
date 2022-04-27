@@ -424,6 +424,16 @@ public class Args extends CommonParameter {
             ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
             : 0;
 
+    if (!config.hasPath(Constant.NODE_FETCH_BLOCK_TIMEOUT)) {
+      PARAMETER.fetchBlockTimeout = 200;
+    } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) > 1000) {
+      PARAMETER.fetchBlockTimeout = 1000;
+    } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) < 100) {
+      PARAMETER.fetchBlockTimeout = 100;
+    } else {
+      PARAMETER.fetchBlockTimeout = config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT);
+    }
+
     PARAMETER.nodeChannelReadTimeout =
         config.hasPath(Constant.NODE_CHANNEL_READ_TIMEOUT)
             ? config.getInt(Constant.NODE_CHANNEL_READ_TIMEOUT)
