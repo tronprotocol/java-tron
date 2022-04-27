@@ -62,6 +62,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
@@ -1516,6 +1517,7 @@ public class Manager {
 
     updateTransHashCache(block);
     updateRecentBlock(block);
+    updateRecentTransaction(block);
     updateDynamicProperties(block);
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
@@ -1621,6 +1623,17 @@ public class Manager {
     chainBaseManager.getRecentBlockStore().put(ByteArray.subArray(
         ByteArray.fromLong(block.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
+  }
+
+  public void updateRecentTransaction(BlockCapsule block) {
+    List list = new ArrayList<>();
+    block.getTransactions().forEach(capsule -> {
+      list.add(capsule.getTransactionId().toString());
+    });
+    RecentTransactionItem item = new RecentTransactionItem(block.getNum(), list);
+    chainBaseManager.getRecentTransactionStore().put(
+            ByteArray.subArray(ByteArray.fromLong(block.getNum()), 6, 8),
+            new BytesCapsule(JsonUtil.obj2Json(item).getBytes()));
   }
 
   public void updateFork(BlockCapsule block) {

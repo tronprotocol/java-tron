@@ -22,6 +22,7 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.FetchBlockService;
+import org.tron.core.net.service.RelayService;
 import org.tron.core.net.service.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -29,6 +30,9 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class BlockMsgHandler implements TronMsgHandler {
+
+  @Autowired
+  private RelayService relayService;
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -119,13 +123,13 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     boolean flag = tronNetDelegate.validBlock(block);
     if (flag) {
-      advService.broadcast(new BlockMessage(block));
+      broadcast(new BlockMessage(block));
     }
 
     try {
       tronNetDelegate.processBlock(block, false);
       if (!flag) {
-        advService.broadcast(new BlockMessage(block));
+        broadcast(new BlockMessage(block));
       }
 
       witnessProductBlockService.validWitnessProductTwoBlock(block);
@@ -138,6 +142,14 @@ public class BlockMsgHandler implements TronMsgHandler {
     } catch (Exception e) {
       logger.warn("Process adv block {} from peer {} failed. reason: {}",
               blockId, peer.getInetAddress(), e.getMessage());
+    }
+  }
+
+  private void broadcast(BlockMessage blockMessage) {
+    if (fastForward) {
+      relayService.broadcast(blockMessage);
+    } else {
+      advService.broadcast(blockMessage);
     }
   }
 

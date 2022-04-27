@@ -7,10 +7,10 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
-public class RecentBlockStore extends TronStoreWithRevoking<BytesCapsule> {
+public class RecentTransactionStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
-  private RecentBlockStore(@Value("recent-block") String dbName) {
+  private RecentTransactionStore(@Value("recent-transaction") String dbName) {
     super(dbName);
   }
 

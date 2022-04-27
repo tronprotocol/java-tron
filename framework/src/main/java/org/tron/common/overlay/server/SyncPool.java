@@ -25,10 +25,12 @@ import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "net")
 @Component
@@ -48,6 +50,9 @@ public class SyncPool {
 
   @Autowired
   private ApplicationContext ctx;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   private ChannelManager channelManager;
 
@@ -222,16 +227,18 @@ public class SyncPool {
 
     @Override
     public boolean test(NodeHandler handler) {
-
+      long headNum = chainBaseManager.getHeadBlockNum();
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
-
+      Protocol.HelloMessage message = channelManager.getHelloMessageCache()
+              .getIfPresent(inetAddress.getHostAddress());
       return !((handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost())
-          && handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
+              && handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
           || (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null)
           || (channelManager.getBadPeers().getIfPresent(inetAddress) != null)
           || (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp)
           || (nodesInUse.contains(handler.getNode().getHexId()))
-          || (nodeHandlerCache.getIfPresent(handler) != null));
+          || (nodeHandlerCache.getIfPresent(handler) != null)
+          || (message != null && headNum < message.getLowestBlockNum()));
     }
   }
 

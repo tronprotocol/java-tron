@@ -178,6 +178,10 @@ public class AdvService {
 
   public void broadcast(Message msg) {
 
+    if (fastForward) {
+      return;
+    }
+
     if (invToSpread.size() > MAX_SPREAD_SIZE) {
       logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
       return;
@@ -196,9 +200,6 @@ public class AdvService {
       });
       blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
-      if (fastForward) {
-        return;
-      }
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
