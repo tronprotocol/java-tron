@@ -133,6 +133,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
     channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
 
+    channel.setAddress(msg.getHelloMessage().getAddress());
+
     if (!fastForward.checkHelloMessage(msg, channel)) {
       channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
       return;
