@@ -22,7 +22,6 @@ import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.RocksDBException;
-import org.tron.common.overlay.server.HandshakeHandler;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -84,7 +83,7 @@ public class LiteFullNodeTool {
       "properties",
       "proposal",
       "recent-block",
-      "recent-transaction",
+      //"recent-transaction",
       "storage-row",
       //TRANS_CACHE_DB_NAME,
       //"tree-block-index",
