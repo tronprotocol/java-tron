@@ -8,13 +8,17 @@ import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.OracleRewardCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.Parameter;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.service.MortgageService;
@@ -58,15 +62,23 @@ public class WithdrawBalanceActuator extends AbstractActuator {
         get(withdrawBalanceContract.getOwnerAddress().toByteArray());
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
-
+    long oracleAllowance = accountCapsule.getOracleAllowance().getBalance();
+    Map<String, Long> asset = new HashMap<>(accountCapsule.getAssetMapV2());
+    Map<String, Long> oracleAsset = accountCapsule.getOracleAllowance().getAssetMap();
+    Map<String, Long> assetMap = new HashMap<>(oracleAsset);
+    assetMap.put(Parameter.ChainSymbol.TRX_SYMBOL, oracleAllowance);
+    oracleAsset.forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-        .setBalance(oldBalance + allowance)
+        .setBalance(oldBalance + allowance + oracleAllowance)
+        .putAllAssetV2(asset)
         .setAllowance(0L)
+        .clearOracleAllowance()
         .setLatestWithdrawTime(now)
         .build());
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
     ret.setWithdrawAmount(allowance);
+    ret.setWithdrawAsset(assetMap);
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -128,11 +140,16 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     if (accountCapsule.getAllowance() <= 0 &&
-        mortgageService.queryReward(ownerAddress) <= 0) {
+        mortgageService.queryReward(ownerAddress) <= 0 &&
+        new OracleRewardCapsule(accountCapsule.getOracleAllowance()).isZero()
+        && mortgageService.queryOracleReward(ownerAddress).isZero()) {
       throw new ContractValidateException("witnessAccount does not have any reward");
     }
     try {
-      LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());
+      long d = LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());
+      LongMath.checkedAdd(d, accountCapsule.getOracleAllowance().getBalance());
+      accountCapsule.getOracleAllowance().getAssetMap().forEach((k, v) ->
+          new HashMap<>(accountCapsule.getAssetMapV2()).merge(k, v, LongMath::checkedAdd));
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());

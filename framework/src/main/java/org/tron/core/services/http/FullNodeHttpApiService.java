@@ -235,6 +235,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetRewardServlet getRewardServlet;
   @Autowired
+  private GetOracleRewardServlet getOracleRewardServlet;
+  @Autowired
   private UpdateBrokerageServlet updateBrokerageServlet;
   @Autowired
   private CreateCommonTransactionServlet createCommonTransactionServlet;
@@ -502,6 +504,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(broadcastHexServlet), "/wallet/broadcasthex");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/wallet/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/wallet/getReward");
+      context.addServlet(new ServletHolder(getOracleRewardServlet), "/wallet/getoraclereward");
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");

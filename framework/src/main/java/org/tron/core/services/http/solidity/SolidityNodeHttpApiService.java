@@ -2,13 +2,11 @@ package org.tron.core.services.http.solidity;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,6 +38,7 @@ import org.tron.core.services.http.GetMarketPriceByPairServlet;
 import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
+import org.tron.core.services.http.GetOracleRewardServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
@@ -140,6 +139,8 @@ public class SolidityNodeHttpApiService implements Service {
   private GetBrokerageServlet getBrokerageServlet;
   @Autowired
   private GetRewardServlet getRewardServlet;
+  @Autowired
+  private GetOracleRewardServlet getOracleRewardServlet;
   @Autowired
   private TriggerConstantContractServlet triggerConstantContractServlet;
 
@@ -249,6 +250,8 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/walletsolidity/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+      context.addServlet(new ServletHolder(getOracleRewardServlet),
+          "/walletsolidity/getoraclereward");
       context.addServlet(new ServletHolder(getBurnTrxServlet), "/walletsolidity/getburntrx");
 
       // http access filter

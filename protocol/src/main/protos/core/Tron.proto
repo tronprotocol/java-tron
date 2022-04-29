@@ -126,6 +126,31 @@ message ChainParameters {
     int64 value = 2;
   }
 }
+/**
+ stable-coin
+ */
+
+message OracleReward {
+  // the trx balance
+  int64 balance = 1;
+  // the other asset owned by this pool，key is assetId
+  map<string, int64> asset = 2;
+}
+
+message DecOracleReward {
+  // the trx balance
+  BigInt balance = 1;
+  // the other asset owned by this pool，key is assetId
+  map<string, BigInt> asset = 2;
+}
+
+message BigInt {
+  bytes data = 1;
+}
+
+/**
+ stable-coin
+ */
 
 /* Account */
 message Account {
@@ -212,6 +237,7 @@ message Account {
   Permission owner_permission = 31;
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
+  OracleReward oracle_allowance = 34;
 }
 
 /* AccountAsset */
@@ -423,6 +449,7 @@ message Transaction {
 
     bytes orderId = 25;
     repeated MarketOrderDetail orderDetails = 26;
+    map<string, int64> withdraw_asset = 27;
   }
 
   message raw {

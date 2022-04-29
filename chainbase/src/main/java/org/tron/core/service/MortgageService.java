@@ -1,14 +1,13 @@
 package org.tron.core.service;
 
+import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +16,8 @@ import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.DecOracleRewardCapsule;
+import org.tron.core.capsule.OracleRewardCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -24,6 +25,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.protos.Protocol.OracleReward;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "mortgage")
@@ -109,6 +111,7 @@ public class MortgageService {
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
     long reward = 0;
+    OracleRewardCapsule oracleReward = new OracleRewardCapsule();
     if (beginCycle > currentCycle || accountCapsule == null) {
       return;
     }
@@ -125,6 +128,9 @@ public class MortgageService {
         reward = computeReward(beginCycle, endCycle, account);
         adjustAllowance(address, reward);
         reward = 0;
+        oracleReward = computeOracleReward(beginCycle, endCycle, account);
+        adjustOracleAllowance(address, oracleReward);
+        oracleReward = new OracleRewardCapsule();
         logger.info("latest cycle reward {},{}", beginCycle, account.getVotesList());
       }
       beginCycle += 1;
@@ -138,12 +144,16 @@ public class MortgageService {
     if (beginCycle < endCycle) {
       reward += computeReward(beginCycle, endCycle, accountCapsule);
       adjustAllowance(address, reward);
+      oracleReward = oracleReward.add(computeOracleReward(beginCycle, endCycle, accountCapsule));
+      adjustAllowance(address, reward);
+      adjustOracleAllowance(address, oracleReward);
     }
     delegationStore.setBeginCycle(address, endCycle);
     delegationStore.setEndCycle(address, endCycle + 1);
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
-    logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
-            + "account vote {},", Hex.toHexString(address), reward, currentCycle,
+    logger.info(
+        "adjust {} allowance {},,oracleAllowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
+            + "account vote {},", Hex.toHexString(address), reward, oracleReward, currentCycle,
         beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
@@ -275,5 +285,126 @@ public class MortgageService {
   private void sortWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) -> getWitnessByAddress(b).getVoteCount())
         .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+  }
+
+  public void adjustOracleAllowance(byte[] address, OracleRewardCapsule reward) {
+    if (reward.isZero()) {
+      return;
+    }
+    AccountCapsule account = accountStore.getUnchecked(address);
+    OracleRewardCapsule oracleAllowance = new OracleRewardCapsule(account.getOracleAllowance());
+    OracleReward ret = oracleAllowance.add(reward).getInstance();
+    account.setOracleAllowance(ret);
+    accountStore.put(account.createDbKey(), account);
+  }
+
+
+  private OracleRewardCapsule computeOracleReward(long cycle, AccountCapsule accountCapsule) {
+    BigInteger balance = BigInteger.ZERO;
+    Map<String, BigInteger> asset = new HashMap<>();
+    for (Vote vote : accountCapsule.getVotesList()) {
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
+      DecOracleRewardCapsule totalReward = delegationStore.getOracleReward(cycle, srAddress);
+      long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
+      if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+        continue;
+      }
+      long userVote = vote.getVoteCount();
+      DecOracleRewardCapsule userReward = totalReward.multiply(userVote).divide(totalVote);
+      balance = balance.add(userReward.getBalance());
+      userReward.getAsset().forEach((k, v) -> asset.merge(k, v, BigInteger::add));
+      logger.debug("computeOracleReward {} {} {} {},{},{},{}", cycle,
+          Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
+          userVote, totalVote, totalReward, userReward);
+    }
+    return new DecOracleRewardCapsule(balance, asset).truncateDecimal();
+  }
+
+  private OracleRewardCapsule computeOracleReward(long beginCycle, long endCycle,
+                                                  AccountCapsule accountCapsule) {
+    OracleRewardCapsule oracleReward = new OracleRewardCapsule();
+    if (beginCycle >= endCycle) {
+      return oracleReward;
+    }
+
+    long balance = 0;
+    Map<String, Long> asset = new HashMap<>();
+    long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
+    if (beginCycle < newAlgorithmCycle) {
+      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
+      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+        OracleRewardCapsule reward = computeOracleReward(cycle, accountCapsule);
+        balance = LongMath.checkedAdd(balance, reward.getBalance());
+        reward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
+      }
+      beginCycle = oldEndCycle;
+    }
+    if (beginCycle < endCycle) {
+      for (Vote vote : accountCapsule.getVotesList()) {
+        byte[] srAddress = vote.getVoteAddress().toByteArray();
+        DecOracleRewardCapsule beginVi =
+            delegationStore.getWitnessOracleVi(beginCycle - 1, srAddress);
+        DecOracleRewardCapsule endVi = delegationStore.getWitnessOracleVi(endCycle - 1, srAddress);
+        DecOracleRewardCapsule deltaVi = endVi.subtract(beginVi);
+        if (deltaVi.isZero()) {
+          continue;
+        }
+        long userVote = vote.getVoteCount();
+        OracleRewardCapsule userReward = deltaVi.multiply(userVote).truncateDecimal();
+        balance = LongMath.checkedAdd(balance, userReward.getBalance());
+        userReward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
+      }
+    }
+    return new OracleRewardCapsule(balance, asset);
+
+  }
+
+  public OracleRewardCapsule queryOracleReward(byte[] address) {
+
+    OracleRewardCapsule oracleReward = new OracleRewardCapsule();
+
+    if (!dynamicPropertiesStore.allowChangeDelegation()) {
+      return oracleReward;
+    }
+
+    AccountCapsule accountCapsule = accountStore.get(address);
+    long beginCycle = delegationStore.getBeginCycle(address);
+    long endCycle = delegationStore.getEndCycle(address);
+    long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
+
+    if (accountCapsule == null) {
+      return oracleReward;
+    }
+    if (beginCycle > currentCycle) {
+      return new OracleRewardCapsule(accountCapsule.getOracleAllowance());
+    }
+    //withdraw the latest cycle reward
+    if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
+      AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
+      if (account != null) {
+        oracleReward = computeOracleReward(beginCycle, endCycle, account);
+      }
+      beginCycle += 1;
+    }
+    //
+    endCycle = currentCycle;
+    if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
+      return oracleReward.add(new OracleRewardCapsule(accountCapsule.getOracleAllowance()));
+    }
+    if (beginCycle < endCycle) {
+      oracleReward = oracleReward.add(computeOracleReward(beginCycle, endCycle, accountCapsule));
+    }
+    return oracleReward.add(new OracleRewardCapsule(accountCapsule.getOracleAllowance()));
+  }
+
+  public void payOracleReward(byte[] witnessAddress, DecOracleRewardCapsule reward) {
+    long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
+    int brokerage = delegationStore.getBrokerage(cycle, witnessAddress);
+
+    DecOracleRewardCapsule witnessReward = reward.multiply(brokerage).divide(
+        DecOracleRewardCapsule.DECIMAL_OF_BROKERAGE.longValue());
+    DecOracleRewardCapsule delegatedReward = reward.subtract(witnessReward);
+    delegationStore.addOracleReward(cycle, witnessAddress, delegatedReward);
+    adjustOracleAllowance(witnessAddress, witnessReward.truncateDecimal());
   }
 }
