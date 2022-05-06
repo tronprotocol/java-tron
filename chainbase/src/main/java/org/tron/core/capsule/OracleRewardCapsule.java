@@ -2,7 +2,6 @@ package org.tron.core.capsule;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,15 +41,6 @@ public class OracleRewardCapsule implements ProtoCapsule<OracleReward> {
         .setBalance(balance)
         .putAllAsset(asset)
         .build();
-  }
-
-  public static DecOracleRewardCapsule newDecOracleReward(OracleRewardCapsule oracleReward) {
-    BigInteger balance = BigInteger.valueOf(oracleReward.getBalance())
-        .multiply(DecOracleRewardCapsule.DECIMAL_OF_ORACLE_REWARD);
-    Map<String, BigInteger> asset = new HashMap<>();
-    oracleReward.getAsset().forEach((k, v) -> asset.put(k,
-        BigInteger.valueOf(v).multiply(DecOracleRewardCapsule.DECIMAL_OF_ORACLE_REWARD)));
-    return new DecOracleRewardCapsule(balance, asset);
   }
 
   public OracleRewardCapsule add(OracleRewardCapsule plus) {

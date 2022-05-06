@@ -170,6 +170,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
       "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
 
+  // Stable Coin
+  private static final byte[] ALLOW_STABLE_MARKET_ON = "ALLOW_STABLE_MARKET_ON".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -719,6 +722,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveChangeDelegation(CommonParameter.getInstance()
           .getChangedDelegation());
+    }
+
+    try {
+      this.getAllowStableMarketOn();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowStableMarketOn(CommonParameter.getInstance()
+          .getAllowStableMarketOn());
     }
 
     try {
@@ -2179,6 +2189,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean allowChangeDelegation() {
+    return getChangeDelegation() == 1;
+  }
+
+  public void saveAllowStableMarketOn(long number) {
+    this.put(ALLOW_STABLE_MARKET_ON,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getAllowStableMarketOn() {
+    return Optional.ofNullable(getUnchecked(ALLOW_STABLE_MARKET_ON))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_STABLE_MARKET_ON"));
+  }
+
+  public boolean allowStableMarketOn() {
     return getChangeDelegation() == 1;
   }
 

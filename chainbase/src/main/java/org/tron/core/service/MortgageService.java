@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
+import org.tron.common.entity.Dec;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DecOracleRewardCapsule;
@@ -145,7 +146,6 @@ public class MortgageService {
       reward += computeReward(beginCycle, endCycle, accountCapsule);
       adjustAllowance(address, reward);
       oracleReward = oracleReward.add(computeOracleReward(beginCycle, endCycle, accountCapsule));
-      adjustAllowance(address, reward);
       adjustOracleAllowance(address, oracleReward);
     }
     delegationStore.setBeginCycle(address, endCycle);
@@ -300,8 +300,8 @@ public class MortgageService {
 
 
   private OracleRewardCapsule computeOracleReward(long cycle, AccountCapsule accountCapsule) {
-    BigInteger balance = BigInteger.ZERO;
-    Map<String, BigInteger> asset = new HashMap<>();
+    Dec balance = Dec.zeroDec();
+    Map<String, Dec> asset = new HashMap<>();
     for (Vote vote : accountCapsule.getVotesList()) {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
       DecOracleRewardCapsule totalReward = delegationStore.getOracleReward(cycle, srAddress);
@@ -310,9 +310,9 @@ public class MortgageService {
         continue;
       }
       long userVote = vote.getVoteCount();
-      DecOracleRewardCapsule userReward = totalReward.multiply(userVote).divide(totalVote);
+      DecOracleRewardCapsule userReward = totalReward.mul(userVote).quo(totalVote);
       balance = balance.add(userReward.getBalance());
-      userReward.getAsset().forEach((k, v) -> asset.merge(k, v, BigInteger::add));
+      userReward.getAsset().forEach((k, v) -> asset.merge(k, v, Dec::add));
       logger.debug("computeOracleReward {} {} {} {},{},{},{}", cycle,
           Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
           userVote, totalVote, totalReward, userReward);
@@ -323,6 +323,10 @@ public class MortgageService {
   private OracleRewardCapsule computeOracleReward(long beginCycle, long endCycle,
                                                   AccountCapsule accountCapsule) {
     OracleRewardCapsule oracleReward = new OracleRewardCapsule();
+
+    if (allowStableMarketOff()) {
+      return oracleReward;
+    }
     if (beginCycle >= endCycle) {
       return oracleReward;
     }
@@ -345,12 +349,12 @@ public class MortgageService {
         DecOracleRewardCapsule beginVi =
             delegationStore.getWitnessOracleVi(beginCycle - 1, srAddress);
         DecOracleRewardCapsule endVi = delegationStore.getWitnessOracleVi(endCycle - 1, srAddress);
-        DecOracleRewardCapsule deltaVi = endVi.subtract(beginVi);
+        DecOracleRewardCapsule deltaVi = endVi.sub(beginVi);
         if (deltaVi.isZero()) {
           continue;
         }
         long userVote = vote.getVoteCount();
-        OracleRewardCapsule userReward = deltaVi.multiply(userVote).truncateDecimal();
+        OracleRewardCapsule userReward = deltaVi.mul(userVote).truncateDecimal();
         balance = LongMath.checkedAdd(balance, userReward.getBalance());
         userReward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
       }
@@ -363,7 +367,7 @@ public class MortgageService {
 
     OracleRewardCapsule oracleReward = new OracleRewardCapsule();
 
-    if (!dynamicPropertiesStore.allowChangeDelegation()) {
+    if (allowStableMarketOff()) {
       return oracleReward;
     }
 
@@ -398,13 +402,20 @@ public class MortgageService {
   }
 
   public void payOracleReward(byte[] witnessAddress, DecOracleRewardCapsule reward) {
+
+    if (allowStableMarketOff()) {
+      return;
+    }
     long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
     int brokerage = delegationStore.getBrokerage(cycle, witnessAddress);
-
-    DecOracleRewardCapsule witnessReward = reward.multiply(brokerage).divide(
-        DecOracleRewardCapsule.DECIMAL_OF_BROKERAGE.longValue());
-    DecOracleRewardCapsule delegatedReward = reward.subtract(witnessReward);
+    DecOracleRewardCapsule witnessReward = reward.mul(Dec.newDecWithPrec(brokerage, 2));
+    DecOracleRewardCapsule delegatedReward = reward.sub(witnessReward);
     delegationStore.addOracleReward(cycle, witnessAddress, delegatedReward);
     adjustOracleAllowance(witnessAddress, witnessReward.truncateDecimal());
+  }
+
+  public boolean allowStableMarketOff () {
+    return !dynamicPropertiesStore.allowChangeDelegation()
+        || !dynamicPropertiesStore.allowStableMarketOn();
   }
 }

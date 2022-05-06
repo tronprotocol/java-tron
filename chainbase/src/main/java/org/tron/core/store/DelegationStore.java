@@ -189,7 +189,7 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
         setWitnessOracleVi(cycle, address, preVi);
       }
     } else { // Accumulate delta vi
-      DecOracleRewardCapsule deltaVi = reward.divide(voteCount);
+      DecOracleRewardCapsule deltaVi = reward.quo(voteCount);
       setWitnessOracleVi(cycle, address, preVi.add(deltaVi));
     }
   }

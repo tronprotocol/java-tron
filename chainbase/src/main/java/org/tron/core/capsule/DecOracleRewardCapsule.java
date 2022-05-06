@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.entity.Dec;
 import org.tron.common.utils.Pair;
 import org.tron.protos.Protocol.BigInt;
 import org.tron.protos.Protocol.DecOracleReward;
@@ -15,15 +16,13 @@ import org.tron.protos.Protocol.OracleReward;
 
 @Slf4j(topic = "capsule")
 public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
-  public static final BigInteger DECIMAL_OF_ORACLE_REWARD = BigInteger.valueOf(10).pow(18);
-  public static final BigInteger DECIMAL_OF_BROKERAGE = BigInteger.valueOf(10).pow(2);
 
 
   private DecOracleReward decReward;
   @Getter
-  private BigInteger balance = BigInteger.ZERO;
+  private Dec balance = Dec.zeroDec();
   @Getter
-  private Map<String, BigInteger> asset = new HashMap<>();
+  private Map<String, Dec> asset = new HashMap<>();
 
 
   public DecOracleRewardCapsule() {
@@ -33,9 +32,9 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
   public DecOracleRewardCapsule(byte[] data) {
     try {
       this.decReward = DecOracleReward.parseFrom(data);
-      this.balance = new BigInteger(this.decReward.getBalance().getData().toByteArray());
+      this.balance = Dec.newDec(this.decReward.getBalance().getData().toByteArray());
       this.decReward.getAssetMap().forEach((k, v) ->
-          this.asset.put(k, new BigInteger(v.getData().toByteArray())));
+          this.asset.put(k, Dec.newDec(v.getData().toByteArray())));
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
@@ -43,9 +42,9 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
 
   public DecOracleRewardCapsule(DecOracleReward decReward) {
     this.decReward = decReward;
-    this.balance = new BigInteger(this.decReward.getBalance().getData().toByteArray());
+    this.balance = Dec.newDec(this.decReward.getBalance().getData().toByteArray());
     this.decReward.getAssetMap().forEach((k, v) ->
-        this.asset.put(k, new BigInteger(v.getData().toByteArray())));
+        this.asset.put(k, Dec.newDec(v.getData().toByteArray())));
   }
 
   public DecOracleRewardCapsule(OracleRewardCapsule oracleReward) {
@@ -53,16 +52,33 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
   }
 
   public DecOracleRewardCapsule(OracleReward oracleReward) {
-    BigInteger balance = BigInteger.valueOf(oracleReward.getBalance())
-        .multiply(DecOracleRewardCapsule.DECIMAL_OF_ORACLE_REWARD);
-    Map<String, BigInteger> asset = new HashMap<>();
-    oracleReward.getAssetMap().forEach((k, v) -> asset.put(k,
-        BigInteger.valueOf(v).multiply(DecOracleRewardCapsule.DECIMAL_OF_ORACLE_REWARD)));
+    Map<String, Dec> asset = new HashMap<>();
+    oracleReward.getAssetMap().forEach((k, v) -> asset.put(k, Dec.newDec(v)));
+    try {
+      this.balance = Dec.newDec(oracleReward.getBalance());
+      this.asset = removeZeroAsset(asset);
+      this.decReward = DecOracleReward.newBuilder()
+          .setBalance(BigInt.parseFrom(this.balance.toByteArray()))
+          .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+              e -> {
+                try {
+                  return BigInt.parseFrom(e.getValue().toByteArray());
+                } catch (InvalidProtocolBufferException ex) {
+                  logger.debug(ex.getMessage(), e);
+                }
+                return BigInt.getDefaultInstance();
+              }))).build();
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+    }
+  }
+
+  public DecOracleRewardCapsule(Dec balance, Map<String, Dec> asset) {
     try {
       this.balance = balance;
       this.asset = removeZeroAsset(asset);
       this.decReward = DecOracleReward.newBuilder()
-          .setBalance(BigInt.parseFrom(balance.toByteArray()))
+          .setBalance(BigInt.parseFrom(this.balance.toByteArray()))
           .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
               e -> {
                 try {
@@ -79,10 +95,12 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
 
   public DecOracleRewardCapsule(BigInteger balance, Map<String, BigInteger> asset) {
     try {
-      this.balance = balance;
-      this.asset = removeZeroAsset(asset);
+      Map<String, Dec> decAsset = new HashMap<>();
+      asset.forEach((k, v) -> decAsset.put(k, Dec.newDec(v)));
+      this.balance = Dec.newDec(balance);
+      this.asset = removeZeroAsset(decAsset);
       this.decReward = DecOracleReward.newBuilder()
-          .setBalance(BigInt.parseFrom(balance.toByteArray()))
+          .setBalance(BigInt.parseFrom(this.balance.toByteArray()))
           .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
               e -> {
                 try {
@@ -99,93 +117,114 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
 
 
   public DecOracleRewardCapsule add(DecOracleRewardCapsule plus) {
-    return operate(plus, BigInteger::add);
+    return operate(plus, Dec::add);
   }
 
-  public DecOracleRewardCapsule subtract(DecOracleRewardCapsule sub) {
-    return operate(sub, BigInteger::subtract);
+  public DecOracleRewardCapsule sub(DecOracleRewardCapsule sub) {
+    return operate(sub, Dec::sub);
   }
 
-  public DecOracleRewardCapsule multiply(long d) {
-    return operate(BigInteger.valueOf(d), BigInteger::multiply);
+  public DecOracleRewardCapsule mul(Dec d) {
+    return operate(d, Dec::mul);
   }
 
-  public DecOracleRewardCapsule divide(long d) {
-    return operate(BigInteger.valueOf(d), BigInteger::divide);
+  public DecOracleRewardCapsule mul(long d) {
+    return mul(Dec.newDec(d));
+  }
+
+  public DecOracleRewardCapsule mulTruncate(long d) {
+    return mulTruncate(Dec.newDec(d));
+  }
+
+  public DecOracleRewardCapsule mulTruncate(Dec d) {
+    return operate(d, Dec::mulTruncate);
+  }
+
+  public DecOracleRewardCapsule quo(Dec d) {
+    return operate(d, Dec::quo);
+  }
+
+  public DecOracleRewardCapsule quo(long d) {
+    return quo(Dec.newDec(d));
+  }
+
+  public DecOracleRewardCapsule quoTruncate(Dec d) {
+    return operate(d, Dec::quoTruncate);
+  }
+
+  public DecOracleRewardCapsule quoTruncate(long d) {
+    return quoTruncate(Dec.newDec(d));
+  }
+
+
+  public DecOracleRewardCapsule intersect(DecOracleRewardCapsule coinsB) {
+    Dec balance = Dec.minDec(this.balance, coinsB.balance);
+    Map<String, Dec> asset = new HashMap<>();
+    this.asset.forEach((k, v) -> asset.put(k, Dec.maxDec(v,
+        coinsB.asset.getOrDefault(k, Dec.zeroDec()))));
+    return new DecOracleRewardCapsule(balance, asset);
   }
 
   private DecOracleRewardCapsule operate(DecOracleRewardCapsule other,
-                                         BiFunction<BigInteger, BigInteger, BigInteger> op) {
-    BigInteger balance = op.apply(this.getBalance(), other.getBalance());
-    Map<String, BigInteger> asset = new HashMap<>(this.getAsset());
+                                         BiFunction<Dec, Dec, Dec> op) {
+    Dec balance = op.apply(this.getBalance(), other.getBalance());
+    Map<String, Dec> asset = new HashMap<>(this.getAsset());
     other.getAsset().forEach((k, v) -> asset.merge(k, v, op));
     return new DecOracleRewardCapsule(balance, asset);
 
   }
 
-  private DecOracleRewardCapsule operate(BigInteger number,
-                                         BiFunction<BigInteger, BigInteger, BigInteger> op) {
-    BigInteger balance = op.apply(this.getBalance(), number);
-    Map<String, BigInteger> asset = new HashMap<>();
+  private DecOracleRewardCapsule operate(Dec number,
+                                         BiFunction<Dec, Dec, Dec> op) {
+    Dec balance = op.apply(this.getBalance(), number);
+    Map<String, Dec> asset = new HashMap<>();
     this.getAsset().forEach((k, v) -> asset.put(k, op.apply(v, number)));
     return new DecOracleRewardCapsule(balance, asset);
 
   }
 
-  public Pair<DecOracleRewardCapsule, DecOracleRewardCapsule> divideAndRemainder(long d) {
-    BigInteger dec = BigInteger.valueOf(d);
-    BigInteger[] truncatedBalance = this.getBalance().divideAndRemainder(dec);
-    Map<String, BigInteger> truncatedAsset = new HashMap<>();
-    Map<String, BigInteger> remainedAsset = new HashMap<>();
-    this.getAsset().forEach((k, v) -> {
-      BigInteger[] truncatedAssets = v.divideAndRemainder(dec);
-      truncatedAsset.put(k, truncatedAssets[0]);
-      remainedAsset.put(k, truncatedAssets[1]);
-    });
-    DecOracleRewardCapsule truncate = new DecOracleRewardCapsule(
-        truncatedBalance[0], truncatedAsset);
-    DecOracleRewardCapsule remainder = new DecOracleRewardCapsule(
-        truncatedBalance[1], remainedAsset);
-    return new Pair<>(truncate, remainder);
-  }
-
   public OracleRewardCapsule truncateDecimal() {
     OracleReward.Builder oracleReward = OracleReward.newBuilder();
-    DecOracleRewardCapsule decOracleReward = divide(DECIMAL_OF_ORACLE_REWARD.longValue());
-    oracleReward.setBalance(decOracleReward.getBalance().longValueExact());
-    decOracleReward.getAsset().forEach((k, v) ->
-        oracleReward.putAsset(k, v.longValueExact()));
+    long balance = this.balance.truncateLong();
+    oracleReward.setBalance(balance);
+    this.getAsset().forEach((k, v) ->
+        oracleReward.putAsset(k, v.truncateLong()));
 
     return new OracleRewardCapsule(oracleReward.build());
   }
 
-  public Pair<OracleReward, DecOracleRewardCapsule> truncateDecimalAndRemainder() {
-    OracleReward.Builder oracleReward = OracleReward.newBuilder();
+  public Pair<OracleRewardCapsule, DecOracleRewardCapsule> truncateDecimalAndRemainder() {
+    long balance = this.balance.truncateLong();
+    Dec remBalance = this.balance.sub(Dec.newDec(balance));
+    Map<String, Long> asset = new HashMap<>();
+    Map<String, Dec> remAsset = new HashMap<>();
 
-    Pair<DecOracleRewardCapsule, DecOracleRewardCapsule> pair =
-        divideAndRemainder(DECIMAL_OF_ORACLE_REWARD.longValue());
+    this.getAsset().forEach((k, v) -> {
+          long amount = v.truncateLong();
+          asset.put(k, amount);
+          remAsset.put(k, v.sub(Dec.newDec(amount)));
+        }
+    );
 
-    DecOracleRewardCapsule truncate = pair.getKey();
-    oracleReward.setBalance(truncate.getBalance().longValueExact());
-    truncate.getAsset().forEach((k, v) -> oracleReward.putAsset(k, v.longValueExact()));
-    return new Pair<>(oracleReward.build(), pair.getValue());
+    return new Pair<>(new OracleRewardCapsule(balance, asset),
+        new DecOracleRewardCapsule(remBalance, remAsset));
   }
 
   // IsZero returns whether all coins are zero
   public boolean isZero() {
-    if (this.getBalance().signum() != 0) {
+    if (!this.getBalance().isZero()) {
       return false;
     }
-    for (BigInteger v : this.getAsset().values()) {
-      if (v.signum() != 0) {
+    for (Dec v : this.getAsset().values()) {
+      if (!this.getBalance().isZero()) {
         return false;
       }
     }
     return true;
   }
 
-  private Map<String, BigInteger> removeZeroAsset(Map<String, BigInteger> asset) {
-    return asset.entrySet().stream().filter(e -> e.getValue().signum() != 0)
+  private Map<String, Dec> removeZeroAsset(Map<String, Dec> asset) {
+    return asset.entrySet().stream().filter(e -> !e.getValue().isZero())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
@@ -197,5 +236,12 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
   @Override
   public DecOracleReward getInstance() {
     return this.decReward;
+  }
+
+  @Override
+  public String toString() {
+    return "DecOracleRewardCapsule{" +
+        "balance:" + balance + ", asset:" + asset +
+        '}';
   }
 }

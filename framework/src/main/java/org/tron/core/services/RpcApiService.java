@@ -448,41 +448,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void getDynamicProperties(EmptyMessage request,
-                                     StreamObserver<DynamicProperties> responseObserver) {
+        StreamObserver<DynamicProperties> responseObserver) {
       DynamicProperties.Builder builder = DynamicProperties.newBuilder();
       builder.setLastSolidityBlockNum(
           dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
       DynamicProperties dynamicProperties = builder.build();
       responseObserver.onNext(dynamicProperties);
       responseObserver.onCompleted();
-    }
-  }
-
-  public void getOracleRewardInfoCommon(BytesMessage request,
-                                        StreamObserver<OracleReward> responseObserver) {
-    try {
-      responseObserver.onNext(dbManager.getMortgageService()
-          .queryOracleReward(request.getValue().toByteArray()).getInstance());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
-  }
-
-  /**
-   * WalletExtensionApi.
-   */
-  public class WalletExtensionApi extends WalletExtensionGrpc.WalletExtensionImplBase {
-
-    private TransactionListExtention transactionList2Extention(TransactionList transactionList) {
-      if (transactionList == null) {
-        return null;
-      }
-      TransactionListExtention.Builder builder = TransactionListExtention.newBuilder();
-      for (Transaction transaction : transactionList.getTransactionList()) {
-        builder.addTransaction(transaction2Extention(transaction));
-      }
-      return builder.build();
     }
   }
 
@@ -689,25 +661,25 @@ public class RpcApiService implements Service {
 
     @Override
     public void generateAddress(EmptyMessage request,
-                                StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
+        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
       generateAddressCommon(request, responseObserver);
     }
 
     @Override
     public void getRewardInfo(BytesMessage request,
-                              StreamObserver<NumberMessage> responseObserver) {
+        StreamObserver<NumberMessage> responseObserver) {
       getRewardInfoCommon(request, responseObserver);
     }
 
     @Override
     public void getOracleRewardInfo(BytesMessage request,
-                                    StreamObserver<OracleReward> responseObserver) {
+        StreamObserver<OracleReward> responseObserver) {
       getOracleRewardInfoCommon(request, responseObserver);
     }
 
     @Override
     public void getBrokerageInfo(BytesMessage request,
-                                 StreamObserver<NumberMessage> responseObserver) {
+        StreamObserver<NumberMessage> responseObserver) {
       getBrokerageInfoCommon(request, responseObserver);
     }
 
@@ -944,42 +916,21 @@ public class RpcApiService implements Service {
     }
   }
 
-  public class MonitorApi extends MonitorGrpc.MonitorImplBase {
+  /**
+   * WalletExtensionApi.
+   */
+  public class WalletExtensionApi extends WalletExtensionGrpc.WalletExtensionImplBase {
 
-    @Override
-    public void getStatsInfo(EmptyMessage request,
-                             StreamObserver<Protocol.MetricsInfo> responseObserver) {
-      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
-      responseObserver.onCompleted();
+    private TransactionListExtention transactionList2Extention(TransactionList transactionList) {
+      if (transactionList == null) {
+        return null;
+      }
+      TransactionListExtention.Builder builder = TransactionListExtention.newBuilder();
+      for (Transaction transaction : transactionList.getTransactionList()) {
+        builder.addTransaction(transaction2Extention(transaction));
+      }
+      return builder.build();
     }
-  }
-
-  public void generateAddressCommon(EmptyMessage request,
-                                    StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
-    byte[] priKey = cryptoEngine.getPrivateKey();
-    byte[] address = cryptoEngine.getAddress();
-    String addressStr = StringUtil.encode58Check(address);
-    String priKeyStr = Hex.encodeHexString(priKey);
-    AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
-    builder.setAddress(addressStr);
-    builder.setPrivateKey(priKeyStr);
-    responseObserver.onNext(builder.build());
-    responseObserver.onCompleted();
-  }
-
-  public void getRewardInfoCommon(BytesMessage request,
-                                  StreamObserver<NumberMessage> responseObserver) {
-    try {
-      long value = dbManager.getMortgageService().queryReward(request.getValue().toByteArray());
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(value);
-      responseObserver.onNext(builder.build());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
   }
 
   /**
@@ -2571,19 +2522,19 @@ public class RpcApiService implements Service {
 
     @Override
     public void getRewardInfo(BytesMessage request,
-                              StreamObserver<NumberMessage> responseObserver) {
+        StreamObserver<NumberMessage> responseObserver) {
       getRewardInfoCommon(request, responseObserver);
     }
 
     @Override
     public void getOracleRewardInfo(BytesMessage request,
-                                    StreamObserver<OracleReward> responseObserver) {
+        StreamObserver<OracleReward> responseObserver) {
       getOracleRewardInfoCommon(request, responseObserver);
     }
 
     @Override
     public void getBrokerageInfo(BytesMessage request,
-                                 StreamObserver<NumberMessage> responseObserver) {
+        StreamObserver<NumberMessage> responseObserver) {
       getBrokerageInfoCommon(request, responseObserver);
     }
 
@@ -2721,7 +2672,43 @@ public class RpcApiService implements Service {
     }
   }
 
+  public class MonitorApi extends MonitorGrpc.MonitorImplBase {
 
+    @Override
+    public void getStatsInfo(EmptyMessage request,
+        StreamObserver<Protocol.MetricsInfo> responseObserver) {
+      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
+      responseObserver.onCompleted();
+    }
+  }
+
+  public void generateAddressCommon(EmptyMessage request,
+      StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
+    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+        Args.getInstance().isECKeyCryptoEngine());
+    byte[] priKey = cryptoEngine.getPrivateKey();
+    byte[] address = cryptoEngine.getAddress();
+    String addressStr = StringUtil.encode58Check(address);
+    String priKeyStr = Hex.encodeHexString(priKey);
+    AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
+    builder.setAddress(addressStr);
+    builder.setPrivateKey(priKeyStr);
+    responseObserver.onNext(builder.build());
+    responseObserver.onCompleted();
+  }
+
+  public void getRewardInfoCommon(BytesMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      long value = dbManager.getMortgageService().queryReward(request.getValue().toByteArray());
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(value);
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
 
   public void getBurnTrxCommon(EmptyMessage request,
       StreamObserver<NumberMessage> responseObserver) {
@@ -2795,6 +2782,17 @@ public class RpcApiService implements Service {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(dbManager.getPendingSize());
       responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getOracleRewardInfoCommon(BytesMessage request,
+      StreamObserver<OracleReward> responseObserver) {
+    try {
+      responseObserver.onNext(dbManager.getMortgageService()
+          .queryOracleReward(request.getValue().toByteArray()).getInstance());
     } catch (Exception e) {
       responseObserver.onError(e);
     }
