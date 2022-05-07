@@ -126,4 +126,7 @@ public class HelloMessage extends P2pMessage {
     return new StringBuilder().append(super.toString()).append(helloMessage.toString()).toString();
   }
 
+  public Protocol.HelloMessage getInstance() {
+    return this.helloMessage;
+  }
 }
