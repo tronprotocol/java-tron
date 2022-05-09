@@ -68,7 +68,7 @@ public class MessageQueue {
           Message msg = msgQueue.take();
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
             if (!future.isSuccess() && !channel.isDisconnect()) {
-              logger.error("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
+              logger.warn("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
             }
           });
         } catch (InterruptedException e) {
@@ -189,7 +189,7 @@ public class MessageQueue {
 
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
       if (!future.isSuccess()) {
-        logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
+        logger.warn("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
       }
     });
 
