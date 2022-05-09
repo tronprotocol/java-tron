@@ -140,8 +140,9 @@ public class SyncPool {
         channelManager.getActivePeers().size(), activePeersCount.get(), passivePeersCount.get());
     StringBuilder sb = new StringBuilder(str);
     for (PeerConnection peer : new ArrayList<>(activePeers)) {
-      sb.append(peer.log()).append('\n');
+      sb.append(peer.log());
       appendPeerLatencyLog(sb, peer);
+      sb.append("\n");
     }
     logger.info(sb.toString());
   }
