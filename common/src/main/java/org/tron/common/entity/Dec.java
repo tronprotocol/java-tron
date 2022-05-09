@@ -11,6 +11,8 @@ public final class Dec implements Comparable<Dec> {
   public static final int decimalPrecisionBits = 60;
   private static final int maxBitLen = 256;
   private static final int maxDecBitLen = maxBitLen + decimalPrecisionBits;
+  // max number of iterations in ApproxRoot function
+  private static final int maxApproxRootIterations = 100;
   private static final BigInteger precisionReuse = BigInteger.TEN.pow(precision);
   private static final BigInteger fivePrecision = precisionReuse.divide(BigInteger.valueOf(2));
   private static final BigInteger zeroInt = BigInteger.ZERO;
@@ -393,19 +395,75 @@ public final class Dec implements Comparable<Dec> {
     return new Dec(mul);
   }
 
-  //     ____
-//  __|    |__   "chop 'em
-//       ` \     round!"
-// ___||  ~  _     -bankers
-// |         |      __
-// |       | |   __|__|__
-// |_____:  /   | $$$    |
-//              |________|
+  // Power returns a the result of raising to a positive integer power
+  public Dec power(BigInteger power) {
+    if (power.signum() == -1) {
+      throw new UnsupportedOperationException();
+    }
+    if (power.signum() == 0) {
+      return oneDec();
+    }
+    Dec tmp = oneDec();
+    Dec d =  new Dec(this.i);
+
+    for (BigInteger i = power; i.compareTo(BigInteger.ONE) > 0;) {
+      if (i.getLowestSetBit() == 0) {
+        tmp = tmp.mul(d);
+      }
+      i = i.divide(BigInteger.valueOf(2));
+      d = d.mul(d);
+    }
+
+    return d.mul(tmp);
+  }
+
+  // ApproxSqrt is a wrapper around ApproxRoot for the common special case
+  // of finding the square root of a number. It returns -(sqrt(abs(d)) if input is negative.
+  public  Dec approxSqrt()  {
+    return approxRoot(2);
+  }
+
+  // ApproxRoot returns an approximate estimation of a Dec's positive real nth root
+  // using Newton's method (where n is positive). The algorithm starts with some guess and
+  // computes the sequence of improved guesses until an answer converges to an
+  // approximate answer.  It returns `|d|.ApproxRoot() * -1` if input is negative.
+  // A maximum number of 100 iterations is used a backup boundary condition for
+  // cases where the answer never converges enough to satisfy the main condition.
+  public  Dec approxRoot(long root ){
+    if (isNegative()) {
+      return mul(-1).approxRoot(root).mul(-1);
+    }
+
+    if (root == 1 || isZero() || this.equal(oneDec())) {
+      return new Dec(this.i);
+    }
+
+    if (root == 0) {
+      return Dec.oneDec();
+    }
+
+    BigInteger rootInt = BigInteger.valueOf(root);
+    Dec guess = oneDec();
+    Dec delta = oneDec();
+    Dec smallestDec = smallestDec();
+
+    for (int i = 0; delta.abs().gt(smallestDec) && i < maxApproxRootIterations; i++) {
+      Dec prev = guess.power(BigInteger.valueOf(root - 1));
+      if (prev.isZero()) {
+        prev = smallestDec();
+      }
+      delta = quo(prev);
+      delta = delta.sub(guess);
+      delta = delta.quo(rootInt);
+      guess = guess.add(delta);
+    }
+    return guess;
+  }
 
   // Remove a Precision amount of rightmost digits and perform bankers rounding
-// on the remainder (gaussian rounding) on the digits which have been removed.
-//
-// Mutates the input. Use the non-mutative version if that is undesired
+  // on the remainder (gaussian rounding) on the digits which have been removed.
+  //
+  // Mutates the input. Use the non-mutative version if that is undesired
   private BigInteger chopPrecisionAndRound(BigInteger d) {
     // remove the negative and add it back when returning
     if (d.signum() == -1) {
@@ -538,6 +596,11 @@ public final class Dec implements Comparable<Dec> {
   // Will return the error if the conversion failed.
   public double Double() {
     return Double.parseDouble(this.toString());
+  }
+
+  // is integer, e.g. decimals are zero
+  public boolean isInteger()  {
+    return this.i.divide(precisionReuse).signum() == 0;
   }
 
   @Override
