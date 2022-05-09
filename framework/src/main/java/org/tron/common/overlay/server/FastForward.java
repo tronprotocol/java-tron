@@ -101,8 +101,7 @@ public class FastForward {
   }
 
   public boolean checkHelloMessage(HelloMessage message, Channel channel) {
-    if (!parameter.isFastForward()
-        || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
+    if (!parameter.isFastForward()) {
       return true;
     }
 
@@ -112,8 +111,6 @@ public class FastForward {
       logger.info("HelloMessage from {}, address is empty.", channel.getInetAddress());
       return false;
     }
-
-    channel.setAddress(msg.getAddress());
 
     if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())) {
       logger.error("HelloMessage from {}, {} is not a schedule witness.",

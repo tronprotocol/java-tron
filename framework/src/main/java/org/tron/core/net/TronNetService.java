@@ -76,6 +76,7 @@ public class TronNetService {
   }
 
   public void stop() {
+    logger.info("TronNetService closed start.");
     channelManager.close();
     advService.close();
     syncService.close();
@@ -152,7 +153,7 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}.",
           peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;

@@ -148,6 +148,12 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
   }
 
+  @Override
+  public T getFromRoot(byte[] key) throws ItemNotFoundException, BadItemException{
+    return of(revokingDB.getFromRoot(key)) ;
+
+  }
+
   public T of(byte[] value) throws BadItemException {
     try {
       Constructor constructor = token.getRawType().getConstructor(byte[].class);
