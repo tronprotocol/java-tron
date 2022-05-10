@@ -480,11 +480,13 @@ public class Manager {
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread rePushThread = new Thread(rePushLoop);
+    rePushThread.setDaemon(true);
     rePushThread.start();
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
+      triggerCapsuleProcessThread.setDaemon(true);
       triggerCapsuleProcessThread.start();
     }
 
