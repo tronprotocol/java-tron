@@ -74,8 +74,8 @@ public class BlockMsgHandler implements TronMsgHandler {
       }
       Long time = peer.getAdvInvRequest().remove(item);
       if (null != time) {
-        MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY_FETCH_BLOCK + peer.getNode().getHost(),
-                now - time);
+        MetricsUtil.histogramUpdateUnCheck(MetricsKey.NET_LATENCY_FETCH_BLOCK
+                + peer.getNode().getHost(), now - time);
       }
       fetchBlockService.blockFetchSuccess(blockId);
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
