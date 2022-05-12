@@ -451,6 +451,14 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public boolean metricsPrometheusEnable = false;
+
+  @Getter
+  @Setter
+  public int metricsPrometheusPort;
+
+  @Getter
+  @Setter
   public int agreeNodeCount;
 
   @Getter

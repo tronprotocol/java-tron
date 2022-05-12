@@ -2,6 +2,9 @@ package org.tron.core.db;
 
 import java.util.Iterator;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 
@@ -23,8 +26,14 @@ public class PendingManager implements AutoCloseable {
     long now = System.currentTimeMillis();
     Iterator<TransactionCapsule> iterator = dbManager.getRePushTransactions().iterator();
     while (iterator.hasNext()) {
-      if (now - iterator.next().getTime() > timeout) {
+      TransactionCapsule tx = iterator.next();
+      if (now - tx.getTime() > timeout) {
         iterator.remove();
+        metric(-1, MetricLabels.Gauge.QUEUE_REPUSH);
+        metric(1, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
+        if (Args.getInstance().isOpenPrintLog()) {
+          logger.warn("[timeout] remove tx from repush, txId:{}", tx.getTransactionId());
+        }
       }
     }
 
@@ -33,26 +42,41 @@ public class PendingManager implements AutoCloseable {
     }
 
     dbManager.getPendingTransactions().clear();
+    Metrics.gaugeSet(MetricKeys.Gauge.MANAGER_QUEUE, 0,
+        MetricLabels.Gauge.QUEUE_PENDING);
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
       tx.setTime(System.currentTimeMillis());
       txIteration(tx);
     }
     dbManager.getPoppedTransactions().clear();
+    Metrics.gaugeSet(MetricKeys.Gauge.MANAGER_QUEUE, 0,
+        MetricLabels.Gauge.QUEUE_POPPED);
     if (Args.getInstance().isOpenPrintLog()) {
       logger.warn("pending tx size:{}", dbManager.getRePushTransactions().size());
     }
+
   }
 
   private void txIteration(TransactionCapsule tx) {
     try {
       if (System.currentTimeMillis() - tx.getTime() < timeout) {
         dbManager.getRePushTransactions().put(tx);
-      } else if (Args.getInstance().isOpenPrintLog()) {
-        logger.warn("[timeout] remove tx from pending, txId:{}", tx.getTransactionId());
+        metric(1, MetricLabels.Gauge.QUEUE_REPUSH);
+      } else {
+        metric(1, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
+        if (Args.getInstance().isOpenPrintLog()) {
+          logger.warn("[timeout] remove tx from pending, txId:{}", tx.getTransactionId());
+        }
       }
     } catch (InterruptedException e) {
       logger.error(e.getMessage());
       Thread.currentThread().interrupt();
     }
   }
+
+  private void metric(long amt, String failType) {
+    Metrics.counterInc(MetricKeys.Counter.TXS, amt,
+        MetricLabels.Counter.TXS_FAIL, failType);
+  }
+
 }

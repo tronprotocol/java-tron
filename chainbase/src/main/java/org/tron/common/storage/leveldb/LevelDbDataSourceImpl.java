@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.NoArgsConstructor;
@@ -46,6 +48,7 @@ import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.storage.metric.DbStat;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
@@ -54,8 +57,8 @@ import org.tron.core.db2.common.Instance;
 
 @Slf4j(topic = "DB")
 @NoArgsConstructor
-public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
-    Iterable<Entry<byte[], byte[]>>, Instance<LevelDbDataSourceImpl> {
+public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[]>,
+    Iterable<Entry<byte[], byte[]>>, Instance<LevelDbDataSourceImpl>  {
 
   private String dataBaseName;
   private DB database;
@@ -64,6 +67,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   private Options options;
   private WriteOptions writeOptions;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
+  private static final String LEVELDB = "LEVELDB";
 
   /**
    * constructor.
@@ -484,6 +488,35 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   private DBIterator getDBIterator() {
     ReadOptions readOptions = new ReadOptions().fillCache(false);
     return  database.iterator(readOptions);
+  }
+
+
+  /**
+   *                                Compactions
+   * Level  Files Size(MB) Time(sec) Read(MB) Write(MB)
+   * --------------------------------------------------
+   *   1        2        2         0        0         2
+   *   2        1        1         0        0         1
+   */
+  @Override
+  public List<String> getStats() throws Exception {
+    String stat = database.getProperty("leveldb.stats");
+    String[] stats = stat.split("\n");
+    return Arrays.stream(stats).skip(3).collect(Collectors.toList());
+  }
+
+  @Override
+  public String getEngine() {
+    return LEVELDB;
+  }
+
+  @Override
+  public String getName() {
+    return this.dataBaseName;
+  }
+
+  @Override public void stat() {
+    this.statProperty();
   }
 
 }

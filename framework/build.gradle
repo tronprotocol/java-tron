@@ -65,9 +65,6 @@ dependencies {
 
     compile group: 'com.carrotsearch', name: 'java-sizeof', version: '0.0.5'
 
-    compile 'org.aspectj:aspectjrt:1.8.13'
-    compile 'org.aspectj:aspectjweaver:1.8.13'
-    compile 'org.aspectj:aspectjtools:1.8.13'
     compile 'com.googlecode.cqengine:cqengine:2.12.4'
     compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 

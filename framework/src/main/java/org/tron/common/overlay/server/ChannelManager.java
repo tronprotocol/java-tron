@@ -10,6 +10,7 @@ import com.google.common.cache.CacheBuilder;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.metrics.MetricsKey;
@@ -112,6 +115,8 @@ public class ChannelManager {
     }
     MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT);
     MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_DETAIL + reason);
+    Metrics.counterInc(MetricKeys.Counter.P2P_DISCONNECT, 1,
+        reason.name().toLowerCase(Locale.ROOT));
   }
 
   public void notifyDisconnect(Channel channel) {
