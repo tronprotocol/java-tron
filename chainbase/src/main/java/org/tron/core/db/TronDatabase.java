@@ -27,7 +27,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   private String dbName;
 
   @Autowired
-  DbStatService dbStatService;
+  private DbStatService dbStatService;
 
   protected TronDatabase(String dbName) {
     this.dbName = dbName;

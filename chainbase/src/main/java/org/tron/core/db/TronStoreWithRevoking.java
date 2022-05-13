@@ -49,7 +49,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private RevokingDatabase revokingDatabase;
 
   @Autowired
-  DbStatService dbStatService;
+  private DbStatService dbStatService;
 
   private DB<byte[], byte[]> db;
 

@@ -227,7 +227,7 @@ public class ChainBaseManager {
   private SectionBloomStore sectionBloomStore;
 
   @Autowired
-  DbStatService dbStatService;
+  private DbStatService dbStatService;
 
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
