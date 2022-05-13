@@ -99,7 +99,7 @@ fi
 
 
 getLatestReleaseVersion() {
-  full_node_version=`git ls-remote --tags git@github.com:tronprotocol/java-tron.git |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
+  full_node_version=`git ls-remote --tags https://github.com/tronprotocol/java-tron.git |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
   if [[ -n $full_node_version ]]; then
    echo $full_node_version
   else
