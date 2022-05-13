@@ -219,7 +219,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public void stat() {
-
+    this.persistentStore.stat();
   }
 }
 
