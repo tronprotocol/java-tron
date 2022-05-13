@@ -29,8 +29,10 @@ public class PendingManager implements AutoCloseable {
       TransactionCapsule tx = iterator.next();
       if (now - tx.getTime() > timeout) {
         iterator.remove();
-        metric(-1, MetricLabels.Gauge.QUEUE_REPUSH);
-        metric(1, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
+        Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+            MetricLabels.Gauge.QUEUE_REPUSH);
+        Metrics.counterInc(MetricKeys.Counter.TXS, 1,
+            MetricLabels.Counter.TXS_FAIL, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
         if (Args.getInstance().isOpenPrintLog()) {
           logger.warn("[timeout] remove tx from repush, txId:{}", tx.getTransactionId());
         }
@@ -61,9 +63,11 @@ public class PendingManager implements AutoCloseable {
     try {
       if (System.currentTimeMillis() - tx.getTime() < timeout) {
         dbManager.getRePushTransactions().put(tx);
-        metric(1, MetricLabels.Gauge.QUEUE_REPUSH);
+        Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
+            MetricLabels.Gauge.QUEUE_REPUSH);
       } else {
-        metric(1, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
+        Metrics.counterInc(MetricKeys.Counter.TXS, 1,
+            MetricLabels.Counter.TXS_FAIL, MetricLabels.Counter.TXS_FAIL_TIMEOUT);
         if (Args.getInstance().isOpenPrintLog()) {
           logger.warn("[timeout] remove tx from pending, txId:{}", tx.getTransactionId());
         }
@@ -73,10 +77,4 @@ public class PendingManager implements AutoCloseable {
       Thread.currentThread().interrupt();
     }
   }
-
-  private void metric(long amt, String failType) {
-    Metrics.counterInc(MetricKeys.Counter.TXS, amt,
-        MetricLabels.Counter.TXS_FAIL, failType);
-  }
-
 }
