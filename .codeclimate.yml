@@ -1,6 +1,7 @@
 version: "2"
 plugins:
   sonar-java:
-    enabled: true
+    enabled: false
+Advertising
     config:
       sonar.java.source: 8
