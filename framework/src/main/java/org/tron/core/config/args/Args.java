@@ -817,6 +817,12 @@ public class Args extends CommonParameter {
             .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
             .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
 
+    PARAMETER.allowStableMarketOn = config
+            .hasPath(Constant.ALLOW_STABLE_MARKET_ON) ? config
+            .getInt(Constant.ALLOW_STABLE_MARKET_ON) : 0;
+
+
+
     PARAMETER.disabledApiList =
         config.hasPath(Constant.NODE_DISABLED_API_LIST)
             ? config.getStringList(Constant.NODE_DISABLED_API_LIST)

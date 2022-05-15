@@ -531,6 +531,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_STABLE_MARKET_ON: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_STABLE_MARKET_ON]");
+        }
+        if (value != 1 && value!= 0) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_STABLE_MARKET_ON] is only allowed to be  or 0");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -592,7 +603,8 @@ public class ProposalUtil {
     ALLOW_TVM_COMPATIBLE_EVM(60), // 0, 1
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
-    ALLOW_TVM_LONDON(63); // 0, 1
+    ALLOW_TVM_LONDON(63), // 0, 1
+    ALLOW_STABLE_MARKET_ON(64); // 0, 1
 
     private long code;
 

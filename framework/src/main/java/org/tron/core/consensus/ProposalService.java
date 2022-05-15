@@ -272,6 +272,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
           break;
         }
+        case ALLOW_STABLE_MARKET_ON: {
+          manager.getDynamicPropertiesStore().saveAllowStableMarketOn(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;
