@@ -20,6 +20,7 @@ import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.FetchBlockService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -61,21 +62,27 @@ public class TronNetService {
   @Autowired
   private PbftDataSyncHandler pbftDataSyncHandler;
 
+  @Autowired
+  private FetchBlockService fetchBlockService;
+
   public void start() {
     channelManager.init();
     advService.init();
     syncService.init();
     peerStatusCheck.init();
     transactionsMsgHandler.init();
+    fetchBlockService.init();
     logger.info("TronNetService start successfully.");
   }
 
   public void stop() {
+    logger.info("TronNetService closed start.");
     channelManager.close();
     advService.close();
     syncService.close();
     peerStatusCheck.close();
     transactionsMsgHandler.close();
+    fetchBlockService.close();
     logger.info("TronNetService closed successfully.");
   }
 
@@ -146,7 +153,7 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+      logger.warn("Message from {} process failed, {} \n type: {}, detail: {}.",
           peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;

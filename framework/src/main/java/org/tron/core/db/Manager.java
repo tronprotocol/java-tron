@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,6 +63,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
@@ -225,6 +227,9 @@ public class Manager {
   // log filter
   private boolean isRunFilterProcessThread = true;
   private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
+
+  @Getter
+  private volatile long latestSolidityNumShutDown;
 
   /**
    * Cycle thread to rePush Transactions
@@ -475,11 +480,13 @@ public class Manager {
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread rePushThread = new Thread(rePushLoop);
+    rePushThread.setDaemon(true);
     rePushThread.start();
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
+      triggerCapsuleProcessThread.setDaemon(true);
       triggerCapsuleProcessThread.start();
     }
 
@@ -494,6 +501,22 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
+
+
+    long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
+    long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
+
+    if (exitCount > 0 && (exitHeight < 0 || exitHeight > headNum + exitCount)) {
+      CommonParameter.getInstance().setShutdownBlockHeight(headNum + exitCount);
+    }
+
+    if (CommonParameter.getInstance().getShutdownBlockHeight() < headNum) {
+      logger.info("ShutDownBlockHeight {} is less than headNum {},ignored.",
+          CommonParameter.getInstance().getShutdownBlockHeight(), headNum);
+      CommonParameter.getInstance().setShutdownBlockHeight(-1);
+    }
+    // init
+    latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
   }
 
   /**
@@ -842,6 +865,16 @@ public class Manager {
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+      if (Args.getInstance().getShutdownBlockTime() != null
+          && Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
+          new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
+          .compareTo(new Date(block.getTimeStamp())) <= 0) {
+        revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      }
+      if (latestSolidityNumShutDown > 0 && latestSolidityNumShutDown - block.getNum()
+          <= SnapshotManager.DEFAULT_MAX_FLUSH_COUNT) {
+        revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      }
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
@@ -1004,6 +1037,13 @@ public class Manager {
             + "block-tx-size: {}, verify-tx-size: {}",
         block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
         block.getTransactions().size(), txs.size());
+
+    if (CommonParameter.getInstance().getShutdownBlockTime() != null
+        && CommonParameter.getInstance().getShutdownBlockTime()
+        .isSatisfiedBy(new Date(block.getTimeStamp()))) {
+      latestSolidityNumShutDown = block.getNum();
+    }
+
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1516,6 +1556,7 @@ public class Manager {
 
     updateTransHashCache(block);
     updateRecentBlock(block);
+    updateRecentTransaction(block);
     updateDynamicProperties(block);
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
@@ -1621,6 +1662,17 @@ public class Manager {
     chainBaseManager.getRecentBlockStore().put(ByteArray.subArray(
         ByteArray.fromLong(block.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
+  }
+
+  public void updateRecentTransaction(BlockCapsule block) {
+    List list = new ArrayList<>();
+    block.getTransactions().forEach(capsule -> {
+      list.add(capsule.getTransactionId().toString());
+    });
+    RecentTransactionItem item = new RecentTransactionItem(block.getNum(), list);
+    chainBaseManager.getRecentTransactionStore().put(
+            ByteArray.subArray(ByteArray.fromLong(block.getNum()), 6, 8),
+            new BytesCapsule(JsonUtil.obj2Json(item).getBytes()));
   }
 
   public void updateFork(BlockCapsule block) {

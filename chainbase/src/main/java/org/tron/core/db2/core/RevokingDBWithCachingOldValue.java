@@ -93,6 +93,11 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   }
 
   @Override
+  public byte[] getFromRoot(byte[] key) throws ItemNotFoundException {
+    return get(key);
+  }
+
+  @Override
   public byte[] getUnchecked(byte[] key) {
     try {
       return get(key);

@@ -138,6 +138,15 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
+  public byte[] getFromRoot(byte[] key) throws ItemNotFoundException {
+    byte[] value = head().getRoot().get(key);
+    if (value == null) {
+      throw new ItemNotFoundException();
+    }
+    return value;
+  }
+
+  @Override
   public byte[] getUnchecked(byte[] key) {
     return head().get(key);
   }

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.quartz.CronExpression;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
@@ -120,6 +121,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int nodeConnectionTimeout;
+  @Getter
+  @Setter
+  public int fetchBlockTimeout;
   @Getter
   @Setter
   public int nodeChannelReadTimeout;
@@ -390,6 +394,8 @@ public class CommonParameter {
   @Getter
   public List<Node> fastForwardNodes;
   @Getter
+  public int maxFastForwardNum;
+  @Getter
   public Storage storage;
   @Getter
   public Overlay overlay;
@@ -519,6 +525,18 @@ public class CommonParameter {
   @Getter
   @Setter
   public List<String> disabledApiList;
+
+  @Getter
+  @Setter
+  public CronExpression shutdownBlockTime = null;
+
+  @Getter
+  @Setter
+  public long shutdownBlockHeight = -1;
+
+  @Getter
+  @Setter
+  public long shutdownBlockCount = -1;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

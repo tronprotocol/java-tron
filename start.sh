@@ -1,20 +1,37 @@
 #!/bin/bash
-# build FullNode config
+#############################################################################
+#
+#                    GNU LESSER GENERAL PUBLIC LICENSE
+#                        Version 3, 29 June 2007
+#
+#  Copyright (C) [2007] [TRON Foundation], Inc. <https://fsf.org/>
+#  Everyone is permitted to copy and distribute verbatim copies
+#  of this license document, but changing it is not allowed.
+#
+#
+#   This version of the GNU Lesser General Public License incorporates
+# the terms and conditions of version 3 of the GNU General Public
+# License, supplemented by the additional permissions listed below.
+#
+# You can find java-tron at https://github.com/tronprotocol/java-tron/
+#
+##############################################################################
+
+# Build FullNode config
 FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG="main_net_config.conf"
 DEFAULT_FULL_NODE_CONFIG='config.conf'
-#FULL_NODE_SHELL="start.sh"
 JAR_NAME="FullNode.jar"
 FULL_START_OPT=''
 GITHUB_BRANCH='master'
 
-# shell option
+# Shell option
 ALL_OPT_LENGTH=$#
-
-# start service option
+# Start service option
 MAX_STOP_TIME=60
-# modify this option to allow the minimum memory to be started, unit MB
+# Modify this option to allow the minimum memory to be started, unit MB
 ALLOW_MIN_MEMORY=8192
+
 # JVM option
 MAX_DIRECT_MEMORY=1g
 JVM_MS=4g
@@ -24,17 +41,62 @@ SPECIFY_MEMORY=0
 RUN=false
 UPGRADE=false
 
-# rebuild manifest
+# Rebuild manifest
 REBUILD_MANIFEST=true
 REBUILD_DIR="$PWD/output-directory/database"
 REBUILD_MANIFEST_SIZE=0
 REBUILD_BATCH_SIZE=80000
 
-# download and upgrade
+# Download and upgrade
 DOWNLOAD=false
 RELEASE_URL='https://github.com/tronprotocol/java-tron/releases'
 QUICK_START=false
 CLONE_BUILD=false
+
+# Determine the Java command to use to start the JVM.
+if [ -z "$JAVA_HOME" ]; then
+  javaExecutable="`which javac`"
+  if [ -n "$javaExecutable" ] && ! [ "`expr \"$javaExecutable\" : '\([^ ]*\)'`" = "no" ]; then
+    # readlink(1) is not available as standard on Solaris 10.
+    readLink=`which readlink`
+    if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
+      if $darwin ; then
+        javaHome="`dirname \"$javaExecutable\"`"
+        javaExecutable="`cd \"$javaHome\" && pwd -P`/javac"
+      else
+        javaExecutable="`readlink -f \"$javaExecutable\"`"
+      fi
+      javaHome="`dirname \"$javaExecutable\"`"
+      javaHome=`expr "$javaHome" : '\(.*\)/bin'`
+      JAVA_HOME="$javaHome"
+      export JAVA_HOME
+    fi
+  fi
+fi
+
+if [ -z "$JAVACMD" ] ; then
+  if [ -n "$JAVA_HOME"  ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+      # IBM's JDK on AIX uses strange locations for the executables
+      JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+      JAVACMD="$JAVA_HOME/bin/java"
+    fi
+  else
+    JAVACMD="`which java`"
+  fi
+fi
+
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly." >&2
+  echo "  We cannot execute $JAVACMD" >&2
+  exit 1
+fi
+
+if [ -z "$JAVA_HOME" ] ; then
+  echo "Warning: JAVA_HOME environment variable is not set."
+fi
+
 
 getLatestReleaseVersion() {
   full_node_version=`git ls-remote --tags git@github.com:tronprotocol/java-tron.git |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
@@ -250,7 +312,7 @@ startService() {
     exit
   fi
 
-  nohup java -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
+  nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
     -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
     -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
     -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -XX:+HeapDumpOnOutOfMemoryError \
@@ -275,13 +337,13 @@ rebuildManifest() {
   ARCHIVE_JAR='ArchiveManifest.jar'
   if [[ -f $ARCHIVE_JAR ]]; then
     echo 'info: execute rebuild manifest.'
-    java -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
+    $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
   else
     echo 'info: download the rebuild manifest plugin from the github'
     download $RELEASE_URL/download/GreatVoyage-v4.3.0/$ARCHIVE_JAR $ARCHIVE_JAR
     if [[ $download == 0 ]]; then
       echo 'info: download success, rebuild manifest'
-      java -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
+      $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
     fi
   fi
   if [[ $? == 0 ]]; then
@@ -329,7 +391,6 @@ while [ -n "$1" ]; do
   case "$1" in
   -c)
     DEFAULT_FULL_NODE_CONFIG=$2
-    FULL_START_OPT="$FULL_START_OPT $1 $2"
     shift 2
     ;;
   -d)
@@ -340,6 +401,18 @@ while [ -n "$1" ]; do
   -j)
     JAR_NAME=$2
     shift 2
+    ;;
+  -p)
+    FULL_START_OPT="$FULL_START_OPT $1 $2"
+    shift 2
+    ;;
+  -w)
+    FULL_START_OPT="$FULL_START_OPT $1"
+    shift 1
+    ;;
+  --witness)
+    FULL_START_OPT="$FULL_START_OPT $1"
+    shift 1
     ;;
   -m)
     REBUILD_MANIFEST_SIZE=$2
@@ -425,8 +498,8 @@ while [ -n "$1" ]; do
         exit
       fi
     fi
-    echo "warn: option $1 does not exist"
-    exit
+    FULL_START_OPT="$FULL_START_OPT $@"
+    break
     ;;
   esac
 done
@@ -470,3 +543,5 @@ if [[ $RUN == true ]]; then
   restart
   exit
 fi
+
+restart

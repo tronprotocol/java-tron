@@ -50,6 +50,9 @@ public class AdvService {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
+  @Autowired
+  private FetchBlockService fetchBlockService;
+
   private ConcurrentHashMap<Item, Long> invToFetch = new ConcurrentHashMap<>();
 
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
@@ -175,6 +178,10 @@ public class AdvService {
 
   public void broadcast(Message msg) {
 
+    if (fastForward) {
+      return;
+    }
+
     if (invToSpread.size() > MAX_SPREAD_SIZE) {
       logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
       return;
@@ -193,9 +200,6 @@ public class AdvService {
       });
       blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
-      if (fastForward) {
-        return;
-      }
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
@@ -364,6 +368,7 @@ public class AdvService {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
           peer.fastSend(new FetchInvDataMessage(value, key));
+          fetchBlockService.fetchBlock(value, peer);
         } else {
           peer.sendMessage(new FetchInvDataMessage(value, key));
         }

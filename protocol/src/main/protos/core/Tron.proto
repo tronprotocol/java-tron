@@ -599,6 +599,7 @@ enum ReasonCode {
   TIME_OUT = 0x20;
   CONNECT_FAIL = 0x21;
   TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
+  LIGHT_NODE_SYNC_FAIL = 0x23;
   UNKNOWN = 0xFF;
 }
 
@@ -620,6 +621,8 @@ message HelloMessage {
   BlockId headBlockId = 6;
   bytes address = 7;
   bytes signature = 8;
+  int32 nodeType = 9;
+  int64 lowestBlockNum = 10;
 }
 
 message InternalTransaction {

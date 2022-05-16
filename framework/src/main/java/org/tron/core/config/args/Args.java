@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.quartz.CronExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.Account;
@@ -77,13 +79,14 @@ public class Args extends CommonParameter {
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, BlockingQueue<ContractLogTrigger>>
+  private static final ConcurrentHashMap<Long, BlockingQueue<ContractLogTrigger>>
       solidityContractLogTriggerMap = new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
+  private static final ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
+
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -115,6 +118,7 @@ public class Args extends CommonParameter {
     PARAMETER.activeNodes = Collections.emptyList();
     PARAMETER.passiveNodes = Collections.emptyList();
     PARAMETER.fastForwardNodes = Collections.emptyList();
+    PARAMETER.maxFastForwardNum = 3;
     PARAMETER.nodeChannelReadTimeout = 0;
     PARAMETER.nodeMaxActiveNodes = 30;
     PARAMETER.nodeMaxActiveNodesWithSameIp = 2;
@@ -198,6 +202,10 @@ public class Args extends CommonParameter {
     PARAMETER.openTransactionSort = false;
     PARAMETER.allowAccountAssetOptimization = 0;
     PARAMETER.disabledApiList = Collections.emptyList();
+    PARAMETER.shutdownBlockTime = null;
+    PARAMETER.shutdownBlockHeight = -1;
+    PARAMETER.shutdownBlockCount = -1;
+
   }
 
   /**
@@ -345,7 +353,7 @@ public class Args extends CommonParameter {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbEngineFromConfig(config)));
 
-    if (Constant.ROCKSDB.equals(PARAMETER.storage.getDbEngine().toUpperCase())
+    if (Constant.ROCKSDB.equalsIgnoreCase(PARAMETER.storage.getDbEngine())
         && PARAMETER.storage.getDbVersion() == 1) {
       throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
     }
@@ -419,6 +427,16 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
             ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
             : 0;
+
+    if (!config.hasPath(Constant.NODE_FETCH_BLOCK_TIMEOUT)) {
+      PARAMETER.fetchBlockTimeout = 200;
+    } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) > 1000) {
+      PARAMETER.fetchBlockTimeout = 1000;
+    } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) < 100) {
+      PARAMETER.fetchBlockTimeout = 100;
+    } else {
+      PARAMETER.fetchBlockTimeout = config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT);
+    }
 
     PARAMETER.nodeChannelReadTimeout =
         config.hasPath(Constant.NODE_CHANNEL_READ_TIMEOUT)
@@ -641,11 +659,10 @@ public class Args extends CommonParameter {
         ? config.getLong(Constant.NODE_PENDING_TRANSACTION_TIMEOUT) : 60_000;
 
     PARAMETER.needToUpdateAsset =
-        config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) ? config
-            .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET)
-            : true;
+        !config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) || config
+            .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET);
     PARAMETER.trxReferenceBlock = config.hasPath(Constant.TRX_REFERENCE_BLOCK)
-        ? config.getString(Constant.TRX_REFERENCE_BLOCK) : "head";
+        ? config.getString(Constant.TRX_REFERENCE_BLOCK) : "solid";
 
     PARAMETER.trxExpirationTimeInMilliseconds =
         config.hasPath(Constant.TRX_EXPIRATION_TIME_IN_MILLIS_SECONDS)
@@ -730,6 +747,16 @@ public class Args extends CommonParameter {
     PARAMETER.passiveNodes = getNodes(config, Constant.NODE_PASSIVE);
 
     PARAMETER.fastForwardNodes = getNodes(config, Constant.NODE_FAST_FORWARD);
+
+    PARAMETER.maxFastForwardNum = config.hasPath(Constant.NODE_MAX_FAST_FORWARD_NUM) ? config
+            .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 3;
+    if (PARAMETER.maxFastForwardNum > MAX_ACTIVE_WITNESS_NUM) {
+      PARAMETER.maxFastForwardNum = MAX_ACTIVE_WITNESS_NUM;
+    }
+    if (PARAMETER.maxFastForwardNum < 1) {
+      PARAMETER.maxFastForwardNum = 1;
+    }
+
     PARAMETER.shieldedTransInPendingMaxCounts =
         config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
             .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
@@ -779,8 +806,8 @@ public class Args extends CommonParameter {
             .getInt(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) : 0;
 
     initBackupProperty(config);
-    if (Constant.ROCKSDB.equals(CommonParameter
-        .getInstance().getStorage().getDbEngine().toUpperCase())) {
+    if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
+        .getInstance().getStorage().getDbEngine())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
@@ -830,6 +857,23 @@ public class Args extends CommonParameter {
             ? config.getStringList(Constant.NODE_DISABLED_API_LIST)
             .stream().map(String::toLowerCase).collect(Collectors.toList())
             : Collections.emptyList();
+
+    if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_TIME)) {
+      try {
+        PARAMETER.shutdownBlockTime = new CronExpression(config.getString(
+            Constant.NODE_SHUTDOWN_BLOCK_TIME));
+      } catch (ParseException e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
+
+    if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_HEIGHT)) {
+      PARAMETER.shutdownBlockHeight = config.getLong(Constant.NODE_SHUTDOWN_BLOCK_HEIGHT);
+    }
+
+    if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_COUNT)) {
+      PARAMETER.shutdownBlockCount = config.getLong(Constant.NODE_SHUTDOWN_BLOCK_COUNT);
+    }
 
     logConfig();
   }
@@ -1159,10 +1203,12 @@ public class Args extends CommonParameter {
     logger.info("Active node size: {}", parameter.getActiveNodes().size());
     logger.info("Passive node size: {}", parameter.getPassiveNodes().size());
     logger.info("FastForward node size: {}", parameter.getFastForwardNodes().size());
+    logger.info("FastForward node number: {}", parameter.getMaxFastForwardNum());
     logger.info("Seed node size: {}", parameter.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", parameter.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", parameter.getNodeMaxActiveNodesWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
+    logger.info("Trx reference block: {}", parameter.getTrxReferenceBlock());
     logger.info("************************ Backup config ************************");
     logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("Backup listen port: {}", parameter.getBackupPort());
@@ -1174,6 +1220,11 @@ public class Args extends CommonParameter {
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", parameter.getStorage().getDbVersion());
     logger.info("DB engine : {}", parameter.getStorage().getDbEngine());
+    logger.info("***************************************************************");
+    logger.info("************************ shutDown config *************************");
+    logger.info("ShutDown blockTime  : {}", parameter.getShutdownBlockTime());
+    logger.info("ShutDown blockHeight : {}", parameter.getShutdownBlockHeight());
+    logger.info("ShutDown blockCount : {}", parameter.getShutdownBlockCount());
     logger.info("***************************************************************");
     logger.info("\n");
   }
@@ -1195,16 +1246,6 @@ public class Args extends CommonParameter {
     return false;
   }
 
-  /**
-   * get output directory.
-   */
-  public String getOutputDirectory() {
-    if (!this.outputDirectory.equals("") && !this.outputDirectory.endsWith(File.separator)) {
-      return this.outputDirectory + File.separator;
-    }
-    return this.outputDirectory;
-  }
-
   private static void witnessAddressCheck(Config config) {
     if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
       byte[] bytes = Commons
@@ -1216,6 +1257,16 @@ public class Args extends CommonParameter {
         logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
       }
     }
+  }
+
+  /**
+   * get output directory.
+   */
+  public String getOutputDirectory() {
+    if (!this.outputDirectory.equals("") && !this.outputDirectory.endsWith(File.separator)) {
+      return this.outputDirectory + File.separator;
+    }
+    return this.outputDirectory;
   }
 }
 

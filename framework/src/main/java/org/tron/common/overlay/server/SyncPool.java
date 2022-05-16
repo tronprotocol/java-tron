@@ -1,5 +1,6 @@
 package org.tron.common.overlay.server;
 
+import com.codahale.metrics.Snapshot;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -23,8 +24,12 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "net")
 @Component
@@ -44,6 +49,9 @@ public class SyncPool {
 
   @Autowired
   private ApplicationContext ctx;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   private ChannelManager channelManager;
 
@@ -132,9 +140,21 @@ public class SyncPool {
         channelManager.getActivePeers().size(), activePeersCount.get(), passivePeersCount.get());
     StringBuilder sb = new StringBuilder(str);
     for (PeerConnection peer : new ArrayList<>(activePeers)) {
-      sb.append(peer.log()).append('\n');
+      sb.append(peer.log());
+      appendPeerLatencyLog(sb, peer);
+      sb.append("\n");
     }
     logger.info(sb.toString());
+  }
+
+  private void appendPeerLatencyLog(StringBuilder builder, PeerConnection peer) {
+    Snapshot peerSnapshot = MetricsUtil.getHistogram(MetricsKey.NET_LATENCY_FETCH_BLOCK
+        + peer.getNode().getHost()).getSnapshot();
+    builder.append(String.format(
+        "top99 : %f, top95 : %f, top75 : %f, max : %d, min : %d, mean : %f, median : %f",
+        peerSnapshot.get99thPercentile(), peerSnapshot.get95thPercentile(),
+        peerSnapshot.get75thPercentile(), peerSnapshot.getMax(), peerSnapshot.getMin(),
+        peerSnapshot.getMean(), peerSnapshot.getMedian())).append("\n");
   }
 
   public List<PeerConnection> getActivePeers() {
@@ -207,16 +227,18 @@ public class SyncPool {
 
     @Override
     public boolean test(NodeHandler handler) {
-
+      long headNum = chainBaseManager.getHeadBlockNum();
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
-
+      Protocol.HelloMessage message = channelManager.getHelloMessageCache()
+              .getIfPresent(inetAddress.getHostAddress());
       return !((handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost())
-          && handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
+              && handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
           || (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null)
           || (channelManager.getBadPeers().getIfPresent(inetAddress) != null)
           || (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp)
           || (nodesInUse.contains(handler.getNode().getHexId()))
-          || (nodeHandlerCache.getIfPresent(handler) != null));
+          || (nodeHandlerCache.getIfPresent(handler) != null)
+          || (message != null && headNum < message.getLowestBlockNum()));
     }
   }
 
