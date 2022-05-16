@@ -64,6 +64,7 @@ public class Constant {
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
   public static final String VM_SUPPORT_CONSTANT = "vm.supportConstant";
   public static final String VM_MAX_ENERGY_LIMIT_FOR_CONSTANT = "vm.maxEnergyLimitForConstant";
+  public static final String VM_LRU_CACHE_SIZE = "vm.lruCacheSize";
   public static final String VM_MIN_TIME_RATIO = "vm.minTimeRatio";
   public static final String VM_MAX_TIME_RATIO = "vm.maxTimeRatio";
   public static final String VM_LONG_RUNNING_TIME = "vm.longRunningTime";
@@ -287,6 +288,8 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
+  public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
+      "committee.allowHigherLimitForMaxCpuTimeOfOneTx";
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
@@ -300,7 +303,7 @@ public class Constant {
   public static final String OPEN_PRINT_LOG = "node.openPrintLog";
   public static final String OPEN_TRANSACTION_SORT = "node.openTransactionSort";
 
-  public static final String  ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
+  public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
 
   public static final String LOCAL_HOST = "127.0.0.1";
 

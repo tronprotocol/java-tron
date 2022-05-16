@@ -1081,6 +1081,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowHigherLimitForMaxCpuTimeOfOneTx")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
+        .build());
+
     return builder.build();
   }
 

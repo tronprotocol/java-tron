@@ -305,6 +305,10 @@ public class Args extends CommonParameter {
       PARAMETER.maxEnergyLimitForConstant = max(3_000_000L, configLimit);
     }
 
+    if (config.hasPath(Constant.VM_LRU_CACHE_SIZE)) {
+      PARAMETER.lruCacheSize = config.getInt(Constant.VM_LRU_CACHE_SIZE);
+    }
+
     if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
       PARAMETER.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
     }
@@ -797,6 +801,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmCompatibleEvm =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) : 0;
+
+    PARAMETER.allowHigherLimitForMaxCpuTimeOfOneTx =
+        config.hasPath(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) : 0;
 
     initBackupProperty(config);
     if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
