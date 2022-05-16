@@ -24,6 +24,7 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -171,10 +172,16 @@ public class EnergyWhenSendAndTransferTest {
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    TVMTestResult result = deploySendAndTransferTestContract(value, feeLimit,
-        consumeUserResourcePercent);
-
+    TVMTestResult result = null;
     long expectEnergyUsageTotal = 140194;
+    for (int i = 0; i < 3; i++) {
+      result = deploySendAndTransferTestContract(value, feeLimit,
+        consumeUserResourcePercent);
+      if (result.getRuntime().getResult().getResultCode()
+        != Protocol.Transaction.Result.contractResult.OUT_OF_TIME) {
+        break;
+      }
+    }
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
     byte[] contractAddress = result.getContractAddress();
     Assert.assertEquals(repository.getAccount(contractAddress).getBalance(), value);
