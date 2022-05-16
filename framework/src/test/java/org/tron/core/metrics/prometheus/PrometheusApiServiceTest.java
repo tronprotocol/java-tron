@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
@@ -41,6 +42,7 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "metric")
+@Ignore
 public class PrometheusApiServiceTest extends BlockGenerate {
 
 
