@@ -173,6 +173,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
   private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
       "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
+  private static final byte[] ORACLE_VOTE_PERIOD =
+          "ORACLE_VOTE_PEROID".getBytes();
+  private static final byte[] ORACLE_VOTE_THRESHOLD =
+          "ORACLE_VOTE_THRESHOLD".getBytes();
 
   // Stable Coin
   private static final byte[] ALLOW_STABLE_MARKET_ON = "ALLOW_STABLE_MARKET_ON".getBytes();
@@ -824,6 +828,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowHigherLimitForMaxCpuTimeOfOneTx(
           CommonParameter.getInstance().getAllowHigherLimitForMaxCpuTimeOfOneTx());
+    }
+
+    try {
+      this.getOracleVotePeriod();
+    } catch (IllegalArgumentException e) {
+      this.setOracleVotePeriod(0);
+    }
+
+    try {
+      this.getOracleVoteThreshold();
+    } catch (IllegalArgumentException e) {
+      this.setOracleVoteThreshold(50);
     }
   }
 
@@ -2454,6 +2470,29 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException(msg));
   }
+
+  public long getOracleVotePeriod() {
+    return Optional.ofNullable(getUnchecked(ORACLE_VOTE_PERIOD))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_VOTE_PERIOD"));
+  }
+
+  public void setOracleVotePeriod(long value) {
+    this.put(ORACLE_VOTE_PERIOD, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getOracleVoteThreshold() {
+    return Optional.ofNullable(getUnchecked(ORACLE_VOTE_THRESHOLD))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_VOTE_THRESHOLD"));
+  }
+
+  public void setOracleVoteThreshold(long value) {
+    this.put(ORACLE_VOTE_THRESHOLD, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
 
   private static class DynamicResourceProperties {
 

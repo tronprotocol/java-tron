@@ -49,6 +49,9 @@ public class DposService implements ConsensusInterface {
   @Autowired
   private MaintenanceManager maintenanceManager;
 
+  @Autowired
+  private OracleManager oracleManager;
+
   @Getter
   @Setter
   private volatile boolean needSyncCheck;
@@ -138,6 +141,7 @@ public class DposService implements ConsensusInterface {
   @Override
   public boolean applyBlock(BlockCapsule blockCapsule) {
     statisticManager.applyBlock(blockCapsule);
+    oracleManager.applyBlock(blockCapsule);
     maintenanceManager.applyBlock(blockCapsule);
     updateSolidBlock();
     return true;

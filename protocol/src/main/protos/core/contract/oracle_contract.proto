@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+import "core/Tron.proto";
+
+message DelegateFeedConsentContract {
+  bytes owner_address = 1;
+  bytes feeder_address = 2;
+}
+
+message OracleExchangeRateVoteContract {
+  bytes owner_address = 1;
+  bytes sr_address = 2;
+
+  // pre vote info, used to verify the next vote
+  bytes pre_vote_hash = 3;
+
+  OracleVote vote = 4;
+}

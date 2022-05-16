@@ -10,6 +10,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.OracleStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -36,6 +37,9 @@ public class ConsensusDelegate {
   @Autowired
   private VotesStore votesStore;
 
+  @Autowired
+  private OracleStore oracleStore;
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return dynamicPropertiesStore;
   }
@@ -47,6 +51,8 @@ public class ConsensusDelegate {
   public VotesStore getVotesStore() {
     return votesStore;
   }
+
+  public OracleStore getOracleStore() { return oracleStore; }
 
   public int calculateFilledSlotsCount() {
     return dynamicPropertiesStore.calculateFilledSlotsCount();

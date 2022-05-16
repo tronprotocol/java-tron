@@ -1093,6 +1093,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getOracleVotePeriod")
+            .setValue(dbManager.getDynamicPropertiesStore().getOracleVotePeriod())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getOracleVoteThreshold")
+            .setValue(dbManager.getDynamicPropertiesStore().getOracleVoteThreshold())
+            .build());
+
     return builder.build();
   }
 

@@ -56,6 +56,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.NullifierStore;
+import org.tron.core.store.OracleStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.SectionBloomStore;
 import org.tron.core.store.StorageRowStore;
@@ -229,6 +230,10 @@ public class ChainBaseManager {
   @Autowired
   private DbStatService dbStatService;
 
+  @Autowired
+  @Getter
+  private OracleStore oracleStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -273,6 +278,7 @@ public class ChainBaseManager {
     closeOneStore(commonDataBase);
     closeOneStore(pbftSignDataStore);
     closeOneStore(sectionBloomStore);
+    closeOneStore(oracleStore);
   }
 
   // for test only
