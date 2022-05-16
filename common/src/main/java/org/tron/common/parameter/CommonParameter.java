@@ -482,6 +482,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowSlashVote;
+
+  @Getter
+  @Setter
   public long allowTvmLondon;
 
   @Getter

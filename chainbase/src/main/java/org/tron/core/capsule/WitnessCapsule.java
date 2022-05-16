@@ -2,6 +2,8 @@ package org.tron.core.capsule;
 
 import static org.tron.common.crypto.Hash.computeAddress;
 
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -139,5 +141,41 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
 
   public void setUrl(final String url) {
     this.witness = this.witness.toBuilder().setUrl(url).build();
+  }
+
+  public long getTotalShares() {
+    if (this.witness.getTotalShares() != 0) {
+      return this.witness.getTotalShares();
+    } else {
+      return this.witness.getVoteCount() * TRX_PRECISION;
+    }
+  }
+
+  public void setTotalShares(final long totalShares) {
+    this.witness = this.witness.toBuilder().setTotalShares(totalShares).build();
+  }
+
+  public long sharesFromVoteCount(long voteCount) {
+    if (getTotalShares() <= 0) {
+      return voteCount * TRX_PRECISION;
+    } else {
+      return voteCount * getTotalShares() / getVoteCount();
+    }
+  }
+
+  public long voteCountFromShares(long shares) {
+    if (getTotalShares() <= 0) {
+      return shares / TRX_PRECISION;
+    } else {
+      return shares * getVoteCount() / getTotalShares();
+    }
+  }
+
+  public long getJailedHeight() {
+    return this.witness.getJailedHeight();
+  }
+
+  public void setJailedHeight(long blockNum) {
+    this.witness = this.witness.toBuilder().setJailedHeight(blockNum).build();
   }
 }

@@ -9,6 +9,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.service.MortgageService;
@@ -28,6 +30,8 @@ import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
+import org.tron.protos.Protocol.Vote;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
@@ -57,6 +61,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
+    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     MortgageService mortgageService = chainBaseManager.getMortgageService();
     try {
       unfreezeBalanceContract = any.unpack(UnfreezeBalanceContract.class);
@@ -78,6 +83,54 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
       accountCapsule.initializeOldTronPower();
+    }
+
+    boolean needToClearVote = true;
+    if (dynamicStore.supportAllowNewResourceModel()
+            && accountCapsule.oldTronPowerIsInvalid()) {
+      switch (unfreezeBalanceContract.getResource()) {
+        case BANDWIDTH:
+        case ENERGY:
+          needToClearVote = false;
+          break;
+        default:
+          break;
+      }
+    }
+
+    if (needToClearVote) {
+      VotesCapsule votesCapsule;
+      if (!votesStore.has(ownerAddress)) {
+        votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
+                accountCapsule.getVotesList());
+      } else {
+        votesCapsule = votesStore.get(ownerAddress);
+      }
+
+      boolean allowSlashVote = dynamicStore.allowSlashVote();
+      if (allowSlashVote && votesCapsule.getOldVotes().size() > 0) {
+        List<Vote> votes = new LinkedList<>(votesCapsule.getOldVotes());
+        votesCapsule.clearOldVotes();
+        long slashVotes = 0;
+        for (Vote vote : votes) {
+          byte[] witnessAddress = vote.getVoteAddress().toByteArray();
+          WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
+          long shares;
+          if (vote.getShares() <= 0) {
+            shares = vote.getVoteCount() * TRX_PRECISION;
+          } else {
+            shares = vote.getShares();
+          }
+          long voteCount = witnessCapsule.voteCountFromShares(shares);
+          slashVotes += vote.getVoteCount() - voteCount;
+          votesCapsule.addOldVotes(vote.getVoteAddress(), voteCount, shares);
+        }
+        accountCapsule.setSlashedVotes(accountCapsule.getSlashedVotes() + slashVotes);
+      }
+
+      accountCapsule.clearVotes();
+      votesCapsule.clearNewVotes();
+      votesStore.put(ownerAddress, votesCapsule);
     }
 
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
@@ -230,32 +283,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       default:
         //this should never happen
         break;
-    }
-
-    boolean needToClearVote = true;
-    if (dynamicStore.supportAllowNewResourceModel()
-        && accountCapsule.oldTronPowerIsInvalid()) {
-      switch (unfreezeBalanceContract.getResource()) {
-        case BANDWIDTH:
-        case ENERGY:
-          needToClearVote = false;
-          break;
-        default:
-          break;
-      }
-    }
-
-    if (needToClearVote) {
-      VotesCapsule votesCapsule;
-      if (!votesStore.has(ownerAddress)) {
-        votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
-            accountCapsule.getVotesList());
-      } else {
-        votesCapsule = votesStore.get(ownerAddress);
-      }
-      accountCapsule.clearVotes();
-      votesCapsule.clearNewVotes();
-      votesStore.put(ownerAddress, votesCapsule);
     }
 
     if (dynamicStore.supportAllowNewResourceModel()

@@ -159,9 +159,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
   private static final byte[] ALLOW_TVM_LONDON = "ALLOW_TVM_LONDON".getBytes();
+  private static final byte[] ALLOW_SLASH_VOTE = "ALLOW_SLASH_VOTE".getBytes();
   private static final byte[] ALLOW_TVM_COMPATIBLE_EVM = "ALLOW_TVM_COMPATIBLE_EVM".getBytes();
   private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
+  private static final byte[] SHARE_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
+          "SHARE_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
   //This value is only allowed to be 1
   private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
       "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
@@ -169,6 +172,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
   private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
       "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
+  private static final byte[] JAIL_DURATION = "JAIL_DURATION".getBytes();
 
   // Stable Coin
   private static final byte[] ALLOW_STABLE_MARKET_ON = "ALLOW_STABLE_MARKET_ON".getBytes();
@@ -778,6 +782,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowSlashVote();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowSlashVote(CommonParameter.getInstance().getAllowSlashVote());
+      if (CommonParameter.getInstance().getAllowSlashVote() == 1) {
+        this.put(SHARE_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+                new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      }
+    }
+
+    try {
       this.getAllowTvmLondon();
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmLondon(CommonParameter.getInstance().getAllowTvmLondon());
@@ -812,6 +826,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getSetBlackholeAccountPermission();
     } catch (IllegalArgumentException e) {
       this.saveSetBlackholePermission(0);
+    }
+
+    try {
+      this.getJailDuration();
+    } catch (IllegalArgumentException e) {
+      this.saveJailDuration(200);
     }
   }
 
@@ -2320,6 +2340,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
+  public void saveAllowSlashVote(long allowSlashVote) {
+    this.put(DynamicPropertiesStore.ALLOW_SLASH_VOTE,
+            new BytesCapsule(ByteArray.fromLong(allowSlashVote)));
+  }
+
+  public long getAllowSlashVote() {
+    String msg = "not found ALLOW_SLASH_VOTE";
+    return Optional.ofNullable(getUnchecked(ALLOW_SLASH_VOTE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException(msg));
+  }
+
   public void saveAllowTvmLondon(long allowTvmLondon) {
     this.put(DynamicPropertiesStore.ALLOW_TVM_LONDON,
         new BytesCapsule(ByteArray.fromLong(allowTvmLondon)));
@@ -2352,6 +2386,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowTvmVote() == 1;
   }
 
+  public boolean allowSlashVote() {
+    return getAllowSlashVote() == 1;
+  }
+
   public void saveNewRewardAlgorithmEffectiveCycle() {
     if (getNewRewardAlgorithmEffectiveCycle() == Long.MAX_VALUE) {
       long currentCycle = getCurrentCycleNumber();
@@ -2365,6 +2403,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(Long.MAX_VALUE);
+  }
+
+  public void saveShareRewardAlgorithmEffectiveCycle() {
+    if (getShareRewardAlgorithmEffectiveCycle() == Long.MAX_VALUE) {
+      long currentCycle = getCurrentCycleNumber();
+      this.put(SHARE_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+              new BytesCapsule(ByteArray.fromLong(currentCycle + 1)));
+    }
+  }
+
+  public long getShareRewardAlgorithmEffectiveCycle() {
+    return Optional.ofNullable(getUnchecked(SHARE_REWARD_ALGORITHM_EFFECTIVE_CYCLE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElse(Long.MAX_VALUE);
   }
 
   // 1: enable
@@ -2413,6 +2466,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveSetBlackholePermission(long value) {
     this.put(SET_BLACKHOLE_ACCOUNT_PERMISSION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getJailDuration() {
+    return Optional.of(getUnchecked(JAIL_DURATION))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found JAIL_DURATION"));
+  }
+
+  public void saveJailDuration(long value) {
+    this.put(JAIL_DURATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {
