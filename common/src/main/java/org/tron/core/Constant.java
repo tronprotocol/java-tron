@@ -282,6 +282,8 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
+  public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
+      "committee.allowHigherLimitForMaxCpuTimeOfOneTx";
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
@@ -293,7 +295,7 @@ public class Constant {
   public static final String OPEN_PRINT_LOG = "node.openPrintLog";
   public static final String OPEN_TRANSACTION_SORT = "node.openTransactionSort";
 
-  public static final String  ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
+  public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
 
   public static final String LOCAL_HOST = "127.0.0.1";
 }

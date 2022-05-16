@@ -173,7 +173,7 @@ public class VMActuator implements Actuator2 {
           throw e;
         }
 
-        VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
+        VM.play(program, OperationRegistry.getTable());
         result = program.getResult();
 
         if (TrxType.TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {

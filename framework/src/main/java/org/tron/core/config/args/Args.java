@@ -657,7 +657,7 @@ public class Args extends CommonParameter {
         ? config.getInt(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION) : 1;
 
     PARAMETER.trxCacheEnable = config.hasPath(Constant.NODE_RPC_TRX_CACHE_ENABLE)
-            && config.getBoolean(Constant.NODE_RPC_TRX_CACHE_ENABLE);
+        && config.getBoolean(Constant.NODE_RPC_TRX_CACHE_ENABLE);
 
     PARAMETER.blockNumForEnergyLimit = config.hasPath(Constant.ENERGY_LIMIT_BLOCK_NUM)
         ? config.getInt(Constant.ENERGY_LIMIT_BLOCK_NUM) : 4727890L;
@@ -759,8 +759,8 @@ public class Args extends CommonParameter {
     }
 
     PARAMETER.allowTvmFreeze =
-            config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
+        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
 
     PARAMETER.allowTvmVote =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
@@ -774,9 +774,13 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) : 0;
 
+    PARAMETER.allowHigherLimitForMaxCpuTimeOfOneTx =
+        config.hasPath(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) : 0;
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
-            .getInstance().getStorage().getDbEngine().toUpperCase())) {
+        .getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
@@ -791,21 +795,21 @@ public class Args extends CommonParameter {
     }
 
     PARAMETER.metricsStorageEnable = config.hasPath(Constant.METRICS_STORAGE_ENABLE) && config
-            .getBoolean(Constant.METRICS_STORAGE_ENABLE);
+        .getBoolean(Constant.METRICS_STORAGE_ENABLE);
     PARAMETER.influxDbIp = config.hasPath(Constant.METRICS_INFLUXDB_IP) ? config
-            .getString(Constant.METRICS_INFLUXDB_IP) : Constant.LOCAL_HOST;
+        .getString(Constant.METRICS_INFLUXDB_IP) : Constant.LOCAL_HOST;
     PARAMETER.influxDbPort = config.hasPath(Constant.METRICS_INFLUXDB_PORT) ? config
-            .getInt(Constant.METRICS_INFLUXDB_PORT) : 8086;
+        .getInt(Constant.METRICS_INFLUXDB_PORT) : 8086;
     PARAMETER.influxDbDatabase = config.hasPath(Constant.METRICS_INFLUXDB_DATABASE) ? config
-            .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
+        .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
     PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
-            .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
+        .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
 
     // lite fullnode params
     PARAMETER.setLiteFullNode(checkIsLiteFullNode());
     PARAMETER.setOpenHistoryQueryWhenLiteFN(
-            config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
-                    && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
+        config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
+            && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
 
     PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
         .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
@@ -818,8 +822,8 @@ public class Args extends CommonParameter {
         .getBoolean(Constant.OPEN_TRANSACTION_SORT);
 
     PARAMETER.allowAccountAssetOptimization = config
-            .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
-            .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
+        .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
+        .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
 
     PARAMETER.disabledApiList =
         config.hasPath(Constant.NODE_DISABLED_API_LIST)
@@ -1183,7 +1187,7 @@ public class Args extends CommonParameter {
    */
   public static boolean checkIsLiteFullNode() {
     String infoFile = Paths.get(PARAMETER.outputDirectory,
-            PARAMETER.storage.getDbDirectory(), Constant.INFO_FILE_NAME).toString();
+        PARAMETER.storage.getDbDirectory(), Constant.INFO_FILE_NAME).toString();
     if (FileUtil.isExists(infoFile)) {
       String value = PropUtil.readProperty(infoFile, Constant.SPLIT_BLOCK_NUM);
       return !"".equals(value) && Long.parseLong(value) > 0;
@@ -1204,7 +1208,7 @@ public class Args extends CommonParameter {
   private static void witnessAddressCheck(Config config) {
     if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
       byte[] bytes = Commons
-              .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
+          .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
       if (bytes != null) {
         localWitnesses.setWitnessAccountAddress(bytes);
         logger.debug("Got localWitnessAccountAddress from config.conf");

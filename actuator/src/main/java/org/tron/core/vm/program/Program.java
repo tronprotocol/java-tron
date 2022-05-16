@@ -650,7 +650,7 @@ public class Program {
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
+      VM.play(program, OperationRegistry.getTable());
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
@@ -882,7 +882,7 @@ public class Program {
         program.setContractVersion(invoke.getDeposit()
             .getContract(codeAddress).getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable(OperationRegistry.Version.TRON_V1));
+      VM.play(program, OperationRegistry.getTable());
       callResult = program.getResult();
 
       getTrace().merge(program.getTrace());

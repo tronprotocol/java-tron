@@ -490,6 +490,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowHigherLimitForMaxCpuTimeOfOneTx;
+
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter

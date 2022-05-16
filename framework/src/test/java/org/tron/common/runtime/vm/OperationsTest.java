@@ -31,7 +31,7 @@ public class OperationsTest {
 
   private ProgramInvokeMockImpl invoke;
   private Program program;
-  private final JumpTable jumpTable = OperationRegistry.newTronV1OperationSet();
+  private final JumpTable jumpTable = OperationRegistry.newTronV10OperationSet();
 
   @BeforeClass
   public static void init() {
