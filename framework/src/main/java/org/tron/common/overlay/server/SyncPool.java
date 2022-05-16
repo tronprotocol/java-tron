@@ -24,6 +24,9 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
@@ -138,13 +141,25 @@ public class SyncPool {
   synchronized void logActivePeers() {
     String str = String.format("\n\n============ Peer stats: all %d, active %d, passive %d\n\n",
         channelManager.getActivePeers().size(), activePeersCount.get(), passivePeersCount.get());
+    metric(channelManager.getActivePeers().size(), MetricLabels.Gauge.PEERS_ALL);
+    metric(activePeersCount.get(), MetricLabels.Gauge.PEERS_ACTIVE);
+    metric(passivePeersCount.get(), MetricLabels.Gauge.PEERS_PASSIVE);
     StringBuilder sb = new StringBuilder(str);
+    int valid = 0;
     for (PeerConnection peer : new ArrayList<>(activePeers)) {
       sb.append(peer.log());
       appendPeerLatencyLog(sb, peer);
       sb.append("\n");
+      if (!(peer.isNeedSyncFromUs() || peer.isNeedSyncFromPeer())) {
+        valid++;
+      }
     }
+    metric(valid, MetricLabels.Gauge.PEERS_VALID);
     logger.info(sb.toString());
+  }
+
+  private void metric(double amt, String peerType) {
+    Metrics.gaugeSet(MetricKeys.Gauge.PEERS, amt, peerType);
   }
 
   private void appendPeerLatencyLog(StringBuilder builder, PeerConnection peer) {

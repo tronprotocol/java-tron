@@ -15,6 +15,7 @@ import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
@@ -78,6 +79,9 @@ public class SolidityNode {
       logger.info("Here is the help message.");
       return;
     }
+    // init metrics first
+    Metrics.init();
+
     Application appT = ApplicationFactory.create(context);
     FullNode.shutdown(appT);
 

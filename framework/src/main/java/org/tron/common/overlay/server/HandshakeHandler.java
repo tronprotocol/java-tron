@@ -35,6 +35,9 @@ import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -124,9 +127,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     fastForward.fillHelloMessage(message, channel);
     ((PeerConnection) channel).setHelloMessageSend(message);
     ctx.writeAndFlush(message.getSendData());
+    int length = message.getSendData().readableBytes();
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
-    MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC,
-        message.getSendData().readableBytes());
+    MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC, length);
+    Metrics.histogramObserve(MetricKeys.Histogram.TCP_BYTES, length,
+        MetricLabels.Histogram.TRAFFIC_OUT);
+
     logger.info("Handshake send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 

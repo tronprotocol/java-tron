@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
@@ -31,6 +33,7 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.storage.metric.DbStat;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
@@ -40,7 +43,7 @@ import org.tron.core.db2.common.Instance;
 
 @Slf4j
 @NoArgsConstructor
-public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
+public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
   ReadOptions readOpts;
@@ -248,7 +251,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
           }
 
           alive = true;
-
         } catch (IOException ioe) {
           logger.error(ioe.getMessage(), ioe);
           throw new RuntimeException(FAIL_TO_INIT_DATABASE, ioe);
@@ -511,5 +513,39 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   @Override
   public RocksDbDataSourceImpl newInstance() {
     return new RocksDbDataSourceImpl(parentPath, dataBaseName, RocksDbSettings.getSettings());
+  }
+
+
+
+  /**
+   * Level Files Size(MB)
+   * --------------------
+   *   0        5       10
+   *   1      134      254
+   *   2     1311     2559
+   *   3     1976     4005
+   *   4        0        0
+   *   5        0        0
+   *   6        0        0
+   */
+  @Override
+  public List<String> getStats() throws Exception {
+    String stat = database.getProperty("rocksdb.levelstats");
+    String[] stats = stat.split("\n");
+    return Arrays.stream(stats).skip(2).collect(Collectors.toList());
+  }
+
+  @Override
+  public String getEngine() {
+    return ROCKSDB;
+  }
+
+  @Override
+  public String getName() {
+    return this.dataBaseName;
+  }
+
+  @Override public void stat() {
+    this.statProperty();
   }
 }

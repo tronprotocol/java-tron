@@ -2,6 +2,7 @@ package org.tron.core.net;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import io.prometheus.client.Histogram;
 import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
@@ -18,6 +19,9 @@ import org.tron.common.backup.BackupServer;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -248,7 +252,12 @@ public class TronNetDelegate {
             //record metrics
             metricsService.applyBlock(block);
           }
+          dbManager.getBlockedTimer().set(Metrics.histogramStartTimer(
+              MetricKeys.Histogram.LOCK_ACQUIRE_LATENCY, MetricLabels.BLOCK));
+          Histogram.Timer timer = Metrics.histogramStartTimer(
+              MetricKeys.Histogram.BLOCK_PROCESS_LATENCY, String.valueOf(isSync));
           dbManager.pushBlock(block);
+          Metrics.histogramObserve(timer);
           freshBlockId.add(blockId);
           logger.info("Success process block {}.", blockId.getString());
           if (!backupServerStartFlag

@@ -185,6 +185,7 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
     PARAMETER.nodeMetricsEnable = false;
     PARAMETER.metricsStorageEnable = false;
+    PARAMETER.metricsPrometheusEnable = false;
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
@@ -823,6 +824,11 @@ public class Args extends CommonParameter {
         .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
     PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
         .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
+
+    PARAMETER.metricsPrometheusEnable = config.hasPath(Constant.METRICS_PROMETHEUS_ENABLE) && config
+        .getBoolean(Constant.METRICS_PROMETHEUS_ENABLE);
+    PARAMETER.metricsPrometheusPort = config.hasPath(Constant.METRICS_PROMETHEUS_PORT) ? config
+        .getInt(Constant.METRICS_PROMETHEUS_PORT) : 9527;
 
     // lite fullnode params
     PARAMETER.setLiteFullNode(checkIsLiteFullNode());
