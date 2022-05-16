@@ -18,6 +18,7 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final byte[] ACTIVE_WITNESSES = "active_witnesses".getBytes();
   private static final byte[] CURRENT_SHUFFLED_WITNESSES = "current_shuffled_witnesses".getBytes();
+  private static final byte[] PREVIOUS_ACTIVE_WITNESSES = "previous_active_witnesses".getBytes();
 
   private static final int ADDRESS_BYTE_ARRAY_LENGTH = 21;
 
@@ -70,5 +71,13 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public List<ByteString> getCurrentShuffledWitnesses() {
     return getData(CURRENT_SHUFFLED_WITNESSES);
+  }
+
+  public void savePreviousActiveWitnesses(List<ByteString> witnessesAddressList) {
+    saveData(PREVIOUS_ACTIVE_WITNESSES, witnessesAddressList);
+  }
+
+  public List<ByteString> getPreviousActiveWitnesses() {
+    return getData(PREVIOUS_ACTIVE_WITNESSES);
   }
 }

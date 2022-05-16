@@ -194,6 +194,34 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
+  public void setWitnessNewVi(long cycle, byte[] address, BigInteger value) {
+    put(buildNewViKey(cycle, address), new BytesCapsule(value.toByteArray()));
+  }
+
+  public BigInteger getWitnessNewVi(long cycle, byte[] address) {
+    BytesCapsule bytesCapsule = get(buildNewViKey(cycle, address));
+    if (bytesCapsule == null) {
+      return BigInteger.ZERO;
+    } else {
+      return new BigInteger(bytesCapsule.getData());
+    }
+  }
+
+  public void accumulateWitnessNewVi(long cycle, byte[] address, long shareCount) {
+    BigInteger preVi = getWitnessNewVi(cycle - 1, address);
+    long reward = getReward(cycle, address);
+    if (reward == 0 || shareCount == 0) { // Just forward pre vi
+      if (!BigInteger.ZERO.equals(preVi)) { // Zero vi will not be record
+        setWitnessNewVi(cycle, address, preVi);
+      }
+    } else { // Accumulate delta vi
+      BigInteger deltaVi = BigInteger.valueOf(reward)
+              .multiply(DECIMAL_OF_VI_REWARD)
+              .divide(BigInteger.valueOf(shareCount));
+      setWitnessNewVi(cycle, address, preVi.add(deltaVi));
+    }
+  }
+
   private byte[] buildVoteKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-vote").getBytes();
   }
@@ -224,6 +252,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildOracleViKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-oracle-vi").getBytes();
+  }
+
+  private byte[] buildNewViKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "-new-vi").getBytes();
   }
 
 }

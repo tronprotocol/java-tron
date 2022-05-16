@@ -255,6 +255,11 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmLondon(entry.getValue());
           break;
         }
+        case ALLOW_SLASH_VOTE: {
+          manager.getDynamicPropertiesStore().saveAllowSlashVote(entry.getValue());
+          manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
+          break;
+        }
         case ALLOW_TVM_COMPATIBLE_EVM: {
           manager.getDynamicPropertiesStore().saveAllowTvmCompatibleEvm(entry.getValue());
           break;
@@ -265,6 +270,10 @@ public class ProposalService extends ProposalUtil {
         }
         case TOTAL_NET_LIMIT: {
           manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
+          break;
+        }
+        case JAIL_DURATION: {
+          manager.getDynamicPropertiesStore().saveJailDuration(entry.getValue());
           break;
         }
 

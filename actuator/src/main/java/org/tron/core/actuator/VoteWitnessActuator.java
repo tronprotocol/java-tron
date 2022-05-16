@@ -10,6 +10,8 @@ import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -18,6 +20,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.service.MortgageService;
@@ -25,6 +28,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
@@ -129,9 +133,9 @@ public class VoteWitnessActuator extends AbstractActuator {
       long tronPower;
       DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
       if (dynamicStore.supportAllowNewResourceModel()) {
-        tronPower = accountCapsule.getAllTronPower();
+        tronPower = accountCapsule.getAllTronPower(dynamicStore.allowSlashVote(), witnessStore);
       } else {
-        tronPower = accountCapsule.getTronPower();
+        tronPower = accountCapsule.getTronPower(dynamicStore.allowSlashVote(), witnessStore);
       }
 
       sum = LongMath
@@ -153,6 +157,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
     MortgageService mortgageService = chainBaseManager.getMortgageService();
+    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
@@ -175,6 +180,27 @@ public class VoteWitnessActuator extends AbstractActuator {
       votesCapsule = votesStore.get(ownerAddress);
     }
 
+    boolean allowSlashVote = dynamicStore.allowSlashVote();
+    if (allowSlashVote && votesCapsule.getOldVotes().size() > 0) {
+      List<Protocol.Vote> votes = new LinkedList<>(votesCapsule.getOldVotes());
+      votesCapsule.clearOldVotes();
+      long slashVotes = 0;
+      for (Protocol.Vote vote : votes) {
+        byte[] witnessAddress = vote.getVoteAddress().toByteArray();
+        WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
+        long shares;
+        if (vote.getShares() <= 0) {
+          shares = vote.getVoteCount() * TRX_PRECISION;
+        } else {
+          shares = vote.getShares();
+        }
+        long voteCount = witnessCapsule.voteCountFromShares(shares);
+        slashVotes += vote.getVoteCount() - voteCount;
+        votesCapsule.addOldVotes(vote.getVoteAddress(), voteCount, shares);
+      }
+      accountCapsule.setSlashedVotes(accountCapsule.getSlashedVotes() + slashVotes);
+    }
+
     accountCapsule.clearVotes();
     votesCapsule.clearNewVotes();
 
@@ -182,8 +208,11 @@ public class VoteWitnessActuator extends AbstractActuator {
       logger.debug("countVoteAccount, address[{}]",
           ByteArray.toHexString(vote.getVoteAddress().toByteArray()));
 
-      votesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount());
-      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
+      byte[] witnessAddress = vote.getVoteAddress().toByteArray();
+      WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
+      long shares = witnessCapsule.sharesFromVoteCount(vote.getVoteCount());
+      votesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount(), shares);
+      accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount(), shares);
     });
 
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);

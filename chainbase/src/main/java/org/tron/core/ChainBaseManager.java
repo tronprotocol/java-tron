@@ -3,6 +3,8 @@ package org.tron.core;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
+
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +18,7 @@ import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
@@ -386,6 +389,34 @@ public class ChainBaseManager {
   public BlockCapsule getBlockByNum(final long num) throws
       ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
+  }
+
+  public List<ByteString> getActiveWitnessesForOracle() {
+    List<ByteString> activeWitnessesForOracle = new ArrayList<>();
+    // todo 10 to vote period
+    long currentBlockNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
+    long startBlockNum = currentBlockNum - currentBlockNum % 10;
+    try {
+      long startBlockTimestamp = getBlockByNum(startBlockNum).getTimeStamp();
+      List<ByteString> activeWitness;
+      if (startBlockTimestamp + dynamicPropertiesStore.getMaintenanceTimeInterval()
+              < dynamicPropertiesStore.getNextMaintenanceTime()) {
+        activeWitness = witnessScheduleStore.getPreviousActiveWitnesses();
+      } else {
+        activeWitness = witnessScheduleStore.getActiveWitnesses();
+      }
+
+      for (ByteString address : activeWitness) {
+        WitnessCapsule witnessCapsule = witnessStore.get(address.toByteArray());
+        if (witnessCapsule != null && witnessCapsule.getJailedHeight() == 0) {
+          activeWitnessesForOracle.add(address);
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Failed get active witnesses for oracle, current block number:{}", currentBlockNum);
+    }
+
+    return activeWitnessesForOracle;
   }
 
   public void init() {

@@ -120,6 +120,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
+import org.tron.core.service.SlashService;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -207,6 +208,8 @@ public class Manager {
   @Getter
   @Autowired
   private MortgageService mortgageService;
+  @Autowired
+  private SlashService slashService;
   @Autowired
   private Consensus consensus;
   @Autowired
@@ -408,6 +411,8 @@ public class Manager {
     mortgageService
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
+    slashService.initStore(chainBaseManager.getWitnessStore(),
+            chainBaseManager.getDynamicPropertiesStore());
     accountStateCallBack.setChainBaseManager(chainBaseManager);
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();

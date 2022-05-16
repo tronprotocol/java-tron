@@ -1,6 +1,7 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.common.utils.WalletUtil.getAddressStringList;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -25,6 +26,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
+import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -92,17 +94,23 @@ public class MaintenanceManager {
 
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
     DelegationStore delegationStore = consensusDelegate.getDelegationStore();
-    if (dynamicPropertiesStore.useNewRewardAlgorithm()) {
+    boolean useNewRewardAlgorithm = dynamicPropertiesStore.useNewRewardAlgorithm();
+    boolean useShareRewardAlgorithm = dynamicPropertiesStore.allowSlashVote();
+    if (useNewRewardAlgorithm || useShareRewardAlgorithm) {
       long curCycle = dynamicPropertiesStore.getCurrentCycleNumber();
       consensusDelegate.getAllWitnesses().forEach(witness -> {
-        delegationStore.accumulateWitnessVi(curCycle, witness.createDbKey(),
-            witness.getVoteCount());
-        delegationStore.accumulateWitnessOracleVi(curCycle, witness.createDbKey(),
-            witness.getVoteCount());
+        if (useShareRewardAlgorithm) {
+          delegationStore.accumulateWitnessNewVi(curCycle, witness.createDbKey(), witness.getTotalShares());
+        } else {
+          delegationStore.accumulateWitnessVi(curCycle, witness.createDbKey(),
+                  witness.getVoteCount());
+          delegationStore.accumulateWitnessOracleVi(curCycle, witness.createDbKey(),
+                  witness.getVoteCount());
+        }
       });
     }
 
-    Map<ByteString, Long> countWitness = countVote(votesStore);
+    Map<ByteString, Vote> countWitness = countVote(votesStore, dynamicPropertiesStore.allowSlashVote());
     if (!countWitness.isEmpty()) {
       List<ByteString> currentWits = consensusDelegate.getActiveWitnesses();
 
@@ -110,7 +118,7 @@ public class MaintenanceManager {
       consensusDelegate.getAllWitnesses()
           .forEach(witnessCapsule -> newWitnessAddressList.add(witnessCapsule.getAddress()));
 
-      countWitness.forEach((address, voteCount) -> {
+      countWitness.forEach((address, vote) -> {
         byte[] witnessAddress = address.toByteArray();
         WitnessCapsule witnessCapsule = consensusDelegate.getWitness(witnessAddress);
         if (witnessCapsule == null) {
@@ -122,7 +130,12 @@ public class MaintenanceManager {
           logger.warn("Witness account is null. address is {}", Hex.toHexString(witnessAddress));
           return;
         }
-        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+        if (witnessCapsule.getTotalShares() <= 0) {
+          witnessCapsule.setTotalShares(witnessCapsule.getVoteCount() * TRX_PRECISION + vote.getShares());
+        } else {
+          witnessCapsule.setTotalShares(witnessCapsule.getTotalShares() + vote.getShares());
+        }
+        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + vote.getVoteCount());
         consensusDelegate.saveWitness(witnessCapsule);
         logger.info("address is {} , countVote is {}", witnessCapsule.createReadableString(),
             witnessCapsule.getVoteCount());
@@ -162,8 +175,9 @@ public class MaintenanceManager {
     }
   }
 
-  private Map<ByteString, Long> countVote(VotesStore votesStore) {
-    final Map<ByteString, Long> countWitness = Maps.newHashMap();
+  private Map<ByteString, Vote> countVote(VotesStore votesStore, boolean allowSlashVote) {
+    final Map<ByteString, Vote> countWitness = Maps.newHashMap();
+    final Map<ByteString, Long> oldCountWitness = Maps.newHashMap();
     Iterator<Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
     long sizeCount = 0;
     while (dbIterator.hasNext()) {
@@ -172,25 +186,68 @@ public class MaintenanceManager {
       votes.getOldVotes().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
+        long shareCount = vote.getShares() == 0 ? (vote.getVoteCount() * TRX_PRECISION) : vote.getShares();
         if (countWitness.containsKey(voteAddress)) {
-          countWitness.put(voteAddress, countWitness.get(voteAddress) - voteCount);
+          Vote witnessVote = countWitness.get(voteAddress);
+          witnessVote = witnessVote.toBuilder().setVoteCount(witnessVote.getVoteCount() - voteCount)
+                  .setShares(witnessVote.getShares() - shareCount).build();
+          countWitness.put(voteAddress, witnessVote);
         } else {
-          countWitness.put(voteAddress, -voteCount);
+          Vote witnessVote = Vote.newBuilder().setVoteCount(-voteCount).setShares(-shareCount).build();
+          countWitness.put(voteAddress, witnessVote);
+        }
+        if (oldCountWitness.containsKey(voteAddress)) {
+          oldCountWitness.put(voteAddress, oldCountWitness.get(voteAddress) + voteCount);
+        } else {
+          oldCountWitness.put(voteAddress, voteCount);
         }
       });
+
       votes.getNewVotes().forEach(vote -> {
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
+        long shareCount = vote.getShares() == 0 ? (vote.getVoteCount() * TRX_PRECISION) : vote.getShares();
         if (countWitness.containsKey(voteAddress)) {
-          countWitness.put(voteAddress, countWitness.get(voteAddress) + voteCount);
+          Vote witnessVote = countWitness.get(voteAddress);
+          witnessVote = witnessVote.toBuilder().setVoteCount(witnessVote.getVoteCount() + voteCount)
+                  .setShares(witnessVote.getShares() + shareCount).build();
+          countWitness.put(voteAddress, witnessVote);
         } else {
-          countWitness.put(voteAddress, voteCount);
+          Vote witnessVote = Vote.newBuilder().setVoteCount(voteCount).setShares(shareCount).build();
+          countWitness.put(voteAddress, witnessVote);
         }
       });
       sizeCount++;
       votesStore.delete(next.getKey());
     }
     logger.info("There is {} new votes in this epoch", sizeCount);
+
+    if (allowSlashVote) {
+      List<ByteString> slashingWitnessList = slashAndResetMissCounters();
+      slashingWitnessList.forEach(address -> {
+        byte[] witnessAddress = address.toByteArray();
+        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(witnessAddress);
+        if (witnessCapsule == null) {
+          logger.warn("Witness capsule is null. address is {}", Hex.toHexString(witnessAddress));
+          return;
+        }
+        // todo fraction
+        long voteCount = witnessCapsule.getVoteCount() / 10000;
+        if (oldCountWitness.containsKey(address)) {
+          voteCount = (witnessCapsule.getVoteCount() - oldCountWitness.get(address)) / 10000;
+        }
+//        if (countWitness.containsKey(address)) {
+//          Vote witnessVote = countWitness.get(address);
+//          witnessVote = witnessVote.toBuilder().setVoteCount(witnessVote.getVoteCount() - voteCount).build();
+//          countWitness.put(address, witnessVote);
+//        } else {
+//          Vote witnessVote = Vote.newBuilder().setVoteCount(-voteCount).build();
+//          countWitness.put(address, witnessVote);
+//        }
+        consensusDelegate.getSlashService().slashWitness(witnessAddress, voteCount, true);
+      });
+    }
+
     return countWitness;
   }
 
@@ -204,6 +261,17 @@ public class MaintenanceManager {
       consensusDelegate.saveWitness(witnessCapsule);
     });
     consensusDelegate.saveRemoveThePowerOfTheGr(-1);
+  }
+
+  private List<ByteString> slashAndResetMissCounters() {
+    final List<ByteString> slashingWitnessList = new ArrayList<>();
+    DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
+    long SlashWindow = 28; // todo
+    if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
+      // todo witness miss count
+    }
+
+    return slashingWitnessList;
   }
 
 }

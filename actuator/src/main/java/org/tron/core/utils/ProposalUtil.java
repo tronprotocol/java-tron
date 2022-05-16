@@ -477,6 +477,22 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_SLASH_VOTE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_SLASH_VOTE]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SLASH_VOTE" + VALUE_NOT_ONE_ERROR);
+        }
+        if (dynamicPropertiesStore.getChangeDelegation() == 0) {
+          throw new ContractValidateException(
+                  "[ALLOW_CHANGE_DELEGATION] proposal must be approved "
+                          + "before [ALLOW_SLASH_VOTE] can be proposed");
+        }
+        break;
+      }
       case FREE_NET_LIMIT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException("Bad chain parameter id [FREE_NET_LIMIT]");
@@ -530,6 +546,16 @@ public class ProposalUtil {
               "This value[ALLOW_TVM_COMPATIBLE_EVM] is only allowed to be 1");
         }
         break;
+      }
+      case JAIL_DURATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [JAIL_DURATION]");
+        }
+        if (value < 0 || value > 1_000_000_000L) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+        }
       }
       case ALLOW_STABLE_MARKET_ON: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
@@ -604,7 +630,9 @@ public class ProposalUtil {
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
     ALLOW_TVM_LONDON(63), // 0, 1
-    ALLOW_STABLE_MARKET_ON(64); // 0, 1
+    ALLOW_STABLE_MARKET_ON(64), // 0, 1
+    ALLOW_SLASH_VOTE(65), // 0, 1
+    JAIL_DURATION(66); // 0, 1
 
     private long code;
 
