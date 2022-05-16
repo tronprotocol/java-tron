@@ -31,7 +31,7 @@ public final class Dec implements Comparable<Dec> {
     }
   }
 
-  final BigInteger i;
+  private final BigInteger i;
   private String s = NIL;
 
   private Dec(BigInteger val) {
@@ -224,7 +224,7 @@ public final class Dec implements Comparable<Dec> {
   }
 
   // equal decimals
-  public boolean equal(Dec d2) {
+  public boolean eq(Dec d2) {
     return (this.i).compareTo(d2.i) == 0;
   }
 
@@ -434,7 +434,7 @@ public final class Dec implements Comparable<Dec> {
       return mul(-1).approxRoot(root).mul(-1);
     }
 
-    if (root == 1 || isZero() || this.equal(oneDec())) {
+    if (root == 1 || isZero() || this.eq(oneDec())) {
       return new Dec(this.i);
     }
 
@@ -594,7 +594,7 @@ public final class Dec implements Comparable<Dec> {
 
   // Double returns the double representation of a Dec.
   // Will return the error if the conversion failed.
-  public double Double() {
+  public double parseDouble() {
     return Double.parseDouble(this.toString());
   }
 

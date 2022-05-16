@@ -305,7 +305,7 @@ public class DecTest {
     ).forEach(tc -> {
       Assert.assertEquals(tc.gt, tc.d1.gt(tc.d2));
       Assert.assertEquals(tc.lt, tc.d1.lt(tc.d2));
-      Assert.assertEquals(tc.eq, tc.d1.equal(tc.d2));
+      Assert.assertEquals(tc.eq, tc.d1.eq(tc.d2));
     });
 
   }
@@ -339,7 +339,7 @@ public class DecTest {
         new Pair<>(Dec.newDecWithPrec(12340, 5), 0.123400000000000000),
         new Pair<>(Dec.newDecWithPrec(12340, 8), 0.000123400000000000),
         new Pair<>(Dec.newDecWithPrec(1009009009009009009L, 17), 10.090090090090090090)
-    ).forEach(e -> Assert.assertEquals(Double.compare(e.v, e.k.Double()), 0));
+    ).forEach(e -> Assert.assertEquals(Double.compare(e.v, e.k.parseDouble()), 0));
   }
 
 
