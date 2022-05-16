@@ -2753,12 +2753,12 @@ public class Wallet {
         .create(Range.openClosed(offset, end), DiscreteDomain.longs())
         .asList();
     rangeList.stream().map(ProposalCapsule::calculateDbKey).map(key -> {
-          try {
-            return chainBaseManager.getProposalStore().get(key);
-          } catch (Exception ex) {
-            return null;
-          }
-        }).filter(Objects::nonNull)
+      try {
+        return chainBaseManager.getProposalStore().get(key);
+      } catch (Exception ex) {
+        return null;
+      }
+    }).filter(Objects::nonNull)
         .forEach(proposalCapsule -> builder
             .addProposals(proposalCapsule.getInstance()));
     return builder.build();
@@ -2784,14 +2784,14 @@ public class Wallet {
         .create(Range.openClosed(offset, end), DiscreteDomain.longs())
         .asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
-          try {
-            return getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
-                chainBaseManager.getExchangeStore(),
-                chainBaseManager.getExchangeV2Store()).get(key);
-          } catch (Exception ex) {
-            return null;
-          }
-        }).filter(Objects::nonNull)
+      try {
+        return getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getExchangeStore(),
+            chainBaseManager.getExchangeV2Store()).get(key);
+      } catch (Exception ex) {
+        return null;
+      }
+    }).filter(Objects::nonNull)
         .forEach(exchangeCapsule -> builder
             .addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
