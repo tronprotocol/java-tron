@@ -38,6 +38,7 @@ import org.tron.core.services.interfaceOnPBFT.http.GetMarketPriceByPairOnPBFTSer
 import org.tron.core.services.interfaceOnPBFT.http.GetMerkleTreeVoucherInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNodeInfoOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetNowBlockOnPBFTServlet;
+import org.tron.core.services.interfaceOnPBFT.http.GetOracleRewardOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetPaginatedAssetIssueListOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetRewardOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetTransactionCountByBlockNumOnPBFTServlet;
@@ -120,6 +121,8 @@ public class HttpApiOnPBFTService implements Service {
   private GetBrokerageOnPBFTServlet getBrokerageServlet;
   @Autowired
   private GetRewardOnPBFTServlet getRewardServlet;
+  @Autowired
+  private GetOracleRewardOnPBFTServlet getOracleRewardOnPBFTServlet;
   @Autowired
   private TriggerConstantContractOnPBFTServlet triggerConstantContractOnPBFTServlet;
 
@@ -215,6 +218,8 @@ public class HttpApiOnPBFTService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
+      context.addServlet(new ServletHolder(getOracleRewardOnPBFTServlet), "/getoraclereward");
+
 
       context.addServlet(new ServletHolder(getMarketOrderByAccountOnPBFTServlet),
           "/getmarketorderbyaccount");

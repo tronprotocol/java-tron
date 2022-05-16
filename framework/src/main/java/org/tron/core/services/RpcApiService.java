@@ -128,6 +128,7 @@ import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketOrderPairList;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.NodeInfo;
+import org.tron.protos.Protocol.OracleReward;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -668,6 +669,12 @@ public class RpcApiService implements Service {
     public void getRewardInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       getRewardInfoCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getOracleRewardInfo(BytesMessage request,
+        StreamObserver<OracleReward> responseObserver) {
+      getOracleRewardInfoCommon(request, responseObserver);
     }
 
     @Override
@@ -2520,6 +2527,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getOracleRewardInfo(BytesMessage request,
+        StreamObserver<OracleReward> responseObserver) {
+      getOracleRewardInfoCommon(request, responseObserver);
+    }
+
+    @Override
     public void getBrokerageInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       getBrokerageInfoCommon(request, responseObserver);
@@ -2769,6 +2782,17 @@ public class RpcApiService implements Service {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       builder.setNum(dbManager.getPendingSize());
       responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getOracleRewardInfoCommon(BytesMessage request,
+      StreamObserver<OracleReward> responseObserver) {
+    try {
+      responseObserver.onNext(dbManager.getMortgageService()
+          .queryOracleReward(request.getValue().toByteArray()).getInstance());
     } catch (Exception e) {
       responseObserver.onError(e);
     }

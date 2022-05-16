@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -9,9 +10,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.DecOracleRewardCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-
-import java.math.BigInteger;
 
 @Slf4j
 @Component
@@ -43,6 +43,17 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
+  public void addOracleReward(long cycle, byte[] address, DecOracleRewardCapsule reward) {
+    byte[] key = buildOracleRewardKey(cycle, address);
+    BytesCapsule bytesCapsule = get(key);
+    if (bytesCapsule == null) {
+      put(key, new BytesCapsule(reward.getData()));
+    } else {
+      put(key, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
+          .add(reward).getData()));
+    }
+  }
+
   public long getReward(long cycle, byte[] address) {
     BytesCapsule bytesCapsule = get(buildRewardKey(cycle, address));
     if (bytesCapsule == null) {
@@ -50,6 +61,14 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     } else {
       return ByteArray.toLong(bytesCapsule.getData());
     }
+  }
+
+  public DecOracleRewardCapsule getOracleReward(long cycle, byte[] address) {
+    BytesCapsule bytesCapsule = get(buildOracleRewardKey(cycle, address));
+    if (bytesCapsule == null) {
+      return new DecOracleRewardCapsule();
+    }
+    return new DecOracleRewardCapsule(bytesCapsule.getData());
   }
 
   public void setBeginCycle(byte[] address, long number) {
@@ -121,6 +140,12 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     put(buildViKey(cycle, address), new BytesCapsule(value.toByteArray()));
   }
 
+  // set CumulativeRewardRatio
+  public void setWitnessOracleVi(long cycle, byte[] address,
+                                 DecOracleRewardCapsule cumulativeRewardRatio) {
+    put(buildOracleViKey(cycle, address), new BytesCapsule(cumulativeRewardRatio.getData()));
+  }
+
   public BigInteger getWitnessVi(long cycle, byte[] address) {
     BytesCapsule bytesCapsule = get(buildViKey(cycle, address));
     if (bytesCapsule == null) {
@@ -128,6 +153,15 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     } else {
       return new BigInteger(bytesCapsule.getData());
     }
+  }
+
+  // get CumulativeRewardRatio
+  public DecOracleRewardCapsule getWitnessOracleVi(long cycle, byte[] address) {
+    BytesCapsule bytesCapsule = get(buildOracleViKey(cycle, address));
+    if (bytesCapsule == null) {
+      return new DecOracleRewardCapsule();
+    }
+    return new DecOracleRewardCapsule(bytesCapsule.getData());
   }
 
   public void accumulateWitnessVi(long cycle, byte[] address, long voteCount) {
@@ -145,12 +179,31 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
+
+  // cal CumulativeRewardRatio
+  public void accumulateWitnessOracleVi(long cycle, byte[] address, long voteCount) {
+    DecOracleRewardCapsule preVi = getWitnessOracleVi(cycle - 1, address);
+    DecOracleRewardCapsule reward = getOracleReward(cycle, address);
+    if (reward.isZero() || voteCount == 0) { // Just forward pre vi
+      if (!preVi.isZero()) { // Zero vi will not be record
+        setWitnessOracleVi(cycle, address, preVi);
+      }
+    } else { // Accumulate delta vi
+      DecOracleRewardCapsule deltaVi = reward.quo(voteCount);
+      setWitnessOracleVi(cycle, address, preVi.add(deltaVi));
+    }
+  }
+
   private byte[] buildVoteKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-vote").getBytes();
   }
 
   private byte[] buildRewardKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-reward").getBytes();
+  }
+
+  private byte[] buildOracleRewardKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "-oracle-reward").getBytes();
   }
 
   private byte[] buildAccountVoteKey(long cycle, byte[] address) {
@@ -167,6 +220,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildViKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-vi").getBytes();
+  }
+
+  private byte[] buildOracleViKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "-oracle-vi").getBytes();
   }
 
 }

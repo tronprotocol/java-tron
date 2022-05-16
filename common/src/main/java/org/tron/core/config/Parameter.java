@@ -45,6 +45,7 @@ public class Parameter {
   public static class ChainSymbol {
 
     public static final byte[] TRX_SYMBOL_BYTES = "_".getBytes(); // TRX symbol
+    public static final String TRX_SYMBOL = "_";
   }
 
   public class ChainConstant {

@@ -687,6 +687,9 @@ service Wallet {
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
   };
 
+  rpc GetOracleRewardInfo (BytesMessage) returns (OracleReward) {
+  };
+
   rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
   };
 
@@ -946,6 +949,9 @@ service WalletSolidity {
   };
 
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetOracleRewardInfo (BytesMessage) returns (OracleReward) {
   };
 
   rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {

@@ -365,6 +365,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long changedDelegation;
+
+  @Getter
+  @Setter
+  public long allowStableMarketOn;
   @Getter
   @Setter
   public Set<String> actuatorSet;

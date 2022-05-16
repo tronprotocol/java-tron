@@ -34,6 +34,7 @@ import org.tron.protos.Protocol.Account.Builder;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.OracleReward;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Vote;
@@ -714,6 +715,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
 
     return assetMap;
+  }
+
+  public OracleReward getOracleAllowance() {
+    return this.account.getOracleAllowance();
+  }
+
+  public boolean setOracleAllowance(OracleReward reward) {
+    this.account = this.account.toBuilder().setOracleAllowance(reward).build();
+    return true;
   }
 
   public boolean addAllLatestAssetOperationTimeV2(Map<String, Long> map) {

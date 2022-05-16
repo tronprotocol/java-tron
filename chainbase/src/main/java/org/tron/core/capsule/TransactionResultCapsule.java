@@ -3,6 +3,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.MarketOrderDetail;
@@ -76,8 +77,16 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
     return transactionResult.getWithdrawAmount();
   }
 
+  public Map<String, Long> getWithdrawAsset() {
+    return transactionResult.getWithdrawAssetMap();
+  }
+
   public void setWithdrawAmount(long amount) {
     this.transactionResult = this.transactionResult.toBuilder().setWithdrawAmount(amount).build();
+  }
+
+  public void setWithdrawAsset(Map<String, Long> asset) {
+    this.transactionResult = this.transactionResult.toBuilder().putAllWithdrawAsset(asset).build();
   }
 
   public long getExchangeReceivedAmount() {

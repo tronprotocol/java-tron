@@ -2,13 +2,11 @@ package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
@@ -40,6 +38,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetMarketPriceByPairOnSol
 import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetOracleRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
@@ -130,6 +129,8 @@ public class HttpApiOnSolidityService implements Service {
   private GetBrokerageOnSolidityServlet getBrokerageServlet;
   @Autowired
   private GetRewardOnSolidityServlet getRewardServlet;
+  @Autowired
+  private GetOracleRewardOnSolidityServlet getOracleRewardOnSolidityServlet;
   @Autowired
   private GetBurnTrxOnSolidityServlet getBurnTrxOnSolidityServlet;
   @Autowired
@@ -253,6 +254,9 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+      context.addServlet(new ServletHolder(getOracleRewardOnSolidityServlet),
+          "/walletsolidity/getoraclereward");
+
       context
           .addServlet(new ServletHolder(getBurnTrxOnSolidityServlet), "/walletsolidity/getburntrx");
       context.addServlet(new ServletHolder(getEnergyPricesOnSolidityServlet),
