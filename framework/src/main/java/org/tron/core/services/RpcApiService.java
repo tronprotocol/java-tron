@@ -156,6 +156,8 @@ import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
+import org.tron.protos.contract.OracleContract.DelegateFeedConsentContract;
+import org.tron.protos.contract.OracleContract.OracleExchangeRateVoteContract;
 import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
@@ -2813,6 +2815,21 @@ public class RpcApiService implements Service {
                                StreamObserver<NumberMessage> responseObserver) {
       getPendingSizeCommon(request, responseObserver);
     }
+
+    @Override
+    public void delegateFeedConsent(DelegateFeedConsentContract request,
+                                    StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.DelegateFeedConsentContract,
+              responseObserver);
+    }
+
+    @Override
+    public void oracleExchangeRateVote(OracleExchangeRateVoteContract request,
+                                       StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.OracleExchangeRateVoteContract,
+              responseObserver);
+    }
+
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {

@@ -402,6 +402,9 @@ message Transaction {
       ShieldedTransferContract = 51;
       MarketSellAssetContract = 52;
       MarketCancelOrderContract = 53;
+
+      DelegateFeedConsentContract = 54;
+      OracleExchangeRateVoteContract = 55;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -911,4 +914,16 @@ message PBFTCommitResult {
 
 message SRL {
   repeated bytes srAddress = 1;
+}
+
+message OraclePrevote {
+  bytes hash = 1;
+  int64 blockNum = 2;
+}
+
+message OracleVote {
+  string salt = 1;
+
+  // [assetID:trxExchangeRate,]assetID:trxExchangeRate
+  string exchangeRates = 2;
 }
