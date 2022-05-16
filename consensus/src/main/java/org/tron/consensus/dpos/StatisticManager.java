@@ -46,8 +46,8 @@ public class StatisticManager {
               .toByteArray()),
           MetricLabels.Counter.MINE_MISS);
       consensusDelegate.saveWitness(wc);
-      logger.info("Current block: {}, witness: {},url: {}, totalMissed: {}",
-          blockNum, wc.createReadableString(),  StringUtil.encode58Check(wc.getAddress()
+      logger.info("Current block: {}, witness: {}, totalMissed: {}", blockNum,
+          StringUtil.encode58Check(wc.getAddress()
               .toByteArray()), wc.getTotalMissed());
       consensusDelegate.applyBlock(false);
     }

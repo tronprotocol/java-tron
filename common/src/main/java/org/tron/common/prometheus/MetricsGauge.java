@@ -34,7 +34,7 @@ class MetricsGauge {
 
 
   static void inc(String key, double delta, String... labels) {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       Gauge gauge = container.get(key);
       if (gauge == null) {
         logger.info("{} not exist", key);
@@ -45,7 +45,7 @@ class MetricsGauge {
   }
 
   static void set(String key, double v, String... labels) {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       Gauge gauge = container.get(key);
       if (gauge == null) {
         logger.info("{} not exist", key);

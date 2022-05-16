@@ -38,8 +38,8 @@ public class Metrics {
     }
   }
 
-  public static boolean initialized() {
-    return initialized;
+  public static boolean enabled() {
+    return CommonParameter.getInstance().isMetricsPrometheusEnable();
   }
 
   public static void counterInc(String key, double amt, String... labels) {

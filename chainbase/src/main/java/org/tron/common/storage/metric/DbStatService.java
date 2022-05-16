@@ -19,19 +19,19 @@ public class DbStatService {
 
 
   public  void register(DB<byte[], byte[]> db) {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       statExecutor.scheduleWithFixedDelay(db::stat, 0, 6, TimeUnit.HOURS);
     }
   }
 
   public  void register(DbSourceInter<byte[]> db) {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       statExecutor.scheduleWithFixedDelay(db::stat, 0, 6, TimeUnit.HOURS);
     }
   }
 
   public void shutdown() {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       try {
         statExecutor.shutdown();
       } catch (Exception e) {

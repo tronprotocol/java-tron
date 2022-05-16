@@ -56,7 +56,7 @@ public class MetricsHistogram {
   }
 
   static Histogram.Timer startTimer(String key, String... labels) {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       Histogram histogram = container.get(key);
       if (histogram == null) {
         logger.info("{} not exist", key);
@@ -75,7 +75,7 @@ public class MetricsHistogram {
 
 
   static void observe(String key, double amt, String... labels) {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       Histogram histogram = container.get(key);
       if (histogram == null) {
         logger.info("{} not exist", key);

@@ -33,7 +33,7 @@ class MetricsCounter {
   }
 
   static void inc(String key, double amt, String... labels) {
-    if (Metrics.initialized()) {
+    if (Metrics.enabled()) {
       Counter counter = container.get(key);
       if (counter == null) {
         logger.info("{} not exist", key);

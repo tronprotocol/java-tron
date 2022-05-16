@@ -18,7 +18,7 @@ public class InstrumentedAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
   @Override
   protected void append(ILoggingEvent event) {
-    if (Metrics.initialized() && event.getLevel().toInt() == Level.ERROR_INT) {
+    if (Metrics.enabled() && event.getLevel().toInt() == Level.ERROR_INT) {
       String type = MetricLabels.UNDEFINED;
       if (event.getThrowableProxy() != null) {
         type = event.getThrowableProxy().getClassName();
