@@ -167,7 +167,7 @@ public class EnergyWhenSendAndTransferTest {
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
       VMIllegalException {
 
-    long value = 1000L;
+    long value = 10_000L;
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
     byte[] address = Hex.decode(OWNER_ADDRESS);
