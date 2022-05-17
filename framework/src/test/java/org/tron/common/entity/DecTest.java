@@ -405,6 +405,29 @@ public class DecTest {
 
   }
 
+  @Test
+  public void TestIsInteger() {
+    Stream.of(
+            // 0.001 => false
+            new Pair<>(Dec.newDecWithPrec(1000000000000000L, Dec.precision), false),
+            // -0.001 => false
+            new Pair<>(Dec.newDecWithPrec(-1000000000000000L, Dec.precision), false),
+            // 0.0 => true
+            new Pair<>(Dec.zeroDec(), true),
+            // 7.8 => false
+            new Pair<>(Dec.newDecWithPrec(78,1), false),
+            // 0.9 => false
+            new Pair<>(Dec.newDecWithPrec(900000000000000000L, Dec.precision), false),
+            // -4.000 => true
+            new Pair<>(Dec.newDec("-4.000"), true),
+            // -4 => true
+            new Pair<>(Dec.newDecWithPrec(-4000000000000000000L, Dec.precision), true),
+            // 5.0  => true
+            new Pair<>(Dec.newDec("5.0"), true),
+            // 5 => true
+            new Pair<>(Dec.newDec(5), true)
+    ).forEach(e -> Assert.assertEquals(e.v, e.k.isInteger()));
+  }
 
   public static class Pair<K, V, S> {
 

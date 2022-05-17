@@ -600,7 +600,7 @@ public final class Dec implements Comparable<Dec> {
 
   // is integer, e.g. decimals are zero
   public boolean isInteger()  {
-    return this.i.divide(precisionReuse).signum() == 0;
+    return this.i.remainder(precisionReuse).signum() == 0;
   }
 
   @Override
