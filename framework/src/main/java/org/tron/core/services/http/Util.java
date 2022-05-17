@@ -252,6 +252,9 @@ public class Util {
     return jsonTransaction;
   }
 
+  /**
+   * Note: the contracts of the returned transaction may be empty
+   * */
   public static Transaction packTransaction(String strTransaction, boolean selfType) {
     JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
