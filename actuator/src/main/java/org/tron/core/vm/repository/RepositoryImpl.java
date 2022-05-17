@@ -123,9 +123,6 @@ public class RepositoryImpl implements Repository {
   private final HashMap<Key, Value<byte[]>> delegationCache = new HashMap<>();
 
   public static void removeLruCache(byte[] address) {
-    Key key = Key.create(address);
-    contractLruCache.remove(key);
-    codeLruCache.remove(key);
   }
 
   public RepositoryImpl(StoreFactory storeFactory, RepositoryImpl repository) {
@@ -369,10 +366,6 @@ public class RepositoryImpl implements Repository {
   @Override
   public ContractCapsule getContract(byte[] address) {
     Key key = Key.create(address);
-    if (contractLruCache.containsKey(key)) {
-      return contractLruCache.get(key);
-    }
-
     if (contractCache.containsKey(key)) {
       return new ContractCapsule(contractCache.get(key).getValue());
     }
@@ -386,9 +379,6 @@ public class RepositoryImpl implements Repository {
 
     if (contractCapsule != null) {
       contractCache.put(key, Value.create(contractCapsule));
-      if (!contractLruCache.containsKey(key)) {
-        contractLruCache.put(key, contractCapsule);
-      }
     }
     return contractCapsule;
   }
@@ -464,10 +454,6 @@ public class RepositoryImpl implements Repository {
   @Override
   public byte[] getCode(byte[] address) {
     Key key = Key.create(address);
-    if (codeLruCache.containsKey(key)) {
-      return codeLruCache.get(key);
-    }
-
     if (codeCache.containsKey(key)) {
       return codeCache.get(key).getValue();
     }
@@ -484,9 +470,6 @@ public class RepositoryImpl implements Repository {
     }
     if (code != null) {
       codeCache.put(key, Value.create(code));
-      if (!codeLruCache.containsKey(key)) {
-        codeLruCache.put(key, code);
-      }
     }
     return code;
   }
