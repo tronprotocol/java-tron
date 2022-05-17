@@ -280,6 +280,9 @@ public class FullNodeHttpApiService implements Service {
   private GetBlockBalanceServlet getBlockBalanceServlet;
 
   @Autowired
+  private UnjailWitnessServlet unjailWitnessServlet;
+
+  @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
   @Autowired
   private HttpApiAccessFilter httpApiAccessFilter;
@@ -526,6 +529,9 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getmarketorderlistbypair");
       context.addServlet(new ServletHolder(getMarketPairListServlet),
           "/wallet/getmarketpairlist");
+
+      context.addServlet(new ServletHolder(unjailWitnessServlet),
+              "/wallet/unjailwitness");
 
       context.addServlet(new ServletHolder(getAccountBalanceServlet),
           "/wallet/getaccountbalance");
