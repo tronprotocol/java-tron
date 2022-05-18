@@ -778,6 +778,9 @@ service Wallet {
   rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
   };
 
+  rpc UnjailWitness (UnjailWitnessContract) returns (TransactionExtention) {
+  };
+
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
 

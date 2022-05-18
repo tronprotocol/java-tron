@@ -169,6 +169,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
+import org.tron.protos.contract.WitnessContract.UnjailWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
@@ -2562,6 +2563,12 @@ public class RpcApiService implements Service {
       Transaction.Contract contract = request.getRawData().getContract(0);
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);
+    }
+
+    @Override
+    public void unjailWitness(UnjailWitnessContract request,
+                              StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnjailWitnessContract, responseObserver);
     }
 
     @Override
