@@ -557,6 +557,36 @@ public class ProposalUtil {
                   "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
         }
       }
+      case UPDATE_SLASH_WINDOW: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [UPDATE_SLASH_WINDOW]");
+        }
+        if (value < 0 || value > 1_000_000_000L) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+        }
+      }
+      case UPDATE_SLASH_FRACTION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [UPDATE_SLASH_FRACTION]");
+        }
+        if (value < 0 || value > 100_000L) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value, valid range is [0, 100_000L]");
+        }
+      }
+      case UPDATE_MIN_VALID_PER_WINDOW: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [UPDATE_MIN_VALID_PER_WINDOW]");
+        }
+        if (value < 0 || value > 100) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+        }
+      }
       case ALLOW_STABLE_MARKET_ON: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
           throw new ContractValidateException(
@@ -632,7 +662,10 @@ public class ProposalUtil {
     ALLOW_TVM_LONDON(63), // 0, 1
     ALLOW_STABLE_MARKET_ON(64), // 0, 1
     ALLOW_SLASH_VOTE(65), // 0, 1
-    JAIL_DURATION(66); // 0, 1
+    JAIL_DURATION(66), // 200, [0,1_000_000_000]
+    UPDATE_SLASH_WINDOW(67), // 28, [0,1_000_000_000]
+    UPDATE_SLASH_FRACTION(68), // 10, [0,100_000]
+    UPDATE_MIN_VALID_PER_WINDOW(69); // 5, [0,100]
 
     private long code;
 

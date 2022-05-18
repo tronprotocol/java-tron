@@ -276,6 +276,18 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveJailDuration(entry.getValue());
           break;
         }
+        case UPDATE_SLASH_WINDOW: {
+          manager.getDynamicPropertiesStore().saveSlashWindow(entry.getValue());
+          break;
+        }
+        case UPDATE_SLASH_FRACTION: {
+          manager.getDynamicPropertiesStore().saveSlashFraction(entry.getValue());
+          break;
+        }
+        case UPDATE_MIN_VALID_PER_WINDOW: {
+          manager.getDynamicPropertiesStore().saveMinValidPerWindow(entry.getValue());
+          break;
+        }
 
         case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());

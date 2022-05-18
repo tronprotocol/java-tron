@@ -1067,6 +1067,21 @@ public class Wallet {
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getSlashWindow")
+            .setValue(dbManager.getDynamicPropertiesStore().getSlashWindow())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getSlashFraction")
+            .setValue(dbManager.getDynamicPropertiesStore().getSlashFraction())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getMinValidPerWindow")
+            .setValue(dbManager.getDynamicPropertiesStore().getMinValidPerWindow())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmLondon")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmLondon())
         .build());

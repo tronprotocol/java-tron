@@ -10,12 +10,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.service.SlashService;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DelegationStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessScheduleStore;
-import org.tron.core.store.WitnessStore;
+import org.tron.core.store.*;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -42,6 +37,9 @@ public class ConsensusDelegate {
   @Autowired
   private SlashService slashService;
 
+  @Autowired
+  private SlashStore slashStore;
+
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return dynamicPropertiesStore;
   }
@@ -56,6 +54,10 @@ public class ConsensusDelegate {
 
   public SlashService getSlashService() {
     return slashService;
+  }
+
+  public SlashStore getSlashStore() {
+    return slashStore;
   }
 
   public int calculateFilledSlotsCount() {
