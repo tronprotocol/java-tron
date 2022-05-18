@@ -41,7 +41,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -139,7 +138,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    if (!checkHelloMsg(msg, ctx)) {
+    if (!msg.valid()) {
+      logger.warn("Peer {} invalid hello message parameters, GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
+              ctx.channel().remoteAddress(),
+              msg.getInstance().getGenesisBlockId().getHash(),
+              msg.getInstance().getSolidBlockId().getHash(),
+              msg.getInstance().getHeadBlockId().getHash());
       channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
       return;
     }
@@ -207,32 +211,4 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     syncPool.onConnect(channel);
   }
 
-  private boolean checkHelloMsg(HelloMessage msg, ChannelHandlerContext ctx) {
-
-    Protocol.HelloMessage helloMessage = msg.getInstance();
-
-    byte[] genesisBlockByte = helloMessage.getGenesisBlockId().getHash().toByteArray();
-
-    if (genesisBlockByte.length == 0) {
-      logger.warn("Peer {} different genesis block, peer genesis block byte length is 0",
-              ctx.channel().remoteAddress());
-      return false;
-    }
-
-    byte[] solidBlockId = helloMessage.getSolidBlockId().toByteArray();
-    if (solidBlockId.length == 0) {
-      logger.warn("Peer {} solidBlockId byte length is 0",
-              ctx.channel().remoteAddress());
-      return false;
-    }
-
-    byte[] headBlockId = helloMessage.getHeadBlockId().toByteArray();
-    if (headBlockId.length == 0) {
-      logger.warn("Peer {} headBlockId byte length is 0",
-              ctx.channel().remoteAddress());
-      return false;
-    }
-
-    return true;
-  }
 }

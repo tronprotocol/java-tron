@@ -1,6 +1,7 @@
 package org.tron.common.overlay.message;
 
 import com.google.protobuf.ByteString;
+import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.server.HandshakeHandler;
@@ -128,5 +129,25 @@ public class HelloMessage extends P2pMessage {
 
   public Protocol.HelloMessage getInstance() {
     return this.helloMessage;
+  }
+
+  public boolean valid() {
+    byte[] genesisBlockByte = this.helloMessage.getGenesisBlockId().getHash().toByteArray();
+
+    if (genesisBlockByte.length == 0) {
+      return false;
+    }
+
+    byte[] solidBlockId = this.helloMessage.getSolidBlockId().getHash().toByteArray();
+    if (solidBlockId.length == 0) {
+      return false;
+    }
+
+    byte[] headBlockId = this.helloMessage.getHeadBlockId().getHash().toByteArray();
+    if (headBlockId.length == 0) {
+      return false;
+    }
+
+    return true;
   }
 }
