@@ -1,15 +1,15 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol;
-import org.tron.protos.contract.WitnessContract;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.WitnessContract.UnjailWitnessContract;
 
 @Component
 @Slf4j(topic = "API")
@@ -24,10 +24,10 @@ public class UnjailWitnessServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      WitnessContract.UnjailWitnessContract.Builder build = WitnessContract.UnjailWitnessContract.newBuilder();
+      UnjailWitnessContract.Builder build = UnjailWitnessContract.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      Protocol.Transaction tx = wallet
-              .createTransactionCapsule(build.build(), Protocol.Transaction.Contract.ContractType.UnjailWitnessContract)
+      Transaction tx = wallet
+              .createTransactionCapsule(build.build(), ContractType.UnjailWitnessContract)
               .getInstance();
       JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       tx = Util.setTransactionPermissionId(jsonObject, tx);
