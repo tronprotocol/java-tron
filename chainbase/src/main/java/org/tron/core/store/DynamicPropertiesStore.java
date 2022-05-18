@@ -175,6 +175,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] JAIL_DURATION = "JAIL_DURATION".getBytes();
 
   // Stable Coin
+  private static final byte[] ORACLE_SLASH_WINDOW = "ORACLE_SLASH_WINDOW".getBytes();
+  private static final byte[] MIN_VALID_PER_WINDOW = "MIN_VALID_PER_WINDOW".getBytes();
+  private static final byte[] ORACLE_SLASH_FRACTION = "ORACLE_SLASH_FRACTION".getBytes();
   private static final byte[] ALLOW_STABLE_MARKET_ON = "ALLOW_STABLE_MARKET_ON".getBytes();
 
 
@@ -832,6 +835,24 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getJailDuration();
     } catch (IllegalArgumentException e) {
       this.saveJailDuration(200);
+    }
+
+    try {
+      this.getSlashWindow();
+    } catch (IllegalArgumentException e) {
+      this.saveSlashWindow(28);
+    }
+
+    try {
+      this.getSlashFraction();
+    } catch (IllegalArgumentException e) {
+      this.saveSlashFraction(10);
+    }
+
+    try {
+      this.getMinValidPerWindow();
+    } catch (IllegalArgumentException e) {
+      this.saveMinValidPerWindow(5);
     }
   }
 
@@ -2478,6 +2499,42 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveJailDuration(long value) {
     this.put(JAIL_DURATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getSlashWindow() {
+    return Optional.of(getUnchecked(ORACLE_SLASH_WINDOW))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ORACLE_SLASH_WINDOW"));
+  }
+
+  public void saveSlashWindow(long value) {
+    this.put(ORACLE_SLASH_WINDOW, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getSlashFraction() {
+    return Optional.of(getUnchecked(ORACLE_SLASH_FRACTION))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ORACLE_SLASH_FRACTION"));
+  }
+
+  public void saveSlashFraction(long value) {
+    this.put(ORACLE_SLASH_FRACTION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getMinValidPerWindow() {
+    return Optional.of(getUnchecked(MIN_VALID_PER_WINDOW))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found MIN_VALID_PER_WINDOW"));
+  }
+
+  public void saveMinValidPerWindow(long value) {
+    this.put(MIN_VALID_PER_WINDOW, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   private static class DynamicResourceProperties {
