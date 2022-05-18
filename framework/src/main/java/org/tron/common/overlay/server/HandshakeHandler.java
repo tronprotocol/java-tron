@@ -168,15 +168,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    byte[] genesisBlockByte = msg.getInstance().getGenesisBlockId().getHash().toByteArray();
-
-    if (genesisBlockByte.length == 0) {
-      logger.info("Peer {} different genesis block, peer genesis block byte length is 0",
-                      ctx.channel().remoteAddress());
-      channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
-      return;
-    }
-
     if (!Arrays
         .equals(chainBaseManager.getGenesisBlockId().getBytes(),
             msg.getGenesisBlockId().getBytes())) {
@@ -225,7 +216,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (genesisBlockByte.length == 0) {
       logger.warn("Peer {} different genesis block, peer genesis block byte length is 0",
               ctx.channel().remoteAddress());
-      channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return Boolean.FALSE;
     }
 
@@ -233,7 +223,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (solidBlockId.length == 0) {
       logger.warn("Peer {} solidBlockId byte length is 0",
               ctx.channel().remoteAddress());
-      channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return Boolean.FALSE;
     }
 
@@ -241,7 +230,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (headBlockId.length == 0) {
       logger.warn("Peer {} headBlockId byte length is 0",
               ctx.channel().remoteAddress());
-      channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return Boolean.FALSE;
     }
 
