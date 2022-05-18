@@ -216,23 +216,23 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (genesisBlockByte.length == 0) {
       logger.warn("Peer {} different genesis block, peer genesis block byte length is 0",
               ctx.channel().remoteAddress());
-      return Boolean.FALSE;
+      return false;
     }
 
     byte[] solidBlockId = helloMessage.getSolidBlockId().toByteArray();
     if (solidBlockId.length == 0) {
       logger.warn("Peer {} solidBlockId byte length is 0",
               ctx.channel().remoteAddress());
-      return Boolean.FALSE;
+      return false;
     }
 
     byte[] headBlockId = helloMessage.getHeadBlockId().toByteArray();
     if (headBlockId.length == 0) {
       logger.warn("Peer {} headBlockId byte length is 0",
               ctx.channel().remoteAddress());
-      return Boolean.FALSE;
+      return false;
     }
 
-    return Boolean.TRUE;
+    return true;
   }
 }
