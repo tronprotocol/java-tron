@@ -15,7 +15,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -30,6 +29,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -52,7 +53,7 @@ public class BatchSendTest {
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
-  private static DepositImpl deposit;
+  private static RepositoryImpl repository;
   private static AccountCapsule ownerCapsule;
 
   static {
@@ -62,10 +63,10 @@ public class BatchSendTest {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     dbManager = context.getBean(Manager.class);
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
-    deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
-    deposit.commit();
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
+    repository.addBalance(Hex.decode(TRANSFER_TO), 10);
+    repository.commit();
     ownerCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
@@ -115,7 +116,7 @@ public class BatchSendTest {
       ContractValidateException {
     //  1. Deploy*/
     byte[] contractAddress = deployTransferContract();
-    deposit.commit();
+    repository.commit();
     Assert.assertEquals(1000,
         dbManager.getAccountStore().get(contractAddress).getBalance());
 
@@ -183,7 +184,7 @@ public class BatchSendTest {
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
-            deposit, null);
+            repository, null);
     return contractAddress;
   }
 }

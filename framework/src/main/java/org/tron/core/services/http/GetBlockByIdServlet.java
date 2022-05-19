@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -22,9 +23,9 @@ public class GetBlockByIdServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(input)), response);
+      fillResponse(Util.getVisible(request), Util.getBlockType(request),
+          ByteString.copyFrom(ByteArray.fromHexString(input)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -35,15 +36,16 @@ public class GetBlockByIdServlet extends RateLimiterServlet {
       PostParams params = PostParams.getPostParams(request);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
-      fillResponse(params.isVisible(), build.getValue(), response);
+      fillResponse(params.isVisible(), build.getType(), build.getValue(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void fillResponse(boolean visible, ByteString blockId, HttpServletResponse response)
+  private void fillResponse(boolean visible, GrpcAPI.BlockType type,
+                            ByteString blockId, HttpServletResponse response)
       throws IOException {
-    Block reply = wallet.getBlockById(blockId);
+    Block reply = wallet.clearTrxForBlock(wallet.getBlockById(blockId), type);
     if (reply != null) {
       response.getWriter().println(Util.printBlock(reply, visible));
     } else {

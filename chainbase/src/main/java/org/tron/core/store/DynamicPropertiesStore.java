@@ -17,6 +17,8 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "DB")
 @Component
@@ -169,6 +171,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
   private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
       "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
+  private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
+      "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
   // Stable Coin
   private static final byte[] ALLOW_STABLE_MARKET_ON = "ALLOW_STABLE_MARKET_ON".getBytes();
@@ -752,7 +756,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowBlackHoleOptimization();
     } catch (IllegalArgumentException e) {
-      this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
+      this.saveAllowBlackHoleOptimization(
+          CommonParameter.getInstance().getAllowBlackHoleOptimization());
     }
 
     try {
@@ -793,7 +798,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowAccountAssetOptimization();
     } catch (IllegalArgumentException e) {
       this.setAllowAccountAssetOptimization(CommonParameter
-              .getInstance().getAllowAccountAssetOptimization());
+          .getInstance().getAllowAccountAssetOptimization());
     }
 
     try {
@@ -812,6 +817,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getSetBlackholeAccountPermission();
     } catch (IllegalArgumentException e) {
       this.saveSetBlackholePermission(0);
+    }
+
+    try {
+      this.getAllowHigherLimitForMaxCpuTimeOfOneTx();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowHigherLimitForMaxCpuTimeOfOneTx(
+          CommonParameter.getInstance().getAllowHigherLimitForMaxCpuTimeOfOneTx());
     }
   }
 
@@ -1993,6 +2005,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found latest block header number"));
   }
 
+  public long getLatestBlockHeaderNumberFromDB() {
+    try {
+      return Optional.ofNullable(getFromRoot(LATEST_BLOCK_HEADER_NUMBER))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+              () -> new IllegalArgumentException("not found latest block header number"));
+    } catch (ItemNotFoundException | BadItemException e) {
+     logger.error("{}", e);
+    }
+    return -1;
+  }
+
   public int getStateFlag() {
     return Optional.ofNullable(getUnchecked(STATE_FLAG))
         .map(BytesCapsule::getData)
@@ -2370,9 +2395,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   // 1: enable
   public long getAllowAccountAssetOptimization() {
     return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
   }
 
   public void setAllowAccountAssetOptimization(long value) {
@@ -2413,6 +2439,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveSetBlackholePermission(long value) {
     this.put(SET_BLACKHOLE_ACCOUNT_PERMISSION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public void saveAllowHigherLimitForMaxCpuTimeOfOneTx(long value) {
+    this.put(ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowHigherLimitForMaxCpuTimeOfOneTx() {
+    String msg = "not found ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX";
+    return Optional.ofNullable(getUnchecked(ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
   }
 
   private static class DynamicResourceProperties {

@@ -10,10 +10,6 @@ public class Key {
    */
   private byte[] data = new byte[0];
 
-  /**
-   *
-   * @param data
-   */
   public Key(byte[] data) {
     if (data != null && data.length != 0) {
       this.data = new byte[data.length];
@@ -21,36 +17,19 @@ public class Key {
     }
   }
 
-  /**
-   *
-   * @param key
-   */
   private Key(Key key) {
     this.data = new byte[key.getData().length];
     System.arraycopy(key.getData(), 0, this.data, 0, this.data.length);
   }
 
-  /**
-   *
-   * @param data
-   * @return
-   */
   public static Key create(byte[] data) {
     return new Key(data);
   }
 
-  /**
-   *
-   * @return
-   */
   public Key clone() {
     return new Key(this);
   }
 
-  /**
-   *
-   * @return
-   */
   public byte[] getData() {
     return data;
   }
