@@ -35,6 +35,7 @@ import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -134,9 +135,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     if (!msg.valid()) {
       logger.warn("Peer {} invalid hello message parameters, GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
               ctx.channel().remoteAddress(),
-              msg.getInstance().getGenesisBlockId().getHash(),
-              msg.getInstance().getSolidBlockId().getHash(),
-              msg.getInstance().getHeadBlockId().getHash());
+              ByteArray.toHexString(msg.getInstance().getGenesisBlockId().getHash().toByteArray()),
+              ByteArray.toHexString(msg.getInstance().getSolidBlockId().getHash().toByteArray()),
+              ByteArray.toHexString(msg.getInstance().getHeadBlockId().getHash().toByteArray()));
       channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
       return;
     }
