@@ -50,6 +50,10 @@ public class CommonParameter {
   public long maxEnergyLimitForConstant = 100_000_000L;
   @Getter
   @Setter
+  @Parameter(names = {"--lru-cache-size"})
+  public int lruCacheSize = 500;
+  @Getter
+  @Setter
   @Parameter(names = {"--debug"})
   public boolean debug = false;
   @Getter
@@ -451,6 +455,14 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public boolean metricsPrometheusEnable = false;
+
+  @Getter
+  @Setter
+  public int metricsPrometheusPort;
+
+  @Getter
+  @Setter
   public int agreeNodeCount;
 
   @Getter
@@ -489,6 +501,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowTvmCompatibleEvm;
+
+  @Getter
+  @Setter
+  public long allowHigherLimitForMaxCpuTimeOfOneTx;
 
   @Getter
   @Setter
@@ -546,5 +562,9 @@ public class CommonParameter {
 
   public boolean isJsonRpcFilterEnabled() {
     return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
+  }
+
+  public int getSafeLruCacheSize() {
+    return lruCacheSize < 1 ? 500 : lruCacheSize;
   }
 }

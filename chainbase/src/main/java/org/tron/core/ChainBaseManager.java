@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
@@ -225,6 +226,9 @@ public class ChainBaseManager {
   @Getter
   private SectionBloomStore sectionBloomStore;
 
+  @Autowired
+  private DbStatService dbStatService;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -237,6 +241,7 @@ public class ChainBaseManager {
   }
 
   public void closeAllStore() {
+    dbStatService.shutdown();
     closeOneStore(transactionRetStore);
     closeOneStore(recentBlockStore);
     closeOneStore(transactionHistoryStore);

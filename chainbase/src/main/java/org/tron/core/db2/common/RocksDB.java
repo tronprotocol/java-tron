@@ -78,4 +78,9 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
   public DB<byte[], byte[]> newInstance() {
     return new RocksDB(db.newInstance());
   }
+
+  @Override
+  public void stat() {
+    this.db.stat();
+  }
 }

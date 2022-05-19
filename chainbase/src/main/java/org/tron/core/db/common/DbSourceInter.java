@@ -42,4 +42,6 @@ public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
 
   long getTotal() throws RuntimeException;
 
+  void stat();
+
 }

@@ -29,7 +29,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   public ProgramInvokeMockImpl() {
-
     this.deposit = RepositoryImpl.createRoot(null);
     this.deposit.createAccount(ownerAddress, Protocol.AccountType.Normal);
 
@@ -43,6 +42,17 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
             + "6040016014525451606001601e52545160800160"
             + "28525460a052546016604860003960166000f260"
             + "00603f556103e75660005460005360200235"));
+  }
+
+  public ProgramInvokeMockImpl(byte[] op, byte[] opAddress) {
+    this.deposit = RepositoryImpl.createRoot(null);
+    this.deposit.createAccount(opAddress, Protocol.AccountType.Normal);
+
+    this.deposit.createAccount(opAddress, Protocol.AccountType.Contract);
+    this.deposit.createContract(opAddress,
+        new ContractCapsule(SmartContract.newBuilder().setContractAddress(
+            ByteString.copyFrom(op)).build()));
+    this.deposit.saveCode(opAddress, op);
   }
 
   public ProgramInvokeMockImpl(boolean defaults) {

@@ -216,5 +216,10 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   public TxCacheDB newInstance() {
     return new TxCacheDB(name, recentTransactionStore);
   }
+
+  @Override
+  public void stat() {
+    this.persistentStore.stat();
+  }
 }
 

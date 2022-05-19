@@ -594,41 +594,48 @@ public class Wallet {
     tswBuilder.setTransaction(trxExBuilder);
     TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
         .newBuilder();
-    try {
-      Contract contract = trx.getRawData().getContract(0);
-      byte[] owner = TransactionCapsule.getOwner(contract);
-      AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
-      if (account == null) {
-        throw new PermissionException("Account does not exist!");
-      }
 
-      if (trx.getSignatureCount() > 0) {
-        List<ByteString> approveList = new ArrayList<ByteString>();
-        byte[] hash = Sha256Hash.hash(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
-        for (ByteString sig : trx.getSignatureList()) {
-          if (sig.size() < 65) {
-            throw new SignatureFormatException(
-                "Signature size is " + sig.size());
-          }
-          String base64 = TransactionCapsule.getBase64FromByteString(sig);
-          byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-              .isECKeyCryptoEngine());
-          approveList.add(ByteString.copyFrom(address)); //out put approve list.
-        }
-        tswBuilder.addAllApprovedList(approveList);
-      }
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
-    } catch (SignatureFormatException signEx) {
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (SignatureException signEx) {
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (Exception ex) {
+    if (trx.getRawData().getContractCount() == 0) {
       resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
-      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+      resultBuilder.setMessage("Invalid transaction: no valid contract");
+    } else {
+      try {
+        Contract contract = trx.getRawData().getContract(0);
+        byte[] owner = TransactionCapsule.getOwner(contract);
+        AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
+        if (account == null) {
+          throw new PermissionException("Account does not exist!");
+        }
+
+        if (trx.getSignatureCount() > 0) {
+          List<ByteString> approveList = new ArrayList<ByteString>();
+          byte[] hash = Sha256Hash.hash(CommonParameter
+              .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
+          for (ByteString sig : trx.getSignatureList()) {
+            if (sig.size() < 65) {
+              throw new SignatureFormatException(
+                  "Signature size is " + sig.size());
+            }
+            String base64 = TransactionCapsule.getBase64FromByteString(sig);
+            byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
+                .isECKeyCryptoEngine());
+            approveList.add(ByteString.copyFrom(address)); //out put approve list.
+          }
+          tswBuilder.addAllApprovedList(approveList);
+        }
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
+      } catch (SignatureFormatException signEx) {
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (SignatureException signEx) {
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (Exception ex) {
+        resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+        resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+      }
     }
+
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }
@@ -1079,6 +1086,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalNetLimit")
         .setValue(dbManager.getDynamicPropertiesStore().getTotalNetLimit())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowHigherLimitForMaxCpuTimeOfOneTx")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
         .build());
 
     return builder.build();

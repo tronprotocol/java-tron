@@ -252,17 +252,26 @@ public class Util {
     return jsonTransaction;
   }
 
+  /**
+   * Note: the contracts of the returned transaction may be empty
+   * */
   public static Transaction packTransaction(String strTransaction, boolean selfType) {
-    JSONObject jsonTransaction = JSONObject.parseObject(strTransaction);
+    JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     JSONArray contracts = new JSONArray();
     JSONArray rawContractArray = rawData.getJSONArray("contract");
 
+    String contractType = null;
     for (int i = 0; i < rawContractArray.size(); i++) {
       try {
         JSONObject contract = rawContractArray.getJSONObject(i);
         JSONObject parameter = contract.getJSONObject(PARAMETER);
-        String contractType = contract.getString("type");
+        contractType = contract.getString("type");
+        if (StringUtils.isEmpty(contractType)) {
+          logger.debug("no type in the transaction, ignore");
+          continue;
+        }
+
         Any any = null;
         Class clazz = TransactionFactory.getContract(ContractType.valueOf(contractType));
         if (clazz != null) {
@@ -279,6 +288,8 @@ public class Util {
           contract.put(PARAMETER, parameter);
           contracts.add(contract);
         }
+      } catch (IllegalArgumentException e) {
+        logger.debug("invalid contractType: {}", contractType);
       } catch (ParseException e) {
         logger.debug("ParseException: {}", e.getMessage());
       } catch (Exception e) {

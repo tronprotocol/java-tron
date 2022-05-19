@@ -67,33 +67,37 @@ public class BlockMsgHandler implements TronMsgHandler {
       peer.getSyncBlockRequested().remove(blockId);
       syncService.processBlock(peer, blockMessage);
     } else {
-      Long time = peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
+      Item item = new Item(blockId, InventoryType.BLOCK);
       long now = System.currentTimeMillis();
+      if (peer.isFastForwardPeer()) {
+        peer.getAdvInvSpread().put(item, now);
+      }
+      Long time = peer.getAdvInvRequest().remove(item);
       if (null != time) {
-        MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY_FETCH_BLOCK + peer.getNode().getHost(),
-            now - time);
+        MetricsUtil.histogramUpdateUnCheck(MetricsKey.NET_LATENCY_FETCH_BLOCK
+                + peer.getNode().getHost(), now - time);
       }
       fetchBlockService.blockFetchSuccess(blockId);
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
       processBlock(peer, blockMessage.getBlockCapsule());
       logger.info(
-          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, "
-              + "txs/process {}/{}ms, witness: {}",
-          blockId.getNum(),
-          interval,
-          peer.getInetAddress(),
-          time == null ? 0 : now - time,
-          now - blockMessage.getBlockCapsule().getTimeStamp(),
-          ((BlockMessage) msg).getBlockCapsule().getTransactions().size(),
-          System.currentTimeMillis() - now,
-          Hex.toHexString(blockMessage.getBlockCapsule().getWitnessAddress().toByteArray()));
+              "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, "
+                      + "txs/process {}/{}ms, witness: {}",
+              blockId.getNum(),
+              interval,
+              peer.getInetAddress(),
+              time == null ? 0 : now - time,
+              now - blockMessage.getBlockCapsule().getTimeStamp(),
+              ((BlockMessage) msg).getBlockCapsule().getTransactions().size(),
+              System.currentTimeMillis() - now,
+              Hex.toHexString(blockMessage.getBlockCapsule().getWitnessAddress().toByteArray()));
     }
   }
 
   private void check(PeerConnection peer, BlockMessage msg) throws P2pException {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
     if (!peer.getSyncBlockRequested().containsKey(msg.getBlockId()) && !peer.getAdvInvRequest()
-        .containsKey(item)) {
+            .containsKey(item)) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
     }
     BlockCapsule blockCapsule = msg.getBlockCapsule();
@@ -110,7 +114,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockId blockId = block.getBlockId();
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
-          peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());
+              peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());
       syncService.startSync(peer);
       return;
     }

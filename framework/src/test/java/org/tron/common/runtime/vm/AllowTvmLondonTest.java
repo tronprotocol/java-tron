@@ -61,7 +61,7 @@ public class AllowTvmLondonTest extends VMTestBase {
         contractName, address, abi, factoryCode, value, feeLimit, consumeUserResourcePercent,
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: getbasefee()
@@ -103,7 +103,7 @@ public class AllowTvmLondonTest extends VMTestBase {
     Protocol.Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, abi, factoryCode, value, feeLimit, consumeUserResourcePercent,
         null);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNotNull(runtime.getRuntimeError());
   }
 }
