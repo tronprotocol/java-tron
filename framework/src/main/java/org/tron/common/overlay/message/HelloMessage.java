@@ -133,7 +133,6 @@ public class HelloMessage extends P2pMessage {
 
   public boolean valid() {
     byte[] genesisBlockByte = this.helloMessage.getGenesisBlockId().getHash().toByteArray();
-
     if (genesisBlockByte.length == 0) {
       return false;
     }

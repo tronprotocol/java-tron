@@ -131,19 +131,19 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
-    channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
-
-    if (!fastForward.checkHelloMessage(msg, channel)) {
-      channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
-      return;
-    }
-
     if (!msg.valid()) {
       logger.warn("Peer {} invalid hello message parameters, GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
               ctx.channel().remoteAddress(),
               msg.getInstance().getGenesisBlockId().getHash(),
               msg.getInstance().getSolidBlockId().getHash(),
               msg.getInstance().getHeadBlockId().getHash());
+      channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
+      return;
+    }
+
+    channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
+
+    if (!fastForward.checkHelloMessage(msg, channel)) {
       channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
       return;
     }
