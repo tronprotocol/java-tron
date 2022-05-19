@@ -69,6 +69,9 @@ import org.tron.core.store.ZKProofStore;
 @Component
 public class ChainBaseManager {
 
+  @Getter
+  private static ChainBaseManager chainBaseManager;
+
   // db store
   @Autowired
   @Getter
@@ -388,7 +391,12 @@ public class ChainBaseManager {
     return getBlockById(getBlockIdByNum(num));
   }
 
+  public static ChainBaseManager getInstance() {
+    return chainBaseManager;
+  }
+
   public void init() {
+    chainBaseManager = this;
     AssetUtil.setAccountAssetStore(accountAssetStore);
     AssetUtil.setDynamicPropertiesStore(dynamicPropertiesStore);
   }

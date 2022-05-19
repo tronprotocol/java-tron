@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
 import lombok.extern.slf4j.Slf4j;
@@ -9,14 +10,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.AccountAsset;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
 
@@ -87,18 +85,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         }
       }
     }
-
-    if (AssetUtil.isAllowAssetOptimization()) {
-      Account account = item.getInstance();
-      AccountAsset accountAsset = AssetUtil.getAsset(account);
-      if (null != accountAsset) {
-        accountAssetStore.put(key, new AccountAssetCapsule(
-                accountAsset));
-        account = AssetUtil.clearAsset(account);
-        item.setIsAssetImport(false);
-        item.setInstance(account);
-      }
-    }
     super.put(key, item);
     accountStateCallBackUtils.accountCallBack(key, item);
   }
@@ -116,7 +102,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
         accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
       }
     }
-
     super.delete(key);
 
     if (AssetUtil.isAllowAssetOptimization()) {

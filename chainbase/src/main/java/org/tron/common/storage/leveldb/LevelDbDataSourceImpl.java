@@ -35,6 +35,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import com.google.common.primitives.Bytes;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
@@ -51,6 +53,7 @@ import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
 import org.tron.core.db2.common.Instance;
+import org.tron.core.db2.common.WrappedByteArray;
 
 @Slf4j(topic = "DB")
 @NoArgsConstructor
@@ -336,6 +339,26 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
         Entry<byte[], byte[]> entry = iterator.peekNext();
         result.put(entry.getKey(), entry.getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = getDBIterator()) {
+      Map<WrappedByteArray, byte[]> result = new HashMap<>();
+      for (iterator.seek(key); iterator.hasNext(); iterator.next()) {
+        Entry<byte[], byte[]> entry = iterator.peekNext();
+        if (Bytes.indexOf(entry.getKey(), key) >= 0) {
+          result.put(WrappedByteArray.of(entry.getKey()), entry.getValue());
+        } else {
+          return result;
+        }
       }
       return result;
     } catch (IOException e) {

@@ -499,7 +499,7 @@ public class ProposalUtil {
       }
 
       case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
         }

@@ -1129,13 +1129,11 @@ public class Manager {
       ownerAddressSet.addAll(result);
     }
 
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME,
-        System.currentTimeMillis() - start);
+    long cost = System.currentTimeMillis() - start;
+    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, cost);
 
-    logger.info("pushBlock block number:{}, cost/txs:{}/{}",
-        block.getNum(),
-        System.currentTimeMillis() - start,
-        block.getTransactions().size());
+    logger.info("pushBlock block number:{}, cost/txs:{}/{} {}",
+            block.getNum(), cost, block.getTransactions().size(), cost > 1000);
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1194,6 +1192,8 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
+
+    long start = System.currentTimeMillis();
 
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
@@ -1277,6 +1277,11 @@ public class Manager {
     trxCap.setOrder(transactionInfo.getFee());
     if (!eventPluginLoaded) {
       trxCap.setTrxTrace(null);
+    }
+    long cost = System.currentTimeMillis() - start;
+    if (cost > 100) {
+      logger.info("Process transaction {} cost {}.",
+             Hex.toHexString(transactionInfo.getId()), cost);
     }
     return transactionInfo.getInstance();
   }

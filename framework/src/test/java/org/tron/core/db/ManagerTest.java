@@ -342,8 +342,8 @@ public class ManagerTest extends BlockGenerate {
           chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
           chainManager.getDynamicPropertiesStore());
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
-      Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
-      copyAccount.getAssetMap().forEach((k, v) -> {
+      Assert.assertEquals(copyAccount.getAssetMapForTest().size(), 1);
+      copyAccount.getAssetMapForTest().forEach((k, v) -> {
         Assert.assertEquals(k, assetID);
         Assert.assertEquals(v.compareTo(10L), 0);
       });
