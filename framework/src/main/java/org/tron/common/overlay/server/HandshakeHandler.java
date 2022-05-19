@@ -139,7 +139,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
     if (!msg.valid()) {
-      logger.warn("Peer {} invalid hello message parameters, GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
+      logger.warn("Peer {} invalid hello message parameters, " +
+                      "GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
               ctx.channel().remoteAddress(),
               ByteArray.toHexString(msg.getInstance().getGenesisBlockId().getHash().toByteArray()),
               ByteArray.toHexString(msg.getInstance().getSolidBlockId().getHash().toByteArray()),
