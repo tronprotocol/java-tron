@@ -77,4 +77,9 @@ public class LevelDB implements DB<byte[], byte[]>, Flusher {
   public LevelDB newInstance() {
     return new LevelDB(db.newInstance());
   }
+
+  @Override
+  public void stat() {
+    this.db.stat();
+  }
 }

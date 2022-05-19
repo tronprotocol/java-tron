@@ -12,6 +12,10 @@ import lombok.Setter;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
@@ -126,7 +130,8 @@ public class BlockChainMetricManager {
    */
   public void applyBlock(BlockCapsule block) {
     long nowTime = System.currentTimeMillis();
-    String witnessAddress = Hex.toHexString(block.getWitnessAddress().toByteArray());
+    byte[] address = block.getWitnessAddress().toByteArray();
+    String witnessAddress = Hex.toHexString(address);
 
     //witness info
     if (witnessInfo.containsKey(witnessAddress)) {
@@ -134,6 +139,8 @@ public class BlockChainMetricManager {
       if ((!oldBlock.getBlockId().equals(block.getBlockId()))
           && oldBlock.getTimeStamp() == block.getTimeStamp()) {
         MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS + witnessAddress);
+        Metrics.counterInc(MetricKeys.Counter.MINER, 1,
+            StringUtil.encode58Check(address), MetricLabels.Counter.MINE_DUP);
         dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
     }
@@ -141,6 +148,8 @@ public class BlockChainMetricManager {
 
     //latency
     long netTime = nowTime - block.getTimeStamp();
+    Metrics.histogramObserve(MetricKeys.Histogram.MINER_LATENCY,
+        netTime / Metrics.MILLISECONDS_PER_SECOND,  StringUtil.encode58Check(address));
     MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY, netTime);
     MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY_WITNESS + witnessAddress, netTime);
     if (netTime >= 3000) {
@@ -157,6 +166,8 @@ public class BlockChainMetricManager {
     //TPS
     if (block.getTransactions().size() > 0) {
       MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
+      Metrics.counterInc(MetricKeys.Counter.TXS, block.getTransactions().size(),
+          MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
     }
   }
 
