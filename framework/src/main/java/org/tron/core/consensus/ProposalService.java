@@ -295,6 +295,10 @@ public class ProposalService extends ProposalUtil {
         }
         case ALLOW_STABLE_MARKET_ON: {
           manager.getDynamicPropertiesStore().saveAllowStableMarketOn(entry.getValue());
+          if (entry.getValue() == 1) {
+            manager.getDynamicPropertiesStore().saveAllowSlashVote(1);
+            manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
+          }
           break;
         }
         default:

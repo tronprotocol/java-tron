@@ -3988,6 +3988,12 @@ public class Wallet {
     return false;
   }
 
+  public NumberMessage getWitnessMissCount(byte[] witnessAddress) {
+    NumberMessage.Builder builder = NumberMessage.newBuilder()
+            .setNum(chainBaseManager.getSlashStore().getWitnessMissCount(witnessAddress));
+    return builder.build();
+  }
+
   public Chainbase.Cursor getCursor() {
     return chainBaseManager.getBlockStore().getRevokingDB().getCursor();
   }

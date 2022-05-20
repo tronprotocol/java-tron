@@ -781,6 +781,9 @@ service Wallet {
   rpc UnjailWitness (UnjailWitnessContract) returns (TransactionExtention) {
   };
 
+  rpc GetWitnessMissCount (BytesMessage) returns (NumberMessage) {
+  };
+
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
 

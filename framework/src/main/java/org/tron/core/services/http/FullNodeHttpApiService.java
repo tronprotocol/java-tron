@@ -281,6 +281,8 @@ public class FullNodeHttpApiService implements Service {
 
   @Autowired
   private UnjailWitnessServlet unjailWitnessServlet;
+  @Autowired
+  private GetWitnessMissCountServlet getWitnessMissCountServlet;
 
   @Autowired
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
@@ -532,6 +534,8 @@ public class FullNodeHttpApiService implements Service {
 
       context.addServlet(new ServletHolder(unjailWitnessServlet),
               "/wallet/unjailwitness");
+      context.addServlet(new ServletHolder(getWitnessMissCountServlet),
+              "/wallet/getwitnessmisscount");
 
       context.addServlet(new ServletHolder(getAccountBalanceServlet),
           "/wallet/getaccountbalance");

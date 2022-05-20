@@ -2572,6 +2572,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getWitnessMissCount(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.getWitnessMissCount(request.getValue().toByteArray()));
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getTransactionInfoByBlockNum(NumberMessage request,
         StreamObserver<TransactionInfoList> responseObserver) {
       try {
