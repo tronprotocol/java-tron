@@ -11,7 +11,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.store.StorageRowStore;
-import org.tron.core.vm.config.VMConfig;
 
 public class Storage {
 
@@ -45,7 +44,7 @@ public class Storage {
   }
 
   private byte[] compose(byte[] key, byte[] addrHash) {
-    if (VMConfig.allowTvmCompatibleEvm() && contractVersion == 1) {
+    if (contractVersion == 1) {
       key = Hash.sha3(key);
     }
     byte[] result = new byte[key.length];
