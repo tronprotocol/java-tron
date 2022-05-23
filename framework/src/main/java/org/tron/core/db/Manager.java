@@ -404,6 +404,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    chainBaseManager.init();
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
     mortgageService
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
@@ -427,7 +428,6 @@ public class Manager {
     this.filterCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
-    chainBaseManager.init();
     this.initGenesis();
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(

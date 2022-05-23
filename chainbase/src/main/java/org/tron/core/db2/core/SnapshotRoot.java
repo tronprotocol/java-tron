@@ -38,6 +38,10 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   @Override
   public void put(byte[] key, byte[] value) {
     if (isAccountDB && AssetUtil.isAllowAssetOptimization()) {
+      if (value == null || value.length == 0) {
+        remove(key);
+        return;
+      }
       AccountAssetStore store = ChainBaseManager.getInstance().getAccountAssetStore();
       AccountCapsule item = new AccountCapsule(value);
       item.getInstance().getAssetV2Map().forEach((k, v) ->
@@ -53,9 +57,9 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   public void remove(byte[] key) {
     if (isAccountDB && AssetUtil.isAllowAssetOptimization()) {
       AccountAssetStore store = ChainBaseManager.getInstance().getAccountAssetStore();
-      byte[] vale = get(key);
-      if (vale.length > 0) {
-        AccountCapsule item = new AccountCapsule(vale);
+      byte[] value = get(key);
+      if (value != null && value.length > 0) {
+        AccountCapsule item = new AccountCapsule(value);
         item.getAssetMapV2().forEach((k, v) ->
                 store.put(item, k.getBytes(), Longs.toByteArray(0)));
       }
