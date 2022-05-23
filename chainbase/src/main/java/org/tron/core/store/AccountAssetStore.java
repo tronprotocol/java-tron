@@ -2,7 +2,6 @@ package org.tron.core.store;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +15,6 @@ import org.tron.protos.Protocol;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j(topic = "DB")
 @Component
 public class AccountAssetStore extends TronDatabase<byte[]> {
 
@@ -56,7 +54,7 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
 
   public long getBalance(Protocol.Account account, byte[] key) {
     byte[] k = Bytes.concat(account.getAddress().toByteArray(), key);
-    byte[] value = getUnchecked(k);
+    byte[] value = get(k);
     if (ArrayUtils.isEmpty(value)) {
       return 0;
     }

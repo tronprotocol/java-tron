@@ -340,8 +340,6 @@ public class Chainbase implements IRevokingDB {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
-
-
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
     Map<WrappedByteArray, byte[]> resultSnapshot = prefixQuerySnapshot(key);
     Map<WrappedByteArray, byte[]> resultDB = prefixQueryDB(key);
@@ -367,7 +365,7 @@ public class Chainbase implements IRevokingDB {
       while (iterator.hasNext()) {
         Map.Entry<byte[], byte[]> entry = iterator.next();
         WrappedByteArray ks = WrappedByteArray.of(entry.getKey());
-        if (Bytes.indexOf(entry.getKey(), key) >= 0 && !result.containsKey(ks)) {
+        if (Bytes.indexOf(entry.getKey(), key) == 0 && !result.containsKey(ks)) {
           result.put(ks, entry.getValue());
         }
       }

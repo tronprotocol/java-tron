@@ -439,7 +439,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     try (RocksIterator iterator = getRocksIterator()) {
       Map<WrappedByteArray, byte[]> result = new HashMap<>();
       for (iterator.seek(key); iterator.isValid(); iterator.next()) {
-        if (Bytes.indexOf(iterator.key(), key) >= 0) {
+        if (Bytes.indexOf(iterator.key(), key) == 0) {
           result.put(WrappedByteArray.of(iterator.key()), iterator.value());
         } else {
           return result;

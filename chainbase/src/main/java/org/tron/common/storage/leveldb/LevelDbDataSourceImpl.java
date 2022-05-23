@@ -354,7 +354,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       Map<WrappedByteArray, byte[]> result = new HashMap<>();
       for (iterator.seek(key); iterator.hasNext(); iterator.next()) {
         Entry<byte[], byte[]> entry = iterator.peekNext();
-        if (Bytes.indexOf(entry.getKey(), key) >= 0) {
+        if (Bytes.indexOf(entry.getKey(), key) == 0) {
           result.put(WrappedByteArray.of(entry.getKey()), entry.getValue());
         } else {
           return result;

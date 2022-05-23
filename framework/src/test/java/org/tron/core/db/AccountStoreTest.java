@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -100,12 +101,12 @@ public class AccountStoreTest {
 
   @Test
   public void assetTest() {
+
     dynamicPropertiesStore.setAllowAccountAssetOptimization(1);
     dynamicPropertiesStore.saveAllowSameTokenName(1);
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(address),
             ByteString.copyFrom(accountName),
             AccountType.forNumber(1));
-
     accountCapsule.addAsset("100".getBytes(), 1);
     accountCapsule.addAssetAmountV2("100".getBytes(), 1,
             dynamicPropertiesStore, assetIssueStore);
@@ -161,12 +162,11 @@ public class AccountStoreTest {
       tmpSession.commit();
     }
 
-    accountCapsule.clearAsset();
     try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
-      map = new HashMap<>();
-      map.put("200", 10L);
-      map.put("300", 10L);
-      accountCapsule.addAssetMapV2(map);
+      accountCapsule.reduceAssetAmountV2("200".getBytes(), 89,
+              dynamicPropertiesStore, assetIssueStore);
+      accountCapsule.addAssetAmountV2("300".getBytes(), 10,
+              dynamicPropertiesStore, assetIssueStore);
       accountCapsule = saveAccount(accountCapsule);
       tmpSession.commit();
     }
@@ -176,20 +176,20 @@ public class AccountStoreTest {
     assertEquals(10, (long)assets.get("200"));
     assertEquals(10, (long)assets.get("300"));
 
-    accountCapsule.clearAsset();
     try (ISession tmpSession = manager.getRevokingStore().buildSession()) {
-      map = new HashMap<>();
-      map.put("100", 10L);
-      map.put("200", 20L);
-      map.put("400", 10L);
-      accountCapsule.addAssetMapV2(map);
+      accountCapsule.reduceAssetAmountV2("100".getBytes(), 91,
+              dynamicPropertiesStore, assetIssueStore);
+      accountCapsule.addAssetAmountV2("200".getBytes(), 0,
+              dynamicPropertiesStore, assetIssueStore);
+      accountCapsule.addAssetAmountV2("400".getBytes(), 10,
+              dynamicPropertiesStore, assetIssueStore);
       accountCapsule = saveAccount(accountCapsule);
       tmpSession.commit();
     }
     assets = accountCapsule.getAssetV2MapForTest();
     assertEquals(4, assets.size());
     assertEquals(10, (long)assets.get("100"));
-    assertEquals(20, (long)assets.get("200"));
+    assertEquals(10, (long)assets.get("200"));
     assertEquals(10, (long)assets.get("300"));
     assertEquals(10, (long)assets.get("400"));
   }
