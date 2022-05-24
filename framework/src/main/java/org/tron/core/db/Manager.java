@@ -422,7 +422,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
-    chainBaseManager.init(chainBaseManager);
+    ChainBaseManager.init(chainBaseManager);
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
     mortgageService
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),

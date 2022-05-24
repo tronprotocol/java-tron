@@ -72,7 +72,7 @@ import org.tron.core.store.ZKProofStore;
 public class ChainBaseManager {
 
   @Getter
-  private static ChainBaseManager chainBaseManager;
+  private static volatile ChainBaseManager chainBaseManager;
 
   // db store
   @Autowired

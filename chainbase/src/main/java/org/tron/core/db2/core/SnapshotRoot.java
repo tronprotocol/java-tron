@@ -15,7 +15,6 @@ import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Flusher;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.store.AccountAssetStore;
-import org.tron.core.store.DynamicPropertiesStore;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
@@ -31,8 +30,8 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   private boolean needOptAsset() {
-    DynamicPropertiesStore s = ChainBaseManager.getInstance().getDynamicPropertiesStore();
-    return isAccountDB && s.getAllowAccountAssetOptimizationFromRoot() == 1;
+    return isAccountDB && ChainBaseManager.getInstance().getDynamicPropertiesStore()
+            .getAllowAccountAssetOptimizationFromRoot() == 1;
   }
 
   @Override
