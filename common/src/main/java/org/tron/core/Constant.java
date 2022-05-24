@@ -19,6 +19,9 @@ public class Constant {
   public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
   public static final String ADD_PRE_FIX_STRING_TESTNET = "a0";
 
+  public static final int NODE_TYPE_FULL_NODE = 0;
+  public static final int NODE_TYPE_LIGHT_NODE = 1;
+
   // config for transaction
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day
@@ -61,6 +64,7 @@ public class Constant {
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
   public static final String VM_SUPPORT_CONSTANT = "vm.supportConstant";
   public static final String VM_MAX_ENERGY_LIMIT_FOR_CONSTANT = "vm.maxEnergyLimitForConstant";
+  public static final String VM_LRU_CACHE_SIZE = "vm.lruCacheSize";
   public static final String VM_MIN_TIME_RATIO = "vm.minTimeRatio";
   public static final String VM_MAX_TIME_RATIO = "vm.maxTimeRatio";
   public static final String VM_LONG_RUNNING_TIME = "vm.longRunningTime";
@@ -77,6 +81,7 @@ public class Constant {
   public static final String NODE_DISCOVERY_ENABLE = "node.discovery.enable";
   public static final String NODE_DISCOVERY_PERSIST = "node.discovery.persist";
   public static final String NODE_CONNECTION_TIMEOUT = "node.connection.timeout";
+  public static final String NODE_FETCH_BLOCK_TIMEOUT = "node.fetchBlock.timeout";
   public static final String NODE_CHANNEL_READ_TIMEOUT = "node.channel.read.timeout";
   public static final String NODE_MAX_ACTIVE_NODES = "node.maxActiveNodes";
   public static final String NODE_MAX_ACTIVE_NODES_WITH_SAMEIP = "node.maxActiveNodesWithSameIp";
@@ -219,6 +224,8 @@ public class Constant {
 
   public static final String NODE_FAST_FORWARD = "node.fastForward";
 
+  public static final String NODE_MAX_FAST_FORWARD_NUM = "node.maxFastForwardNum";
+
   public static final String NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = "node.shieldedTransInPendingMaxCounts";
 
   public static final String RATE_LIMITER = "rate.limiter";
@@ -281,18 +288,26 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
+  public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
+      "committee.allowHigherLimitForMaxCpuTimeOfOneTx";
 
   public static final String METRICS_STORAGE_ENABLE = "node.metrics.storageEnable";
   public static final String METRICS_INFLUXDB_IP = "node.metrics.influxdb.ip";
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
   public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
+  public static final String METRICS_PROMETHEUS_ENABLE = "node.metrics.prometheus.enable";
+  public static final String METRICS_PROMETHEUS_PORT = "node.metrics.prometheus.port";
 
   public static final String HISTORY_BALANCE_LOOKUP = "storage.balance.history.lookup";
   public static final String OPEN_PRINT_LOG = "node.openPrintLog";
   public static final String OPEN_TRANSACTION_SORT = "node.openTransactionSort";
 
-  public static final String  ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
+  public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
 
   public static final String LOCAL_HOST = "127.0.0.1";
+
+  public static final String NODE_SHUTDOWN_BLOCK_TIME = "node.shutdown.BlockTime";
+  public static final String NODE_SHUTDOWN_BLOCK_HEIGHT = "node.shutdown.BlockHeight";
+  public static final String NODE_SHUTDOWN_BLOCK_COUNT = "node.shutdown.BlockCount";
 }

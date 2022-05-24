@@ -9,11 +9,13 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import io.prometheus.client.Histogram;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,11 +62,16 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
@@ -226,6 +233,12 @@ public class Manager {
   private boolean isRunFilterProcessThread = true;
   private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
 
+  @Getter
+  private volatile long latestSolidityNumShutDown;
+
+  @Getter
+  private final ThreadLocal<Histogram.Timer> blockedTimer = new ThreadLocal<>();
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -245,9 +258,14 @@ public class Manager {
               Thread.currentThread().interrupt();
             }
             logger.error("unknown exception happened in rePush loop", ex);
-          } finally {
             if (tx != null) {
-              getRePushTransactions().remove(tx);
+              Metrics.counterInc(MetricKeys.Counter.TXS, 1,
+                  MetricLabels.Counter.TXS_FAIL, MetricLabels.Counter.TXS_FAIL_ERROR);
+            }
+          } finally {
+            if (tx != null && getRePushTransactions().remove(tx)) {
+              Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+                  MetricLabels.Gauge.QUEUE_REPUSH);
             }
           }
         }
@@ -404,7 +422,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
-    chainBaseManager.init();
+    chainBaseManager.init(chainBaseManager);
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
     mortgageService
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
@@ -475,11 +493,13 @@ public class Manager {
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread rePushThread = new Thread(rePushLoop);
+    rePushThread.setDaemon(true);
     rePushThread.start();
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
+      triggerCapsuleProcessThread.setDaemon(true);
       triggerCapsuleProcessThread.start();
     }
 
@@ -494,6 +514,22 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
+
+
+    long exitHeight = CommonParameter.getInstance().getShutdownBlockHeight();
+    long exitCount = CommonParameter.getInstance().getShutdownBlockCount();
+
+    if (exitCount > 0 && (exitHeight < 0 || exitHeight > headNum + exitCount)) {
+      CommonParameter.getInstance().setShutdownBlockHeight(headNum + exitCount);
+    }
+
+    if (CommonParameter.getInstance().getShutdownBlockHeight() < headNum) {
+      logger.info("ShutDownBlockHeight {} is less than headNum {},ignored.",
+          CommonParameter.getInstance().getShutdownBlockHeight(), headNum);
+      CommonParameter.getInstance().setShutdownBlockHeight(-1);
+    }
+    // init
+    latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
   }
 
   /**
@@ -711,7 +747,8 @@ public class Manager {
     }
 
     pushTransactionQueue.add(trx);
-
+    Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
+        MetricLabels.Gauge.QUEUE_QUEUED);
     try {
       if (!trx.validateSignature(chainBaseManager.getAccountStore(),
           chainBaseManager.getDynamicPropertiesStore())) {
@@ -731,6 +768,8 @@ public class Manager {
           processTransaction(trx, null);
           trx.setTrxTrace(null);
           pendingTransactions.add(trx);
+          Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, 1,
+              MetricLabels.Gauge.QUEUE_PENDING);
           tmpSession.merge();
         }
         if (isShieldedTransaction(trx.getInstance())) {
@@ -738,7 +777,10 @@ public class Manager {
         }
       }
     } finally {
-      pushTransactionQueue.remove(trx);
+      if (pushTransactionQueue.remove(trx)) {
+        Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+            MetricLabels.Gauge.QUEUE_QUEUED);
+      }
     }
     return true;
   }
@@ -793,6 +835,8 @@ public class Manager {
       revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
       poppedTransactions.addAll(oldHeadBlock.getTransactions());
+      Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
+          MetricLabels.Gauge.QUEUE_POPPED);
 
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
@@ -842,6 +886,16 @@ public class Manager {
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+      if (Args.getInstance().getShutdownBlockTime() != null
+          && Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
+          new Date(block.getTimeStamp() - SnapshotManager.DEFAULT_MAX_FLUSH_COUNT * 1000 * 3))
+          .compareTo(new Date(block.getTimeStamp())) <= 0) {
+        revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      }
+      if (latestSolidityNumShutDown > 0 && latestSolidityNumShutDown - block.getNum()
+          <= SnapshotManager.DEFAULT_MAX_FLUSH_COUNT) {
+        revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      }
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
@@ -855,6 +909,7 @@ public class Manager {
       VMIllegalException, ZksnarkException, BadBlockException, EventBloomException {
 
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT);
+    Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.ALL);
 
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
@@ -862,6 +917,7 @@ public class Manager {
           khaosDb.getBranch(
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
+      Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.FAIL);
       MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
       logger.info(
           "this is not the most recent common ancestor, "
@@ -913,6 +969,7 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
+            Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.FAIL);
             MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
             logger.warn("switch back because exception thrown while switching forks. " + exception
                     .getMessage(),
@@ -998,12 +1055,23 @@ public class Manager {
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
+    Metrics.histogramObserve(blockedTimer.get());
+    blockedTimer.remove();
+    final Histogram.Timer timer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.BLOCK_PUSH_LATENCY);
     long start = System.currentTimeMillis();
     List<TransactionCapsule> txs = getVerifyTxs(block);
     logger.info("Block num: {}, re-push-size: {}, pending-size: {}, "
             + "block-tx-size: {}, verify-tx-size: {}",
         block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
         block.getTransactions().size(), txs.size());
+
+    if (CommonParameter.getInstance().getShutdownBlockTime() != null
+        && CommonParameter.getInstance().getShutdownBlockTime()
+        .isSatisfiedBy(new Date(block.getTimeStamp()))) {
+      latestSolidityNumShutDown = block.getNum();
+    }
+
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
@@ -1134,6 +1202,8 @@ public class Manager {
 
     logger.info("pushBlock block number:{}, cost/txs:{}/{} {}",
             block.getNum(), cost, block.getTransactions().size(), cost > 1000);
+
+    Metrics.histogramObserve(timer);
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
@@ -1153,6 +1223,8 @@ public class Manager {
         (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
             + 1));
+    Metrics.gaugeSet(MetricKeys.Gauge.HEADER_HEIGHT, block.getNum());
+    Metrics.gaugeSet(MetricKeys.Gauge.HEADER_TIME, block.getTimeStamp());
   }
 
   /**
@@ -1192,6 +1264,12 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
+    Contract contract = trxCap.getInstance().getRawData().getContract(0);
+
+    final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.PROCESS_TRANSACTION_LATENCY,
+        Objects.nonNull(blockCap) ? MetricLabels.BLOCK : MetricLabels.TRX,
+        contract.getType().name());
 
     long start = System.currentTimeMillis();
 
@@ -1262,7 +1340,7 @@ public class Manager {
       postContractTrigger(trace, false, blockHash);
     }
 
-    Contract contract = trxCap.getInstance().getRawData().getContract(0);
+
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
@@ -1283,6 +1361,7 @@ public class Manager {
       logger.info("Process transaction {} cost {}.",
              Hex.toHexString(transactionInfo.getId()), cost);
     }
+    Metrics.histogramObserve(requestTimer);
     return transactionInfo.getInstance();
   }
 
@@ -1290,8 +1369,13 @@ public class Manager {
    * Generate a block.
    */
   public synchronized BlockCapsule generateBlock(Miner miner, long blockTime, long timeout) {
-
+    String address =  StringUtil.encode58Check(miner.getWitnessAddress().toByteArray());
+    final Histogram.Timer timer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.BLOCK_GENERATE_LATENCY, address);
+    Metrics.histogramObserve(MetricKeys.Histogram.MINER_LATENCY,
+        (System.currentTimeMillis() - blockTime) / Metrics.MILLISECONDS_PER_SECOND, address);
     long postponedTrxCount = 0;
+    logger.info("Generate block {} begin", chainBaseManager.getHeadBlockNum() + 1);
 
     BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
         chainBaseManager.getHeadBlockId(),
@@ -1327,12 +1411,16 @@ public class Manager {
             fromPending = true;
           } else {
             trx = rePushTransactions.poll();
+            Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+                MetricLabels.Gauge.QUEUE_REPUSH);
           }
         } else {
           fromPending = true;
         }
       } else {
         trx = rePushTransactions.poll();
+        Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+            MetricLabels.Gauge.QUEUE_REPUSH);
       }
 
       if (System.currentTimeMillis() > timeout) {
@@ -1377,6 +1465,8 @@ public class Manager {
         }
         if (fromPending) {
           pendingTransactions.poll();
+          Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+              MetricLabels.Gauge.QUEUE_PENDING);
         }
       } catch (Exception e) {
         logger.error("Process trx {} failed when generating block: {}", trx.getTransactionId(),
@@ -1388,8 +1478,9 @@ public class Manager {
 
     session.reset();
 
-    logger.info("Generate block {} success, pendingCount: {}, rePushCount: {}, postponedCount: {}",
-        blockCapsule.getNum(),
+    logger.info("Generate block {} success, trxs:{}, pendingCount: {}, rePushCount: {},"
+            + " postponedCount: {}",
+        blockCapsule.getNum(), blockCapsule.getTransactions().size(),
         pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
@@ -1397,6 +1488,7 @@ public class Manager {
 
     BlockCapsule capsule = new BlockCapsule(blockCapsule.getInstance());
     capsule.generatedByMyself = true;
+    Metrics.histogramObserve(timer);
     return capsule;
   }
 
@@ -1521,6 +1613,7 @@ public class Manager {
 
     updateTransHashCache(block);
     updateRecentBlock(block);
+    updateRecentTransaction(block);
     updateDynamicProperties(block);
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
@@ -1628,6 +1721,17 @@ public class Manager {
         new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
   }
 
+  public void updateRecentTransaction(BlockCapsule block) {
+    List list = new ArrayList<>();
+    block.getTransactions().forEach(capsule -> {
+      list.add(capsule.getTransactionId().toString());
+    });
+    RecentTransactionItem item = new RecentTransactionItem(block.getNum(), list);
+    chainBaseManager.getRecentTransactionStore().put(
+            ByteArray.subArray(ByteArray.fromLong(block.getNum()), 6, 8),
+            new BytesCapsule(JsonUtil.obj2Json(item).getBytes()));
+  }
+
   public void updateFork(BlockCapsule block) {
     int blockVersion = block.getInstance().getBlockHeader().getRawData().getVersion();
     if (blockVersion > ChainConstant.BLOCK_VERSION) {
@@ -1695,22 +1799,28 @@ public class Manager {
     if (transSize <= 0) {
       return;
     }
-    CountDownLatch countDownLatch = new CountDownLatch(transSize);
-    List<Future<Boolean>> futures = new ArrayList<>(transSize);
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.VERIFY_SIGN_LATENCY, MetricLabels.TRX);
+    try {
+      CountDownLatch countDownLatch = new CountDownLatch(transSize);
+      List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
-    for (TransactionCapsule transaction : txs) {
-      Future<Boolean> future = validateSignService
-          .submit(new ValidateSignTask(transaction, countDownLatch, chainBaseManager));
-      futures.add(future);
-    }
-    countDownLatch.await();
-
-    for (Future<Boolean> future : futures) {
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        throw new ValidateSignatureException(e.getCause().getMessage());
+      for (TransactionCapsule transaction : txs) {
+        Future<Boolean> future = validateSignService
+            .submit(new ValidateSignTask(transaction, countDownLatch, chainBaseManager));
+        futures.add(future);
       }
+      countDownLatch.await();
+
+      for (Future<Boolean> future : futures) {
+        try {
+          future.get();
+        } catch (ExecutionException e) {
+          throw new ValidateSignatureException(e.getCause().getMessage());
+        }
+      }
+    } finally {
+      Metrics.histogramObserve(requestTimer);
     }
   }
 

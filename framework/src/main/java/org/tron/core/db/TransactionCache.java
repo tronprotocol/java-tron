@@ -10,7 +10,8 @@ import org.tron.core.db2.common.TxCacheDB;
 public class TransactionCache extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
-  public TransactionCache(@Value("trans-cache") String dbName) {
-    super(new TxCacheDB(dbName));
+  public TransactionCache(@Value("trans-cache") String dbName,
+                          RecentTransactionStore recentTransactionStore) {
+    super(new TxCacheDB(dbName, recentTransactionStore));
   }
 }

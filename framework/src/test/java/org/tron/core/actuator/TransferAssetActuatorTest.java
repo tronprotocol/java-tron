@@ -32,7 +32,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -48,7 +47,9 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
@@ -1437,11 +1438,10 @@ public class TransferAssetActuatorTest {
     long value = 1;
     long feeLimit = 1000000000L;
     long consumeUserResourcePercent = 0;
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    byte[] contractAddress = TvmTestUtils
-            .deployContractWholeProcessReturnContractAddress(contractName, address, ABI,
-                    codes, value, feeLimit, consumeUserResourcePercent,
-                    null, 0, 0, deposit, null);
+    RepositoryImpl repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    byte[] contractAddress = TvmTestUtils.deployContractWholeProcessReturnContractAddress(
+            contractName, address, ABI, codes, value, feeLimit, consumeUserResourcePercent,
+            null, 0, 0, repository, null);
 
     TransferAssetActuator actuator = new TransferAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())

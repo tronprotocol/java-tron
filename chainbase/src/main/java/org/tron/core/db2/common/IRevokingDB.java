@@ -17,6 +17,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   byte[] get(byte[] key) throws ItemNotFoundException;
 
+  byte[] getFromRoot(byte[] key) throws ItemNotFoundException;
+
   byte[] getUnchecked(byte[] key);
 
   void close();
