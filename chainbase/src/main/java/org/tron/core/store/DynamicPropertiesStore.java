@@ -2366,6 +2366,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElse(Long.MAX_VALUE);
   }
 
+  public long getAllowAccountAssetOptimizationFromRoot() {
+    try {
+      return Optional.ofNullable(getFromRoot(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
+              .map(BytesCapsule::getData)
+              .map(ByteArray::toLong)
+              .orElseThrow(
+                      () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
+    } catch (Exception e) {
+      logger.debug("{}", e.getMessage());
+      return CommonParameter.getInstance().getAllowAccountAssetOptimization();
+    }
+  }
+
   // 1: enable
   public long getAllowAccountAssetOptimization() {
     return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))

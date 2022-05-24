@@ -422,6 +422,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    ChainBaseManager.init(chainBaseManager);
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
     mortgageService
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
@@ -445,7 +446,6 @@ public class Manager {
     this.filterCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
-    chainBaseManager.init();
     this.initGenesis();
     try {
       this.khaosDb.start(chainBaseManager.getBlockById(
@@ -1197,13 +1197,12 @@ public class Manager {
       ownerAddressSet.addAll(result);
     }
 
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME,
-        System.currentTimeMillis() - start);
+    long cost = System.currentTimeMillis() - start;
+    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, cost);
 
-    logger.info("pushBlock block number:{}, cost/txs:{}/{}",
-        block.getNum(),
-        System.currentTimeMillis() - start,
-        block.getTransactions().size());
+    logger.info("pushBlock block number:{}, cost/txs:{}/{} {}",
+            block.getNum(), cost, block.getTransactions().size(), cost > 1000);
+
     Metrics.histogramObserve(timer);
   }
 
@@ -1265,13 +1264,14 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
-    long start = System.currentTimeMillis();
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
 
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.PROCESS_TRANSACTION_LATENCY,
         Objects.nonNull(blockCap) ? MetricLabels.BLOCK : MetricLabels.TRX,
         contract.getType().name());
+
+    long start = System.currentTimeMillis();
 
     if (Objects.nonNull(blockCap)) {
       chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
@@ -1356,10 +1356,12 @@ public class Manager {
     if (!eventPluginLoaded) {
       trxCap.setTrxTrace(null);
     }
-    Metrics.histogramObserve(requestTimer);
-    if (System.currentTimeMillis() - start >= 200) {
-      logger.info("Contract:{},trx:{}", contract.getType().name(), trxCap.getTransactionId());
+    long cost = System.currentTimeMillis() - start;
+    if (cost > 100) {
+      logger.info("Process transaction {} cost {}.",
+             Hex.toHexString(transactionInfo.getId()), cost);
     }
+    Metrics.histogramObserve(requestTimer);
     return transactionInfo.getInstance();
   }
 

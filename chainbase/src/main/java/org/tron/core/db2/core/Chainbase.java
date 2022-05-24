@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.google.common.primitives.Bytes;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
@@ -346,4 +348,39 @@ public class Chainbase implements IRevokingDB {
         .limit(limit)
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
+
+  public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    Map<WrappedByteArray, byte[]> resultSnapshot = prefixQuerySnapshot(key);
+    Map<WrappedByteArray, byte[]> resultDB = prefixQueryDB(key);
+    resultDB.putAll(resultSnapshot);
+    return resultDB;
+  }
+
+  private Map<WrappedByteArray, byte[]> prefixQueryDB(byte[] key) {
+    Map<WrappedByteArray, byte[]> result = new HashMap<>();
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      result = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      result = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
+    }
+    return result;
+  }
+
+  private Map<WrappedByteArray, byte[]> prefixQuerySnapshot(byte[] key) {
+    Map<WrappedByteArray, byte[]> result = new HashMap<>();
+    Snapshot snapshot = head();
+    while (!snapshot.equals(head.getRoot())) {
+      Iterator<Map.Entry<byte[], byte[]>> iterator = snapshot.iterator();
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        WrappedByteArray ks = WrappedByteArray.of(entry.getKey());
+        if (Bytes.indexOf(entry.getKey(), key) == 0 && !result.containsKey(ks)) {
+          result.put(ks, entry.getValue());
+        }
+      }
+      snapshot = snapshot.getPrevious();
+    }
+    return result;
+  }
+
 }

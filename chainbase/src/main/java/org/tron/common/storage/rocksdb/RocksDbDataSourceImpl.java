@@ -1,6 +1,7 @@
 package org.tron.common.storage.rocksdb;
 
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Bytes;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +40,7 @@ import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 import org.tron.core.db2.common.Instance;
+import org.tron.core.db2.common.WrappedByteArray;
 
 
 @Slf4j
@@ -272,7 +274,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       database.put(key, value);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -287,11 +289,10 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       return database.get(key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException: {}", e);
+      throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
     }
-    return null;
   }
 
   @Override
@@ -303,7 +304,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       database.delete(key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      throw new RuntimeException(e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -423,6 +424,26 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
       long i = 0;
       for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
         result.put(iter.key(), iter.value());
+      }
+      return result;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    if (quitIfNotAlive()) {
+      return null;
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iterator = getRocksIterator()) {
+      Map<WrappedByteArray, byte[]> result = new HashMap<>();
+      for (iterator.seek(key); iterator.isValid(); iterator.next()) {
+        if (Bytes.indexOf(iterator.key(), key) == 0) {
+          result.put(WrappedByteArray.of(iterator.key()), iterator.value());
+        } else {
+          return result;
+        }
       }
       return result;
     } finally {
