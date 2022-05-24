@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Flusher;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.store.AccountAssetStore;
+import org.tron.core.store.DynamicPropertiesStore;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
@@ -30,6 +30,11 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     isAccountDB = "account".equalsIgnoreCase(db.getDbName());
   }
 
+  private boolean needOptAsset() {
+    DynamicPropertiesStore s = ChainBaseManager.getInstance().getDynamicPropertiesStore();
+    return isAccountDB && s.getAllowAccountAssetOptimizationFromRoot() == 1;
+  }
+
   @Override
   public byte[] get(byte[] key) {
     return db.get(key);
@@ -37,7 +42,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public void put(byte[] key, byte[] value) {
-    if (isAccountDB && AssetUtil.isAllowAssetOptimization()) {
+    if (needOptAsset()) {
       if (value == null || value.length == 0) {
         remove(key);
         return;
@@ -55,7 +60,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public void remove(byte[] key) {
-    if (isAccountDB && AssetUtil.isAllowAssetOptimization()) {
+    if (needOptAsset()) {
       AccountAssetStore store = ChainBaseManager.getInstance().getAccountAssetStore();
       byte[] value = get(key);
       if (value != null && value.length > 0) {
@@ -74,7 +79,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
         .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
             WrappedByteArray.of(e.getValue().getBytes())))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    if (isAccountDB && AssetUtil.isAllowAssetOptimization()) {
+    if (needOptAsset()) {
       processAccount(batch);
     } else {
       ((Flusher) db).flush(batch);
@@ -90,7 +95,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
               WrappedByteArray.of(e.getValue().getBytes())))
           .forEach(e -> batch.put(e.getKey(), e.getValue()));
     }
-    if (isAccountDB && AssetUtil.isAllowAssetOptimization()) {
+    if (needOptAsset()) {
       processAccount(batch);
     } else {
       ((Flusher) db).flush(batch);
