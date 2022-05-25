@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.util.StringUtil;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -61,6 +62,7 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
   public static final String PARAMETER = "parameter";
+  public static final String TYPE = "type";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -250,17 +252,26 @@ public class Util {
     return jsonTransaction;
   }
 
+  /**
+   * Note: the contracts of the returned transaction may be empty
+   * */
   public static Transaction packTransaction(String strTransaction, boolean selfType) {
-    JSONObject jsonTransaction = JSONObject.parseObject(strTransaction);
+    JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     JSONArray contracts = new JSONArray();
     JSONArray rawContractArray = rawData.getJSONArray("contract");
 
+    String contractType = null;
     for (int i = 0; i < rawContractArray.size(); i++) {
       try {
         JSONObject contract = rawContractArray.getJSONObject(i);
         JSONObject parameter = contract.getJSONObject(PARAMETER);
-        String contractType = contract.getString("type");
+        contractType = contract.getString("type");
+        if (StringUtils.isEmpty(contractType)) {
+          logger.debug("no type in the transaction, ignore");
+          continue;
+        }
+
         Any any = null;
         Class clazz = TransactionFactory.getContract(ContractType.valueOf(contractType));
         if (clazz != null) {
@@ -277,6 +288,8 @@ public class Util {
           contract.put(PARAMETER, parameter);
           contracts.add(contract);
         }
+      } catch (IllegalArgumentException e) {
+        logger.debug("invalid contractType: {}", contractType);
       } catch (ParseException e) {
         logger.debug("ParseException: {}", e.getMessage());
       } catch (Exception e) {
@@ -304,10 +317,27 @@ public class Util {
 
   public static boolean getVisible(final HttpServletRequest request) {
     boolean visible = false;
-    if (StringUtil.isNotBlank(request.getParameter(VISIBLE))) {
-      visible = Boolean.valueOf(request.getParameter(VISIBLE));
+    String v = request.getParameter(VISIBLE);
+    if (StringUtil.isBlank(v)) {
+      try {
+        String input = request.getReader().lines()
+            .collect(Collectors.joining(System.lineSeparator()));
+        Util.checkBodySize(input);
+        if (StringUtil.isNotBlank(input)) {
+          visible = getVisiblePost(input);
+        }
+      } catch (Exception e) {
+        logger.debug("GetVisibleError: {}", e.getMessage());
+      }
+    } else {
+      visible = Boolean.parseBoolean(v);
     }
     return visible;
+  }
+
+  public static GrpcAPI.BlockType getBlockType(final HttpServletRequest request) {
+    String type = request.getParameter(TYPE);
+    return GrpcAPI.BlockType.forNumber(StringUtil.isNotBlank(type) ? Integer.parseInt(type) : 0);
   }
 
   public static boolean getVisiblePost(final String input) {

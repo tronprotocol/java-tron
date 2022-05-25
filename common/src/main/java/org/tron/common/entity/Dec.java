@@ -83,18 +83,18 @@ public final class Dec implements Comparable<Dec> {
   }
 
   // create a decimal from an input decimal string.
-// valid must come in the form:
-//   (-) whole integers (.) decimal integers
-// examples of acceptable input include:
-//   -123.456
-//   456.7890
-//   345
-//   -456789
-//
-// NOTE - An error will return if more decimal places
-// are provided in the string than the constant Precision.
-//
-// CONTRACT - This function does not mutate the input str.
+  // valid must come in the form:
+  //   (-) whole integers (.) decimal integers
+  // examples of acceptable input include:
+  //   -123.456
+  //   456.7890
+  //   345
+  //   -456789
+  //
+  // NOTE - An error will return if more decimal places
+  // are provided in the string than the constant Precision.
+  //
+  // CONTRACT - This function does not mutate the input str.
   public static Dec newDec(String str) {
     if (str == null || str.isEmpty()) {
       throw new RuntimeException("decimal string cannot be empty");
@@ -157,25 +157,25 @@ public final class Dec implements Comparable<Dec> {
 
 
   // create a new Dec from integer with decimal place at prec
-// CONTRACT: prec <= precision
+  // CONTRACT: prec <= precision
   public static Dec newDecWithPrec(long i, int prec) {
     return new Dec(BigInteger.valueOf(i).multiply(precisionMultiplier(prec)));
   }
 
   // create a new Dec from big integer assuming whole numbers
-// CONTRACT: prec <= Precision
+  // CONTRACT: prec <= Precision
   public static Dec newDec(BigInteger i) {
     return newDecWithPrec(i, 0);
   }
 
   // create a new Dec from big integer assuming whole numbers
-// CONTRACT: prec <= Precision
+  // CONTRACT: prec <= Precision
   public static Dec newDecWithPrec(BigInteger i, int prec) {
     return new Dec(i.multiply(precisionMultiplier(prec)));
   }
 
   // create a new Dec from int assuming whole numbers
-// CONTRACT: prec <= Precision
+  // CONTRACT: prec <= Precision
   public static Dec newDec(int i) {
     return newDecWithPrec(i, 0);
   }
@@ -198,7 +198,7 @@ public final class Dec implements Comparable<Dec> {
   }
 
   // create a new Dec from big integer with decimal place at prec
-// CONTRACT: prec <= Precision
+  // CONTRACT: prec <= Precision
   public static Dec newDecWithPrec(int i, int prec) {
     return new Dec(BigInteger.valueOf(i).multiply(precisionMultiplier(prec)));
   }
@@ -268,7 +268,7 @@ public final class Dec implements Comparable<Dec> {
     if (this.isNil()) {
       return null;
     }
-    return new BigInteger(this.i.toByteArray());
+    return new BigInteger(this.toByteArray());
   }
 
   public byte[] toByteArray() {
@@ -404,9 +404,9 @@ public final class Dec implements Comparable<Dec> {
       return oneDec();
     }
     Dec tmp = oneDec();
-    Dec d =  new Dec(this.i);
+    Dec d = new Dec(this.i);
 
-    for (BigInteger i = power; i.compareTo(BigInteger.ONE) > 0;) {
+    for (BigInteger i = power; i.compareTo(BigInteger.ONE) > 0; ) {
       if (i.getLowestSetBit() == 0) {
         tmp = tmp.mul(d);
       }
@@ -419,7 +419,7 @@ public final class Dec implements Comparable<Dec> {
 
   // ApproxSqrt is a wrapper around ApproxRoot for the common special case
   // of finding the square root of a number. It returns -(sqrt(abs(d)) if input is negative.
-  public  Dec approxSqrt()  {
+  public Dec approxSqrt() {
     return approxRoot(2);
   }
 
@@ -429,7 +429,7 @@ public final class Dec implements Comparable<Dec> {
   // approximate answer.  It returns `|d|.ApproxRoot() * -1` if input is negative.
   // A maximum number of 100 iterations is used a backup boundary condition for
   // cases where the answer never converges enough to satisfy the main condition.
-  public  Dec approxRoot(long root ){
+  public Dec approxRoot(long root) {
     if (isNegative()) {
       return mul(-1).approxRoot(root).mul(-1);
     }
@@ -526,7 +526,7 @@ public final class Dec implements Comparable<Dec> {
   }
 
   // chopPrecisionAndTruncate is similar to chopPrecisionAndRound,
-// but always rounds down. It does not mutate the input.
+  // but always rounds down. It does not mutate the input.
   private BigInteger chopPrecisionAndTruncate(BigInteger d) {
     return d.divide(precisionReuse);
   }
@@ -568,11 +568,11 @@ public final class Dec implements Comparable<Dec> {
 
   //  truncates the decimals from the number and returns a Dec
   public Dec truncateDec() {
-    return new Dec(chopPrecisionAndTruncate(this.i));
+    return Dec.newDec(chopPrecisionAndTruncate(this.i));
   }
 
   // Ceil returns the smallest integer value (as a decimal) that is greater than
-// or equal to the given decimal.
+  // or equal to the given decimal.
   public Dec ceil() {
     BigInteger tmp = new BigInteger(this.i.toByteArray());
 
@@ -599,7 +599,7 @@ public final class Dec implements Comparable<Dec> {
   }
 
   // is integer, e.g. decimals are zero
-  public boolean isInteger()  {
+  public boolean isInteger() {
     return this.i.remainder(precisionReuse).signum() == 0;
   }
 
@@ -639,7 +639,7 @@ public final class Dec implements Comparable<Dec> {
       tmp = this.neg();
     }
 
-    String bzInt = tmp.i.toString(10);// base 10
+    String bzInt = tmp.i.toString(10); // base 10
 
     int inputSize = bzInt.length();
 

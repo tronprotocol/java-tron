@@ -67,9 +67,16 @@ public class ProposalUtil {
       case EXCHANGE_CREATE_FEE:
         break;
       case MAX_CPU_TIME_OF_ONE_TX:
-        if (value < 10 || value > 100) {
-          throw new ContractValidateException(
-              "Bad chain parameter value, valid range is [10,100]");
+        if (dynamicPropertiesStore.getAllowHigherLimitForMaxCpuTimeOfOneTx() == 1) {
+          if (value < 10 || value > 400) {
+            throw new ContractValidateException(
+                "Bad chain parameter value, valid range is [10,400]");
+          }
+        } else {
+          if (value < 10 || value > 100) {
+            throw new ContractValidateException(
+                "Bad chain parameter value, valid range is [10,100]");
+          }
         }
         break;
       case ALLOW_UPDATE_ACCOUNT_NAME: {
@@ -517,11 +524,11 @@ public class ProposalUtil {
       case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException(
-                  "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
+              "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
         }
         if (value != 1) {
           throw new ContractValidateException(
-                  "This value[ALLOW_ACCOUNT_ASSET_OPTIMIZATION] is only allowed to be 1");
+              "This value[ALLOW_ACCOUNT_ASSET_OPTIMIZATION] is only allowed to be 1");
         }
         break;
       }
@@ -547,8 +554,44 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX] is only allowed to be 1");
+        }
+        break;
+      }
+      case ORACLE_VOTE_PERIOD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ORACLE_VOTE_PERIOD]");
+        }
+        final long minVotePeriod = 5;
+        final long maxVotePeriod = 1200;
+        if ((value != 0 && value < minVotePeriod) || value > maxVotePeriod) {
+          throw new ContractValidateException(
+                  "The valid range of [ORACLE_VOTE_PERIOD] is ["
+                          + minVotePeriod + "," + maxVotePeriod + "]");
+        }
+        break;
+      }
+      case ORACLE_VOTE_THRESHOLD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ORACLE_VOTE_THRESHOLD]");
+        }
+        if (value < 0 || value > 100) {
+          throw new ContractValidateException(
+                  "The valid range of [ORACLE_VOTE_THRESHOLD] is [0, 100]");
+        }
+        break;
+      }
       case JAIL_DURATION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [JAIL_DURATION]");
         }
@@ -558,7 +601,7 @@ public class ProposalUtil {
         }
       }
       case UPDATE_SLASH_WINDOW: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [UPDATE_SLASH_WINDOW]");
         }
@@ -568,7 +611,7 @@ public class ProposalUtil {
         }
       }
       case UPDATE_SLASH_FRACTION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [UPDATE_SLASH_FRACTION]");
         }
@@ -578,7 +621,7 @@ public class ProposalUtil {
         }
       }
       case UPDATE_MIN_VALID_PER_WINDOW: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [UPDATE_MIN_VALID_PER_WINDOW]");
         }
@@ -588,11 +631,11 @@ public class ProposalUtil {
         }
       }
       case ALLOW_STABLE_MARKET_ON: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [ALLOW_STABLE_MARKET_ON]");
         }
-        if (value != 1 && value!= 0) {
+        if (value != 1 && value != 0) {
           throw new ContractValidateException(
                   "This value[ALLOW_STABLE_MARKET_ON] is only allowed to be  or 0");
         }
@@ -660,12 +703,15 @@ public class ProposalUtil {
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
     ALLOW_TVM_LONDON(63), // 0, 1
-    ALLOW_STABLE_MARKET_ON(64), // 0, 1
-    ALLOW_SLASH_VOTE(65), // 0, 1
-    JAIL_DURATION(66), // 200, [0,1_000_000_000]
-    UPDATE_SLASH_WINDOW(67), // 28, [0,1_000_000_000]
-    UPDATE_SLASH_FRACTION(68), // 10, [0,100_000]
-    UPDATE_MIN_VALID_PER_WINDOW(69); // 5, [0,100]
+    ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(64), // 0, 1
+    ALLOW_STABLE_MARKET_ON(65), // 0, 1
+    ORACLE_VOTE_PERIOD(66), // 0 [5,1200]
+    ORACLE_VOTE_THRESHOLD(67), // 0 [0,100]
+    ALLOW_SLASH_VOTE(68), // 0, 1
+    JAIL_DURATION(69), // 200, [0,1_000_000_000]
+    UPDATE_SLASH_WINDOW(70), // 28, [0,1_000_000_000]
+    UPDATE_SLASH_FRACTION(71), // 10, [0,100_000]
+    UPDATE_MIN_VALID_PER_WINDOW(72); // 5, [0,100]
 
     private long code;
 

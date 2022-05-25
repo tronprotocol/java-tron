@@ -71,7 +71,7 @@ public class IstanbulTest extends VMTestBase {
         contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] istanbulAddress = WalletUtil.generateContractAddress(tx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(tx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(tx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // SELFBALANCE Test
@@ -217,7 +217,7 @@ public class IstanbulTest extends VMTestBase {
         contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] istanbulAddress = WalletUtil.generateContractAddress(tx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(tx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(tx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // bn128 add
@@ -447,7 +447,7 @@ public class IstanbulTest extends VMTestBase {
         contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] istanbulAddress = WalletUtil.generateContractAddress(tx);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(tx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(tx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // bn128 add

@@ -6,6 +6,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
 import org.tron.core.utils.ProposalUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 /**
  * Notice:
@@ -291,6 +292,23 @@ public class ProposalService extends ProposalUtil {
 
         case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
+          break;
+        }
+        case ORACLE_VOTE_PERIOD: {
+          manager.getDynamicPropertiesStore().setOracleVotePeriod(entry.getValue());
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+                  ContractType.OracleExchangeRateVoteContract_VALUE);
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+                  ContractType.DelegateFeedConsentContract_VALUE);
+          break;
+        }
+        case ORACLE_VOTE_THRESHOLD: {
+          manager.getDynamicPropertiesStore().setOracleVoteThreshold(entry.getValue());
+          break;
+        }
+        case ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX: {
+          manager.getDynamicPropertiesStore().saveAllowHigherLimitForMaxCpuTimeOfOneTx(
+              entry.getValue());
           break;
         }
         case ALLOW_STABLE_MARKET_ON: {

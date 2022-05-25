@@ -54,14 +54,14 @@ public class InterpreterTest {
 
   @Test
   public void testVMException() throws ContractValidateException {
-    invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x5b, 0x60, 0x00, 0x56};
     // 0x5b      - JUMPTEST
     // 0x60 0x00 - PUSH 0x00
     // 0x56      - JUMP to 0
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 
@@ -96,7 +96,8 @@ public class InterpreterTest {
     // 0x56      - JUMP
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 
@@ -134,7 +135,8 @@ public class InterpreterTest {
     // 0x56      - JUMP
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 
@@ -173,7 +175,8 @@ public class InterpreterTest {
     // 0x56              - JUMP
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 

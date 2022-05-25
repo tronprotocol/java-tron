@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.quartz.CronExpression;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
@@ -47,6 +48,10 @@ public class CommonParameter {
   @Setter
   @Parameter(names = {"--max-energy-limit-for-constant"})
   public long maxEnergyLimitForConstant = 100_000_000L;
+  @Getter
+  @Setter
+  @Parameter(names = {"--lru-cache-size"})
+  public int lruCacheSize = 500;
   @Getter
   @Setter
   @Parameter(names = {"--debug"})
@@ -116,6 +121,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int nodeConnectionTimeout;
+  @Getter
+  @Setter
+  public int fetchBlockTimeout;
   @Getter
   @Setter
   public int nodeChannelReadTimeout;
@@ -390,6 +398,8 @@ public class CommonParameter {
   @Getter
   public List<Node> fastForwardNodes;
   @Getter
+  public int maxFastForwardNum;
+  @Getter
   public Storage storage;
   @Getter
   public Overlay overlay;
@@ -449,6 +459,14 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public boolean metricsPrometheusEnable = false;
+
+  @Getter
+  @Setter
+  public int metricsPrometheusPort;
+
+  @Getter
+  @Setter
   public int agreeNodeCount;
 
   @Getter
@@ -494,6 +512,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowHigherLimitForMaxCpuTimeOfOneTx;
+
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter
@@ -520,6 +542,18 @@ public class CommonParameter {
   @Setter
   public List<String> disabledApiList;
 
+  @Getter
+  @Setter
+  public CronExpression shutdownBlockTime = null;
+
+  @Getter
+  @Setter
+  public long shutdownBlockHeight = -1;
+
+  @Getter
+  @Setter
+  public long shutdownBlockCount = -1;
+
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;
@@ -536,5 +570,9 @@ public class CommonParameter {
 
   public boolean isJsonRpcFilterEnabled() {
     return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
+  }
+
+  public int getSafeLruCacheSize() {
+    return lruCacheSize < 1 ? 500 : lruCacheSize;
   }
 }

@@ -150,28 +150,37 @@ public class EnergyCost {
   public static long getMloadCost(Program program) {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
-    long energyCost = calcMemEnergy(oldMemSize,
+    return calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), new DataWord(32)),
         0, Op.MLOAD);
-    return energyCost;
+  }
+
+  public static long getMloadCost2(Program program) {
+    return SPECIAL_TIER + getMloadCost(program);
   }
 
   public static long getMStoreCost(Program program) {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
-    long energyCost = calcMemEnergy(oldMemSize,
+    return calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), new DataWord(32)),
         0, Op.MSTORE);
-    return energyCost;
+  }
+
+  public static long getMStoreCost2(Program program) {
+    return SPECIAL_TIER + getMStoreCost(program);
   }
 
   public static long getMStore8Cost(Program program) {
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
-    long energyCost = calcMemEnergy(oldMemSize,
+    return calcMemEnergy(oldMemSize,
         memNeeded(stack.peek(), DataWord.ONE()),
         0, Op.MSTORE8);
-    return energyCost;
+  }
+
+  public static long getMStore8Cost2(Program program) {
+    return SPECIAL_TIER + getMStore8Cost(program);
   }
 
   public static long getSloadCost(Program ignored) {

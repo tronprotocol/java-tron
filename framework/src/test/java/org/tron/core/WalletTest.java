@@ -21,14 +21,11 @@ package org.tron.core;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -45,21 +42,18 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
@@ -123,7 +117,7 @@ public class WalletTest {
   private static AssetIssueCapsule Asset1;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
@@ -188,11 +182,11 @@ public class WalletTest {
   private static Transaction getBuildTransaction(
       TransferContract transferContract, long transactionTimestamp, long refBlockNum) {
     return Transaction.newBuilder().setRawData(
-        Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
-            .setRefBlockNum(refBlockNum)
-            .addContract(
-                Contract.newBuilder().setType(ContractType.TransferContract)
-                    .setParameter(Any.pack(transferContract)).build()).build())
+            Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
+                .setRefBlockNum(refBlockNum)
+                .addContract(
+                    Contract.newBuilder().setType(ContractType.TransferContract)
+                        .setParameter(Any.pack(transferContract)).build()).build())
         .build();
   }
 
@@ -239,11 +233,12 @@ public class WalletTest {
   }
 
   private static Block getBuildBlock(long timestamp, long num, long witnessId,
-      String witnessAddress, Transaction transaction, Transaction transactionNext) {
+                                     String witnessAddress, Transaction transaction,
+                                     Transaction transactionNext) {
     return Block.newBuilder().setBlockHeader(BlockHeader.newBuilder().setRawData(
-        raw.newBuilder().setTimestamp(timestamp).setNumber(num).setWitnessId(witnessId)
-            .setWitnessAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessAddress)))
-            .build()).build()).addTransactions(transaction).addTransactions(transactionNext)
+            raw.newBuilder().setTimestamp(timestamp).setNumber(num).setWitnessId(witnessId)
+                .setWitnessAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessAddress)))
+                .build()).build()).addTransactions(transaction).addTransactions(transactionNext)
         .build();
   }
 
