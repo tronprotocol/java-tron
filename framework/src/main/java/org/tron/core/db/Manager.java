@@ -46,6 +46,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
+import org.tron.common.entity.Dec;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
@@ -144,6 +145,7 @@ import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.store.TransactionHistoryStore;
@@ -219,6 +221,7 @@ public class Manager {
   @Autowired
   @Getter
   private ChainBaseManager chainBaseManager;
+
   // transactions cache
   private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
@@ -394,6 +397,10 @@ public class Manager {
 
   public BlockIndexStore getBlockIndexStore() {
     return chainBaseManager.getBlockIndexStore();
+  }
+
+  public StableMarketStore getStableMarketStore() {
+    return chainBaseManager.getStableMarketStore();
   }
 
   public BlockingQueue<TransactionCapsule> getPendingTransactions() {
@@ -1616,6 +1623,9 @@ public class Manager {
 
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
+    // adjust stable pool delta
+    replenishPools();
+
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       Bloom blockBloom = chainBaseManager.getSectionBloomStore()
           .initBlockSection(transactionRetCapsule);
@@ -2210,6 +2220,15 @@ public class Manager {
     long value = getPendingTransactions().size() + getRePushTransactions().size()
         + getPoppedTransactions().size();
     return value;
+  }
+
+  public void replenishPools() {
+    Dec poolDelta = chainBaseManager.getStableMarketStore().getPoolDelta();
+    long poolRecoveryPeriod = chainBaseManager.getStableMarketStore().getPoolRecoveryPeriod();
+
+    Dec poolRegressionAmt = poolDelta.quo(poolRecoveryPeriod);
+    poolDelta = poolDelta.sub(poolRegressionAmt);
+    chainBaseManager.getStableMarketStore().setPoolDelta(poolDelta);
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {
