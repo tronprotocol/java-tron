@@ -4012,7 +4012,7 @@ public class Wallet {
 
   public NumberMessage getWitnessMissCount(byte[] witnessAddress) {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
-            .setNum(chainBaseManager.getSlashStore().getWitnessMissCount(witnessAddress));
+            .setNum(chainBaseManager.getOracleStore().getWitnessMissCount(witnessAddress));
     return builder.build();
   }
 
