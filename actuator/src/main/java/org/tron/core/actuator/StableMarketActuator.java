@@ -52,7 +52,7 @@ import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContr
 @Slf4j(topic = "actuator")
 public class StableMarketActuator extends AbstractActuator {
 
-  StableMarketUtil stableMarketUtil = new StableMarketUtil();
+  private StableMarketUtil stableMarketUtil = new StableMarketUtil();
 
   public StableMarketActuator() {
     super(ContractType.StableMarketContract, StableMarketContract.class);
@@ -152,8 +152,6 @@ public class StableMarketActuator extends AbstractActuator {
     stableMarketUtil.init(chainBaseManager);
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();
-    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
-    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     if (!this.any.is(StableMarketContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [StableMarketContract],real type[" + any
@@ -231,14 +229,9 @@ public class StableMarketActuator extends AbstractActuator {
 
       assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(destAsset));
 
-      if (assetBalance != null) {
-        try {
-          // todo: calculate exchange amount
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
-        } catch (Exception e) {
-          logger.debug(e.getMessage(), e);
-          throw new ContractValidateException(e.getMessage());
-        }
+      if (assetBalance != null && Long.MAX_VALUE - assetBalance < amount) {
+        // todo: calculate exchange amount
+        throw new ContractValidateException("exchange amount overflow");
       }
     } else {
       fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();

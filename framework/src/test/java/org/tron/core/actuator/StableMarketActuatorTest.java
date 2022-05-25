@@ -15,21 +15,19 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.common.utils.Commons.adjustBalance;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -48,10 +46,8 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.Common;
 import org.tron.protos.contract.StableMarketContractOuterClass;
 
-import static org.tron.common.utils.Commons.adjustBalance;
 
 @Slf4j
 public class StableMarketActuatorTest {
@@ -103,8 +99,10 @@ public class StableMarketActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
             ByteString.copyFromUtf8("toAccount"),
             AccountType.Normal);
-    dbManager.getAccountStore().put(fromAccountCapsule.getAddress().toByteArray(), fromAccountCapsule);
-    dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    dbManager.getAccountStore()
+        .put(fromAccountCapsule.getAddress().toByteArray(), fromAccountCapsule);
+    dbManager.getAccountStore()
+        .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
 
     dbManager.getAccountAssetStore().put(fromAccountCapsule.getAddress().toByteArray(),
         new AccountAssetCapsule(fromAccountCapsule.getAddress()));
@@ -184,7 +182,8 @@ public class StableMarketActuatorTest {
         .put(assetIssueCapsuleV2.createDbKeyFinal(
             dbManager.getDynamicPropertiesStore()), assetIssueCapsuleV2);
 
-    dbManager.getStableMarketStore().setStableCoin(ByteArray.fromString(String.valueOf(id)), TOBIN_FEE);
+    dbManager.getStableMarketStore()
+        .setStableCoin(ByteArray.fromString(String.valueOf(id)), TOBIN_FEE);
     return id;
   }
 
@@ -232,14 +231,16 @@ public class StableMarketActuatorTest {
       setTrxBalance(OWNER_ADDRESS, sourceBalance);
       setTrxBalance(TO_ADDRESS, destBalance);
     } catch (BalanceInsufficientException e) {
-      Assert.assertFalse(e instanceof BalanceInsufficientException);
+      Assert.fail();
     }
 
     // init param
     setMarketParam(basePool, minSpread, delta);
-    String sourceTokenId = String.valueOf(initToken(OWNER_ADDRESS,"Source", sourceTotalSupply, sourceExchangeRate));
+    String sourceTokenId = String.valueOf(
+        initToken(OWNER_ADDRESS, "Source", sourceTotalSupply, sourceExchangeRate));
     System.out.println(sourceTokenId);
-    String destTokenId = String.valueOf(initToken(TO_ADDRESS, "Dest", destTotalSupply, destExchangeRate));
+    String destTokenId = String.valueOf(
+        initToken(TO_ADDRESS, "Dest", destTotalSupply, destExchangeRate));
     System.out.println(destTokenId);
 
     StableMarketActuator actuator = new StableMarketActuator();
@@ -252,14 +253,14 @@ public class StableMarketActuatorTest {
         dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     // check V2
     System.out.println("before");
-    System.out.println("from source:" +
-        fromAccount.getAssetMapV2().get(sourceTokenId));
-    System.out.println("from dest:" +
-        fromAccount.getAssetMapV2().get(destTokenId));
-    System.out.println("to source:" +
-        toAccount.getAssetMapV2().get(sourceTokenId));
-    System.out.println("to dest:" +
-        toAccount.getAssetMapV2().get(destTokenId));
+    System.out.println("from source:"
+        + fromAccount.getAssetMapV2().get(sourceTokenId));
+    System.out.println("from dest:"
+        + fromAccount.getAssetMapV2().get(destTokenId));
+    System.out.println("to source:"
+        + toAccount.getAssetMapV2().get(sourceTokenId));
+    System.out.println("to dest:"
+        + toAccount.getAssetMapV2().get(destTokenId));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -272,14 +273,14 @@ public class StableMarketActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
       // check V2
       System.out.println("after");
-      System.out.println("from source:" +
-          fromAccount.getAssetMapV2().get(sourceTokenId));
-      System.out.println("from dest:" +
-          fromAccount.getAssetMapV2().get(destTokenId));
-      System.out.println("to source:" +
-          toAccount.getAssetMapV2().get(sourceTokenId));
-      System.out.println("to dest:" +
-          toAccount.getAssetMapV2().get(destTokenId));
+      System.out.println("from source:"
+          + fromAccount.getAssetMapV2().get(sourceTokenId));
+      System.out.println("from dest:"
+          + fromAccount.getAssetMapV2().get(destTokenId));
+      System.out.println("to source:"
+          + toAccount.getAssetMapV2().get(sourceTokenId));
+      System.out.println("to dest:"
+          + toAccount.getAssetMapV2().get(destTokenId));
 
     } catch (ContractValidateException e) {
       System.out.println(e);

@@ -1,17 +1,14 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol;
 import org.tron.protos.contract.StableMarketContractOuterClass;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
 
 @Component
 @Slf4j(topic = "API")
@@ -43,7 +40,8 @@ public class GetStableCoinInfoServlet extends RateLimiterServlet {
 
   private void fillResponse(byte[] tokenId, boolean visible, HttpServletResponse response)
       throws IOException {
-    StableMarketContractOuterClass.StableCoinInfo stableCoinInfo = wallet.getStableCoinById(tokenId);
+    StableMarketContractOuterClass.StableCoinInfo stableCoinInfo =
+        wallet.getStableCoinById(tokenId);
     if (stableCoinInfo != null) {
       response.getWriter().println(JsonFormat.printToString(stableCoinInfo, visible));
     } else {

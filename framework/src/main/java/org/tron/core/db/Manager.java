@@ -1624,7 +1624,9 @@ public class Manager {
     chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
 
     // adjust stable pool delta
-    replenishPools();
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowStableMarketOn() == 1) {
+      replenishPools();
+    }
 
     if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
       Bloom blockBloom = chainBaseManager.getSectionBloomStore()

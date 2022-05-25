@@ -25,16 +25,14 @@ import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 @Component
 public class StableMarketUtil {
 
-  private static final BigInteger EXCHANGE_RATE_DECIMAL = new BigInteger("1000000");
-
   @Autowired
-  StableMarketStore stableMarketStore;
+  private StableMarketStore stableMarketStore;
   @Autowired
-  DynamicPropertiesStore dynamicPropertiesStore;
+  private DynamicPropertiesStore dynamicPropertiesStore;
   @Autowired
-  AssetIssueStore assetIssueStore;
+  private AssetIssueStore assetIssueStore;
   @Autowired
-  AssetIssueV2Store assetIssueV2Store;
+  private AssetIssueV2Store assetIssueV2Store;
 
   public void init(ChainBaseManager chainBaseManager) {
     this.stableMarketStore = chainBaseManager.getStableMarketStore();
@@ -65,7 +63,7 @@ public class StableMarketUtil {
     builder.setAskAmount(askAmount.truncateLong());
     builder.setExchangeRate(exchangeRate.toString());
 
-    Dec spread = Dec.zeroDec();
+    Dec spread;
     if (!Arrays.equals(sourceToken, TRX_SYMBOL_BYTES) && !Arrays.equals(destToken, TRX_SYMBOL_BYTES)) {
       Dec sourceTobin = stableMarketStore.getTobinFee(sourceToken);
       Dec destTobin = stableMarketStore.getTobinFee(destToken);

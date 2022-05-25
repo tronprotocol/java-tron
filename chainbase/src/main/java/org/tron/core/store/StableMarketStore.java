@@ -28,7 +28,6 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final int TOBIN_FEE_DECIMAL = 3;
 
-  private static final byte[] TOBIN_FEE_PREFIX = "tobin_".getBytes();
   private static final byte[] STABLE_COIN_PREFIX = "stable_".getBytes();
   private static final byte[] BASE_POOL = "basepool".getBytes();
   private static final byte[] POOL_RECOVERY_PERIOD = "pool_recovery_period".getBytes();
@@ -38,7 +37,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   private static final byte[] EXCHANGE_RATE = "exchange_rate".getBytes();
 
   @Autowired
-  AssetIssueV2Store assetIssueV2Store;
+  private AssetIssueV2Store assetIssueV2Store;
 
   @Autowired
   private StableMarketStore(@Value("stable-market") String dbName) {

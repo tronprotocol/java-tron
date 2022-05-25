@@ -293,6 +293,9 @@ public class ProposalService extends ProposalUtil {
         }
         case ALLOW_STABLE_MARKET_ON: {
           manager.getDynamicPropertiesStore().saveAllowStableMarketOn(entry.getValue());
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+              ContractType.StableMarketContract_VALUE);
+          // todo: init other genesis params
           break;
         }
         case BASE_POOL: {
@@ -313,9 +316,12 @@ public class ProposalService extends ProposalUtil {
         }
         case USDD_TOBIN_FEE: {
           // todo: replace usdd to the real token id
-          manager.getStableMarketStore().setTobinFee("usdd".getBytes(), entry.getValue());
+          byte[] tokenId = "usdd".getBytes();
+          if (manager.getStableMarketStore().getStableCoinById(tokenId) != null) {
+            manager.getStableMarketStore().setTobinFee(tokenId, entry.getValue());
+          }
+          break;
         }
-
         default:
           find = false;
           break;

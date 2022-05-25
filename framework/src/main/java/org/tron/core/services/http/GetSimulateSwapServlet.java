@@ -1,18 +1,15 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.Longs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.protos.contract.StableMarketContractOuterClass;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
 
 @Component
 @Slf4j(topic = "API")
@@ -40,15 +37,18 @@ public class GetSimulateSwapServlet extends RateLimiterServlet {
       String sourceToken = jsonObject.getString("source_token");
       String destToken = jsonObject.getString("dest_token");
       long amount = jsonObject.getLongValue("amount");
-      fillResponse(sourceToken.getBytes(), destToken.getBytes(), amount, params.isVisible(), response);
+      fillResponse(sourceToken.getBytes(), destToken.getBytes(),
+          amount, params.isVisible(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void fillResponse(byte[] sourceToken, byte[] destToken, long amount, boolean visible, HttpServletResponse response)
+  private void fillResponse(byte[] sourceToken, byte[] destToken,
+                            long amount, boolean visible, HttpServletResponse response)
       throws IOException, ContractExeException {
-    StableMarketContractOuterClass.ExchangeResult exchangeResult = wallet.getSimulateSwap(sourceToken, destToken, amount);
+    StableMarketContractOuterClass.ExchangeResult exchangeResult =
+        wallet.getSimulateSwap(sourceToken, destToken, amount);
     if (exchangeResult != null) {
       response.getWriter().println(JsonFormat.printToString(exchangeResult, visible));
     } else {

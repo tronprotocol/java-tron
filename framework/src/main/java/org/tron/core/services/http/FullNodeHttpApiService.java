@@ -564,9 +564,12 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBasePoolServlet), "/wallet/getbasepool");
       context.addServlet(new ServletHolder(getMinSpreadServlet), "/wallet/getminspread");
       context.addServlet(new ServletHolder(getSimulateSwapServlet), "/wallet/getsimulateswap");
-      context.addServlet(new ServletHolder(getStableCoinInfoListServlet), "/wallet/getstablecoininfolist");
-      context.addServlet(new ServletHolder(getStableCoinInfoServlet), "/wallet/getstablecoininfo");
-      context.addServlet(new ServletHolder(getPoolRecoveryPeriodServlet), "/wallet/getpoolrecoveryperiod");
+      context.addServlet(new ServletHolder(getStableCoinInfoListServlet),
+          "/wallet/getstablecoininfolist");
+      context.addServlet(new ServletHolder(getStableCoinInfoServlet),
+          "/wallet/getstablecoininfo");
+      context.addServlet(new ServletHolder(getPoolRecoveryPeriodServlet),
+          "/wallet/getpoolrecoveryperiod");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

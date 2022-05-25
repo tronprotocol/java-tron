@@ -48,8 +48,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-
-import io.grpc.stub.StreamObserver;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -4012,7 +4010,7 @@ public class Wallet {
 
   public StableMarketContractOuterClass.ExchangeResult getSimulateSwap(
       byte[] sourceToken, byte[] destToken, long amount) throws ContractExeException {
-      return stableMarketUtil.computeSwap(sourceToken, destToken, amount);
+    return stableMarketUtil.computeSwap(sourceToken, destToken, amount);
   }
 
   public Chainbase.Cursor getCursor() {
