@@ -595,20 +595,20 @@ public class ProposalUtil {
           throw new ContractValidateException(
                   "Bad chain parameter id [JAIL_DURATION]");
         }
-        if (value < 0 || value > 1_000_000_000L) {
-          throw new ContractValidateException(
-                  "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
         }
+        break;
       }
       case UPDATE_SLASH_WINDOW: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [UPDATE_SLASH_WINDOW]");
         }
-        if (value < 0 || value > 1_000_000_000L) {
-          throw new ContractValidateException(
-                  "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
         }
+        break;
       }
       case UPDATE_SLASH_FRACTION: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
@@ -619,6 +619,7 @@ public class ProposalUtil {
           throw new ContractValidateException(
                   "Bad chain parameter value, valid range is [0, 100_000L]");
         }
+        break;
       }
       case UPDATE_MIN_VALID_PER_WINDOW: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
@@ -627,8 +628,9 @@ public class ProposalUtil {
         }
         if (value < 0 || value > 100) {
           throw new ContractValidateException(
-                  "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+                  "Bad chain parameter value, valid range is [0, 100]");
         }
+        break;
       }
       case ALLOW_STABLE_MARKET_ON: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {

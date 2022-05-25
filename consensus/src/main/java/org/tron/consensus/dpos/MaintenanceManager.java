@@ -255,14 +255,13 @@ public class MaintenanceManager {
   }
 
   private void slashAndResetMissCounters(Map<ByteString, Long> oldCountWitness) {
-    final List<ByteString> slashingWitnessList = new ArrayList<>();
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
     OracleStore oracleStore = consensusDelegate.getOracleStore();
     long SlashWindow = dynamicPropertiesStore.getSlashWindow();
     if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
       // todo witness miss count
       long minValidPerWindow = dynamicPropertiesStore.getMinValidPerWindow();
-      long votePeriod = 10;
+      long votePeriod = dynamicPropertiesStore.getOracleVotePeriod();
       long slashMissCount = 7200 * SlashWindow * minValidPerWindow / votePeriod / 100;
       final long slashFraction = dynamicPropertiesStore.getSlashFraction();
       consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->{
