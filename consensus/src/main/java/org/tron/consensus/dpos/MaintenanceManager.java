@@ -34,6 +34,7 @@ import org.tron.protos.Protocol.Vote;
 public class MaintenanceManager {
 
   private static final long SLASH_FRACTION_BASE = 100_000L;
+  private static final long BLOCK_COUNT = 7200;
 
   @Autowired
   private ConsensusDelegate consensusDelegate;
@@ -262,7 +263,7 @@ public class MaintenanceManager {
       // todo witness miss count
       long minValidPerWindow = dynamicPropertiesStore.getMinValidPerWindow();
       long votePeriod = dynamicPropertiesStore.getOracleVotePeriod();
-      long slashMissCount = 7200 * SlashWindow * minValidPerWindow / votePeriod / 100;
+      long slashMissCount = BLOCK_COUNT * SlashWindow * minValidPerWindow / votePeriod / 100;
       final long slashFraction = dynamicPropertiesStore.getSlashFraction();
       consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->{
         ByteString address = witnessCapsule.getAddress();
