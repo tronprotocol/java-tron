@@ -10,6 +10,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.protos.Protocol;
 
 import java.util.HashMap;
@@ -43,13 +44,42 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
     return dbSource.getData(key) != null;
   }
 
-  public void put(AccountCapsule account, byte[] key, byte[] value) {
-    byte[] k = Bytes.concat(account.createDbKey(), key);
-    if (Longs.fromByteArray(value) == 0) {
-      delete(k);
-    } else {
-      put(k, value);
+  public void putAccount(Protocol.Account account) {
+    Map<byte[], byte[]> assets = getAssets(account);
+    if (!assets.isEmpty()) {
+      updateByBatch(assets);
     }
+  }
+
+  public void deleteAccount(SnapshotRoot accountSnapshotRoot, byte[] key) {
+    Map<byte[], byte[]> assets = getDeletedAssets(accountSnapshotRoot, key);
+    if (!assets.isEmpty()) {
+      updateByBatch(assets);
+    }
+  }
+
+  public Map<byte[], byte[]> getAssets(Protocol.Account account) {
+    Map<byte[], byte[]> assets = new HashMap<>();
+    account.getAssetV2Map().forEach((k, v) -> {
+      byte[] key = Bytes.concat(account.getAddress().toByteArray(), k.getBytes());
+      if (v == 0) {
+        assets.put(key, null);
+      } else {
+        assets.put(key, Longs.toByteArray(v));
+      }
+    });
+    return assets;
+  }
+
+  public Map<byte[], byte[]> getDeletedAssets(SnapshotRoot accountSnapshotRoot, byte[] key) {
+    Map<byte[], byte[]> assets = new HashMap<>();
+    byte[] value = accountSnapshotRoot.get(key);
+    if (value != null && value.length > 0) {
+      AccountCapsule item = new AccountCapsule(value);
+      new AccountCapsule(value).getAssetMapV2().keySet().forEach(assetKey ->
+              assets.put(Bytes.concat(item.createDbKey(), assetKey.getBytes()), null));
+    }
+    return assets;
   }
 
   public long getBalance(Protocol.Account account, byte[] key) {
