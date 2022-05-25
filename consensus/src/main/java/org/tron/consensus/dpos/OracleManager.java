@@ -132,6 +132,16 @@ public class OracleManager {
         });
       }
 
+      // Do miss counting & slashing
+      int supportAssetsSize = supportAssets.size();
+      srMap.forEach((sr, claim) -> {
+        if (claim.winCount < supportAssetsSize) {
+          // Increase miss counter
+          long missCount = oracleStore.getWitnessMissCount(sr.toByteArray());
+          oracleStore.setWitnessMissCount(sr.toByteArray(), missCount + 1);
+        }
+      });
+
       // 5. post-processing, clear vote info, update tobin tax
       oracleStore.clearPrevoteAndVotes(blockNum, votePeriod);
       // TODO replace first param with proposal tobin list

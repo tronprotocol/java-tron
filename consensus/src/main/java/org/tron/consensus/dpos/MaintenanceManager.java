@@ -25,7 +25,7 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.SlashStore;
+import org.tron.core.store.OracleStore;
 import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol.Vote;
 
@@ -257,7 +257,7 @@ public class MaintenanceManager {
   private void slashAndResetMissCounters(Map<ByteString, Long> oldCountWitness) {
     final List<ByteString> slashingWitnessList = new ArrayList<>();
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
-    SlashStore slashStore = consensusDelegate.getSlashStore();
+    OracleStore oracleStore = consensusDelegate.getOracleStore();
     long SlashWindow = dynamicPropertiesStore.getSlashWindow();
     if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
       // todo witness miss count
@@ -268,7 +268,7 @@ public class MaintenanceManager {
       consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->{
         ByteString address = witnessCapsule.getAddress();
         byte[] witnessAddress = address.toByteArray();
-        if (slashStore.getWitnessMissCount(witnessAddress) >= slashMissCount) {
+        if (oracleStore.getWitnessMissCount(witnessAddress) >= slashMissCount) {
           long voteCount = witnessCapsule.getVoteCount() * slashFraction / SLASH_FRACTION_BASE;
           if (oldCountWitness.containsKey(address)) {
             voteCount = witnessCapsule.getVoteCount() - oldCountWitness.get(address);
@@ -284,7 +284,7 @@ public class MaintenanceManager {
 //        }
           consensusDelegate.getSlashService().slashWitness(witnessAddress, voteCount, true);
         }
-        slashStore.deleteWitnessMissCount(witnessAddress);
+        oracleStore.deleteWitnessMissCount(witnessAddress);
       });
     }
   }

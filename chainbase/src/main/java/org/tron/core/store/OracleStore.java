@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.Dec;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.OraclePrevoteCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -185,5 +186,28 @@ public class OracleStore extends TronStoreWithRevoking<BytesCapsule> {
       ex.put(asset, Dec.newDec(exchangeRate));
     }
     return ex;
+  }
+
+  public long getWitnessMissCount(byte[] address) {
+    BytesCapsule bytesCapsule = get(buildMissCountKey(address));
+    if (bytesCapsule == null) {
+      return 0;
+    } else {
+      return ByteArray.toLong(bytesCapsule.getData());
+    }
+  }
+
+  public void setWitnessMissCount(byte[] address, long value) {
+    put(buildMissCountKey(address), new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public void deleteWitnessMissCount(byte[] address) {
+    if (has(buildMissCountKey(address))) {
+      delete(buildMissCountKey(address));
+    }
+  }
+
+  private byte[] buildMissCountKey(byte[] address) {
+    return ("miss-count-" + Hex.toHexString(address)).getBytes();
   }
 }
