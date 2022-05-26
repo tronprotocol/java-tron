@@ -196,6 +196,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmFreeze = 0;
     PARAMETER.allowTvmVote = 0;
+    PARAMETER.allowSlashVote = 0;
     PARAMETER.allowTvmLondon = 0;
     PARAMETER.allowTvmCompatibleEvm = 0;
     PARAMETER.historyBalanceLookup = false;
@@ -793,6 +794,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmVote =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
+
+    PARAMETER.allowSlashVote =
+            config.hasPath(Constant.COMMITTEE_ALLOW_SLASH_VOTE) ? config
+                    .getInt(Constant.COMMITTEE_ALLOW_SLASH_VOTE) : 0;
 
     PARAMETER.allowTvmLondon =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_LONDON) ? config

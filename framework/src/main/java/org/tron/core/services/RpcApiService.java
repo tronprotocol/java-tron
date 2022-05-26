@@ -176,6 +176,7 @@ import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
 import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoList;
 import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
+import org.tron.protos.contract.WitnessContract.UnjailWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
@@ -1343,13 +1344,17 @@ public class RpcApiService implements Service {
       Preconditions.checkArgument(votesCount <= 0,
           "VotesCount[" + votesCount + "] <= 0");
       if (dbManager.getDynamicPropertiesStore().supportAllowNewResourceModel()) {
-        Preconditions.checkArgument(account.getAllTronPower() < votesCount,
-            "tron power[" + account.getAllTronPower()
-                + "] <  VotesCount[" + votesCount + "]");
+        long tronPower = account.getAllTronPower(
+                dbManager.getDynamicPropertiesStore().allowSlashVote(),
+                dbManager.getWitnessStore());
+        Preconditions.checkArgument(tronPower < votesCount,
+            "tron power[" + tronPower + "] <  VotesCount[" + votesCount + "]");
       } else {
-        Preconditions.checkArgument(account.getTronPower() < votesCount,
-            "tron power[" + account.getTronPower()
-                + "] <  VotesCount[" + votesCount + "]");
+        long tronPower = account.getTronPower(
+                dbManager.getDynamicPropertiesStore().allowSlashVote(),
+                dbManager.getWitnessStore());
+        Preconditions.checkArgument(tronPower < votesCount,
+            "tron power[" + tronPower + "] <  VotesCount[" + votesCount + "]");
       }
 
       req.getVotesList().forEach(vote -> {
@@ -2626,6 +2631,19 @@ public class RpcApiService implements Service {
       Transaction.Contract contract = request.getRawData().getContract(0);
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);
+    }
+
+    @Override
+    public void unjailWitness(UnjailWitnessContract request,
+                              StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnjailWitnessContract, responseObserver);
+    }
+
+    @Override
+    public void getWitnessMissCount(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      responseObserver.onNext(wallet.getWitnessMissCount(request.getValue().toByteArray()));
+      responseObserver.onCompleted();
     }
 
     @Override
