@@ -2380,7 +2380,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public long getAllowAccountAssetOptimizationFromRoot() {
     try {
-      return Optional.ofNullable(getFromRoot(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
+      return Optional.ofNullable(getFromRoot(ALLOW_ASSET_OPTIMIZATION))
               .map(BytesCapsule::getData)
               .map(ByteArray::toLong)
               .orElseThrow(
