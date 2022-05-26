@@ -216,4 +216,13 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
   public ByteString getDesc() {
     return this.assetIssueContract.getDescription();
   }
+
+  public long getTotalSupply() {
+    return this.assetIssueContract.getTotalSupply();
+  }
+
+  public void setTotalSupply(long totalSupply) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+            .setTotalSupply(totalSupply).build();
+  }
 }

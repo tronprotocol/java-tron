@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+import "core/contract/asset_issue_contract.proto";
+
+message StableCoinContract {
+    string assetIssueId = 1;
+    string tobin_fee = 2;
+}
+
+message StableCoinInfo {
+    AssetIssueContract assetIssue = 1;
+    int64 tobin_fee = 2;
+}
+
+message StableCoinInfoList {
+    repeated StableCoinInfo stable_coin_info = 1;
+}
+
+message StableMarketContract {
+    bytes owner_address = 1;
+    bytes to_address = 2;
+    string source_token_id = 3;
+    string dest_token_id = 4;
+    int64 amount = 5;
+}
+
+message ExchangeResult {
+    string sourceToken = 1;
+    string destToken = 2;
+    int64 offerAmount = 3;
+    int64 askAmount = 4;
+    string spread = 5;
+    string exchangeRate = 6;
+}

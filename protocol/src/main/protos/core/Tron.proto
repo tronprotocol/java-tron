@@ -402,9 +402,9 @@ message Transaction {
       ShieldedTransferContract = 51;
       MarketSellAssetContract = 52;
       MarketCancelOrderContract = 53;
-
       DelegateFeedConsentContract = 54;
       OracleExchangeRateVoteContract = 55;
+      StableMarketContract = 56;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

@@ -296,6 +296,19 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private OracleExchangeRateVoteServlet oracleExchangeRateVoteServlet;
 
+  @Autowired
+  private GetBasePoolServlet getBasePoolServlet;
+  @Autowired
+  private GetMinSpreadServlet getMinSpreadServlet;
+  @Autowired
+  private GetSimulateSwapServlet getSimulateSwapServlet;
+  @Autowired
+  private GetStableCoinInfoListServlet getStableCoinInfoListServlet;
+  @Autowired
+  private GetStableCoinInfoServlet getStableCoinInfoServlet;
+  @Autowired
+  private GetPoolRecoveryPeriodServlet getPoolRecoveryPeriodServlet;
+
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
@@ -546,6 +559,17 @@ public class FullNodeHttpApiService implements Service {
               "/wallet/delegatefeedconsent");
       context.addServlet(new ServletHolder(oracleExchangeRateVoteServlet),
               "/wallet/oracleexchangeratevote");
+
+      // stable market
+      context.addServlet(new ServletHolder(getBasePoolServlet), "/wallet/getbasepool");
+      context.addServlet(new ServletHolder(getMinSpreadServlet), "/wallet/getminspread");
+      context.addServlet(new ServletHolder(getSimulateSwapServlet), "/wallet/getsimulateswap");
+      context.addServlet(new ServletHolder(getStableCoinInfoListServlet),
+          "/wallet/getstablecoininfolist");
+      context.addServlet(new ServletHolder(getStableCoinInfoServlet),
+          "/wallet/getstablecoininfo");
+      context.addServlet(new ServletHolder(getPoolRecoveryPeriodServlet),
+          "/wallet/getpoolrecoveryperiod");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

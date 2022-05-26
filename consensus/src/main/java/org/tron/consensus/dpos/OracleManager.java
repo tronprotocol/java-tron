@@ -362,7 +362,7 @@ public class OracleManager {
   private List<DecCoin> mulDec(List<DecCoin> periodRewards, Dec d) {
     List<DecCoin> result = new ArrayList<>();
     periodRewards.forEach(newDecCoin -> {
-      DecCoin decCoin = new DecCoin(newDecCoin.denom, newDecCoin.amount.mul(d));
+      DecCoin decCoin = new DecCoin(newDecCoin.decDenom, newDecCoin.decAmount.mul(d));
       if (!decCoin.isZero()) {
         result.add(decCoin);
       }
@@ -372,10 +372,10 @@ public class OracleManager {
 
   private void truncateDecimal(List<DecCoin> decCoins, List<Coin> truncatedCoins, List<DecCoin> changeCoins) {
     decCoins.forEach(decCoin -> {
-      BigInteger truncated = decCoin.amount.truncateBigInt();
-      Dec change = decCoin.amount.sub(Dec.newDec(truncated));
-      Coin truncatedCoin = new Coin(decCoin.denom, truncated);
-      DecCoin changeCoin = new DecCoin(decCoin.denom, change);
+      BigInteger truncated = decCoin.decAmount.truncateBigInt();
+      Dec change = decCoin.decAmount.sub(Dec.newDec(truncated));
+      Coin truncatedCoin = new Coin(decCoin.decDenom, truncated);
+      DecCoin changeCoin = new DecCoin(decCoin.decDenom, change);
       if (!truncatedCoin.isZero()) {
         truncatedCoins.add(truncatedCoin);
       }
@@ -404,16 +404,16 @@ public class OracleManager {
   }
 
   private static class DecCoin {
-    String denom;
-    Dec amount;
+    String decDenom;
+    Dec decAmount;
 
     private boolean isZero() {
-      return this.amount.isZero();
+      return this.decAmount.isZero();
     }
 
     public DecCoin(String denom, Dec amount) {
-      this.denom = denom;
-      this.amount = amount;
+      this.decDenom = denom;
+      this.decAmount = amount;
     }
   }
 
