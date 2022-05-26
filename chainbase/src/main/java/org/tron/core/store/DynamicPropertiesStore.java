@@ -2405,10 +2405,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void setAllowAccountAssetOptimization(long value) {
-    long allowAssetOptimization = getAllowAssetOptimization();
-    if (allowAssetOptimization != 1) {
-      this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
-    }
+    this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   // 1: enable
