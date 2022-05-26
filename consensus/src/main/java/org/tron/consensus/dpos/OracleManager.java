@@ -1,26 +1,45 @@
 package org.tron.consensus.dpos;
 
 import com.google.protobuf.ByteString;
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.Dec;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.DecOracleRewardCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.service.MortgageService;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.OracleStore;
 import org.tron.protos.Protocol;
+
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL;
 
 
 @Slf4j(topic = "consensus")
 @Component
 public class OracleManager {
+
+  @Autowired
+  private DynamicPropertiesStore dynamicPropertiesStore;
+
+  @Autowired
+  private OracleStore oracleStore;
+
+  @Autowired
+  private MortgageService mortgageService;
 
   static class ExchangeRateData implements Comparable<ExchangeRateData> {
     private final ByteString srAddress;
@@ -142,6 +161,10 @@ public class OracleManager {
         }
       });
 
+      //payout sr rewards
+      long rewardDistributionWindow = dynamicPropertiesStore.getOracleRewardDistributionWindow();
+      rewardBallotWinners(votePeriod, rewardDistributionWindow, supportAssets, srMap);
+
       // 5. post-processing, clear vote info, update tobin tax
       oracleStore.clearPrevoteAndVotes(blockNum, votePeriod);
       // TODO replace first param with proposal tobin list
@@ -237,12 +260,185 @@ public class OracleManager {
   }
 
   private Dec tally(List<ExchangeRateData> voteList, Map<ByteString, Claim> srClaim) {
-    // TODO add reward process
+    if (CollectionUtils.isEmpty(voteList)) {
+      return Dec.zeroDec();
+    }
+    Dec rewardBand = Dec.newDecWithPrec(dynamicPropertiesStore.getOracleRewardBand(), 6);
+
+    Dec weightedMedian = getWeightedMedian(voteList);
+    if (weightedMedian.eq(Dec.zeroDec())) {
+      return Dec.zeroDec();
+    }
+
+    Dec standardDeviation = getStandardDeviation(voteList, weightedMedian);
+    if (standardDeviation.eq(Dec.zeroDec())) {
+      return Dec.zeroDec();
+    }
+    Dec rewardSpread = weightedMedian.mul(rewardBand.quo(2));
+
+    if (standardDeviation.gt(rewardSpread)) {
+      rewardSpread = standardDeviation;
+    }
+
+    for (ExchangeRateData exchange : voteList) {
+      // Filter ballot winners & abstain voters
+      if (exchange.exchangeRate.gte(weightedMedian.sub(rewardSpread))
+          && exchange.exchangeRate.lte(weightedMedian.add(rewardSpread)) || !exchange.exchangeRate.isPositive()) {
+        Claim claim = srClaim.get(exchange.srAddress);
+        claim.weight += exchange.vote;
+        claim.winCount++;
+        srClaim.put(exchange.srAddress, claim);
+      }
+    }
+
     srClaim.forEach((sr, claim) -> logger.debug(
         "sr=" + claim.srAddress.toString()
             + ", weight=" + claim.weight
             + " win=" + claim.winCount));
     return getWeightedMedian(voteList);
+  }
+
+  private void rewardBallotWinners(long votePeriod, long rewardDistributionWindow, Map<String, Dec> voteTargets,
+                                   Map<ByteString, Claim> ballotWinners) {
+    List<String> rewardDenoms = new ArrayList<>();
+    rewardDenoms.add(TRX_SYMBOL);
+    voteTargets.forEach((name, dec) -> {
+      rewardDenoms.add(name);
+    });
+
+    AtomicLong ballotPowerSum = new AtomicLong(0L);
+    ballotWinners.forEach((srAddress, claim) -> {
+      ballotPowerSum.addAndGet(claim.weight);
+    });
+
+    if (0L == ballotPowerSum.get()) {
+      return;
+    }
+
+    Dec distributionRatio = Dec.newDec(votePeriod).quo(rewardDistributionWindow);
+
+    List<DecCoin> periodRewards = new ArrayList<>();
+    DecOracleRewardCapsule decOracleRewardCapsule = oracleStore.getOracleRewardPool();
+    rewardDenoms.forEach(denom -> {
+      Dec rewardPool = getRewardPool(denom, decOracleRewardCapsule);
+      if (rewardPool.isZero()) {
+        return;
+      }
+      periodRewards.add(new DecCoin(denom, rewardPool.mul(distributionRatio)));
+    });
+
+    ballotWinners.forEach((srAddress, claim) -> {
+      //check validator status TODO
+      byte[] receiverVal = srAddress.toByteArray();
+
+      // Reflects contribution
+      List<DecCoin> decCoins = mulDec(periodRewards, Dec.newDec(claim.weight).quo(ballotPowerSum.get()));
+      List<Coin> rewardCoins = new ArrayList<>();
+      List<DecCoin> changeCoins = new ArrayList<>();
+      truncateDecimal(decCoins, rewardCoins, changeCoins);
+
+      // In case absence of the validator, we just skip distribution
+      if (null != receiverVal && !rewardCoins.isEmpty()) {
+        DecOracleRewardCapsule srOracleReward = oracleRewardFromCoins(rewardCoins);
+        mortgageService.payOracleReward(receiverVal, srOracleReward);
+        oracleStore.addOracleRewardPool(srOracleReward);
+      }
+    });
+  }
+
+  private Dec getRewardPool(String denom, DecOracleRewardCapsule decOracleRewardCapsule) {
+    if (TRX_SYMBOL.equals(denom)) {
+      return decOracleRewardCapsule.getBalance();
+    }
+    if (!decOracleRewardCapsule.getAsset().containsKey(denom)) {
+      return Dec.zeroDec();
+    }
+    return decOracleRewardCapsule.getAsset().get(denom);
+  }
+
+  private DecOracleRewardCapsule oracleRewardFromCoins(List<Coin> rewardCoins) {
+    BigInteger balance = BigInteger.ZERO;
+    Map<String, BigInteger> asset = new HashMap<>();
+    for (Coin coin : rewardCoins) {
+      if (TRX_SYMBOL.equals(coin.denom)) {
+        balance = balance.add(coin.amount);
+        continue;
+      }
+      asset.put(coin.denom, coin.amount);
+    }
+    return new DecOracleRewardCapsule(balance, asset);
+  }
+
+  private List<DecCoin> mulDec(List<DecCoin> periodRewards, Dec d) {
+    List<DecCoin> result = new ArrayList<>();
+    periodRewards.forEach(newDecCoin -> {
+      DecCoin decCoin = new DecCoin(newDecCoin.decDenom, newDecCoin.decAmount.mul(d));
+      if (!decCoin.isZero()) {
+        result.add(decCoin);
+      }
+    });
+    return result;
+  }
+
+  private void truncateDecimal(List<DecCoin> decCoins, List<Coin> truncatedCoins, List<DecCoin> changeCoins) {
+    decCoins.forEach(decCoin -> {
+      BigInteger truncated = decCoin.decAmount.truncateBigInt();
+      Dec change = decCoin.decAmount.sub(Dec.newDec(truncated));
+      Coin truncatedCoin = new Coin(decCoin.decDenom, truncated);
+      DecCoin changeCoin = new DecCoin(decCoin.decDenom, change);
+      if (!truncatedCoin.isZero()) {
+        truncatedCoins.add(truncatedCoin);
+      }
+      if (!changeCoin.isZero()) {
+        changeCoins.add(changeCoin);
+      }
+    });
+  }
+
+  private Dec getStandardDeviation(List<ExchangeRateData> sortedVoteList, Dec weightedMedian) {
+    if (CollectionUtils.isEmpty(sortedVoteList)) {
+      return Dec.zeroDec();
+    }
+
+    Dec sum = Dec.zeroDec();
+    for (ExchangeRateData exchangeRate : sortedVoteList) {
+      Dec deviation = exchangeRate.exchangeRate.sub(weightedMedian);
+      sum = sum.add(deviation.mul(deviation));
+    }
+
+    Dec variance = sum.quo(sortedVoteList.size());
+
+    double floatNum = variance.parseDouble();
+    double sqrtNum = Math.sqrt(floatNum);
+    return Dec.newDec(String.valueOf(sqrtNum));
+  }
+
+  private static class DecCoin {
+    private String decDenom;
+    private Dec decAmount;
+
+    private boolean isZero() {
+      return this.decAmount.isZero();
+    }
+
+    public DecCoin(String decDenom, Dec decAmount) {
+      this.decDenom = decDenom;
+      this.decAmount = decAmount;
+    }
+  }
+
+  private static class Coin {
+    private String denom;
+    private BigInteger amount;
+
+    private boolean isZero() {
+      return amount.equals(BigInteger.ZERO);
+    }
+
+    public Coin(String denom, BigInteger amount) {
+      this.denom = denom;
+      this.amount = amount;
+    }
   }
 
 }

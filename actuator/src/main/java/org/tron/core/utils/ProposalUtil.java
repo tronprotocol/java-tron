@@ -698,6 +698,28 @@ public class ProposalUtil {
         }
         break;
       }
+      case ORACLE_REWARD_BAND: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ORACLE_REWARD_BAND]");
+        }
+        if (value < 0 || value > 1_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value, valid range is [0, 1_000_000L]");
+        }
+        break;
+      }
+      case ORACLE_REWARD_DISTRIBUTION_WINDOW: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ORACLE_REWARD_DISTRIBUTION_WINDOW]");
+        }
+        if (value < 0 || value > 1_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -772,6 +794,8 @@ public class ProposalUtil {
     BASE_POOL(73),
     POOL_RECOVERY_PERIOD(74),
     MIN_SPREAD(75),
+    ORACLE_REWARD_BAND(76),
+    ORACLE_REWARD_DISTRIBUTION_WINDOW(77), // 70000, [0, 1000000]
     STABLE_USDD(100),
     USDD_TOBIN_FEE(101);
 

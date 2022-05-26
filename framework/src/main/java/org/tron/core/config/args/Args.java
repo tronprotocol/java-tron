@@ -867,6 +867,14 @@ public class Args extends CommonParameter {
             .hasPath(Constant.ALLOW_STABLE_MARKET_ON) ? config
             .getInt(Constant.ALLOW_STABLE_MARKET_ON) : 0;
 
+    PARAMETER.rewardBand = config
+        .hasPath(Constant.ORACLE_REWARD_BAND) ? config
+        .getInt(Constant.ORACLE_REWARD_BAND) : 70000;
+
+    PARAMETER.rewardDistributionWindow = config
+        .hasPath(Constant.ORACLE_REWARD_DISTRIBUTION_WINDOW) ? config
+        .getInt(Constant.ORACLE_REWARD_DISTRIBUTION_WINDOW) : 10512000;
+
 
 
     PARAMETER.disabledApiList =
