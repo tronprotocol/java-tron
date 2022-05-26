@@ -7,10 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.common.WrappedByteArray;
-import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.protos.Protocol;
 
 import java.util.HashMap;
@@ -51,8 +49,8 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
     }
   }
 
-  public void deleteAccount(SnapshotRoot accountSnapshotRoot, byte[] key) {
-    Map<byte[], byte[]> assets = getDeletedAssets(accountSnapshotRoot, key);
+  public void deleteAccount(byte[] key) {
+    Map<byte[], byte[]> assets = getDeletedAssets(key);
     if (!assets.isEmpty()) {
       updateByBatch(assets);
     }
@@ -71,14 +69,9 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
     return assets;
   }
 
-  public Map<byte[], byte[]> getDeletedAssets(SnapshotRoot accountSnapshotRoot, byte[] key) {
+  public Map<byte[], byte[]> getDeletedAssets(byte[] key) {
     Map<byte[], byte[]> assets = new HashMap<>();
-    byte[] value = accountSnapshotRoot.get(key);
-    if (value != null && value.length > 0) {
-      AccountCapsule item = new AccountCapsule(value);
-      new AccountCapsule(value).getAssetMapV2().keySet().forEach(assetKey ->
-              assets.put(Bytes.concat(item.createDbKey(), assetKey.getBytes()), null));
-    }
+    prefixQuery(key).forEach((k, v) -> assets.put(k.getBytes(), null));
     return assets;
   }
 

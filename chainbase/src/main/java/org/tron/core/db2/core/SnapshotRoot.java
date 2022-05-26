@@ -59,7 +59,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   @Override
   public void remove(byte[] key) {
     if (needOptAsset()) {
-      ChainBaseManager.getInstance().getAccountAssetStore().deleteAccount(this, key);
+      ChainBaseManager.getInstance().getAccountAssetStore().deleteAccount(key);
     }
     db.remove(key);
   }
@@ -101,7 +101,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
     batch.forEach((k, v) -> {
       if (ByteArray.isEmpty(v.getBytes())) {
         accounts.put(k, v);
-        assets.putAll(assetStore.getDeletedAssets(this, k.getBytes()));
+        assets.putAll(assetStore.getDeletedAssets(k.getBytes()));
       } else {
         AccountCapsule item = new AccountCapsule(v.getBytes());
         assets.putAll(assetStore.getAssets(item.getInstance()));

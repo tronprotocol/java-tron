@@ -123,7 +123,7 @@ public class AccountStoreTest {
     accountCapsule.reduceAssetAmountV2("100".getBytes(), 1,
             dynamicPropertiesStore, assetIssueStore);
     accountCapsule = saveAccount(accountCapsule);
-    assertEquals(2, accountCapsule.getAssetMapV2().size());
+    assertEquals(1, accountCapsule.getAssetMapV2().size());
     assertEquals(0, accountCapsule.getAssetV2("100"));
     assertEquals(1, accountCapsule.getAssetV2("200"));
     assertEquals(0, accountCapsule.getAssetV2("300"));
