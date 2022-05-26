@@ -114,6 +114,7 @@ import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
+import org.tron.core.utils.StableMarketUtil;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -170,6 +171,10 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoList;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 import org.tron.protos.contract.WitnessContract.UnjailWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
@@ -211,6 +216,9 @@ public class RpcApiService implements Service {
 
   @Autowired
   private MetricsApiService metricsApiService;
+
+  @Autowired
+  private StableMarketUtil stableMarketUtil;
 
   @Getter
   private final DatabaseApi databaseApi = new DatabaseApi();
@@ -405,125 +413,6 @@ public class RpcApiService implements Service {
         Thread.currentThread().interrupt();
       }
     }
-  }
-
-  public void generateAddressCommon(
-      EmptyMessage request,
-      StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
-    byte[] priKey = cryptoEngine.getPrivateKey();
-    byte[] address = cryptoEngine.getAddress();
-    String addressStr = StringUtil.encode58Check(address);
-    String priKeyStr = Hex.encodeHexString(priKey);
-    AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
-    builder.setAddress(addressStr);
-    builder.setPrivateKey(priKeyStr);
-    responseObserver.onNext(builder.build());
-    responseObserver.onCompleted();
-  }
-
-  public void getRewardInfoCommon(BytesMessage request,
-                                  StreamObserver<NumberMessage> responseObserver) {
-    try {
-      long value = dbManager.getMortgageService().queryReward(request.getValue().toByteArray());
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(value);
-      responseObserver.onNext(builder.build());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
-  }
-
-  public void getOracleRewardInfoCommon(BytesMessage request,
-                                        StreamObserver<OracleReward> responseObserver) {
-    try {
-      responseObserver.onNext(dbManager.getMortgageService()
-          .queryOracleReward(request.getValue().toByteArray()).getInstance());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
-  }
-
-  public void getBurnTrxCommon(EmptyMessage request,
-                               StreamObserver<NumberMessage> responseObserver) {
-    try {
-      long value = dbManager.getDynamicPropertiesStore().getBurnTrxAmount();
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(value);
-      responseObserver.onNext(builder.build());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
-  }
-
-  public void getBrokerageInfoCommon(BytesMessage request,
-                                     StreamObserver<NumberMessage> responseObserver) {
-    try {
-      long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
-      long value = dbManager.getDelegationStore()
-          .getBrokerage(cycle, request.getValue().toByteArray());
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(value);
-      responseObserver.onNext(builder.build());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
-  }
-
-  public void getTransactionCountByBlockNumCommon(NumberMessage request,
-                                                  StreamObserver<NumberMessage> responseObserver) {
-    NumberMessage.Builder builder = NumberMessage.newBuilder();
-    try {
-      Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
-      builder.setNum(block.getTransactionsCount());
-    } catch (StoreException e) {
-      logger.error(e.getMessage());
-      builder.setNum(-1);
-    }
-    responseObserver.onNext(builder.build());
-    responseObserver.onCompleted();
-  }
-
-  public void getTransactionFromPendingCommon(BytesMessage request,
-                                              StreamObserver<Transaction> responseObserver) {
-    try {
-      String txId = ByteArray.toHexString(request.getValue().toByteArray());
-      TransactionCapsule transactionCapsule = dbManager.getTxFromPending(txId);
-      responseObserver.onNext(transactionCapsule == null ? null : transactionCapsule.getInstance());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
-  }
-
-  public void getTransactionListFromPendingCommon(
-      EmptyMessage request,
-      StreamObserver<TransactionIdList> responseObserver) {
-    try {
-      TransactionIdList.Builder builder = TransactionIdList.newBuilder();
-      builder.addAllTxId(dbManager.getTxListFromPending());
-      responseObserver.onNext(builder.build());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
-  }
-
-  public void getPendingSizeCommon(EmptyMessage request,
-                                   StreamObserver<NumberMessage> responseObserver) {
-    try {
-      NumberMessage.Builder builder = NumberMessage.newBuilder();
-      builder.setNum(dbManager.getPendingSize());
-      responseObserver.onNext(builder.build());
-    } catch (Exception e) {
-      responseObserver.onError(e);
-    }
-    responseObserver.onCompleted();
   }
 
   /**
@@ -1044,6 +933,42 @@ public class RpcApiService implements Service {
       }
 
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getStableCoinById(BytesMessage request,
+                                  StreamObserver<StableCoinInfo> responseObserver) {
+      getStableCoinByIdCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getStableCoinList(EmptyMessage request,
+                                  StreamObserver<StableCoinInfoList> responseObserver) {
+      getStableCoinListCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getMinSpread(EmptyMessage request,
+                             StreamObserver<BytesMessage> responseObserver) {
+      getMinSpreadCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getBasePoolSize(EmptyMessage request,
+                                StreamObserver<BytesMessage> responseObserver) {
+      getBasePoolSizeCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getPoolRecoveryPeriod(EmptyMessage request,
+                                      StreamObserver<BytesMessage> responseObserver) {
+      getPoolRecoveryPeriodCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getSimulateSwap(StableMarketContract request,
+                                StreamObserver<ExchangeResult> responseObserver) {
+      getSimulateSwapCommon(request, responseObserver);
     }
   }
 
@@ -2835,6 +2760,42 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getStableCoinById(BytesMessage request,
+                                  StreamObserver<StableCoinInfo> responseObserver) {
+      getStableCoinByIdCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getStableCoinList(EmptyMessage request,
+                                  StreamObserver<StableCoinInfoList> responseObserver) {
+      getStableCoinListCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getMinSpread(EmptyMessage request,
+                                  StreamObserver<BytesMessage> responseObserver) {
+      getMinSpreadCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getBasePoolSize(EmptyMessage request,
+                             StreamObserver<BytesMessage> responseObserver) {
+      getBasePoolSizeCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getPoolRecoveryPeriod(EmptyMessage request,
+                                StreamObserver<BytesMessage> responseObserver) {
+      getPoolRecoveryPeriodCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getSimulateSwap(StableMarketContract request,
+                                StreamObserver<ExchangeResult> responseObserver) {
+      getSimulateSwapCommon(request, responseObserver);
+    }
+
+    @Override
     public void delegateFeedConsent(DelegateFeedConsentContract request,
                                     StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.DelegateFeedConsentContract,
@@ -2859,4 +2820,198 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
   }
+
+  public void generateAddressCommon(EmptyMessage request,
+      StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
+    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+        Args.getInstance().isECKeyCryptoEngine());
+    byte[] priKey = cryptoEngine.getPrivateKey();
+    byte[] address = cryptoEngine.getAddress();
+    String addressStr = StringUtil.encode58Check(address);
+    String priKeyStr = Hex.encodeHexString(priKey);
+    AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
+    builder.setAddress(addressStr);
+    builder.setPrivateKey(priKeyStr);
+    responseObserver.onNext(builder.build());
+    responseObserver.onCompleted();
+  }
+
+  public void getRewardInfoCommon(BytesMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      long value = dbManager.getMortgageService().queryReward(request.getValue().toByteArray());
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(value);
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getOracleRewardInfoCommon(BytesMessage request,
+                                        StreamObserver<OracleReward> responseObserver) {
+    try {
+      responseObserver.onNext(dbManager.getMortgageService()
+          .queryOracleReward(request.getValue().toByteArray()).getInstance());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getBurnTrxCommon(EmptyMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      long value = dbManager.getDynamicPropertiesStore().getBurnTrxAmount();
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(value);
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getBrokerageInfoCommon(BytesMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
+      long value = dbManager.getDelegationStore()
+          .getBrokerage(cycle, request.getValue().toByteArray());
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(value);
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getTransactionCountByBlockNumCommon(NumberMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    try {
+      Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
+      builder.setNum(block.getTransactionsCount());
+    } catch (StoreException e) {
+      logger.error(e.getMessage());
+      builder.setNum(-1);
+    }
+    responseObserver.onNext(builder.build());
+    responseObserver.onCompleted();
+  }
+
+  public void getTransactionFromPendingCommon(BytesMessage request,
+      StreamObserver<Transaction> responseObserver) {
+    try {
+      String txId = ByteArray.toHexString(request.getValue().toByteArray());
+      TransactionCapsule transactionCapsule = dbManager.getTxFromPending(txId);
+      responseObserver.onNext(transactionCapsule == null ? null : transactionCapsule.getInstance());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getTransactionListFromPendingCommon(EmptyMessage request,
+      StreamObserver<TransactionIdList> responseObserver) {
+    try {
+      TransactionIdList.Builder builder = TransactionIdList.newBuilder();
+      builder.addAllTxId(dbManager.getTxListFromPending());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getPendingSizeCommon(EmptyMessage request,
+      StreamObserver<NumberMessage> responseObserver) {
+    try {
+      NumberMessage.Builder builder = NumberMessage.newBuilder();
+      builder.setNum(dbManager.getPendingSize());
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getStableCoinByIdCommon(BytesMessage request,
+                                StreamObserver<StableCoinInfo> responseObserver) {
+    try {
+      StableCoinInfo stableCoinInfo =
+          dbManager.getStableMarketStore().getStableCoinById(request.toByteArray());
+      responseObserver.onNext(stableCoinInfo);
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getStableCoinListCommon(EmptyMessage request,
+                                StreamObserver<StableCoinInfoList> responseObserver) {
+    try {
+      StableCoinInfoList stableCoinInfoList = wallet.getStableCoinList();
+      responseObserver.onNext(stableCoinInfoList);
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getMinSpreadCommon(EmptyMessage request,
+                           StreamObserver<BytesMessage> responseObserver) {
+    try {
+      BytesMessage.Builder builder = BytesMessage.newBuilder();
+      String spread = wallet.getMinSpread();
+      builder.setValue(ByteString.copyFrom(spread.getBytes()));
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getBasePoolSizeCommon(EmptyMessage request,
+                              StreamObserver<BytesMessage> responseObserver) {
+    try {
+      BytesMessage.Builder builder = BytesMessage.newBuilder();
+      String basePool = wallet.getBasePoolSize();
+      builder.setValue(ByteString.copyFrom(basePool.getBytes()));
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getPoolRecoveryPeriodCommon(EmptyMessage request,
+                                    StreamObserver<BytesMessage> responseObserver) {
+    try {
+      BytesMessage.Builder builder = BytesMessage.newBuilder();
+      long poolRecoveryPeriod = wallet.getPoolRecoveryPeriod();
+      builder.setValue(ByteString.copyFrom(ByteArray.fromLong(poolRecoveryPeriod)));
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
+  public void getSimulateSwapCommon(StableMarketContract request,
+                              StreamObserver<ExchangeResult> responseObserver) {
+    try {
+      byte[] sourceToken = request.getSourceTokenId().getBytes();
+      byte[] destToken = request.getSourceTokenId().getBytes();
+      long amount = request.getAmount();
+      ExchangeResult result = wallet.getSimulateSwap(sourceToken, destToken, amount);
+      responseObserver.onNext(result);
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
+  }
+
 }

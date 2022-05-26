@@ -635,11 +635,66 @@ public class ProposalUtil {
       case ALLOW_STABLE_MARKET_ON: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
-                  "Bad chain parameter id [ALLOW_STABLE_MARKET_ON]");
+              "Bad chain parameter id [ALLOW_STABLE_MARKET_ON]");
         }
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
-                  "This value[ALLOW_STABLE_MARKET_ON] is only allowed to be  or 0");
+              "This value[ALLOW_STABLE_MARKET_ON] is only allowed to be  or 0");
+        }
+        break;
+      }
+      case BASE_POOL: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [BASE_POOL]");
+        }
+        if (value < 0) {
+          throw new ContractValidateException(
+              "This value[BASE_POOL] is must greater than 0");
+        }
+        break;
+      }
+      case POOL_RECOVERY_PERIOD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [POOL_RECOVERY_PERIOD]");
+        }
+        if (value < 0) {
+          throw new ContractValidateException(
+              "This value[POOL_RECOVERY_PERIOD] is must greater than 0");
+        }
+        break;
+      }
+      case MIN_SPREAD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [MIN_SPREAD]");
+        }
+        if (value < 0) {
+          throw new ContractValidateException(
+              "This value[MIN_SPREAD] is must greater than 0");
+        }
+        break;
+      }
+      case STABLE_USDD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [STABLE_USDD]");
+        }
+        if (value != 0) {   // todo: change 0 to the USDD token id
+          throw new ContractValidateException(
+              "This value[STABLE_USDD] is equal to USDD token id");
+        }
+        break;
+      }
+      case USDD_TOBIN_FEE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [TOBIN_FEE]");
+        }
+        if (value < 0) {
+          throw new ContractValidateException(
+              "This value[TOBIN_FEE] is must greater than 0");
         }
         break;
       }
@@ -713,7 +768,12 @@ public class ProposalUtil {
     JAIL_DURATION(69), // 200, [0,1_000_000_000]
     UPDATE_SLASH_WINDOW(70), // 28, [0,1_000_000_000]
     UPDATE_SLASH_FRACTION(71), // 10, [0,100_000]
-    UPDATE_MIN_VALID_PER_WINDOW(72); // 5, [0,100]
+    UPDATE_MIN_VALID_PER_WINDOW(72), // 5, [0,100]
+    BASE_POOL(73),
+    POOL_RECOVERY_PERIOD(74),
+    MIN_SPREAD(75),
+    STABLE_USDD(100),
+    USDD_TOBIN_FEE(101);
 
     private long code;
 

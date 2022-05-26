@@ -62,6 +62,7 @@ import org.tron.core.store.NullifierStore;
 import org.tron.core.store.OracleStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.SectionBloomStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.TransactionHistoryStore;
 import org.tron.core.store.TransactionRetStore;
@@ -217,6 +218,10 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private AccountTraceStore accountTraceStore;
+
+  @Autowired
+  @Getter
+  private StableMarketStore stableMarketStore;
 
   @Getter
   private ForkController forkController = ForkController.instance();

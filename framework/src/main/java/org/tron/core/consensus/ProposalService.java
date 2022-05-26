@@ -2,6 +2,8 @@ package org.tron.core.consensus;
 
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.entity.Dec;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
@@ -313,9 +315,36 @@ public class ProposalService extends ProposalUtil {
         }
         case ALLOW_STABLE_MARKET_ON: {
           manager.getDynamicPropertiesStore().saveAllowStableMarketOn(entry.getValue());
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+              ContractType.StableMarketContract_VALUE);
           if (entry.getValue() == 1) {
             manager.getDynamicPropertiesStore().saveAllowSlashVote(1);
             manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
+          }
+          // todo: init other genesis params
+          break;
+        }
+        case BASE_POOL: {
+          manager.getStableMarketStore().setBasePool(Dec.newDec(entry.getValue()));
+          break;
+        }
+        case POOL_RECOVERY_PERIOD: {
+          manager.getStableMarketStore().setPoolRecoveryPeriod(entry.getValue());
+          break;
+        }
+        case MIN_SPREAD: {
+          manager.getStableMarketStore().setMinSpread(Dec.newDec(entry.getValue()));
+          break;
+        }
+        case STABLE_USDD: {
+          manager.getStableMarketStore().setStableCoin(ByteArray.fromLong(entry.getValue()), 0);
+          break;
+        }
+        case USDD_TOBIN_FEE: {
+          // todo: replace usdd to the real token id
+          byte[] tokenId = "usdd".getBytes();
+          if (manager.getStableMarketStore().getStableCoinById(tokenId) != null) {
+            manager.getStableMarketStore().setTobinFee(tokenId, entry.getValue());
           }
           break;
         }
