@@ -969,7 +969,7 @@ public class AccountPermissionUpdateActuatorTest {
     // and you will get the value from the output,
     // then update the value to checkAvailableContractType
     // and checkActiveDefaultOperations
-    String validContractType = "7fff1fc0037ef800000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037ef801000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -997,7 +997,7 @@ public class AccountPermissionUpdateActuatorTest {
     // 7fff1fc0033e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract
     // type
-    String validContractType = "7fff1fc0033ef800000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033ef801000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1021,7 +1021,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkAvailableContractType() {
-    String validContractType = "7fff1fc0037ef900000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037ef901000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1043,7 +1043,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkActiveDefaultOperations() {
-    String validContractType = "7fff1fc0033ef900000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033ef901000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
