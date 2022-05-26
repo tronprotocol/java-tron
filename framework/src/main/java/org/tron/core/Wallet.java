@@ -186,6 +186,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.StableMarketUtil;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -230,6 +231,7 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.StableMarketContractOuterClass;
 
 @Slf4j
 @Component
@@ -264,6 +266,9 @@ public class Wallet {
 
   @Autowired
   private ChainBaseManager chainBaseManager;
+
+  @Autowired
+  private StableMarketUtil stableMarketUtil;
 
   @Autowired
   private NodeManager nodeManager;
@@ -3985,6 +3990,32 @@ public class Wallet {
     }
 
     return false;
+  }
+
+  public StableMarketContractOuterClass.StableCoinInfo getStableCoinById(byte[] tokenId) {
+    return dbManager.getStableMarketStore().getStableCoinById(tokenId);
+  }
+
+  public StableMarketContractOuterClass.StableCoinInfoList getStableCoinList() {
+    return dbManager.getStableMarketStore().getStableCoinList();
+
+  }
+
+  public String getMinSpread() {
+    return dbManager.getStableMarketStore().getMinSpread().toString();
+  }
+
+  public String getBasePoolSize() {
+    return dbManager.getStableMarketStore().getBasePool().toString();
+  }
+
+  public long getPoolRecoveryPeriod() {
+    return dbManager.getStableMarketStore().getPoolRecoveryPeriod();
+  }
+
+  public StableMarketContractOuterClass.ExchangeResult getSimulateSwap(
+      byte[] sourceToken, byte[] destToken, long amount) throws ContractExeException {
+    return stableMarketUtil.computeSwap(sourceToken, destToken, amount);
   }
 
   public Chainbase.Cursor getCursor() {

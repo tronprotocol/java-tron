@@ -59,6 +59,10 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoList;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableMarketContract;
 
 @Slf4j(topic = "API")
 public class RpcApiServiceOnSolidity implements Service {
@@ -496,6 +500,55 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getBurnTrx(EmptyMessage request, StreamObserver<NumberMessage> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getStableCoinById(BytesMessage request,
+                                  StreamObserver<StableCoinInfo> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getStableCoinById(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getStableCoinList(EmptyMessage request,
+                                  StreamObserver<StableCoinInfoList> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getStableCoinList(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getMinSpread(EmptyMessage request,
+                             StreamObserver<BytesMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getMinSpread(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getBasePoolSize(EmptyMessage request,
+                                StreamObserver<BytesMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBasePoolSize(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getPoolRecoveryPeriod(EmptyMessage request,
+                                      StreamObserver<BytesMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getPoolRecoveryPeriod(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getSimulateSwap(StableMarketContract request,
+                                StreamObserver<ExchangeResult> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getSimulateSwap(request, responseObserver)
       );
     }
 
