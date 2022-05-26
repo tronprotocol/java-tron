@@ -102,7 +102,7 @@ public class AccountStoreTest {
   @Test
   public void assetTest() {
 
-    dynamicPropertiesStore.setAllowAccountAssetOptimization(1);
+    dynamicPropertiesStore.setAllowAssetOptimization(1);
     dynamicPropertiesStore.saveAllowSameTokenName(1);
     AccountCapsule accountCapsule = new AccountCapsule(ByteString.copyFrom(address),
             ByteString.copyFrom(accountName),
