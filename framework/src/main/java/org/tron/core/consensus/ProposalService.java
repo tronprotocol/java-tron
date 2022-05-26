@@ -267,13 +267,17 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
           break;
         }
-        case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
-          manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
-          break;
-        }
+//        case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
+//          manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
+//          break;
+//        }
         case ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX: {
           manager.getDynamicPropertiesStore().saveAllowHigherLimitForMaxCpuTimeOfOneTx(
               entry.getValue());
+          break;
+        }
+        case ALLOW_ASSET_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
           break;
         }
         default:
