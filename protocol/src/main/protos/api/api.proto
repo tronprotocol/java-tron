@@ -12,6 +12,7 @@ import "core/contract/proposal_contract.proto";
 import "core/contract/storage_contract.proto";
 import "core/contract/exchange_contract.proto";
 import "core/contract/market_contract.proto";
+import "core/contract/oracle_contract.proto";
 import "core/contract/smart_contract.proto";
 import "core/contract/shield_contract.proto";
 
@@ -792,6 +793,27 @@ service Wallet {
 
   rpc GetPendingSize (EmptyMessage) returns (NumberMessage) {
   }
+
+  rpc DelegateFeedConsent (DelegateFeedConsentContract) returns (TransactionExtention) {
+    option (google.api.http) = {
+      post: "/wallet/delegatefeedconsent"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/delegatefeedconsent"
+      }
+    };
+  }
+
+  rpc OracleExchangeRateVote (OracleExchangeRateVoteContract) returns (TransactionExtention) {
+    option (google.api.http) = {
+      post: "/wallet/oracleexchangeratevote"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/oracleexchangeratevote"
+      }
+    };
+  }
+
 };
 
 service WalletSolidity {
@@ -1117,13 +1139,21 @@ message Address {
   int32 port = 2;
 }
 
+enum BlockType {
+  ALL = 0; // 0 for all block msg
+  HEADER = 1; //1 for block header;
+}
+
 message EmptyMessage {
+  BlockType type = 1;
 }
 message NumberMessage {
   int64 num = 1;
+  BlockType type = 2;
 }
 message BytesMessage {
   bytes value = 1;
+  BlockType type = 2;
 }
 message TimeMessage {
   int64 beginInMilliseconds = 1;
@@ -1132,6 +1162,7 @@ message TimeMessage {
 message BlockLimit {
   int64 startNum = 1;
   int64 endNum = 2;
+  BlockType type = 3;
 }
 message TransactionLimit {
   bytes transactionId = 1;

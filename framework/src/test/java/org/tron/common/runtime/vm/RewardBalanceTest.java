@@ -149,7 +149,7 @@ public class RewardBalanceTest extends VMTestBase {
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: rewardBalanceTest(address)
@@ -168,7 +168,7 @@ public class RewardBalanceTest extends VMTestBase {
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    Program program = new Program(null, programInvoke, rootInternalTransaction);
+    Program program = new Program(null, null, programInvoke, rootInternalTransaction);
     byte[] result = program.getRewardBalance(new DataWord(Base58.decode(nonexistentAccount)))
         .getData();
 
@@ -188,7 +188,7 @@ public class RewardBalanceTest extends VMTestBase {
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(new DataWord(Base58.decode(factoryAddressStr))).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -207,7 +207,7 @@ public class RewardBalanceTest extends VMTestBase {
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(new DataWord(Base58.decode(witnessAccount))).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -226,7 +226,7 @@ public class RewardBalanceTest extends VMTestBase {
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(DataWord.ZERO()).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -245,7 +245,7 @@ public class RewardBalanceTest extends VMTestBase {
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(new DataWord(Base58.decode(factoryAddressStr))).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");

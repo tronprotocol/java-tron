@@ -402,6 +402,9 @@ message Transaction {
       ShieldedTransferContract = 51;
       MarketSellAssetContract = 52;
       MarketCancelOrderContract = 53;
+
+      DelegateFeedConsentContract = 54;
+      OracleExchangeRateVoteContract = 55;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -626,6 +629,7 @@ enum ReasonCode {
   TIME_OUT = 0x20;
   CONNECT_FAIL = 0x21;
   TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
+  LIGHT_NODE_SYNC_FAIL = 0x23;
   UNKNOWN = 0xFF;
 }
 
@@ -647,6 +651,8 @@ message HelloMessage {
   BlockId headBlockId = 6;
   bytes address = 7;
   bytes signature = 8;
+  int32 nodeType = 9;
+  int64 lowestBlockNum = 10;
 }
 
 message InternalTransaction {
@@ -908,4 +914,16 @@ message PBFTCommitResult {
 
 message SRL {
   repeated bytes srAddress = 1;
+}
+
+message OraclePrevote {
+  bytes hash = 1;
+  int64 blockNum = 2;
+}
+
+message OracleVote {
+  string salt = 1;
+
+  // [assetID:trxExchangeRate,]assetID:trxExchangeRate
+  string exchangeRates = 2;
 }

@@ -146,7 +146,7 @@ public class IsSRCandidateTest extends VMTestBase {
             contractName, address, abi, factoryCode, value, fee, consumeUserResourcePercent, null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: isSRCandidateTest(address)
@@ -174,7 +174,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    Program program = new Program(null, programInvoke, rootInternalTransaction);
+    Program program = new Program(null, null, programInvoke, rootInternalTransaction);
     byte[] programResult = program.isSRCandidate(new DataWord(nonexistentAddr)).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),
@@ -201,7 +201,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     programResult = program.isSRCandidate(new DataWord(factoryAddress)).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),
@@ -230,7 +230,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     programResult = program.isSRCandidate(new DataWord(witnessAddr)).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),
@@ -258,7 +258,7 @@ public class IsSRCandidateTest extends VMTestBase {
             System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000,
             3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     programResult = program.isSRCandidate(new DataWord()).getData();
     Assert.assertEquals(
         Hex.toHexString(programResult),

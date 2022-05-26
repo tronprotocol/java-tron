@@ -77,7 +77,8 @@ public class DecTest {
         new Pair<>(Dec.newDec(2), 2,
             Dec.newDecWithPrec(1414213562373095049L, 18)),
         // 1.005 ^ (1/31536000) ≈ 1.00000000016
-        new Pair<>(Dec.newDecWithPrec(1005, 3), 31536000, Dec.newDec("1.000000000158153904")),
+        new Pair<>(Dec.newDecWithPrec(1005, 3), 31536000,
+            Dec.newDec("1.000000000158153904")),
         // 1e-18 ^ (0.5) => 1e-9
         new Pair<>(Dec.smallestDec(), 2, Dec.newDecWithPrec(1, 9)),
         // 1e-18 ^ (1/3) => 1e-6
@@ -139,19 +140,19 @@ public class DecTest {
   }
 
   @Test
-  public void TestTruncate() {
+  public void TestTruncateLong() {
 
     Stream.of(
-        new Pair<>(Dec.newDec("0"), 0),
-        new Pair<>(Dec.newDec("0.25"), 0),
-        new Pair<>(Dec.newDec("0.75"), 0),
-        new Pair<>(Dec.newDec("1"), 1),
-        new Pair<>(Dec.newDec("1.5"), 1),
-        new Pair<>(Dec.newDec("7.5"), 7),
-        new Pair<>(Dec.newDec("7.6"), 7),
-        new Pair<>(Dec.newDec("7.4"), 7),
-        new Pair<>(Dec.newDec("100.1"), 100),
-        new Pair<>(Dec.newDec("1000.1"), 1000)
+        new Pair<>(Dec.newDec("0"), 0L),
+        new Pair<>(Dec.newDec("0.25"), 0L),
+        new Pair<>(Dec.newDec("0.75"), 0L),
+        new Pair<>(Dec.newDec("1"), 1L),
+        new Pair<>(Dec.newDec("1.5"), 1L),
+        new Pair<>(Dec.newDec("7.5"), 7L),
+        new Pair<>(Dec.newDec("7.6"), 7L),
+        new Pair<>(Dec.newDec("7.4"), 7L),
+        new Pair<>(Dec.newDec("100.1"), 100L),
+        new Pair<>(Dec.newDec("1000000000000000000.1"), 1000000000000000000L)
     ).forEach(e -> {
       Assert.assertEquals(-1 * e.v, e.k.neg().truncateLong());
       Assert.assertEquals(e.v.longValue(), e.k.truncateLong());
@@ -160,18 +161,125 @@ public class DecTest {
 
 
   @Test
-  public void TestBankerRoundChop() {
+  public void TestQuoDec() {
+
     Stream.of(
-        new Pair<>(Dec.newDec("0.25"), 0),
-        new Pair<>(Dec.newDec("0"), 0),
-        new Pair<>(Dec.newDec("1"), 1),
-        new Pair<>(Dec.newDec("0.75"), 1),
-        new Pair<>(Dec.newDec("0.5"), 0),
-        new Pair<>(Dec.newDec("7.5"), 8),
-        new Pair<>(Dec.newDec("1.5"), 2),
-        new Pair<>(Dec.newDec("2.5"), 2),
-        new Pair<>(Dec.newDec("0.545"), 1),
-        new Pair<>(Dec.newDec("1.545"), 2)
+        new Pair<>(Dec.newDec("0"), Dec.newDec(1), Dec.zeroDec()),
+        new Pair<>(Dec.newDec("0.25"), Dec.newDec(2), Dec.newDec("0.125")),
+        new Pair<>(Dec.newDec("0.99"), Dec.newDecWithPrec(-1, 2), Dec.newDec("-99")),
+        new Pair<>(Dec.newDec("1"), Dec.newDec(10), Dec.newDecWithPrec(1, 1)),
+        new Pair<>(Dec.newDec("1.5"), Dec.newDec(3), Dec.newDecWithPrec(5, 1)),
+        new Pair<>(Dec.newDec("7.5"), Dec.newDecWithPrec(7, 2),
+            Dec.newDec("107.142857142857142857")),
+        new Pair<>(Dec.newDec("7.6"), Dec.newDec(20), Dec.newDec("0.38")),
+        new Pair<>(Dec.newDec("-7.4"), Dec.newDec(37), Dec.newDec("-0.2")),
+        new Pair<>(Dec.newDec("100.1"), Dec.newDec(100), Dec.newDec("1.001")),
+        new Pair<>(Dec.newDec("1000.1"), Dec.newDec(20), Dec.newDec("50.005"))
+    ).forEach(e -> {
+      Assert.assertTrue(e.k.mul(-1).quo(e.v).sub(e.s.neg()).abs().lte(Dec.smallestDec()));
+      Assert.assertTrue(e.k.quo(e.v).sub(e.s).abs().lte(Dec.smallestDec()));
+    });
+  }
+
+  @Test
+  public void TestQuoInt() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec("0"), 1, Dec.zeroDec()),
+        new Pair<>(Dec.newDec("0.25"), 2, Dec.newDec("0.125")),
+        new Pair<>(Dec.newDec("0.99"), -1, Dec.newDec("-0.99")),
+        new Pair<>(Dec.newDec("1"), 10, Dec.newDecWithPrec(1, 1)),
+        new Pair<>(Dec.newDec("1.5"), 3, Dec.newDecWithPrec(5, 1)),
+        new Pair<>(Dec.newDec("7.5"), -7, Dec.newDec("-1.071428571428571428")),
+        new Pair<>(Dec.newDec("7.6"), 20, Dec.newDec("0.38")),
+        new Pair<>(Dec.newDec("-7.4"), 37, Dec.newDec("-0.2")),
+        new Pair<>(Dec.newDec("100.1"), 100, Dec.newDec("1.001")),
+        new Pair<>(Dec.newDec("1000.1"), 20, Dec.newDec("50.005"))
+    ).forEach(e -> {
+      Assert.assertTrue(e.k.mul(-1).quo(e.v).sub(e.s.neg()).abs().lte(Dec.smallestDec()));
+      Assert.assertTrue(e.k.quo(e.v).sub(e.s).abs().lte(Dec.smallestDec()));
+    });
+  }
+
+  @Test
+  public void TestQuoLong() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec("0"), 1L, Dec.zeroDec()),
+        new Pair<>(Dec.newDec("0.25"), 2L, Dec.newDec("0.125")),
+        new Pair<>(Dec.newDec("0.99"), -1L, Dec.newDec("-0.99")),
+        new Pair<>(Dec.newDec("1"), 10L, Dec.newDecWithPrec(1, 1)),
+        new Pair<>(Dec.newDec("1.5"), 3L, Dec.newDecWithPrec(5, 1)),
+        new Pair<>(Dec.newDec("7.5"), -7L, Dec.newDec("-1.071428571428571428")),
+        new Pair<>(Dec.newDec("7.6"), 20L, Dec.newDec("0.38")),
+        new Pair<>(Dec.newDec("-7.4"), 37L, Dec.newDec("-0.2")),
+        new Pair<>(Dec.newDec("100.1"), 100L, Dec.newDec("1.001")),
+        new Pair<>(Dec.newDec("1000.1"), 20L, Dec.newDec("50.005"))
+    ).forEach(e -> {
+      Assert.assertTrue(e.k.mul(-1).quo(e.v).sub(e.s.neg()).abs().lte(Dec.smallestDec()));
+      Assert.assertTrue(e.k.quo(e.v).sub(e.s).abs().lte(Dec.smallestDec()));
+    });
+  }
+
+  @Test
+  public void TestQuoBigInt() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec("0"), BigInteger.valueOf(1), Dec.zeroDec()),
+        new Pair<>(Dec.newDec("0.25"), BigInteger.valueOf(2), Dec.newDec("0.125")),
+        new Pair<>(Dec.newDec("0.99"), BigInteger.valueOf(-1), Dec.newDec("-0.99")),
+        new Pair<>(Dec.newDec("1"), BigInteger.valueOf(10), Dec.newDecWithPrec(1, 1)),
+        new Pair<>(Dec.newDec("1.5"), BigInteger.valueOf(3), Dec.newDecWithPrec(5, 1)),
+        new Pair<>(Dec.newDec("7.5"), BigInteger.valueOf(-7), Dec.newDec("-1.071428571428571428")),
+        new Pair<>(Dec.newDec("7.6"), BigInteger.valueOf(20), Dec.newDec("0.38")),
+        new Pair<>(Dec.newDec("-7.4"), BigInteger.valueOf(37), Dec.newDec("-0.2")),
+        new Pair<>(Dec.newDec("100.1"), BigInteger.valueOf(100), Dec.newDec("1.001")),
+        new Pair<>(Dec.newDec("1000.1"), BigInteger.valueOf(20), Dec.newDec("50.005"))
+    ).forEach(e -> {
+      Assert.assertTrue(e.k.mul(-1).quo(e.v).sub(e.s.neg()).abs().lte(Dec.smallestDec()));
+      Assert.assertTrue(e.k.quo(e.v).sub(e.s).abs().lte(Dec.smallestDec()));
+    });
+  }
+
+  @Test
+  public void TestTruncateDec() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec("0"), Dec.zeroDec()),
+        new Pair<>(Dec.newDec("0.25"), Dec.zeroDec()),
+        new Pair<>(Dec.newDec("0.99"), Dec.zeroDec()),
+        new Pair<>(Dec.newDec("1"), Dec.oneDec()),
+        new Pair<>(Dec.newDec("1.5"), Dec.oneDec()),
+        new Pair<>(Dec.newDec("7.5"), Dec.newDec(7)),
+        new Pair<>(Dec.newDec("7.6"), Dec.newDec(7)),
+        new Pair<>(Dec.newDec("7.4"), Dec.newDec(7)),
+        new Pair<>(Dec.newDec("100.1"), Dec.newDec(100)),
+        new Pair<>(Dec.newDec("1000.1"), Dec.newDec(1000))
+    ).forEach(e -> {
+      Assert.assertEquals(e.v.mul(-1), e.k.neg().truncateDec());
+      Assert.assertEquals(e.v, e.k.truncateDec());
+    });
+  }
+
+
+  @Test
+  public void TestBankerRoundLongChop() {
+    Stream.of(
+        new Pair<>(Dec.newDec("0.25"), 0L),
+        new Pair<>(Dec.newDec("0"), 0L),
+        new Pair<>(Dec.newDec("1"), 1L),
+        new Pair<>(Dec.newDec("0.75"), 1L),
+        new Pair<>(Dec.newDec("0.5"), 0L),
+        new Pair<>(Dec.newDec("7.5"), 8L),
+        new Pair<>(Dec.newDec("1.4"), 1L),
+        new Pair<>(Dec.newDec("1.499999999999999999"), 1L),
+        new Pair<>(Dec.newDec("1.500000"), 2L),
+        new Pair<>(Dec.newDec("1.500000000000000001"), 2L),
+        new Pair<>(Dec.newDec("1.5000001"), 2L),
+        new Pair<>(Dec.newDec("2.5"), 2L),
+        new Pair<>(Dec.newDec("2.500000000000000001"), 3L),
+        new Pair<>(Dec.newDec("0.545"), 1L),
+        new Pair<>(Dec.newDec("1.545"), 2L)
     ).forEach(e -> {
       Assert.assertEquals(-1 * e.v, e.k.neg().roundLong());
       Assert.assertEquals(e.v.longValue(), e.k.roundLong());
@@ -179,13 +287,82 @@ public class DecTest {
 
   }
 
+  @Test
+  public void TestBankerRoundIntChop() {
+    Stream.of(
+        new Pair<>(Dec.newDec("0.25"), 0),
+        new Pair<>(Dec.newDec("0"), 0),
+        new Pair<>(Dec.newDec("1"), 1),
+        new Pair<>(Dec.newDec("0.75"), 1),
+        new Pair<>(Dec.newDec("0.5"), 0),
+        new Pair<>(Dec.newDec("7.5"), 8),
+        new Pair<>(Dec.newDec("1.4"), 1),
+        new Pair<>(Dec.newDec("1.499999999999999999"), 1),
+        new Pair<>(Dec.newDec("1.500000"), 2),
+        new Pair<>(Dec.newDec("1.500000000000000001"), 2),
+        new Pair<>(Dec.newDec("1.5000001"), 2),
+        new Pair<>(Dec.newDec("2.5"), 2),
+        new Pair<>(Dec.newDec("2.500000000000000001"), 3),
+        new Pair<>(Dec.newDec("0.545"), 1),
+        new Pair<>(Dec.newDec("1.545"), 2)
+    ).forEach(e -> {
+      Assert.assertEquals(-1 * e.v, e.k.neg().roundInt());
+      Assert.assertEquals(e.v.longValue(), e.k.roundInt());
+    });
+
+  }
+
+  @Test
+  public void TestBankerRoundBigIntChop() {
+    Stream.of(
+        new Pair<>(Dec.newDec("0.25"), BigInteger.valueOf(0)),
+        new Pair<>(Dec.newDec("0"), BigInteger.valueOf(0)),
+        new Pair<>(Dec.newDec("1"), BigInteger.valueOf(1)),
+        new Pair<>(Dec.newDec("0.75"), BigInteger.valueOf(1)),
+        new Pair<>(Dec.newDec("0.5"), BigInteger.valueOf(0)),
+        new Pair<>(Dec.newDec("7.5"), BigInteger.valueOf(8)),
+        new Pair<>(Dec.newDec("1.4"), BigInteger.valueOf(1)),
+        new Pair<>(Dec.newDec("1.499999999999999999"), BigInteger.valueOf(1)),
+        new Pair<>(Dec.newDec("1.500000"), BigInteger.valueOf(2)),
+        new Pair<>(Dec.newDec("1.500000000000000001"), BigInteger.valueOf(2)),
+        new Pair<>(Dec.newDec("1.5000001"), BigInteger.valueOf(2)),
+        new Pair<>(Dec.newDec("2.5"), BigInteger.valueOf(2)),
+        new Pair<>(Dec.newDec("2.500000000000000001"), BigInteger.valueOf(3)),
+        new Pair<>(Dec.newDec("0.545"), BigInteger.valueOf(1)),
+        new Pair<>(Dec.newDec("1.545"), BigInteger.valueOf(2))
+    ).forEach(e -> {
+      Assert.assertEquals(e.v.multiply(BigInteger.valueOf(-1)), e.k.neg().roundBigInt());
+      Assert.assertEquals(e.v, e.k.roundBigInt());
+    });
+
+  }
+
+  @Test
+  public void TestBigInt() {
+    BigInteger pre = BigInteger.TEN.pow(Dec.precision);
+    Stream.of(
+        new Pair<>(Dec.newDec(0), BigInteger.valueOf(0)),
+        new Pair<>(Dec.newDec(1), BigInteger.valueOf(1).multiply(pre)),
+        new Pair<>(Dec.newDec(10), BigInteger.valueOf(10).multiply(pre)),
+        new Pair<>(Dec.newDec(12340), BigInteger.valueOf(12340).multiply(pre)),
+        new Pair<>(Dec.newDecWithPrec(12340, 4), BigInteger.valueOf(12340)
+            .multiply(pre).divide(BigInteger.TEN.pow(4))),
+        new Pair<>(Dec.newDecWithPrec(12340, 5), BigInteger.valueOf(12340)
+            .multiply(pre).divide(BigInteger.TEN.pow(5))),
+        new Pair<>(Dec.newDecWithPrec(12340, 8), BigInteger.valueOf(12340)
+            .multiply(pre).divide(BigInteger.TEN.pow(8))),
+        new Pair<>(Dec.newDecWithPrec(1009009009009009009L, 17), BigInteger
+            .valueOf(1009009009009009009L).multiply(pre).divide(BigInteger.TEN.pow(17)))
+    ).forEach(e -> Assert.assertEquals(0, e.v.compareTo(e.k.bigInt())));
+  }
+
 
   @Test
   public void TestArithmetic() {
     //  d1         d2         MUL    MulTruncate    QUO    QUORoundUp QUOTrunctate  ADD         SUB
     Stream.of(
-            new Arithmetic(Dec.newDec(0), Dec.newDec(0), Dec.newDec(0), Dec.newDec(0),
-                Dec.newDec(0),
+            new Arithmetic(Dec.newDec(BigInteger.valueOf(0).toByteArray()),
+                Dec.newDec(0), Dec.newDec(0), Dec.newDec(0), Dec.newDec(0),
                 Dec.newDec(0), Dec.newDec(0), Dec.newDec(0), Dec.newDec(0)),
             new Arithmetic(Dec.newDec(1), Dec.newDec(0), Dec.newDec(0), Dec.newDec(0),
                 Dec.newDec(0),
@@ -214,14 +391,16 @@ public class DecTest {
             new Arithmetic(Dec.newDec(3), Dec.newDec(7), Dec.newDec(21), Dec.newDec(21),
                 Dec.newDecWithPrec(428571428571428571L, 18),
                 Dec.newDecWithPrec(428571428571428572L, 18),
-                Dec.newDecWithPrec(428571428571428571L, 18), Dec.newDec(10), Dec.newDec(-4)),
+                Dec.newDecWithPrec(428571428571428571L, 18), Dec.newDec(10),
+                Dec.newDec(-4)),
             new Arithmetic(Dec.newDec(2), Dec.newDec(4), Dec.newDec(8), Dec.newDec(8),
                 Dec.newDecWithPrec(5, 1), Dec.newDecWithPrec(5, 1),
                 Dec.newDecWithPrec(5, 1), Dec.newDec(6), Dec.newDec(-2)),
             new Arithmetic(Dec.newDec(100), Dec.newDec(100), Dec.newDec(10000), Dec.newDec(10000),
                 Dec.newDec(1), Dec.newDec(1), Dec.newDec(1), Dec.newDec(200), Dec.newDec(0)),
             new Arithmetic(Dec.newDecWithPrec(15, 1), Dec.newDecWithPrec(15, 1),
-                Dec.newDecWithPrec(225, 2), Dec.newDecWithPrec(225, 2), Dec.newDec(1),
+                Dec.newDecWithPrec(225, 2), Dec.newDecWithPrec(225, 2),
+                Dec.newDec(1),
                 Dec.newDec(1), Dec.newDec(1), Dec.newDec(3), Dec.newDec(0)),
             new Arithmetic(Dec.newDecWithPrec(3333, 4), Dec.newDecWithPrec(333, 4),
                 Dec.newDecWithPrec(1109889, 8), Dec.newDecWithPrec(1109889, 8),
@@ -405,12 +584,149 @@ public class DecTest {
 
   }
 
+  @Test
+  public void TestIsInteger() {
+    Stream.of(
+        // 0.001 => false
+        new Pair<>(Dec.newDecWithPrec(1000000000000000L, Dec.precision), false),
+        // -0.001 => false
+        new Pair<>(Dec.newDecWithPrec(-1000000000000000L, Dec.precision), false),
+        // 0.0 => true
+        new Pair<>(Dec.zeroDec(), true),
+        // 7.8 => false
+        new Pair<>(Dec.newDecWithPrec(78, 1), false),
+        // 0.9 => false
+        new Pair<>(Dec.newDecWithPrec(900000000000000000L, Dec.precision), false),
+        // -4.000 => true
+        new Pair<>(Dec.newDec("-4.000"), true),
+        // -4 => true
+        new Pair<>(Dec.newDecWithPrec(-4000000000000000000L, Dec.precision), true),
+        // 5.0  => true
+        new Pair<>(Dec.newDec("5.0"), true),
+        // 5 => true
+        new Pair<>(Dec.newDec(5), true)
+    ).forEach(e -> Assert.assertEquals(e.v, e.k.isInteger()));
+  }
 
-  public static class Pair<K, V, S> {
+  @Test
+  public void TestMinAndMax() {
+    Stream.of(
+        // 1.0 ^ (10) => 1.0
+        new Pair<>(Dec.oneDec(), Dec.newDec(0), Dec.newDec(0), Dec.oneDec()),
+        // 0.5 ^ 2 => 0.25
+        new Pair<>(Dec.newDecWithPrec(5, 1), Dec.newDecWithPrec(25, 2),
+            Dec.newDecWithPrec(25, 2), Dec.newDecWithPrec(5, 1)),
+        // 0.2 ^ 2 => 0.04
+        new Pair<>(Dec.newDecWithPrec(2, 1), Dec.newDecWithPrec(4, 2),
+            Dec.newDecWithPrec(4, 2), Dec.newDecWithPrec(2, 1)),
+        // 3 ^ 3 => 27
+        new Pair<>(Dec.newDec(3), Dec.newDec(27), Dec.newDec(3), Dec.newDec(27)),
+        // -3 ^ 4 = 81
+        new Pair<>(Dec.newDec(-81), Dec.newDec(0), Dec.newDec(-81), Dec.newDec(0)),
+        //// 1.414213562373095049 ^ 2 = 2
+        new Pair<>(Dec.newDecWithPrec(1414213562373095049L, 18), Dec.newDec(2),
+            Dec.newDecWithPrec(1414213562373095049L, 18), Dec.newDec(2))
+    ).forEach(tc -> {
+      Assert.assertEquals(Dec.maxDec(tc.k, tc.v), tc.t);
+      Assert.assertEquals(Dec.minDec(tc.k, tc.v), tc.s);
+    });
+  }
+
+  @Test
+  public void TestSignum() {
+    Stream.of(
+        new Pair<>(Dec.oneDec(), false, true, false),
+        new Pair<>(Dec.newDecWithPrec(0, 1), true, false, false),
+        new Pair<>(Dec.newDecWithPrec(-2, 1), false, false, true),
+        new Pair<>(Dec.newDecWithPrec(141421356237309L, 18), false, true, false)
+    ).forEach(tc -> {
+      Assert.assertEquals(tc.k.isZero(), tc.v);
+      Assert.assertEquals(tc.k.isPositive(), tc.s);
+      Assert.assertEquals(tc.k.isNegative(), tc.t);
+    });
+  }
+
+  @Test
+  public void TestGte() {
+    Stream.of(
+        new Pair<>(Dec.oneDec(), Dec.oneDec()),
+        new Pair<>(Dec.newDecWithPrec(1, 1), Dec.newDecWithPrec(0, 1)),
+        new Pair<>(Dec.newDecWithPrec(-2, 1), Dec.newDecWithPrec(-4, 1)),
+        new Pair<>(Dec.newDecWithPrec(1, 18), Dec.newDecWithPrec(1, 18))
+    ).forEach(tc -> {
+      Assert.assertTrue(tc.k.gte(tc.v));
+    });
+  }
+
+  @Test
+  public void TestDecMulLong() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec(10), 2L, Dec.newDec(20)),
+        new Pair<>(Dec.newDec(1000000), 100L, Dec.newDec(100000000)),
+        new Pair<>(Dec.newDecWithPrec(1, 1), 10L, Dec.newDec(1)),
+        new Pair<>(Dec.newDecWithPrec(1, 5), 20L, Dec.newDecWithPrec(2, 4))
+    ).forEach(e -> Assert.assertEquals(e.k.mul(e.v), e.s));
+  }
+
+  @Test
+  public void TestDecMulBigInt() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec(10), BigInteger.valueOf(2), Dec.newDec(20)),
+        new Pair<>(Dec.newDec(1000000), BigInteger.valueOf(100), Dec.newDec(100000000)),
+        new Pair<>(Dec.newDecWithPrec(1, 1), BigInteger.valueOf(10), Dec.newDec(1)),
+        new Pair<>(Dec.newDecWithPrec(1, 5), BigInteger.valueOf(20),
+            Dec.newDecWithPrec(2, 4))
+    ).forEach(e -> Assert.assertEquals(e.k.mul(e.v), e.s));
+  }
+
+  @Test
+  public void TestTruncateInt() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec("0"), 0),
+        new Pair<>(Dec.newDec("0.25"), 0),
+        new Pair<>(Dec.newDec("0.75"), 0),
+        new Pair<>(Dec.newDec("1"), 1),
+        new Pair<>(Dec.newDec("1.5"), 1),
+        new Pair<>(Dec.newDec("7.5"), 7),
+        new Pair<>(Dec.newDec("7.6"), 7),
+        new Pair<>(Dec.newDec("7.4"), 7),
+        new Pair<>(Dec.newDec("100.1"), 100),
+        new Pair<>(Dec.newDec("1000.1"), 1000)
+    ).forEach(e -> {
+      Assert.assertEquals(-1 * e.v, e.k.neg().truncateInt());
+      Assert.assertEquals(e.v.longValue(), e.k.truncateInt());
+    });
+  }
+
+  @Test
+  public void TestTruncateBigInt() {
+
+    Stream.of(
+        new Pair<>(Dec.newDec("0"), BigInteger.valueOf(0)),
+        new Pair<>(Dec.newDec("0.25"), BigInteger.valueOf(0)),
+        new Pair<>(Dec.newDec("0.75"), BigInteger.valueOf(0)),
+        new Pair<>(Dec.newDec("1"), BigInteger.valueOf(1)),
+        new Pair<>(Dec.newDec("1.5"), BigInteger.valueOf(1)),
+        new Pair<>(Dec.newDec("7.5"), BigInteger.valueOf(7)),
+        new Pair<>(Dec.newDec("7.6"), BigInteger.valueOf(7)),
+        new Pair<>(Dec.newDec("7.4"), BigInteger.valueOf(7)),
+        new Pair<>(Dec.newDec("100.1"), BigInteger.valueOf(100)),
+        new Pair<>(Dec.newDec("1000000000000000000.1"), BigInteger.valueOf(1000000000000000000L))
+    ).forEach(e -> {
+      Assert.assertEquals(e.v.multiply(BigInteger.valueOf(-1)), e.k.neg().truncateBigInt());
+      Assert.assertEquals(e.v, e.k.truncateBigInt());
+    });
+  }
+
+  public static class Pair<K, V, S, T> {
 
     private final K k;
     private final V v;
     private S s;
+    private T t;
 
     Pair(K key, V value) {
       this.k = key;
@@ -421,6 +737,13 @@ public class DecTest {
       this.k = k;
       this.v = v;
       this.s = s;
+    }
+
+    Pair(K k, V v, S s, T t) {
+      this.k = k;
+      this.v = v;
+      this.s = s;
+      this.t = t;
     }
 
   }

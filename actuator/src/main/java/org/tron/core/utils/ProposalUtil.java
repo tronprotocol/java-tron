@@ -67,9 +67,16 @@ public class ProposalUtil {
       case EXCHANGE_CREATE_FEE:
         break;
       case MAX_CPU_TIME_OF_ONE_TX:
-        if (value < 10 || value > 100) {
-          throw new ContractValidateException(
-              "Bad chain parameter value, valid range is [10,100]");
+        if (dynamicPropertiesStore.getAllowHigherLimitForMaxCpuTimeOfOneTx() == 1) {
+          if (value < 10 || value > 400) {
+            throw new ContractValidateException(
+                "Bad chain parameter value, valid range is [10,400]");
+          }
+        } else {
+          if (value < 10 || value > 100) {
+            throw new ContractValidateException(
+                "Bad chain parameter value, valid range is [10,100]");
+          }
         }
         break;
       case ALLOW_UPDATE_ACCOUNT_NAME: {
@@ -501,11 +508,11 @@ public class ProposalUtil {
       case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException(
-                  "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
+              "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
         }
         if (value != 1) {
           throw new ContractValidateException(
-                  "This value[ALLOW_ACCOUNT_ASSET_OPTIMIZATION] is only allowed to be 1");
+              "This value[ALLOW_ACCOUNT_ASSET_OPTIMIZATION] is only allowed to be 1");
         }
         break;
       }
@@ -531,12 +538,48 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX] is only allowed to be 1");
+        }
+        break;
+      }
+      case ORACLE_VOTE_PERIOD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ORACLE_VOTE_PERIOD]");
+        }
+        final long minVotePeriod = 5;
+        final long maxVotePeriod = 1200;
+        if ((value != 0 && value < minVotePeriod) || value > maxVotePeriod) {
+          throw new ContractValidateException(
+                  "The valid range of [ORACLE_VOTE_PERIOD] is ["
+                          + minVotePeriod + "," + maxVotePeriod + "]");
+        }
+        break;
+      }
+      case ORACLE_VOTE_THRESHOLD: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ORACLE_VOTE_THRESHOLD]");
+        }
+        if (value < 0 || value > 100) {
+          throw new ContractValidateException(
+                  "The valid range of [ORACLE_VOTE_THRESHOLD] is [0, 100]");
+        }
+        break;
+      }
       case ALLOW_STABLE_MARKET_ON: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
                   "Bad chain parameter id [ALLOW_STABLE_MARKET_ON]");
         }
-        if (value != 1 && value!= 0) {
+        if (value != 1 && value != 0) {
           throw new ContractValidateException(
                   "This value[ALLOW_STABLE_MARKET_ON] is only allowed to be  or 0");
         }
@@ -626,6 +669,10 @@ public class ProposalUtil {
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
     ALLOW_TVM_LONDON(63), // 0, 1
+    ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(64), // 0, 1
+    ALLOW_STABLE_MARKET_ON(65), // 0, 1
+    ORACLE_VOTE_PERIOD(66), // 0 [5,1200]
+    ORACLE_VOTE_THRESHOLD(67); // 0 [0,100]
     ALLOW_STABLE_MARKET_ON(64), // 0, 1
     ORACLE_REWARD_BAND(65), // 70000, [0, 1000000]
     ORACLE_REWARD_DISTRIBUTION_WINDOW(66); // 10512000, [0, 0,1_000_000_000]

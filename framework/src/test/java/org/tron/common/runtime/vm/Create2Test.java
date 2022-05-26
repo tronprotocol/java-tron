@@ -144,7 +144,7 @@ public class Create2Test extends VMTestBase {
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     for (int i = 0; i < 3; i++) {
-      runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+      runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
       if (runtime.getRuntimeError() == null) {
         break;
       }

@@ -13,7 +13,6 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -24,9 +23,11 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Program.OutOfMemoryException;
 import org.tron.core.vm.program.Program.PrecompiledContractException;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 
 
@@ -36,7 +37,7 @@ public class EnergyWhenAssertStyleTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
-  private DepositImpl deposit;
+  private RepositoryImpl repository;
   private String dbPath = "output_EnergyWhenAssertStyleTest";
   private String OWNER_ADDRESS;
   private Application AppT;
@@ -53,10 +54,10 @@ public class EnergyWhenAssertStyleTest {
     AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     dbManager = context.getBean(Manager.class);
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
-    deposit.commit();
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
+    repository.addBalance(Hex.decode(OWNER_ADDRESS), totalBalance);
+    repository.commit();
   }
 
   // An assert-style exception is generated in the following situations:

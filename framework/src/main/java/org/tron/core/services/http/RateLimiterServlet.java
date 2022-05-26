@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import com.google.common.base.Strings;
+import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import javax.annotation.PostConstruct;
@@ -10,7 +12,11 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.RateLimiterInitialization;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.filter.CharResponseWrapper;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
 import org.tron.core.services.ratelimiter.RuntimeData;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
@@ -98,7 +104,15 @@ public abstract class RateLimiterServlet extends HttpServlet {
       resp.setContentType("application/json; charset=utf-8");
 
       if (acquireResource) {
+        String url = Strings.isNullOrEmpty(req.getRequestURI())
+            ? MetricLabels.UNDEFINED : req.getRequestURI();
+        Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+            MetricKeys.Histogram.HTTP_SERVICE_LATENCY, url);
         super.service(req, resp);
+        Metrics.histogramObserve(requestTimer);
+        Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
+            ((CharResponseWrapper) resp).getByteSize(),
+            url, String.valueOf(resp.getStatus()));
       } else {
         resp.getWriter()
             .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
