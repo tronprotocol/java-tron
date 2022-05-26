@@ -506,7 +506,7 @@ public class ProposalUtil {
       }
 
       case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_ACCOUNT_ASSET_OPTIMIZATION]");
         }
@@ -546,6 +546,17 @@ public class ProposalUtil {
         if (value != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_ASSET_OPTIMIZATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_ASSET_OPTIMIZATION]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_ASSET_OPTIMIZATION] is only allowed to be 1");
         }
         break;
       }
@@ -611,7 +622,8 @@ public class ProposalUtil {
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
     ALLOW_TVM_LONDON(63), // 0, 1
-    ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65); // 0, 1
+    ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
+    ALLOW_ASSET_OPTIMIZATION(66); // 0, 1
 
     private long code;
 
