@@ -167,7 +167,11 @@ public class DposService implements ConsensusInterface {
   }
 
   public void updateWitness(List<ByteString> list) {
-    consensusDelegate.savePreviousActiveWitnesses(consensusDelegate.getActiveWitnesses());
+    try {
+      consensusDelegate.savePreviousActiveWitnesses(consensusDelegate.getActiveWitnesses());
+    } catch (Exception e) {
+      logger.warn("Update previous active witnesses failed");
+    }
     list.sort(Comparator.comparingLong((ByteString b) ->
         consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
         .reversed()
