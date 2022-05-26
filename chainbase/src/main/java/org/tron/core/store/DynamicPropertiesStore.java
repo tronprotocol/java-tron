@@ -790,17 +790,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowAccountAssetOptimization();
-    } catch (IllegalArgumentException e) {
-      this.setAllowAccountAssetOptimization(CommonParameter
-          .getInstance().getAllowAccountAssetOptimization());
-    }
-
-    try {
       this.getAllowAssetOptimization();
     } catch (IllegalArgumentException e) {
       this.setAllowAssetOptimization(CommonParameter
               .getInstance().getAllowAssetOptimization());
+    }
+
+    try {
+      this.getAllowAccountAssetOptimization();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAccountAssetOptimization(CommonParameter
+          .getInstance().getAllowAccountAssetOptimization());
     }
 
     try {
@@ -2401,7 +2401,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void setAllowAccountAssetOptimization(long value) {
-    this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+    long allowAssetOptimization = getAllowAssetOptimization();
+    if (allowAssetOptimization != 1) {
+      this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+    }
   }
 
   // 1: enable
