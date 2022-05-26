@@ -1094,14 +1094,19 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getOracleVotePeriod")
-            .setValue(dbManager.getDynamicPropertiesStore().getOracleVotePeriod())
-            .build());
+        .setKey("getOracleVotePeriod")
+        .setValue(dbManager.getDynamicPropertiesStore().getOracleVotePeriod())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getOracleVoteThreshold")
-            .setValue(dbManager.getDynamicPropertiesStore().getOracleVoteThreshold())
-            .build());
+        .setKey("getOracleVoteThreshold")
+        .setValue(dbManager.getDynamicPropertiesStore().getOracleVoteThreshold())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowStableMarketOn")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowStableMarketOn())
+        .build());
 
     return builder.build();
   }
