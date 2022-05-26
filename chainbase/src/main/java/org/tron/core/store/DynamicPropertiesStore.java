@@ -2246,7 +2246,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean allowStableMarketOn() {
-    return getChangeDelegation() == 1;
+    return getAllowStableMarketOn() == 1;
   }
 
   public void saveAllowPBFT(long number) {
