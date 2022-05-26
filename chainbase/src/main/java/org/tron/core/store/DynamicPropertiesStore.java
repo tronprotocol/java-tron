@@ -165,8 +165,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
   //This value is only allowed to be 1
+  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
+      "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+
   private static final byte[] ALLOW_ASSET_OPTIMIZATION =
-      "ALLOW_ASSET_OPTIMIZATION".getBytes();
+          "ALLOW_ASSET_OPTIMIZATION".getBytes();
+
+
   private static final byte[] ENERGY_PRICE_HISTORY = "ENERGY_PRICE_HISTORY".getBytes();
   private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
   private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
@@ -789,6 +794,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.setAllowAccountAssetOptimization(CommonParameter
           .getInstance().getAllowAccountAssetOptimization());
+    }
+
+    try {
+      this.getAllowAssetOptimization();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAssetOptimization(CommonParameter
+              .getInstance().getAllowAssetOptimization());
     }
 
     try {
@@ -2368,11 +2380,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public long getAllowAccountAssetOptimizationFromRoot() {
     try {
-      return Optional.ofNullable(getFromRoot(ALLOW_ASSET_OPTIMIZATION))
+      return Optional.ofNullable(getFromRoot(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
               .map(BytesCapsule::getData)
               .map(ByteArray::toLong)
               .orElseThrow(
-                      () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+                      () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
     } catch (Exception e) {
       logger.debug("{}", e.getMessage());
       return CommonParameter.getInstance().getAllowAccountAssetOptimization();
@@ -2381,14 +2393,27 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   // 1: enable
   public long getAllowAccountAssetOptimization() {
-    return Optional.ofNullable(getUnchecked(ALLOW_ASSET_OPTIMIZATION))
+    return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+            () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
   }
 
   public void setAllowAccountAssetOptimization(long value) {
+    this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  // 1: enable
+  public long getAllowAssetOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ASSET_OPTIMIZATION))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+                  () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+  }
+
+  public void setAllowAssetOptimization(long value) {
     this.put(ALLOW_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 

@@ -532,6 +532,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowAssetOptimization;
+
+  @Getter
+  @Setter
   public List<String> disabledApiList;
 
   @Getter
