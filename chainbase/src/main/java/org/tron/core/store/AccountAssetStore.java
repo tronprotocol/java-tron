@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronDatabase;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.protos.Protocol;
@@ -43,13 +42,37 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
     return dbSource.getData(key) != null;
   }
 
-  public void put(AccountCapsule account, byte[] key, byte[] value) {
-    byte[] k = Bytes.concat(account.createDbKey(), key);
-    if (Longs.fromByteArray(value) == 0) {
-      delete(k);
-    } else {
-      put(k, value);
+  public void putAccount(Protocol.Account account) {
+    Map<byte[], byte[]> assets = getAssets(account);
+    if (!assets.isEmpty()) {
+      updateByBatch(assets);
     }
+  }
+
+  public void deleteAccount(byte[] key) {
+    Map<byte[], byte[]> assets = getDeletedAssets(key);
+    if (!assets.isEmpty()) {
+      updateByBatch(assets);
+    }
+  }
+
+  public Map<byte[], byte[]> getAssets(Protocol.Account account) {
+    Map<byte[], byte[]> assets = new HashMap<>();
+    account.getAssetV2Map().forEach((k, v) -> {
+      byte[] key = Bytes.concat(account.getAddress().toByteArray(), k.getBytes());
+      if (v == 0) {
+        assets.put(key, null);
+      } else {
+        assets.put(key, Longs.toByteArray(v));
+      }
+    });
+    return assets;
+  }
+
+  public Map<byte[], byte[]> getDeletedAssets(byte[] key) {
+    Map<byte[], byte[]> assets = new HashMap<>();
+    prefixQuery(key).forEach((k, v) -> assets.put(k.getBytes(), null));
+    return assets;
   }
 
   public long getBalance(Protocol.Account account, byte[] key) {

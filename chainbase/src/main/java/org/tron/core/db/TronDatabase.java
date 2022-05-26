@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
@@ -31,6 +32,8 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   protected DbSourceInter<byte[]> dbSource;
   @Getter
   private String dbName;
+  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
+          .sync(CommonParameter.getInstance().getStorage().isDbSync());
 
   @Autowired
   private DbStatService dbStatService;
@@ -68,6 +71,10 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
 
   public DbSourceInter<byte[]> getDbSource() {
     return dbSource;
+  }
+
+  public void updateByBatch(Map<byte[], byte[]> rows) {
+    this.dbSource.updateByBatch(rows, writeOptions);
   }
 
   /**

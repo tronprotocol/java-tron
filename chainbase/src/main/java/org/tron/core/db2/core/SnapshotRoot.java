@@ -1,14 +1,15 @@
 package org.tron.core.db2.core;
 
+import ch.qos.logback.core.encoder.ByteArrayUtil;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import com.google.common.primitives.Longs;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db2.common.DB;
@@ -42,14 +43,12 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   @Override
   public void put(byte[] key, byte[] value) {
     if (needOptAsset()) {
-      if (value == null || value.length == 0) {
+      if (ByteArray.isEmpty(value)) {
         remove(key);
         return;
       }
-      AccountAssetStore store = ChainBaseManager.getInstance().getAccountAssetStore();
       AccountCapsule item = new AccountCapsule(value);
-      item.getInstance().getAssetV2Map().forEach((k, v) ->
-              store.put(item, k.getBytes(), Longs.toByteArray(v)));
+      ChainBaseManager.getInstance().getAccountAssetStore().putAccount(item.getInstance());
       item.clearAsset();
       db.put(key, item.getData());
     } else {
@@ -60,13 +59,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   @Override
   public void remove(byte[] key) {
     if (needOptAsset()) {
-      AccountAssetStore store = ChainBaseManager.getInstance().getAccountAssetStore();
-      byte[] value = get(key);
-      if (value != null && value.length > 0) {
-        AccountCapsule item = new AccountCapsule(value);
-        item.getAssetMapV2().forEach((k, v) ->
-                store.put(item, k.getBytes(), Longs.toByteArray(0)));
-      }
+      ChainBaseManager.getInstance().getAccountAssetStore().deleteAccount(key);
     }
     db.remove(key);
   }
@@ -102,13 +95,22 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   private void processAccount(Map<WrappedByteArray, WrappedByteArray> batch) {
+    AccountAssetStore assetStore = ChainBaseManager.getInstance().getAccountAssetStore();
+    Map<WrappedByteArray, WrappedByteArray> accounts = new HashMap<>();
+    Map<byte[], byte[]> assets = new HashMap<>();
     batch.forEach((k, v) -> {
-      if (v.getBytes() == null || v.getBytes().length == 0) {
-        remove(k.getBytes());
+      if (ByteArray.isEmpty(v.getBytes())) {
+        accounts.put(k, v);
+        assets.putAll(assetStore.getDeletedAssets(k.getBytes()));
       } else {
-        put(k.getBytes(), v.getBytes());
+        AccountCapsule item = new AccountCapsule(v.getBytes());
+        assets.putAll(assetStore.getAssets(item.getInstance()));
+        item.clearAsset();
+        accounts.put(k, WrappedByteArray.of(item.getData()));
       }
     });
+    ((Flusher) db).flush(accounts);
+    assetStore.updateByBatch(assets);
   }
 
   @Override

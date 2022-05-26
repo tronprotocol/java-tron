@@ -126,6 +126,8 @@ public class AccountStoreTest {
     assertEquals(1, accountCapsule.getAssetMapV2().size());
     assertEquals(0, accountCapsule.getAssetV2("100"));
     assertEquals(1, accountCapsule.getAssetV2("200"));
+    assertEquals(0, accountCapsule.getAssetV2("300"));
+    assertEquals(3, accountCapsule.getAssetMapV2().size());
 
     accountCapsule.clearAsset();
     accountStore.delete(accountCapsule.createDbKey());
