@@ -586,7 +586,7 @@ public class ProposalUtil {
         break;
       }
       case ORACLE_REWARD_BAND: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ORACLE_REWARD_BAND]");
         }
@@ -597,7 +597,7 @@ public class ProposalUtil {
         break;
       }
       case ORACLE_REWARD_DISTRIBUTION_WINDOW: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ORACLE_REWARD_DISTRIBUTION_WINDOW]");
         }
@@ -672,10 +672,9 @@ public class ProposalUtil {
     ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(64), // 0, 1
     ALLOW_STABLE_MARKET_ON(65), // 0, 1
     ORACLE_VOTE_PERIOD(66), // 0 [5,1200]
-    ORACLE_VOTE_THRESHOLD(67); // 0 [0,100]
-    ALLOW_STABLE_MARKET_ON(64), // 0, 1
-    ORACLE_REWARD_BAND(65), // 70000, [0, 1000000]
-    ORACLE_REWARD_DISTRIBUTION_WINDOW(66); // 10512000, [0, 0,1_000_000_000]
+    ORACLE_VOTE_THRESHOLD(67), // 0 [0,100]
+    ORACLE_REWARD_BAND(68), // 70000, [0, 1000000]
+    ORACLE_REWARD_DISTRIBUTION_WINDOW(69); // 10512000, [0, 0,1_000_000_000]
 
     private long code;
 

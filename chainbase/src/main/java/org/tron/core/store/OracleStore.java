@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.Dec;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.DecOracleRewardCapsule;
 import org.tron.core.capsule.OraclePrevoteCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.protos.Protocol.OracleVote;
@@ -90,6 +91,52 @@ public class OracleStore extends TronStoreWithRevoking<BytesCapsule> {
       return null;
     }
     return oracleVote;
+  }
+
+  public void addOracleRewardPool(DecOracleRewardCapsule reward) {
+    byte[] key = buildOracleRewardPoolKey();
+    BytesCapsule bytesCapsule = get(key);
+    if (bytesCapsule == null) {
+      put(key, new BytesCapsule(reward.getData()));
+    } else {
+      put(key, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
+          .add(reward).getData()));
+    }
+  }
+
+  public void addToOracleRewardTotal(DecOracleRewardCapsule reward) {
+    byte[] key = buildOracleRewardToTalKey();
+    BytesCapsule bytesCapsule = get(key);
+    if (bytesCapsule == null) {
+      put(key, new BytesCapsule(reward.getData()));
+    } else {
+      put(key, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
+          .add(reward).getData()));
+    }
+  }
+
+  public DecOracleRewardCapsule getOracleRewardPool() {
+    BytesCapsule bytesCapsule = get(buildOracleRewardPoolKey());
+    if (bytesCapsule == null) {
+      return new DecOracleRewardCapsule();
+    }
+    return new DecOracleRewardCapsule(bytesCapsule.getData());
+  }
+
+  public DecOracleRewardCapsule getOracleRewardTotal() {
+    BytesCapsule bytesCapsule = get(buildOracleRewardToTalKey());
+    if (bytesCapsule == null) {
+      return new DecOracleRewardCapsule();
+    }
+    return new DecOracleRewardCapsule(bytesCapsule.getData());
+  }
+
+  private byte[] buildOracleRewardPoolKey() {
+    return ("oracle-reward-pool").getBytes();
+  }
+
+  private byte[] buildOracleRewardToTalKey() {
+    return ("oracle-reward-total").getBytes();
   }
 
   public void clearPrevoteAndVotes(long blockNum, long votePeriod) {

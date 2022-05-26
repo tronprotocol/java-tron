@@ -379,6 +379,12 @@ public class CommonParameter {
   public long allowStableMarketOn;
   @Getter
   @Setter
+  public long rewardBand;
+  @Getter
+  @Setter
+  public long rewardDistributionWindow;
+  @Getter
+  @Setter
   public Set<String> actuatorSet;
   @Getter
   @Setter

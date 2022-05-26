@@ -164,44 +164,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     return new DecOracleRewardCapsule(bytesCapsule.getData());
   }
 
-  public void addOracleRewardPool(DecOracleRewardCapsule reward) {
-    byte[] key = buildOracleRewardPoolKey();
-    BytesCapsule bytesCapsule = get(key);
-    if (bytesCapsule == null) {
-      put(key, new BytesCapsule(reward.getData()));
-    } else {
-      put(key, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
-          .add(reward).getData()));
-    }
-  }
-
-  public void addToOracleRewardTotal(DecOracleRewardCapsule reward) {
-    byte[] key = buildOracleRewardToTalKey();
-    BytesCapsule bytesCapsule = get(key);
-    if (bytesCapsule == null) {
-      put(key, new BytesCapsule(reward.getData()));
-    } else {
-      put(key, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
-          .add(reward).getData()));
-    }
-  }
-
-  public DecOracleRewardCapsule getOracleRewardPool() {
-    BytesCapsule bytesCapsule = get(buildOracleRewardPoolKey());
-    if (bytesCapsule == null) {
-      return new DecOracleRewardCapsule();
-    }
-    return new DecOracleRewardCapsule(bytesCapsule.getData());
-  }
-
-  public DecOracleRewardCapsule getOracleRewardTotal() {
-    BytesCapsule bytesCapsule = get(buildOracleRewardToTalKey());
-    if (bytesCapsule == null) {
-      return new DecOracleRewardCapsule();
-    }
-    return new DecOracleRewardCapsule(bytesCapsule.getData());
-  }
-
   public void accumulateWitnessVi(long cycle, byte[] address, long voteCount) {
     BigInteger preVi = getWitnessVi(cycle - 1, address);
     long reward = getReward(cycle, address);
@@ -262,14 +224,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildOracleViKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-oracle-vi").getBytes();
-  }
-
-  private byte[] buildOracleRewardPoolKey() {
-    return ("oracle-reward-pool").getBytes();
-  }
-
-  private byte[] buildOracleRewardToTalKey() {
-    return ("oracle-reward-total").getBytes();
   }
 
 }
