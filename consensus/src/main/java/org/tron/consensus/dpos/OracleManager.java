@@ -151,6 +151,16 @@ public class OracleManager {
         });
       }
 
+      // Do miss counting & slashing
+      int supportAssetsSize = supportAssets.size();
+      srMap.forEach((sr, claim) -> {
+        if (claim.winCount < supportAssetsSize) {
+          // Increase miss counter
+          long missCount = oracleStore.getWitnessMissCount(sr.toByteArray());
+          oracleStore.setWitnessMissCount(sr.toByteArray(), missCount + 1);
+        }
+      });
+
       //payout sr rewards
       long rewardDistributionWindow = dynamicPropertiesStore.getOracleRewardDistributionWindow();
       rewardBallotWinners(votePeriod, rewardDistributionWindow, supportAssets, srMap);
@@ -404,22 +414,22 @@ public class OracleManager {
   }
 
   private static class DecCoin {
-    String decDenom;
-    Dec decAmount;
+    private String decDenom;
+    private Dec decAmount;
 
     private boolean isZero() {
       return this.decAmount.isZero();
     }
 
-    public DecCoin(String denom, Dec amount) {
-      this.decDenom = denom;
-      this.decAmount = amount;
+    public DecCoin(String decDenom, Dec decAmount) {
+      this.decDenom = decDenom;
+      this.decAmount = decAmount;
     }
   }
 
   private static class Coin {
-    String denom;
-    BigInteger amount;
+    private String denom;
+    private BigInteger amount;
 
     private boolean isZero() {
       return amount.equals(BigInteger.ZERO);

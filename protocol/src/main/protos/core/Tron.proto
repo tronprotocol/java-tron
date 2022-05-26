@@ -28,6 +28,8 @@ message Vote {
   bytes vote_address = 1;
   // the vote num to this super rep.
   int64 vote_count = 2;
+  // the share num to this super rep.
+  int64 shares = 3;
 }
 
 // Proposal
@@ -238,6 +240,7 @@ message Account {
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
   OracleReward oracle_allowance = 34;
+  int64 slashed_votes = 60;
 }
 
 /* AccountAsset */
@@ -317,6 +320,8 @@ message Witness {
   int64 latestBlockNum = 7;
   int64 latestSlotNum = 8;
   bool isJobs = 9;
+  int64 totalShares = 10;
+  int64 jailed_height = 11;
 }
 
 // Vote Change
@@ -404,7 +409,8 @@ message Transaction {
       MarketCancelOrderContract = 53;
       DelegateFeedConsentContract = 54;
       OracleExchangeRateVoteContract = 55;
-      StableMarketContract = 56;
+      UnjailWitnessContract = 56;
+      StableMarketContract = 57;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

@@ -484,6 +484,22 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_SLASH_VOTE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_SLASH_VOTE]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SLASH_VOTE" + VALUE_NOT_ONE_ERROR);
+        }
+        if (dynamicPropertiesStore.getChangeDelegation() == 0) {
+          throw new ContractValidateException(
+                  "[ALLOW_CHANGE_DELEGATION] proposal must be approved "
+                          + "before [ALLOW_SLASH_VOTE] can be proposed");
+        }
+        break;
+      }
       case FREE_NET_LIMIT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException("Bad chain parameter id [FREE_NET_LIMIT]");
@@ -571,6 +587,48 @@ public class ProposalUtil {
         if (value < 0 || value > 100) {
           throw new ContractValidateException(
                   "The valid range of [ORACLE_VOTE_THRESHOLD] is [0, 100]");
+        }
+        break;
+      }
+      case JAIL_DURATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [JAIL_DURATION]");
+        }
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
+        }
+        break;
+      }
+      case UPDATE_SLASH_WINDOW: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [UPDATE_SLASH_WINDOW]");
+        }
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
+        }
+        break;
+      }
+      case UPDATE_SLASH_FRACTION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [UPDATE_SLASH_FRACTION]");
+        }
+        if (value < 0 || value > 100_000L) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value, valid range is [0, 100_000L]");
+        }
+        break;
+      }
+      case UPDATE_MIN_VALID_PER_WINDOW: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [UPDATE_MIN_VALID_PER_WINDOW]");
+        }
+        if (value < 0 || value > 100) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value, valid range is [0, 100]");
         }
         break;
       }
@@ -728,11 +786,16 @@ public class ProposalUtil {
     ALLOW_STABLE_MARKET_ON(65), // 0, 1
     ORACLE_VOTE_PERIOD(66), // 0 [5,1200]
     ORACLE_VOTE_THRESHOLD(67), // 0 [0,100]
-    BASE_POOL(68),
-    POOL_RECOVERY_PERIOD(69),
-    MIN_SPREAD(70),
-    ORACLE_REWARD_BAND(71), // 70000, [0, 1000000]
-    ORACLE_REWARD_DISTRIBUTION_WINDOW(72), // 10512000, [0, 0,1_000_000_000]
+    ALLOW_SLASH_VOTE(68), // 0, 1
+    JAIL_DURATION(69), // 200, [0,1_000_000_000]
+    UPDATE_SLASH_WINDOW(70), // 28, [0,1_000_000_000]
+    UPDATE_SLASH_FRACTION(71), // 10, [0,100_000]
+    UPDATE_MIN_VALID_PER_WINDOW(72), // 5, [0,100]
+    BASE_POOL(73),
+    POOL_RECOVERY_PERIOD(74),
+    MIN_SPREAD(75),
+    ORACLE_REWARD_BAND(76),
+    ORACLE_REWARD_DISTRIBUTION_WINDOW(77), // 70000, [0, 1000000]
     STABLE_USDD(100),
     USDD_TOBIN_FEE(101);
 

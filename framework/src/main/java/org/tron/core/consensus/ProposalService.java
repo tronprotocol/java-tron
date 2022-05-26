@@ -258,6 +258,11 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmLondon(entry.getValue());
           break;
         }
+        case ALLOW_SLASH_VOTE: {
+          manager.getDynamicPropertiesStore().saveAllowSlashVote(entry.getValue());
+          manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
+          break;
+        }
         case ALLOW_TVM_COMPATIBLE_EVM: {
           manager.getDynamicPropertiesStore().saveAllowTvmCompatibleEvm(entry.getValue());
           break;
@@ -270,6 +275,23 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
           break;
         }
+        case JAIL_DURATION: {
+          manager.getDynamicPropertiesStore().saveJailDuration(entry.getValue());
+          break;
+        }
+        case UPDATE_SLASH_WINDOW: {
+          manager.getDynamicPropertiesStore().saveSlashWindow(entry.getValue());
+          break;
+        }
+        case UPDATE_SLASH_FRACTION: {
+          manager.getDynamicPropertiesStore().saveSlashFraction(entry.getValue());
+          break;
+        }
+        case UPDATE_MIN_VALID_PER_WINDOW: {
+          manager.getDynamicPropertiesStore().saveMinValidPerWindow(entry.getValue());
+          break;
+        }
+
         case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
           break;
@@ -295,6 +317,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowStableMarketOn(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
               ContractType.StableMarketContract_VALUE);
+          if (entry.getValue() == 1) {
+            manager.getDynamicPropertiesStore().saveAllowSlashVote(1);
+            manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
+          }
           // todo: init other genesis params
           break;
         }

@@ -211,6 +211,40 @@ public class MortgageService {
     return reward;
   }
 
+  private long computeVoteReward(long beginCycle, long endCycle, AccountCapsule accountCapsule) {
+    long reward = 0;
+    for (Vote vote : accountCapsule.getVotesList()) {
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
+      BigInteger beginVi = delegationStore.getWitnessVi(beginCycle - 1, srAddress);
+      BigInteger endVi = delegationStore.getWitnessVi(endCycle - 1, srAddress);
+      BigInteger deltaVi = endVi.subtract(beginVi);
+      if (deltaVi.signum() <= 0) {
+        continue;
+      }
+      long userVote = vote.getVoteCount();
+      reward += deltaVi.multiply(BigInteger.valueOf(userVote))
+              .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
+    }
+    return reward;
+  }
+
+  private long computeShareReward(long beginCycle, long endCycle, AccountCapsule accountCapsule) {
+    long reward = 0;
+    for (Vote vote : accountCapsule.getVotesList()) {
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
+      BigInteger beginVi = delegationStore.getWitnessNewVi(beginCycle - 1, srAddress);
+      BigInteger endVi = delegationStore.getWitnessNewVi(endCycle - 1, srAddress);
+      BigInteger deltaVi = endVi.subtract(beginVi);
+      if (deltaVi.signum() <= 0) {
+        continue;
+      }
+      long userShares = vote.getShares();
+      reward += deltaVi.multiply(BigInteger.valueOf(userShares))
+              .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
+    }
+    return reward;
+  }
+
   /**
    * Compute reward from begin cycle to end cycle, which endCycle must greater than beginCycle.
    * While computing reward after new reward algorithm taking effective cycle number,
@@ -227,27 +261,33 @@ public class MortgageService {
 
     long reward = 0;
     long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
-    if (beginCycle < newAlgorithmCycle) {
-      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
-      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
-        reward += computeReward(cycle, accountCapsule);
+    long shareAlgorithmCycle = dynamicPropertiesStore.getShareRewardAlgorithmEffectiveCycle();
+    if (newAlgorithmCycle >= shareAlgorithmCycle) {
+      if (beginCycle < shareAlgorithmCycle) {
+        long oldEndCycle = Math.min(endCycle, shareAlgorithmCycle);
+        for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+          reward += computeReward(cycle, accountCapsule);
+        }
+        beginCycle = oldEndCycle;
       }
-      beginCycle = oldEndCycle;
+    } else {
+      if (beginCycle < newAlgorithmCycle) {
+        long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
+        for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+          reward += computeReward(cycle, accountCapsule);
+        }
+        beginCycle = oldEndCycle;
+      }
+      if (beginCycle < shareAlgorithmCycle) {
+        long oldEndCycle = Math.min(endCycle, shareAlgorithmCycle);
+        reward += computeVoteReward(beginCycle, shareAlgorithmCycle, accountCapsule);
+        beginCycle = oldEndCycle;
+      }
     }
     if (beginCycle < endCycle) {
-      for (Vote vote : accountCapsule.getVotesList()) {
-        byte[] srAddress = vote.getVoteAddress().toByteArray();
-        BigInteger beginVi = delegationStore.getWitnessVi(beginCycle - 1, srAddress);
-        BigInteger endVi = delegationStore.getWitnessVi(endCycle - 1, srAddress);
-        BigInteger deltaVi = endVi.subtract(beginVi);
-        if (deltaVi.signum() <= 0) {
-          continue;
-        }
-        long userVote = vote.getVoteCount();
-        reward += deltaVi.multiply(BigInteger.valueOf(userVote))
-            .divide(DelegationStore.DECIMAL_OF_VI_REWARD).longValue();
-      }
+      reward += computeShareReward(beginCycle, endCycle, accountCapsule);
     }
+
     return reward;
   }
 
@@ -333,17 +373,17 @@ public class MortgageService {
 
     long balance = 0;
     Map<String, Long> asset = new HashMap<>();
-    long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
-    if (beginCycle < newAlgorithmCycle) {
-      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
-      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
-        OracleRewardCapsule reward = computeOracleReward(cycle, accountCapsule);
-        balance = LongMath.checkedAdd(balance, reward.getBalance());
-        reward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
-      }
-      beginCycle = oldEndCycle;
-    }
-    if (beginCycle < endCycle) {
+//    long newAlgorithmCycle = dynamicPropertiesStore.getNewRewardAlgorithmEffectiveCycle();
+//    if (beginCycle < newAlgorithmCycle) {
+//      long oldEndCycle = Math.min(endCycle, newAlgorithmCycle);
+//      for (long cycle = beginCycle; cycle < oldEndCycle; cycle++) {
+//        OracleRewardCapsule reward = computeOracleReward(cycle, accountCapsule);
+//        balance = LongMath.checkedAdd(balance, reward.getBalance());
+//        reward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
+//      }
+//      beginCycle = oldEndCycle;
+//    }
+//    if (beginCycle < endCycle) {
       for (Vote vote : accountCapsule.getVotesList()) {
         byte[] srAddress = vote.getVoteAddress().toByteArray();
         DecOracleRewardCapsule beginVi =
@@ -353,12 +393,12 @@ public class MortgageService {
         if (deltaVi.isZero()) {
           continue;
         }
-        long userVote = vote.getVoteCount();
+        long userVote = vote.getShares();// vote.getVoteCount();
         OracleRewardCapsule userReward = deltaVi.mul(userVote).truncateDecimal();
         balance = LongMath.checkedAdd(balance, userReward.getBalance());
         userReward.getAsset().forEach((k, v) -> asset.merge(k, v, LongMath::checkedAdd));
       }
-    }
+//    }
     return new OracleRewardCapsule(balance, asset);
 
   }

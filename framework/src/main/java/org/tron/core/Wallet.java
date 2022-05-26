@@ -1069,6 +1069,31 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowSlashVote")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowSlashVote())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getJailDuration")
+            .setValue(dbManager.getDynamicPropertiesStore().getJailDuration())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getSlashWindow")
+            .setValue(dbManager.getDynamicPropertiesStore().getSlashWindow())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getSlashFraction")
+            .setValue(dbManager.getDynamicPropertiesStore().getSlashFraction())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getMinValidPerWindow")
+            .setValue(dbManager.getDynamicPropertiesStore().getMinValidPerWindow())
+            .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmLondon")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmLondon())
         .build());
@@ -1252,7 +1277,10 @@ public class Wallet {
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
     long allTronPowerUsage = accountCapsule.getTronPowerUsage();
-    long allTronPower = accountCapsule.getAllTronPower() / TRX_PRECISION;
+    boolean allowSlashVote = chainBaseManager.getDynamicPropertiesStore().allowSlashVote();
+    long allTronPower =
+            accountCapsule.getAllTronPower(allowSlashVote, chainBaseManager.getWitnessStore())
+                    / TRX_PRECISION;
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
     Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
@@ -4016,6 +4044,12 @@ public class Wallet {
   public StableMarketContractOuterClass.ExchangeResult getSimulateSwap(
       byte[] sourceToken, byte[] destToken, long amount) throws ContractExeException {
     return stableMarketUtil.computeSwap(sourceToken, destToken, amount);
+  }
+
+  public NumberMessage getWitnessMissCount(byte[] witnessAddress) {
+    NumberMessage.Builder builder = NumberMessage.newBuilder()
+            .setNum(chainBaseManager.getOracleStore().getWitnessMissCount(witnessAddress));
+    return builder.build();
   }
 
   public Chainbase.Cursor getCursor() {

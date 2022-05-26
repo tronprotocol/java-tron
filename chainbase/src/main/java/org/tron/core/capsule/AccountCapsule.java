@@ -15,6 +15,8 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -28,6 +30,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Builder;
@@ -454,6 +457,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void addVotes(ByteString voteAddress, long voteAdd, long shares) {
+    this.account = this.account.toBuilder()
+            .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).setShares(shares).build())
+            .build();
+  }
+
   public void clearAssetV2() {
     importAsset();
     this.account = this.account.toBuilder()
@@ -520,6 +529,24 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return getTronPower() + getTronPowerFrozenBalance();
     } else {
       return account.getOldTronPower() + getTronPowerFrozenBalance();
+    }
+  }
+
+  public long getTronPower(boolean allowSlashVote, WitnessStore witnessStore) {
+    long tp = getTronPower();
+    tp -= getAllSlashVoteCount(allowSlashVote, witnessStore) * TRX_PRECISION;
+
+    return tp;
+  }
+
+  public long getAllTronPower(boolean allowSlashVote, WitnessStore witnessStore) {
+    if (account.getOldTronPower() == -1) {
+      return getTronPowerFrozenBalance() - getAllSlashVoteCount(allowSlashVote, witnessStore) * TRX_PRECISION;
+    } else if (account.getOldTronPower() == 0) {
+      return getTronPower(allowSlashVote, witnessStore) + getTronPowerFrozenBalance();
+    } else {
+      return account.getOldTronPower() + getTronPowerFrozenBalance()
+              - getAllSlashVoteCount(allowSlashVote, witnessStore) * TRX_PRECISION;
     }
   }
 
@@ -1164,4 +1191,34 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     }
   }
 
+  public long getAllSlashVoteCount(boolean allowSlashVote, WitnessStore witnessStore) {
+    // todo need?
+    if (!allowSlashVote) {
+      return 0;
+    }
+
+    long slashingVotes = 0;
+    for (Vote vote : this.getVotesList()) {
+      byte[] witnessAddress = vote.getVoteAddress().toByteArray();
+      WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
+      long shares;
+      if (vote.getShares() <= 0) {
+        shares = vote.getVoteCount() * TRX_PRECISION;
+      } else {
+        shares = vote.getShares();
+      }
+      long voteCount = witnessCapsule.voteCountFromShares(shares);
+      slashingVotes += vote.getVoteCount() - voteCount;
+    }
+
+    return this.account.getSlashedVotes() + slashingVotes;
+  }
+
+  public long getSlashedVotes() {
+    return this.account.getSlashedVotes();
+  }
+
+  public void setSlashedVotes(long slashedVotes) {
+    this.account = this.account.toBuilder().setSlashedVotes(slashedVotes).build();
+  }
 }

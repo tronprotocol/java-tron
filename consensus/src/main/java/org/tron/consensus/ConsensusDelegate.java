@@ -1,12 +1,15 @@
 package org.tron.consensus;
 
 import com.google.protobuf.ByteString;
+
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.service.SlashService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -38,6 +41,9 @@ public class ConsensusDelegate {
   private VotesStore votesStore;
 
   @Autowired
+  private SlashService slashService;
+
+  @Autowired
   private OracleStore oracleStore;
 
   public DynamicPropertiesStore getDynamicPropertiesStore() {
@@ -50,6 +56,10 @@ public class ConsensusDelegate {
 
   public VotesStore getVotesStore() {
     return votesStore;
+  }
+
+  public SlashService getSlashService() {
+    return slashService;
   }
 
   public OracleStore getOracleStore() { return oracleStore; }
@@ -140,5 +150,9 @@ public class ConsensusDelegate {
 
   public boolean allowChangeDelegation() {
     return dynamicPropertiesStore.allowChangeDelegation();
+  }
+
+  public void savePreviousActiveWitnesses(List<ByteString> addresses) {
+    witnessScheduleStore.savePreviousActiveWitnesses(addresses);
   }
 }

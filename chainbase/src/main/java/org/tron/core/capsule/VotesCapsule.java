@@ -84,9 +84,21 @@ public class VotesCapsule implements ProtoCapsule<Votes> {
         .build();
   }
 
+  public void addNewVotes(ByteString voteAddress, long voteCount, long shares) {
+    this.votes = this.votes.toBuilder()
+            .addNewVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteCount).setShares(shares).build())
+            .build();
+  }
+
   public void addOldVotes(ByteString voteAddress, long voteCount) {
     this.votes = this.votes.toBuilder()
             .addOldVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteCount).build())
+            .build();
+  }
+
+  public void addOldVotes(ByteString voteAddress, long voteCount, long shares) {
+    this.votes = this.votes.toBuilder()
+            .addOldVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteCount).setShares(shares).build())
             .build();
   }
 
