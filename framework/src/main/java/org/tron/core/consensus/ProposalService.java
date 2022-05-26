@@ -276,6 +276,14 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowStableMarketOn(entry.getValue());
           break;
         }
+        case ORACLE_REWARD_BAND: {
+          manager.getDynamicPropertiesStore().saveOracleRewardBand(entry.getValue());
+          break;
+        }
+        case ORACLE_REWARD_DISTRIBUTION_WINDOW: {
+          manager.getDynamicPropertiesStore().saveOracleRewardDistributionWindow(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

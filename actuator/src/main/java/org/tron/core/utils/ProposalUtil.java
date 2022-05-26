@@ -542,6 +542,28 @@ public class ProposalUtil {
         }
         break;
       }
+      case ORACLE_REWARD_BAND: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ORACLE_REWARD_BAND]");
+        }
+        if (value < 0 || value > 1_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value, valid range is [0, 1_000_000L]");
+        }
+        break;
+      }
+      case ORACLE_REWARD_DISTRIBUTION_WINDOW: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ORACLE_REWARD_DISTRIBUTION_WINDOW]");
+        }
+        if (value < 0 || value > 1_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value, valid range is [0, 1_000_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -604,7 +626,9 @@ public class ProposalUtil {
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
     ALLOW_TVM_LONDON(63), // 0, 1
-    ALLOW_STABLE_MARKET_ON(64); // 0, 1
+    ALLOW_STABLE_MARKET_ON(64), // 0, 1
+    ORACLE_REWARD_BAND(65), // 70000, [0, 1000000]
+    ORACLE_REWARD_DISTRIBUTION_WINDOW(66); // 10512000, [0, 0,1_000_000_000]
 
     private long code;
 

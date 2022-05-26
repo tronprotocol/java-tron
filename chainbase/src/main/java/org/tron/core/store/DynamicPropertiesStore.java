@@ -172,6 +172,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   // Stable Coin
   private static final byte[] ALLOW_STABLE_MARKET_ON = "ALLOW_STABLE_MARKET_ON".getBytes();
+  private static final byte[] ORACLE_REWARD_BAND = "ORACLE_REWARD_BAND".getBytes();
+  private static final byte[] ORACLE_REWARD_DISTRIBUTION_WINDOW = "ORACLE_REWARD_DISTRIBUTION_WINDOW".getBytes();
 
 
   @Autowired
@@ -2202,6 +2204,30 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_STABLE_MARKET_ON"));
+  }
+
+  public void saveOracleRewardBand(long number) {
+    this.put(ORACLE_REWARD_BAND,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getOracleRewardBand() {
+    return Optional.ofNullable(getUnchecked(ORACLE_REWARD_BAND))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_REWARD_BAND"));
+  }
+
+  public void saveOracleRewardDistributionWindow(long number) {
+    this.put(ORACLE_REWARD_DISTRIBUTION_WINDOW,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getOracleRewardDistributionWindow() {
+    return Optional.ofNullable(getUnchecked(ORACLE_REWARD_DISTRIBUTION_WINDOW))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ORACLE_REWARD_DISTRIBUTION_WINDOW"));
   }
 
   public boolean allowStableMarketOn() {
