@@ -76,6 +76,9 @@ import org.tron.core.store.ZKProofStore;
 @Component
 public class ChainBaseManager {
 
+  @Getter
+  private static volatile ChainBaseManager chainBaseManager;
+
   // db store
   @Autowired
   @Getter
@@ -219,10 +222,6 @@ public class ChainBaseManager {
   @Getter
   private AccountTraceStore accountTraceStore;
 
-  @Autowired
-  @Getter
-  private StableMarketStore stableMarketStore;
-
   @Getter
   private ForkController forkController = ForkController.instance();
 
@@ -241,6 +240,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private OracleStore oracleStore;
+  @Autowired
+  @Getter
+  private StableMarketStore stableMarketStore;
 
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
@@ -287,6 +289,7 @@ public class ChainBaseManager {
     closeOneStore(pbftSignDataStore);
     closeOneStore(sectionBloomStore);
     closeOneStore(oracleStore);
+    closeOneStore(stableMarketStore);
   }
 
   // for test only
@@ -411,6 +414,16 @@ public class ChainBaseManager {
     return getBlockById(getBlockIdByNum(num));
   }
 
+  public static ChainBaseManager getInstance() {
+    return chainBaseManager;
+  }
+
+  public static synchronized void init(ChainBaseManager manager) {
+    chainBaseManager = manager;
+    AssetUtil.setAccountAssetStore(manager.getAccountAssetStore());
+    AssetUtil.setDynamicPropertiesStore(manager.getDynamicPropertiesStore());
+  }
+
   public List<ByteString> getActiveWitnessesForOracle() {
     List<ByteString> activeWitnessesForOracle = new ArrayList<>();
     // todo 10 to vote period
@@ -420,7 +433,7 @@ public class ChainBaseManager {
       long startBlockTimestamp = getBlockByNum(startBlockNum).getTimeStamp();
       List<ByteString> activeWitness;
       if (startBlockTimestamp + dynamicPropertiesStore.getMaintenanceTimeInterval()
-              < dynamicPropertiesStore.getNextMaintenanceTime()) {
+          < dynamicPropertiesStore.getNextMaintenanceTime()) {
         activeWitness = witnessScheduleStore.getPreviousActiveWitnesses();
       } else {
         activeWitness = witnessScheduleStore.getActiveWitnesses();
@@ -438,9 +451,5 @@ public class ChainBaseManager {
 
     return activeWitnessesForOracle;
   }
-
-  public void init() {
-    AssetUtil.setAccountAssetStore(accountAssetStore);
-    AssetUtil.setDynamicPropertiesStore(dynamicPropertiesStore);
-  }
 }
+

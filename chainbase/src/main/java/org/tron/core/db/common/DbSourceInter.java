@@ -17,6 +17,8 @@
  */
 package org.tron.core.db.common;
 
+import org.tron.core.db2.common.WrappedByteArray;
+
 import java.util.Map;
 import java.util.Set;
 

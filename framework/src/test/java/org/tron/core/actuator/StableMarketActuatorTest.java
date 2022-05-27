@@ -31,7 +31,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -103,11 +102,6 @@ public class StableMarketActuatorTest {
         .put(fromAccountCapsule.getAddress().toByteArray(), fromAccountCapsule);
     dbManager.getAccountStore()
         .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
-
-    dbManager.getAccountAssetStore().put(fromAccountCapsule.getAddress().toByteArray(),
-        new AccountAssetCapsule(fromAccountCapsule.getAddress()));
-    dbManager.getAccountAssetStore().put(toAccountCapsule.getAddress().toByteArray(),
-        new AccountAssetCapsule(toAccountCapsule.getAddress()));
   }
 
   /**

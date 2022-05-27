@@ -286,8 +286,6 @@ public class Constant {
   public static final String COMMITTEE_ALLOW_TVM_FREEZE = "committee.allowTvmFreeze";
   public static final String COMMITTEE_ALLOW_TVM_VOTE = "committee.allowTvmVote";
 
-  public static final String COMMITTEE_ALLOW_SLASH_VOTE = "committee.allowSlashVote";
-
   public static final String COMMITTEE_ALLOW_TVM_LONDON = "committee.allowTvmLondon";
   public static final String COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM = "committee.allowTvmCompatibleEvm";
   public static final String COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
@@ -306,10 +304,13 @@ public class Constant {
   public static final String OPEN_TRANSACTION_SORT = "node.openTransactionSort";
 
   public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "committee.allowAccountAssetOptimization";
+  public static final String ALLOW_ASSET_OPTIMIZATION = "committee.allowAssetOptimization";
 
   public static final String  ALLOW_STABLE_MARKET_ON = "committee.allowStableMarketOn";
   public static final String  ORACLE_REWARD_BAND = "committee.oracle.rewardBand";
-  public static final String  ORACLE_REWARD_DISTRIBUTION_WINDOW = "committee.oracle.rewardDistributionWindow";
+  public static final String  ORACLE_REWARD_DISTRIBUTION_WINDOW =
+      "committee.oracle.rewardDistributionWindow";
+  public static final String COMMITTEE_ALLOW_SLASH_VOTE = "committee.allowSlashVote";
 
   public static final String LOCAL_HOST = "127.0.0.1";
 

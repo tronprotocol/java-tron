@@ -258,11 +258,6 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmLondon(entry.getValue());
           break;
         }
-        case ALLOW_SLASH_VOTE: {
-          manager.getDynamicPropertiesStore().saveAllowSlashVote(entry.getValue());
-          manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
-          break;
-        }
         case ALLOW_TVM_COMPATIBLE_EVM: {
           manager.getDynamicPropertiesStore().saveAllowTvmCompatibleEvm(entry.getValue());
           break;
@@ -275,42 +270,17 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveTotalNetLimit(entry.getValue());
           break;
         }
-        case JAIL_DURATION: {
-          manager.getDynamicPropertiesStore().saveJailDuration(entry.getValue());
-          break;
-        }
-        case UPDATE_SLASH_WINDOW: {
-          manager.getDynamicPropertiesStore().saveSlashWindow(entry.getValue());
-          break;
-        }
-        case UPDATE_SLASH_FRACTION: {
-          manager.getDynamicPropertiesStore().saveSlashFraction(entry.getValue());
-          break;
-        }
-        case UPDATE_MIN_VALID_PER_WINDOW: {
-          manager.getDynamicPropertiesStore().saveMinValidPerWindow(entry.getValue());
-          break;
-        }
-
         case ALLOW_ACCOUNT_ASSET_OPTIMIZATION: {
           manager.getDynamicPropertiesStore().setAllowAccountAssetOptimization(entry.getValue());
-          break;
-        }
-        case ORACLE_VOTE_PERIOD: {
-          manager.getDynamicPropertiesStore().setOracleVotePeriod(entry.getValue());
-          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
-                  ContractType.OracleExchangeRateVoteContract_VALUE);
-          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
-                  ContractType.DelegateFeedConsentContract_VALUE);
-          break;
-        }
-        case ORACLE_VOTE_THRESHOLD: {
-          manager.getDynamicPropertiesStore().setOracleVoteThreshold(entry.getValue());
           break;
         }
         case ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX: {
           manager.getDynamicPropertiesStore().saveAllowHigherLimitForMaxCpuTimeOfOneTx(
               entry.getValue());
+          break;
+        }
+        case ALLOW_ASSET_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().setAllowAssetOptimization(entry.getValue());
           break;
         }
         case ALLOW_STABLE_MARKET_ON: {
@@ -354,6 +324,39 @@ public class ProposalService extends ProposalUtil {
         }
         case ORACLE_REWARD_DISTRIBUTION_WINDOW: {
           manager.getDynamicPropertiesStore().saveOracleRewardDistributionWindow(entry.getValue());
+          break;
+        }
+        case ALLOW_SLASH_VOTE: {
+          manager.getDynamicPropertiesStore().saveAllowSlashVote(entry.getValue());
+          manager.getDynamicPropertiesStore().saveShareRewardAlgorithmEffectiveCycle();
+          break;
+        }
+        case JAIL_DURATION: {
+          manager.getDynamicPropertiesStore().saveJailDuration(entry.getValue());
+          break;
+        }
+        case UPDATE_SLASH_WINDOW: {
+          manager.getDynamicPropertiesStore().saveSlashWindow(entry.getValue());
+          break;
+        }
+        case UPDATE_SLASH_FRACTION: {
+          manager.getDynamicPropertiesStore().saveSlashFraction(entry.getValue());
+          break;
+        }
+        case UPDATE_MIN_VALID_PER_WINDOW: {
+          manager.getDynamicPropertiesStore().saveMinValidPerWindow(entry.getValue());
+          break;
+        }
+        case ORACLE_VOTE_PERIOD: {
+          manager.getDynamicPropertiesStore().setOracleVotePeriod(entry.getValue());
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+              ContractType.OracleExchangeRateVoteContract_VALUE);
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(
+              ContractType.DelegateFeedConsentContract_VALUE);
+          break;
+        }
+        case ORACLE_VOTE_THRESHOLD: {
+          manager.getDynamicPropertiesStore().setOracleVoteThreshold(entry.getValue());
           break;
         }
         default:

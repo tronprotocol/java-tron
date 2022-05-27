@@ -1,18 +1,3 @@
-/*
- * java-tron is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * java-tron is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package org.tron.core.capsule.utils;
 
 import com.google.common.collect.Lists;
@@ -25,19 +10,14 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.protos.Protocol;
-
-
-
 
 @Slf4j
 public class AssetUtilTest {
@@ -65,22 +45,6 @@ public class AssetUtilTest {
     return result;
   }
 
-  private static AccountCapsule createAccount() {
-    com.google.protobuf.ByteString accountName =
-            com.google.protobuf.ByteString.copyFrom(randomBytes(16));
-    com.google.protobuf.ByteString address =
-            ByteString.copyFrom(randomBytes(32));
-    Protocol.AccountType accountType = Protocol.AccountType.forNumber(1);
-    AccountCapsule accountCapsule = new AccountCapsule(accountName, address, accountType);
-    accountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(1)), 1000L);
-    Protocol.Account build = accountCapsule.getInstance().toBuilder()
-            .addAllFrozenSupply(getFrozenList())
-            .build();
-    accountCapsule.setInstance(build);
-
-    return accountCapsule;
-  }
-
   private static AccountCapsule createAccount2() {
     AccountAssetStore accountAssetStore = dbManager.getAccountAssetStore();
     com.google.protobuf.ByteString accountName =
@@ -88,30 +52,7 @@ public class AssetUtilTest {
     com.google.protobuf.ByteString address = ByteString.copyFrom(randomBytes(32));
     Protocol.AccountType accountType = Protocol.AccountType.forNumber(1);
     AccountCapsule accountCapsule = new AccountCapsule(accountName, address, accountType);
-    Protocol.AccountAsset accountAsset =
-            Protocol.AccountAsset.newBuilder()
-            .setAddress(accountCapsule.getInstance().getAddress())
-            .setAssetIssuedID(accountCapsule.getAssetIssuedID())
-            .setAssetIssuedName(accountCapsule.getAssetIssuedName())
-            .build();
-    accountAssetStore.put(accountCapsule.createDbKey(),
-              new AccountAssetCapsule(
-              accountAsset));
     return accountCapsule;
-  }
-
-  @Test
-  public void testGetAsset() {
-    AccountCapsule account = createAccount();
-    Protocol.AccountAsset asset = AssetUtil.getAsset(account.getInstance());
-    Assert.assertNotNull(asset);
-  }
-
-  @Test
-  public void testImport() {
-    AccountCapsule account = createAccount2();
-    Protocol.Account asset = AssetUtil.importAsset(account.getInstance());
-    Assert.assertNotNull(asset);
   }
 
   @Test

@@ -147,7 +147,7 @@ public class TransferToAccountTest {
     repository.commit();
     Assert.assertEquals(100,
         chainBaseManager.getAccountStore()
-            .get(contractAddress).getAssetMapV2().get(String.valueOf(id)).longValue());
+            .get(contractAddress).getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     Assert.assertEquals(1000,
         chainBaseManager.getAccountStore().get(contractAddress).getBalance());
 
@@ -170,11 +170,11 @@ public class TransferToAccountTest {
 
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9,
-        chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+        chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
     Assert.assertEquals(100 + tokenValue - 9,
         chainBaseManager.getAccountStore().get(contractAddress)
-            .getAssetMapV2().get(String.valueOf(id)).longValue());
+            .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     long energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
     // 3.Test transferToken To Non-exist address
@@ -190,10 +190,10 @@ public class TransferToAccountTest {
 
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue * 2 - 18,
-        chainBaseManager.getAccountStore().get(contractAddress).getAssetMapV2()
+        chainBaseManager.getAccountStore().get(contractAddress).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
     Assert.assertEquals(9,
-        chainBaseManager.getAccountStore().get(ecKey.getAddress()).getAssetMapV2()
+        chainBaseManager.getAccountStore().get(ecKey.getAddress()).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
