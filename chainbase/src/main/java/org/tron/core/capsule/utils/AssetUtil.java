@@ -23,7 +23,7 @@ public class AssetUtil {
       return false;
     }
     byte[] dbKey = Bytes.concat(account.getAddress().toByteArray(), key);
-    return accountAssetStore.getUnchecked(dbKey) != null;
+    return accountAssetStore.get(dbKey) != null;
   }
 
   public static Account importAsset(Account account, byte[] key) {
