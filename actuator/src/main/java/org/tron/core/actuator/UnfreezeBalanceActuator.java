@@ -79,6 +79,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     long oldBalance = accountCapsule.getBalance();
 
     long unfreezeBalance = 0L;
+    long addBalance;
 
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
@@ -187,7 +188,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
       }
 
-      accountCapsule.setBalance(oldBalance + unfreezeBalance);
+      addBalance = deductSlashedVotes(accountCapsule, unfreezeBalance);
+      accountCapsule.setBalance(oldBalance + addBalance);
 
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
@@ -238,26 +240,27 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
               iterator.remove();
             }
           }
-
+          addBalance = deductSlashedVotes(accountCapsule, unfreezeBalance);
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-              .setBalance(oldBalance + unfreezeBalance)
+              .setBalance(oldBalance + addBalance)
               .clearFrozen().addAllFrozen(frozenList).build());
 
           break;
         case ENERGY:
           unfreezeBalance = accountCapsule.getAccountResource().getFrozenBalanceForEnergy()
               .getFrozenBalance();
-
+          addBalance = deductSlashedVotes(accountCapsule, unfreezeBalance);
           AccountResource newAccountResource = accountCapsule.getAccountResource().toBuilder()
               .clearFrozenBalanceForEnergy().build();
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-              .setBalance(oldBalance + unfreezeBalance)
+              .setBalance(oldBalance + addBalance)
               .setAccountResource(newAccountResource).build());
           break;
         case TRON_POWER:
           unfreezeBalance = accountCapsule.getTronPowerFrozenBalance();
+          addBalance = deductSlashedVotes(accountCapsule, unfreezeBalance);
           accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
-              .setBalance(oldBalance + unfreezeBalance)
+              .setBalance(oldBalance + addBalance)
               .clearTronPower().build());
           break;
         default:
@@ -496,4 +499,16 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     return 0;
   }
 
+  private long deductSlashedVotes(AccountCapsule accountCapsule, long unfreezeBalance) {
+    if (accountCapsule.getSlashedVotes() > 0) {
+      if (unfreezeBalance > accountCapsule.getSlashedVotes()) {
+        unfreezeBalance = unfreezeBalance - accountCapsule.getSlashedVotes();
+        accountCapsule.setSlashedVotes(0);
+      } else {
+        accountCapsule.setSlashedVotes(accountCapsule.getSlashedVotes() - unfreezeBalance);
+        unfreezeBalance = 0;
+      }
+    }
+    return unfreezeBalance;
+  }
 }
