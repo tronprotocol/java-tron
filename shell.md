@@ -44,6 +44,10 @@ The script is available in the java-tron project at [github](https://github.com/
   sh start.sh -cb --run
   ```
 
+* Select a supported network,default network `main_net`, optional network `test_net`,`private`
+  ```
+  sh start.sh --net test
+  ```
 
 
 ## Options
@@ -73,6 +77,9 @@ The script is available in the java-tron project at [github](https://github.com/
 * `-mem`
 
   Specify the maximum memory of the `FullNode.jar` service in`MB`, jvm's startup maximum memory will be adjusted according to this parameter.
+  
+* `--net`
+    Select test and private networks.
 
 ### build project
 
@@ -227,3 +234,4 @@ sh start.sh --release --run -d /tmp/db/database -m 128 -b 64000
 ```
 
 For more design details, please refer to: [TIP298](https://github.com/tronprotocol/tips/issues/298) | [Leveldb Startup Optimization Plugins](https://github.com/tronprotocol/documentation-en/blob/master/docs/developers/archive-manifest.md)
+
