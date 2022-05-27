@@ -79,7 +79,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     long oldBalance = accountCapsule.getBalance();
 
     long unfreezeBalance = 0L;
-    long addBalance = 0L;
+    long addBalance;
 
     if (dynamicStore.supportAllowNewResourceModel()
         && accountCapsule.oldTronPowerIsNotInitialized()) {
