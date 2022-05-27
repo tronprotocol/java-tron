@@ -62,7 +62,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     map.putAll(assetMapV2);
     accountCapsule.getAllFreeAssetNetUsageV2().forEach((k, v) -> {
       if (!map.containsKey(k)) {
-        map.put(k, 0l);
+        map.put(k, 0L);
       }
     });
     map.forEach((assetName, balance) -> {
