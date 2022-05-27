@@ -2388,10 +2388,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
               .map(BytesCapsule::getData)
               .map(ByteArray::toLong)
               .orElseThrow(
-                      () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
+                      () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
     } catch (Exception e) {
       logger.debug("{}", e.getMessage());
-      return CommonParameter.getInstance().getAllowAccountAssetOptimization();
+      return CommonParameter.getInstance().getAllowAssetOptimization();
     }
   }
 
