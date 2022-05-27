@@ -39,6 +39,8 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
 
   List<byte[]> getKeysNext(byte[] key, long limit);
 
+  Map<WrappedByteArray, byte[]> prefixQuery(byte[] key);
+
   default Map<byte[], byte[]> getNext(byte[] key, long limit) {
     return Collections.emptyMap();
   }

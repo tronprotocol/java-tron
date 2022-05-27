@@ -196,17 +196,19 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmFreeze = 0;
     PARAMETER.allowTvmVote = 0;
-    PARAMETER.allowSlashVote = 0;
     PARAMETER.allowTvmLondon = 0;
     PARAMETER.allowTvmCompatibleEvm = 0;
     PARAMETER.historyBalanceLookup = false;
     PARAMETER.openPrintLog = true;
     PARAMETER.openTransactionSort = false;
     PARAMETER.allowAccountAssetOptimization = 0;
+    PARAMETER.allowAssetOptimization = 0;
     PARAMETER.disabledApiList = Collections.emptyList();
     PARAMETER.shutdownBlockTime = null;
     PARAMETER.shutdownBlockHeight = -1;
     PARAMETER.shutdownBlockCount = -1;
+    PARAMETER.allowSlashVote = 0;
+    PARAMETER.allowStableMarketOn = 0;
 
   }
 
@@ -795,10 +797,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
 
-    PARAMETER.allowSlashVote =
-            config.hasPath(Constant.COMMITTEE_ALLOW_SLASH_VOTE) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_SLASH_VOTE) : 0;
-
     PARAMETER.allowTvmLondon =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_LONDON) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_LONDON) : 0;
@@ -863,6 +861,10 @@ public class Args extends CommonParameter {
         .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
         .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
 
+    PARAMETER.allowAssetOptimization = config
+        .hasPath(Constant.ALLOW_ASSET_OPTIMIZATION) ? config
+        .getInt(Constant.ALLOW_ASSET_OPTIMIZATION) : 0;
+
     PARAMETER.allowStableMarketOn = config
             .hasPath(Constant.ALLOW_STABLE_MARKET_ON) ? config
             .getInt(Constant.ALLOW_STABLE_MARKET_ON) : 0;
@@ -899,6 +901,10 @@ public class Args extends CommonParameter {
     if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_COUNT)) {
       PARAMETER.shutdownBlockCount = config.getLong(Constant.NODE_SHUTDOWN_BLOCK_COUNT);
     }
+
+    PARAMETER.allowSlashVote =
+        config.hasPath(Constant.COMMITTEE_ALLOW_SLASH_VOTE) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_SLASH_VOTE) : 0;
 
     logConfig();
   }

@@ -484,22 +484,6 @@ public class ProposalUtil {
         }
         break;
       }
-      case ALLOW_SLASH_VOTE: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
-          throw new ContractValidateException(
-                  "Bad chain parameter id [ALLOW_SLASH_VOTE]");
-        }
-        if (value != 1) {
-          throw new ContractValidateException(
-                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SLASH_VOTE" + VALUE_NOT_ONE_ERROR);
-        }
-        if (dynamicPropertiesStore.getChangeDelegation() == 0) {
-          throw new ContractValidateException(
-                  "[ALLOW_CHANGE_DELEGATION] proposal must be approved "
-                          + "before [ALLOW_SLASH_VOTE] can be proposed");
-        }
-        break;
-      }
       case FREE_NET_LIMIT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
           throw new ContractValidateException("Bad chain parameter id [FREE_NET_LIMIT]");
@@ -562,6 +546,33 @@ public class ProposalUtil {
         if (value != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_ASSET_OPTIMIZATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_5)) {
+          throw new ContractValidateException(
+                  "Bad chain parameter id [ALLOW_ASSET_OPTIMIZATION]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_ASSET_OPTIMIZATION] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_SLASH_VOTE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_SLASH_VOTE]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SLASH_VOTE" + VALUE_NOT_ONE_ERROR);
+        }
+        if (dynamicPropertiesStore.getChangeDelegation() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_CHANGE_DELEGATION] proposal must be approved "
+                  + "before [ALLOW_SLASH_VOTE] can be proposed");
         }
         break;
       }
@@ -782,20 +793,21 @@ public class ProposalUtil {
     FREE_NET_LIMIT(61), // 5000, [0, 100_000]
     TOTAL_NET_LIMIT(62), // 43_200_000_000L, [0, 1000_000_000_000L]
     ALLOW_TVM_LONDON(63), // 0, 1
-    ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(64), // 0, 1
-    ALLOW_STABLE_MARKET_ON(65), // 0, 1
-    ORACLE_VOTE_PERIOD(66), // 0 [5,1200]
-    ORACLE_VOTE_THRESHOLD(67), // 0 [0,100]
-    ALLOW_SLASH_VOTE(68), // 0, 1
-    JAIL_DURATION(69), // 200, [0,1_000_000_000]
-    UPDATE_SLASH_WINDOW(70), // 28, [0,1_000_000_000]
-    UPDATE_SLASH_FRACTION(71), // 10, [0,100_000]
-    UPDATE_MIN_VALID_PER_WINDOW(72), // 5, [0,100]
-    BASE_POOL(73),
-    POOL_RECOVERY_PERIOD(74),
-    MIN_SPREAD(75),
-    ORACLE_REWARD_BAND(76),
-    ORACLE_REWARD_DISTRIBUTION_WINDOW(77), // 70000, [0, 1000000]
+    ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX(65), // 0, 1
+    ALLOW_ASSET_OPTIMIZATION(66), // 0, 1
+    ALLOW_STABLE_MARKET_ON(67), // 0, 1
+    ORACLE_VOTE_PERIOD(68), // 0 [5,1200]
+    ORACLE_VOTE_THRESHOLD(69), // 0 [0,100]
+    ALLOW_SLASH_VOTE(70), // 0, 1
+    JAIL_DURATION(71), // 200, [0,1_000_000_000]
+    UPDATE_SLASH_WINDOW(72), // 28, [0,1_000_000_000]
+    UPDATE_SLASH_FRACTION(73), // 10, [0,100_000]
+    UPDATE_MIN_VALID_PER_WINDOW(74), // 5, [0,100]
+    BASE_POOL(75),
+    POOL_RECOVERY_PERIOD(76),
+    MIN_SPREAD(77),
+    ORACLE_REWARD_BAND(78),
+    ORACLE_REWARD_DISTRIBUTION_WINDOW(79), // 70000, [0, 1000000]
     STABLE_USDD(100),
     USDD_TOBIN_FEE(101);
 

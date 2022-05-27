@@ -337,7 +337,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    accountCapsule.importAsset();
+    accountCapsule.importAllAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -368,7 +368,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    accountCapsule.importAsset();
+    accountCapsule.importAllAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -1069,31 +1069,6 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowSlashVote")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowSlashVote())
-            .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getJailDuration")
-            .setValue(dbManager.getDynamicPropertiesStore().getJailDuration())
-            .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getSlashWindow")
-            .setValue(dbManager.getDynamicPropertiesStore().getSlashWindow())
-            .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getSlashFraction")
-            .setValue(dbManager.getDynamicPropertiesStore().getSlashFraction())
-            .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getMinValidPerWindow")
-            .setValue(dbManager.getDynamicPropertiesStore().getMinValidPerWindow())
-            .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmLondon")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmLondon())
         .build());
@@ -1122,6 +1097,10 @@ public class Wallet {
         .setKey("getAllowHigherLimitForMaxCpuTimeOfOneTx")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
         .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowAssetOptimization")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
+            .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getOracleVotePeriod")
@@ -1136,6 +1115,30 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowStableMarketOn")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowStableMarketOn())
+        .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowSlashVote")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowSlashVote())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getJailDuration")
+        .setValue(dbManager.getDynamicPropertiesStore().getJailDuration())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getSlashWindow")
+        .setValue(dbManager.getDynamicPropertiesStore().getSlashWindow())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getSlashFraction")
+        .setValue(dbManager.getDynamicPropertiesStore().getSlashFraction())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMinValidPerWindow")
+        .setValue(dbManager.getDynamicPropertiesStore().getMinValidPerWindow())
         .build());
 
     return builder.build();

@@ -373,16 +373,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long changedDelegation;
-
-  @Getter
-  @Setter
-  public long allowStableMarketOn;
-  @Getter
-  @Setter
-  public long rewardBand;
-  @Getter
-  @Setter
-  public long rewardDistributionWindow;
   @Getter
   @Setter
   public Set<String> actuatorSet;
@@ -506,10 +496,6 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public long allowSlashVote;
-
-  @Getter
-  @Setter
   public long allowTvmLondon;
 
   @Getter
@@ -546,6 +532,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long allowAssetOptimization;
+
+  @Getter
+  @Setter
   public List<String> disabledApiList;
 
   @Getter
@@ -559,6 +549,22 @@ public class CommonParameter {
   @Getter
   @Setter
   public long shutdownBlockCount = -1;
+
+  @Getter
+  @Setter
+  public long allowSlashVote;
+
+  @Getter
+  @Setter
+  public long allowStableMarketOn;
+
+  @Getter
+  @Setter
+  public long rewardBand;
+
+  @Getter
+  @Setter
+  public long rewardDistributionWindow;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
