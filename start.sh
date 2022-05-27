@@ -391,7 +391,6 @@ while [ -n "$1" ]; do
   case "$1" in
   -c)
     DEFAULT_FULL_NODE_CONFIG=$2
-    FULL_START_OPT="$FULL_START_OPT $1 $2"
     shift 2
     ;;
   -d)
@@ -402,6 +401,18 @@ while [ -n "$1" ]; do
   -j)
     JAR_NAME=$2
     shift 2
+    ;;
+  -p)
+    FULL_START_OPT="$FULL_START_OPT $1 $2"
+    shift 2
+    ;;
+  -w)
+    FULL_START_OPT="$FULL_START_OPT $1"
+    shift 1
+    ;;
+  --witness)
+    FULL_START_OPT="$FULL_START_OPT $1"
+    shift 1
     ;;
   -m)
     REBUILD_MANIFEST_SIZE=$2
@@ -487,8 +498,8 @@ while [ -n "$1" ]; do
         exit
       fi
     fi
-    echo "warn: option $1 does not exist"
-    exit
+    FULL_START_OPT="$FULL_START_OPT $@"
+    break
     ;;
   esac
 done
