@@ -1,8 +1,12 @@
 package org.tron.core.store;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -11,15 +15,14 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.StableCoinCapsule;
-import org.tron.core.capsule.StableCoinInfoCapsule;
+import org.tron.core.capsule.DecOracleRewardCapsule;
+import org.tron.core.capsule.OraclePrevoteCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.protos.contract.AssetIssueContractOuterClass;
-import org.tron.protos.contract.StableMarketContractOuterClass;
-import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
+import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.protos.Protocol.OracleVote;
 import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinContract;
-
-import java.util.List;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfo;
+import org.tron.protos.contract.StableMarketContractOuterClass.StableCoinInfoList;
 
 
 @Slf4j(topic = "DB")
@@ -34,7 +37,17 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   private static final byte[] POOL_DELTA = "delta".getBytes();
   private static final byte[] MIN_SPREAD = "min_spread".getBytes();
   private static final byte[] TRX_EXCHANGE_AMOUNT = "trx_exchange_amount".getBytes();
+
+  // for oracle module begin
   private static final byte[] EXCHANGE_RATE = "exchange_rate".getBytes();
+  private static final byte[] ORACLE_FEEDER = "oracle_feeder".getBytes();
+  private static final byte[] ORACLE_VOTE = "oracle_vote".getBytes();
+  private static final byte[] ORACLE_PREVOTE = "oracle_prevote".getBytes();
+  private static final byte[] ORACLE_TOBIN_TAX = "oracle_tobin_tax".getBytes();
+  private static final byte[] ORACLE_MISS = "oracle_miss".getBytes();
+  private static final byte[] REWARD_POOL = "reward_pool".getBytes();
+  private static final byte[] REWARD_TOTAL = "reward_total".getBytes();
+  // for oracle module end
 
   @Autowired
   private AssetIssueV2Store assetIssueV2Store;
@@ -44,23 +57,45 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     super(dbName);
   }
 
-  // todo
-  public StableMarketContractOuterClass.StableCoinInfoList getStableCoinList() {
-    return null;
+  public StableCoinInfoList getStableCoinList() {
+    StableCoinInfoList.Builder result = StableCoinInfoList.newBuilder();
+    Map<WrappedByteArray, byte[]> allStableCoins = prefixQuery(STABLE_COIN_PREFIX);
+    allStableCoins.forEach((key, data) -> {
+      int tokenLength = key.getBytes().length - STABLE_COIN_PREFIX.length;
+      byte[] tokenId = new byte[tokenLength];
+      System.arraycopy(key.getBytes(), STABLE_COIN_PREFIX.length, tokenId, 0, tokenLength);
+
+      try {
+        if (!ByteUtil.isNullOrZeroArray(data)) {
+          AssetIssueCapsule assetIssueContract = assetIssueV2Store.get(tokenId);
+          StableCoinContract stableCoin = StableCoinContract.parseFrom(data);
+          result.addStableCoinInfo(
+              StableCoinInfo.newBuilder()
+                  .setAssetIssue(assetIssueContract.getInstance())
+                  .setTobinFee(Dec.newDec(stableCoin.getTobinFee()).roundLong())// todo check
+                  .build()
+          );
+        } else {
+          // todo: optimize
+          throw new RuntimeException("set tobin fee failed, data is null");
+        }
+      } catch (InvalidProtocolBufferException e) {
+        throw new RuntimeException("set tobin fee failed, " + e.getMessage());
+      }
+    });
+    return result.build();
   }
 
-  public StableCoinInfo getStableCoinById(byte[] tokenId) {
+  public StableCoinInfo getStableCoinInfoById(byte[] tokenId) {
     BytesCapsule data = getUnchecked(buildKey(STABLE_COIN_PREFIX, tokenId));
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       AssetIssueCapsule assetIssueContract = assetIssueV2Store.get(tokenId);
       // todo: optimize
-      Dec tobinFee = getTobinFee(tokenId);
-      StableCoinInfo stableCoinInfo =
-           StableCoinInfo.newBuilder()
-               .setAssetIssue(assetIssueContract.getInstance())
-               .setTobinFee(tobinFee.roundLong())  // todo check
-               .build();
-      return stableCoinInfo;
+      Dec tobinTax = getProposalTobinFee(tokenId);
+      return StableCoinInfo.newBuilder()
+          .setAssetIssue(assetIssueContract.getInstance())
+          .setTobinFee(tobinTax.roundLong())  // todo check
+          .build();
     } else {
       return null;
     }
@@ -69,27 +104,28 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   public void setStableCoin(byte[] tokenId, long tobinFee) {
     Dec fee = Dec.newDecWithPrec(tobinFee, TOBIN_FEE_DECIMAL);
     StableCoinContract stableCoin = StableCoinContract.newBuilder()
-            .setAssetIssueId(ByteArray.toStr(tokenId))
-            .setTobinFee(fee.toString())
-            .build();
+        .setAssetIssueId(ByteArray.toStr(tokenId))
+        .setTobinFee(fee.toString())
+        .build();
     this.put(buildKey(STABLE_COIN_PREFIX, tokenId), new BytesCapsule(stableCoin.toByteArray()));
   }
 
-  public Dec getTobinFee(byte[] tokenId) {
+  public Dec getProposalTobinFee(byte[] tokenId) {
     BytesCapsule data = getUnchecked(buildKey(STABLE_COIN_PREFIX, tokenId));
     try {
       if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
-        StableCoinContract stableCoin = StableCoinContract.parseFrom(data.getData());
-        return Dec.newDec(stableCoin.getTobinFee());
+        StableCoinContract stableCoinContract = StableCoinContract.parseFrom(data.getData());
+        return Dec.newDec(stableCoinContract.getTobinFee());
       } else {
-        return null;
+        // todo: optimize
+        throw new RuntimeException("get stable coin failed, data is null");
       }
     } catch (InvalidProtocolBufferException e) {
-      return null;
+      throw new RuntimeException("set tobin fee failed, " + e.getMessage());
     }
   }
 
-  public void setTobinFee(byte[] tokenId, long tobinFee) {
+  public void setProposalTobinFee(byte[] tokenId, long tobinFee) {
     Dec fee = Dec.newDecWithPrec(tobinFee, TOBIN_FEE_DECIMAL);
     BytesCapsule data = getUnchecked(buildKey(STABLE_COIN_PREFIX, tokenId));
     try {
@@ -184,6 +220,192 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     this.put(buildKey(EXCHANGE_RATE, tokenId), new BytesCapsule(rate.toByteArray()));
   }
 
+  public void clearAllOracleExchangeRates() {
+    Map<WrappedByteArray, byte[]> allExchangeRates = prefixQuery(EXCHANGE_RATE);
+    allExchangeRates.forEach((key, value) -> {
+      delete(key.getBytes());
+    });
+  }
+
+  public void setVote(byte[] srAddress, OracleVote vote) {
+    byte[] key = buildKey(ORACLE_VOTE, srAddress);
+    put(key, new BytesCapsule(vote.toByteArray()));
+  }
+
+  public OracleVote getVote(byte[] srAddress) {
+    BytesCapsule vote = getUnchecked(buildKey(ORACLE_VOTE, srAddress));
+    if (vote == null) {
+      return null;
+    }
+    OracleVote oracleVote;
+    try {
+      oracleVote = OracleVote.parseFrom(vote.getData());
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      return null;
+    }
+    return oracleVote;
+  }
+
+  public void clearPrevoteAndVotes(long blockNum, long votePeriod) {
+    Map<WrappedByteArray, byte[]> prevotes = prefixQuery(ORACLE_PREVOTE);
+    prevotes.forEach((key, value) -> {
+      OraclePrevoteCapsule prevote = new OraclePrevoteCapsule(value);
+      if (blockNum > prevote.getInstance().getBlockNum() + votePeriod) {
+        delete(key.getBytes());
+      }
+    });
+    Map<WrappedByteArray, byte[]> votes = prefixQuery(ORACLE_VOTE);
+    votes.forEach((key, value) -> {
+      delete(key.getBytes());
+    });
+  }
+
+  public Map<String, Dec> getAllTobinTax() {
+    Map<String, Dec> result = new HashMap<>();
+    Map<WrappedByteArray, byte[]> allTobinTax = prefixQuery(ORACLE_TOBIN_TAX);
+    allTobinTax.forEach((key, value) -> {
+      int tokenLength = key.getBytes().length - ORACLE_TOBIN_TAX.length;
+      byte[] tokenID = new byte[tokenLength];
+      System.arraycopy(key.getBytes(), ORACLE_TOBIN_TAX.length, tokenID, 0, tokenLength);
+      result.put(new String(tokenID), Dec.newDec(value));
+    });
+    return null;
+  }
+
+  public void clearAllTobinTax() {
+    Map<WrappedByteArray, byte[]> allTobinTax = prefixQuery(ORACLE_TOBIN_TAX);
+    allTobinTax.forEach((key, value) -> {
+      delete(key.getBytes());
+    });
+  }
+
+  public Dec getTobinFee(byte[] tokenId) {
+    BytesCapsule data = getUnchecked(buildKey(ORACLE_TOBIN_TAX, tokenId));
+    if (data == null || ByteUtil.isNullOrZeroArray(data.getData())) {
+      return null;
+    }
+    return Dec.newDec(data.getData());
+  }
+
+  public void updateTobinTax(Map<String, Dec> oracleTobinTaxMap) {
+    // check is there any update in proposal
+    boolean needUpdate = false;
+    StableCoinInfoList stableCoinList = getStableCoinList();
+    if (stableCoinList == null) {
+
+      if (oracleTobinTaxMap != null) {
+        clearAllTobinTax();
+      }
+      return;
+    } else if (oracleTobinTaxMap == null) {
+      needUpdate = true;
+    } else if (stableCoinList.getStableCoinInfoList().size() != oracleTobinTaxMap.size()) {
+      needUpdate = true;
+    } else {
+      for (StableCoinInfo stableCoinInfo : stableCoinList.getStableCoinInfoList()) {
+        Dec oracleTobin = oracleTobinTaxMap.get(stableCoinInfo.getAssetIssue().getId());
+        if (oracleTobin == null || !oracleTobin.eq(Dec.newDec(stableCoinInfo.getTobinFee()))) {
+          needUpdate = true;
+          break;
+        }
+      }
+    }
+
+    if (needUpdate) {
+      clearAllTobinTax();
+      for (StableCoinInfo stableCoinInfo : stableCoinList.getStableCoinInfoList()) {
+        Dec tobinTax = Dec.newDec(stableCoinInfo.getTobinFee());
+        byte[] key = buildKey(ORACLE_TOBIN_TAX,
+            Objects.requireNonNull(ByteArray.fromString(stableCoinInfo.getAssetIssue().getId())));
+        put(key, new BytesCapsule(tobinTax.toByteArray()));
+      }
+    }
+  }
+
+  public void setFeeder(byte[] srAddress, byte[] feederAddress) {
+    byte[] key = buildKey(ORACLE_FEEDER, srAddress);
+
+    // if feeder == sr or fedder is empty, delete sr feeder from db
+    if (Arrays.equals(srAddress, feederAddress) || ArrayUtils.isEmpty(feederAddress)) {
+      delete(key);
+      return;
+    }
+
+    put(key, new BytesCapsule(feederAddress));
+  }
+
+  public byte[] getFeeder(byte[] srAddress) {
+    BytesCapsule feeder = getUnchecked(buildKey(ORACLE_FEEDER, srAddress));
+    return feeder != null ? feeder.getData() : null;
+  }
+
+  public void setPrevote(byte[] srAddress, OraclePrevoteCapsule oraclePrevoteCapsule) {
+    byte[] key = buildKey(ORACLE_PREVOTE, srAddress);
+    put(key, new BytesCapsule(oraclePrevoteCapsule.getData()));
+  }
+
+  public OraclePrevoteCapsule getPrevote(byte[] srAddress) {
+    BytesCapsule prevote = getUnchecked(buildKey(ORACLE_PREVOTE, srAddress));
+    if (prevote != null) {
+      return new OraclePrevoteCapsule(prevote.getData());
+    }
+    return null;
+  }
+
+  public void setWitnessMissCount(byte[] address, long value) {
+    put(buildKey(ORACLE_MISS, address), new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getWitnessMissCount(byte[] address) {
+    BytesCapsule bytesCapsule = getUnchecked(buildKey(ORACLE_MISS, address));
+    if (bytesCapsule == null) {
+      return 0;
+    } else {
+      return ByteArray.toLong(bytesCapsule.getData());
+    }
+  }
+
+  public void deleteWitnessMissCount(byte[] address) {
+    delete(buildKey(ORACLE_MISS, address));
+  }
+
+  public void addOracleRewardPool(DecOracleRewardCapsule reward) {
+    BytesCapsule bytesCapsule = getUnchecked(REWARD_POOL);
+    if (bytesCapsule == null) {
+      put(REWARD_POOL, new BytesCapsule(reward.getData()));
+    } else {
+      put(REWARD_POOL, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
+          .add(reward).getData()));
+    }
+  }
+
+  public void addToOracleRewardTotal(DecOracleRewardCapsule reward) {
+    BytesCapsule bytesCapsule = getUnchecked(REWARD_TOTAL);
+    if (bytesCapsule == null) {
+      put(REWARD_TOTAL, new BytesCapsule(reward.getData()));
+    } else {
+      put(REWARD_TOTAL, new BytesCapsule(new DecOracleRewardCapsule(bytesCapsule.getData())
+          .add(reward).getData()));
+    }
+  }
+
+  public DecOracleRewardCapsule getOracleRewardPool() {
+    BytesCapsule bytesCapsule = getUnchecked(REWARD_POOL);
+    if (bytesCapsule == null) {
+      return new DecOracleRewardCapsule();
+    }
+    return new DecOracleRewardCapsule(bytesCapsule.getData());
+  }
+
+  public DecOracleRewardCapsule getOracleRewardTotal() {
+    BytesCapsule bytesCapsule = getUnchecked(REWARD_TOTAL);
+    if (bytesCapsule == null) {
+      return new DecOracleRewardCapsule();
+    }
+    return new DecOracleRewardCapsule(bytesCapsule.getData());
+  }
+
   @Override
   public void close() {
     super.close();
@@ -194,5 +416,25 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     System.arraycopy(a, 0, c, 0, a.length);
     System.arraycopy(b, 0, c, a.length, b.length);
     return c;
+  }
+
+  public static Map<String, Dec> parseExchangeRateTuples(String exchangeRatesStr) {
+    exchangeRatesStr = exchangeRatesStr.trim();
+    if (exchangeRatesStr.isEmpty()) {
+      throw new RuntimeException("exchange rate string cannot be empty");
+    }
+
+    Map<String, Dec> ex = new HashMap<>();
+    String[] exchangeRateList = exchangeRatesStr.split(",");
+    for (String e : exchangeRateList) {
+      String[] exchangeRatePair = e.split(":");
+      if (exchangeRatePair.length != 2) {
+        throw new RuntimeException("exchange rate pair length error");
+      }
+      String asset = exchangeRatePair[0];
+      String exchangeRate = exchangeRatePair[1];
+      ex.put(asset, Dec.newDec(exchangeRate));
+    }
+    return ex;
   }
 }

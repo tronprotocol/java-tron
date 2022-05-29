@@ -313,8 +313,8 @@ public class ProposalService extends ProposalUtil {
         case USDD_TOBIN_FEE: {
           // todo: replace usdd to the real token id
           byte[] tokenId = "usdd".getBytes();
-          if (manager.getStableMarketStore().getStableCoinById(tokenId) != null) {
-            manager.getStableMarketStore().setTobinFee(tokenId, entry.getValue());
+          if (manager.getStableMarketStore().getStableCoinInfoById(tokenId) != null) {
+            manager.getStableMarketStore().setProposalTobinFee(tokenId, entry.getValue());
           }
           break;
         }

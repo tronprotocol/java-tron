@@ -17,7 +17,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.OracleStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -42,10 +42,10 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
     final OracleContract.OracleExchangeRateVoteContract oracleExchangeRateVoteContract;
     final long fee = calcFee();
 
-    OracleStore oracleStore = chainBaseManager.getOracleStore();
+    StableMarketStore stableMarketStore = chainBaseManager.getStableMarketStore();
     try {
       oracleExchangeRateVoteContract =
-              any.unpack(OracleContract.OracleExchangeRateVoteContract.class);
+          any.unpack(OracleContract.OracleExchangeRateVoteContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, Protocol.Transaction.Result.code.FAILED);
@@ -56,15 +56,15 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
 
     if (!oracleExchangeRateVoteContract.getPreVoteHash().isEmpty()) {
       // save preVoteInfo
-      oracleStore.setPrevote(srAddress, new OraclePrevoteCapsule(
-              dynamicStore.getLatestBlockHeaderNumber(),
-              oracleExchangeRateVoteContract.getPreVoteHash().toByteArray())
+      stableMarketStore.setPrevote(srAddress, new OraclePrevoteCapsule(
+          dynamicStore.getLatestBlockHeaderNumber(),
+          oracleExchangeRateVoteContract.getPreVoteHash().toByteArray())
       );
     }
 
     if (oracleExchangeRateVoteContract.hasVote()) {
       // save vote
-      oracleStore.setVote(srAddress, oracleExchangeRateVoteContract.getVote());
+      stableMarketStore.setVote(srAddress, oracleExchangeRateVoteContract.getVote());
     }
 
     ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
@@ -89,7 +89,7 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
     final OracleContract.OracleExchangeRateVoteContract oracleExchangeRateVoteContract;
     try {
       oracleExchangeRateVoteContract =
-              any.unpack(OracleContract.OracleExchangeRateVoteContract.class);
+          any.unpack(OracleContract.OracleExchangeRateVoteContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -112,9 +112,9 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
     }
 
     // check feeder address
-    OracleStore oracleStore = chainBaseManager.getOracleStore();
+    StableMarketStore stableMarketStore = chainBaseManager.getStableMarketStore();
     if (!Arrays.equals(ownerAddress, srAddress)
-            && !Arrays.equals(ownerAddress, oracleStore.getFeeder(srAddress))) {
+        && !Arrays.equals(ownerAddress, stableMarketStore.getFeeder(srAddress))) {
       throw new ContractValidateException("Invalid feeder address");
     }
 
@@ -122,20 +122,23 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
     // check vote with prevote hash of store
     if (oracleExchangeRateVoteContract.hasVote()) {
       String exchangeRateStr =
-              oracleExchangeRateVoteContract.getVote().getExchangeRates();
+          oracleExchangeRateVoteContract.getVote().getExchangeRates();
 
       // check vote exchange rates
       if (!exchangeRateStr.isEmpty()) {
         Map<String, Dec> exchangeRateMap;
         try {
-          exchangeRateMap = OracleStore.parseExchangeRateTuples(exchangeRateStr);
+          exchangeRateMap = StableMarketStore.parseExchangeRateTuples(exchangeRateStr);
         } catch (RuntimeException e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(
-                  "parse exchange rate string error: " + e.getMessage());
+              "parse exchange rate string error: " + e.getMessage());
         }
 
-        Map<String, Dec> supportAssets = oracleStore.getAllTobinTax();
+        Map<String, Dec> supportAssets = stableMarketStore.getAllTobinTax();
+        if (supportAssets == null) {
+          throw new ContractValidateException("asset whitelist is empty");
+        }
         // check all assets are in the vote whitelist
         for (Map.Entry<String, Dec> exchangeRate : exchangeRateMap.entrySet()) {
           if (!supportAssets.containsKey(exchangeRate.getKey())) {
@@ -144,7 +147,7 @@ public class OracleExchangeRateVoteActuator extends AbstractActuator {
         }
       }
 
-      OraclePrevoteCapsule prevote = oracleStore.getPrevote(ownerAddress);
+      OraclePrevoteCapsule prevote = stableMarketStore.getPrevote(ownerAddress);
       if (prevote == null) {
         throw new ContractValidateException("cannot find prevote");
       }

@@ -236,6 +236,7 @@ public class StableMarketActuatorTest {
     String destTokenId = String.valueOf(
         initToken(TO_ADDRESS, "Dest", destTotalSupply, destExchangeRate));
     System.out.println(destTokenId);
+    dbManager.getStableMarketStore().updateTobinTax(null);
 
     StableMarketActuator actuator = new StableMarketActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(

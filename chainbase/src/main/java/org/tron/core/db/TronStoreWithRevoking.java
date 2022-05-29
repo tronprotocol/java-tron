@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +30,7 @@ import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
@@ -155,6 +157,16 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     } catch (BadItemException e) {
       return null;
     }
+  }
+
+  public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    Map<WrappedByteArray, byte[]> result = new HashMap<>();
+    if (db.getClass() == LevelDB.class) {
+      result = ((LevelDB) db).getDb().prefixQuery(key);
+    } else if (db.getClass() == RocksDB.class) {
+      result = ((RocksDB) db).getDb().prefixQuery(key);
+    }
+    return result;
   }
 
   @Override

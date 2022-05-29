@@ -1,8 +1,6 @@
 package org.tron.consensus;
 
 import com.google.protobuf.ByteString;
-
-import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +11,7 @@ import org.tron.core.service.SlashService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.OracleStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -44,7 +42,7 @@ public class ConsensusDelegate {
   private SlashService slashService;
 
   @Autowired
-  private OracleStore oracleStore;
+  private StableMarketStore stableMarketStore;
 
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return dynamicPropertiesStore;
@@ -62,7 +60,9 @@ public class ConsensusDelegate {
     return slashService;
   }
 
-  public OracleStore getOracleStore() { return oracleStore; }
+  public StableMarketStore getStableMarketStore() {
+    return stableMarketStore;
+  }
 
   public int calculateFilledSlotsCount() {
     return dynamicPropertiesStore.calculateFilledSlotsCount();

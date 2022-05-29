@@ -1,7 +1,8 @@
 package org.tron.consensus.dpos;
 
-import com.google.protobuf.ByteString;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL;
 
+import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,22 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.Dec;
+import org.tron.common.utils.ByteArray;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.DecOracleRewardCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.OracleStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.protos.Protocol;
-
-import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL;
 
 
 @Slf4j(topic = "consensus")
@@ -36,7 +35,7 @@ public class OracleManager {
   private DynamicPropertiesStore dynamicPropertiesStore;
 
   @Autowired
-  private OracleStore oracleStore;
+  private StableMarketStore stableMarketStore;
 
   @Autowired
   private MortgageService mortgageService;
@@ -112,63 +111,62 @@ public class OracleManager {
         totalVote += witness.getVoteCount();
       }
 
-      // get white list
-      OracleStore oracleStore = consensusDelegate.getOracleStore();
-      Map<String, Dec> supportAssets = oracleStore.getAllTobinTax();
-
       // 1. clear old exchange rates
-      oracleStore.clearAllExchangeRates();
+      stableMarketStore.clearAllOracleExchangeRates();
 
-      // 2, sorting ballots
-      Map<String, List<ExchangeRateData>> assetVotes =
-          organizeBallotByAsset(srMap, supportAssets);
+      Map<String, Dec> supportAssets = stableMarketStore.getAllTobinTax();
+      if (supportAssets != null) {
+        // 2, sorting ballots
+        Map<String, List<ExchangeRateData>> assetVotes =
+            organizeBallotByAsset(srMap, supportAssets);
 
-      // 3. pick reference Asset
-      final long thresholdVotes = totalVote / 100
-          * consensusDelegate.getDynamicPropertiesStore().getOracleVoteThreshold();
-      String referenceAsset = pickReferenceAsset(assetVotes, thresholdVotes);
+        // 3. pick reference Asset
+        final long thresholdVotes = totalVote / 100
+            * consensusDelegate.getDynamicPropertiesStore().getOracleVoteThreshold();
+        String referenceAsset = pickReferenceAsset(assetVotes, thresholdVotes,assetVotes);
 
-      // 4. calculate cross exchange rates
-      if (referenceAsset != null) {
-        // make voteMap of Reference Asset to calculate cross exchange rates
-        List<ExchangeRateData> voteReferenceList = assetVotes.get(referenceAsset);
-        // save reference asset exchange rate
-        Dec exchangeRateReference = getWeightedMedian(voteReferenceList);
-        oracleStore.setTrxExchangeRate(referenceAsset, exchangeRateReference);
+        // 4. calculate cross exchange rates
+        if (referenceAsset != null) {
+          // make voteMap of Reference Asset to calculate cross exchange rates
+          List<ExchangeRateData> voteReferenceList = assetVotes.get(referenceAsset);
+          // save reference asset exchange rate
+          Dec exchangeRateReference = getWeightedMedian(voteReferenceList);
+          stableMarketStore.setOracleExchangeRate(
+              ByteArray.fromString(referenceAsset), exchangeRateReference);
 
-        // save other assets exchange rate
-        Map<ByteString, Dec> voteReferenceMap = new HashMap<>();
-        voteReferenceList.forEach(vote ->
-            voteReferenceMap.put(vote.srAddress, vote.exchangeRate));
-        assetVotes.forEach((token, voteList) -> {
-          if (!token.equals(referenceAsset)) {
-            // Convert vote to cross exchange rates
-            toCrossRate(voteList, voteReferenceMap);
-            Dec exchangeRate = tally(voteList, srMap);
-            exchangeRate = exchangeRateReference.quo(exchangeRate);
-            oracleStore.setTrxExchangeRate(token, exchangeRate);
+          // save other assets exchange rate
+          Map<ByteString, Dec> voteReferenceMap = new HashMap<>();
+          voteReferenceList.forEach(vote ->
+              voteReferenceMap.put(vote.srAddress, vote.exchangeRate));
+          assetVotes.forEach((asset, voteList) -> {
+            if (!asset.equals(referenceAsset)) {
+              // Convert vote to cross exchange rates
+              toCrossRate(voteList, voteReferenceMap);
+              Dec exchangeRate = tally(voteList, srMap);
+              exchangeRate = exchangeRateReference.quo(exchangeRate);
+              stableMarketStore.setOracleExchangeRate(
+                  ByteArray.fromString(asset), exchangeRate);
+            }
+          });
+        }
+        // 5. Do miss counting & slashing
+        int supportAssetsSize = supportAssets.size();
+        srMap.forEach((sr, claim) -> {
+          if (claim.winCount < supportAssetsSize) {
+            // Increase miss counter
+            long missCount = stableMarketStore.getWitnessMissCount(sr.toByteArray());
+            stableMarketStore.setWitnessMissCount(sr.toByteArray(), missCount + 1);
           }
         });
+
+        // 6. payout sr rewards
+        long rewardDistributionWindow = dynamicPropertiesStore.getOracleRewardDistributionWindow();
+        rewardBallotWinners(votePeriod, rewardDistributionWindow, supportAssets, srMap);
       }
 
-      // Do miss counting & slashing
-      int supportAssetsSize = supportAssets.size();
-      srMap.forEach((sr, claim) -> {
-        if (claim.winCount < supportAssetsSize) {
-          // Increase miss counter
-          long missCount = oracleStore.getWitnessMissCount(sr.toByteArray());
-          oracleStore.setWitnessMissCount(sr.toByteArray(), missCount + 1);
-        }
-      });
-
-      //payout sr rewards
-      long rewardDistributionWindow = dynamicPropertiesStore.getOracleRewardDistributionWindow();
-      rewardBallotWinners(votePeriod, rewardDistributionWindow, supportAssets, srMap);
-
-      // 5. post-processing, clear vote info, update tobin tax
-      oracleStore.clearPrevoteAndVotes(blockNum, votePeriod);
-      // TODO replace first param with proposal tobin list
-      oracleStore.updateTobinTax(supportAssets, supportAssets);
+      // 7. post-processing, clear vote info, update tobin tax
+      stableMarketStore.clearPrevoteAndVotes(blockNum, votePeriod);
+      stableMarketStore.updateTobinTax(supportAssets); // TODO support remove sth in pre step
     }
   }
 
@@ -180,15 +178,14 @@ public class OracleManager {
     for (Map.Entry<ByteString, Claim> entry : srMap.entrySet()) {
       ByteString sr = entry.getKey();
       Claim srInfo = entry.getValue();
-      OracleStore oracleStore = consensusDelegate.getOracleStore();
-      Protocol.OracleVote srVote = oracleStore.getVote(sr.toByteArray());
+      Protocol.OracleVote srVote = stableMarketStore.getVote(sr.toByteArray());
       if (srVote == null) {
         continue;
       }
       String exchangeRateStr = srVote.getExchangeRates();
 
       // check all assets are in the vote whitelist
-      Map<String, Dec> exchangeRateMap = OracleStore.parseExchangeRateTuples(exchangeRateStr);
+      Map<String, Dec> exchangeRateMap = StableMarketStore.parseExchangeRateTuples(exchangeRateStr);
       exchangeRateMap.forEach((asset, exchangeRate) -> {
         if (whiteList.get(asset) != null) {
           List<ExchangeRateData> tokenRateList =
@@ -208,7 +205,8 @@ public class OracleManager {
   }
 
   private String pickReferenceAsset(
-      Map<String, List<ExchangeRateData>> assetVotes, long thresholdVotes) {
+      Map<String, List<ExchangeRateData>> assetVotes, long thresholdVotes,
+      Map<String, List<ExchangeRateData>> supportAssets) {
     long largestVote = 0;
     String referenceAsset = "";
 
@@ -219,6 +217,7 @@ public class OracleManager {
       // check token vote count
       if (tokenVoteCounts < thresholdVotes) {
         assetVotes.remove(asset);
+        supportAssets.remove(asset);
       }
 
       if (tokenVoteCounts > largestVote || largestVote == 0) {
@@ -267,12 +266,12 @@ public class OracleManager {
 
     Dec weightedMedian = getWeightedMedian(voteList);
     if (weightedMedian.eq(Dec.zeroDec())) {
-      return Dec.zeroDec();
+      return weightedMedian;
     }
 
     Dec standardDeviation = getStandardDeviation(voteList, weightedMedian);
     if (standardDeviation.eq(Dec.zeroDec())) {
-      return Dec.zeroDec();
+      return weightedMedian;
     }
     Dec rewardSpread = weightedMedian.mul(rewardBand.quo(2));
 
@@ -283,7 +282,8 @@ public class OracleManager {
     for (ExchangeRateData exchange : voteList) {
       // Filter ballot winners & abstain voters
       if (exchange.exchangeRate.gte(weightedMedian.sub(rewardSpread))
-          && exchange.exchangeRate.lte(weightedMedian.add(rewardSpread)) || !exchange.exchangeRate.isPositive()) {
+          && exchange.exchangeRate.lte(weightedMedian.add(rewardSpread))
+          || !exchange.exchangeRate.isPositive()) {
         Claim claim = srClaim.get(exchange.srAddress);
         claim.weight += exchange.vote;
         claim.winCount++;
@@ -291,14 +291,11 @@ public class OracleManager {
       }
     }
 
-    srClaim.forEach((sr, claim) -> logger.debug(
-        "sr=" + claim.srAddress.toString()
-            + ", weight=" + claim.weight
-            + " win=" + claim.winCount));
-    return getWeightedMedian(voteList);
+    return weightedMedian;
   }
 
-  private void rewardBallotWinners(long votePeriod, long rewardDistributionWindow, Map<String, Dec> voteTargets,
+  private void rewardBallotWinners(long votePeriod, long rewardDistributionWindow,
+                                   Map<String, Dec> voteTargets,
                                    Map<ByteString, Claim> ballotWinners) {
     List<String> rewardDenoms = new ArrayList<>();
     rewardDenoms.add(TRX_SYMBOL);
@@ -318,7 +315,7 @@ public class OracleManager {
     Dec distributionRatio = Dec.newDec(votePeriod).quo(rewardDistributionWindow);
 
     List<DecCoin> periodRewards = new ArrayList<>();
-    DecOracleRewardCapsule decOracleRewardCapsule = oracleStore.getOracleRewardPool();
+    DecOracleRewardCapsule decOracleRewardCapsule = stableMarketStore.getOracleRewardPool();
     rewardDenoms.forEach(denom -> {
       Dec rewardPool = getRewardPool(denom, decOracleRewardCapsule);
       if (rewardPool.isZero()) {
@@ -332,7 +329,8 @@ public class OracleManager {
       byte[] receiverVal = srAddress.toByteArray();
 
       // Reflects contribution
-      List<DecCoin> decCoins = mulDec(periodRewards, Dec.newDec(claim.weight).quo(ballotPowerSum.get()));
+      List<DecCoin> decCoins =
+          mulDec(periodRewards, Dec.newDec(claim.weight).quo(ballotPowerSum.get()));
       List<Coin> rewardCoins = new ArrayList<>();
       List<DecCoin> changeCoins = new ArrayList<>();
       truncateDecimal(decCoins, rewardCoins, changeCoins);
@@ -341,7 +339,7 @@ public class OracleManager {
       if (null != receiverVal && !rewardCoins.isEmpty()) {
         DecOracleRewardCapsule srOracleReward = oracleRewardFromCoins(rewardCoins);
         mortgageService.payOracleReward(receiverVal, srOracleReward);
-        oracleStore.addOracleRewardPool(srOracleReward);
+        stableMarketStore.addOracleRewardPool(srOracleReward);
       }
     });
   }
@@ -380,7 +378,8 @@ public class OracleManager {
     return result;
   }
 
-  private void truncateDecimal(List<DecCoin> decCoins, List<Coin> truncatedCoins, List<DecCoin> changeCoins) {
+  private void truncateDecimal(List<DecCoin> decCoins,
+                               List<Coin> truncatedCoins, List<DecCoin> changeCoins) {
     decCoins.forEach(decCoin -> {
       BigInteger truncated = decCoin.decAmount.truncateBigInt();
       Dec change = decCoin.decAmount.sub(Dec.newDec(truncated));

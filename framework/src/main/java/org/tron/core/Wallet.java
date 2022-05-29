@@ -4024,7 +4024,7 @@ public class Wallet {
   }
 
   public StableMarketContractOuterClass.StableCoinInfo getStableCoinById(byte[] tokenId) {
-    return dbManager.getStableMarketStore().getStableCoinById(tokenId);
+    return dbManager.getStableMarketStore().getStableCoinInfoById(tokenId);
   }
 
   public StableMarketContractOuterClass.StableCoinInfoList getStableCoinList() {
@@ -4051,7 +4051,7 @@ public class Wallet {
 
   public NumberMessage getWitnessMissCount(byte[] witnessAddress) {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
-            .setNum(chainBaseManager.getOracleStore().getWitnessMissCount(witnessAddress));
+            .setNum(chainBaseManager.getStableMarketStore().getWitnessMissCount(witnessAddress));
     return builder.build();
   }
 

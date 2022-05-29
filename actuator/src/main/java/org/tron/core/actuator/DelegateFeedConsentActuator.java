@@ -13,7 +13,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
-import org.tron.core.store.OracleStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.OracleContract;
@@ -36,7 +36,7 @@ public class DelegateFeedConsentActuator extends AbstractActuator {
     final OracleContract.DelegateFeedConsentContract delegateFeedConsentContract;
     final long fee = calcFee();
 
-    OracleStore oracleStore = chainBaseManager.getOracleStore();
+    StableMarketStore stableMarketStore = chainBaseManager.getStableMarketStore();
     try {
       delegateFeedConsentContract = any.unpack(OracleContract.DelegateFeedConsentContract.class);
     } catch (InvalidProtocolBufferException e) {
@@ -47,8 +47,8 @@ public class DelegateFeedConsentActuator extends AbstractActuator {
 
     // save feeder address of the sr
     byte[] ownerAddress = delegateFeedConsentContract.getOwnerAddress().toByteArray();
-    oracleStore.setFeeder(ownerAddress,
-            delegateFeedConsentContract.getFeederAddress().toByteArray());
+    stableMarketStore.setFeeder(ownerAddress,
+        delegateFeedConsentContract.getFeederAddress().toByteArray());
     ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
 
     return true;
@@ -92,7 +92,7 @@ public class DelegateFeedConsentActuator extends AbstractActuator {
     WitnessCapsule witnessCapsule = chainBaseManager.getWitnessStore().get(ownerAddress);
     if (witnessCapsule == null) {
       throw new ContractValidateException(
-              "Not existed witness:" + Hex.toHexString(ownerAddress));
+          "Not existed witness:" + Hex.toHexString(ownerAddress));
     }
     return true;
   }

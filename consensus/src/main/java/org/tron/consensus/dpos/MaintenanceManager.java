@@ -25,7 +25,7 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.OracleStore;
+import org.tron.core.store.StableMarketStore;
 import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol.Vote;
 
@@ -257,7 +257,7 @@ public class MaintenanceManager {
 
   private void slashAndResetMissCounters(Map<ByteString, Long> oldCountWitness) {
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
-    OracleStore oracleStore = consensusDelegate.getOracleStore();
+    StableMarketStore stableMarketStore = consensusDelegate.getStableMarketStore();
     long SlashWindow = dynamicPropertiesStore.getSlashWindow();
     if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
       // todo witness miss count
@@ -265,10 +265,10 @@ public class MaintenanceManager {
       long votePeriod = dynamicPropertiesStore.getOracleVotePeriod();
       long slashMissCount = BLOCK_COUNT * SlashWindow * minValidPerWindow / votePeriod / 100;
       final long slashFraction = dynamicPropertiesStore.getSlashFraction();
-      consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->{
+      consensusDelegate.getAllWitnesses().forEach(witnessCapsule -> {
         ByteString address = witnessCapsule.getAddress();
         byte[] witnessAddress = address.toByteArray();
-        if (oracleStore.getWitnessMissCount(witnessAddress) >= slashMissCount) {
+        if (stableMarketStore.getWitnessMissCount(witnessAddress) >= slashMissCount) {
           long voteCount = witnessCapsule.getVoteCount() * slashFraction / SLASH_FRACTION_BASE;
           if (oldCountWitness.containsKey(address)) {
             voteCount = witnessCapsule.getVoteCount() - oldCountWitness.get(address);
@@ -284,7 +284,7 @@ public class MaintenanceManager {
 //        }
           consensusDelegate.getSlashService().slashWitness(witnessAddress, voteCount, true);
         }
-        oracleStore.deleteWitnessMissCount(witnessAddress);
+        stableMarketStore.deleteWitnessMissCount(witnessAddress);
       });
     }
   }

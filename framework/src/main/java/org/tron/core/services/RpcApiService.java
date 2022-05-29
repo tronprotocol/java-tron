@@ -2942,7 +2942,7 @@ public class RpcApiService implements Service {
                                 StreamObserver<StableCoinInfo> responseObserver) {
     try {
       StableCoinInfo stableCoinInfo =
-          dbManager.getStableMarketStore().getStableCoinById(request.toByteArray());
+          dbManager.getStableMarketStore().getStableCoinInfoById(request.toByteArray());
       responseObserver.onNext(stableCoinInfo);
     } catch (Exception e) {
       responseObserver.onError(e);

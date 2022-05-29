@@ -1,26 +1,20 @@
 package org.tron.core.utils;
 
-import com.google.protobuf.ByteString;
-import lombok.extern.slf4j.Slf4j;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.entity.Dec;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StableMarketStore;
 import org.tron.protos.contract.StableMarketContractOuterClass.ExchangeResult;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-
-import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 @Component
 public class StableMarketUtil {
@@ -124,7 +118,7 @@ public class StableMarketUtil {
 
   public void adjustTrxExchangeTotalAmount(long amount) {
     long preAmount = stableMarketStore.getTrxExchangeAmount();
-    stableMarketStore.setTrxExchangeAmount(preAmount+amount);
+    stableMarketStore.setTrxExchangeAmount(preAmount + amount);
   }
 
   public boolean validateStable(byte[] tokenId) {
@@ -132,6 +126,6 @@ public class StableMarketUtil {
         .has(tokenId) && !Arrays.equals(tokenId, TRX_SYMBOL_BYTES)) {
       return false;
     }
-    return stableMarketStore.getStableCoinById(tokenId) != null;
+    return stableMarketStore.getStableCoinInfoById(tokenId) != null;
   }
 }
