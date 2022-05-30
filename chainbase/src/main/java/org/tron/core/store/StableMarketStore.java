@@ -31,6 +31,8 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static final int TOBIN_FEE_DECIMAL = 3;
 
+  private static final String TOBIN_FEE_SET_FAILED = "set tobin fee failed, ";
+
   private static final byte[] STABLE_COIN_PREFIX = "stable_".getBytes();
   private static final byte[] BASE_POOL = "basepool".getBytes();
   private static final byte[] POOL_RECOVERY_PERIOD = "pool_recovery_period".getBytes();
@@ -60,6 +62,9 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
   public StableCoinInfoList getStableCoinList() {
     StableCoinInfoList.Builder result = StableCoinInfoList.newBuilder();
     Map<WrappedByteArray, byte[]> allStableCoins = prefixQuery(STABLE_COIN_PREFIX);
+    if (allStableCoins == null) {
+      return result.build();
+    }
     allStableCoins.forEach((key, data) -> {
       int tokenLength = key.getBytes().length - STABLE_COIN_PREFIX.length;
       byte[] tokenId = new byte[tokenLength];
@@ -72,15 +77,15 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
           result.addStableCoinInfo(
               StableCoinInfo.newBuilder()
                   .setAssetIssue(assetIssueContract.getInstance())
-                  .setTobinFee(Dec.newDec(stableCoin.getTobinFee()).roundLong())// todo check
+                  .setTobinFee(Dec.newDec(stableCoin.getTobinFee()).toString())// todo check
                   .build()
           );
         } else {
           // todo: optimize
-          throw new RuntimeException("get stable coin list failed, data is null");
+          throw new RuntimeException(TOBIN_FEE_SET_FAILED + "data is null");
         }
       } catch (InvalidProtocolBufferException e) {
-        throw new RuntimeException("get stable coin list failed, " + e.getMessage());
+        throw new RuntimeException(TOBIN_FEE_SET_FAILED + e.getMessage());
       }
     });
     return result.build();
@@ -90,11 +95,15 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     BytesCapsule data = getUnchecked(buildKey(STABLE_COIN_PREFIX, tokenId));
     if (data != null && !ByteUtil.isNullOrZeroArray(data.getData())) {
       AssetIssueCapsule assetIssueContract = assetIssueV2Store.get(tokenId);
+      if(assetIssueContract == null || assetIssueContract.getData() == null
+          || assetIssueContract.getData().length == 0) {
+        throw new RuntimeException("fatal: stable asset not exist");
+      }
       // todo: optimize
       Dec tobinTax = getProposalTobinFee(tokenId);
       return StableCoinInfo.newBuilder()
           .setAssetIssue(assetIssueContract.getInstance())
-          .setTobinFee(tobinTax.roundLong())  // todo check
+          .setTobinFee(tobinTax.toString())  // todo check
           .build();
     } else {
       return null;
@@ -121,7 +130,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
         throw new RuntimeException("get stable coin failed, data is null");
       }
     } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("get tobin fee failed, " + e.getMessage());
+      throw new RuntimeException(TOBIN_FEE_SET_FAILED + e.getMessage());
     }
   }
 
@@ -135,10 +144,10 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
         this.put(buildKey(STABLE_COIN_PREFIX, tokenId), new BytesCapsule(stableCoin.toByteArray()));
       } else {
         // todo: optimize
-        throw new RuntimeException("set tobin fee failed, data is null");
+        throw new RuntimeException(TOBIN_FEE_SET_FAILED + "data is null");
       }
     } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("set tobin fee failed, " + e.getMessage());
+      throw new RuntimeException(TOBIN_FEE_SET_FAILED + e.getMessage());
     }
   }
 
