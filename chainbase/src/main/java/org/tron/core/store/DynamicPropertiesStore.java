@@ -167,6 +167,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //This value is only allowed to be 1
   private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
       "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+
+  private static final byte[] ALLOW_ASSET_OPTIMIZATION =
+          "ALLOW_ASSET_OPTIMIZATION".getBytes();
+
+
   private static final byte[] ENERGY_PRICE_HISTORY = "ENERGY_PRICE_HISTORY".getBytes();
   private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
   private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
@@ -782,6 +787,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowTvmCompatibleEvm();
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmCompatibleEvm(CommonParameter.getInstance().getAllowTvmCompatibleEvm());
+    }
+
+    try {
+      this.getAllowAssetOptimization();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAssetOptimization(CommonParameter
+              .getInstance().getAllowAssetOptimization());
     }
 
     try {
@@ -2279,6 +2291,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowAccountAssetOptimization() == 1L;
   }
 
+  public boolean supportAllowAssetOptimization() {
+    return getAllowAssetOptimization() == 1L;
+  }
+
   public void saveAllowNewResourceModel(long value) {
     this.put(ALLOW_NEW_RESOURCE_MODEL, new BytesCapsule(ByteArray.fromLong(value)));
   }
@@ -2366,6 +2382,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElse(Long.MAX_VALUE);
   }
 
+  public long getAllowAccountAssetOptimizationFromRoot() {
+    try {
+      return Optional.ofNullable(getFromRoot(ALLOW_ASSET_OPTIMIZATION))
+              .map(BytesCapsule::getData)
+              .map(ByteArray::toLong)
+              .orElseThrow(
+                      () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+    } catch (Exception e) {
+      logger.debug("{}", e.getMessage());
+      return CommonParameter.getInstance().getAllowAssetOptimization();
+    }
+  }
+
   // 1: enable
   public long getAllowAccountAssetOptimization() {
     return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
@@ -2377,6 +2406,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void setAllowAccountAssetOptimization(long value) {
     this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  // 1: enable
+  public long getAllowAssetOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ASSET_OPTIMIZATION))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+                  () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+  }
+
+  public void setAllowAssetOptimization(long value) {
+    this.put(ALLOW_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public void saveEnergyPriceHistoryDone(long value) {

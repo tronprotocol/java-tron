@@ -276,6 +276,10 @@ public class ProposalService extends ProposalUtil {
               entry.getValue());
           break;
         }
+        case ALLOW_ASSET_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore().setAllowAssetOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

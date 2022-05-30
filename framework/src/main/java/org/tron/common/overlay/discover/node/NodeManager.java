@@ -275,10 +275,11 @@ public class NodeManager implements EventHandler {
     for (NodeHandler handler : nodeHandlerMap.values()) {
       if (handler.getNode().isConnectible(Args.getInstance().getNodeP2pVersion())
           && predicate.test(handler)) {
+        handler.setReputation(handler.getNodeStatistics().getReputation());
         filtered.add(handler);
       }
     }
-    filtered.sort(Comparator.comparingInt(handler -> -handler.getNodeStatistics().getReputation()));
+    filtered.sort(Comparator.comparingInt(handler -> -handler.getReputation()));
     return CollectionUtils.truncate(filtered, limit);
   }
 

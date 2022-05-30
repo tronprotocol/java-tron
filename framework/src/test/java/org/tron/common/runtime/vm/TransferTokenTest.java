@@ -134,8 +134,8 @@ public class TransferTokenTest {
     byte[] contractAddress = deployTransferTokenContract(id);
     repository.commit();
     Assert.assertEquals(100,
-        dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
-            .longValue());
+        dbManager.getAccountStore().get(contractAddress)
+                .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
     Assert.assertEquals(1000, dbManager.getAccountStore().get(contractAddress).getBalance());
 
     String selectorStr = "TransferTokenTo(address,trcToken,uint256)";
@@ -158,10 +158,10 @@ public class TransferTokenTest {
 
     org.testng.Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9,
-        dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
-            .longValue());
-    Assert.assertEquals(9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
-        .get(String.valueOf(id)).longValue());
+        dbManager.getAccountStore().get(contractAddress).getAssetV2MapForTest()
+                .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO))
+            .getAssetV2MapForTest().get(String.valueOf(id)).longValue());
 
     /*   suicide test  */
     // create new token: testToken2
@@ -183,10 +183,10 @@ public class TransferTokenTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction2, dbManager, null);
     org.testng.Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue - 9 + 9,
-        dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+        dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetV2MapForTest()
             .get(String.valueOf(id)).longValue());
-    Assert.assertEquals(99, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
-        .get(String.valueOf(id2)).longValue());
+    Assert.assertEquals(99, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO))
+            .getAssetV2MapForTest().get(String.valueOf(id2)).longValue());
   }
 
   private byte[] deployTransferTokenContract(long id)

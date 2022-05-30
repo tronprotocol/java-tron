@@ -38,6 +38,7 @@ import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -137,6 +138,17 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
+    if (!msg.valid()) {
+      logger.warn("Peer {} invalid hello message parameters, "
+                      + "GenesisBlockId: {}, SolidBlockId: {}, HeadBlockId: {}",
+              ctx.channel().remoteAddress(),
+              ByteArray.toHexString(msg.getInstance().getGenesisBlockId().getHash().toByteArray()),
+              ByteArray.toHexString(msg.getInstance().getSolidBlockId().getHash().toByteArray()),
+              ByteArray.toHexString(msg.getInstance().getHeadBlockId().getHash().toByteArray()));
+      channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
+      return;
+    }
+
     channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
 
     channel.setAddress(msg.getHelloMessage().getAddress());

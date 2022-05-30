@@ -332,7 +332,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    accountCapsule.importAsset();
+    accountCapsule.importAllAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -363,7 +363,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    accountCapsule.importAsset();
+    accountCapsule.importAllAsset();
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
@@ -1092,6 +1092,10 @@ public class Wallet {
         .setKey("getAllowHigherLimitForMaxCpuTimeOfOneTx")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
         .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowAssetOptimization")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
+            .build());
 
     return builder.build();
   }

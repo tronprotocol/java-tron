@@ -192,8 +192,8 @@ public class ShieldedTransferActuatorTest {
 
   private long getAssertBalance(AccountCapsule accountCapsule) {
     String token = String.valueOf(tokenId);
-    if (accountCapsule != null && accountCapsule.getAssetMapV2().containsKey(token)) {
-      return accountCapsule.getAssetMapV2().get(token);
+    if (accountCapsule != null && accountCapsule.getAssetV2MapForTest().containsKey(token)) {
+      return accountCapsule.getAssetV2MapForTest().get(token);
     } else {
       return 0;
     }

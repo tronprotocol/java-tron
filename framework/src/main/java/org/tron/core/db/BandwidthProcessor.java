@@ -5,6 +5,8 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Shielde
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 import com.google.protobuf.ByteString;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +58,14 @@ public class BandwidthProcessor extends ResourceProcessor {
       });
     }
     Map<String, Long> assetMapV2 = accountCapsule.getAssetMapV2();
-    assetMapV2.forEach((assetName, balance) -> {
+    Map<String, Long> map = new HashMap<>();
+    map.putAll(assetMapV2);
+    accountCapsule.getAllFreeAssetNetUsageV2().forEach((k, v) -> {
+      if (!map.containsKey(k)) {
+        map.put(k, 0L);
+      }
+    });
+    map.forEach((assetName, balance) -> {
       long oldFreeAssetNetUsage = accountCapsule.getFreeAssetNetUsageV2(assetName);
       long latestAssetOperationTime = accountCapsule.getLatestAssetOperationTimeV2(assetName);
       accountCapsule.putFreeAssetNetUsageV2(assetName,
