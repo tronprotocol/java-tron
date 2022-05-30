@@ -1093,9 +1093,9 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
         .build());
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowAssetOptimization")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
-            .build());
+        .setKey("getAllowAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
+        .build());
 
     return builder.build();
   }
@@ -1111,8 +1111,7 @@ public class Wallet {
             issueCapsule -> {
               processor.updateUsage(issueCapsule);
               builder.addAssetIssue(issueCapsule.getInstance());
-            }
-        );
+            });
 
     return builder.build();
   }
@@ -1157,8 +1156,7 @@ public class Wallet {
             issueCapsule -> {
               processor.updateUsage(issueCapsule);
               builder.addAssetIssue(issueCapsule.getInstance());
-            }
-        );
+            });
 
     return builder.build();
   }
@@ -1308,8 +1306,7 @@ public class Wallet {
               issueCapsule -> {
                 processor.updateUsage(issueCapsule);
                 builder.addAssetIssue(issueCapsule.getInstance());
-              }
-          );
+              });
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
@@ -1365,8 +1362,7 @@ public class Wallet {
             issueCapsule -> {
               processor.updateUsage(issueCapsule);
               builder.addAssetIssue(issueCapsule.getInstance());
-            }
-        );
+            });
 
     return builder.build();
   }
