@@ -1093,20 +1093,25 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHigherLimitForMaxCpuTimeOfOneTx())
         .build());
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowAssetOptimization")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
-            .build());
+        .setKey("getAllowAssetOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAssetOptimization())
+        .build());
 
     return builder.build();
   }
 
   public AssetIssueList getAssetIssueList() {
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
     getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
         chainBaseManager.getAssetIssueStore(),
         chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues()
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+        .forEach(
+            issueCapsule -> {
+              processor.updateUsage(issueCapsule);
+              builder.addAssetIssue(issueCapsule.getInstance());
+            });
 
     return builder.build();
   }
@@ -1123,7 +1128,13 @@ public class Wallet {
       return null;
     }
 
-    assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+    assetIssueList.forEach(
+        issueCapsule -> {
+          processor.updateUsage(issueCapsule);
+          builder.addAssetIssue(issueCapsule.getInstance());
+        }
+    );
     return builder.build();
   }
 
@@ -1137,10 +1148,15 @@ public class Wallet {
             chainBaseManager.getAssetIssueStore(),
             chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+        .forEach(
+            issueCapsule -> {
+              processor.updateUsage(issueCapsule);
+              builder.addAssetIssue(issueCapsule.getInstance());
+            });
 
     return builder.build();
   }
@@ -1267,11 +1283,17 @@ public class Wallet {
       return null;
     }
 
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       // fetch from old DB, same as old logic ops
       AssetIssueCapsule assetIssueCapsule =
           chainBaseManager.getAssetIssueStore().get(assetName.toByteArray());
-      return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
+      if (assetIssueCapsule != null) {
+        processor.updateUsage(assetIssueCapsule);
+        return assetIssueCapsule.getInstance();
+      } else {
+        return null;
+      }
     } else {
       // get asset issue by name from new DB
       List<AssetIssueCapsule> assetIssueCapsuleList =
@@ -1281,18 +1303,23 @@ public class Wallet {
           .stream()
           .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
           .forEach(
-              issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+              issueCapsule -> {
+                processor.updateUsage(issueCapsule);
+                builder.addAssetIssue(issueCapsule.getInstance());
+              });
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
         throw new NonUniqueObjectException(
-            "To get more than one asset, please use getAssetIssuebyid syntax");
+            "To get more than one asset, please use getAssetIssueById syntax");
       } else {
         // fetch from DB by assetName as id
         AssetIssueCapsule assetIssueCapsule =
             chainBaseManager.getAssetIssueV2Store().get(assetName.toByteArray());
 
         if (assetIssueCapsule != null) {
+          processor.updateUsage(assetIssueCapsule);
+
           // check already fetch
           if (builder.getAssetIssueCount() > 0
               && builder.getAssetIssue(0).getId()
@@ -1327,10 +1354,15 @@ public class Wallet {
             chainBaseManager.getAssetIssueStore(),
             chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+        .forEach(
+            issueCapsule -> {
+              processor.updateUsage(issueCapsule);
+              builder.addAssetIssue(issueCapsule.getInstance());
+            });
 
     return builder.build();
   }
@@ -1341,7 +1373,14 @@ public class Wallet {
     }
     AssetIssueCapsule assetIssueCapsule = chainBaseManager.getAssetIssueV2Store()
         .get(ByteArray.fromString(assetId));
-    return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
+    if (assetIssueCapsule != null) {
+      BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+      processor.updateUsage(assetIssueCapsule);
+
+      return assetIssueCapsule.getInstance();
+    } else {
+      return null;
+    }
   }
 
   public NumberMessage totalTransaction() {
