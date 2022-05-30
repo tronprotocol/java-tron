@@ -14,7 +14,7 @@ message StableCoinContract {
 
 message StableCoinInfo {
     AssetIssueContract assetIssue = 1;
-    int64 tobin_fee = 2;
+    string tobin_fee = 2;
 }
 
 message StableCoinInfoList {

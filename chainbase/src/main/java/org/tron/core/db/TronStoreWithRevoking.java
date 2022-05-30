@@ -160,13 +160,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   }
 
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
-    Map<WrappedByteArray, byte[]> result = new HashMap<>();
-    if (db.getClass() == LevelDB.class) {
-      result = ((LevelDB) db).getDb().prefixQuery(key);
-    } else if (db.getClass() == RocksDB.class) {
-      result = ((RocksDB) db).getDb().prefixQuery(key);
-    }
-    return result;
+    return revokingDB.prefixQuery(key);
   }
 
   @Override

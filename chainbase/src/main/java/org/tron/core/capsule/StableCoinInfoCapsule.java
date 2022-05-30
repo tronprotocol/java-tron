@@ -42,7 +42,7 @@ public class StableCoinInfoCapsule implements ProtoCapsule<StableCoinInfo> {
 
   public StableCoinInfoCapsule(AssetIssueContract assetIssueContract, long tobinFee) {
     this.stableCoinInfo = StableCoinInfo.newBuilder()
-            .setAssetIssue(assetIssueContract).setTobinFee(tobinFee).build();
+            .setAssetIssue(assetIssueContract).setTobinFee(String.valueOf(tobinFee)).build();
   }
 
   public byte[] getData() {
