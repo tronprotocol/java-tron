@@ -279,7 +279,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
       System.arraycopy(key.getBytes(), ORACLE_TOBIN_TAX.length, tokenID, 0, tokenLength);
       result.put(new String(tokenID), Dec.newDec(value));
     });
-    return null;
+    return result;
   }
 
   public void clearAllTobinTax() {
