@@ -77,10 +77,10 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
           );
         } else {
           // todo: optimize
-          throw new RuntimeException("set tobin fee failed, data is null");
+          throw new RuntimeException("get stable coin list failed, data is null");
         }
       } catch (InvalidProtocolBufferException e) {
-        throw new RuntimeException("set tobin fee failed, " + e.getMessage());
+        throw new RuntimeException("get stable coin list failed, " + e.getMessage());
       }
     });
     return result.build();
@@ -121,7 +121,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
         throw new RuntimeException("get stable coin failed, data is null");
       }
     } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("set tobin fee failed, " + e.getMessage());
+      throw new RuntimeException("get tobin fee failed, " + e.getMessage());
     }
   }
 
@@ -270,7 +270,7 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
       System.arraycopy(key.getBytes(), ORACLE_TOBIN_TAX.length, tokenID, 0, tokenLength);
       result.put(new String(tokenID), Dec.newDec(value));
     });
-    return null;
+    return result;
   }
 
   public void clearAllTobinTax() {
