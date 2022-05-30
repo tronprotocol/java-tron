@@ -64,6 +64,17 @@ public class BandwidthProcessor extends ResourceProcessor {
     });
   }
 
+  // update usage for asset issue
+  public void updateUsage(AssetIssueCapsule assetIssueCapsule) {
+    long now = chainBaseManager.getHeadSlot();
+
+    long publicFreeAssetNetUsage = assetIssueCapsule.getPublicFreeAssetNetUsage();
+    long publicLatestFreeNetTime = assetIssueCapsule.getPublicLatestFreeNetTime();
+
+    assetIssueCapsule.setPublicFreeAssetNetUsage(increase(publicFreeAssetNetUsage, 0,
+        publicLatestFreeNetTime, now));
+  }
+
   @Override
   public void consume(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException,
