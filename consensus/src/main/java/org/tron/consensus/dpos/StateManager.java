@@ -51,13 +51,13 @@ public class StateManager {
       return State.DUP_WITNESS;
     }
 
-    int participation = consensusDelegate.calculateFilledSlotsCount();
-    int minParticipationRate = dposService.getMinParticipationRate();
-    if (participation < minParticipationRate) {
-      logger
-          .warn("Participation:{} <  minParticipationRate:{}", participation, minParticipationRate);
-      return State.LOW_PARTICIPATION;
-    }
+//    int participation = consensusDelegate.calculateFilledSlotsCount();
+//    int minParticipationRate = dposService.getMinParticipationRate();
+//    if (participation < minParticipationRate) {
+//      logger
+//          .warn("Participation:{} <  minParticipationRate:{}", participation, minParticipationRate);
+//      return State.LOW_PARTICIPATION;
+//    }
 
     return State.OK;
   }
