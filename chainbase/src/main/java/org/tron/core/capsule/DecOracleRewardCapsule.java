@@ -1,5 +1,7 @@
 package org.tron.core.capsule;
 
+import com.google.common.base.Objects;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -41,10 +43,10 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
   }
 
   public DecOracleRewardCapsule(DecOracleReward decReward) {
-    this.decReward = decReward;
-    this.balance = Dec.newDec(this.decReward.getBalance().getData().toByteArray());
-    this.decReward.getAssetMap().forEach((k, v) ->
-        this.asset.put(k, Dec.newDec(v.getData().toByteArray())));
+    this(Dec.newDec(decReward.getBalance().getData().toByteArray()),
+        decReward.getAssetMap().entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey,
+                e -> Dec.newDec(e.getValue().getData().toByteArray()))));
   }
 
   public DecOracleRewardCapsule(OracleRewardCapsule oracleReward) {
@@ -52,67 +54,22 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
   }
 
   public DecOracleRewardCapsule(OracleReward oracleReward) {
-    Map<String, Dec> asset = new HashMap<>();
-    oracleReward.getAssetMap().forEach((k, v) -> asset.put(k, Dec.newDec(v)));
-    try {
-      this.balance = Dec.newDec(oracleReward.getBalance());
-      this.asset = removeZeroAsset(asset);
-      this.decReward = DecOracleReward.newBuilder()
-          .setBalance(BigInt.parseFrom(this.balance.toByteArray()))
-          .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-              e -> {
-                try {
-                  return BigInt.parseFrom(e.getValue().toByteArray());
-                } catch (InvalidProtocolBufferException ex) {
-                  logger.debug(ex.getMessage(), e);
-                }
-                return BigInt.getDefaultInstance();
-              }))).build();
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
-  }
-
-  public DecOracleRewardCapsule(Dec balance, Map<String, Dec> asset) {
-    try {
-      this.balance = balance;
-      this.asset = removeZeroAsset(asset);
-      this.decReward = DecOracleReward.newBuilder()
-          .setBalance(BigInt.parseFrom(this.balance.toByteArray()))
-          .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-              e -> {
-                try {
-                  return BigInt.parseFrom(e.getValue().toByteArray());
-                } catch (InvalidProtocolBufferException ex) {
-                  logger.debug(ex.getMessage(), e);
-                }
-                return BigInt.getDefaultInstance();
-              }))).build();
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
+    this(Dec.newDec(oracleReward.getBalance()), oracleReward.getAssetMap().entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> Dec.newDec(e.getValue()))));
   }
 
   public DecOracleRewardCapsule(BigInteger balance, Map<String, BigInteger> asset) {
-    try {
-      Map<String, Dec> decAsset = new HashMap<>();
-      asset.forEach((k, v) -> decAsset.put(k, Dec.newDec(v)));
-      this.balance = Dec.newDec(balance);
-      this.asset = removeZeroAsset(decAsset);
-      this.decReward = DecOracleReward.newBuilder()
-          .setBalance(BigInt.parseFrom(this.balance.toByteArray()))
-          .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-              e -> {
-                try {
-                  return BigInt.parseFrom(e.getValue().toByteArray());
-                } catch (InvalidProtocolBufferException ex) {
-                  logger.debug(ex.getMessage(), e);
-                }
-                return BigInt.getDefaultInstance();
-              }))).build();
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
+    this(Dec.newDec(balance), asset.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> Dec.newDec(e.getValue()))));
+  }
+
+  public DecOracleRewardCapsule(Dec balance, Map<String, Dec> asset) {
+    this.balance = Dec.newDec(balance.toByteArray());
+    this.asset = removeZeroAsset(asset);
+    this.decReward = DecOracleReward.newBuilder()
+        .setBalance(buildFromDec(this.balance))
+        .putAllAsset(this.asset.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+            e -> buildFromDec(e.getValue())))).build();
   }
 
 
@@ -156,11 +113,15 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
     return quoTruncate(Dec.newDec(d));
   }
 
-
+  // Intersect will return a new set of coins which contains the minimum DecCoin
+  // for common denoms found in both `coins` and `coinsB`. For denoms not common
+  // to both `coins` and `coinsB` the minimum is considered to be 0, thus they
+  // are not added to the final set.In other words, trim any denom amount from
+  // coin which exceeds that of coinB, such that (coin.Intersect(coinB)).IsLTE(coinB).
   public DecOracleRewardCapsule intersect(DecOracleRewardCapsule coinsB) {
     Dec balance = Dec.minDec(this.balance, coinsB.balance);
     Map<String, Dec> asset = new HashMap<>();
-    this.asset.forEach((k, v) -> asset.put(k, Dec.maxDec(v,
+    this.asset.forEach((k, v) -> asset.put(k, Dec.minDec(v,
         coinsB.asset.getOrDefault(k, Dec.zeroDec()))));
     return new DecOracleRewardCapsule(balance, asset);
   }
@@ -240,8 +201,28 @@ public class DecOracleRewardCapsule implements ProtoCapsule<DecOracleReward> {
 
   @Override
   public String toString() {
-    return "DecOracleRewardCapsule{" +
-        "balance:" + balance + ", asset:" + asset +
-        '}';
+    return "DecOracleRewardCapsule{" + "balance:" + balance + ", asset:" + asset + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DecOracleRewardCapsule that = (DecOracleRewardCapsule) o;
+    return Objects.equal(balance, that.balance)
+        && Objects.equal(asset, that.asset);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(balance, asset);
+  }
+
+  private BigInt buildFromDec(Dec dec) {
+    return BigInt.newBuilder().setData(ByteString.copyFrom(dec.toByteArray())).build();
   }
 }
