@@ -1055,6 +1055,11 @@ public class Manager {
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
+    long headerNumber = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    if (block.getNum() <= headerNumber && khaosDb.getBlock(block.getBlockId()) != null) {
+      logger.info("Block {} is already exist.", block.getBlockId().getString());
+      return;
+    }
     Metrics.histogramObserve(blockedTimer.get());
     blockedTimer.remove();
     final Histogram.Timer timer = Metrics.histogramStartTimer(
@@ -1110,7 +1115,7 @@ public class Manager {
           return;
         }
       } else {
-        if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+        if (newBlock.getNum() <= headerNumber) {
           return;
         }
 
