@@ -375,6 +375,25 @@ public class StableMarketStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
+  public Map<byte[], Long> getAllWitnessMissCount() {
+    Map<byte[], Long> result = new HashMap<>();
+    Map<WrappedByteArray, byte[]> allWitnessMissCount = prefixQuery(ORACLE_MISS);
+    allWitnessMissCount.forEach((key, value) -> {
+      int tokenLength = key.getBytes().length - ORACLE_MISS.length;
+      byte[] address = new byte[tokenLength];
+      System.arraycopy(key.getBytes(), ORACLE_MISS.length, address, 0, tokenLength);
+      result.put(address, ByteArray.toLong(value));
+    });
+    return result;
+  }
+
+  public void clearAllWitnessMissCount() {
+    Map<WrappedByteArray, byte[]> allWitnessMissCount = prefixQuery(ORACLE_MISS);
+    allWitnessMissCount.forEach((key, value) -> {
+      delete(key.getBytes());
+    });
+  }
+
   public void deleteWitnessMissCount(byte[] address) {
     delete(buildKey(ORACLE_MISS, address));
   }

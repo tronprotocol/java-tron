@@ -260,32 +260,23 @@ public class MaintenanceManager {
     StableMarketStore stableMarketStore = consensusDelegate.getStableMarketStore();
     long SlashWindow = dynamicPropertiesStore.getSlashWindow();
     if ((dynamicPropertiesStore.getCurrentCycleNumber() + 1) % SlashWindow == 0) {
-      // todo witness miss count
       long minValidPerWindow = dynamicPropertiesStore.getMinValidPerWindow();
       long votePeriod = dynamicPropertiesStore.getOracleVotePeriod();
       long slashMissCount = BLOCK_COUNT * SlashWindow * minValidPerWindow / votePeriod / 100;
       final long slashFraction = dynamicPropertiesStore.getSlashFraction();
-      consensusDelegate.getAllWitnesses().forEach(witnessCapsule -> {
-        ByteString address = witnessCapsule.getAddress();
-        byte[] witnessAddress = address.toByteArray();
-        if (stableMarketStore.getWitnessMissCount(witnessAddress) >= slashMissCount) {
+      stableMarketStore.getAllWitnessMissCount().forEach((address, missCount) -> {
+        if (missCount >= slashMissCount) {
+          WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address);
           long voteCount = witnessCapsule.getVoteCount() * slashFraction / SLASH_FRACTION_BASE;
-          if (oldCountWitness.containsKey(address)) {
-            voteCount = witnessCapsule.getVoteCount() - oldCountWitness.get(address);
+          if (oldCountWitness.containsKey(witnessCapsule.getAddress())) {
+            voteCount = witnessCapsule.getVoteCount()
+                    - oldCountWitness.get(witnessCapsule.getAddress());
             voteCount = voteCount * slashFraction / SLASH_FRACTION_BASE;
           }
-//        if (countWitness.containsKey(address)) {
-//          Vote witnessVote = countWitness.get(address);
-//          witnessVote = witnessVote.toBuilder().setVoteCount(witnessVote.getVoteCount() - voteCount).build();
-//          countWitness.put(address, witnessVote);
-//        } else {
-//          Vote witnessVote = Vote.newBuilder().setVoteCount(-voteCount).build();
-//          countWitness.put(address, witnessVote);
-//        }
-          consensusDelegate.getSlashService().slashWitness(witnessAddress, voteCount, true);
+          consensusDelegate.getSlashService().slashWitness(address, voteCount, true);
         }
-        stableMarketStore.deleteWitnessMissCount(witnessAddress);
       });
+      stableMarketStore.clearAllWitnessMissCount();
     }
   }
 
